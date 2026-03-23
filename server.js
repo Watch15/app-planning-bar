@@ -174,7 +174,8 @@ app.get('/api/users', checkDB, requirePatron, async (req, res) => {
 });
 
 app.post('/api/users', checkDB, requirePatron, async (req, res) => {
-    const { email, staff_id, name } = req.body;
+    const { email, staff_id, name, role } = req.body;
+    const userRole = role === 'patron' ? 'patron' : 'staff';
     if (!email) return res.status(400).json({ error: 'Email requis' });
     try {
         const existing = await db.collection('users').findOne({ email: email.toLowerCase().trim() });
@@ -186,7 +187,7 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
         await db.collection('users').insertOne({
             email:          email.toLowerCase().trim(),
             password_hash:  null,
-            role:           'staff',
+            role:           userRole,
             staff_id:       staff_id || null,
             name:           name || '',
             invite_token:   token,

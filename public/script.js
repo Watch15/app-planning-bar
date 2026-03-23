@@ -69,24 +69,37 @@ function isToday(dateStr) {
 // ── Init ─────────────────────────────────────────────────────────────────────
 
 async function init() {
-    // Vérifier la session avant tout
     const me = await checkAuth();
-    if (!me) return; // redirigé vers login.html
+    if (!me) return;
 
     currentUser = me;
     renderUserBadge(me);
     renderDateDisplay();
-    loadDisposBadge();
-    loadDispoControl();
-
-    document.getElementById('btn-dispos').addEventListener('click', openDisposPanel);
-    document.getElementById('dispos-modal-close').addEventListener('click', () => {
-        document.getElementById('dispos-modal').style.display = 'none';
-    });
     initDropZone();
     setupWeekNav();
     initViewTabs();
     await Promise.all([loadEstablishments(), loadAllStaff()]);
+
+    // Dispos
+    loadDisposBadge();
+    loadDispoControl();
+
+    const btnDispos = document.getElementById('btn-dispos');
+    if (btnDispos) btnDispos.addEventListener('click', openDisposPanel);
+
+    const disposClose = document.getElementById('dispos-modal-close');
+    if (disposClose) disposClose.addEventListener('click', () => {
+        document.getElementById('dispos-modal').style.display = 'none';
+    });
+
+    // Comptes
+    const btnAccounts = document.getElementById('btn-manage-accounts');
+    if (btnAccounts) btnAccounts.addEventListener('click', openAccountsModal);
+
+    const accountsClose = document.getElementById('accounts-modal-close');
+    if (accountsClose) accountsClose.addEventListener('click', () => {
+        document.getElementById('accounts-modal').style.display = 'none';
+    });
 }
 
 async function checkAuth() {
@@ -1022,6 +1035,281 @@ function switchToDayView(date) {
     applyViewMode();
 }
 
+// ── Modale gestion des comptes ────────────────────────────────────────────────
+
+async function openAccountsModal() {
+    await renderAccountsList();
+    populateStaffSelect();
+    document.getElementById('accounts-modal').style.display = 'flex';
+}
+
+async function renderAccountsList() {
+    const list = document.getElementById('accounts-list');
+    list.innerHTML = '<div style="padding:12px;text-align:center;color:#ccc;font-size:13px">Chargement…</div>';
+    try {
+        const res   = await fetch('/api/users', { credentials: 'include' });
+        const users = await res.json();
+        if (!res.ok) throw new Error(users.error);
+        if (users.length === 0) {
+            list.innerHTML = '<div style="padding:16px;text-align:center;color:#ccc;font-size:13px">Aucun compte</div>';
+            return;
+        }
+        list.innerHTML = '';
+        users.forEach(user => {
+            const row    = document.createElement('div');
+            row.className = 'staff-manage-row';
+            const sm     = allStaff.find(s => String(s._id) === user.staff_id);
+            const color  = sm ? sm.color : '#888';
+            const isP    = user.role === 'patron';
+            const status = isP ? 'Patron' : (user.active ? 'Actif' : 'Invitation envoyée');
+            const badge  = isP ? 'linked' : (user.active ? 'linked' : 'unlinked');
+            row.innerHTML =
+                '<span class="staff-manage-dot" style="background:' + color + '"></span>' +
+                '<div class="staff-manage-info" style="flex:1">' +
+                    '<div style="font-size:13px;font-weight:600;color:#333">' + (user.name || '—') + '</div>' +
+                    '<div style="font-size:12px;color:#999">' + user.email + '</div>' +
+                '</div>' +
+                '<span class="staff-login-badge ' + badge + '" style="margin-right:8px">' + status + '</span>' +
+                (!isP
+                    ? '<button class="staff-manage-save" data-action="reset">Reset mdp</button>' +
+                      '<button class="staff-manage-delete" data-action="delete">×</button>'
+                    : '');
+            if (!isP) {
+                row.querySelector('[data-action="reset"]').addEventListener('click',  () => patronResetPassword(user._id, user.name || user.email));
+                row.querySelector('[data-action="delete"]').addEventListener('click', () => deleteAccount(user._id, user.name || user.email));
+            }
+            list.appendChild(row);
+        });
+    } catch (e) {
+        list.innerHTML = '<div style="padding:16px;text-align:center;color:#e74c3c;font-size:13px">' + e.message + '</div>';
+    }
+}
+
+function populateStaffSelect() {
+    const select = document.getElementById('new-account-staff');
+    if (!select) return;
+    select.innerHTML = '<option value="">— Lier à un membre du staff —</option>';
+    allStaff.forEach(s => {
+        const opt       = document.createElement('option');
+        opt.value       = String(s._id);
+        opt.textContent = s.name;
+        select.appendChild(opt);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const btnInvite = document.getElementById('btn-invite-account');
+    if (btnInvite) btnInvite.addEventListener('click', async () => {
+        const staffId = document.getElementById('new-account-staff')?.value || '';
+        const email   = document.getElementById('new-account-email')?.value.trim();
+        const role    = document.getElementById('new-account-role')?.value || 'staff';
+        if (!email) { showToast('Email requis', true); return; }
+        const sm   = allStaff.find(s => String(s._id) === staffId);
+        const name = sm ? sm.name : '';
+        const btn  = btnInvite;
+        btn.disabled    = true;
+        btn.textContent = 'Envoi…';
+        try {
+            const res  = await fetch('/api/users', {
+                credentials: 'include',
+                method:      'POST',
+                headers:     { 'Content-Type': 'application/json' },
+                body:        JSON.stringify({ email, staff_id: role === 'staff' ? (staffId || null) : null, name, role }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            await renderAccountsList();
+            if (data.manual && data.link) {
+                const box = document.createElement('div');
+                box.style.cssText = 'background:#fff9e6;border:1.5px solid #f39c12;border-radius:8px;padding:12px;margin:10px 0;font-size:12px';
+                box.innerHTML =
+                    '<div style="font-weight:600;color:#f39c12;margin-bottom:6px">⚠️ Email non envoyé — copie ce lien :</div>' +
+                    '<div style="word-break:break-all;color:#555;cursor:pointer;text-decoration:underline" ' +
+                    'onclick="navigator.clipboard.writeText(this.dataset.link);showToast(\'Lien copi\u00e9 !\');" data-link="' + data.link + '">' +
+                    data.link + '</div>';
+                document.getElementById('accounts-list').after(box);
+                showToast('Compte créé — envoie le lien manuellement', true);
+            } else {
+                showToast('Invitation envoyée à ' + email);
+            }
+            if (document.getElementById('new-account-email')) document.getElementById('new-account-email').value = '';
+            if (document.getElementById('new-account-staff')) document.getElementById('new-account-staff').value = '';
+        } catch (e) {
+            showToast(e.message, true);
+        } finally {
+            btn.disabled    = false;
+            btn.textContent = 'Inviter';
+        }
+    });
+});
+
+async function patronResetPassword(userId, userName) {
+    const pwd = prompt('Nouveau mot de passe pour ' + userName + ' (8 car. min) :');
+    if (!pwd) return;
+    if (pwd.length < 8) { showToast('Minimum 8 caractères', true); return; }
+    try {
+        const res = await fetch('/api/users/' + userId + '/reset-password', {
+            credentials: 'include',
+            method:      'PATCH',
+            headers:     { 'Content-Type': 'application/json' },
+            body:        JSON.stringify({ password: pwd }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        showToast('Mot de passe de ' + userName + ' mis à jour');
+    } catch (e) { showToast(e.message, true); }
+}
+
+async function deleteAccount(userId, userName) {
+    if (!confirm('Supprimer le compte de ' + userName + ' ?')) return;
+    try {
+        const res  = await fetch('/api/users/' + userId, { credentials: 'include', method: 'DELETE' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        await renderAccountsList();
+        showToast('Compte de ' + userName + ' supprimé');
+    } catch (e) { showToast(e.message, true); }
+}
+
+// ── Disponibilités — côté patron ──────────────────────────────────────────────
+
+function getMondayOf(d) {
+    const day  = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    const mon  = new Date(d);
+    mon.setDate(d.getDate() + diff);
+    mon.setHours(0, 0, 0, 0);
+    return mon;
+}
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+function toDateStr(d)  { return d.toISOString().slice(0, 10); }
+
+async function loadDisposBadge() {
+    try {
+        const res = await fetch('/api/dispos/count', { credentials: 'include' });
+        if (!res.ok) return;
+        const { count } = await res.json();
+        const badge = document.getElementById('dispos-badge');
+        if (!badge) return;
+        badge.textContent    = count;
+        badge.style.display  = count > 0 ? 'flex' : 'none';
+    } catch { }
+}
+
+async function openDisposPanel() {
+    const modal = document.getElementById('dispos-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    await loadDisposList();
+}
+
+async function loadDisposList() {
+    const list = document.getElementById('dispos-list');
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:#ccc;font-size:13px">Chargement…</div>';
+    const nextMonday = getMondayOf(addDays(new Date(), 7));
+    const from = toDateStr(nextMonday);
+    const to   = toDateStr(addDays(nextMonday, 6));
+    try {
+        const res    = await fetch('/api/dispos/pending?from=' + from + '&to=' + to, { credentials: 'include' });
+        const dispos = await res.json();
+        if (!res.ok) throw new Error(dispos.error);
+        if (dispos.length === 0) {
+            list.innerHTML = '<div style="padding:24px;text-align:center;color:#ccc;font-size:13px">Aucune disponibilité en attente</div>';
+            return;
+        }
+        list.innerHTML = '';
+        dispos.forEach(dispo => {
+            const row   = document.createElement('div');
+            row.className = 'staff-manage-row';
+            const sm    = allStaff.find(s => String(s._id) === dispo.staff_id);
+            const color = sm ? sm.color : '#888';
+            const fmt   = h => String(Math.floor(h % 24)).padStart(2, '0') + 'h';
+            const typeLabel = dispo.type === 'soir' ? 'Soir' : dispo.type === 'midi' ? 'Midi' : 'Horaires précis';
+            const dateObj   = new Date(dispo.date + 'T00:00:00');
+            const dateLabel = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+            row.innerHTML =
+                '<span class="staff-manage-dot" style="background:' + color + '"></span>' +
+                '<div class="staff-manage-info" style="flex:1">' +
+                    '<div style="font-size:13px;font-weight:600;color:#333">' + dispo.staff_name + ' — ' + dateLabel + '</div>' +
+                    '<div style="font-size:12px;color:#999">' + typeLabel + ' · ' + fmt(dispo.start_time) + ' → ' + fmt(dispo.end_time) + (dispo.note ? ' · ' + dispo.note : '') + '</div>' +
+                '</div>' +
+                '<button class="staff-manage-save" data-action="confirm" style="background:#eafaf1;border-color:#2ecc71;color:#27ae60">✓</button>' +
+                '<button class="staff-manage-delete" data-action="reject">✕</button>';
+            row.querySelector('[data-action="confirm"]').addEventListener('click', () => openConfirmDispo(dispo, row));
+            row.querySelector('[data-action="reject"]').addEventListener('click', async () => {
+                if (!confirm('Refuser cette dispo ?')) return;
+                await fetch('/api/dispos/' + dispo._id + '/reject', { credentials: 'include', method: 'PATCH' });
+                row.remove();
+                loadDisposBadge();
+            });
+            list.appendChild(row);
+        });
+    } catch (e) {
+        list.innerHTML = '<div style="padding:16px;text-align:center;color:#e74c3c;font-size:13px">' + e.message + '</div>';
+    }
+}
+
+function openConfirmDispo(dispo, row) {
+    const modal  = document.getElementById('confirm-dispo-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    const select = document.getElementById('confirm-dispo-establishment');
+    select.innerHTML = '';
+    [
+        { id: 'Josy_pub',          name: 'Josy (Pub)' },
+        { id: 'Poni_restaurant',   name: 'Poni' },
+        { id: 'FanFan_restaurant', name: 'FanFan' },
+        { id: 'Caval_restaurant',  name: 'Caval' },
+    ].forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e.id; opt.textContent = e.name;
+        select.appendChild(opt);
+    });
+    if (currentVenueId) select.value = currentVenueId;
+
+    document.getElementById('confirm-dispo-btn').onclick = async () => {
+        const establishmentId = select.value;
+        const createShift     = document.getElementById('confirm-create-shift').checked;
+        try {
+            const res = await fetch('/api/dispos/' + dispo._id + '/confirm', {
+                credentials: 'include', method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ establishment_id: establishmentId, create_shift: createShift }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            modal.style.display = 'none';
+            row.remove();
+            loadDisposBadge();
+            if (createShift) await refreshWeek();
+            showToast(data.message);
+        } catch (e) { showToast(e.message, true); }
+    };
+    document.getElementById('confirm-dispo-cancel').onclick = () => { modal.style.display = 'none'; };
+}
+
+async function loadDispoControl() {
+    try {
+        const res      = await fetch('/api/dispo-settings', { credentials: 'include' });
+        if (!res.ok) return;
+        const settings = await res.json();
+        const toggle   = document.getElementById('dispo-toggle');
+        const label    = document.getElementById('dispo-toggle-label');
+        if (!toggle || !label) return;
+        toggle.checked    = settings.open;
+        label.textContent = settings.open ? 'Dispos ouvertes' : 'Dispos fermées';
+        toggle.onchange   = async () => {
+            await fetch('/api/dispo-settings', {
+                credentials: 'include', method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ open: toggle.checked }),
+            });
+            label.textContent = toggle.checked ? 'Dispos ouvertes' : 'Dispos fermées';
+            showToast(toggle.checked ? 'Saisie des dispos ouverte' : 'Saisie des dispos fermée');
+        };
+    } catch { }
+}
+
 // ── Modale gestion staff ─────────────────────────────────────────────────────
 
 document.getElementById('btn-manage-staff').addEventListener('click', openStaffModal);
@@ -1265,174 +1553,6 @@ function showConflictAlert(warnings, staffName) {
 async function logout() {
     await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
     window.location.href = '/login.html';
-}
-
-// ── Disponibilités — côté patron ──────────────────────────────────────────────
-
-async function loadDisposBadge() {
-    try {
-        const res  = await fetch('/api/dispos/count', { credentials: 'include' });
-        if (!res.ok) return;
-        const { count } = await res.json();
-        const badge = document.getElementById('dispos-badge');
-        if (!badge) return;
-        if (count > 0) {
-            badge.textContent = count;
-            badge.style.display = 'flex';
-        } else {
-            badge.style.display = 'none';
-        }
-    } catch { /* silencieux */ }
-}
-
-async function openDisposPanel() {
-    document.getElementById('dispos-modal').style.display = 'flex';
-    await loadDisposList();
-}
-
-async function loadDisposList() {
-    const list = document.getElementById('dispos-list');
-    list.innerHTML = '<div style="padding:16px;text-align:center;color:#ccc;font-size:13px">Chargement…</div>';
-
-    // Semaine suivante
-    const nextMonday = getMondayOf(addDays(new Date(), 7));
-    const from = toDateStr(nextMonday);
-    const to   = toDateStr(addDays(nextMonday, 6));
-
-    try {
-        const res   = await fetch('/api/dispos/pending?from=' + from + '&to=' + to, { credentials: 'include' });
-        const dispos = await res.json();
-        if (!res.ok) throw new Error(dispos.error);
-
-        if (dispos.length === 0) {
-            list.innerHTML = '<div style="padding:24px;text-align:center;color:#ccc;font-size:13px">Aucune disponibilité en attente</div>';
-            return;
-        }
-
-        list.innerHTML = '';
-        dispos.forEach(dispo => {
-            const row  = document.createElement('div');
-            row.className = 'staff-manage-row';
-            const sm   = allStaff.find(s => String(s._id) === dispo.staff_id);
-            const color = sm ? sm.color : '#888';
-            const fmt   = h => String(Math.floor(h % 24)).padStart(2, '0') + 'h';
-            const typeLabel = dispo.type === 'soir' ? 'Soir' : dispo.type === 'midi' ? 'Midi' : 'Horaires précis';
-            const dateObj = new Date(dispo.date + 'T00:00:00');
-            const dateLabel = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-
-            row.innerHTML =
-                '<span class="staff-manage-dot" style="background:' + color + '"></span>' +
-                '<div class="staff-manage-info" style="flex:1">' +
-                    '<div style="font-size:13px;font-weight:600;color:#333">' + dispo.staff_name + ' — ' + dateLabel + '</div>' +
-                    '<div style="font-size:12px;color:#999">' + typeLabel + ' · ' + fmt(dispo.start_time) + ' → ' + fmt(dispo.end_time) + (dispo.note ? ' · ' + dispo.note : '') + '</div>' +
-                '</div>' +
-                '<button class="staff-manage-save" data-action="confirm" style="background:#eafaf1;border-color:#2ecc71;color:#27ae60">✓ Confirmer</button>' +
-                '<button class="staff-manage-delete" data-action="reject" style="background:#fff5f5;border-color:#e74c3c;color:#e74c3c">✕</button>';
-
-            // Confirmer
-            row.querySelector('[data-action="confirm"]').addEventListener('click', () => openConfirmDispo(dispo, row));
-            // Refuser
-            row.querySelector('[data-action="reject"]').addEventListener('click', async () => {
-                if (!confirm('Refuser cette dispo ?')) return;
-                await fetch('/api/dispos/' + dispo._id + '/reject', { credentials: 'include', method: 'PATCH' });
-                row.remove();
-                loadDisposBadge();
-                if (!list.children.length) list.innerHTML = '<div style="padding:24px;text-align:center;color:#ccc;font-size:13px">Aucune disponibilité en attente</div>';
-            });
-
-            list.appendChild(row);
-        });
-    } catch (e) {
-        list.innerHTML = '<div style="padding:16px;text-align:center;color:#e74c3c;font-size:13px">' + e.message + '</div>';
-    }
-}
-
-function openConfirmDispo(dispo, row) {
-    const modal = document.getElementById('confirm-dispo-modal');
-    modal.style.display = 'flex';
-
-    // Remplir le select établissements
-    const select = document.getElementById('confirm-dispo-establishment');
-    select.innerHTML = '';
-    const establishments = [
-        { id: 'Josy_pub',          name: 'Josy (Pub)' },
-        { id: 'Poni_restaurant',   name: 'Poni (Restaurant)' },
-        { id: 'FanFan_restaurant', name: 'FanFan (Restaurant)' },
-        { id: 'Caval_restaurant',  name: 'Caval (Restaurant)' },
-    ];
-    establishments.forEach(e => {
-        const opt = document.createElement('option');
-        opt.value = e.id;
-        opt.textContent = e.name;
-        select.appendChild(opt);
-    });
-
-    // Pré-sélectionner si currentVenueId
-    if (currentVenueId) select.value = currentVenueId;
-
-    document.getElementById('confirm-dispo-btn').onclick = async () => {
-        const establishmentId = select.value;
-        const createShift     = document.getElementById('confirm-create-shift').checked;
-        try {
-            const res = await fetch('/api/dispos/' + dispo._id + '/confirm', {
-                credentials: 'include',
-                method:      'PATCH',
-                headers:     { 'Content-Type': 'application/json' },
-                body:        JSON.stringify({ establishment_id: establishmentId, create_shift: createShift }),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error);
-            modal.style.display = 'none';
-            row.remove();
-            loadDisposBadge();
-            if (createShift) await refreshWeek();
-            showToast(data.message);
-        } catch (e) { showToast(e.message, true); }
-    };
-
-    document.getElementById('confirm-dispo-cancel').onclick = () => {
-        modal.style.display = 'none';
-    };
-}
-
-// Contrôle ouverture/fermeture saisie
-async function loadDispoControl() {
-    const res      = await fetch('/api/dispo-settings', { credentials: 'include' });
-    const settings = await res.json();
-    const toggle   = document.getElementById('dispo-toggle');
-    const label    = document.getElementById('dispo-toggle-label');
-    if (!toggle) return;
-    toggle.checked     = settings.open;
-    label.textContent  = settings.open ? 'Saisie ouverte' : 'Saisie fermée';
-    toggle.onchange    = async () => {
-        await fetch('/api/dispo-settings', {
-            credentials: 'include',
-            method:      'PATCH',
-            headers:     { 'Content-Type': 'application/json' },
-            body:        JSON.stringify({ open: toggle.checked }),
-        });
-        label.textContent = toggle.checked ? 'Saisie ouverte' : 'Saisie fermée';
-        showToast('Saisie des dispos ' + (toggle.checked ? 'ouverte' : 'fermée'));
-    };
-}
-
-function getMondayOf(d) {
-    const day  = d.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    const mon  = new Date(d);
-    mon.setDate(d.getDate() + diff);
-    mon.setHours(0, 0, 0, 0);
-    return mon;
-}
-
-function addDays(d, n) {
-    const r = new Date(d);
-    r.setDate(r.getDate() + n);
-    return r;
-}
-
-function toDateStr(d) {
-    return d.toISOString().slice(0, 10);
 }
 
 // ── Démarrage ─────────────────────────────────────────────────────────────────

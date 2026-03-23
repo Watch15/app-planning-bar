@@ -21,10 +21,10 @@
             <button class="btn-manage-staff" id="btn-manage-accounts" style="background:#f0effe;border-color:#7F77DD;color:#534AB7">Comptes</button>
             <button class="btn-manage-staff" id="btn-dispos" style="position:relative">
                 Dispos
-                <span id="dispos-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#e74c3c;color:white;font-size:10px;font-weight:700;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center">0</span>
+                <span id="dispos-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#e74c3c;color:white;font-size:10px;font-weight:700;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center;pointer-events:none">0</span>
             </button>
-            <div style="display:flex;align-items:center;gap:8px;padding:0 8px;border-left:1px solid #f0f0f0">
-                <label style="font-size:12px;color:#888" id="dispo-toggle-label">Saisie dispos</label>
+            <div style="display:flex;align-items:center;gap:6px;padding:0 10px;border-left:1px solid #f0f0f0">
+                <span id="dispo-toggle-label" style="font-size:11px;color:#aaa;white-space:nowrap">Dispos</span>
                 <input type="checkbox" id="dispo-toggle" style="cursor:pointer">
             </div>
             <div class="user-badge-wrap">
@@ -114,6 +114,32 @@
     </div>
 </div>
 
+<!-- Modale comptes -->
+<div class="modal-overlay" id="accounts-modal" style="display:none">
+    <div class="modal" style="width:520px;max-width:95vw">
+        <div class="modal-header">
+            <span class="modal-title">Comptes</span>
+            <button class="modal-close" id="accounts-modal-close">&times;</button>
+        </div>
+        <div id="accounts-list"></div>
+        <div class="staff-add-form">
+            <div class="staff-add-title">Inviter</div>
+            <div class="staff-add-fields">
+                <select id="new-account-role" class="staff-input" style="flex:0.7">
+                    <option value="staff">Staff</option>
+                    <option value="patron">Patron</option>
+                </select>
+                <select id="new-account-staff" class="staff-input" style="flex:1">
+                    <option value="">&#8212; Lier au staff &#8212;</option>
+                </select>
+                <input type="email" id="new-account-email" class="staff-input" placeholder="email@exemple.com">
+                <button class="btn-add-staff" id="btn-invite-account">Inviter</button>
+            </div>
+            <p style="font-size:11px;color:#bbb;margin-top:8px">Un lien de cr&#233;ation de mot de passe sera envoy&#233; par email.</p>
+        </div>
+    </div>
+</div>
+
 <!-- ── Modale copie de jour ── -->
 <div class="modal-overlay" id="copy-modal" style="display:none">
     <div class="modal">
@@ -139,8 +165,8 @@
 <div class="modal-overlay" id="dispos-modal" style="display:none">
     <div class="modal" style="width:560px;max-width:95vw">
         <div class="modal-header">
-            <span class="modal-title">Disponibilités en attente</span>
-            <button class="modal-close" id="dispos-modal-close">×</button>
+            <span class="modal-title">Disponibilit&eacute;s en attente</span>
+            <button class="modal-close" id="dispos-modal-close">&times;</button>
         </div>
         <div id="dispos-list"></div>
     </div>
@@ -153,11 +179,11 @@
             <span class="modal-title">Confirmer la dispo</span>
         </div>
         <div style="padding:4px 0 16px">
-            <p class="modal-hint" style="margin-bottom:8px">Assigner à quel établissement ?</p>
+            <p class="modal-hint" style="margin-bottom:8px">Assigner &agrave; quel &eacute;tablissement ?</p>
             <select id="confirm-dispo-establishment" class="staff-input" style="width:100%;margin-bottom:14px"></select>
             <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#555;cursor:pointer">
                 <input type="checkbox" id="confirm-create-shift" checked>
-                Créer le shift automatiquement
+                Cr&eacute;er le shift automatiquement
             </label>
         </div>
         <div class="modal-actions">
