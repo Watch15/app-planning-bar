@@ -233,9 +233,11 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
             console.log('✅ Email envoyé à', email);
             } catch (mailErr) {
                 console.error('❌ Erreur envoi email:', mailErr.message);
-                // Supprimer le compte créé puisque l'invitation n'a pas pu partir
-                await db.collection('users').deleteOne({ invite_token: token });
-                return res.status(500).json({ error: 'Impossible d\'envoyer l\'email : ' + mailErr.message });
+                return res.status(201).json({
+                message: 'Compte créé mais email non envoyé.',
+                link,
+                manual: true,
+                });
             }
 
         res.status(201).json({ message: 'Invitation envoyée à ' + email });
@@ -437,6 +439,79 @@ app.post('/api/copy-day', checkDB, requirePatron, async (req, res) => {
             }
         }
         res.json({ message: created + ' shifts copiés sur ' + to_dates.length + ' jour(s)' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /auth/forgot-password — demande de reset
+app.post('/auth/forgot-password', checkDB, async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email requis' });
+    try {
+        const user = await db.collection('users').findOne({ email: email.toLowerCase().trim() });
+        // Toujours répondre OK pour ne pas révéler si l'email existe
+        if (!user) return res.json({ message: 'Si cet email existe, un lien a été envoyé.' });
+
+        const token   = crypto.randomBytes(32).toString('hex');
+        const expires = new Date(Date.now() + 60 * 60 * 1000); // 1h
+
+        await db.collection('users').updateOne(
+            { _id: user._id },
+            { $set: { reset_token: token, reset_expires: expires } }
+        );
+
+        const link = (process.env.APP_URL || 'http://localhost:3000') + '/set-password.html?token=' + token + '&mode=reset';
+        const html =
+            '<p>Bonjour ' + (user.name || '') + ',</p>' +
+            '<p>Tu as demandé à réinitialiser ton mot de passe.</p>' +
+            '<p><a href="' + link + '" style="background:#1a1a2e;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;display:inline-block;margin:16px 0">Réinitialiser mon mot de passe</a></p>' +
+            '<p style="color:#999;font-size:12px">Ce lien expire dans 1h. Si tu n\'as pas fait cette demande, ignore cet email.</p>';
+
+        let manual = false;
+        try {
+            await sendEmail(email, 'Réinitialisation de ton mot de passe', html);
+        } catch (mailErr) {
+            console.error('❌ Reset email failed:', mailErr.message);
+            manual = true;
+        }
+
+        res.json({
+            message: 'Si cet email existe, un lien a été envoyé.',
+            ...(manual && { link, manual: true }),
+        });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PATCH /auth/reset-password — définir le nouveau mot de passe (reset)
+app.patch('/auth/reset-password', checkDB, async (req, res) => {
+    const { token, password } = req.body;
+    if (!token || !password) return res.status(400).json({ error: 'Token et mot de passe requis' });
+    if (password.length < 8) return res.status(400).json({ error: 'Minimum 8 caractères' });
+    try {
+        const user = await db.collection('users').findOne({ reset_token: token });
+        if (!user)                          return res.status(404).json({ error: 'Lien invalide' });
+        if (user.reset_expires < new Date()) return res.status(410).json({ error: 'Lien expiré (1h)' });
+
+        const hash = await bcrypt.hash(password, 12);
+        await db.collection('users').updateOne(
+            { reset_token: token },
+            { $set: { password_hash: hash }, $unset: { reset_token: '', reset_expires: '' } }
+        );
+        res.json({ message: 'Mot de passe mis à jour, tu peux te connecter' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PATCH /api/users/:id/reset-password — le patron remet un mdp manuellement
+app.patch('/api/users/:id/reset-password', checkDB, requirePatron, async (req, res) => {
+    const { password } = req.body;
+    if (!password || password.length < 8) return res.status(400).json({ error: 'Minimum 8 caractères' });
+    try {
+        const hash   = await bcrypt.hash(password, 12);
+        const result = await db.collection('users').updateOne(
+            { _id: new ObjectId(req.params.id) },
+            { $set: { password_hash: hash, active: true }, $unset: { reset_token: '', reset_expires: '' } }
+        );
+        if (result.matchedCount === 0) return res.status(404).json({ error: 'Utilisateur introuvable' });
+        res.json({ message: 'Mot de passe mis à jour' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

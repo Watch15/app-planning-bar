@@ -1055,8 +1055,12 @@ async function renderAccountsList() {
                     '<div style="font-size:12px;color:#999">' + user.email + '</div>' +
                 '</div>' +
                 '<span class="staff-login-badge ' + badge + '" style="margin-right:8px">' + status + '</span>' +
-                (!isP ? '<button class="staff-manage-delete" data-action="delete">×</button>' : '');
+                (!isP
+                    ? '<button class="staff-manage-save" data-action="reset">Reset mdp</button>' +
+                      '<button class="staff-manage-delete" data-action="delete">×</button>'
+                    : '');
             if (!isP) {
+                row.querySelector('[data-action="reset"]').addEventListener('click',  () => patronResetPassword(user._id, user.name || user.email));
                 row.querySelector('[data-action="delete"]').addEventListener('click', () => deleteAccount(user._id, user.name || user.email));
             }
             list.appendChild(row);
@@ -1095,10 +1099,27 @@ document.getElementById('btn-invite-account').addEventListener('click', async ()
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
+
+        await renderAccountsList();
+
+        if (data.manual && data.link) {
+            // Email non envoyé — afficher le lien à copier
+            const box = document.createElement('div');
+            box.style.cssText = 'background:#fff9e6;border:1.5px solid #f39c12;border-radius:8px;padding:12px;margin:10px 0;font-size:12px';
+            box.innerHTML =
+                '<div style="font-weight:600;color:#f39c12;margin-bottom:6px">⚠️ Email non envoyé — copie ce lien et envoie-le manuellement :</div>' +
+                '<div style="word-break:break-all;color:#555;cursor:pointer;text-decoration:underline" ' +
+                'onclick="navigator.clipboard.writeText(this.dataset.link);showToast(\'Lien copi\u00e9 !\');" data-link="' + data.link + '">' +
+                data.link + '</div>' +
+                '<div style="color:#999;font-size:11px;margin-top:4px">Clique sur le lien pour copier</div>';
+            document.getElementById('accounts-list').after(box);
+            showToast('Compte créé — envoie le lien manuellement', true);
+        } else {
+            showToast('Invitation envoyée à ' + email);
+        }
+
         document.getElementById('new-account-email').value = '';
         document.getElementById('new-account-staff').value = '';
-        await renderAccountsList();
-        showToast('Invitation envoyée à ' + email);
     } catch (e) {
         showToast(e.message, true);
     } finally {
@@ -1106,6 +1127,24 @@ document.getElementById('btn-invite-account').addEventListener('click', async ()
         btn.textContent = 'Inviter';
     }
 });
+
+// Reset mdp par le patron (nouveau mdp saisi directement)
+async function patronResetPassword(userId, userName) {
+    const pwd = prompt('Nouveau mot de passe pour ' + userName + ' (8 car. min) :');
+    if (!pwd) return;
+    if (pwd.length < 8) { showToast('Minimum 8 caractères', true); return; }
+    try {
+        const res = await fetch('/api/users/' + userId + '/reset-password', {
+            credentials: 'include',
+            method:      'PATCH',
+            headers:     { 'Content-Type': 'application/json' },
+            body:        JSON.stringify({ password: pwd }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        showToast('Mot de passe de ' + userName + ' mis à jour');
+    } catch (e) { showToast(e.message, true); }
+}
 
 async function deleteAccount(userId, userName) {
     if (!confirm('Supprimer le compte de ' + userName + ' ?')) return;

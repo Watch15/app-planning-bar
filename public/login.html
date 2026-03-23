@@ -188,6 +188,21 @@
 
     <button class="btn-login" id="btn-login">Se connecter</button>
 
+    <div style="text-align:center;margin-top:16px">
+        <a href="#" id="link-forgot" style="font-size:13px;color:#aaa;text-decoration:none">
+            Mot de passe oublié ?
+        </a>
+    </div>
+
+    <!-- Formulaire reset (caché par défaut) -->
+    <div id="forgot-form" style="display:none;margin-top:16px">
+        <div class="field">
+            <label for="reset-email">Ton email</label>
+            <input type="email" id="reset-email" placeholder="ton@email.com">
+        </div>
+        <button class="btn-login" id="btn-reset" style="background:#534AB7">Envoyer le lien</button>
+    </div>
+
     <div class="login-footer">Planning Bar &copy; 2025</div>
 </div>
 
@@ -257,7 +272,7 @@
         if (role === 'patron') {
             window.location.href = '/index.html';
         } else {
-            window.location.href = '/planning.html';
+            window.location.href = '/planning.html'; // Vue staff — Phase 4
         }
     }
 
@@ -268,6 +283,53 @@
     function hideError() {
         errorMsg.classList.remove('visible');
     }
+
+    // ── Mot de passe oublié ───────────────────────────────────────────────────
+
+    document.getElementById('link-forgot').addEventListener('click', e => {
+        e.preventDefault();
+        const forgotForm = document.getElementById('forgot-form');
+        forgotForm.style.display = forgotForm.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', async () => {
+        const email = document.getElementById('reset-email').value.trim();
+        if (!email) { showError('Saisis ton email.'); return; }
+
+        const btn = document.getElementById('btn-reset');
+        btn.disabled    = true;
+        btn.textContent = 'Envoi…';
+        hideError();
+
+        try {
+            const res  = await fetch('/auth/forgot-password', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ email }),
+            });
+            const data = await res.json();
+
+            if (data.manual && data.link) {
+                // Email non envoyé — afficher le lien
+                document.getElementById('forgot-form').innerHTML =
+                    '<div style="background:#fff9e6;border:1.5px solid #f39c12;border-radius:8px;padding:12px;font-size:12px">' +
+                    '<div style="font-weight:600;color:#f39c12;margin-bottom:6px">Email non envoyé — copie ce lien :</div>' +
+                    '<div style="word-break:break-all;color:#555;cursor:pointer;text-decoration:underline" ' +
+                    'onclick="navigator.clipboard.writeText(this.dataset.link);showToast(\'Lien copi\u00e9 !\');" data-link="' + data.link + '">' +
+                    data.link + '</div>' +
+                    '<div style="color:#999;font-size:11px;margin-top:4px">Clique pour copier</div></div>';
+            } else {
+                document.getElementById('forgot-form').innerHTML =
+                    '<div style="background:#f0faf5;border:1px solid #a8dfc7;border-radius:8px;padding:12px;font-size:13px;color:#1a7a4a">' +
+                    'Si cet email existe, un lien de réinitialisation a été envoyé.</div>';
+            }
+        } catch {
+            showError('Impossible de contacter le serveur.');
+        } finally {
+            btn.disabled    = false;
+            btn.textContent = 'Envoyer le lien';
+        }
+    });
 </script>
 </body>
 </html>
