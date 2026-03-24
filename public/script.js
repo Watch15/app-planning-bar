@@ -1,7 +1,7 @@
 // ── Constantes ───────────────────────────────────────────────────────────────
 
 const PX_PER_HOUR = 60;
-const START_HOUR  = 10;
+const START_HOUR  = 12;
 const END_HOUR    = 26;
 const TOTAL_HOURS = END_HOUR - START_HOUR;
 
@@ -35,6 +35,12 @@ let draggedStaff = null;
 let copyShiftsBuffer = []; // shifts modifiables avant confirmation
 
 // ── Utilitaires date ──────────────────────────────────────────────────────────
+
+// Parseur de date YYYY-MM-DD sans décalage timezone
+function parseDate(str) {
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d, 0, 0, 0, 0);
+}
 
 function toDateStr(d) {
     return d.toISOString().slice(0, 10);
@@ -299,7 +305,7 @@ function renderWeekGrid() {
 
 async function loadDayDetail(dateStr) {
     selectedDate = dateStr;
-    const date = new Date(dateStr + 'T00:00:00');
+    const date = parseDate(dateStr);
 
     document.getElementById('day-detail-title').textContent =
         formatDateLong(date);
@@ -327,7 +333,7 @@ async function loadDayDetail(dateStr) {
 }
 
 async function loadPublishButton(dateStr) {
-    const weekStart = toDateStr(getMondayOf(new Date(dateStr + 'T00:00:00')));
+    const weekStart = toDateStr(getMondayOf(parseDate(dateStr)));
     const btn = document.getElementById('btn-publish-week');
     if (!btn) return;
     try {
@@ -1313,7 +1319,7 @@ async function loadDisposList() {
 
             weekDays.forEach(date => {
                 const dispo = staffDispos.find(d => d.date === date);
-                const d     = new Date(date + 'T00:00:00');
+                const d     = parseDate(date);
                 const pill  = document.createElement('div');
                 pill.style.cssText = 'min-width:70px;border-radius:8px;padding:8px 6px;text-align:center;border:1.5px solid;flex-shrink:0;' +
                     (dispo

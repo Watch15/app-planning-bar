@@ -605,7 +605,9 @@ function renderDays(from, shifts, colleagues) {
 
 function renderDaysInto(from, shifts, colleagues, list) {
     const today  = toDateStr(new Date());
-    const monday = new Date(from + 'T00:00:00');
+    // Parser la date YYYY-MM-DD sans risque de décalage timezone
+    const [fy, fm, fd] = from.split('-').map(Number);
+    const monday = new Date(fy, fm - 1, fd, 0, 0, 0, 0);
 
     // Si aucun shift toute la semaine
     if (shifts.length === 0) {
