@@ -95,6 +95,7 @@ async function init() {
 
     loadDisposBadge();
     loadDispoControl();
+    initStaffSearch();
 
     const btnDispos = document.getElementById('btn-dispos');
     if (btnDispos) btnDispos.addEventListener('click', openDisposPanel);
@@ -420,9 +421,54 @@ async function loadAllStaff() {
     renderSidebar();
 }
 
+let _staffFilterRole = ''; // filtre rôle actif
+
+
+function buildRoleFilters() {
+    const container = document.getElementById('staff-role-filters');
+    if (!container) return;
+    // Ne reconstruire que si les rôles ont changé
+    const currentCount = container.querySelectorAll('[data-role]').length - 1; // -1 pour "Tous"
+    if (currentCount === allRoles.length) return;
+
+    container.innerHTML = '<button class="role-filter-btn active" data-role="">Tous</button>';
+    allRoles.forEach(r => {
+        const btn = document.createElement('button');
+        btn.className = 'role-filter-btn' + (r.type === 'responsable' ? ' responsable' : '');
+        btn.dataset.role = String(r._id);
+        btn.textContent  = r.name;
+        if (_staffFilterRole === String(r._id)) btn.classList.add('active');
+        btn.addEventListener('click', () => {
+            _staffFilterRole = btn.dataset.role;
+            container.querySelectorAll('.role-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderSidebar();
+        });
+        container.appendChild(btn);
+    });
+
+    // Listener "Tous"
+    container.querySelector('[data-role=""]').addEventListener('click', function() {
+        _staffFilterRole = '';
+        container.querySelectorAll('.role-filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        renderSidebar();
+    });
+}
+
+// Listener recherche — attaché une seule fois dans init()
+function initStaffSearch() {
+    const input = document.getElementById('staff-search');
+    if (input) input.addEventListener('input', () => renderSidebar());
+}
+
 function renderSidebar() {
     const list = document.getElementById('staff-list');
+    if (!list) return;
     list.innerHTML = '';
+
+    // Construire les filtres rôles si pas encore fait
+    buildRoleFilters();
 
     // Trier : staff affecté à l'établissement courant en premier
     const sorted = [...allStaff].sort((a, b) => {
@@ -431,17 +477,35 @@ function renderSidebar() {
         return aHas - bHas;
     });
 
+    const searchVal = (document.getElementById('staff-search')?.value || '').toLowerCase().trim();
+
     sorted.forEach(staff => {
         const isPref = staff.venues && staff.venues.includes(currentVenueId);
+
+        // Trouver le rôle responsable de ce staff (affichage prioritaire)
+        const staffRoleIds = staff.roles || [];
+        const responsableRole = allRoles.find(r => r.type === 'responsable' && staffRoleIds.includes(String(r._id)));
+        const firstRole = responsableRole || allRoles.find(r => staffRoleIds.includes(String(r._id)));
+
+        // Filtrage par recherche
+        if (searchVal && !staff.name.toLowerCase().includes(searchVal)) return;
+        // Filtrage par rôle
+        if (_staffFilterRole && !staffRoleIds.includes(_staffFilterRole)) return;
+
         const card = document.createElement('div');
         card.className       = 'staff-card' + (isPref ? ' staff-pref' : '');
         card.draggable       = true;
         card.dataset.staffId = staff._id;
+        card.dataset.name    = staff.name.toLowerCase();
+        card.dataset.roles   = staffRoleIds.join(',');
 
         card.innerHTML =
-            '<span class="staff-dot" style="background:' + staff.color + '"></span>' +
             (isPref ? '<span class="staff-pref-dot" title="Affecté à cet établissement">★</span>' : '') +
+            '<span class="staff-dot" style="background:' + staff.color + '"></span>' +
             '<span class="staff-info-name">' + staff.name + '</span>' +
+            (firstRole
+                ? '<span class="staff-role-badge ' + firstRole.type + '">' + firstRole.name + '</span>'
+                : '') +
             '<div class="color-controls">' +
                 '<input type="color" class="color-picker" value="' + staff.color + '" title="Choisir une couleur">' +
                 '<button class="btn-auto-color">Auto</button>' +
@@ -1602,7 +1666,8 @@ function renderRolesHeader() {
         const name = prompt('Nom du rôle :');
         if (!name) return;
         const type = confirm('C\'est un rôle responsable ? (OK = Responsable, Annuler = Informatif)')
-    ? 'responsable' : 'informatif';
+            ? 'responsable' : 'informatif';
+
         try {
             const res = await fetch('/api/roles', {
                 credentials: 'include', method: 'POST',
@@ -1720,7 +1785,7 @@ function renderStaffManageList() {
             btnAddRole.addEventListener('click', async () => {
                 const name = prompt('Nom du rôle :');
                 if (!name) return;
-                const type = confirm('C est un rôle responsable ? (OK = Responsable, Annuler = Informatif)')
+                const type = confirm('C\'est un rôle responsable ? (OK = Responsable, Annuler = Informatif)')
                     ? 'responsable' : 'informatif';
                 try {
                     const res = await fetch('/api/roles', {
