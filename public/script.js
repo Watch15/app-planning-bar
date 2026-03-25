@@ -1,7 +1,7 @@
 // ── Constantes ───────────────────────────────────────────────────────────────
 
 const PX_PER_HOUR = 60;
-const START_HOUR  = 12;
+const START_HOUR  = 10;
 const END_HOUR    = 26;
 const TOTAL_HOURS = END_HOUR - START_HOUR;
 
@@ -130,9 +130,11 @@ async function checkAuth() {
 }
 
 function renderUserBadge(user) {
-    const badge = document.getElementById('user-badge');
-    if (!badge) return;
-    badge.textContent = user.name || user.email;
+    const badge  = document.getElementById('user-badge');
+    const avatar = document.getElementById('user-avatar');
+    const name   = user.name || user.email || '';
+    if (badge)  badge.textContent  = name;
+    if (avatar) avatar.textContent = name.charAt(0).toUpperCase();
 }
 
 function renderDateDisplay() {
@@ -1611,8 +1613,91 @@ document.getElementById('staff-modal-close').addEventListener('click', () => {
     document.getElementById('staff-modal').style.display = 'none';
 });
 
+
+// ── Onglet Rôles ─────────────────────────────────────────────────────────────
+
+function renderRolesList() {
+    const list = document.getElementById('roles-manage-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    if (allRoles.length === 0) {
+        list.innerHTML = '<p style="text-align:center;color:#ccc;font-size:13px;padding:16px 0">Aucun rôle créé</p>';
+    } else {
+        allRoles.forEach(role => {
+            const row = document.createElement('div');
+            row.className = 'role-manage-row';
+            row.innerHTML =
+                '<span class="role-type-badge ' + role.type + '">' +
+                    (role.type === 'responsable' ? 'Responsable' : 'Informatif') +
+                '</span>' +
+                '<span style="flex:1;font-size:13px;font-weight:600;color:#333">' + role.name + '</span>' +
+                '<button class="staff-manage-delete" data-id="' + role._id + '">×</button>';
+            row.querySelector('.staff-manage-delete').addEventListener('click', async () => {
+                if (!confirm('Supprimer le rôle "' + role.name + '" ?')) return;
+                try {
+                    const res = await fetch('/api/roles/' + role._id, { credentials: 'include', method: 'DELETE' });
+                    if (!res.ok) throw new Error((await res.json()).error);
+                    await loadRoles();
+                    renderRolesList();
+                    renderStaffManageList(); // mettre à jour les fiches
+                    showToast('Rôle supprimé');
+                } catch (e) { showToast(e.message, true); }
+            });
+            list.appendChild(row);
+        });
+    }
+
+    // Listener bouton créer rôle
+    const btnAdd = document.getElementById('btn-add-role');
+    if (btnAdd && !btnAdd._bound) {
+        btnAdd._bound = true;
+        btnAdd.addEventListener('click', async () => {
+            const name = document.getElementById('new-role-name').value.trim();
+            const type = document.getElementById('new-role-type').value;
+            if (!name) { showToast('Nom requis', true); return; }
+            try {
+                const res = await fetch('/api/roles', {
+                    credentials: 'include', method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, type }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                document.getElementById('new-role-name').value = '';
+                await loadRoles();
+                renderRolesList();
+                renderStaffManageList();
+                buildRoleFilters();
+                showToast('Rôle "' + name + '" créé');
+            } catch (e) { showToast(e.message, true); }
+        });
+    }
+}
+
 function openStaffModal() {
-    renderRolesHeader();
+    // Init onglets (une seule fois)
+    document.querySelectorAll('.staff-modal-tab').forEach(btn => {
+        if (btn._tabBound) return;
+        btn._tabBound = true;
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.staff-modal-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const tab = btn.dataset.tab;
+            const staffTab = document.getElementById('staff-tab-staff');
+            const rolesTab = document.getElementById('staff-tab-roles');
+            if (staffTab) staffTab.style.display = tab === 'staff' ? '' : 'none';
+            if (rolesTab) rolesTab.style.display  = tab === 'roles'  ? '' : 'none';
+            if (tab === 'roles') renderRolesList();
+        });
+    });
+    // Revenir sur l'onglet Membres
+    document.querySelectorAll('.staff-modal-tab').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-tab="staff"]')?.classList.add('active');
+    const staffTab = document.getElementById('staff-tab-staff');
+    const rolesTab = document.getElementById('staff-tab-roles');
+    if (staffTab) staffTab.style.display = '';
+    if (rolesTab) rolesTab.style.display  = 'none';
     renderStaffManageList();
     document.getElementById('staff-modal').style.display = 'flex';
 }
@@ -1779,28 +1864,7 @@ function renderStaffManageList() {
             });
         });
 
-        // Créer un nouveau rôle
-        const btnAddRole = row.querySelector('.btn-add-role');
-        if (btnAddRole) {
-            btnAddRole.addEventListener('click', async () => {
-                const name = prompt('Nom du rôle :');
-                if (!name) return;
-                const type = confirm('C\'est un rôle responsable ? (OK = Responsable, Annuler = Informatif)')
-                    ? 'responsable' : 'informatif';
-                try {
-                    const res = await fetch('/api/roles', {
-                        credentials: 'include', method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name: name.trim(), type }),
-                    });
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.error);
-                    await loadRoles();
-                    renderStaffManageList();
-                    showToast('Rôle "' + name + '" créé');
-                } catch (e) { showToast(e.message, true); }
-            });
-        }
+        // Rôles gérés dans l'onglet dédié
 
         // Enregistrer
         row.querySelector('.staff-manage-save').addEventListener('click', async () => {

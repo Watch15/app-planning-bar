@@ -15,30 +15,35 @@
 <body>
 <div class="app">
 
-    <!-- ── Header ── -->
+    <!-- ── Header niveau 1 : actions ── -->
     <header class="header">
         <div class="header-left">
-            <h1 class="app-title">Planning</h1>
-            <div class="venue-tabs" id="venue-tabs"></div>
+            <button class="btn-manage-staff" id="btn-manage-staff">Staff</button>
+            <button class="btn-manage-staff" id="btn-manage-accounts" style="background:#f0effe;border-color:#7F77DD;color:#534AB7">Comptes</button>
+            <div style="position:relative;display:inline-block">
+                <button class="btn-manage-staff" id="btn-dispos">Dispos</button>
+                <span id="dispos-badge" style="display:none;position:absolute;top:-5px;right:-5px;background:#e74c3c;color:white;font-size:9px;font-weight:700;width:14px;height:14px;border-radius:50%;align-items:center;justify-content:center;pointer-events:none;z-index:1">0</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;padding:0 8px;border-left:1px solid #eee">
+                <span id="dispo-toggle-label" style="font-size:11px;color:#bbb;white-space:nowrap">Dispos</span>
+                <input type="checkbox" id="dispo-toggle" style="cursor:pointer">
+            </div>
         </div>
         <div class="header-right">
             <span class="date-display" id="date-display"></span>
-            <button class="btn-manage-staff" id="btn-manage-staff">Gérer le staff</button>
-            <button class="btn-manage-staff" id="btn-manage-accounts" style="background:#f0effe;border-color:#7F77DD;color:#534AB7">Comptes</button>
-            <button class="btn-manage-staff" id="btn-dispos" style="position:relative">
-                Dispos
-                <span id="dispos-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#e74c3c;color:white;font-size:10px;font-weight:700;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center;pointer-events:none">0</span>
-            </button>
-            <div style="display:flex;align-items:center;gap:6px;padding:0 10px;border-left:1px solid #f0f0f0">
-                <span id="dispo-toggle-label" style="font-size:11px;color:#aaa;white-space:nowrap">Dispos</span>
-                <input type="checkbox" id="dispo-toggle" style="cursor:pointer">
+            <div style="display:flex;align-items:center;gap:7px">
+                <div class="user-avatar" id="user-avatar">?</div>
+                <span class="user-badge" id="user-badge" style="font-size:13px;font-weight:500;color:#1a1a2e"></span>
             </div>
-            <div class="user-badge-wrap">
-                <span class="user-badge" id="user-badge"></span>
-                <button class="btn-logout" onclick="logout()">Déconnexion</button>
-            </div>
+            <button class="btn-logout" onclick="logout()">Déconnexion</button>
         </div>
     </header>
+
+    <!-- ── Header niveau 2 : établissements ── -->
+    <div class="venue-bar">
+        <span class="venue-bar-label">Bar ·</span>
+        <div id="venue-tabs" style="display:contents"></div>
+    </div>
 
     <!-- ── Barre de navigation + onglets vue ── -->
     <div class="week-nav">
@@ -102,25 +107,50 @@
 
 </div>
 
-<!-- ── Modale gestion staff ── -->
+<!-- Modale gestion staff -->
 <div class="modal-overlay" id="staff-modal" style="display:none">
-    <div class="modal">
+    <div class="modal" style="width:560px;max-width:95vw">
         <div class="modal-header">
             <span class="modal-title">Gestion du staff</span>
-            <button class="modal-close" id="staff-modal-close">×</button>
+            <button class="modal-close" id="staff-modal-close">&times;</button>
+        </div>
+        <!-- Onglets -->
+        <div style="display:flex;border-bottom:1px solid #f0f0f0;margin-bottom:0">
+            <button class="staff-modal-tab active" data-tab="staff">Membres</button>
+            <button class="staff-modal-tab" data-tab="roles">R&ocirc;les</button>
         </div>
 
-        <!-- Liste du staff existant -->
-        <div class="staff-manage-list" id="staff-manage-list"></div>
+        <!-- Onglet Membres -->
+        <div id="staff-tab-staff">
+            <div class="staff-manage-list" id="staff-manage-list"></div>
+            <div class="staff-add-form">
+                <div class="staff-add-title">Ajouter un membre</div>
+                <div class="staff-add-fields">
+                    <input type="text"  id="new-staff-name"  class="staff-input" placeholder="Pr&eacute;nom Nom">
+                    <input type="email" id="new-staff-email" class="staff-input" placeholder="email@exemple.com (optionnel)">
+                    <input type="color" id="new-staff-color" class="staff-color-pick" value="#3498db" title="Couleur">
+                    <button class="btn-add-staff" id="btn-add-staff">Ajouter</button>
+                </div>
+            </div>
+        </div>
 
-        <!-- Formulaire ajout -->
-        <div class="staff-add-form">
-            <div class="staff-add-title">Ajouter un membre</div>
-            <div class="staff-add-fields">
-                <input type="text"  id="new-staff-name"  class="staff-input" placeholder="Prénom Nom">
-                <input type="email" id="new-staff-email" class="staff-input" placeholder="email@exemple.com (optionnel)">
-                <input type="color" id="new-staff-color" class="staff-color-pick" value="#3498db" title="Couleur">
-                <button class="btn-add-staff" id="btn-add-staff">Ajouter</button>
+        <!-- Onglet Rôles -->
+        <div id="staff-tab-roles" style="display:none">
+            <div class="staff-manage-list" id="roles-manage-list"></div>
+            <div class="staff-add-form">
+                <div class="staff-add-title">Cr&eacute;er un r&ocirc;le</div>
+                <div class="staff-add-fields">
+                    <input type="text" id="new-role-name" class="staff-input" placeholder="Nom du r&ocirc;le (ex: Manager)">
+                    <select id="new-role-type" class="staff-input" style="flex:0.8">
+                        <option value="responsable">Responsable</option>
+                        <option value="informatif">Informatif</option>
+                    </select>
+                    <button class="btn-add-staff" id="btn-add-role">Cr&eacute;er</button>
+                </div>
+                <p style="font-size:11px;color:#bbb;margin-top:8px">
+                    <strong>Responsable</strong> : doit &ecirc;tre pr&eacute;sent &agrave; chaque service (alerte si absent) &nbsp;·&nbsp;
+                    <strong>Informatif</strong> : indication seulement
+                </p>
             </div>
         </div>
     </div>
@@ -210,12 +240,9 @@
 <div id="toast"></div>
 
 <script src="script.js"></script>
-
 <script>
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
-    });
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 }
 </script>
 </body>

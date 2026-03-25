@@ -19,35 +19,55 @@ body {
 /* ── Header ──────────────────────────────────────────────────────────────────*/
 
 .header {
+    background: white;
+    border-radius: 12px 12px 0 0;
+    border: 0.5px solid #e8e8e8;
+    padding: 10px 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: white;
-    border-radius: 12px;
-    padding: 14px 20px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
-.header-left  { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-.header-right { display: flex; align-items: center; gap: 12px; }
+.header-left  { display: flex; align-items: center; gap: 8px; }
+.header-right { display: flex; align-items: center; gap: 8px; }
 .app-title    { font-size: 18px; font-weight: 700; }
 .date-display { font-size: 13px; color: #999; }
 
+/* ── Barre établissements niveau 2 ──────────────────────────────────────────*/
+.venue-bar {
+    background: #f8f8f8;
+    border: 0.5px solid #e8e8e8;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    padding: 7px 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-bottom: 0;
+}
+.venue-bar::-webkit-scrollbar { display: none; }
+.venue-bar-label { font-size: 11px; color: #bbb; white-space: nowrap; margin-right: 2px; flex-shrink: 0; }
+
+/* ── Avatar utilisateur ────────────────────────────────────────────────────*/
+.user-avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #EEEDFE; display: flex; align-items: center;
+    justify-content: center; font-size: 11px; font-weight: 600; color: #534AB7;
+    flex-shrink: 0;
+}
+
 /* ── Onglets établissement ───────────────────────────────────────────────────*/
 
-.venue-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.venue-tabs { display: none; }
 .venue-tab {
-    padding: 5px 13px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 500;
-    border: 1.5px solid #e0e0e0;
-    background: white;
-    color: #666;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
+    padding: 5px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 500;
+    border: 0.5px solid #e0e0e0; background: transparent;
+    color: #666; cursor: pointer; transition: all 0.12s;
+    white-space: nowrap; flex-shrink: 0;
 }
-.venue-tab:hover { border-color: #aaa; color: #333; }
+.venue-tab:hover { border-color: #999; color: #333; }
 .venue-tab.active { background: #1a1a2e; border-color: #1a1a2e; color: white; }
 .venue-tab .badge { font-size: 10px; background: rgba(255,255,255,0.2); padding: 1px 5px; border-radius: 8px; margin-left: 4px; }
 .venue-tab:not(.active) .badge { background: #f0f0f0; color: #999; }
@@ -488,18 +508,12 @@ body {
 /* ── Bouton gérer le staff ───────────────────────────────────────────────────*/
 
 .btn-manage-staff {
-    padding: 6px 14px;
-    border-radius: 8px;
-    border: 1.5px solid #e0e0e0;
-    background: white;
-    font-size: 13px;
-    font-weight: 600;
-    color: #555;
-    cursor: pointer;
-    transition: all 0.12s;
-    white-space: nowrap;
+    padding: 6px 12px; border-radius: 8px;
+    border: 0.5px solid #e0e0e0; background: #f5f5f5;
+    font-size: 12px; font-weight: 500; color: #555;
+    cursor: pointer; transition: all 0.12s; white-space: nowrap;
 }
-.btn-manage-staff:hover { border-color: #1a1a2e; color: #1a1a2e; }
+.btn-manage-staff:hover { border-color: #1a1a2e; color: #1a1a2e; background: white; }
 
 /* ── Modale gestion staff ────────────────────────────────────────────────────*/
 
@@ -900,3 +914,58 @@ body {
 .shift {
     z-index: 2; /* shifts au-dessus des dispos */
 }
+/* ── Onglets modale staff ────────────────────────────────────────────────────*/
+.staff-modal-tab {
+    padding: 10px 20px; border: none; background: transparent;
+    font-size: 13px; font-weight: 500; color: #aaa;
+    cursor: pointer; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; transition: all 0.15s;
+}
+.staff-modal-tab.active { color: #1a1a2e; border-bottom-color: #1a1a2e; }
+.staff-modal-tab:hover { color: #555; }
+
+/* ── Rôles dans modale staff ────────────────────────────────────────────────*/
+.role-manage-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border: 0.5px solid #f0f0f0;
+    border-radius: 10px; margin-bottom: 6px;
+}
+.role-type-badge {
+    padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;
+}
+.role-type-badge.responsable { background: #FFF3E0; color: #e67e22; }
+.role-type-badge.informatif  { background: #EEEDFE; color: #534AB7; }
+
+/* ── Affectation rôles sur fiche staff ───────────────────────────────────────*/
+.venue-pref-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+.venue-pref-btn {
+    padding: 3px 9px; border-radius: 12px; border: 1px solid #e0e0e0;
+    background: white; font-size: 11px; color: #aaa; cursor: pointer; transition: all 0.12s;
+}
+.venue-pref-btn:hover  { border-color: #999; color: #555; }
+.venue-pref-btn.active { background: #1a1a2e; border-color: #1a1a2e; color: white; }
+
+.roles-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+.role-badge-pick {
+    padding: 3px 9px; border-radius: 12px; border: 1px solid #e0e0e0;
+    background: white; font-size: 11px; color: #aaa; cursor: pointer; transition: all 0.12s;
+}
+.role-badge-pick:hover { border-color: #999; color: #555; }
+.role-badge-pick.active { background: #534AB7; border-color: #534AB7; color: white; }
+.role-badge-pick.responsable.active { background: #e67e22; border-color: #e67e22; color: white; }
+
+/* ── Préférentiels staff ─────────────────────────────────────────────────────*/
+.staff-pref-dot { font-size: 10px; color: #f39c12; margin-right: -2px; flex-shrink: 0; }
+.staff-card.staff-pref { border-color: #f39c12; background: #fffdf5; }
+
+/* ── Alerte responsable manquant ─────────────────────────────────────────────*/
+.day-card { position: relative; }
+.day-card.no-responsable { border-color: #e74c3c; border-width: 1.5px; }
+.day-card.no-responsable .day-num { color: #e74c3c; }
+.day-card.no-responsable::after {
+    content: '!'; position: absolute; top: 6px; right: 8px;
+    font-size: 11px; font-weight: 700; color: #e74c3c;
+}
+
+/* ── Établissements préférentiels + roles filtres ────────────────────────────*/
+.role-filter-btn.active.responsable { background: #e67e22; border-color: #e67e22; }
