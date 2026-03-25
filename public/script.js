@@ -1,7 +1,7 @@
 // ── Constantes ───────────────────────────────────────────────────────────────
 
 const PX_PER_HOUR = 60;
-const START_HOUR  = 10;
+const START_HOUR  = 12;
 const END_HOUR    = 26;
 const TOTAL_HOURS = END_HOUR - START_HOUR;
 
@@ -475,7 +475,21 @@ function renderSidebar() {
 async function loadRoles() {
     try {
         const res = await fetch('/api/roles', { credentials: 'include' });
-        if (res.ok) allRoles = await res.json();
+        if (res.ok) {
+            allRoles = await res.json();
+            // Créer le rôle Responsable par défaut s'il n'existe pas
+            if (!allRoles.some(r => r.type === 'responsable')) {
+                const cr = await fetch('/api/roles', {
+                    credentials: 'include', method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: 'Responsable', type: 'responsable' }),
+                });
+                if (cr.ok) {
+                    const res2 = await fetch('/api/roles', { credentials: 'include' });
+                    if (res2.ok) allRoles = await res2.json();
+                }
+            }
+        }
     } catch { allRoles = []; }
 }
 
@@ -1534,8 +1548,76 @@ document.getElementById('staff-modal-close').addEventListener('click', () => {
 });
 
 function openStaffModal() {
+    renderRolesHeader();
     renderStaffManageList();
     document.getElementById('staff-modal').style.display = 'flex';
+}
+
+function renderRolesHeader() {
+    const container = document.getElementById('roles-header');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (allRoles.length === 0) {
+        container.innerHTML =
+            '<div style="font-size:12px;color:#bbb;padding:4px 0">Aucun rôle créé. Utilise le bouton "+ Rôle" sur une fiche staff.</div>';
+        return;
+    }
+
+    allRoles.forEach(role => {
+        const chip = document.createElement('div');
+        chip.className = 'role-chip';
+        chip.innerHTML =
+            '<span class="role-chip-dot ' + role.type + '"></span>' +
+            '<span class="role-chip-name">' + role.name + '</span>' +
+            '<span class="role-chip-type">' + (role.type === 'responsable' ? 'Resp.' : 'Info') + '</span>' +
+            '<button class="role-chip-del" data-id="' + role._id + '" title="Supprimer">×</button>';
+
+        chip.querySelector('.role-chip-del').addEventListener('click', async () => {
+            if (!confirm('Supprimer le rôle "' + role.name + '" ? Il sera retiré de tous les employés.')) return;
+            try {
+                const res = await fetch('/api/roles/' + role._id, {
+                    credentials: 'include', method: 'DELETE'
+                });
+                if (!res.ok) throw new Error((await res.json()).error);
+                await loadRoles();
+                // Retirer le rôle de allStaff localement
+                allStaff.forEach(s => {
+                    if (s.roles) s.roles = s.roles.filter(r => r !== String(role._id));
+                });
+                renderRolesHeader();
+                renderStaffManageList();
+                showToast('Rôle "' + role.name + '" supprimé');
+            } catch (e) { showToast(e.message, true); }
+        });
+
+        container.appendChild(chip);
+    });
+
+    // Bouton créer un rôle dans le header
+    const btnNew = document.createElement('button');
+    btnNew.className   = 'btn-new-role';
+    btnNew.textContent = '+ Nouveau rôle';
+    btnNew.addEventListener('click', async () => {
+        const name = prompt('Nom du rôle :');
+        if (!name) return;
+        const type = confirm('C\'est un rôle responsable ? (OK = Responsable, Annuler = Informatif)')
+    ? 'responsable' : 'informatif';
+        try {
+            const res = await fetch('/api/roles', {
+                credentials: 'include', method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name.trim(), type }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            await loadRoles();
+            renderRolesHeader();
+            renderStaffManageList();
+            showToast('Rôle "' + name + '" créé');
+        } catch (e) { showToast(e.message, true); }
+    });
+    container.appendChild(btnNew);
 }
 
 function renderStaffManageList() {
@@ -1565,14 +1647,37 @@ function renderStaffManageList() {
                 '<input type="text"  class="staff-manage-name-input"  value="' + staff.name + '"  placeholder="Nom">' +
                 '<input type="email" class="staff-manage-email-input" value="' + (staff.email || '') + '" placeholder="email (pour le login futur)">' +
                 '<div class="venue-pref-row">' + venueButtons + '</div>' +
-                '<div class="roles-row">' +
-                    allRoles.map(r =>
-                        '<span class="role-badge-pick' +
-                        (r.type === 'responsable' ? ' responsable' : '') +
-                        ((staff.roles || []).includes(String(r._id)) ? ' active' : '') +
-                        '" data-role="' + r._id + '">' + r.name + '</span>'
-                    ).join('') +
-                    '<button class="btn-add-role" title="Créer un rôle">+ Rôle</button>' +
+                '<div class="roles-section">' +
+                    '<div class="roles-section-header">' +
+                        '<span class="roles-section-title">Rôles</span>' +
+                        '<button class="btn-add-role">+ Nouveau rôle</button>' +
+                    '</div>' +
+                    (allRoles.filter(r => r.type === 'responsable').length > 0
+                        ? '<div class="roles-group">' +
+                            '<div class="roles-group-label">Responsables</div>' +
+                            '<div class="roles-group-items">' +
+                            allRoles.filter(r => r.type === 'responsable').map(r =>
+                                '<div class="role-item">' +
+                                    '<span class="role-badge-pick responsable' + ((staff.roles || []).includes(String(r._id)) ? ' active' : '') + '" data-role="' + r._id + '">' + r.name + '</span>' +
+                                    '<button class="btn-delete-role" data-role-id="' + r._id + '" data-role-name="' + r.name + '">×</button>' +
+                                '</div>'
+                            ).join('') +
+                            '</div>' +
+                          '</div>'
+                        : '') +
+                    (allRoles.filter(r => r.type === 'informatif').length > 0
+                        ? '<div class="roles-group">' +
+                            '<div class="roles-group-label">Informatifs</div>' +
+                            '<div class="roles-group-items">' +
+                            allRoles.filter(r => r.type === 'informatif').map(r =>
+                                '<div class="role-item">' +
+                                    '<span class="role-badge-pick' + ((staff.roles || []).includes(String(r._id)) ? ' active' : '') + '" data-role="' + r._id + '">' + r.name + '</span>' +
+                                    '<button class="btn-delete-role" data-role-id="' + r._id + '" data-role-name="' + r.name + '">×</button>' +
+                                '</div>'
+                            ).join('') +
+                            '</div>' +
+                          '</div>'
+                        : '') +
                 '</div>' +
             '</div>' +
             '<span class="staff-login-badge ' + (hasLogin ? 'linked' : 'unlinked') + '">' +
@@ -1589,6 +1694,24 @@ function renderStaffManageList() {
         // Toggle rôles
         row.querySelectorAll('.role-badge-pick').forEach(badge => {
             badge.addEventListener('click', () => badge.classList.toggle('active'));
+        });
+
+        // Supprimer un rôle (global — affecte tous les staffs)
+        row.querySelectorAll('.btn-delete-role').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const roleId   = btn.dataset.roleId;
+                const roleName = btn.dataset.roleName;
+                if (!confirm('Supprimer le rôle "' + roleName + '" pour tous les membres du staff ?')) return;
+                try {
+                    const res = await fetch('/api/roles/' + roleId, { credentials: 'include', method: 'DELETE' });
+                    if (!res.ok) throw new Error((await res.json()).error);
+                    await loadRoles();
+                    await loadAllStaff();
+                    renderStaffManageList();
+                    showToast('Rôle "' + roleName + '" supprimé');
+                } catch (e) { showToast(e.message, true); }
+            });
         });
 
         // Créer un nouveau rôle

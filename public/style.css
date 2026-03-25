@@ -965,3 +965,129 @@ body {
     color: #e74c3c;
 }
 .day-card { position: relative; }
+
+/* ── Header rôles dans modale staff ─────────────────────────────────────────*/
+
+.roles-header-section {
+    padding: 12px 0 4px;
+    border-bottom: 0.5px solid #f0f0f0;
+    margin-bottom: 12px;
+}
+.roles-header-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+.roles-header-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+/* Chip rôle dans le header */
+.role-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px 4px 10px;
+    border-radius: 20px;
+    border: 0.5px solid #e0e0e0;
+    background: white;
+    font-size: 12px;
+}
+.role-chip-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.role-chip-dot.responsable { background: #e67e22; }
+.role-chip-dot.informatif  { background: #534AB7; }
+.role-chip-name { font-weight: 500; color: #333; }
+.role-chip-type { font-size: 10px; color: #bbb; }
+.role-chip-del {
+    background: none; border: none;
+    color: #ccc; cursor: pointer; font-size: 14px;
+    padding: 0 0 0 2px; line-height: 1;
+}
+.role-chip-del:hover { color: #e74c3c; }
+
+.btn-new-role {
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px dashed #ccc;
+    background: transparent;
+    font-size: 11px;
+    color: #999;
+    cursor: pointer;
+}
+.btn-new-role:hover { border-color: #999; color: #555; }
+
+/* ── Section rôles dans la modale staff ─────────────────────────────────────*/
+
+.roles-section {
+    margin-top: 8px;
+    border: 0.5px solid #f0f0f0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.roles-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: #f8f8f8;
+    border-bottom: 0.5px solid #f0f0f0;
+}
+
+.roles-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.roles-group { padding: 8px 10px 4px; }
+.roles-group + .roles-group { border-top: 0.5px solid #f5f5f5; }
+
+.roles-group-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #bbb;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 6px;
+}
+
+.roles-group-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.role-item {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.btn-delete-role {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: none;
+    background: #f0f0f0;
+    color: #bbb;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.btn-delete-role:hover { background: #fee; color: #e74c3c; }
