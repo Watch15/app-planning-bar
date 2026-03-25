@@ -21,6 +21,7 @@ let displayedStaff = [];
 let currentWeekStart = getMondayOf(new Date()); // Date du lundi courant
 let selectedDate     = toDateStr(new Date());   // "YYYY-MM-DD" du jour sélectionné
 let weekSummary      = {};                       // { "YYYY-MM-DD": nbShifts }
+let currentShiftsWeek = [];                      // shifts de la semaine pour les couleurs
 let weekFullData     = {};                       // { "YYYY-MM-DD": [shifts...] }
 let currentView      = 'day';                    // 'day' | 'week'
 let currentSubView   = 'dashboard';              // 'dashboard' | 'agenda'
@@ -126,11 +127,9 @@ async function checkAuth() {
 }
 
 function renderUserBadge(user) {
-    const badge  = document.getElementById('user-badge');
-    const avatar = document.getElementById('user-avatar');
-    const name   = user.name || user.email || '';
-    if (badge)  badge.textContent  = name;
-    if (avatar) avatar.textContent = name.charAt(0).toUpperCase();
+    const badge = document.getElementById('user-badge');
+    if (!badge) return;
+    badge.textContent = user.name || user.email;
 }
 
 function renderDateDisplay() {
@@ -244,10 +243,21 @@ async function loadWeekSummary() {
     const from = toDateStr(currentWeekStart);
     const to   = toDateStr(addDays(currentWeekStart, 6));
     try {
-        const res = await fetch(`/api/week/${currentVenueId}?from=${from}&to=${to}`);
-        weekSummary = await res.json();
+        const [summaryRes, shiftsRes] = await Promise.all([
+            fetch('/api/week/' + currentVenueId + '?from=' + from + '&to=' + to, { credentials: 'include' }),
+            fetch('/api/shifts/' + currentVenueId + '/' + toDateStr(currentWeekStart) + '?week=1&from=' + from + '&to=' + to, { credentials: 'include' }),
+        ]);
+        weekSummary = await summaryRes.json();
+        // Charger les shifts de chaque jour pour avoir les couleurs
+        currentShiftsWeek = [];
+        const days = Array.from({ length: 7 }, (_, i) => toDateStr(addDays(currentWeekStart, i)));
+        const allShifts = await Promise.all(
+            days.map(d => fetch('/api/shifts/' + currentVenueId + '/' + d, { credentials: 'include' }).then(r => r.ok ? r.json() : []))
+        );
+        currentShiftsWeek = allShifts.flat();
     } catch {
         weekSummary = {};
+        currentShiftsWeek = [];
     }
 }
 
@@ -272,12 +282,12 @@ function renderWeekGrid() {
             + (sel   ? ' selected' : '');
         card.dataset.date = dateStr;
 
-        // En-tête
+        // En-tête : jour + numéro
         const header = document.createElement('div');
         header.className = 'day-card-header';
-        header.innerHTML = `
-            <span class="day-name">${DAY_NAMES_SHORT[date.getDay()]}</span>
-            <span class="day-num">${date.getDate()}</span>`;
+        header.innerHTML =
+            '<span class="day-name">' + DAY_NAMES_SHORT[date.getDay()] + '</span>' +
+            '<span class="day-num">' + date.getDate() + '</span>';
         card.appendChild(header);
 
         // Corps
@@ -285,12 +295,25 @@ function renderWeekGrid() {
         body.className = 'day-card-body';
 
         if (empty) {
-            body.innerHTML = `<div class="day-empty-label">Aucun shift</div>`;
+            body.innerHTML = '<div class="day-empty-label">Vide</div>';
         } else {
-            // Afficher les pills des shifts (max 3 visibles)
-            const shiftsForDay = (weekSummary._shifts || []).filter(s => s.date === dateStr);
-            if (count > 0) {
-                body.innerHTML = `<div class="day-shift-count">${count} shift${count > 1 ? 's' : ''} planifié${count > 1 ? 's' : ''}</div>`;
+            // Points de couleur du staff présent ce jour
+            const shiftsForDay = currentShiftsWeek ? currentShiftsWeek.filter(s => s.date === dateStr) : [];
+            if (shiftsForDay.length > 0) {
+                const seen = new Set();
+                const dots = shiftsForDay
+                    .filter(s => { if (seen.has(s.staff_id)) return false; seen.add(s.staff_id); return true; })
+                    .slice(0, 6)
+                    .map(s => {
+                        const sm = allStaff.find(st => String(st._id) === s.staff_id);
+                        const color = sm ? sm.color : (s.color || '#888');
+                        return '<span style="width:8px;height:8px;border-radius:50%;background:' + color + ';display:inline-block;flex-shrink:0"></span>';
+                    }).join('');
+                body.innerHTML =
+                    '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">' + dots + '</div>' +
+                    '<div class="day-shift-count">' + count + ' shift' + (count > 1 ? 's' : '') + '</div>';
+            } else {
+                body.innerHTML = '<div class="day-shift-count">' + count + ' shift' + (count > 1 ? 's' : '') + '</div>';
             }
         }
 
@@ -298,7 +321,7 @@ function renderWeekGrid() {
 
         card.addEventListener('click', async () => {
             selectedDate = dateStr;
-            renderWeekGrid(); // refresh sélection visuelle
+            renderWeekGrid();
             await loadDayDetail(dateStr);
         });
 
