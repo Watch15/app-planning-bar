@@ -829,7 +829,13 @@ function createStaffRow(staff) {
         });
 
     currentShifts
-        .filter(s => s.staff_id === staff._id)
+        .filter(s => {
+            if (staff.isJoker) {
+                // La ligne Joker est identifiée par l'_id du shift (pas staff_id)
+                return String(s._id) === staff._id;
+            }
+            return s.staff_id === staff._id;
+        })
         .forEach(shift => rail.appendChild(createShiftEl(shift)));
 
     row.appendChild(label);

@@ -1,4 +1,4 @@
-const CACHE = 'planning-bar-v5';
+const CACHE = 'planning-bar-v6';
 const STATIC = [
     '/login.html',
     '/set-password.html',
