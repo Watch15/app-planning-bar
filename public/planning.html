@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Planning Bar">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
-    <title>Mon planning — Planning Castanui Family</title>
+    <title>Mon planning — Planning Bar</title>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -392,60 +392,54 @@ async function init() {
         const pubRes  = await fetch('/api/publish/' + nextWeekStart, { credentials: 'include' });
         const pubData = await pubRes.json();
         if (pubData.published) {
-            // Ajouter onglet semaine suivante
-            const tabBar = document.querySelector('.tabs-bar');
-            const tabNext = document.createElement('button');
-            tabNext.className    = 'tab-btn';
-            tabNext.dataset.tab  = 'next-week';
-            tabNext.textContent  = 'Semaine prochaine';
-            tabBar.appendChild(tabNext);
-
-            // Créer la vue semaine suivante
+            // Créer la vue semaine suivante (avant l'onglet pour que showTab la trouve)
             const viewNext = document.createElement('div');
-            viewNext.id           = 'view-next-week';
+            viewNext.id            = 'view-next-week';
             viewNext.style.display = 'none';
             document.getElementById('view-dispos').after(viewNext);
 
+            // Ajouter l'onglet et rebinder initTabs
+            const tabBar  = document.querySelector('.tabs-bar');
+            const tabNext = document.createElement('button');
+            tabNext.className   = 'tab-btn';
+            tabNext.dataset.tab = 'next-week';
+            tabNext.textContent = 'Semaine prochaine ✨';
+            tabBar.appendChild(tabNext);
+            initTabs(); // rebind pour inclure le nouvel onglet
+
+            // Charger le contenu au premier clic
             tabNext.addEventListener('click', async () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                tabNext.classList.add('active');
-                document.getElementById('view-planning').style.display  = 'none';
-                document.getElementById('view-dispos').style.display    = 'none';
-                viewNext.style.display = '';
+                if (viewNext.dataset.loaded) return;
+                viewNext.innerHTML = '<div style="padding:20px;text-align:center;color:#ccc">Chargement…</div>';
+                const nextSunday = addDays(nextMonday, 6);
+                const nFrom = toDateStr(nextMonday);
+                const nTo   = toDateStr(nextSunday);
 
-                if (!viewNext.dataset.loaded) {
-                    viewNext.innerHTML = '<div style="padding:20px;text-align:center;color:#ccc">Chargement…</div>';
-                    const nextSunday = addDays(nextMonday, 6);
-                    const nFrom = toDateStr(nextMonday);
-                    const nTo   = toDateStr(nextSunday);
+                try {
+                    const res  = await fetch('/api/my-shifts?from=' + nFrom + '&to=' + nTo, { credentials: 'include' });
+                    const data = await res.json();
 
-                    // Mettre à jour le label semaine
-                    document.getElementById('header-week').textContent =
-                        'Semaine du ' + nextMonday.getDate() + ' ' + MONTH_NAMES[nextMonday.getMonth()] +
-                        ' au ' + nextSunday.getDate() + ' ' + MONTH_NAMES[nextSunday.getMonth()];
-
-                    // Charger les shifts de la semaine suivante
+                    viewNext.innerHTML = '';
                     const tempStats = document.createElement('div');
                     tempStats.className = 'week-stats';
-                    tempStats.id = 'week-stats-next';
-                    const tempList = document.createElement('div');
-                    tempList.className = 'days-list';
-                    tempList.id = 'days-list-next';
+                    const tempList  = document.createElement('div');
+                    tempList.className  = 'days-list';
                     viewNext.appendChild(tempStats);
                     viewNext.appendChild(tempList);
 
-                    try {
-                        const res  = await fetch('/api/my-shifts?from=' + nFrom + '&to=' + nTo, { credentials: 'include' });
-                        const data = await res.json();
-                        // Réutiliser renderStats et renderDays avec les bons conteneurs
-                        renderStatsInto(data.shifts, tempStats);
-                        renderDaysInto(nFrom, data.shifts, data.colleagues, tempList);
-                        viewNext.dataset.loaded = '1';
-                    } catch (e) {
-                        viewNext.innerHTML = '<div style="padding:20px;text-align:center;color:#e74c3c">' + e.message + '</div>';
-                    }
+                    renderStatsInto(data.shifts, tempStats);
+                    renderDaysInto(nFrom, data.shifts, data.colleagues, tempList);
+                    viewNext.dataset.loaded = '1';
+                } catch (e) {
+                    viewNext.innerHTML = '<div style="padding:20px;text-align:center;color:#e74c3c">' + e.message + '</div>';
                 }
             });
+        } else {
+            // Semaine pas encore publiée — afficher un message discret
+            const msgEl = document.createElement('div');
+            msgEl.style.cssText = 'padding:16px 20px;font-size:13px;color:#bbb;text-align:center';
+            msgEl.textContent = 'Le planning de la semaine prochaine n’est pas encore disponible.';
+            document.getElementById('view-planning').appendChild(msgEl);
         }
     } catch { }
 }
@@ -661,15 +655,29 @@ function formatEstablishment(id) {
 
 // ── Navigation onglets ───────────────────────────────────────────────────────
 
+function showTab(tab) {
+    // Cacher toutes les vues connues
+    const views = ['view-planning', 'view-dispos', 'view-next-week'];
+    views.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    // Afficher la bonne vue
+    const target = document.getElementById('view-' + tab);
+    if (target) target.style.display = '';
+    // Mettre à jour les onglets
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tab);
+    });
+}
+
 function initTabs() {
     document.querySelectorAll('.tab-btn').forEach(btn => {
+        if (btn._tabBound) return;
+        btn._tabBound = true;
         btn.addEventListener('click', () => {
             if (btn.disabled) return;
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            const tab = btn.dataset.tab;
-            document.getElementById('view-planning').style.display = tab === 'planning' ? '' : 'none';
-            document.getElementById('view-dispos').style.display   = tab === 'dispos'   ? '' : 'none';
+            showTab(btn.dataset.tab);
         });
     });
 }

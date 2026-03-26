@@ -348,19 +348,11 @@ function renderWeekGrid() {
         const today   = isToday(dateStr);
         const sel     = dateStr === selectedDate;
 
-        // Vérifier si un responsable est planifié ce jour
-        const responsableRoleIds = allRoles.filter(r => r.type === 'responsable').map(r => String(r._id));
-        const shiftsDay = currentShiftsWeek.filter(s => s.date === dateStr);
-        const hasResponsable = responsableRoleIds.length > 0 && !empty && !shiftsDay.some(s =>
-            s.roles && s.roles.some(r => responsableRoleIds.includes(r))
-        );
-
         const card = document.createElement('div');
         card.className = 'day-card'
             + (today ? ' today' : '')
             + (empty ? ' empty' : '')
-            + (sel   ? ' selected' : '')
-            + (hasResponsable && !empty ? ' no-responsable' : '');
+            + (sel   ? ' selected' : '');
         card.dataset.date = dateStr;
 
         // En-tête

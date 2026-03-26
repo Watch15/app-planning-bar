@@ -960,12 +960,7 @@ body {
 
 /* ── Alerte responsable manquant ─────────────────────────────────────────────*/
 .day-card { position: relative; }
-.day-card.no-responsable { border-color: #e74c3c; border-width: 1.5px; }
-.day-card.no-responsable .day-num { color: #e74c3c; }
-.day-card.no-responsable::after {
-    content: '!'; position: absolute; top: 6px; right: 8px;
-    font-size: 11px; font-weight: 700; color: #e74c3c;
-}
+
 
 /* ── Établissements préférentiels + roles filtres ────────────────────────────*/
 .role-filter-btn.active.responsable { background: #e67e22; border-color: #e67e22; }
