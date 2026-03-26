@@ -4,7 +4,7 @@
   "description": "Planning SaaS multi-établissements — avec authentification",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node -e \"const fs=require('fs');const sw=fs.readFileSync('public/sw.js','utf8').replace('%%BUILD_TIME%%', Date.now());fs.writeFileSync('public/sw.js',sw);\" && node server.js",
     "dev": "node --watch server.js",
     "init": "node scripts/init-db.js",
     "seed": "node scripts/seed.js",
