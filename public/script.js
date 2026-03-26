@@ -878,13 +878,22 @@ function initDropZone() {
 
     container.addEventListener('dragover', e => {
         if (!draggedStaff) return;
+        // Survol d'un shift Joker par un vrai staff → highlight d'assignation
+        const jokerShift = e.target.closest('.shift-joker');
+        if (jokerShift && !draggedStaff.isJoker) {
+            e.preventDefault();
+            document.querySelectorAll('.shift-joker').forEach(s => s.classList.remove('joker-target'));
+            document.querySelectorAll('.row-rail').forEach(r => r.classList.remove('drag-over'));
+            jokerShift.classList.add('joker-target');
+            return;
+        }
+        document.querySelectorAll('.shift-joker').forEach(s => s.classList.remove('joker-target'));
         const rail = e.target.closest('.row-rail');
         if (rail) {
             e.preventDefault();
             document.querySelectorAll('.row-rail').forEach(r => r.classList.remove('drag-over'));
             rail.classList.add('drag-over');
         } else if (e.target.closest('#timeline-body')) {
-            // Drop sur le body vide (message "glisse un membre...")
             e.preventDefault();
         }
     });
@@ -892,6 +901,7 @@ function initDropZone() {
     container.addEventListener('dragleave', e => {
         if (!container.contains(e.relatedTarget)) {
             document.querySelectorAll('.row-rail').forEach(r => r.classList.remove('drag-over'));
+            document.querySelectorAll('.shift-joker').forEach(s => s.classList.remove('joker-target'));
         }
     });
 
@@ -899,12 +909,19 @@ function initDropZone() {
         e.preventDefault();
         e.stopPropagation();
         document.querySelectorAll('.row-rail').forEach(r => r.classList.remove('drag-over'));
+        document.querySelectorAll('.shift-joker').forEach(s => s.classList.remove('joker-target'));
         document.getElementById('drop-hint').classList.remove('visible');
         if (!draggedStaff) return;
 
-        // S'assurer qu'un jour est sélectionné
         if (!selectedDate) {
             showToast('Sélectionne un jour dans la semaine d\'abord', true);
+            return;
+        }
+
+        // Drop sur un shift Joker existant → assignation du staff
+        const jokerShift = e.target.closest('.shift-joker');
+        if (jokerShift && !draggedStaff.isJoker) {
+            await assignStaffToJoker(draggedStaff, jokerShift);
             return;
         }
 
@@ -942,6 +959,81 @@ function onSidebarDragEnd(card) {
 // ── Créer un shift ────────────────────────────────────────────────────────────
 
 let _createShiftPending = false; // anti-doublon drop
+
+// ── Assigner un staff à un shift Joker ───────────────────────────────────────
+
+async function assignStaffToJoker(staff, jokerEl) {
+    const shiftId = jokerEl.dataset.id;
+    const shift   = currentShifts.find(s => String(s._id) === shiftId);
+    if (!shift) { showToast('Shift introuvable', true); return; }
+
+    // Trouver la vraie couleur du staff depuis allStaff
+    const staffMember = allStaff.find(s => String(s._id) === String(staff._id));
+    const staffColor  = staffMember ? staffMember.color : (staff.color || '#3498db');
+
+    try {
+        const res = await fetch(`/api/shifts/${shiftId}`, {
+            method:      'PATCH',
+            credentials: 'include',
+            headers:     { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                staff_id:   String(staff._id),
+                staff_name: staff.name,
+                color:      staffColor,
+                is_joker:   false,
+                start_time: shift.start_time,
+                end_time:   shift.end_time,
+            }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showToast(data.error || 'Erreur', true); return; }
+
+        // Mettre à jour currentShifts en mémoire
+        shift.staff_id   = String(staff._id);
+        shift.staff_name = staff.name;
+        shift.color      = staffColor;
+        shift.is_joker   = false;
+
+        // Retrouver la ligne Joker dans displayedStaff
+        // La ligne Joker a _id = shiftId (voir buildDisplayedStaff)
+        const jokerRowIdx = displayedStaff.findIndex(s => s.isJoker && s._id === shiftId);
+        if (jokerRowIdx !== -1) {
+            // Remplacer la ligne Joker par la ligne du vrai staff
+            const existingRow = displayedStaff.find(s => s._id === String(staff._id) && !s.isJoker);
+            if (existingRow) {
+                // Le staff a déjà une ligne — retirer la ligne Joker
+                displayedStaff.splice(jokerRowIdx, 1);
+            } else {
+                // Transformer la ligne Joker en ligne staff réelle
+                displayedStaff[jokerRowIdx] = {
+                    _id:   String(staff._id),
+                    name:  staff.name,
+                    color: staffColor,
+                };
+            }
+        }
+
+        // Mettre à jour weekFullData aussi
+        if (weekFullData[selectedDate]) {
+            const wIdx = weekFullData[selectedDate].findIndex(s => String(s._id) === shiftId);
+            if (wIdx !== -1) {
+                weekFullData[selectedDate][wIdx].staff_id   = String(staff._id);
+                weekFullData[selectedDate][wIdx].staff_name = staff.name;
+                weekFullData[selectedDate][wIdx].color      = staffColor;
+                weekFullData[selectedDate][wIdx].is_joker   = false;
+            }
+        }
+        currentShiftsWeek = Object.values(weekFullData).flat();
+
+        if (data.warnings?.length) showConflictAlert(data.warnings, staff.name);
+
+        // Re-rendre la timeline
+        renderBody();
+        renderWeekGrid();
+        renderStats();
+        showToast(staff.name + ' assigné au shift Joker');
+    } catch { showToast('Erreur réseau', true); }
+}
 
 async function createShift(staff, startTime, endTime) {
     if (_createShiftPending) return;

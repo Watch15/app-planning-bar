@@ -526,30 +526,52 @@ app.post('/api/shifts', checkDB, requirePatron, async (req, res) => {
 
 app.patch('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
-    const { start_time, end_time } = req.body;
-    if (start_time == null && end_time == null) return res.status(400).json({ error: 'start_time ou end_time requis' });
+    const { start_time, end_time, staff_id, staff_name, color, is_joker } = req.body;
+    const assigningStaff = staff_id !== undefined; // affectation d'un staff sur un Joker
+    if (!assigningStaff && start_time == null && end_time == null)
+        return res.status(400).json({ error: 'start_time, end_time ou staff_id requis' });
     try {
         const existing = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
         if (!existing) return res.status(404).json({ error: 'Shift introuvable' });
-        const newStart = start_time != null ? parseFloat(start_time) : existing.start_time;
-        const newEnd   = end_time   != null ? parseFloat(end_time)   : existing.end_time;
+
+        const newStart  = start_time != null ? parseFloat(start_time) : existing.start_time;
+        const newEnd    = end_time   != null ? parseFloat(end_time)   : existing.end_time;
         if (newEnd <= newStart) return res.status(400).json({ error: 'end_time > start_time requis' });
-        const conflicts = await db.collection('shifts').find({
-            staff_id: existing.staff_id, date: existing.date,
-            establishment_id: { $ne: existing.establishment_id },
-            _id: { $ne: new ObjectId(req.params.id) }
-        }).toArray();
-        const warnings = [];
-        for (const s of conflicts) {
-            const gap = Math.min(Math.abs(newStart - s.end_time), Math.abs(s.start_time - newEnd));
-            if (newStart < s.end_time && newEnd > s.start_time)
-                warnings.push({ type: 'overlap', message: 'Chevauchement avec ' + s.establishment_id });
-            else if (gap < 1)
-                warnings.push({ type: 'gap', message: Math.round(gap * 60) + ' min de coupure avec ' + s.establishment_id });
+
+        const updateFields = { start_time: newStart, end_time: newEnd };
+
+        // Affectation d'un vrai staff sur un Joker
+        if (assigningStaff) {
+            updateFields.staff_id   = staff_id;
+            updateFields.staff_name = staff_name || '';
+            if (color) updateFields.color = color;
+            // Si on assigne un vrai staff, retirer le flag joker
+            if (is_joker === false) {
+                updateFields.is_joker = false;
+            }
         }
+
+        // Détection de conflits (uniquement pour les vrais staffs)
+        const effectiveStaffId = staff_id || existing.staff_id;
+        const warnings = [];
+        if (effectiveStaffId !== '__joker__') {
+            const conflicts = await db.collection('shifts').find({
+                staff_id: effectiveStaffId, date: existing.date,
+                establishment_id: { $ne: existing.establishment_id },
+                _id: { $ne: new ObjectId(req.params.id) }
+            }).toArray();
+            for (const s of conflicts) {
+                const gap = Math.min(Math.abs(newStart - s.end_time), Math.abs(s.start_time - newEnd));
+                if (newStart < s.end_time && newEnd > s.start_time)
+                    warnings.push({ type: 'overlap', message: 'Chevauchement avec ' + s.establishment_id });
+                else if (gap < 1)
+                    warnings.push({ type: 'gap', message: Math.round(gap * 60) + ' min de coupure avec ' + s.establishment_id });
+            }
+        }
+
         await db.collection('shifts').updateOne(
             { _id: new ObjectId(req.params.id) },
-            { $set: { start_time: newStart, end_time: newEnd } }
+            { $set: updateFields }
         );
         res.json({ message: 'Shift mis à jour', warnings });
     } catch (e) { res.status(500).json({ error: e.message }); }

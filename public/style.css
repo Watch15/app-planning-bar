@@ -1187,8 +1187,31 @@ body {
 .shift-joker {
     border: 1.5px dashed #95a5a6 !important;
     opacity: 0.85;
+    cursor: crosshair;
+    transition: border-color 0.15s, opacity 0.15s;
 }
 .shift-joker .shift-name {
     font-style: italic;
     color: #555 !important;
+}
+
+/* Highlight quand un staff est glissé dessus */
+.shift-joker.joker-target {
+    border: 2px solid #2ecc71 !important;
+    opacity: 1;
+    background: repeating-linear-gradient(45deg, #d5f5e3, #d5f5e3 4px, #eafaf1 4px, #eafaf1 10px) !important;
+}
+.shift-joker.joker-target .shift-name {
+    color: #27ae60 !important;
+    font-style: normal !important;
+}
+.shift-joker.joker-target::after {
+    content: '+ Assigner';
+    position: absolute;
+    bottom: 2px;
+    right: 6px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #27ae60;
+    pointer-events: none;
 }
