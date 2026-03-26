@@ -197,12 +197,14 @@ app.post('/auth/set-password', checkDB, async (req, res) => {
     if (!token || !password) return res.status(400).json({ error: 'Token et mot de passe requis' });
     if (password.length < 8) return res.status(400).json({ error: 'Minimum 8 caractères' });
     try {
-        const user = await db.collection('users').findOne({ invite_token: hashToken(token) });
+        // Cherche d'abord le token hashé (nouveaux comptes), puis en clair (anciens comptes)
+        let user = await db.collection('users').findOne({ invite_token: hashToken(token) });
+        if (!user) user = await db.collection('users').findOne({ invite_token: token });
         if (!user)                            return res.status(404).json({ error: 'Lien invalide' });
         if (user.invite_expires < new Date()) return res.status(410).json({ error: 'Lien expiré (24h)' });
         const hash = await bcrypt.hash(password, 12);
         await db.collection('users').updateOne(
-            { invite_token: token },
+            { _id: user._id },
             { $set: { password_hash: hash, active: true }, $unset: { invite_token: '', invite_expires: '' } }
         );
         res.json({ message: 'Mot de passe créé, tu peux te connecter' });
@@ -215,13 +217,15 @@ app.patch('/auth/reset-password', checkDB, async (req, res) => {
     if (!token || !password) return res.status(400).json({ error: 'Token et mot de passe requis' });
     if (password.length < 8) return res.status(400).json({ error: 'Minimum 8 caractères' });
     try {
-        const user = await db.collection('users').findOne({ reset_token: hashToken(token) });
+        // Cherche d'abord le token hashé (nouveaux resets), puis en clair (anciens)
+        let user = await db.collection('users').findOne({ reset_token: hashToken(token) });
+        if (!user) user = await db.collection('users').findOne({ reset_token: token });
         if (!user)                           return res.status(404).json({ error: 'Lien invalide' });
         if (user.reset_expires < new Date()) return res.status(410).json({ error: 'Lien expiré (1h)' });
         const hash = await bcrypt.hash(password, 12);
         await db.collection('users').updateOne(
-            { reset_token: token },
-            { $set: { password_hash: hash }, $unset: { reset_token: '', reset_expires: '' } }
+            { _id: user._id },
+            { $set: { password_hash: hash, active: true }, $unset: { reset_token: '', reset_expires: '' } }
         );
         res.json({ message: 'Mot de passe mis à jour, tu peux te connecter' });
     } catch (e) { res.status(500).json({ error: e.message }); }
