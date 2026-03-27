@@ -677,11 +677,9 @@ function renderSidebar() {
         '<span class="staff-role-badge joker">Non désigné</span>';
 
     jokerCard.addEventListener('dragstart', e => {
-        // Créer un Joker numéroté unique à chaque drag
-        _jokerCount++;
         const joker = {
             _id:     '__joker__',
-            name:    'Joker ',
+            name:    'Joker',
             color:   '#95a5a6',
             isJoker: true,
         };

@@ -452,13 +452,22 @@ app.get('/api/my-shifts', checkDB, requireAuth, async (req, res) => {
     const staffId = req.session.user.staff_id;
     if (!staffId) return res.status(400).json({ error: 'Aucun profil staff lié à ce compte' });
     try {
-        const myShifts = await db.collection('shifts').find({
-            date: { $gte: from, $lte: to },
-            $or: [
-                { staff_id: staffId },
-                { is_joker: true }
-            ]
+        const myRawShifts = await db.collection('shifts').find({
+            staff_id: staffId, date: { $gte: from, $lte: to }
         }).sort({ date: 1, start_time: 1 }).toArray();
+
+        const myEstablishments = [...new Set(myRawShifts.map(s => s.establishment_id))];
+        const myDates          = [...new Set(myRawShifts.map(s => s.date))];
+
+        const jokers = myEstablishments.length ? await db.collection('shifts').find({
+            is_joker: true,
+            establishment_id: { $in: myEstablishments },
+            date: { $in: myDates }
+        }).toArray() : [];
+
+        const myShifts = [...myRawShifts, ...jokers].sort((a, b) =>
+            a.date < b.date ? -1 : a.date > b.date ? 1 : a.start_time - b.start_time
+        );
 
         const dates = [...new Set(myShifts.map(s => s.date))];
         const colleagueMap = {};
