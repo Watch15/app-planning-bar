@@ -181,6 +181,14 @@ async function init() {
     const btnDispos = document.getElementById('btn-dispos');
     if (btnDispos) btnDispos.addEventListener('click', openDisposPanel);
 
+    const btnRefresh = document.getElementById('btn-refresh-day');
+    if (btnRefresh) btnRefresh.addEventListener('click', async () => {
+        if (selectedDate) {
+            await loadDayDetail(selectedDate);
+            showToast('Planning rechargé');
+        }
+    });
+
     const disposClose = document.getElementById('dispos-modal-close');
     if (disposClose) disposClose.addEventListener('click', () => {
         document.getElementById('dispos-modal').style.display = 'none';
@@ -1089,10 +1097,9 @@ function openRealHoursModal(shift, shiftEl) {
                 body: JSON.stringify({ real_start: null, real_end: null }),
             });
             shift.real_start = null; shift.real_end = null;
-            const newEl = createShiftEl(shift);
-            shiftEl.replaceWith(newEl);
             close();
             showToast('Heures réelles effacées');
+            if (selectedDate) await loadDayDetail(selectedDate);
         } catch (e) { showToast(e.message, true); }
     });
 
@@ -1109,11 +1116,10 @@ function openRealHoursModal(shift, shiftEl) {
             const d = await r.json();
             if (!r.ok) throw new Error(d.error);
             shift.real_start = rs; shift.real_end = re;
-            // Remplacer le shift dans le DOM par la version mise à jour
-            const newEl = createShiftEl(shift);
-            shiftEl.replaceWith(newEl);
+            // Recharger le jour pour repositionner tous les shifts
             close();
             showToast(shift.staff_name + ' — heures réelles enregistrées');
+            if (selectedDate) await loadDayDetail(selectedDate);
         } catch (e) { showToast(e.message, true); }
     });
 }

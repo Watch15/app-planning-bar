@@ -1094,19 +1094,21 @@ app.get('/api/pointage/:date', checkDB, requireAuth, async (req, res) => {
 app.patch('/api/shifts/:id/pointage', checkDB, requireAuth, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const { real_start, real_end } = req.body;
-    if (real_start == null && real_end == null) return res.status(400).json({ error: 'real_start ou real_end requis' });
+    // Accepter null explicite (effacement) ou valeurs numériques
+    const hasStart = req.body.hasOwnProperty('real_start');
+    const hasEnd   = req.body.hasOwnProperty('real_end');
+    if (!hasStart && !hasEnd) return res.status(400).json({ error: 'real_start ou real_end requis' });
     try {
         const existing = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
         if (!existing) return res.status(404).json({ error: 'Shift introuvable' });
-        // Vérifier l'accès : compte établissement lié OU patron
         const user = req.session.user;
         if (user.role === 'etablissement' && user.establishment_id !== existing.establishment_id)
             return res.status(403).json({ error: 'Accès refusé' });
         if (user.role !== 'etablissement' && !canAccessEstablishment(user, existing.establishment_id))
             return res.status(403).json({ error: 'Accès refusé' });
         const update = {};
-        if (real_start != null) update.real_start = parseFloat(real_start);
-        if (real_end   != null) update.real_end   = parseFloat(real_end);
+        if (hasStart) update.real_start = real_start != null ? parseFloat(real_start) : null;
+        if (hasEnd)   update.real_end   = real_end   != null ? parseFloat(real_end)   : null;
         await db.collection('shifts').updateOne({ _id: new ObjectId(req.params.id) }, { $set: update });
         res.json({ message: 'Heures réelles enregistrées' });
     } catch (e) { res.status(500).json({ error: e.message }); }
