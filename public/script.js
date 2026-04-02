@@ -186,17 +186,11 @@ async function init() {
 
     const btnEstab = document.getElementById('btn-manage-establishments');
     if (btnEstab) {
-        if (currentUser.role === 'patron') {
-            btnEstab.addEventListener('click', openEstablishmentsModal);
-        } else {
+        if (currentUser.role !== 'patron') {
             btnEstab.style.display = 'none';
         }
+        // Le listener est déjà attaché via DOMContentLoaded
     }
-
-    const estabClose = document.getElementById('establishments-modal-close');
-    if (estabClose) estabClose.addEventListener('click', () => {
-        document.getElementById('establishments-modal').style.display = 'none';
-    });
 
     const btnAccounts = document.getElementById('btn-manage-accounts');
     if (btnAccounts) btnAccounts.addEventListener('click', openAccountsModal);
@@ -1573,14 +1567,16 @@ function switchToDayView(date) {
 // ── Modale gestion établissements ────────────────────────────────────────────
 
 async function openEstablishmentsModal() {
-    await renderEstablishmentsList();
-    document.getElementById('establishments-modal').style.display = 'flex';
-    // Listener ajout (une seule fois)
-    const btn = document.getElementById('btn-add-establishment');
-    if (btn && !btn._bound) {
-        btn._bound = true;
-        btn.addEventListener('click', addEstablishment);
-    }
+    try {
+        await renderEstablishmentsList();
+        document.getElementById('establishments-modal').style.display = 'flex';
+        // Listener ajout (une seule fois)
+        const btn = document.getElementById('btn-add-establishment');
+        if (btn && !btn._bound) {
+            btn._bound = true;
+            btn.addEventListener('click', addEstablishment);
+        }
+    } catch (e) { showToast('Erreur ouverture établissements : ' + e.message, true); }
 }
 
 async function renderEstablishmentsList() {
@@ -1789,6 +1785,15 @@ function populateStaffSelect() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Bouton gestion établissements
+    const btnEstab = document.getElementById('btn-manage-establishments');
+    if (btnEstab) btnEstab.addEventListener('click', () => openEstablishmentsModal());
+
+    const estabClose = document.getElementById('establishments-modal-close');
+    if (estabClose) estabClose.addEventListener('click', () => {
+        document.getElementById('establishments-modal').style.display = 'none';
+    });
+
     // Afficher/masquer le select de bars selon le rôle sélectionné (admin uniquement)
     const roleSelect = document.getElementById('new-account-role');
     const barsRow    = document.getElementById('new-account-bars-row');
