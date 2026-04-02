@@ -747,8 +747,11 @@ function renderGroupFilter() {
 
     const groups = [null, ...allGroups]; // null = Tous
     groups.forEach(g => {
-        const btn = document.createElement('button');
         const isActive = g === currentGroup;
+        const pill = document.createElement('div');
+        pill.style.cssText = 'display:inline-flex;align-items:center;gap:3px';
+
+        const btn = document.createElement('button');
         btn.textContent = g || 'Tous';
         btn.style.cssText = 'padding:4px 12px;border-radius:20px;border:1.5px solid ' +
             (isActive ? '#1a1a2e' : '#e0e0e0') + ';background:' +
@@ -758,12 +761,10 @@ function renderGroupFilter() {
         btn.addEventListener('click', async () => {
             currentGroup = g;
             renderGroupFilter();
-            // Filtrer les tabs d'établissements
             const filtered = currentGroup
                 ? allEstablishments.filter(e => (e.groups || []).includes(currentGroup))
                 : allEstablishments;
             renderTabs(filtered);
-            // Sélectionner le premier tab du groupe si le tab courant n'est pas dans ce groupe
             if (filtered.length > 0 && !filtered.find(e => e.id === currentVenueId)) {
                 currentVenueId = filtered[0].id;
                 document.querySelectorAll('.venue-tab').forEach((t, i) => {
@@ -774,7 +775,38 @@ function renderGroupFilter() {
             if (selectedDate) await loadDayDetail(selectedDate);
             renderSidebar();
         });
-        container.appendChild(btn);
+        pill.appendChild(btn);
+
+        // Bouton × pour supprimer le groupe (admin uniquement, pas sur "Tous")
+        if (g && currentUser && currentUser.role === 'patron') {
+            const del = document.createElement('button');
+            del.textContent = '×';
+            del.title = 'Supprimer le groupe ' + g;
+            del.style.cssText = 'padding:0 4px;border:none;background:none;color:#bbb;font-size:13px;cursor:pointer;line-height:1';
+            del.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showConfirm(
+                    'Supprimer le groupe <strong>' + g + '</strong> ?<br><span style="font-size:12px;color:#888">Il sera retiré de tous les établissements et membres du staff.</span>',
+                    async () => {
+                        try {
+                            const r = await fetch('/api/groups/' + encodeURIComponent(g), {
+                                credentials: 'include', method: 'DELETE',
+                            });
+                            const d = await r.json();
+                            if (!r.ok) throw new Error(d.error);
+                            if (currentGroup === g) currentGroup = null;
+                            // Recharger établissements et staff pour refléter la suppression
+                            await Promise.all([loadEstablishments(), loadAllStaff()]);
+                            await loadGroups();
+                            showToast('Groupe "' + g + '" supprimé');
+                        } catch (err) { showToast(err.message, true); }
+                    }
+                );
+            });
+            pill.appendChild(del);
+        }
+
+        container.appendChild(pill);
     });
 }
 

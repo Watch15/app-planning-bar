@@ -512,6 +512,23 @@ app.get('/api/groups', checkDB, requireAuth, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Supprimer un groupe (le retire de tous les établissements et membres du staff)
+app.delete('/api/groups/:name', checkDB, requireAdmin, async (req, res) => {
+    const name = decodeURIComponent(req.params.name);
+    if (!name) return res.status(400).json({ error: 'Nom du groupe requis' });
+    try {
+        await db.collection('establishments').updateMany(
+            { groups: name },
+            { $pull: { groups: name } }
+        );
+        await db.collection('staff').updateMany(
+            { groups: name },
+            { $pull: { groups: name } }
+        );
+        res.json({ message: 'Groupe "' + name + '" supprimé' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── Staff ─────────────────────────────────────────────────────────────────────
 
 app.get('/api/staff', checkDB, requireAuth, async (req, res) => {
