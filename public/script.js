@@ -760,7 +760,7 @@ function renderGroupFilter() {
             renderGroupFilter();
             // Filtrer les tabs d'établissements
             const filtered = currentGroup
-                ? allEstablishments.filter(e => e.group === currentGroup)
+                ? allEstablishments.filter(e => (e.groups || []).includes(currentGroup))
                 : allEstablishments;
             renderTabs(filtered);
             // Sélectionner le premier tab du groupe si le tab courant n'est pas dans ce groupe
@@ -1665,9 +1665,25 @@ async function renderEstablishmentsList() {
             const hours = (e.open_time && e.close_time)
                 ? e.open_time + ' – ' + e.close_time
                 : (e.open_time || e.close_time || '—');
+            const estabGroups = e.groups || [];
+            const groupChipsEstab = allGroups.length
+                ? '<div style="margin-top:4px"><div style="font-size:10px;color:#aaa;margin-bottom:3px">Groupes</div>' +
+                  '<div style="display:flex;flex-wrap:wrap;gap:3px">' +
+                  allGroups.map(g =>
+                      '<button type="button" class="estab-group-btn' + (estabGroups.includes(g) ? ' active' : '') + '" ' +
+                      'data-group="' + g + '" style="padding:2px 8px;border-radius:20px;border:1.5px solid ' +
+                      (estabGroups.includes(g) ? '#534AB7' : '#e0e0e0') + ';background:' +
+                      (estabGroups.includes(g) ? '#f0effe' : 'white') + ';color:' +
+                      (estabGroups.includes(g) ? '#534AB7' : '#888') + ';font-size:11px;cursor:pointer">' + g + '</button>'
+                  ).join('') + '</div>' +
+                  // Champ texte pour créer un nouveau groupe
+                  '<input type="text" class="estab-new-group-input" placeholder="+ nouveau groupe" style="margin-top:4px;font-size:11px;border:1px solid #e0e0e0;border-radius:6px;padding:3px 7px;width:100%">' +
+                  '</div>'
+                : '<input type="text" class="estab-new-group-input" placeholder="Groupe (ex: Bar)" style="margin-top:4px;font-size:11px;border:1px solid #e0e0e0;border-radius:6px;padding:3px 7px;width:100%">';
+
             row.innerHTML =
                 '<div class="staff-manage-info" style="flex:1;gap:6px">' +
-                    '<input type="text"  class="estab-name-input"  value="' + e.name + '" style="font-size:13px;font-weight:600;border:1px solid #e0e0e0;border-radius:6px;padding:5px 8px;width:100%">' +
+                    '<input type="text" class="estab-name-input" value="' + e.name + '" style="font-size:13px;font-weight:600;border:1px solid #e0e0e0;border-radius:6px;padding:5px 8px;width:100%">' +
                     '<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">' +
                         '<select class="estab-type-select" style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px;flex:0.8">' +
                             '<option value="bar"' +        (e.type === 'bar'        ? ' selected' : '') + '>Bar</option>' +
@@ -1675,38 +1691,53 @@ async function renderEstablishmentsList() {
                         '</select>' +
                         '<input type="time" class="estab-open-input"  value="' + (e.open_time  || '') + '" title="Ouverture"  style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px;flex:1">' +
                         '<input type="time" class="estab-close-input" value="' + (e.close_time || '') + '" title="Fermeture" style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px;flex:1">' +
-                        '<input type="text" class="estab-group-input" value="' + (e.group || '') + '" placeholder="Groupe (ex: Bar, Cuisine)" title="Groupe" style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px;flex:1.2">' +
                     '</div>' +
+                    groupChipsEstab +
                 '</div>' +
                 '<button class="staff-manage-save"  data-action="save">Enregistrer</button>' +
                 '<button class="staff-manage-delete" data-action="delete" title="Supprimer">×</button>';
+
+            // Toggle groupes établissement
+            row.querySelectorAll('.estab-group-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    btn.classList.toggle('active');
+                    const isActive = btn.classList.contains('active');
+                    btn.style.borderColor = isActive ? '#534AB7' : '#e0e0e0';
+                    btn.style.background  = isActive ? '#f0effe' : 'white';
+                    btn.style.color       = isActive ? '#534AB7' : '#888';
+                });
+            });
 
             row.querySelector('[data-action="save"]').addEventListener('click', async () => {
                 const name       = row.querySelector('.estab-name-input').value.trim();
                 const type       = row.querySelector('.estab-type-select').value;
                 const open_time  = row.querySelector('.estab-open-input').value  || null;
                 const close_time = row.querySelector('.estab-close-input').value || null;
-                const group      = row.querySelector('.estab-group-input').value.trim() || null;
+                // Groupes : chips actives + éventuel nouveau groupe saisi
+                const activeGroups = Array.from(row.querySelectorAll('.estab-group-btn.active')).map(b => b.dataset.group);
+                const newGroupRaw  = row.querySelector('.estab-new-group-input')?.value.trim();
+                const newGroupList = newGroupRaw ? newGroupRaw.split(',').map(g => g.trim()).filter(Boolean) : [];
+                const groups = [...new Set([...activeGroups, ...newGroupList])];
                 if (!name) { showToast('Le nom ne peut pas être vide', true); return; }
                 try {
                     const r = await fetch('/api/establishments/' + e._id, {
                         credentials: 'include', method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name, type, open_time, close_time, group }),
+                        body: JSON.stringify({ name, type, open_time, close_time, groups }),
                     });
                     const d = await r.json();
                     if (!r.ok) throw new Error(d.error);
-                    // Mettre à jour localement
                     const idx = allEstablishments.findIndex(x => String(x._id) === String(e._id) || x.id === e.id);
                     if (idx !== -1) {
                         allEstablishments[idx].name       = name;
                         allEstablishments[idx].type       = type;
                         allEstablishments[idx].open_time  = open_time;
                         allEstablishments[idx].close_time = close_time;
-                        allEstablishments[idx].group      = group;
+                        allEstablishments[idx].groups     = groups;
                     }
-                    await loadGroups(); // recharger les groupes disponibles
-                    renderTabs(currentGroup ? allEstablishments.filter(x => x.group === currentGroup) : allEstablishments);
+                    await loadGroups();
+                    renderTabs(currentGroup ? allEstablishments.filter(x => (x.groups || []).includes(currentGroup)) : allEstablishments);
+                    await renderEstablishmentsList();
                     showToast(name + ' mis à jour');
                 } catch (err) { showToast(err.message, true); }
             });
@@ -1740,19 +1771,20 @@ async function addEstablishment() {
     const type       = document.getElementById('new-estab-type').value;
     const open_time  = document.getElementById('new-estab-open').value   || null;
     const close_time = document.getElementById('new-estab-close').value  || null;
-    const group      = document.getElementById('new-estab-group')?.value.trim() || null;
+    const groupRaw   = document.getElementById('new-estab-group')?.value.trim() || '';
+    const groups     = groupRaw ? groupRaw.split(',').map(g => g.trim()).filter(Boolean) : [];
     if (!name) { showToast('Le nom est obligatoire', true); return; }
     try {
         const res  = await fetch('/api/establishments', {
             credentials: 'include', method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, type, open_time, close_time, group }),
+            body: JSON.stringify({ name, type, open_time, close_time, groups }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
         allEstablishments.push(data);
         await loadGroups();
-        renderTabs(currentGroup ? allEstablishments.filter(x => x.group === currentGroup) : allEstablishments);
+        renderTabs(currentGroup ? allEstablishments.filter(x => (x.groups || []).includes(currentGroup)) : allEstablishments);
         await renderEstablishmentsList();
         // Reset form
         document.getElementById('new-estab-name').value  = '';

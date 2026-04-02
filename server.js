@@ -440,7 +440,7 @@ app.get('/api/establishments', checkDB, requireAuth, async (req, res) => {
 });
 
 app.post('/api/establishments', checkDB, requireAdmin, async (req, res) => {
-    const { name, type, open_time, close_time, group } = req.body;
+    const { name, type, open_time, close_time, groups } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ error: 'Nom requis' });
     if (!['bar', 'restaurant'].includes(type)) return res.status(400).json({ error: 'Type : bar ou restaurant' });
     try {
@@ -451,7 +451,7 @@ app.post('/api/establishments', checkDB, requireAdmin, async (req, res) => {
             id,
             name:       name.trim(),
             type,
-            group:      group || null,
+            groups:     Array.isArray(groups) ? groups : [],
             open_time:  open_time  || null,
             close_time: close_time || null,
             created_at: new Date(),
@@ -463,8 +463,8 @@ app.post('/api/establishments', checkDB, requireAdmin, async (req, res) => {
 
 app.patch('/api/establishments/:id', checkDB, requireAdmin, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
-    const { name, type, open_time, close_time, group } = req.body;
-    if (!name && !type && open_time === undefined && close_time === undefined && group === undefined)
+    const { name, type, open_time, close_time, groups } = req.body;
+    if (!name && !type && open_time === undefined && close_time === undefined && groups === undefined)
         return res.status(400).json({ error: 'Au moins un champ requis' });
     try {
         const update = {};
@@ -472,7 +472,7 @@ app.patch('/api/establishments/:id', checkDB, requireAdmin, async (req, res) => 
         if (type)                    update.type       = type;
         if (open_time  !== undefined) update.open_time  = open_time  || null;
         if (close_time !== undefined) update.close_time = close_time || null;
-        if (group !== undefined)     update.group      = group || null;
+        if (groups !== undefined)    update.groups     = Array.isArray(groups) ? groups : [];
         const result = await db.collection('establishments').updateOne(
             { _id: new ObjectId(req.params.id) },
             { $set: update }
@@ -505,10 +505,9 @@ app.delete('/api/establishments/:id', checkDB, requireAdmin, async (req, res) =>
 // Retourne la liste des groupes distincts (depuis establishments + staff)
 app.get('/api/groups', checkDB, requireAuth, async (req, res) => {
     try {
-        const estabs = await db.collection('establishments').distinct('group');
+        const estabG = await db.collection('establishments').distinct('groups');
         const staffG = await db.collection('staff').distinct('groups');
-        // Fusionner, dédupliquer, retirer null/vide
-        const all = [...new Set([...estabs, ...staffG.flat()])].filter(Boolean).sort();
+        const all = [...new Set([...estabG, ...staffG].flat())].filter(Boolean).sort();
         res.json(all);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -609,7 +608,7 @@ app.get('/api/my-shifts', checkDB, requireAuth, async (req, res) => {
         let allowedEstabIds = null;
         if (staffGroups.length > 0) {
             const groupEstabs = await db.collection('establishments').find({
-                group: { $in: staffGroups }
+                groups: { $in: staffGroups }
             }).toArray();
             allowedEstabIds = groupEstabs.map(e => e.id);
         }
