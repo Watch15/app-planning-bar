@@ -2585,8 +2585,6 @@ async function loadRecapData() {
         data.forEach(s => {
             totalPlanned += s.planned_hours;
             totalDays    += s.days;
-            totalExtra   += s.extra_count;
-            totalExtraH  += s.extra_hours;
             if (s.real_hours != null) { totalReal += s.real_hours; hasAnyReal = true; }
 
             const ecartStr = s.ecart != null
@@ -2597,9 +2595,6 @@ async function loadRecapData() {
                 ? fmtH(s.real_hours) + (s.partial ? ' <span style="font-size:10px;color:#f39c12" title="Certains shifts non pointés">partiel</span>' : '')
                 : '—';
 
-            const extraStr = s.extra_count > 0
-                ? s.extra_count + ' (' + fmtH(s.extra_hours) + ')'
-                : '—';
 
             tableHTML += '<tr style="border-bottom:1px solid #f0f0f0">' +
                 '<td style="padding:8px 10px;display:flex;align-items:center;gap:6px">' +
@@ -2904,12 +2899,12 @@ async function loadDispoControl() {
                 '<div style="font-size:10px;color:#bbb;margin-top:3px">Laisser jour vide = vendredi 13h auto</div>' +
             '</div>' +
             '<div style="margin-bottom:10px;border-top:1px solid #f0f0f0;padding-top:10px">' +
-                '<div style="font-size:11px;color:#aaa;margin-bottom:4px">Bascule jour pointage</div>' +
+                '<div style="font-size:11px;color:#aaa;margin-bottom:4px">Fin de soirée / bascule pointage</div>' +
                 '<div style="display:flex;align-items:center;gap:6px">' +
                     '<select id="pointage-cutoff" style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px">' +
                         cutoffOpts +
                     '</select>' +
-                    '<span style="font-size:10px;color:#bbb">Avant cette heure = affiche la veille</span>' +
+                    '<span style="font-size:10px;color:#bbb">Saisie ouverte de minuit jusqu\'à cette heure</span>' +
                 '</div>' +
             '</div>' +
             '<button id="dispo-save-advanced" style="width:100%;padding:6px;background:#1a1a2e;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer">Enregistrer</button>';
