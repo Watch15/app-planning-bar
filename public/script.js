@@ -2295,23 +2295,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!res.ok) throw new Error(data.error);
             await renderAccountsList();
             if (data.manual && data.link) {
-                // Email non envoyé — afficher le lien
+                // Email ou SMS non envoyé — afficher le lien à copier
+                const via = (phone && !email) ? 'SMS non envoyé' : 'Email non envoyé';
                 const box = document.createElement('div');
-                box.style.cssText = 'background:#fff9e6;border:1.5px solid #f39c12;border-radius:8px;padding:12px;margin:10px 0;font-size:12px';
+                box.style.cssText = 'background:#fff9e6;border:1.5px solid #f39c12;border-radius:10px;padding:14px;margin:12px 0;font-size:12px';
                 box.innerHTML =
-                    '<div style="font-weight:600;color:#f39c12;margin-bottom:6px">⚠️ Email non envoyé — copie ce lien :</div>' +
-                    '<div style="word-break:break-all;color:#555;cursor:pointer;text-decoration:underline" ' +
-                    'onclick="navigator.clipboard.writeText(this.dataset.link);showToast(\'Lien copié !\');" data-link="' + data.link + '">' +
-                    data.link + '</div>';
+                    '<div style="font-weight:600;color:#f39c12;margin-bottom:8px">\u26a0\ufe0f ' + via + ' \u2014 envoie ce lien manuellement :</div>' +
+                    '<div style="background:white;border:1px solid #f0e0b0;border-radius:7px;padding:8px 10px;word-break:break-all;font-size:11px;color:#555;margin-bottom:8px">' + data.link + '</div>' +
+                    '<button onclick="navigator.clipboard.writeText(\'' + data.link + '\');showToast(\'Lien copi\u00e9 !\')" ' +
+                    'style="background:#f39c12;color:white;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;width:100%">\ud83d\udccb Copier le lien</button>';
                 document.getElementById('accounts-list').after(box);
-                showToast('Compte créé — envoie le lien manuellement', true);
-            } else if (data.manual && data.phone) {
-                // SMS non envoyé
-                showToast('Compte créé (SMS non envoyé) — numéro : ' + data.phone, true);
+                showToast('Compte cr\u00e9\u00e9 \u2014 envoie le lien manuellement', true);
             } else if (phone && !email) {
-                showToast('Compte créé, SMS envoyé au ' + phone);
+                showToast('Compte cr\u00e9\u00e9, SMS envoy\u00e9 au ' + phone);
             } else {
-                showToast('Invitation envoyée à ' + email);
+                showToast('Invitation envoy\u00e9e \u00e0 ' + email);
             }
             if (document.getElementById('new-account-email'))  document.getElementById('new-account-email').value  = '';
             if (document.getElementById('new-account-phone'))  document.getElementById('new-account-phone').value  = '';

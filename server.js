@@ -403,9 +403,11 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
             if (existingPhone) return res.status(409).json({ error: 'Ce numéro est déjà utilisé' });
         }
 
-        // Compte téléphone uniquement : pas de token d'invitation, activation par OTP
+        // Compte téléphone uniquement — token d'invitation pour créer le mot de passe
         if (!email && normalizedPhone) {
-            const userDoc = {
+            const token   = crypto.randomBytes(32).toString('hex');
+            const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 jours
+            await db.collection('users').insertOne({
                 phone:                   normalizedPhone,
                 email:                   null,
                 password_hash:           null,
@@ -414,28 +416,28 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
                 assigned_establishments: userRole === 'directeur' ? (assigned_establishments || []) : [],
                 establishment_id:        userRole === 'etablissement' ? establishment_id : null,
                 name:                    name || '',
-                active:                  true, // actif dès création — connexion par OTP
+                invite_token:            hashToken(token),
+                invite_expires:          expires,
+                active:                  false,
                 created_at:              new Date(),
-            };
-            await db.collection('users').insertOne(userDoc);
+            });
             if (staff_id && userRole === 'staff' && isValidObjectId(staff_id)) {
                 await db.collection('staff').updateOne(
                     { _id: new ObjectId(staff_id) },
                     { $set: { phone: normalizedPhone } }
                 );
             }
-            // Envoyer un SMS de bienvenue avec instruction de connexion
-            const appUrl = process.env.APP_URL || 'http://localhost:3000';
+            const link = (process.env.APP_URL || 'http://localhost:3000') + '/set-password.html?token=' + token;
             let smsSent = true;
             try {
-                await sendSMS(normalizedPhone, 'Planning Bar — Bienvenue ' + (name || '') + ' ! Connecte-toi sur ' + appUrl + '/login.html avec ton numéro de téléphone.');
+                await sendSMS(normalizedPhone, 'Planning Bar — Bienvenue ' + (name || '') + ' ! Crée ton mot de passe : ' + link);
             } catch (smsErr) {
                 console.error('❌ SMS bienvenue non envoyé:', smsErr.message);
                 smsSent = false;
             }
             return res.status(201).json({
                 message: smsSent ? 'Compte créé, SMS envoyé.' : 'Compte créé mais SMS non envoyé.',
-                ...(!smsSent && { manual: true, phone: normalizedPhone }),
+                ...(!smsSent && { manual: true, link }),
             });
         }
 
