@@ -1232,7 +1232,8 @@ function initDropZone() {
 
         if (rail) {
             const rect = rail.getBoundingClientRect();
-            const snappedH = Math.round((e.clientX - rect.left) / PX_PER_HOUR) + START_HOUR;
+            const rawH     = (e.clientX - rect.left) / PX_PER_HOUR;
+            const snappedH = Math.round(rawH * 4) / 4 + START_HOUR; // snap 15 min
             startTime = Math.max(START_HOUR, Math.min(snappedH, END_HOUR - 2));
             endTime   = startTime + 2;
         } else {
@@ -1472,15 +1473,16 @@ document.addEventListener('mousedown', e => {
 function onMove(e) {
     if (!activeEl) return;
     const deltaX = e.clientX - startX;
-    const snapX  = Math.round(deltaX / PX_PER_HOUR) * PX_PER_HOUR;
+    const SNAP   = PX_PER_HOUR / 4; // 15 minutes
+    const snapX  = Math.round(deltaX / SNAP) * SNAP;
     const maxW   = TOTAL_HOURS * PX_PER_HOUR;
 
     if (activeAction === 'res-right') {
         const newW = startWidth + snapX;
-        if (newW >= PX_PER_HOUR && startLeft + newW <= maxW) activeEl.style.width = newW + 'px';
+        if (newW >= PX_PER_HOUR / 4 && startLeft + newW <= maxW) activeEl.style.width = newW + 'px';
     } else if (activeAction === 'res-left') {
         const newL = startLeft + snapX, newW = startWidth - snapX;
-        if (newW >= PX_PER_HOUR && newL >= 0) { activeEl.style.left = newL + 'px'; activeEl.style.width = newW + 'px'; }
+        if (newW >= PX_PER_HOUR / 4 && newL >= 0) { activeEl.style.left = newL + 'px'; activeEl.style.width = newW + 'px'; }
     } else {
         const newL = startLeft + snapX;
         if (newL >= 0 && newL + activeEl.offsetWidth <= maxW) activeEl.style.left = newL + 'px';
@@ -2300,16 +2302,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const box = document.createElement('div');
                 box.style.cssText = 'background:#fff9e6;border:1.5px solid #f39c12;border-radius:10px;padding:14px;margin:12px 0;font-size:12px';
                 box.innerHTML =
-                    '<div style="font-weight:600;color:#f39c12;margin-bottom:8px">\u26a0\ufe0f ' + via + ' \u2014 envoie ce lien manuellement :</div>' +
+                    '<div style="font-weight:600;color:#f39c12;margin-bottom:8px">⚠️ ' + via + ' — envoie ce lien manuellement :</div>' +
                     '<div style="background:white;border:1px solid #f0e0b0;border-radius:7px;padding:8px 10px;word-break:break-all;font-size:11px;color:#555;margin-bottom:8px">' + data.link + '</div>' +
-                    '<button onclick="navigator.clipboard.writeText(\'' + data.link + '\');showToast(\'Lien copi\u00e9 !\')" ' +
-                    'style="background:#f39c12;color:white;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;width:100%">\ud83d\udccb Copier le lien</button>';
+                    '<button onclick="navigator.clipboard.writeText(\'' + data.link + '\');showToast(\'Lien copié !\')" ' +
+                    'style="background:#f39c12;color:white;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;width:100%">📋 Copier le lien</button>';
                 document.getElementById('accounts-list').after(box);
-                showToast('Compte cr\u00e9\u00e9 \u2014 envoie le lien manuellement', true);
+                showToast('Compte créé — envoie le lien manuellement', true);
             } else if (phone && !email) {
-                showToast('Compte cr\u00e9\u00e9, SMS envoy\u00e9 au ' + phone);
+                showToast('Compte créé, SMS envoyé au ' + phone);
             } else {
-                showToast('Invitation envoy\u00e9e \u00e0 ' + email);
+                showToast('Invitation envoyée à ' + email);
             }
             if (document.getElementById('new-account-email'))  document.getElementById('new-account-email').value  = '';
             if (document.getElementById('new-account-phone'))  document.getElementById('new-account-phone').value  = '';
