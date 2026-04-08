@@ -551,6 +551,72 @@ app.delete('/api/users/:id', checkDB, requirePatron, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Création en masse depuis CSV (nom + téléphone ou email)
+app.post('/api/users/bulk', checkDB, requireAdmin, async (req, res) => {
+    const { entries } = req.body; // [{ name, phone?, email? }, ...]
+    if (!Array.isArray(entries) || entries.length === 0)
+        return res.status(400).json({ error: 'entries (tableau) requis' });
+    if (entries.length > 200)
+        return res.status(400).json({ error: 'Maximum 200 entrées par import' });
+
+    const results = { created: [], skipped: [], failed: [] };
+
+    for (const entry of entries) {
+        const name  = (entry.name  || '').trim();
+        const email = (entry.email || '').trim().toLowerCase() || null;
+        const phone = (entry.phone || '').trim() || null;
+
+        if (!name)            { results.failed.push({ entry, reason: 'Nom manquant' }); continue; }
+        if (!email && !phone) { results.failed.push({ entry, reason: 'Email ou téléphone requis' }); continue; }
+
+        try {
+            if (email) {
+                const ex = await db.collection('users').findOne({ email });
+                if (ex) { results.skipped.push({ name, reason: 'Email déjà utilisé : ' + email }); continue; }
+            }
+            let normalizedPhone = null;
+            if (phone) {
+                normalizedPhone = normalizePhone(phone);
+                const ex = await db.collection('users').findOne({ phone: normalizedPhone });
+                if (ex) { results.skipped.push({ name, reason: 'Numéro déjà utilisé : ' + normalizedPhone }); continue; }
+            }
+
+            const token   = require('crypto').randomBytes(32).toString('hex');
+            const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+            await db.collection('users').insertOne({
+                email, phone: normalizedPhone, password_hash: null, role: 'staff',
+                staff_id: null, assigned_establishments: [],
+                name, invite_token: hashToken(token), invite_expires: expires,
+                active: false, created_at: new Date(),
+            });
+
+            const link = (process.env.APP_URL || 'http://localhost:3000') + '/set-password.html?token=' + token;
+            let sent = false;
+
+            if (normalizedPhone) {
+                try {
+                    await sendSMS(normalizedPhone, 'Planning Bar — Bienvenue ' + name + ' ! Crée ton mot de passe : ' + link);
+                    sent = true;
+                } catch (e) { console.error('Bulk SMS erreur ' + name + ':', e.message); }
+            }
+            if (email && !sent) {
+                const html = '<p>Bonjour ' + name + ',</p><p>Tu as été invité(e) à rejoindre <strong>Planning Bar</strong>.</p>' +
+                    '<p><a href="' + link + '" style="background:#1a1a2e;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;display:inline-block;margin:16px 0">Créer mon mot de passe</a></p>' +
+                    '<p style="color:#999;font-size:12px">Ce lien expire dans 7 jours.</p>';
+                try { await sendEmail(email, 'Ton accès Planning Bar', html); sent = true; }
+                catch (e) { console.error('Bulk email erreur ' + name + ':', e.message); }
+            }
+
+            results.created.push({ name, phone: normalizedPhone, email, link, sent });
+        } catch (e) {
+            results.failed.push({ entry, reason: e.message });
+        }
+    }
+
+    res.status(201).json(results);
+});
+
 // ── Établissements ────────────────────────────────────────────────────────────
 
 app.get('/api/establishments', checkDB, requireAuth, async (req, res) => {

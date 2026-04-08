@@ -212,6 +212,9 @@ async function init() {
     if (accountsClose) accountsClose.addEventListener('click', () => {
         document.getElementById('accounts-modal').style.display = 'none';
     });
+
+    const btnImportCsv = document.getElementById('btn-import-csv');
+    if (btnImportCsv) btnImportCsv.addEventListener('click', openCsvImportModal);
 }
 
 async function checkAuth() {
@@ -3519,3 +3522,209 @@ async function logout() {
 // ── Démarrage ─────────────────────────────────────────────────────────────────
 
 init();
+// ── Import CSV comptes staff ──────────────────────────────────────────────────
+
+function openCsvImportModal() {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    overlay.innerHTML = `
+        <div style="background:white;border-radius:14px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.2)">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 0">
+                <span style="font-size:16px;font-weight:700;color:#1a1a2e">Importer des comptes staff</span>
+                <button id="_csv-close" style="background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;line-height:1">&times;</button>
+            </div>
+
+            <div style="padding:16px 20px">
+                <!-- Instructions -->
+                <div style="background:#f8f8f8;border-radius:8px;padding:12px 14px;font-size:12px;color:#555;margin-bottom:14px;line-height:1.6">
+                    <strong>Format CSV accepté :</strong> une ligne par personne, séparateur <code>,</code> ou <code>;</code><br>
+                    Colonnes : <code>nom</code> et <code>telephone</code> (et/ou <code>email</code>)<br>
+                    Exemple : <code>Marie Dupont;0612345678</code>
+                    <div style="margin-top:8px;display:flex;gap:8px">
+                        <button id="_csv-dl-template" style="background:#1a1a2e;color:white;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer">⬇ Télécharger le modèle</button>
+                    </div>
+                </div>
+
+                <!-- Zone de saisie / collage -->
+                <textarea id="_csv-input" placeholder="Colle ton CSV ici ou saisis les lignes manuellement&#10;Exemple :&#10;Marie Dupont;0612345678&#10;Jean Martin;jean@bar.fr&#10;Sophie Leroy;0698765432;sophie@email.fr"
+                    style="width:100%;height:140px;border:1.5px solid #e0e0e0;border-radius:10px;padding:10px 12px;font-size:13px;font-family:monospace;resize:vertical;outline:none;box-sizing:border-box"></textarea>
+
+                <!-- Bouton charger un fichier -->
+                <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+                    <label style="background:#f0f0f0;border:1.5px solid #ddd;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;color:#555;cursor:pointer">
+                        📁 Charger un fichier CSV
+                        <input type="file" id="_csv-file" accept=".csv,.txt" style="display:none">
+                    </label>
+                    <span id="_csv-file-name" style="font-size:12px;color:#aaa"></span>
+                </div>
+
+                <!-- Aperçu -->
+                <div id="_csv-preview" style="margin-top:14px"></div>
+
+                <!-- Actions -->
+                <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+                    <button id="_csv-parse" style="background:#534AB7;color:white;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer">Analyser</button>
+                    <button id="_csv-confirm" style="background:#27ae60;color:white;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;display:none">Créer les comptes</button>
+                </div>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+
+    let parsedEntries = [];
+
+    // Fermeture
+    overlay.querySelector('#_csv-close').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+    // Télécharger le modèle
+    overlay.querySelector('#_csv-dl-template').addEventListener('click', () => {
+        const content = 'nom;telephone;email\nMarie Dupont;0612345678;\nJean Martin;;jean@bar.fr\nSophie Leroy;0698765432;sophie@email.fr\n';
+        const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url; a.download = 'modele-import-staff.csv';
+        a.click(); URL.revokeObjectURL(url);
+    });
+
+    // Charger un fichier
+    overlay.querySelector('#_csv-file').addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        overlay.querySelector('#_csv-file-name').textContent = file.name;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            overlay.querySelector('#_csv-input').value = ev.target.result;
+        };
+        reader.readAsText(file, 'UTF-8');
+    });
+
+    // Parser le CSV
+    overlay.querySelector('#_csv-parse').addEventListener('click', () => {
+        const raw = overlay.querySelector('#_csv-input').value.trim();
+        if (!raw) { showToast('Colle du contenu CSV d\'abord', true); return; }
+
+        parsedEntries = [];
+        const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+        const errors = [];
+
+        // Détecter si la première ligne est un header
+        const firstLower = lines[0].toLowerCase();
+        const startIdx   = (firstLower.includes('nom') || firstLower.includes('name') || firstLower.includes('telephone') || firstLower.includes('email')) ? 1 : 0;
+
+        for (let i = startIdx; i < lines.length; i++) {
+            const line = lines[i];
+            // Accepter , ou ;
+            const sep  = line.includes(';') ? ';' : ',';
+            const cols  = line.split(sep).map(c => c.trim());
+
+            const name  = cols[0] || '';
+            const col1  = cols[1] || '';
+            const col2  = cols[2] || '';
+
+            if (!name) { errors.push('Ligne ' + (i + 1) + ' : nom manquant'); continue; }
+
+            // col1 = téléphone ou email selon le contenu
+            let phone = '', email = '';
+            [col1, col2].forEach(v => {
+                if (!v) return;
+                if (v.includes('@')) email = v;
+                else if (/^[\d\s\+\-\.]{6,}$/.test(v)) phone = v;
+            });
+
+            if (!phone && !email) { errors.push('Ligne ' + (i + 1) + ' (' + name + ') : téléphone ou email requis'); continue; }
+            parsedEntries.push({ name, phone: phone || undefined, email: email || undefined });
+        }
+
+        // Afficher l'aperçu
+        const preview = overlay.querySelector('#_csv-preview');
+        let html = '';
+
+        if (parsedEntries.length) {
+            html += '<div style="font-size:12px;font-weight:600;color:#555;margin-bottom:6px">' + parsedEntries.length + ' compte(s) à créer :</div>';
+            html += '<div style="max-height:200px;overflow-y:auto;border:1px solid #e0e0e0;border-radius:8px">';
+            parsedEntries.forEach((e, i) => {
+                html += '<div style="display:flex;align-items:center;gap:8px;padding:7px 12px;' + (i % 2 ? 'background:#f8f8f8' : '') + ';font-size:12px">' +
+                    '<span style="font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + e.name + '</span>' +
+                    '<span style="color:#888;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (e.phone || '') + '</span>' +
+                    '<span style="color:#888;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (e.email || '') + '</span>' +
+                    '</div>';
+            });
+            html += '</div>';
+        }
+
+        if (errors.length) {
+            html += '<div style="margin-top:10px;background:#fff5f5;border:1px solid #f5c6c6;border-radius:8px;padding:10px 12px;font-size:11px;color:#c0392b">' +
+                '<strong>' + errors.length + ' ligne(s) ignorée(s) :</strong><br>' + errors.join('<br>') + '</div>';
+        }
+
+        preview.innerHTML = html;
+        overlay.querySelector('#_csv-confirm').style.display = parsedEntries.length ? '' : 'none';
+    });
+
+    // Créer les comptes
+    overlay.querySelector('#_csv-confirm').addEventListener('click', async () => {
+        if (!parsedEntries.length) return;
+        const btn = overlay.querySelector('#_csv-confirm');
+        btn.disabled = true;
+        btn.textContent = 'Création…';
+
+        try {
+            const res  = await fetch('/api/users/bulk', {
+                method: 'POST', credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ entries: parsedEntries }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+
+            // Afficher le rapport
+            const preview = overlay.querySelector('#_csv-preview');
+            let html = '';
+
+            if (data.created.length) {
+                const nbSent    = data.created.filter(c => c.sent).length;
+                const nbManual  = data.created.filter(c => !c.sent).length;
+                html += '<div style="background:#f0fdf4;border:1.5px solid #27ae60;border-radius:10px;padding:14px;margin-bottom:10px">' +
+                    '<div style="font-weight:700;color:#27ae60;margin-bottom:8px">✅ ' + data.created.length + ' compte(s) créé(s)' +
+                    (nbSent   ? ' — ' + nbSent   + ' SMS/email envoyé(s)' : '') +
+                    (nbManual ? ' — ' + nbManual + ' lien(s) à envoyer manuellement' : '') + '</div>';
+
+                // Liens manuels si SMS échoué
+                const manuals = data.created.filter(c => !c.sent);
+                if (manuals.length) {
+                    html += '<div style="font-size:11px;font-weight:600;color:#555;margin-bottom:6px">Liens à envoyer manuellement :</div>';
+                    manuals.forEach(c => {
+                        html += '<div style="margin-bottom:6px;padding:6px 8px;background:white;border-radius:6px;font-size:11px">' +
+                            '<strong>' + c.name + '</strong> ' + (c.phone || c.email || '') + '<br>' +
+                            '<span style="word-break:break-all;color:#555">' + c.link + '</span>' +
+                            '<button onclick="navigator.clipboard.writeText(\'' + c.link + '\');showToast(\'Lien copié !\')" ' +
+                            'style="margin-left:6px;background:#f39c12;color:white;border:none;border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer">Copier</button>' +
+                            '</div>';
+                    });
+                }
+                html += '</div>';
+            }
+
+            if (data.skipped.length) {
+                html += '<div style="background:#fff9e6;border:1px solid #f0c040;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:11px;color:#7d6000">' +
+                    '<strong>' + data.skipped.length + ' ignoré(s) (déjà existants) :</strong><br>' +
+                    data.skipped.map(s => s.name + ' — ' + s.reason).join('<br>') + '</div>';
+            }
+
+            if (data.failed.length) {
+                html += '<div style="background:#fff5f5;border:1px solid #f5c6c6;border-radius:8px;padding:10px 12px;font-size:11px;color:#c0392b">' +
+                    '<strong>' + data.failed.length + ' erreur(s) :</strong><br>' +
+                    data.failed.map(f => (f.entry?.name || '?') + ' — ' + f.reason).join('<br>') + '</div>';
+            }
+
+            preview.innerHTML = html;
+            btn.style.display = 'none';
+            overlay.querySelector('#_csv-parse').style.display = 'none';
+            await renderAccountsList();
+        } catch (e) {
+            showToast(e.message, true);
+            btn.disabled = false;
+            btn.textContent = 'Créer les comptes';
+        }
+    });
+}
