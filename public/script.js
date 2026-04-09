@@ -177,6 +177,7 @@ async function init() {
     loadDisposBadge();
     loadNotifBadge();
     _notifPollTimer = setInterval(loadNotifBadge, 60000);
+    startAutoRefresh();
     loadDispoControl();
     initStaffSearch();
 
@@ -3730,6 +3731,40 @@ function openCsvImportModal() {
         }
     });
 }
+
+// ── Auto-refresh polling (patron/directeur) ───────────────────────────────────
+
+let _lastUpdatedTs  = 0;
+let _pollRefreshTimer = null;
+
+async function startAutoRefresh() {
+    // Initialiser le timestamp de référence sans déclencher de refresh immédiat
+    try {
+        const res = await fetch('/api/last-updated', { credentials: 'include' });
+        if (res.ok) { const d = await res.json(); _lastUpdatedTs = d.ts || 0; }
+    } catch { /* silencieux */ }
+
+    // Poll toutes les 60 secondes
+    _pollRefreshTimer = setInterval(async () => {
+        try {
+            const res = await fetch('/api/last-updated', { credentials: 'include' });
+            if (!res.ok) return;
+            const { ts } = await res.json();
+            if (ts && ts !== _lastUpdatedTs) {
+                _lastUpdatedTs = ts;
+                await silentRefresh();
+            }
+        } catch { /* silencieux */ }
+    }, 60000);
+}
+
+async function silentRefresh() {
+    try { await refreshWeek(); } catch { /* silencieux */ }
+    try { await loadAllStaff(); } catch { /* silencieux */ }
+    try { loadDisposBadge(); } catch { /* silencieux */ }
+    try { loadNotifBadge(); } catch { /* silencieux */ }
+}
+
 // ── Notifications patron/directeur ────────────────────────────────────────────
 
 let _notifPollTimer = null;

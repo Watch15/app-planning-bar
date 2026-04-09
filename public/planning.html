@@ -492,6 +492,7 @@ async function init() {
         ' au ' + sunday.getDate() + ' ' + MONTH_NAMES[sunday.getMonth()];
 
     await loadPlanning(from, to, user);
+    startStaffAutoRefresh(from, to, user);
 
     // Vérifier si la semaine suivante est publiée
     const nextMonday = getMondayOf(addDays(new Date(), 7));
@@ -1157,6 +1158,36 @@ async function togglePushSubscription() {
     } catch (e) {
         console.error('Erreur abonnement push:', e);
     }
+}
+
+
+// ── Auto-refresh polling (staff) ─────────────────────────────────────────────
+
+let _staffLastTs = 0;
+let _staffPollTimer = null;
+
+async function startStaffAutoRefresh(from, to, user) {
+    // Capturer le timestamp initial
+    try {
+        const res = await fetch('/api/last-updated', { credentials: 'include' });
+        if (res.ok) { const d = await res.json(); _staffLastTs = d.ts || 0; }
+    } catch { /* silencieux */ }
+
+    _staffPollTimer = setInterval(async () => {
+        try {
+            const res = await fetch('/api/last-updated', { credentials: 'include' });
+            if (!res.ok) return;
+            const { ts } = await res.json();
+            if (ts && ts !== _staffLastTs) {
+                _staffLastTs = ts;
+                // Recharger silencieusement le planning affiché
+                await loadPlanning(from, to, user);
+                // Si la vue "semaine prochaine" était chargée, la marquer à recharger
+                const viewNext = document.getElementById('view-next-week');
+                if (viewNext) delete viewNext.dataset.loaded;
+            }
+        } catch { /* silencieux */ }
+    }, 30000);
 }
 
 // ── Démarrage ─────────────────────────────────────────────────────────────────

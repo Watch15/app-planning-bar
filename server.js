@@ -868,6 +868,7 @@ app.patch('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
         if (color) await db.collection('shifts').updateMany({ staff_id: req.params.id }, { $set: { color } });
         if (name)  await db.collection('shifts').updateMany({ staff_id: req.params.id }, { $set: { staff_name: name } });
         res.json({ message: 'Staff mis à jour', updated: update });
+        touchLastUpdated();
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1044,6 +1045,7 @@ app.post('/api/shifts', checkDB, requirePatron, async (req, res) => {
         }
 
         res.status(201).json({ ...shift, _id: result.insertedId, warnings });
+        touchLastUpdated();
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1134,6 +1136,7 @@ app.patch('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
         }
 
         res.json({ message: 'Shift mis à jour', warnings });
+        touchLastUpdated();
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1147,6 +1150,7 @@ app.delete('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
         const result = await db.collection('shifts').deleteOne({ _id: new ObjectId(req.params.id) });
         if (result.deletedCount === 0) return res.status(404).json({ error: 'Shift introuvable' });
         res.json({ message: 'Shift supprimé' });
+        touchLastUpdated();
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1164,6 +1168,7 @@ app.post('/api/copy-day', checkDB, requirePatron, async (req, res) => {
             if (newShifts.length > 0) { await db.collection('shifts').insertMany(newShifts); created += newShifts.length; }
         }
         res.json({ message: created + ' shifts copiés sur ' + to_dates.length + ' jour(s)' });
+        touchLastUpdated();
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1260,6 +1265,7 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
         }));
         await db.collection('availabilities').insertMany(docs);
         res.status(201).json({ message: docs.length + ' disponibilité(s) enregistrée(s)' });
+        touchLastUpdated();
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1297,6 +1303,7 @@ app.patch('/api/dispos/:id/confirm', checkDB, requirePatron, async (req, res) =>
             });
         }
         res.json({ message: 'Dispo confirmée' + (create_shift ? ' et shift créé' : '') });
+        touchLastUpdated();
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1357,6 +1364,7 @@ app.patch('/api/publish/:weekStart', checkDB, requirePatron, async (req, res) =>
         }
 
         res.json({ message: published ? 'Planning publié' : 'Planning dépublié' });
+        touchLastUpdated();
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1655,6 +1663,19 @@ function formatShiftTime(h) {
     return String(hh).padStart(2, '0') + 'h' + (mm > 0 ? String(mm).padStart(2, '0') : '');
 }
 
+
+// ── Last-updated timestamp (polling auto-refresh) ─────────────────────────────
+
+async function touchLastUpdated() {
+    try {
+        await db.collection('settings').updateOne(
+            { key: 'last_updated' },
+            { $set: { key: 'last_updated', ts: Date.now() } },
+            { upsert: true }
+        );
+    } catch { /* silencieux — ne jamais bloquer une mutation pour ça */ }
+}
+
 // ── Routes notifications in-app ───────────────────────────────────────────────
 
 // GET notifications du patron/directeur connecté (50 dernières)
@@ -1679,6 +1700,15 @@ app.patch('/api/notifications/read-all', checkDB, requirePatron, async (req, res
             { $set: { read: true } }
         );
         res.json({ message: 'Notifications marquées comme lues' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+
+// GET timestamp dernière modification (polling auto-refresh clients)
+app.get('/api/last-updated', checkDB, requireAuth, async (req, res) => {
+    try {
+        const doc = await db.collection('settings').findOne({ key: 'last_updated' });
+        res.json({ ts: doc ? doc.ts : 0 });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
