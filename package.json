@@ -20,5 +20,5 @@
     "express-session": "^1.17.3",
     "mongodb": "^6.3.0",
     "web-push": "^3.6.7"
-}
+  }
 }
