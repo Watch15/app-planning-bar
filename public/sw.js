@@ -59,3 +59,36 @@ self.addEventListener('fetch', e => {
 self.addEventListener('message', e => {
     if (e.data === 'skipWaiting') self.skipWaiting();
 });
+
+// ── Web Push — réception et affichage ────────────────────────────────────────
+
+self.addEventListener('push', e => {
+    let data = { title: 'Planning Bar', body: 'Nouveau message', url: '/planning.html' };
+    try {
+        if (e.data) data = { ...data, ...e.data.json() };
+    } catch { /* payload non-JSON ignoré */ }
+
+    e.waitUntil(
+        self.registration.showNotification(data.title, {
+            body:    data.body,
+            icon:    '/icons/icon-192.png',
+            badge:   '/icons/icon-72.png',
+            data:    { url: data.url || '/planning.html' },
+            vibrate: [200, 100, 200],
+        })
+    );
+});
+
+// Clic sur la notification — ouvrir / focus la page
+self.addEventListener('notificationclick', e => {
+    e.notification.close();
+    const target = (e.notification.data && e.notification.data.url) || '/planning.html';
+    e.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+            for (const client of list) {
+                if (client.url.includes(target) && 'focus' in client) return client.focus();
+            }
+            if (clients.openWindow) return clients.openWindow(target);
+        })
+    );
+});

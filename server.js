@@ -5,6 +5,7 @@ const cors    = require('cors');
 const bcrypt  = require('bcryptjs');
 const session = require('express-session');
 const crypto  = require('crypto');
+const webpush = require('web-push');
 
 const app = express();
 app.use(express.json());
@@ -13,6 +14,16 @@ const allowedOrigin = process.env.NODE_ENV === 'production'
     ? process.env.APP_URL
     : true;
 app.use(cors({ origin: allowedOrigin, credentials: true }));
+
+// ── VAPID — Web Push ──────────────────────────────────────────────────────────
+
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    webpush.setVapidDetails(
+        process.env.VAPID_EMAIL || 'mailto:admin@planning-bar.fr',
+        process.env.VAPID_PUBLIC_KEY,
+        process.env.VAPID_PRIVATE_KEY
+    );
+}
 
 // ── Utilitaires sécurité ──────────────────────────────────────────────────────
 
@@ -112,6 +123,51 @@ async function sendSMS(to, body) {
     if (!res.ok) {
         const err = await res.json();
         throw new Error(err.message || 'Erreur Twilio');
+    }
+}
+
+// ── Web Push — helper envoi ───────────────────────────────────────────────────
+
+// Envoie une notification push à une liste de staff_ids (ou à tous si staffIds est null)
+async function sendPushToStaff(staffIds, payload) {
+    if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return;
+    try {
+        // Récupérer les user_ids correspondant aux staff_ids
+        let userQuery = {};
+        if (staffIds && staffIds.length > 0) {
+            userQuery = { staff_id: { $in: staffIds } };
+        }
+        const users = await db.collection('users').find(userQuery, { projection: { _id: 1 } }).toArray();
+        const userIds = users.map(u => String(u._id));
+        if (userIds.length === 0) return;
+
+        const subs = await db.collection('push_subscriptions')
+            .find({ user_id: { $in: userIds } })
+            .toArray();
+        if (subs.length === 0) return;
+
+        const payloadStr = JSON.stringify(payload);
+        const stale = [];
+
+        await Promise.allSettled(subs.map(async sub => {
+            try {
+                await webpush.sendNotification(sub.subscription, payloadStr);
+            } catch (err) {
+                // 410 Gone = subscription expirée → à supprimer
+                if (err.statusCode === 410 || err.statusCode === 404) {
+                    stale.push(sub._id);
+                } else {
+                    console.error('❌ Push error pour user', sub.user_id, ':', err.message);
+                }
+            }
+        }));
+
+        // Nettoyage des subscriptions expirées
+        if (stale.length > 0) {
+            await db.collection('push_subscriptions').deleteMany({ _id: { $in: stale } });
+        }
+    } catch (e) {
+        console.error('❌ sendPushToStaff error:', e.message);
     }
 }
 
@@ -984,6 +1040,38 @@ app.patch('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
             { _id: new ObjectId(req.params.id) },
             { $set: updateFields }
         );
+
+        // ── Notification push au staff concerné (si le planning était déjà publié) ──
+        const weekStart = existing.date.substring(0, 8) + '01'; // approximatif — on vérifie via settings
+        const targetStaffId = updateFields.staff_id || existing.staff_id;
+        if (targetStaffId && targetStaffId !== '__joker__') {
+            // Vérifier si la semaine est publiée (async, ne bloque pas la réponse)
+            db.collection('settings').findOne({ key: 'publish_' + existing.date.substring(0, 7) + '-01' })
+                .then(async pub => {
+                    // Chercher la publication pour n'importe quelle date de cette semaine
+                    // On cherche via date du shift — si la semaine est publiée, notifier
+                    const allPubs = await db.collection('settings').find({
+                        key: { $regex: '^publish_' },
+                        published: true,
+                    }).toArray();
+                    const isPublished = allPubs.some(p => {
+                        const weekKey = p.key.replace('publish_', '');
+                        const weekDate = new Date(weekKey + 'T12:00:00');
+                        const shiftDate = new Date(existing.date + 'T12:00:00');
+                        const diff = Math.abs(shiftDate - weekDate);
+                        return diff < 8 * 24 * 60 * 60 * 1000; // même semaine (7 jours)
+                    });
+                    if (isPublished) {
+                        await sendPushToStaff([targetStaffId], {
+                            title: 'Planning Bar — Modification',
+                            body:  'Ton planning du ' + existing.date + ' a été modifié.',
+                            url:   '/planning.html',
+                        });
+                    }
+                })
+                .catch(() => { /* silencieux */ });
+        }
+
         res.json({ message: 'Shift mis à jour', warnings });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -1173,12 +1261,40 @@ app.get('/api/publish/:weekStart', checkDB, requireAuth, async (req, res) => {
 // PATCH publier/dépublier une semaine (patron)
 app.patch('/api/publish/:weekStart', checkDB, requirePatron, async (req, res) => {
     const { published } = req.body;
+    const weekStart = req.params.weekStart;
     try {
         await db.collection('settings').updateOne(
-            { key: 'publish_' + req.params.weekStart },
-            { $set: { key: 'publish_' + req.params.weekStart, published: !!published, updated_at: new Date() } },
+            { key: 'publish_' + weekStart },
+            { $set: { key: 'publish_' + weekStart, published: !!published, updated_at: new Date() } },
             { upsert: true }
         );
+
+        // ── Notifications push à la publication ───────────────────────────────
+        if (published) {
+            // Récupérer tous les staff_ids qui ont un shift cette semaine (hors jokers)
+            const weekEnd = (() => {
+                const d = new Date(weekStart + 'T12:00:00');
+                d.setDate(d.getDate() + 6);
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const j = String(d.getDate()).padStart(2, '0');
+                return y + '-' + m + '-' + j;
+            })();
+
+            db.collection('shifts').distinct('staff_id', {
+                date: { $gte: weekStart, $lte: weekEnd },
+                staff_id: { $ne: '__joker__' },
+                is_joker: { $ne: true },
+            }).then(staffIds => {
+                if (!staffIds.length) return;
+                return sendPushToStaff(staffIds, {
+                    title: 'Planning Bar — Planning publié 📅',
+                    body:  'Le planning de la semaine du ' + weekStart + ' est disponible.',
+                    url:   '/planning.html',
+                });
+            }).catch(() => { /* silencieux — ne pas bloquer */ });
+        }
+
         res.json({ message: published ? 'Planning publié' : 'Planning dépublié' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -1429,6 +1545,44 @@ app.post('/api/shifts/extra', checkDB, requireAuth, async (req, res) => {
         };
         const result = await db.collection('shifts').insertOne(shift);
         res.status(201).json({ ...shift, _id: result.insertedId });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Web Push — abonnement ─────────────────────────────────────────────────────
+
+// GET clé publique VAPID (nécessaire côté client pour s'abonner)
+app.get('/api/push/vapid-public-key', (req, res) => {
+    const key = process.env.VAPID_PUBLIC_KEY;
+    if (!key) return res.status(503).json({ error: 'Web Push non configuré' });
+    res.json({ publicKey: key });
+});
+
+// POST enregistrer ou mettre à jour une PushSubscription
+app.post('/api/push/subscribe', checkDB, requireAuth, async (req, res) => {
+    const { subscription } = req.body;
+    if (!subscription || !subscription.endpoint)
+        return res.status(400).json({ error: 'subscription invalide' });
+    const userId = req.session.user._id;
+    try {
+        await db.collection('push_subscriptions').updateOne(
+            { user_id: userId, 'subscription.endpoint': subscription.endpoint },
+            { $set: { user_id: userId, subscription, updated_at: new Date() } },
+            { upsert: true }
+        );
+        res.json({ message: 'Abonnement enregistré' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE se désabonner
+app.delete('/api/push/subscribe', checkDB, requireAuth, async (req, res) => {
+    const { endpoint } = req.body;
+    const userId = req.session.user._id;
+    try {
+        await db.collection('push_subscriptions').deleteOne({
+            user_id: userId,
+            'subscription.endpoint': endpoint,
+        });
+        res.json({ message: 'Désabonné' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
