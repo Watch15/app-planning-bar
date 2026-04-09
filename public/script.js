@@ -178,6 +178,7 @@ async function init() {
     loadNotifBadge();
     _notifPollTimer = setInterval(loadNotifBadge, 30000);
     startAutoRefresh();
+    initNotifListeners();
     loadDispoControl();
     initStaffSearch();
 
@@ -3836,24 +3837,28 @@ function escapeHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// Fermeture modale notifs
-(function () {
+// listeners modale notifs — attachés dans initNotifListeners()
+
+function initNotifListeners() {
     const closeBtn = document.getElementById('notif-modal-close');
     if (closeBtn) closeBtn.addEventListener('click', () => {
         document.getElementById('notif-modal').style.display = 'none';
     });
+
     const markAll = document.getElementById('notif-mark-all-read');
     if (markAll) markAll.addEventListener('click', async () => {
         await fetch('/api/notifications/read-all', { method: 'PATCH', credentials: 'include' });
+        // Vider le badge
         const badge = document.getElementById('notif-badge');
         if (badge) { badge.textContent = '0'; badge.classList.remove('visible'); }
-        // Retirer les points bleus visuellement
-        document.querySelectorAll('#notif-list .notif-dot').forEach(d => d.classList.add('read'));
-        document.querySelectorAll('#notif-list .notif-item').forEach(i => i.classList.remove('unread'));
+        // Vider la liste affichée
+        const list = document.getElementById('notif-list');
+        if (list) list.innerHTML = '<div class="notif-empty">Aucune activité récente</div>';
     });
+
     // Fermer en cliquant en dehors
     const overlay = document.getElementById('notif-modal');
     if (overlay) overlay.addEventListener('click', e => {
         if (e.target === overlay) overlay.style.display = 'none';
     });
-})();
+}
