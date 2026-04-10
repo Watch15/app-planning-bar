@@ -190,12 +190,39 @@
                 background: white;
                 border-radius: 20px 20px 0 0;
                 box-shadow: 0 -4px 32px rgba(0,0,0,0.15);
-                max-height: 70vh;
-                overflow-y: auto;
-                padding: 16px 14px max(16px,env(safe-area-inset-bottom)) !important;
+                max-height: 42vh;
+                display: flex;
+                flex-direction: column;
+                padding: 8px 14px max(12px,env(safe-area-inset-bottom)) !important;
+            }
+            .staff-bar::before {
+                content: '';
+                display: block;
+                width: 36px; height: 4px;
+                background: #e0e0e0;
+                border-radius: 2px;
+                margin: 0 auto 10px;
+                flex-shrink: 0;
             }
             .staff-bar.open {
                 transform: translateY(0);
+            }
+            /* Recherche + filtres fixes en haut du sheet */
+            .staff-bar .staff-bar-top {
+                flex-shrink: 0;
+                padding-bottom: 8px;
+                border-bottom: 1px solid #f0f0f0;
+                margin-bottom: 6px;
+            }
+            /* Liste scrollable */
+            .staff-bar .staff-list {
+                overflow-y: auto;
+                overflow-x: hidden;
+                flex-wrap: wrap !important;
+                -webkit-overflow-scrolling: touch;
+                flex: 1;
+                min-height: 0;
+                gap: 6px !important;
             }
             .staff-bar-hint { display: none !important; }
 
@@ -728,12 +755,38 @@ function toggleStaffBar() {
     if (!bar) return;
     const isOpen = bar.classList.contains('open');
     if (isOpen) {
-        bar.classList.remove('open');
-        document.getElementById('fab-staff').textContent = '＋';
+        _closeStaffBar();
     } else {
-        bar.classList.add('open');
-        document.getElementById('fab-staff').textContent = '✕';
+        _openStaffBar();
     }
+}
+
+function _openStaffBar() {
+    const bar = document.getElementById('staff-bar-container');
+    const fab = document.getElementById('fab-staff');
+    if (!bar) return;
+    bar.classList.add('open');
+    fab.textContent = '✕';
+    // Overlay léger pour fermer en tapant sur le planning
+    let ov = document.getElementById('staff-bar-overlay');
+    if (!ov) {
+        ov = document.createElement('div');
+        ov.id = 'staff-bar-overlay';
+        ov.style.cssText = 'position:fixed;inset:0;bottom:42vh;z-index:299;background:rgba(0,0,0,0.18)';
+        ov.addEventListener('touchend', () => _closeStaffBar());
+        document.body.appendChild(ov);
+    }
+    ov.style.display = 'block';
+}
+
+function _closeStaffBar() {
+    const bar = document.getElementById('staff-bar-container');
+    const fab = document.getElementById('fab-staff');
+    if (!bar) return;
+    bar.classList.remove('open');
+    fab.textContent = '＋';
+    const ov = document.getElementById('staff-bar-overlay');
+    if (ov) ov.style.display = 'none';
 }
 
 // ── Synchroniser le badge dispos dans le drawer ───────────────────────────────

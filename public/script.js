@@ -1003,8 +1003,10 @@ function createStaffRow(staff) {
         if (e.target.closest('.shift')) return;
         e.preventDefault();
         const touch    = e.changedTouches[0];
+        const scroller = document.getElementById('timeline-scroll');
+        const scrollLeft = scroller ? scroller.scrollLeft : 0;
         const rect     = rail.getBoundingClientRect();
-        const rawH     = (touch.clientX - rect.left) / PX_PER_HOUR;
+        const rawH     = (touch.clientX - rect.left + scrollLeft) / PX_PER_HOUR;
         const snappedH = Math.round(rawH * 4) / 4 + START_HOUR;
         const startTime = Math.max(START_HOUR, Math.min(snappedH, END_HOUR - 2));
         const endTime   = startTime + 2;
@@ -1643,8 +1645,10 @@ async function onUp() {
 
     const el        = activeEl; // capturer avant reset
     const id        = el.dataset.id;
-    const startTime = START_HOUR + el.offsetLeft / PX_PER_HOUR;
-    const endTime   = startTime  + el.offsetWidth / PX_PER_HOUR;
+    // Arrondi au quart d'heure (snap 15 min) — évite les valeurs comme 18.066...
+    const snapH     = PX_PER_HOUR / 4;
+    const startTime = START_HOUR + Math.round(el.offsetLeft / snapH) * 0.25;
+    const endTime   = startTime  + Math.round(el.offsetWidth / snapH) * 0.25;
 
     activeEl = null; activeAction = null;
 
@@ -1684,6 +1688,8 @@ async function onUp() {
 
 // ── Touch events — resize & drag shifts ──────────────────────────────────────
 
+let _touchScrollLeft = 0; // scrollLeft du conteneur au moment du touchstart
+
 document.addEventListener('touchstart', onTouchStart, { passive: false });
 document.addEventListener('touchmove',  onTouchMove,  { passive: false });
 document.addEventListener('touchend',   onTouchEnd);
@@ -1692,14 +1698,15 @@ function onTouchStart(e) {
     const shiftEl = e.target.closest('.shift');
     if (!shiftEl || e.target.closest('.shift-delete')) return;
 
-    const isResizer = e.target.closest('.resizer');
-    if (!isResizer && !shiftEl) return;
-
     // Bloquer le scroll uniquement sur resizer ou shift
     e.preventDefault();
 
     refreshPxPerHour();
     const touch = e.touches[0];
+
+    // Capturer le scrollLeft courant pour corriger le delta
+    const scroller = document.getElementById('timeline-scroll');
+    _touchScrollLeft = scroller ? scroller.scrollLeft : 0;
 
     activeEl     = shiftEl;
     startX       = touch.clientX;
@@ -1715,12 +1722,24 @@ function onTouchMove(e) {
     if (!activeEl) return;
     e.preventDefault();
     const touch = e.touches[0];
-    // Réutiliser onMove avec un objet simulé
-    onMove({ clientX: touch.clientX });
+    // Corriger le clientX avec le scroll courant du conteneur
+    const scroller = document.getElementById('timeline-scroll');
+    const scrollDelta = scroller ? (scroller.scrollLeft - _touchScrollLeft) : 0;
+    onMove({ clientX: touch.clientX - scrollDelta });
 }
 
 function onTouchEnd() {
     if (!activeEl) return;
+    // Snap final : forcer left et width à des multiples de PX_PER_HOUR/4
+    const SNAP = PX_PER_HOUR / 4;
+    const snappedLeft  = Math.round(activeEl.offsetLeft  / SNAP) * SNAP;
+    const snappedWidth = Math.max(SNAP, Math.round(activeEl.offsetWidth / SNAP) * SNAP);
+    const maxW = TOTAL_HOURS * PX_PER_HOUR;
+    if (snappedLeft >= 0 && snappedLeft + snappedWidth <= maxW) {
+        activeEl.style.left  = snappedLeft  + 'px';
+        activeEl.style.width = snappedWidth + 'px';
+        updateShiftText(activeEl);
+    }
     onUp();
 }
 
@@ -1788,16 +1807,35 @@ function initTimelineBodyTap() {
 
     body.addEventListener('touchend', async e => {
         if (!isMobileDevice() || !_tapSelectedStaff) return;
-        // Ne traiter que si le tap est directement sur le body (zone vide, pas sur un rail)
-        if (e.target.closest('.row-rail') || e.target.closest('.shift')) return;
+        // Ne traiter que si le tap est directement sur le body ou sur .empty-rail (timeline vide)
+        // Pas sur un shift existant
+        if (e.target.closest('.shift')) return;
+        // Autoriser : body direct, empty-rail, row-rail
+        const rail = e.target.closest('.row-rail');
+        const isBody = !rail && (e.target === body || e.target.closest('.empty-rail'));
+        if (!rail && !isBody) return;
         e.preventDefault();
+
+        let startTime = 18, endTime = 20;
+
+        if (rail) {
+            // Calculer la position du tap dans le rail, en tenant compte du scroll
+            const scroller = document.getElementById('timeline-scroll');
+            const scrollLeft = scroller ? scroller.scrollLeft : 0;
+            const touch = e.changedTouches[0];
+            const rect  = rail.getBoundingClientRect();
+            const rawH  = (touch.clientX - rect.left + scrollLeft) / PX_PER_HOUR;
+            // snap 15 min
+            const snapped = Math.round(rawH * 4) / 4 + START_HOUR;
+            startTime = Math.max(START_HOUR, Math.min(snapped, END_HOUR - 2));
+            endTime   = startTime + 2;
+        }
+
         const staff = _tapSelectedStaff;
         clearTapSelection();
-        // Créer avec horaires par défaut
-        await createShift(staff, 18, 20);
+        await createShift(staff, startTime, endTime);
     }, { passive: false });
 }
-
 
 
 document.getElementById('btn-copy-day').addEventListener('click', () => {
