@@ -1724,13 +1724,14 @@ function onTouchEnd() {
     onUp();
 }
 
-
+function updateShiftText(el) {
     const display = el.querySelector('.shift-hours');
     if (!display) return;
     const hStart = START_HOUR + el.offsetLeft / PX_PER_HOUR;
     const hEnd   = hStart + el.offsetWidth / PX_PER_HOUR;
     const fmt = h => `${Math.floor(h % 24).toString().padStart(2, '0')}h${String(Math.round((h%1)*60)).padStart(2,'0')}`;
     display.textContent = `${fmt(hStart)} – ${fmt(hEnd)}`;
+}
 
 // ── Tap-to-place — sélection staff mobile ────────────────────────────────────
 
