@@ -541,7 +541,6 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
             const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 jours
             await db.collection('users').insertOne({
                 phone:                   normalizedPhone,
-                email:                   null,
                 password_hash:           null,
                 role:                    userRole,
                 staff_id:                userRole === 'staff' ? (staff_id || null) : null,
@@ -580,7 +579,7 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
 
         await db.collection('users').insertOne({
             email:                   email.toLowerCase().trim(),
-            phone:                   normalizedPhone,
+            ...(normalizedPhone && { phone: normalizedPhone }),
             password_hash:           null,
             role:                    userRole,
             staff_id:                userRole === 'staff' ? (staff_id || null) : null,
@@ -734,7 +733,8 @@ app.post('/api/users/bulk', checkDB, requireAdmin, async (req, res) => {
             const staffId = String(staffResult.insertedId);
 
             await db.collection('users').insertOne({
-                email, phone: normalizedPhone, password_hash: null, role: 'staff',
+                ...(email && { email }), ...(normalizedPhone && { phone: normalizedPhone }),
+                password_hash: null, role: 'staff',
                 staff_id: staffId, assigned_establishments: [],
                 name, invite_token: hashToken(token), invite_expires: expires,
                 active: false, created_at: new Date(),
