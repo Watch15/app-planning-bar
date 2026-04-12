@@ -390,7 +390,10 @@ a:hover { color: var(--accent-soft); }
 }
 .copy-time-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 .copy-shift-sep { color: var(--text-muted); font-size: 11px; }
-.copy-days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 20px; }
+.copy-days-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+.copy-week-section { display: flex; flex-direction: column; gap: 6px; }
+.copy-week-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.copy-week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
 .copy-day-btn {
   padding: 8px 4px; border-radius: var(--radius);
   border: 1.5px solid var(--light-border); background: var(--light-card);
@@ -581,6 +584,8 @@ a:hover { color: var(--accent-soft); }
 .dash-shift-pill { display: inline-block; padding: 3px 8px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: opacity var(--transition); }
 .dash-shift-pill:hover { opacity: 0.8; }
 .dash-empty { color: var(--light-border); font-size: 14px; }
+.dash-cell-multi { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.dash-day-total { font-size: 10px; font-weight: 700; color: var(--text-muted); margin-top: 1px; }
 .dash-total-cell { font-size: 12px; font-weight: 700; color: var(--accent); white-space: nowrap; }
 .dashboard-stats {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;

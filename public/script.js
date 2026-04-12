@@ -1897,21 +1897,42 @@ function openCopyModal() {
         });
     });
 
-    // Grille des 7 jours de la semaine
+    // Grille des jours — semaine courante + semaine suivante
     const daysGrid = document.getElementById('copy-days-grid');
     daysGrid.innerHTML = '';
-    for (let i = 0; i < 7; i++) {
-        const date    = addDays(currentWeekStart, i);
-        const dateStr = toDateStr(date);
-        const btn = document.createElement('button');
-        btn.className    = 'copy-day-btn' + (dateStr === selectedDate ? ' source' : '');
-        btn.dataset.date = dateStr;
-        btn.innerHTML    = `<div>${DAY_NAMES_SHORT[date.getDay()]}</div><div>${date.getDate()}</div>`;
-        if (dateStr !== selectedDate) {
-            btn.addEventListener('click', () => btn.classList.toggle('selected'));
+
+    const nextWeekStart = addDays(currentWeekStart, 7);
+
+    [
+        { label: 'Cette semaine',    weekStart: currentWeekStart },
+        { label: 'Semaine suivante', weekStart: nextWeekStart    },
+    ].forEach(({ label, weekStart }) => {
+        const section = document.createElement('div');
+        section.className = 'copy-week-section';
+
+        const sectionLabel = document.createElement('div');
+        sectionLabel.className = 'copy-week-label';
+        sectionLabel.textContent = label;
+        section.appendChild(sectionLabel);
+
+        const grid = document.createElement('div');
+        grid.className = 'copy-week-grid';
+
+        for (let i = 0; i < 7; i++) {
+            const date    = addDays(weekStart, i);
+            const dateStr = toDateStr(date);
+            const btn = document.createElement('button');
+            btn.className    = 'copy-day-btn' + (dateStr === selectedDate ? ' source' : '');
+            btn.dataset.date = dateStr;
+            btn.innerHTML    = `<div>${DAY_NAMES_SHORT[date.getDay()]}</div><div>${date.getDate()}</div>`;
+            if (dateStr !== selectedDate) {
+                btn.addEventListener('click', () => btn.classList.toggle('selected'));
+            }
+            grid.appendChild(btn);
         }
-        daysGrid.appendChild(btn);
-    }
+        section.appendChild(grid);
+        daysGrid.appendChild(section);
+    });
 
     document.getElementById('copy-modal').style.display = 'flex';
 }
@@ -1974,7 +1995,8 @@ function renderDashboard() {
     });
 
     // Construire la liste de staff présent cette semaine
-    const staffMap = new Map(); // staff_id → { name, color, shifts: {} }
+    // shifts[date] est un tableau pour supporter plusieurs shifts le même jour
+    const staffMap = new Map(); // staff_id → { name, color, shifts: { date: [shift, ...] } }
     days.forEach(({ date }) => {
         (weekFullData[date] || []).forEach(shift => {
             if (!staffMap.has(shift.staff_id)) {
@@ -1983,7 +2005,9 @@ function renderDashboard() {
                     color: shift.color, shifts: {}
                 });
             }
-            staffMap.get(shift.staff_id).shifts[date] = shift;
+            const entry = staffMap.get(shift.staff_id);
+            if (!entry.shifts[date]) entry.shifts[date] = [];
+            entry.shifts[date].push(shift);
         });
     });
 
@@ -2010,6 +2034,12 @@ function renderDashboard() {
     thead.innerHTML = hRow;
     table.appendChild(thead);
 
+    const fmtD = v => {
+        const hh = Math.floor(v % 24).toString().padStart(2,'0');
+        const mm = Math.round((v % 1) * 60);
+        return hh + 'h' + (mm > 0 ? String(mm).padStart(2,'0') : '');
+    };
+
     // Corps
     const tbody = document.createElement('tbody');
     staffMap.forEach(staff => {
@@ -2022,25 +2052,37 @@ function renderDashboard() {
         </div></td>`;
 
         days.forEach(({ date }) => {
-            const shift = staff.shifts[date];
-            if (shift) {
-                const dispStart  = shift.real_start != null ? shift.real_start : shift.start_time;
-                const dispEnd    = shift.real_end   != null ? shift.real_end   : shift.end_time;
-                const h          = dispEnd - dispStart;
-                totalH += h;
-                const fmtD = v => {
-                    const hh = Math.floor(v % 24).toString().padStart(2,'0');
-                    const mm = Math.round((v % 1) * 60);
-                    return hh + 'h' + (mm > 0 ? String(mm).padStart(2,'0') : '');
-                };
-                const hasReal   = shift.real_start != null && shift.real_end != null;
-                const textColor = textColorFor(shift.color);
-                row += `<td><span class="dash-shift-pill"
-                    style="background:${shift.color};color:${textColor}"
-                    onclick="switchToDayView('${date}')"
-                    title="${hasReal ? 'Réel — ' : 'Planifié — '}Cliquer pour voir ce jour">
-                    ${fmtD(dispStart)}-${fmtD(dispEnd)}
-                </span></td>`;
+            const dayShifts = staff.shifts[date];
+            if (dayShifts && dayShifts.length) {
+                // Calcul total heures du jour pour ce staff
+                let dayH = 0;
+                dayShifts.forEach(s => {
+                    const ds = s.real_start != null ? s.real_start : s.start_time;
+                    const de = s.real_end   != null ? s.real_end   : s.end_time;
+                    dayH += de - ds;
+                });
+                totalH += dayH;
+
+                // Pills empilées
+                const pillsHtml = dayShifts.map(shift => {
+                    const dispStart = shift.real_start != null ? shift.real_start : shift.start_time;
+                    const dispEnd   = shift.real_end   != null ? shift.real_end   : shift.end_time;
+                    const hasReal   = shift.real_start != null && shift.real_end != null;
+                    const textColor = textColorFor(shift.color);
+                    return `<span class="dash-shift-pill"
+                        style="background:${shift.color};color:${textColor}"
+                        onclick="switchToDayView('${date}')"
+                        title="${hasReal ? 'Réel — ' : 'Planifié — '}Cliquer pour voir ce jour">
+                        ${fmtD(dispStart)}-${fmtD(dispEnd)}
+                    </span>`;
+                }).join('');
+
+                // Compteur journalier si plusieurs shifts ou toujours (optionnel : afficher si ≥1 shift)
+                const dayTotalHtml = dayShifts.length > 1
+                    ? `<span class="dash-day-total">${fmtD(dayH).replace('h','h')}</span>`
+                    : '';
+
+                row += `<td><div class="dash-cell-multi">${pillsHtml}${dayTotalHtml}</div></td>`;
             } else {
                 row += `<td><span class="dash-empty">—</span></td>`;
             }
