@@ -461,8 +461,7 @@ app.post('/auth/forgot-password', checkDB, async (req, res) => {
             let manual = false;
             try {
                 // Message court : 1 segment SMS = 1 seul tarif Twilio (< 160 chars)
-                const shortLink = link.replace(/^https?:\/\//, '');
-                await sendSMS(normalizePhone(phone), 'Planning Bar - Reset mdp:\n' + shortLink + '\n(1h)');
+                await sendSMS(normalizePhone(phone), 'Planning Bar - Reset mdp:\n' + link + '\n(1h)');
             } catch (smsErr) {
                 console.error('❌ Reset SMS failed:', smsErr.message);
                 manual = true;
@@ -559,10 +558,9 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
                 );
             }
             const link = (process.env.APP_URL || 'http://localhost:3000') + '/set-password.html?token=' + token;
-            const shortLink = link.replace(/^https?:\/\//, '');
             let smsSent = true;
             try {
-                await sendSMS(normalizedPhone, 'Planning Bar\nBienvenue' + (name ? ' ' + name : '') + ' ! Cree ton mdp :\n' + shortLink);
+                await sendSMS(normalizedPhone, 'Planning Bar\nBienvenue' + (name ? ' ' + name : '') + ' ! Cree ton mdp :\n' + link);
             } catch (smsErr) {
                 console.error('❌ SMS bienvenue non envoyé:', smsErr.message);
                 smsSent = false;
@@ -741,12 +739,11 @@ app.post('/api/users/bulk', checkDB, requireAdmin, async (req, res) => {
             });
 
             const link = (process.env.APP_URL || 'http://localhost:3000') + '/set-password.html?token=' + token;
-            const shortLink = link.replace(/^https?:\/\//, '');
             let sent = false;
 
             if (normalizedPhone) {
                 try {
-                    await sendSMS(normalizedPhone, 'Planning Bar\nBienvenue' + (name ? ' ' + name : '') + ' ! Cree ton mdp :\n' + shortLink);
+                    await sendSMS(normalizedPhone, 'Planning Bar\nBienvenue' + (name ? ' ' + name : '') + ' ! Cree ton mdp :\n' + link);
                     sent = true;
                 } catch (e) { console.error('Bulk SMS erreur ' + name + ':', e.message); }
             }
