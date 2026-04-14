@@ -252,9 +252,37 @@
         .toast.visible { opacity: 1; }
         .toast.error   { background: var(--danger); border-color: var(--danger); }
 
+        /* ── Sélecteur établissement ── */
+        .estab-select-bar {
+            display: none;
+            background: var(--dark-surface);
+            border-bottom: 1px solid var(--dark-border);
+            padding: 8px 20px;
+            gap: 10px;
+            align-items: center;
+        }
+        .estab-select-bar.visible { display: flex; }
+        .estab-select-label { font-size: 11px; color: rgba(255,255,255,0.45); white-space: nowrap; }
+        .estab-select {
+            flex: 1;
+            background: var(--dark-border); color: white;
+            border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
+            padding: 6px 10px; font-size: 13px; font-weight: 600;
+            outline: none; cursor: pointer; font-family: var(--font);
+        }
+        .btn-back {
+            background: transparent; border: 1px solid rgba(255,255,255,0.20);
+            color: rgba(255,255,255,0.60); font-size: 12px; padding: 5px 10px;
+            border-radius: 8px; cursor: pointer; white-space: nowrap;
+            font-family: var(--font); text-decoration: none; display: inline-block;
+            transition: all 0.15s;
+        }
+        .btn-back:hover { background: rgba(255,255,255,0.08); color: white; }
+
         /* ── Mobile ── */
         @media (max-width: 600px) {
             .header { padding: 0 14px; height: 52px; }
+            .estab-select-bar { padding: 8px 14px; }
             .container { padding: 14px 12px 80px; }
             .shift-card { border-radius: 12px; }
             .shift-body { gap: 8px; padding: 12px; }
@@ -274,8 +302,16 @@
         <div class="header-title" id="header-title">Pointage</div>
         <div class="header-sub"  id="header-date"></div>
     </div>
-    <button class="btn-logout" onclick="logout()">Déconnexion</button>
+    <div style="display:flex;align-items:center;gap:8px">
+        <a href="/planning.html" class="btn-back" id="btn-back" style="display:none">← Planning</a>
+        <button class="btn-logout" onclick="logout()">Déconnexion</button>
+    </div>
 </header>
+
+<div class="estab-select-bar" id="estab-select-bar">
+    <span class="estab-select-label">Établissement</span>
+    <select class="estab-select" id="estab-select"></select>
+</div>
 
 <div class="container">
     <div id="shifts-list"></div>
@@ -362,9 +398,10 @@ async function logout() {
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
-let currentUser = null;
-let allStaff    = [];
-let cutoffHour  = 9; // heure de bascule par défaut
+let currentUser  = null;
+let allStaff     = [];
+let cutoffHour   = 9; // heure de bascule par défaut
+let currentEstabId = null; // établissement actif (pointage)
 
 // Calcule la date "active" selon l'heure de bascule
 function getActiveDate() {
@@ -385,7 +422,7 @@ async function checkAuth() {
         const res  = await fetch('/auth/me', { credentials: 'include' });
         if (!res.ok) { window.location.href = '/login.html'; return null; }
         const data = await res.json();
-        if (data.user?.role !== 'etablissement' && data.user?.role !== 'patron') {
+        if (!['etablissement', 'patron', 'directeur'].includes(data.user?.role)) {
             window.location.href = '/login.html'; return null;
         }
         return data.user;
@@ -417,14 +454,53 @@ async function init() {
         if (r.ok) allStaff = await r.json();
     } catch { allStaff = []; }
 
-    // Nom de l'établissement dans le header
-    if (currentUser.establishment_id) {
+    // Établissement actif + sélecteur pour directeur/patron
+    if (currentUser.role === 'etablissement') {
+        currentEstabId = currentUser.establishment_id;
+        // Afficher le nom
         try {
             const r = await fetch('/api/establishments', { credentials: 'include' });
             if (r.ok) {
                 const estabs = await r.json();
-                const e = estabs.find(x => x.id === currentUser.establishment_id || String(x._id) === currentUser.establishment_id);
+                const e = estabs.find(x => x.id === currentEstabId || String(x._id) === currentEstabId);
                 if (e) document.getElementById('header-title').textContent = 'Pointage — ' + e.name;
+            }
+        } catch {}
+    } else {
+        // directeur ou patron — lien retour + sélecteur d'établissement
+        if (currentUser.role === 'directeur') {
+            document.getElementById('btn-back').style.display = '';
+        }
+        try {
+            const r = await fetch('/api/establishments', { credentials: 'include' });
+            if (r.ok) {
+                const allEstabs = await r.json();
+                // Filtrer selon les établissements assignés (directeur) ou tous (patron)
+                const assigned = currentUser.assigned_establishments || [];
+                const myEstabs = currentUser.role === 'directeur'
+                    ? allEstabs.filter(e => assigned.includes(e.id || String(e._id)))
+                    : allEstabs;
+
+                if (myEstabs.length > 0) {
+                    const sel  = document.getElementById('estab-select');
+                    const bar  = document.getElementById('estab-select-bar');
+                    myEstabs.forEach(e => {
+                        const opt = document.createElement('option');
+                        opt.value       = e.id || String(e._id);
+                        opt.textContent = e.name;
+                        sel.appendChild(opt);
+                    });
+                    currentEstabId = myEstabs[0].id || String(myEstabs[0]._id);
+                    document.getElementById('header-title').textContent = 'Pointage — ' + myEstabs[0].name;
+                    bar.classList.add('visible');
+
+                    sel.addEventListener('change', () => {
+                        const chosen = myEstabs.find(e => (e.id || String(e._id)) === sel.value);
+                        currentEstabId = sel.value;
+                        document.getElementById('header-title').textContent = 'Pointage — ' + (chosen ? chosen.name : sel.value);
+                        loadShifts();
+                    });
+                }
             }
         } catch {}
     }
@@ -440,7 +516,7 @@ async function loadShifts() {
     list.innerHTML = '<div class="empty-msg">Chargement…</div>';
     try {
         const url = '/api/pointage/' + today +
-            (currentUser.role === 'patron' ? '?establishment_id=' + currentUser.establishment_id : '');
+            (currentUser.role !== 'etablissement' ? '?establishment_id=' + currentEstabId : '');
         const res    = await fetch(url, { credentials: 'include' });
         const shifts = await res.json();
         if (!res.ok) throw new Error(shifts.error);
@@ -699,11 +775,12 @@ function initExtraForm() {
                 credentials: 'include', method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    staff_id:   staffId,
-                    staff_name: staffName,
-                    date:       today,
-                    real_start: realStart,
-                    real_end:   realEnd,
+                    staff_id:        staffId,
+                    staff_name:      staffName,
+                    date:            today,
+                    real_start:      realStart,
+                    real_end:        realEnd,
+                    establishment_id: currentUser.role !== 'etablissement' ? currentEstabId : undefined,
                 }),
             });
             const data = await res.json();

@@ -462,6 +462,20 @@ a:hover { color: var(--accent-soft); }
     border-radius: 10px;
   }
 }
+
+/* ── B-03 : suppression du délai 300ms sur mobile ──────────────────────────── */
+button, [role="button"], a[href], input[type="submit"], input[type="button"],
+label[for], select, .tab-btn, .staff-card, .shift-card {
+  touch-action: manipulation;
+}
+
+/* ── B-02 : modales inline — évite le débordement sur petits écrans ─────────── */
+@media (max-width: 600px) {
+  /* Réduit le padding de l'overlay pour que les boîtes ne débordent pas */
+  [style*="padding:20px"][style*="position:fixed"] {
+    padding: 12px !important;
+  }
+}
 .conflict-toast {
   position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
   background: var(--warning); color: white;
