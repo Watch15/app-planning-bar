@@ -461,7 +461,7 @@ app.post('/auth/forgot-password', checkDB, async (req, res) => {
             let manual = false;
             try {
                 // Message court : 1 segment SMS = 1 seul tarif Twilio (< 160 chars)
-                await sendSMS(normalizePhone(phone), 'Planning Bar - Reset mdp:\n' + link + '\n(1h)');
+                await sendSMS(normalizePhone(phone), 'Planning Bar\nRéinitialisation de ton mot de passe :\n' + link + '\n(valable 1h)');
             } catch (smsErr) {
                 console.error('❌ Reset SMS failed:', smsErr.message);
                 manual = true;
@@ -560,7 +560,7 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
             const link = (process.env.APP_URL || 'http://localhost:3000') + '/set-password.html?token=' + token;
             let smsSent = true;
             try {
-                await sendSMS(normalizedPhone, 'Planning Bar\nBienvenue' + (name ? ' ' + name : '') + ' ! Cree ton mdp :\n' + link);
+                await sendSMS(normalizedPhone, 'Planning Bar\nBienvenue' + (name ? ' ' + name : '') + ' 👋\nCrée ton mot de passe :\n' + link);
             } catch (smsErr) {
                 console.error('❌ SMS bienvenue non envoyé:', smsErr.message);
                 smsSent = false;
@@ -743,7 +743,7 @@ app.post('/api/users/bulk', checkDB, requireAdmin, async (req, res) => {
 
             if (normalizedPhone) {
                 try {
-                    await sendSMS(normalizedPhone, 'Planning Bar\nBienvenue' + (name ? ' ' + name : '') + ' ! Cree ton mdp :\n' + link);
+                    await sendSMS(normalizedPhone, 'Planning Bar\nBienvenue' + (name ? ' ' + name : '') + ' 👋\nCrée ton mot de passe :\n' + link);
                     sent = true;
                 } catch (e) { console.error('Bulk SMS erreur ' + name + ':', e.message); }
             }
@@ -1076,10 +1076,19 @@ app.post('/api/shifts', checkDB, requirePatron, async (req, res) => {
                         return Math.abs(shiftDate - weekDate) < 8 * 24 * 60 * 60 * 1000;
                     });
                     if (isPublished) {
+                        const estabDoc  = await db.collection('establishments').findOne({ _id: establishment_id }) || {};
+                        const estabName = estabDoc.name || establishment_id;
+                        // Push au staff planifié
+                        await sendPushToStaff([staff_id], {
+                            title: '✅ Nouveau shift — ' + estabName,
+                            body:  'Tu es planifié(e) ' + formatDateFR(date) + ' · ' + formatShiftTime(parseFloat(start_time)) + ' → ' + formatShiftTime(parseFloat(end_time)),
+                            url:   '/planning.html',
+                        });
+                        // In-app patron
                         await createNotifForPatrons(
                             establishment_id,
                             'shift_added',
-                            (staff_name || 'Un membre') + ' — shift ajouté le ' + date + ' (' + formatShiftTime(parseFloat(start_time)) + '→' + formatShiftTime(parseFloat(end_time)) + ')',
+                            '➕ ' + (staff_name || 'Un membre') + ' — ' + formatDateShortFR(date) + ' · ' + formatShiftTime(parseFloat(start_time)) + '→' + formatShiftTime(parseFloat(end_time)),
                             { date, shift_id: String(result.insertedId) }
                         );
                     }
@@ -1170,11 +1179,11 @@ app.patch('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
                     const finalShift = await db.collection('shifts').findOne({ _id: existing._id });
                     const fS = finalShift ? finalShift.start_time : newS;
                     const fE = finalShift ? finalShift.end_time   : newE;
-                    const dayLabel = new Date(capturedDate + 'T12:00:00')
-                        .toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                    const estabDoc = await db.collection('establishments').findOne({ _id: capturedEstab }) || {};
+                    const estabName = estabDoc.name || capturedEstab;
                     await sendPushToStaff([targetStaffId], {
-                        title: 'Planning Bar',
-                        body:  'Ton shift du ' + dayLabel + ' a été modifié : ' + formatShiftTime(fS) + ' → ' + formatShiftTime(fE),
+                        title: '✏️ Shift modifié — ' + estabName,
+                        body:  formatDateFR(capturedDate) + ' · ' + formatShiftTime(fS) + ' → ' + formatShiftTime(fE),
                         url:   '/planning.html',
                     });
                 },
@@ -1186,7 +1195,7 @@ app.patch('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
                     await createNotifForPatrons(
                         capturedEstab,
                         'shift_modified',
-                        staffName + ' — shift modifié le ' + capturedDate + ' (' + formatShiftTime(fS) + '→' + formatShiftTime(fE) + ')',
+                        '✏️ ' + staffName + ' — ' + formatDateShortFR(capturedDate) + ' · ' + formatShiftTime(fS) + '→' + formatShiftTime(fE),
                         { date: capturedDate, shift_id: shiftId }
                     );
                 }
@@ -1209,6 +1218,33 @@ app.delete('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
         if (result.deletedCount === 0) return res.status(404).json({ error: 'Shift introuvable' });
         res.json({ message: 'Shift supprimé' });
         touchLastUpdated();
+        // Notifications si le shift concernait un vrai staff sur une semaine publiée
+        if (!existing.is_joker && existing.staff_id && existing.staff_id !== '__joker__') {
+            (async () => {
+                try {
+                    const allPubs = await db.collection('settings').find({ key: { $regex: '^publish_' }, published: true }).toArray();
+                    const isPublished = allPubs.some(p => {
+                        const weekDate  = new Date(p.key.replace('publish_', '') + 'T12:00:00');
+                        const shiftDate = new Date(existing.date + 'T12:00:00');
+                        return Math.abs(shiftDate - weekDate) < 8 * 24 * 60 * 60 * 1000;
+                    });
+                    if (!isPublished) return;
+                    const estabDoc  = await db.collection('establishments').findOne({ _id: existing.establishment_id }) || {};
+                    const estabName = estabDoc.name || existing.establishment_id;
+                    await sendPushToStaff([existing.staff_id], {
+                        title: '❌ Shift annulé — ' + estabName,
+                        body:  'Ton shift du ' + formatDateFR(existing.date) + ' (' + formatShiftTime(existing.start_time) + ' → ' + formatShiftTime(existing.end_time) + ') a été annulé.',
+                        url:   '/planning.html',
+                    });
+                    await createNotifForPatrons(
+                        existing.establishment_id,
+                        'shift_deleted',
+                        '❌ ' + (existing.staff_name || 'Un membre') + ' — ' + formatDateShortFR(existing.date) + ' · shift supprimé',
+                        { date: existing.date }
+                    );
+                } catch { /* silencieux */ }
+            })();
+        }
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1362,15 +1398,43 @@ app.patch('/api/dispos/:id/confirm', checkDB, requirePatron, async (req, res) =>
         }
         res.json({ message: 'Dispo confirmée' + (create_shift ? ' et shift créé' : '') });
         touchLastUpdated();
+        // Push staff : dispo confirmée
+        (async () => {
+            try {
+                const estabDoc  = await db.collection('establishments').findOne({ _id: establishment_id }) || {};
+                const estabName = estabDoc.name || establishment_id;
+                const body = create_shift
+                    ? 'Ta dispo du ' + formatDateFR(dispo.date) + ' a été confirmée : ' + formatShiftTime(dispo.start_time) + ' → ' + formatShiftTime(dispo.end_time) + ' au ' + estabName + '.'
+                    : 'Ta dispo du ' + formatDateFR(dispo.date) + ' a été confirmée au ' + estabName + '.';
+                await sendPushToStaff([dispo.staff_id], {
+                    title: '✅ Dispo confirmée',
+                    body,
+                    url: '/planning.html',
+                });
+            } catch { /* silencieux */ }
+        })();
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.patch('/api/dispos/:id/reject', checkDB, requirePatron, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     try {
+        const dispo = await db.collection('availabilities').findOne({ _id: new ObjectId(req.params.id) });
+        if (!dispo) return res.status(404).json({ error: 'Dispo introuvable' });
         const result = await db.collection('availabilities').updateOne({ _id: new ObjectId(req.params.id) }, { $set: { status: 'rejected' } });
         if (result.matchedCount === 0) return res.status(404).json({ error: 'Dispo introuvable' });
         res.json({ message: 'Dispo refusée' });
+        touchLastUpdated();
+        // Push staff : dispo refusée
+        (async () => {
+            try {
+                await sendPushToStaff([dispo.staff_id], {
+                    title: '❌ Dispo refusée',
+                    body:  'Ta dispo du ' + formatDateFR(dispo.date) + ' a été refusée.',
+                    url:   '/planning.html',
+                });
+            } catch { /* silencieux */ }
+        })();
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1414,8 +1478,8 @@ app.patch('/api/publish/:weekStart', checkDB, requirePatron, async (req, res) =>
             }).then(staffIds => {
                 if (!staffIds.length) return;
                 return sendPushToStaff(staffIds, {
-                    title: 'Planning Bar — Planning publié 📅',
-                    body:  'Le planning de la semaine du ' + weekStart + ' est disponible.',
+                    title: '📅 Planning disponible',
+                    body:  'La ' + formatWeekFR(weekStart) + ' est publiée — consulte ton planning.',
                     url:   '/planning.html',
                 });
             }).catch(() => { /* silencieux — ne pas bloquer */ });
@@ -1719,6 +1783,24 @@ function formatShiftTime(h) {
     const hh = Math.floor(h % 24);
     const mm = Math.round((h % 1) * 60);
     return String(hh).padStart(2, '0') + 'h' + (mm > 0 ? String(mm).padStart(2, '0') : '');
+}
+
+// "2026-04-14" → "lundi 14 avril" (pour push/notifs)
+function formatDateFR(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00');
+    return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+// "2026-04-14" → "lun. 14 avr." (compact, pour in-app patron)
+function formatDateShortFR(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00');
+    return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+// "2026-04-14" (lundi) → "sem. du 14 avr." (pour notification de publication)
+function formatWeekFR(weekStartStr) {
+    const d = new Date(weekStartStr + 'T12:00:00');
+    return 'sem. du ' + d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
 }
 
 
