@@ -86,14 +86,15 @@ let copyShiftsBuffer = []; // shifts modifiables avant confirmation
 // ── Modales utilitaires (remplacent confirm/prompt natifs — bloqués PWA iOS) ──
 
 function showConfirm(message, onConfirm, onCancel) {
+    const mob = window.innerWidth < 768;
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:' + (mob ? 'flex-end' : 'center') + ';justify-content:center;padding:' + (mob ? '0' : '20px');
     overlay.innerHTML =
-        '<div style="background:white;border-radius:14px;padding:24px;max-width:380px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.18)">' +
+        '<div style="background:white;border-radius:' + (mob ? '20px 20px 0 0' : '14px') + ';padding:' + (mob ? '24px 24px max(20px,env(safe-area-inset-bottom))' : '24px') + ';max-width:' + (mob ? '100%' : '380px') + ';width:100%;box-shadow:0 -4px 32px rgba(0,0,0,0.18)">' +
             '<p style="font-size:14px;color:#1a1a2e;line-height:1.5;margin-bottom:20px">' + message + '</p>' +
             '<div style="display:flex;gap:8px;justify-content:flex-end">' +
-                '<button id="_mc" style="padding:8px 16px;border-radius:8px;border:1px solid #e0e0e0;background:white;font-size:13px;cursor:pointer;color:#555">Annuler</button>' +
-                '<button id="_mo" style="padding:8px 16px;border-radius:8px;border:none;background:#e74c3c;color:white;font-size:13px;font-weight:600;cursor:pointer">Confirmer</button>' +
+                '<button id="_mc" style="padding:10px 18px;border-radius:8px;border:1px solid #e0e0e0;background:white;font-size:14px;cursor:pointer;color:#555">Annuler</button>' +
+                '<button id="_mo" style="padding:10px 18px;border-radius:8px;border:none;background:#e74c3c;color:white;font-size:14px;font-weight:600;cursor:pointer">Confirmer</button>' +
             '</div>' +
         '</div>';
     document.body.appendChild(overlay);
@@ -104,15 +105,16 @@ function showConfirm(message, onConfirm, onCancel) {
 }
 
 function showPrompt(message, placeholder, onConfirm) {
+    const mob = window.innerWidth < 768;
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:' + (mob ? 'flex-end' : 'center') + ';justify-content:center;padding:' + (mob ? '0' : '20px');
     overlay.innerHTML =
-        '<div style="background:white;border-radius:14px;padding:24px;max-width:380px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.18)">' +
+        '<div style="background:white;border-radius:' + (mob ? '20px 20px 0 0' : '14px') + ';padding:' + (mob ? '24px 24px max(20px,env(safe-area-inset-bottom))' : '24px') + ';max-width:' + (mob ? '100%' : '380px') + ';width:100%;box-shadow:0 -4px 32px rgba(0,0,0,0.18)">' +
             '<p style="font-size:14px;color:#1a1a2e;margin-bottom:12px">' + message + '</p>' +
-            '<input id="_pi" type="password" placeholder="' + placeholder + '" style="width:100%;padding:9px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;margin-bottom:16px">' +
+            '<input id="_pi" type="password" placeholder="' + placeholder + '" style="width:100%;padding:11px 14px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:16px;outline:none;margin-bottom:16px;box-sizing:border-box">' +
             '<div style="display:flex;gap:8px;justify-content:flex-end">' +
-                '<button id="_pc" style="padding:8px 16px;border-radius:8px;border:1px solid #e0e0e0;background:white;font-size:13px;cursor:pointer;color:#555">Annuler</button>' +
-                '<button id="_po" style="padding:8px 16px;border-radius:8px;border:none;background:#1a1a2e;color:white;font-size:13px;font-weight:600;cursor:pointer">Valider</button>' +
+                '<button id="_pc" style="padding:10px 18px;border-radius:8px;border:1px solid #e0e0e0;background:white;font-size:14px;cursor:pointer;color:#555">Annuler</button>' +
+                '<button id="_po" style="padding:10px 18px;border-radius:8px;border:none;background:#1a1a2e;color:white;font-size:14px;font-weight:600;cursor:pointer">Valider</button>' +
             '</div>' +
         '</div>';
     document.body.appendChild(overlay);
@@ -126,15 +128,16 @@ function showPrompt(message, placeholder, onConfirm) {
 }
 
 function showTextPrompt(message, placeholder, onConfirm) {
+    const mob = window.innerWidth < 768;
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:' + (mob ? 'flex-end' : 'center') + ';justify-content:center;padding:' + (mob ? '0' : '20px');
     overlay.innerHTML =
-        '<div style="background:white;border-radius:14px;padding:24px;max-width:380px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.18)">' +
+        '<div style="background:white;border-radius:' + (mob ? '20px 20px 0 0' : '14px') + ';padding:' + (mob ? '24px 24px max(20px,env(safe-area-inset-bottom))' : '24px') + ';max-width:' + (mob ? '100%' : '380px') + ';width:100%;box-shadow:0 -4px 32px rgba(0,0,0,0.18)">' +
             '<p style="font-size:14px;color:#1a1a2e;margin-bottom:12px">' + message + '</p>' +
-            '<input id="_ti" type="text" placeholder="' + placeholder + '" style="width:100%;padding:9px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;margin-bottom:16px">' +
+            '<input id="_ti" type="text" placeholder="' + placeholder + '" style="width:100%;padding:11px 14px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:16px;outline:none;margin-bottom:16px;box-sizing:border-box">' +
             '<div style="display:flex;gap:8px;justify-content:flex-end">' +
-                '<button id="_tc" style="padding:8px 16px;border-radius:8px;border:1px solid #e0e0e0;background:white;font-size:13px;cursor:pointer;color:#555">Annuler</button>' +
-                '<button id="_to" style="padding:8px 16px;border-radius:8px;border:none;background:#1a1a2e;color:white;font-size:13px;font-weight:600;cursor:pointer">Valider</button>' +
+                '<button id="_tc" style="padding:10px 18px;border-radius:8px;border:1px solid #e0e0e0;background:white;font-size:14px;cursor:pointer;color:#555">Annuler</button>' +
+                '<button id="_to" style="padding:10px 18px;border-radius:8px;border:none;background:#1a1a2e;color:white;font-size:14px;font-weight:600;cursor:pointer">Valider</button>' +
             '</div>' +
         '</div>';
     document.body.appendChild(overlay);
@@ -1803,7 +1806,8 @@ function onTouchEnd() {
     const snappedLeft  = Math.round(activeEl.offsetLeft  / SNAP) * SNAP;
     const snappedWidth = Math.max(SNAP, Math.round(activeEl.offsetWidth / SNAP) * SNAP);
     const maxW = TOTAL_HOURS * PX_PER_HOUR;
-    if (snappedLeft >= 0 && snappedLeft + snappedWidth <= maxW) {
+    const minL = (OPEN_TIME - START_HOUR) * PX_PER_HOUR;
+    if (snappedLeft >= minL && snappedLeft + snappedWidth <= maxW) {
         activeEl.style.left  = snappedLeft  + 'px';
         activeEl.style.width = snappedWidth + 'px';
         updateShiftText(activeEl);

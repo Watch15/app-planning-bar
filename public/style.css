@@ -453,6 +453,15 @@ a:hover { color: var(--accent-soft); }
 }
 #toast.visible { opacity: 1; }
 #toast.error   { background: var(--danger); border-color: var(--danger); }
+@media (max-width: 767px) {
+  #toast {
+    bottom: auto;
+    top: max(16px, env(safe-area-inset-top));
+    right: 16px; left: 16px;
+    text-align: center;
+    border-radius: 10px;
+  }
+}
 .conflict-toast {
   position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
   background: var(--warning); color: white;
