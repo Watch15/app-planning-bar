@@ -70,6 +70,7 @@ let currentSubView   = 'dashboard';              // 'dashboard' | 'agenda'
 let activeEl     = null;
 let activeAction = null;
 let startX, startLeft, startWidth;
+let _shiftWasDragged = false; // bloque le click après un drag/resize mouse
 
 let draggedStaff = null;
 
@@ -1137,6 +1138,7 @@ function createShiftEl(shift) {
     if (!shift.is_joker && shift.staff_id !== '__joker__') {
         el.addEventListener('click', e => {
             if (e.target.closest('.resizer') || e.target.closest('.shift-delete') || e.target.closest('.shift-resp-btn')) return;
+            if (_shiftWasDragged) { _shiftWasDragged = false; return; } // ignorer le click après un drag/resize
             if (isMobileDevice()) {
                 openMobileShiftEditModal(shift);
             } else {
@@ -1701,9 +1703,10 @@ async function removeStaffFromDay(rowId) {
 document.addEventListener('mousedown', e => {
     if (_touchActive) return; // ignore les mousedown synthétiques émis après touchstart sur Android
     const shiftEl = e.target.closest('.shift');
-    if (!shiftEl || e.target.closest('.shift-delete')) return;
+    if (!shiftEl || e.target.closest('.shift-delete') || e.target.closest('.shift-resp-btn')) return;
     refreshPxPerHour();
 
+    _shiftWasDragged = false; // réinitialiser au début de chaque interaction
     activeEl   = shiftEl;
     startX     = e.clientX;
     startLeft  = activeEl.offsetLeft;
@@ -1720,6 +1723,7 @@ document.addEventListener('mousedown', e => {
 
 function onMove(e) {
     if (!activeEl) return;
+    _shiftWasDragged = true; // un mouvement réel a eu lieu → bloquer le click suivant
     const deltaX = e.clientX - startX;
     const SNAP   = PX_PER_HOUR / 4; // 15 minutes
     const snapX  = Math.round(deltaX / SNAP) * SNAP;
