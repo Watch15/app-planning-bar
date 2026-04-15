@@ -1765,18 +1765,24 @@ app.get('/api/me/responsable-tonight', checkDB, requireAuth, async (req, res) =>
 app.get('/api/pointage-settings', checkDB, requireAuth, async (req, res) => {
     try {
         const s = await db.collection('settings').findOne({ key: 'pointage' }) || {};
-        res.json({ cutoff_hour: s.cutoff_hour ?? 9 }); // défaut 9h
+        res.json({
+            cutoff_hour:      s.cutoff_hour      ?? 9,  // fin de fenêtre (défaut 9h)
+            cutoff_open_hour: s.cutoff_open_hour ?? 0,  // début de fenêtre (défaut minuit)
+        });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.patch('/api/pointage-settings', checkDB, requireAdmin, async (req, res) => {
-    const { cutoff_hour } = req.body;
+    const { cutoff_hour, cutoff_open_hour } = req.body;
     if (cutoff_hour == null || cutoff_hour < 0 || cutoff_hour > 23)
         return res.status(400).json({ error: 'cutoff_hour entre 0 et 23 requis' });
+    const openHour = cutoff_open_hour != null ? parseInt(cutoff_open_hour) : 0;
+    if (openHour < 0 || openHour > 23)
+        return res.status(400).json({ error: 'cutoff_open_hour entre 0 et 23 requis' });
     try {
         await db.collection('settings').updateOne(
             { key: 'pointage' },
-            { $set: { key: 'pointage', cutoff_hour: parseInt(cutoff_hour) } },
+            { $set: { key: 'pointage', cutoff_hour: parseInt(cutoff_hour), cutoff_open_hour: openHour } },
             { upsert: true }
         );
         res.json({ message: 'Paramètres pointage mis à jour' });

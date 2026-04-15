@@ -3428,8 +3428,9 @@ async function loadDispoControl() {
         ]);
         if (!dispoRes.ok) return;
         const settings      = await dispoRes.json();
-        const ptSettings    = pointageRes.ok ? await pointageRes.json() : { cutoff_hour: 9 };
-        const cutoffHourVal = ptSettings.cutoff_hour ?? 9;
+        const ptSettings      = pointageRes.ok ? await pointageRes.json() : { cutoff_hour: 9, cutoff_open_hour: 0 };
+        const cutoffHourVal     = ptSettings.cutoff_hour      ?? 9;
+        const cutoffOpenHourVal = ptSettings.cutoff_open_hour ?? 0;
 
         const toggle = document.getElementById('dispo-toggle');
         const label  = document.getElementById('dispo-toggle-label');
@@ -3456,10 +3457,15 @@ async function loadDispoControl() {
                 tOpts += '<option value="' + val + '"' + (cdTime === val ? ' selected' : '') + '>' + lbl + '</option>';
             }
         }
-        // Options heure de bascule pointage (0h → 12h)
+        // Options fin de fenêtre pointage (0h → 12h)
         let cutoffOpts = '';
         for (let h = 0; h <= 12; h++) {
             cutoffOpts += '<option value="' + h + '"' + (cutoffHourVal === h ? ' selected' : '') + '>' + String(h).padStart(2,'0') + 'h00</option>';
+        }
+        // Options début de fenêtre pointage (0h = minuit, 16h → 23h)
+        let cutoffOpenOpts = '<option value="0"' + (cutoffOpenHourVal === 0 ? ' selected' : '') + '>Minuit (00h)</option>';
+        for (let h = 16; h <= 23; h++) {
+            cutoffOpenOpts += '<option value="' + h + '"' + (cutoffOpenHourVal === h ? ' selected' : '') + '>' + h + 'h00</option>';
         }
 
         panel.innerHTML =
@@ -3481,12 +3487,17 @@ async function loadDispoControl() {
                 '<div style="font-size:10px;color:#bbb;margin-top:3px">Laisser jour vide = vendredi 13h auto</div>' +
             '</div>' +
             '<div style="margin-bottom:10px;border-top:1px solid #f0f0f0;padding-top:10px">' +
-                '<div style="font-size:11px;color:#aaa;margin-bottom:4px">Fin de soirée / bascule pointage</div>' +
-                '<div style="display:flex;align-items:center;gap:6px">' +
+                '<div style="font-size:11px;color:#aaa;margin-bottom:6px">Fenêtre de saisie pointage</div>' +
+                '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
+                    '<span style="font-size:11px;color:#666">De</span>' +
+                    '<select id="pointage-cutoff-open" style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px">' +
+                        cutoffOpenOpts +
+                    '</select>' +
+                    '<span style="font-size:11px;color:#666">jusqu\'à</span>' +
                     '<select id="pointage-cutoff" style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px">' +
                         cutoffOpts +
                     '</select>' +
-                    '<span style="font-size:10px;color:#bbb">Saisie ouverte de minuit jusqu\'à cette heure</span>' +
+                    '<span style="font-size:10px;color:#bbb">le lendemain</span>' +
                 '</div>' +
             '</div>' +
             '<button id="dispo-save-advanced" style="width:100%;padding:6px;background:#1a1a2e;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer">Enregistrer</button>';
@@ -3505,7 +3516,8 @@ async function loadDispoControl() {
             const forceOpen   = document.getElementById('dispo-force-open').checked;
             const dayVal      = document.getElementById('dispo-deadline-day').value;
             const timeVal     = document.getElementById('dispo-deadline-time').value || '13:00';
-            const cutoffVal   = parseInt(document.getElementById('pointage-cutoff').value);
+            const cutoffVal     = parseInt(document.getElementById('pointage-cutoff').value);
+            const cutoffOpenVal = parseInt(document.getElementById('pointage-cutoff-open').value);
             let customDeadline = null;
             if (dayVal !== '') {
                 const [hh, mm] = timeVal.split(':').map(Number);
@@ -3525,7 +3537,7 @@ async function loadDispoControl() {
                 fetch('/api/pointage-settings', {
                     credentials: 'include', method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ cutoff_hour: cutoffVal }),
+                    body: JSON.stringify({ cutoff_hour: cutoffVal, cutoff_open_hour: cutoffOpenVal }),
                 }),
             ]);
             panel.style.display = 'none';
