@@ -514,6 +514,7 @@ async function loadDayDetail(dateStr) {
     } catch { /* silencieux */ }
 
     buildDisplayedStaff();
+    extendDisplayForRealHours();
     renderTimelineHeader();
     renderBody();
     renderStats();
@@ -951,6 +952,22 @@ function renderTabs(list) {
 }
 
 // ── Planning (réutilisé de la version précédente) ─────────────────────────────
+
+function extendDisplayForRealHours() {
+    // Étend START_HOUR / END_HOUR / TOTAL_HOURS si des heures réelles dépassent les bornes visuelles.
+    // Appelée après buildDisplayedStaff() et avant renderTimelineHeader().
+    // OPEN_TIME / CLOSE_TIME / snap ne sont PAS modifiés.
+    // applyVenueHours() remet les valeurs d'origine au prochain changement de jour/venue.
+    let minStart = START_HOUR;
+    let maxEnd   = END_HOUR;
+    currentShifts.forEach(s => {
+        if (s.real_start != null && s.real_start < minStart) minStart = s.real_start;
+        if (s.real_end   != null && s.real_end   > maxEnd)   maxEnd   = s.real_end;
+    });
+    if (minStart < START_HOUR) START_HOUR  = Math.floor(minStart);
+    if (maxEnd   > END_HOUR)   END_HOUR    = Math.ceil(maxEnd + 0.5);
+    TOTAL_HOURS = END_HOUR - START_HOUR;
+}
 
 function buildDisplayedStaff() {
     const seen = new Map();
