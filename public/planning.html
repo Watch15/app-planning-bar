@@ -333,7 +333,10 @@
     </div>
     <div class="header-user">
         <div class="user-avatar-sm" id="staff-avatar">?</div>
-        <button class="btn-notif" id="btn-notif" title="Activer les notifications" onclick="togglePushSubscription()">🔔</button>
+        <button class="btn-notif" id="btn-notif" title="Activer les notifications" onclick="togglePushSubscription()" style="display:flex;align-items:center;gap:5px;padding:0 10px;width:auto;font-size:13px">
+            <span style="font-size:15px">🔔</span>
+            <span id="btn-notif-label" style="font-size:11px;font-weight:600;letter-spacing:0.2px">Notifs</span>
+        </button>
         <button class="btn-logout" onclick="logout()">Déconnexion</button>
     </div>
 </div>
@@ -1194,6 +1197,8 @@ async function initPushButton() {
         if (_pushSubscription) {
             btn.classList.add('active');
             btn.title = 'Notifications activées — cliquer pour désactiver';
+            const lbl = document.getElementById('btn-notif-label');
+            if (lbl) lbl.textContent = 'Activé';
         }
     } catch { /* silencieux */ }
 }
@@ -1215,6 +1220,8 @@ async function togglePushSubscription() {
             _pushSubscription = null;
             btn.classList.remove('active');
             btn.title = 'Activer les notifications';
+            const lbl = document.getElementById('btn-notif-label');
+            if (lbl) lbl.textContent = 'Notifs';
         } catch (e) {
             console.error('Erreur désabonnement push:', e);
         }
@@ -1254,6 +1261,8 @@ async function togglePushSubscription() {
         if (subRes.ok) {
             btn.classList.add('active');
             btn.title = 'Notifications activées — cliquer pour désactiver';
+            const lbl = document.getElementById('btn-notif-label');
+            if (lbl) lbl.textContent = 'Activé';
         }
     } catch (e) {
         console.error('Erreur abonnement push:', e);

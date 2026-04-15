@@ -772,7 +772,8 @@ function renderSidebar() {
                 ? '<span class="staff-role-badge ' + firstRole.type + '">' + firstRole.name + '</span>'
                 : '') +
             '<div class="color-controls">' +
-                '<input type="color" class="color-picker" value="' + staff.color + '" title="Choisir une couleur">' +
+                '<input type="color" class="color-picker" value="' + staff.color + '" title="Couleur du shift">' +
+                '<input type="color" class="color-picker font-color-picker" value="' + (staff.name_color || staff.color) + '" title="Couleur du texte" style="opacity:0.65">' +
                 '<button class="btn-auto-color">Auto</button>' +
             '</div>';
 
@@ -793,6 +794,29 @@ function renderSidebar() {
         const picker = card.querySelector('.color-picker');
         picker.addEventListener('change', async e => { e.stopPropagation(); await updateStaffColor(staff, e.target.value, card); });
         picker.addEventListener('mousedown', e => e.stopPropagation());
+
+        const fontPicker = card.querySelector('.font-color-picker');
+        fontPicker.addEventListener('change', async e => {
+            e.stopPropagation();
+            const newNameColor = e.target.value !== staff.color ? e.target.value : null;
+            try {
+                const res = await fetch('/api/staff/' + staff._id, {
+                    method: 'PATCH', credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name_color: newNameColor }),
+                });
+                if (!res.ok) throw new Error((await res.json()).error);
+                staff.name_color = newNameColor;
+                const nameEl = card.querySelector('.staff-info-name');
+                if (nameEl) nameEl.style.color = newNameColor || '';
+                document.querySelectorAll('.shift').forEach(el => {
+                    if (el.dataset.staffId === String(staff._id)) {
+                        el.style.color = newNameColor || '';
+                    }
+                });
+            } catch (err) { showToast(err.message, true); }
+        });
+        fontPicker.addEventListener('mousedown', e => e.stopPropagation());
 
         const btnAuto = card.querySelector('.btn-auto-color');
         btnAuto.addEventListener('click', async e => {
@@ -3990,6 +4014,11 @@ async function updateStaffColor(staff, newColor, card) {
     }
     staff.color = newColor;
     card.querySelector('.staff-dot').style.background = newColor;
+    // Synchroniser la valeur du font-color-picker si pas de couleur texte custom
+    if (!staff.name_color) {
+        const fp = card.querySelector('.font-color-picker');
+        if (fp) fp.value = newColor;
+    }
     const newTextColor = textColorFor(newColor);
     document.querySelectorAll('.shift').forEach(el => {
         const sd = currentShifts.find(s => String(s._id) === el.dataset.id);
@@ -4344,12 +4373,21 @@ async function openNotifPanel() {
             list.innerHTML = notifs.map(n => {
                 const date = new Date(n.created_at);
                 const timeAgo = formatTimeAgo(date);
+                const msg = n.message || '';
+                // Icône selon le contenu du message
+                let icon = '📢';
+                if (/dispo|disponib/i.test(msg))      icon = '📋';
+                else if (/pointage|heure|saisie/i.test(msg)) icon = '⏱';
+                else if (/publié|planning/i.test(msg)) icon = '📅';
+                else if (/extra|hors planning/i.test(msg)) icon = '➕';
+                else if (/connexion|login/i.test(msg)) icon = '🔑';
                 return '<div class="notif-item' + (n.read ? '' : ' unread') + '">' +
-                    '<div class="notif-dot' + (n.read ? ' read' : '') + '"></div>' +
+                    '<div class="notif-icon">' + icon + '</div>' +
                     '<div class="notif-text">' +
-                        '<div>' + escapeHtml(n.message) + '</div>' +
+                        '<div class="notif-msg">' + escapeHtml(msg) + '</div>' +
                         '<div class="notif-time">' + timeAgo + '</div>' +
                     '</div>' +
+                    (!n.read ? '<div class="notif-dot"></div>' : '') +
                 '</div>';
             }).join('');
         }

@@ -96,6 +96,19 @@
             border-color: var(--warning);
             background: #fffbf0;
         }
+        .shift-card.validated-card {
+            border-color: #6EE7B7;
+            background: #f0fdf9;
+        }
+        .shift-card.validated-card .shift-header {
+            background: #ECFDF5;
+        }
+        .validated-badge {
+            font-size: 10px; font-weight: 700;
+            color: #065f46; background: #d1fae5;
+            padding: 2px 8px; border-radius: 6px;
+            border: 1px solid #6EE7B7; white-space: nowrap;
+        }
 
         .shift-header {
             display: flex; align-items: center; gap: 10px;
@@ -162,9 +175,10 @@
             padding: 4px 10px; border-radius: 8px;
             white-space: nowrap; flex-shrink: 0; align-self: flex-end; margin-bottom: 2px;
         }
-        .ecart-badge.pos  { background: var(--warning-bg); color: var(--warning-text); }
-        .ecart-badge.neg  { background: var(--danger-bg); color: #991b1b; }
-        .ecart-badge.zero { background: var(--success-bg); color: var(--success-text); }
+        /* pos = plus d'heures que prévu (vert), neg = moins (orange), zero = exact (gris) */
+        .ecart-badge.pos  { background: #D1FAE5; color: #065f46; }
+        .ecart-badge.neg  { background: #FFF7ED; color: #9a3412; border: 1px solid #fed7aa; }
+        .ecart-badge.zero { background: #f1f2f4; color: #8892a4; }
 
         .btn-save {
             padding: 0 18px; height: 48px;
@@ -563,7 +577,8 @@ async function loadShifts() {
 
 function buildShiftCard(shift) {
     const card = document.createElement('div');
-    card.className = 'shift-card' + (shift.extra ? ' extra-card' : '');
+    const isValidated = shift.real_start != null && shift.real_end != null;
+    card.className = 'shift-card' + (shift.extra ? ' extra-card' : (isValidated ? ' validated-card' : ''));
     card.dataset.id = String(shift._id);
 
     const realStartVal = shift.real_start != null ? fmtH(shift.real_start) : '';
@@ -585,6 +600,7 @@ function buildShiftCard(shift) {
             (shift.extra
                 ? '<span class="extra-badge">Hors planning</span>'
                 : '<span class="shift-planned">' + plannedLabel + '</span>') +
+            (isValidated ? '<span class="validated-badge">✓ Validé</span>' : '') +
         '</div>' +
         '<div class="shift-body">' +
             '<div class="time-group">' +
@@ -684,6 +700,16 @@ function buildShiftCard(shift) {
             if (!res.ok) throw new Error(d.error);
             btnSave.textContent = '✓ Enregistré';
             btnSave.className   = 'btn-save saved';
+            // Passer la carte en état validé
+            card.classList.remove('extra-card');
+            card.classList.add('validated-card');
+            const hdr = card.querySelector('.shift-header');
+            if (hdr && !hdr.querySelector('.validated-badge')) {
+                const vBadge = document.createElement('span');
+                vBadge.className = 'validated-badge';
+                vBadge.textContent = '✓ Validé';
+                hdr.appendChild(vBadge);
+            }
             showToast(shift.staff_name + ' — heures enregistrées');
         } catch (e) {
             showToast(e.message, true);
