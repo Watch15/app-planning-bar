@@ -208,10 +208,11 @@
         .extra-row .time-input { flex: 1; }
 
         .staff-suggestions {
+            position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 50;
             background: var(--light-card);
             border: 1.5px solid var(--light-border); border-radius: 8px;
             max-height: 180px; overflow-y: auto; display: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.14);
         }
         .staff-suggestion-item {
             padding: 9px 12px; font-size: 13px; cursor: pointer;
@@ -764,7 +765,7 @@ function initExtraForm() {
             suggestions.appendChild(libre);
         }
 
-        suggestions.style.display = '';
+        suggestions.style.display = 'block';
     }
 
     searchInput.addEventListener('focus', () => {
