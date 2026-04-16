@@ -6,12 +6,54 @@ const bcrypt  = require('bcryptjs');
 const session = require('express-session');
 const crypto  = require('crypto');
 const webpush = require('web-push');
+const helmet  = require('helmet');
+const morgan  = require('morgan');
+
+// Sentry — initialisation conditionnelle (ne se charge que si SENTRY_DSN fourni).
+// Doit être importé AVANT de créer l'app Express pour que l'auto-instrumentation
+// capture correctement les handlers.
+const Sentry = process.env.SENTRY_DSN ? require('@sentry/node') : null;
+if (Sentry) {
+    Sentry.init({
+        dsn:              process.env.SENTRY_DSN,
+        environment:      process.env.NODE_ENV || 'development',
+        tracesSampleRate: Number(process.env.SENTRY_TRACES || 0.1),
+    });
+    console.log('✅ Sentry activé');
+}
 
 const app = express();
 
 // Derrière le reverse proxy Railway : nécessaire pour que cookies `secure:true`
 // soient émis et que req.ip reflète l'IP client (pas celle du proxy).
 if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1);
+
+// Sécurité — headers HTTP (helmet). CSP adaptée au stack : vanilla JS sans
+// bundler, Google Fonts, Service Worker, pas de CDN externe.
+// `unsafe-inline` sur style/script reste nécessaire tant qu'on n'a pas extrait
+// les <style>/<script> inline des HTML et les style="" des templates JS.
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc:  ["'self'"],
+            scriptSrc:   ["'self'", "'unsafe-inline'"],
+            styleSrc:    ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+            fontSrc:     ["'self'", 'https://fonts.gstatic.com', 'data:'],
+            imgSrc:      ["'self'", 'data:', 'blob:'],
+            connectSrc:  ["'self'"],
+            workerSrc:   ["'self'"],
+            manifestSrc: ["'self'"],
+            objectSrc:   ["'none'"],
+            frameAncestors: ["'none'"],
+        },
+    },
+    // HSTS géré par Railway (proxy TLS) — on laisse helmet le poser quand même en prod.
+    crossOriginEmbedderPolicy: false,  // évite de casser certains subresources PWA
+}));
+
+// Logs HTTP structurés (morgan). 'combined' en prod (format standard Apache),
+// 'dev' en local (colorisé, concis).
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 app.use(express.json());
 
@@ -2332,6 +2374,33 @@ app.get('/', (req, res) => {
     if (!req.session?.user) return res.redirect('/login.html');
     if (req.session.user.role === 'etablissement') return res.redirect('/pointage.html');
     res.redirect('/index.html');
+});
+
+// ── Healthcheck ──────────────────────────────────────────────────────────────
+// Public — utilisé par Railway (liveness) et monitoring externe.
+// Ne révèle aucune info sensible : état base + uptime.
+app.get('/health', async (req, res) => {
+    let dbOk = false;
+    try {
+        if (db) { await db.command({ ping: 1 }); dbOk = true; }
+    } catch (_) {}
+    res.status(dbOk ? 200 : 503).json({
+        ok:     dbOk,
+        db:     dbOk,
+        uptime: Math.round(process.uptime()),
+    });
+});
+
+// ── Sentry error handler (après toutes les routes) ───────────────────────────
+if (Sentry) {
+    Sentry.setupExpressErrorHandler(app);
+}
+
+// Fallback : log les erreurs non capturées et renvoie 500 générique
+app.use((err, req, res, next) => {
+    console.error('❌ Unhandled error on', req.method, req.url, ':', err.message);
+    if (res.headersSent) return next(err);
+    res.status(500).json({ error: 'Erreur interne' });
 });
 
 // ── Lancement ─────────────────────────────────────────────────────────────────

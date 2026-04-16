@@ -30,12 +30,25 @@ async function main() {
 
         await db.collection('establishments').createIndex({ id: 1 }, { unique: true });
         await db.collection('shifts').createIndex({ establishment_id: 1, date: 1 });
-        await db.collection('shifts').createIndex({ staff_id: 1 });
-        await db.collection('users').createIndex({ email: 1 }, { unique: true });
+        await db.collection('shifts').createIndex({ staff_id: 1, date: 1 });
+        await db.collection('users').createIndex({ email: 1 }, { unique: true, sparse: true });
+        await db.collection('users').createIndex({ phone: 1 }, { sparse: true });
+        await db.collection('users').createIndex({ invite_token: 1 }, { sparse: true });
+        await db.collection('users').createIndex({ reset_token: 1 }, { sparse: true });
+        await db.collection('users').createIndex({ staff_id: 1 }, { sparse: true });
+        await db.collection('sessions').createIndex({ sid: 1 }, { unique: true });
         await db.collection('sessions').createIndex({ expires: 1 }, { expireAfterSeconds: 0 });
-        console.log('✅ Index créés');
         await db.collection('availabilities').createIndex({ staff_id: 1, date: 1 });
+        await db.collection('availabilities').createIndex({ date: 1, status: 1 });
         await db.collection('availabilities').createIndex({ status: 1 });
+        await db.collection('push_subscriptions').createIndex({ user_id: 1 });
+        await db.collection('notifications').createIndex({ user_id: 1, read: 1, created_at: -1 });
+        await db.collection('shift_swaps').createIndex({ status: 1, created_at: -1 });
+        await db.collection('shift_swaps').createIndex({ from_staff_id: 1 });
+        await db.collection('shift_swaps').createIndex({ to_staff_id: 1 });
+        await db.collection('settings').createIndex({ key: 1 }, { unique: true });
+        await db.collection('roles').createIndex({ type: 1, name: 1 });
+        console.log('✅ Index créés');
         // Paramètres par défaut : saisie ouverte
         await db.collection('settings').updateOne(
             { key: 'dispo' },

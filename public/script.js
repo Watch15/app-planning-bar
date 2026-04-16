@@ -1010,7 +1010,7 @@ function renderTabs(list) {
         const btn = document.createElement('button');
         btn.className  = 'venue-tab' + (i === 0 ? ' active' : '');
         btn.dataset.id = v.id;
-        btn.innerHTML  = `${v.name} <span class="badge">${v.type === 'pub' ? 'Pub' : 'Resto'}</span>`;
+        btn.innerHTML  = `${escapeHtml(v.name)} <span class="badge">${v.type === 'pub' ? 'Pub' : 'Resto'}</span>`;
         btn.addEventListener('click', async () => {
             document.querySelectorAll('.venue-tab').forEach(t => t.classList.remove('active'));
             btn.classList.add('active');
@@ -1091,11 +1091,11 @@ function createStaffRow(staff) {
     label.className = 'row-label';
     label.innerHTML = staff.isJoker
         ? `<span class="joker-dot">?</span>
-           <span style="font-style:italic;color:#888">${staff.name}</span>
-           <button class="row-delete" onclick="removeStaffFromDay('${staff._id}')">×</button>`
-        : `<span class="row-label-dot" style="background:${staff.color}"></span>
-           <span>${staff.name}</span>
-           <button class="row-delete" onclick="removeStaffFromDay('${staff._id}')">×</button>`;
+           <span style="font-style:italic;color:#888">${escapeHtml(staff.name)}</span>
+           <button class="row-delete" onclick="removeStaffFromDay('${escapeHtml(staff._id)}')">×</button>`
+        : `<span class="row-label-dot" style="background:${escapeHtml(staff.color)}"></span>
+           <span>${escapeHtml(staff.name)}</span>
+           <button class="row-delete" onclick="removeStaffFromDay('${escapeHtml(staff._id)}')">×</button>`;
 
     const rail = document.createElement('div');
     rail.className      = 'row-rail';
@@ -2421,8 +2421,8 @@ function renderAgenda() {
                 pill.className = 'agenda-pill';
                 pill.style.background = shift.color + '22';
                 pill.innerHTML = `
-                    <span class="agenda-pill-dot" style="background:${shift.color}"></span>
-                    <span style="color:${shift.color}">${shift.staff_name}</span>
+                    <span class="agenda-pill-dot" style="background:${escapeHtml(shift.color)}"></span>
+                    <span style="color:${escapeHtml(shift.color)}">${escapeHtml(shift.staff_name)}</span>
                     <span style="color:#888;font-weight:400">${fmtA(dispStart)}-${fmtA(dispEnd)}</span>`;
                 pills.appendChild(pill);
             });
@@ -2599,10 +2599,10 @@ async function renderEstablishmentsList() {
                   '<div style="display:flex;flex-wrap:wrap;gap:3px">' +
                   allGroups.map(g =>
                       '<button type="button" class="estab-group-btn' + (estabGroups.includes(g) ? ' active' : '') + '" ' +
-                      'data-group="' + g + '" style="padding:2px 8px;border-radius:20px;border:1.5px solid ' +
+                      'data-group="' + escapeHtml(g) + '" style="padding:2px 8px;border-radius:20px;border:1.5px solid ' +
                       (estabGroups.includes(g) ? '#534AB7' : '#e0e0e0') + ';background:' +
                       (estabGroups.includes(g) ? '#f0effe' : 'white') + ';color:' +
-                      (estabGroups.includes(g) ? '#534AB7' : '#888') + ';font-size:11px;cursor:pointer">' + g + '</button>'
+                      (estabGroups.includes(g) ? '#534AB7' : '#888') + ';font-size:11px;cursor:pointer">' + escapeHtml(g) + '</button>'
                   ).join('') + '</div>' +
                   // Champ texte pour créer un nouveau groupe
                   '<input type="text" class="estab-new-group-input" placeholder="+ nouveau groupe" style="margin-top:4px;font-size:11px;border:1px solid #e0e0e0;border-radius:6px;padding:3px 7px;width:100%">' +
@@ -2611,17 +2611,17 @@ async function renderEstablishmentsList() {
 
             row.innerHTML =
                 '<div class="staff-manage-info" style="flex:1;gap:6px">' +
-                    '<input type="text" class="estab-name-input" value="' + e.name + '" style="font-size:13px;font-weight:600;border:1px solid #e0e0e0;border-radius:6px;padding:5px 8px;width:100%">' +
+                    '<input type="text" class="estab-name-input" value="' + escapeHtml(e.name) + '" style="font-size:13px;font-weight:600;border:1px solid #e0e0e0;border-radius:6px;padding:5px 8px;width:100%">' +
                     '<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">' +
                         '<select class="estab-type-select" style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px;flex:0.8">' +
                             '<option value="bar"' +        (e.type === 'bar'        ? ' selected' : '') + '>Bar</option>' +
                             '<option value="restaurant"' + (e.type === 'restaurant' ? ' selected' : '') + '>Restaurant</option>' +
                         '</select>' +
                         '<label style="display:flex;flex-direction:column;gap:2px;flex:1;font-size:10px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.3px">Ouverture' +
-                            '<input type="time" class="estab-open-input"  value="' + (e.open_time  || '') + '" style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px;font-weight:400;text-transform:none;letter-spacing:0;color:#1a1a2e">' +
+                            '<input type="time" class="estab-open-input"  value="' + escapeHtml(e.open_time  || '') + '" style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px;font-weight:400;text-transform:none;letter-spacing:0;color:#1a1a2e">' +
                         '</label>' +
                         '<label style="display:flex;flex-direction:column;gap:2px;flex:1;font-size:10px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.3px">Fermeture' +
-                            '<input type="time" class="estab-close-input" value="' + (e.close_time || '') + '" style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px;font-weight:400;text-transform:none;letter-spacing:0;color:#1a1a2e">' +
+                            '<input type="time" class="estab-close-input" value="' + escapeHtml(e.close_time || '') + '" style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px;font-weight:400;text-transform:none;letter-spacing:0;color:#1a1a2e">' +
                         '</label>' +
                     '</div>' +
                     groupChipsEstab +
@@ -2792,12 +2792,12 @@ async function renderAccountsList() {
             else             { statusLabel = user.active ? 'Actif' : 'Invitation envoyée'; statusBadge = user.active ? 'linked' : 'unlinked'; }
 
             row.innerHTML =
-                '<span class="staff-manage-dot" style="background:' + color + '"></span>' +
+                '<span class="staff-manage-dot" style="background:' + escapeHtml(color) + '"></span>' +
                 '<div class="staff-manage-info" style="flex:1">' +
-                    '<div style="font-size:13px;font-weight:600;color:#333">' + (user.name || '—') + '</div>' +
-                    '<div style="font-size:12px;color:#999">' + (user.email || user.phone || '—') + '</div>' +
+                    '<div style="font-size:13px;font-weight:600;color:#333">' + escapeHtml(user.name || '—') + '</div>' +
+                    '<div style="font-size:12px;color:#999">' + escapeHtml(user.email || user.phone || '—') + '</div>' +
                 '</div>' +
-                '<span class="staff-login-badge ' + statusBadge + '" style="margin-right:8px">' + statusLabel + '</span>' +
+                '<span class="staff-login-badge ' + statusBadge + '" style="margin-right:8px">' + escapeHtml(statusLabel) + '</span>' +
                 (currentUser.role === 'patron' && String(user._id) !== currentUser._id
                     ? '<button class="staff-manage-save" data-action="change-role" style="background:#fff9e6;border-color:#f39c12;color:#d68910">Rôle</button>'
                     : '') +
@@ -3381,10 +3381,10 @@ function _renderSwapCard(swap) {
         const div = document.createElement('div');
         div.style.cssText = 'flex:1;min-width:200px;background:white;border:1px solid #eee;border-radius:8px;padding:10px 12px';
         div.innerHTML =
-            '<div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">' + title + '</div>' +
-            '<div style="font-weight:700;font-size:14px;color:#222">' + (staffName || '—') + '</div>' +
+            '<div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">' + escapeHtml(title) + '</div>' +
+            '<div style="font-weight:700;font-size:14px;color:#222">' + (staffName ? escapeHtml(staffName) : '—') + '</div>' +
             '<div style="font-size:12px;color:#555;margin-top:4px">' + _fmtSwapDateFR(date) + ' · ' + _fmtSwapTime(st) + ' → ' + _fmtSwapTime(et) + '</div>' +
-            '<div style="font-size:11px;color:#888;margin-top:2px">' + _estabName(estabId) + '</div>';
+            '<div style="font-size:11px;color:#888;margin-top:2px">' + escapeHtml(_estabName(estabId)) + '</div>';
         return div;
     };
 
@@ -3838,10 +3838,10 @@ function renderRolesList() {
                 '<span class="role-type-badge ' + role.type + '">' +
                     (role.type === 'responsable' ? 'Responsable' : 'Informatif') +
                 '</span>' +
-                '<span style="flex:1;font-size:13px;font-weight:600;color:#333">' + role.name + '</span>' +
-                '<button class="staff-manage-delete" data-id="' + role._id + '">×</button>';
+                '<span style="flex:1;font-size:13px;font-weight:600;color:#333">' + escapeHtml(role.name) + '</span>' +
+                '<button class="staff-manage-delete" data-id="' + escapeHtml(role._id) + '">×</button>';
             row.querySelector('.staff-manage-delete').addEventListener('click', () => {
-                showConfirm('Supprimer le rôle <strong>' + role.name + '</strong> ?', async () => {
+                showConfirm('Supprimer le rôle <strong>' + escapeHtml(role.name) + '</strong> ?', async () => {
                     try {
                         const res = await fetch('/api/roles/' + role._id, { credentials: 'include', method: 'DELETE' });
                         if (!res.ok) throw new Error((await res.json()).error);
@@ -4047,21 +4047,21 @@ function renderStaffManageList() {
               '<div style="display:flex;flex-wrap:wrap;gap:4px">' +
               allGroups.map(g =>
                   '<button type="button" class="staff-group-btn' + (staffGroups.includes(g) ? ' active' : '') + '" ' +
-                  'data-group="' + g + '" style="padding:3px 10px;border-radius:20px;border:1.5px solid ' +
+                  'data-group="' + escapeHtml(g) + '" style="padding:3px 10px;border-radius:20px;border:1.5px solid ' +
                   (staffGroups.includes(g) ? '#534AB7' : '#e0e0e0') + ';background:' +
                   (staffGroups.includes(g) ? '#f0effe' : 'white') + ';color:' +
-                  (staffGroups.includes(g) ? '#534AB7' : '#888') + ';font-size:11px;cursor:pointer">' + g + '</button>'
+                  (staffGroups.includes(g) ? '#534AB7' : '#888') + ';font-size:11px;cursor:pointer">' + escapeHtml(g) + '</button>'
               ).join('') + '</div></div>'
             : '';
 
         row.innerHTML =
-            '<input type="color" class="staff-manage-color" value="' + staff.color + '" title="Changer la couleur">' +
+            '<input type="color" class="staff-manage-color" value="' + escapeHtml(staff.color) + '" title="Changer la couleur">' +
             '<div class="staff-manage-info">' +
-                '<input type="text"  class="staff-manage-name-input"  value="' + staff.name + '" placeholder="Nom">' +
-                '<input type="email" class="staff-manage-email-input" value="' + (staff.email || '') + '" placeholder="email (pour le login futur)">' +
+                '<input type="text"  class="staff-manage-name-input"  value="' + escapeHtml(staff.name) + '" placeholder="Nom">' +
+                '<input type="email" class="staff-manage-email-input" value="' + escapeHtml(staff.email || '') + '" placeholder="email (pour le login futur)">' +
                 '<div style="display:flex;align-items:center;gap:6px;margin-top:4px">' +
                     '<span style="font-size:11px;color:#aaa">Couleur nom :</span>' +
-                    '<input type="color" class="staff-manage-name-color" value="' + (staff.name_color || staff.color) + '" title="Couleur du nom">' +
+                    '<input type="color" class="staff-manage-name-color" value="' + escapeHtml(staff.name_color || staff.color) + '" title="Couleur du nom">' +
                     '<button type="button" class="staff-name-color-reset" style="font-size:10px;color:#bbb;border:1px solid #e0e0e0;background:white;border-radius:4px;padding:2px 6px;cursor:pointer" title="Utiliser la couleur du shift">Reset</button>' +
                 '</div>' +
                 '<div class="venue-pref-row">' + venueButtons + '</div>' +
@@ -4351,7 +4351,7 @@ function showToast(msg, isError = false) {
 
 function showConflictAlert(warnings, staffName) {
     const el = document.getElementById('conflict-toast');
-    el.innerHTML = `⚠️ <strong>${staffName}</strong> — ${warnings.map(w => w.message).join('<br>')}`;
+    el.innerHTML = `⚠️ <strong>${escapeHtml(staffName)}</strong> — ${warnings.map(w => escapeHtml(w.message)).join('<br>')}`;
     el.classList.add('visible');
     clearTimeout(conflictTimer);
     conflictTimer = setTimeout(() => el.classList.remove('visible'), 5000);
@@ -4684,7 +4684,13 @@ function formatTimeAgo(date) {
 }
 
 function escapeHtml(str) {
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 // listeners modale notifs — attachés dans initNotifListeners()
