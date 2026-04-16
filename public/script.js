@@ -2331,14 +2331,17 @@ function renderDashboard() {
     table.appendChild(tbody);
     container.appendChild(table);
 
+    const isJokerShift   = s => s.is_joker || s.staff_id === '__joker__';
     const allShifts      = Object.values(weekFullData).flat();
-    const totalHSemaine  = allShifts.reduce((a, s) => {
+    const realShifts     = allShifts.filter(s => !isJokerShift(s));
+    const totalHSemaine  = realShifts.reduce((a, s) => {
         const start = s.real_start != null ? s.real_start : s.start_time;
         const end   = s.real_end   != null ? s.real_end   : s.end_time;
         return a + (end - start);
     }, 0);
     const joursStaffes = Object.values(weekFullData).filter(arr => arr.length > 0).length;
-    const nbStaff      = staffMap.size;
+    // Exclut le(s) entrée(s) joker dans staffMap pour ne compter que les vrais employés
+    const nbStaff      = Array.from(staffMap.keys()).filter(id => id !== '__joker__').length;
 
     const fmtTotalH = h => {
         const hrs  = Math.floor(h);
@@ -4303,12 +4306,17 @@ async function updateStaffColor(staff, newColor, card) {
 function renderStats() {
     const bar = document.getElementById('stats-bar');
     bar.innerHTML = '';
-    const totalH  = currentShifts.reduce((a, s) => {
+    // Jokers = shifts non encore assignés à une personne. On les exclut des
+    // heures cumulées ET du nombre de staff pour que « Moy. par personne »
+    // reflète bien les personnes réellement planifiées.
+    const isJokerShift = s => s.is_joker || s.staff_id === '__joker__';
+    const realShifts   = currentShifts.filter(s => !isJokerShift(s));
+    const totalH  = realShifts.reduce((a, s) => {
         const start = s.real_start != null ? s.real_start : s.start_time;
         const end   = s.real_end   != null ? s.real_end   : s.end_time;
         return a + (end - start);
     }, 0);
-    const nbStaff = displayedStaff.length;
+    const nbStaff = displayedStaff.filter(s => !s.isJoker).length;
     const fmtH = h => {
         const hrs  = Math.floor(h);
         const mins = Math.round((h - hrs) * 60);
