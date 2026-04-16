@@ -573,8 +573,18 @@ async function init() {
     startStaffAutoRefresh(from, to, user);
 
     // Vérifier si le staff est responsable de soirée ce soir → onglet Pointage
+    // Avant l'heure de bascule (ex: 9h) on considère encore la date "d'hier" pour
+    // que le responsable puisse pointer le lendemain matin.
     try {
-        const todayStr = toDateStr(new Date());
+        let cutoffH = 9;
+        try {
+            const cr = await fetch('/api/pointage-settings', { credentials: 'include' });
+            if (cr.ok) { const cs = await cr.json(); cutoffH = cs.cutoff_hour ?? 9; }
+        } catch { /* défaut */ }
+        const now = new Date();
+        const refDate = new Date(now);
+        if (now.getHours() < cutoffH) refDate.setDate(now.getDate() - 1);
+        const todayStr = toDateStr(refDate);
         const respRes  = await fetch('/api/me/responsable-tonight?date=' + todayStr, { credentials: 'include' });
         if (respRes.ok) {
             const resp = await respRes.json();

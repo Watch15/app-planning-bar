@@ -52,35 +52,35 @@ Inter uniquement. Échelle : 11px (labels caps) → 13px (corps) → 14–15px (
 | I-07 | Jokers sans légende — un nouveau patron ne comprend pas | Moyen |
 
 ### 2.4 planning.html (Staff)
-| # | Problème | Sévérité |
-|---|---|---|
-| P-01 | Collègues en pastilles sans nom au tap mobile | Moyen |
-| P-02 | Delta heures uniquement textuel, pas de couleur sur mobile portrait | Faible |
-| P-03 | Onglet ⏱ Pointage actif seulement le jour J — disparu le lendemain | Haut |
-| P-04 | Bouton fixe "Envoyer" dispos couvre le dernier jour sur petits écrans | Moyen |
-| P-05 | Pas de confirmation visuelle post-envoi dispos au-delà du toast | Faible |
-| P-06 | Aucun moyen pour le staff de voir les shifts des semaines passées | Moyen |
+| # | Problème | Sévérité | Statut |
+|---|---|---|---|
+| P-01 | Collègues en pastilles sans nom au tap mobile | Moyen | |
+| P-02 | Delta heures uniquement textuel, pas de couleur sur mobile portrait | Faible | |
+| ~~P-03~~ | ~~Onglet ⏱ Pointage actif seulement le jour J — disparu le lendemain~~ | Haut | ✅ Done — date de référence = date active (cutoff_hour) |
+| P-04 | Bouton fixe "Envoyer" dispos couvre le dernier jour sur petits écrans | Moyen | |
+| P-05 | Pas de confirmation visuelle post-envoi dispos au-delà du toast | Faible | |
+| P-06 | Aucun moyen pour le staff de voir les shifts des semaines passées | Moyen | |
 
 ### 2.5 pointage.html
-| # | Problème | Sévérité |
-|---|---|---|
-| PT-01 | Shifts déjà validés sans état visuel "terminé" | Haut |
-| PT-02 | Impossible de modifier une heure réelle déjà saisie depuis pointage.html | Haut |
-| PT-03 | Pas de total des heures du soir affiché en bas de page | Moyen |
-| PT-04 | Écart badge sans couleur différenciée (positif / négatif) | Moyen |
-| PT-05 | Inputs heures + bouton Valider débordent sur mobile portrait | Moyen |
-| PT-06 | Heure de bascule (9h) non indiquée — date "hier" inexpliquée | Moyen |
+| # | Problème | Sévérité | Statut |
+|---|---|---|---|
+| ~~PT-01~~ | ~~Shifts déjà validés sans état visuel "terminé"~~ | Haut | ✅ Done — `validated-card` + badge `✓ Validé` |
+| ~~PT-02~~ | ~~Impossible de modifier une heure réelle déjà saisie depuis pointage.html~~ | Haut | ✅ Done — patron/directeur peuvent ré-éditer, établissement verrouillé |
+| PT-03 | Pas de total des heures du soir affiché en bas de page | Moyen | |
+| PT-04 | Écart badge sans couleur différenciée (positif / négatif) | Moyen | |
+| PT-05 | Inputs heures + bouton Valider débordent sur mobile portrait | Moyen | |
+| PT-06 | Heure de bascule (9h) non indiquée — date "hier" inexpliquée | Moyen | |
 
 ---
 
 ## 3. Priorités recommandées
 
-| Prio | ID | Action | Page |
-|---|---|---|---|
-| 🔴 Haut | PT-01 | État visuel "validé" sur les cartes pointage | pointage.html |
-| 🔴 Haut | PT-02 | Édition heure réelle depuis pointage.html — patron/directeur uniquement (établissement = saisie unique verrouillée après enregistrement) | pointage.html |
-| 🔴 Haut | P-03 | Onglet pointage actif sur le shift du jour même si lendemain | planning.html |
-| 🟡 Moyen | I-01 | Header mobile allégé — tout dans le drawer | index.html |
+| Prio | ID | Action | Page | Statut |
+|---|---|---|---|---|
+| ~~🔴 Haut~~ | ~~PT-01~~ | ~~État visuel "validé" sur les cartes pointage~~ | pointage.html | ✅ Done |
+| ~~🔴 Haut~~ | ~~PT-02~~ | ~~Édition heure réelle depuis pointage.html — patron/directeur uniquement (établissement = saisie unique verrouillée après enregistrement)~~ | pointage.html | ✅ Done |
+| ~~🔴 Haut~~ | ~~P-03~~ | ~~Onglet pointage actif sur le shift du jour même si lendemain~~ | planning.html | ✅ Done |
+| 🟡 Moyen | I-01 | Header mobile allégé — tout dans le drawer | index.html | |
 | 🟡 Moyen | PT-05 | Layout mobile inputs heures pointage | pointage.html |
 | 🟡 Moyen | PT-03 | Footer récap heures totales | pointage.html |
 | 🟡 Moyen | S-01 | Toggle voir mot de passe sur set-password | set-password.html |
@@ -135,5 +135,5 @@ Actions associées :
 
 - **Staff** : deadline dispos vendredi 13h non affichée sur planning.html
 - **Staff** : shifts passés inaccessibles (P-06)
-- **Patron** : export heures mensuelles absent (F-04 backlog)
-- **Établissement** : shifts validés vs non-validés non différenciés (PT-01)
+- ~~**Patron** : export heures mensuelles absent (F-04 backlog)~~ — ✅ Livré (export CSV)
+- ~~**Établissement** : shifts validés vs non-validés non différenciés (PT-01)~~ — ✅ Livré (`validated-card` + badge)

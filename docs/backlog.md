@@ -30,7 +30,7 @@ Add new items with a short description, context, and priority. Remove or move to
 
 | ID | Description | Area | Notes |
 |---|---|---|---|
-| F-03 | **Note sur Joker** — ajouter un champ `note` sur les shifts Joker uniquement, pour laisser des instructions au staff qui sera affecté (ex. "s'occuper de la caisse", "arrivée 30 min avant") | Joker / UX | Côté patron : saisie dans la modale Joker. Côté staff : affiché si le Joker leur est attribué |
+| ~~F-03~~ | ~~**Note sur Joker**~~ | Joker / UX | ✅ Done — champ `note` sur shifts Joker, saisie modale patron, affichage staff si Joker attribué |
 | ~~F-04~~ | ~~**Récap mensuel heures (export CSV)**~~ | Dashboard / Export | ✅ Done — bouton `⬇ Export CSV` ajouté à la modale Récap (UTF-8 BOM, séparateur `;`) |
 | ~~F-05~~ | ~~**Échange de shifts avec validation patron**~~ | Shifts / Notifications | ✅ Done — collection `shift_swaps`, cross-établissement autorisé, modale patron + modale staff |
 
@@ -68,6 +68,7 @@ Add new items with a short description, context, and priority. Remove or move to
 | D-16 | B-03 — `touch-action: manipulation` global sur boutons/liens | — |
 | D-17 | F-04 — Export CSV du récap mensuel (UTF-8 BOM, séparateur `;`, compatible Excel FR) | — |
 | D-18 | F-05 — Échange de shifts : collection `shift_swaps`, 7 routes backend, modale patron (✓/✗ + raison), modale staff (4 semaines glissantes, cross-établissement) | — |
+| D-19 | F-03 — Note sur Joker : champ `note` sur shifts Joker, saisie patron dans modale Joker, affichage staff si Joker attribué | — |
 
 ---
 
