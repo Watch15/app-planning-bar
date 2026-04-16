@@ -228,18 +228,6 @@ async function init() {
     renderUserBadge(me);
     renderDateDisplay();
 
-    // Lien ⏱ Pointage dans le header pour patron et directeur
-    const headerRight = document.querySelector('.header-right');
-    if (headerRight) {
-        const lnk = document.createElement('a');
-        lnk.href            = '/pointage.html';
-        lnk.className       = 'btn-manage-staff';
-        lnk.textContent     = '⏱ Pointage';
-        lnk.style.textDecoration = 'none';
-        const btnNotif = document.getElementById('btn-notif-patron');
-        headerRight.insertBefore(lnk, btnNotif || headerRight.firstChild);
-    }
-
     initDropZone();
     initTimelineBodyTap();
     setupWeekNav();
@@ -3327,8 +3315,10 @@ async function openSwapsPanel() {
 
 function _fmtSwapTime(h) {
     if (h == null) return '';
-    const hrs = Math.floor(h);
-    const mins = Math.round((h - hrs) * 60);
+    // Les heures >= 24 représentent le lendemain (nuit tardive) — on wrap sur 00-23.
+    const normalized = ((h % 24) + 24) % 24;
+    const hrs = Math.floor(normalized);
+    const mins = Math.round((normalized - hrs) * 60);
     return String(hrs).padStart(2, '0') + 'h' + String(mins).padStart(2, '0');
 }
 
