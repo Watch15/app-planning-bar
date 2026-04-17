@@ -1,172 +1,174 @@
-# Product Requirements Document — Planning Bar
+# Document d'Exigences Produit — Planning Bar
 
-## 1. Purpose
+## 1. Objet
 
-Planning Bar is a multi-establishment staff scheduling web application designed for a bar/restaurant owner managing multiple venues and a team of employees. It provides a full scheduling interface for the owner and a read-only personal planning view for each staff member, accessible on mobile as a PWA.
+Planning Bar est une application web SaaS de planification du personnel multi-établissements, conçue pour un patron de bar/restaurant gérant plusieurs lieux et une équipe d'employés. Elle fournit une interface de planification complète pour le patron et une vue planning personnelle en lecture seule pour chaque membre du staff, accessible sur mobile sous forme de PWA.
 
 ---
 
-## 2. Users & Roles
+## 2. Utilisateurs & Rôles
 
-| Role | Description |
+| Rôle | Description |
 |---|---|
-| `patron` | Super-admin. Full access to all establishments, all staff, all settings. |
-| `directeur` | Manager scoped to assigned establishments. Can manage planning and staff for their venues. |
-| `staff` | Employee. Read-only access to their own schedule and availability submission. |
-| `etablissement` | Per-venue account for on-site timeclock access (`pointage.html`). |
+| `patron` | Super-admin. Accès complet à tous les établissements, tout le personnel, tous les paramètres. |
+| `directeur` | Manager limité aux établissements qui lui sont assignés. Peut gérer le planning et le personnel de ses établissements. |
+| `staff` | Employé. Accès en lecture seule à son planning et envoi de disponibilités. |
+| `etablissement` | Compte par établissement pour le pointage sur place (`pointage.html`). |
 
 ---
 
-## 3. Core Features
+## 3. Fonctionnalités principales
 
-### 3.1 Authentication
-- Email or phone number + password login (bcryptjs, 12 rounds)
-- Server-side sessions stored in MongoDB (7-day TTL, httpOnly cookie)
-- Invitation by email via Resend API — 24h activation link
-- Password reset by email link (1h expiry)
-- Manual link fallback if email delivery fails
-- Rate limiting: 10 attempts per 15 min per IP
+### 3.1 Authentification
+- Connexion par e-mail ou téléphone + mot de passe (bcryptjs, 12 rounds)
+- Sessions côté serveur stockées dans MongoDB (TTL 7 jours, cookie httpOnly)
+- Invitation par e-mail via l'API Resend — lien d'activation valable 24h
+- Réinitialisation du mot de passe par lien e-mail (expiration 1h)
+- Lien manuel de repli si l'envoi d'e-mail échoue
+- Limitation du débit : 10 tentatives par 15 minutes par IP
 
-### 3.2 Multi-establishment Planning (Patron / Directeur view — `index.html`)
+### 3.2 Planning multi-établissements (vue Patron / Directeur — `index.html`)
 
-#### Header
-- Two-level header: actions row (Staff, Accounts, Availabilities, toggle, user, logout) + scrollable establishments row
-- User avatar (initial letter)
-- Red badge on Availabilities button when pending submissions exist
-- Mobile: hamburger menu opens a bottom-sheet drawer
+#### En-tête
+- En-tête à deux niveaux : ligne d'actions (Staff, Comptes, Disponibilités, toggle, utilisateur, déconnexion) + ligne d'établissements scrollable
+- Avatar utilisateur (initiale)
+- Badge rouge sur le bouton Disponibilités lorsqu'il y a des envois en attente
+- Mobile : le menu hamburger ouvre un drawer bottom-sheet
 
-#### Week navigation
-- Previous / Next arrows, Today button
-- Two views: **Day** (timeline) and **Week** (dashboard + agenda)
+#### Navigation semaine
+- Flèches Précédent / Suivant, bouton Aujourd'hui
+- Deux vues : **Jour** (timeline) et **Semaine** (dashboard + agenda)
 
-#### Week cards
-- 7 clickable cards (Mon → Sun)
-- Colour dots representing scheduled staff per day
-- Today: purple border — Selected day: black border — Empty: red dashed border
-- `!` alert if no `responsable`-role staff is scheduled (when responsible roles exist)
+#### Cartes semaine
+- 7 cartes cliquables (Lun → Dim)
+- Pastilles de couleur représentant le personnel planifié par jour
+- Aujourd'hui : bordure violette — Jour sélectionné : bordure noire — Vide : bordure rouge pointillée
+- Alerte `!` si aucun staff au rôle `responsable` n'est planifié (lorsque des rôles responsables existent)
 
-#### Day timeline
-- Drag & drop scheduling per staff member
-- Hour snap, left/right resize
-- Cross-establishment conflict and overlap detection
-- Confirmed availabilities displayed as semi-transparent background
-- Copy a day's shifts to other days of the week
-- "Publish week" button
+#### Timeline jour
+- Glisser-déposer pour la planification par staff
+- Snap à l'heure, redimensionnement gauche/droite
+- Détection de conflits et chevauchements entre établissements
+- Disponibilités confirmées affichées en fond semi-transparent
+- Copier les shifts d'un jour vers d'autres jours de la semaine
+- Bouton « Publier la semaine »
 
-#### Staff bar
-- Real-time name search
-- Role filter pills (dynamic)
-- Preferred-venue staff shown first with ★ badge
-- Role badge per card (responsible role takes priority)
-- Drag & drop to timeline
+#### Barre staff
+- Recherche par nom en temps réel
+- Filtres de rôles dynamiques
+- Staff avec établissement préféré affiché en premier avec badge ★
+- Badge de rôle par carte (le rôle responsable prime)
+- Glisser-déposer vers la timeline
 
-### 3.3 Joker Shifts
-A **Joker** is a placeholder shift with no assigned staff member (`staff_id: '__joker__'`, `is_joker: true`). It represents an open slot that needs filling.
+### 3.3 Shifts Joker
+Un **Joker** est un shift sans membre du personnel assigné (`staff_id: '__joker__'`, `is_joker: true`). Il représente un créneau ouvert à pourvoir.
 
-- Jokers are excluded from conflict detection
-- Jokers appear in the staff member's view so they can see open slots at their establishment
-- A joker can be converted to a real shift by assigning a staff member (sets `is_joker: false`)
-- Jokers are filtered out of colleague lists and statistics
+- Les jokers sont exclus de la détection de conflits
+- Les jokers apparaissent dans la vue staff afin qu'ils voient les créneaux ouverts dans leur établissement
+- Un joker peut être converti en shift réel en assignant un membre du personnel (passe `is_joker: false`)
+- Les jokers sont filtrés des listes de collègues et des statistiques
 
-### 3.4 Web Push Notifications
-- VAPID-based push via `web-push` library
-- Service Worker handles push reception and displays notifications with icon, badge, vibration
-- Notification click opens / focuses the relevant page
-- Staff subscriptions stored in `push_subscriptions` collection (stale 410/404 subscriptions auto-deleted)
-- Debounce: shift update notifications fire 60 seconds after last drag/resize to avoid spam
-- In-app notifications for patron/directeur stored in `notifications` collection
+### 3.4 Notifications Web Push
+- Push basé sur VAPID via la bibliothèque `web-push`
+- Le Service Worker gère la réception push et affiche les notifications avec icône, badge, vibration
+- Le clic sur la notification ouvre / met au premier plan la page concernée
+- Abonnements staff stockés dans la collection `push_subscriptions` (abonnements périmés 410/404 supprimés automatiquement)
+- Debounce : les notifications de mise à jour de shift sont envoyées 60 secondes après le dernier drag/resize pour éviter le spam
+- Notifications in-app pour patron/directeur stockées dans la collection `notifications`
 
-### 3.5 Staff Management
-- Colour, name, email per person
-- Preferred establishments: staff appears first in the bar (★ gold)
-- Role assignment: clickable badges grouped as Responsable / Informatif
-- Individual save, deletion with all associated shifts
+### 3.5 Gestion du personnel
+- Couleur, nom, e-mail par personne
+- Établissements préférés : le staff apparaît en premier dans la barre (★ doré)
+- Attribution de rôles : badges cliquables regroupés en Responsable / Informatif
+- Sauvegarde individuelle, suppression avec tous les shifts associés
 
-### 3.6 Roles
-- Free-form role creation with name and type
-- **Responsable**: visual alert on planning if absent from a service
-- **Informatif**: indication for patron only
-- Deletion removes role from all profiles
+### 3.6 Rôles
+- Création libre de rôles avec nom et type
+- **Responsable** : alerte visuelle sur le planning si absent d'un service
+- **Informatif** : indication à destination du patron uniquement
+- La suppression retire le rôle de tous les profils
 
-### 3.7 Account Management
-- Invite staff, directeur, or etablissement by email with activation link
-- Link account ↔ staff profile
-- Patron can reset any account password
-- Account deletion
+### 3.7 Gestion des comptes
+- Invitation du staff, directeur ou établissement par e-mail avec lien d'activation
+- Liaison compte ↔ fiche staff
+- Le patron peut réinitialiser le mot de passe de n'importe quel compte
+- Suppression de compte
 
-### 3.8 Availabilities (Staff side — `planning.html`)
-- Staff submits for the following week; deadline auto-set to Friday 13:00
-- Per day: **Evening** (16h→2h), **Midday** (10h→17h), **Custom**, **Unavailable**
-- Optional note per day
-- Fixed "Send my availabilities" button at bottom of screen
+### 3.8 Disponibilités (côté Staff — `planning.html`)
+- Le staff envoie ses disponibilités pour la semaine suivante ; deadline automatique vendredi 13h00
+- Par jour : **Soir** (16h→2h), **Midi** (10h→17h), **Personnalisé**, **Indisponible**
+- Note optionnelle par jour
+- Bouton fixe « Envoyer mes disponibilités » en bas d'écran
 
-### 3.9 Availabilities (Patron side)
-- Toggle open / close availability submission
-- Validate: choose establishment, auto-create shift
-- One-click reject
+### 3.9 Disponibilités (côté Patron)
+- Toggle ouvrir / fermer l'envoi des disponibilités
+- Valider : choisir l'établissement, créer automatiquement le shift
+- Rejeter en un clic
 
 ### 3.10 Publication
-- "Publish week" makes the schedule visible to staff
-- Unpublish possible at any time
+- « Publier la semaine » rend le planning visible au staff
+- Dépublication possible à tout moment
 
-### 3.11 Staff View (`planning.html`)
-- Stats: days worked, shifts, total hours
-- Working days: coloured border, establishment, times, duration, colleagues
-- Today: purple border
-- Rest days: compact 5-column grid (no empty rows)
-- Next week visible if published
+### 3.11 Vue Staff (`planning.html`)
+- Stats : jours travaillés, shifts, total d'heures
+- Jours travaillés : bordure colorée, établissement, horaires, durée, collègues
+- Aujourd'hui : bordure violette
+- Jours de repos : grille compacte 5 colonnes (pas de lignes vides)
+- Semaine suivante visible si publiée
 
 ### 3.12 PWA
-- Installable on mobile without App Store
-- iOS (Safari): Share → Add to Home Screen
-- Android (Chrome): Menu → Install app
-- Launches fullscreen; Service Worker caches static assets (instant load, partial offline)
-- API/auth requests always go through the network
+- Installable sur mobile sans App Store
+- iOS (Safari) : Partager → Ajouter à l'écran d'accueil
+- Android (Chrome) : Menu → Installer l'application
+- Lancement plein écran ; le Service Worker met en cache les assets statiques (chargement instantané, mode partiellement hors-ligne)
+- Les requêtes API/auth passent toujours par le réseau
 
 ### 3.13 SMS (Twilio)
-- Optional SMS sending via Twilio API
-- French mobile number normalisation (06/07 → +336/+337)
-- Requires `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` env vars
+- Envoi SMS optionnel via l'API Twilio
+- Normalisation des numéros mobiles français (06/07 → +336/+337)
+- Nécessite les variables d'environnement `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`
 
 ---
 
-## 4. MongoDB Collections
+## 4. Collections MongoDB
 
-| Collection | Contents |
+| Collection | Contenu |
 |---|---|
-| `establishments` | Bars/restaurants with schedules |
-| `staff` | Members (colour, email, preferred venues, roles) |
-| `shifts` | Scheduled shifts (includes `is_joker` flag) |
-| `users` | Login accounts |
-| `sessions` | Active sessions (auto-TTL) |
-| `availabilities` | Staff-submitted availabilities |
-| `roles` | Patron-created roles |
-| `settings` | Settings (availability open state, published weeks) |
-| `push_subscriptions` | Web Push endpoint subscriptions per user |
-| `notifications` | In-app notifications for patron/directeur |
+| `establishments` | Bars/restaurants avec horaires |
+| `staff` | Membres (couleur, e-mail, établissements préférés, rôles) |
+| `shifts` | Shifts planifiés (inclut le flag `is_joker`) |
+| `users` | Comptes de connexion |
+| `sessions` | Sessions actives (TTL auto) |
+| `availabilities` | Disponibilités envoyées par le staff |
+| `roles` | Rôles créés par le patron |
+| `settings` | Paramètres (état d'ouverture des dispos, semaines publiées) |
+| `push_subscriptions` | Endpoints d'abonnements Web Push par utilisateur |
+| `notifications` | Notifications in-app pour patron/directeur |
 
 ---
 
-## 5. Environment Variables
+## 5. Variables d'environnement
 
-| Variable | Purpose |
+| Variable | Usage |
 |---|---|
-| `MONGO_URI` | MongoDB Atlas connection string |
-| `PORT` | Server port (default 3000) |
-| `SESSION_SECRET` | Express session signing key |
-| `NODE_ENV` | `production` enables secure cookies and CORS restriction |
-| `APP_URL` | Public URL (used for CORS and email links) |
-| `RESEND_API_KEY` | Resend email API key |
-| `VAPID_PUBLIC_KEY` | Web Push VAPID public key |
-| `VAPID_PRIVATE_KEY` | Web Push VAPID private key |
-| `VAPID_EMAIL` | Contact email for VAPID (default `mailto:admin@planning-bar.fr`) |
-| `TWILIO_ACCOUNT_SID` | Twilio account SID (optional) |
-| `TWILIO_AUTH_TOKEN` | Twilio auth token (optional) |
-| `TWILIO_FROM` | Twilio sender number (optional) |
+| `MONGO_URI` | Chaîne de connexion MongoDB Atlas |
+| `PORT` | Port du serveur (3000 par défaut) |
+| `SESSION_SECRET` | Clé de signature des sessions Express — **requise en production** (hard-crash au démarrage si manquante) |
+| `NODE_ENV` | `production` active cookies sécurisés, restriction CORS, `trust proxy` et exigence stricte de `SESSION_SECRET` |
+| `APP_URL` | URL publique (utilisée pour CORS et les liens e-mail) |
+| `RESEND_API_KEY` | Clé API Resend |
+| `VAPID_PUBLIC_KEY` | Clé publique VAPID pour Web Push |
+| `VAPID_PRIVATE_KEY` | Clé privée VAPID pour Web Push |
+| `VAPID_EMAIL` | E-mail de contact VAPID (par défaut `mailto:admin@planning-bar.fr`) |
+| `TWILIO_ACCOUNT_SID` | SID du compte Twilio (optionnel) |
+| `TWILIO_AUTH_TOKEN` | Token d'authentification Twilio (optionnel) |
+| `TWILIO_FROM` | Numéro expéditeur Twilio (optionnel) |
+| `SENTRY_DSN` | DSN du projet Sentry (optionnel — Sentry inactif si absent) |
+| `SENTRY_TRACES` | Taux d'échantillonnage des traces Sentry, 0–1 (optionnel, défaut `0.1`) |
 
 ---
 
-## 6. Hosting
+## 6. Hébergement
 
-- **Platform**: Railway
-- **Database**: MongoDB Atlas (`gestion_bar`)
+- **Plateforme** : Railway
+- **Base de données** : MongoDB Atlas (`gestion_bar`)

@@ -1,13 +1,13 @@
 # Backlog — Planning Bar
 
-Registry of identified bugs, pending enhancements, and future features.
-Add new items with a short description, context, and priority. Remove or move to `done` when resolved.
+Registre des bugs identifiés, améliorations en attente et fonctionnalités futures.
+Ajouter les nouveaux éléments avec une description courte, un contexte et une priorité. Retirer ou déplacer vers `done` une fois résolus.
 
 ---
 
 ## P1 — Bugs bloquants (à faire en premier)
 
-| ID | Description | Area | Status |
+| ID | Description | Domaine | Statut |
 |---|---|---|---|
 | B-04 | **Barre staff verticale mobile** — sur téléphone vertical la barre est difficilement utilisable : scroll horizontal, cartes trop petites, recherche/filtres peu accessibles | Mobile / Staff bar | ✅ Done |
 | B-05 | **Touch OPEN_TIME bypass** — comportement voulu : le snap bloque avant l'ouverture pour la planification, les heures réelles peuvent dépasser librement | Timeline / Touch | ✅ By design |
@@ -17,7 +17,7 @@ Add new items with a short description, context, and priority. Remove or move to
 
 ## P2 — Améliorations (après les P1)
 
-| ID | Description | Area | Status |
+| ID | Description | Domaine | Statut |
 |---|---|---|---|
 | E-03 | **Pointage : onglet responsable** — remplacer le compte `etablissement` par un onglet dédié dans la vue staff pour le `responsable` de soirée, qui peut valider les horaires sans compte séparé | Pointage / Auth | ✅ Done |
 | E-04 | **Heures côté staff** — affichage amélioré sur `planning.html` : total semaine, heures par établissement, comparaison semaines | Staff view | ✅ Done |
@@ -28,7 +28,7 @@ Add new items with a short description, context, and priority. Remove or move to
 
 ## P3 — Nouvelles fonctionnalités (roadmap)
 
-| ID | Description | Area | Notes |
+| ID | Description | Domaine | Notes |
 |---|---|---|---|
 | ~~F-03~~ | ~~**Note sur Joker**~~ | Joker / UX | ✅ Done — champ `note` sur shifts Joker, saisie modale patron, affichage staff si Joker attribué |
 | ~~F-04~~ | ~~**Récap mensuel heures (export CSV)**~~ | Dashboard / Export | ✅ Done — bouton `⬇ Export CSV` ajouté à la modale Récap (UTF-8 BOM, séparateur `;`) |
@@ -46,7 +46,7 @@ Add new items with a short description, context, and priority. Remove or move to
 
 ---
 
-## Done
+## Fait
 
 | ID | Description | Commit |
 |---|---|---|
@@ -69,13 +69,42 @@ Add new items with a short description, context, and priority. Remove or move to
 | D-17 | F-04 — Export CSV du récap mensuel (UTF-8 BOM, séparateur `;`, compatible Excel FR) | — |
 | D-18 | F-05 — Échange de shifts : collection `shift_swaps`, 7 routes backend, modale patron (✓/✗ + raison), modale staff (4 semaines glissantes, cross-établissement) | — |
 | D-19 | F-03 — Note sur Joker : champ `note` sur shifts Joker, saisie patron dans modale Joker, affichage staff si Joker attribué | — |
+| D-20 | UX — refonte header patron (I-01/02/03) : brand mobile + ⏱ Pointage ambre + drawer restructuré | — |
+| D-21 | UX — pointage (PT-01/02/03/04/05/06) : validated-card, édition heures réelles, total-footer, gap coloré, session-banner, mobile layout | — |
+| D-22 | UX — planning staff (P-03/04) : cutoff_hour sur onglet Pointage + spacer safe-area-inset-bottom | — |
+| D-23 | UX — auth (L-02/L-04, S-01/S-03) : login scroll, année dynamique, toggle œil, guard token absent | — |
+| **Sprint court — sécurité / infra** ||
+| D-24 | `SESSION_SECRET` hard-crash en prod + `sameSite:'lax'` sur cookie session | — |
+| D-25 | `app.set('trust proxy', 1)` en prod (Railway reverse proxy) | — |
+| D-26 | `.gitignore` nettoyé — renommé depuis `gitignore`, retrait `docs/`, ajout `.env.*`, `.idea/`, `.vscode/` | — |
+| D-27 | `toISOString()` remplacé par formatage local dans `script.js:3779` (bug off-by-one timezone potentiel) | — |
+| **Sprint moyen — sécurité / observabilité** ||
+| D-28 | `helmet()` + CSP adaptée au stack (Google Fonts, `'unsafe-inline'` toléré) | — |
+| D-29 | `morgan` access logs (`combined` prod, `dev` local) | — |
+| D-30 | `GET /health` — ping MongoDB + uptime, pour Railway + monitoring | — |
+| D-31 | Indexes MongoDB manquants — push_subscriptions.user_id, notifications(user_id,read,created_at), shift_swaps(status,created_at), settings.key unique, users.phone/invite_token/reset_token sparse | — |
+| D-32 | `escapeHtml()` étendu (quotes) + appliqué aux `innerHTML` user-data : venues, staff rows, users, roles, agenda pills, swap cards, conflict toast | — |
+| D-33 | Sentry intégration conditionnelle — init uniquement si `SENTRY_DSN` présent, `setupExpressErrorHandler` + fallback `app.use((err,req,res,next))` | — |
+| **Phase 3 — fondations** ||
+| D-34 | `lib/utils.js` — extraction helpers purs (`isValidObjectId`, `hashToken`, `normalizePhone`, `computeActiveDate`, `toDateStr`) | — |
+| D-35 | `tests/utils.test.js` — 20 tests `node --test` natif (cutoff 0/pile/bascule mois-année, padding date, téléphones internationaux) | — |
+| D-36 | GitHub Actions CI — `.github/workflows/ci.yml`, matrice Node 20/22, `npm ci` → syntax check → `npm test` | — |
+| **Bugs hotfix** ||
+| D-37 | Double bouton ⏱ Pointage dans header patron — retrait insertion JS dupliquée dans `script.js:init()` | — |
+| D-38 | Modale approbation échange patron — heures ≥ 24h wrap sur 00-23 (`_fmtSwapTime` aligné sur `fmtHour`) | — |
+| D-39 | Stats « Moy. par personne » (vue jour + vue semaine) — jokers exclus du numérateur ET dénominateur | — |
 
 ---
 
 ## Notes pour les agents
 
-- **Timezone** : ne jamais utiliser `toISOString()` — toujours `getFullYear()/getMonth()/getDate()`. Voir `docs/architecture.md` §3.1.
-- **script.js** : fichier monolithique (~4200 lignes) — modifications additives et ciblées uniquement, pas de refactoring.
-- **Joker** : `staff_id === '__joker__'` et `is_joker: true`. F-03 ajoute un champ `note` uniquement sur ces shifts.
+- **Timezone** : ne jamais utiliser `toISOString()` — toujours `getFullYear()/getMonth()/getDate()`. Voir `docs/architecture.md` §3.1. Helper pur : `toDateStr()` dans `lib/utils.js`.
+- **script.js** : fichier monolithique (~4700 lignes) — modifications additives et ciblées uniquement, pas de refactoring sans décision explicite.
+- **server.js** : monolithique (~2400 lignes). Helpers purs dans `lib/utils.js` (testés). Split en routers = chantier futur (#10 backlog).
+- **Tests** : `npm test` (zéro dépendance, `node --test`). Ajouter un test quand on extrait un helper pur, change une règle de date/heure, ou fixe un bug qui pourrait régresser.
+- **Joker** : `staff_id === '__joker__'` et `is_joker: true`. F-03 ajoute un champ `note` uniquement sur ces shifts. **Les jokers sont exclus des stats « Moy. par personne »** (D-39).
 - **Timeline** : tester drag, resize et snap sur desktop ET mobile 390px portrait après chaque modification.
 - **OPEN_TIME / CLOSE_TIME** : bornes métier décimales (ex. 9.5 = 09:30). `START_HOUR`/`END_HOUR` sont des entiers pour l'affichage uniquement.
+- **Heures ≥ 24h** : convention interne pour les shifts de nuit (25.5 = 01h30 du lendemain). Toujours wrap avec `((h % 24) + 24) % 24` avant affichage.
+- **CSP (helmet)** : `'unsafe-inline'` toléré sur `script-src`/`style-src` tant que les HTML contiennent des `<script>`/`<style>` inline. À retirer si on extrait tout.
+- **Sentry** : désactivé par défaut, s'active seulement si `SENTRY_DSN` présent côté Railway.
