@@ -73,6 +73,26 @@ test('normalizePhone ajoute + devant un numéro non préfixé non-FR', () => {
     assert.equal(normalizePhone('14155551234'), '+14155551234');
 });
 
+test('normalizePhone supprime les espaces insécables (NBSP U+00A0)', () => {
+    const nbsp = String.fromCharCode(160);
+    assert.equal(normalizePhone('+33' + nbsp + '6' + nbsp + '12' + nbsp + '34' + nbsp + '56' + nbsp + '78'), '+33612345678');
+});
+
+test('normalizePhone supprime les Zero Width Spaces (U+200B)', () => {
+    const zws = String.fromCharCode(0x200B);
+    assert.equal(normalizePhone('06' + zws + '12345678'), '+33612345678');
+});
+
+test('normalizePhone supprime les tirets insécables (U+2011)', () => {
+    const nbHyphen = String.fromCharCode(0x2011);
+    assert.equal(normalizePhone('06' + nbHyphen + '12' + nbHyphen + '34' + nbHyphen + '56' + nbHyphen + '78'), '+33612345678');
+});
+
+test('normalizePhone gère un mix WhatsApp (NBSP + espaces + tirets)', () => {
+    const nbsp = String.fromCharCode(160);
+    assert.equal(normalizePhone('+33' + nbsp + '6 12-34.56' + nbsp + '78'), '+33612345678');
+});
+
 // ── computeActiveDate ────────────────────────────────────────────────────────
 
 test('computeActiveDate : heure >= cutoff → date du jour', () => {
