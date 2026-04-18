@@ -1,6 +1,6 @@
-# Planning Bar
+# Templyo
 
-Application web de gestion de plannings pour bars et restaurants multi-établissements. Conçue pour un patron gérant plusieurs adresses et une équipe de staff, avec une vue dédiée pour chaque employé.
+Application web SaaS de gestion de plannings pour bars et restaurants multi-établissements. Conçue pour un patron gérant plusieurs adresses et une équipe de staff, avec une vue dédiée pour chaque employé.
 
 ---
 
@@ -10,37 +10,50 @@ Application web de gestion de plannings pour bars et restaurants multi-établiss
 |---|---|
 | Backend | Node.js + Express 4 |
 | Base de données | MongoDB Atlas (`gestion_bar`) |
-| Auth | Sessions serveur + bcryptjs |
-| Email | Resend API (HTTP) |
-| Frontend | HTML5 / CSS3 / JS vanilla (zéro dépendance front) |
-| Hébergement | Railway |
-| Mobile | PWA (installable iOS & Android) |
+| Auth | Sessions serveur + bcryptjs (12 rounds) |
+| Email | Resend API (HTTP direct, pas de SDK) |
+| SMS | Twilio API (HTTP direct, pas de SDK) |
+| Notifications push | Web Push API — VAPID (`web-push`) |
+| Frontend | HTML5 / CSS3 / JS vanilla — zéro dépendance front |
+| Sécurité | helmet + CSP, morgan, Sentry conditionnel |
+| Hébergement | Railway (déploiement auto depuis GitHub) |
+| Mobile | PWA installable iOS & Android |
+| Tests | `node --test` natif — zéro dépendance |
+| CI | GitHub Actions — matrice Node 20/22 |
 
 ---
 
 ## Structure du projet
 
 ```
-app-planning-bar/
-├── server.js                   ← Serveur Express (point d'entrée)
+app-templyo/
+├── server.js                      ← Serveur Express — toutes les routes API et auth (~2400 lignes)
 ├── package.json
-├── .env                        ← Variables d'environnement (à créer)
+├── .env                           ← Variables d'environnement (à créer, ne jamais commiter)
+├── lib/
+│   └── utils.js                   ← Helpers purs testables (isValidObjectId, hashToken, normalizePhone, computeActiveDate, toDateStr)
+├── tests/
+│   └── utils.test.js              ← 20 tests node --test
+├── .github/
+│   └── workflows/
+│       └── ci.yml                 ← CI : npm ci → syntax check → npm test (Node 20/22)
 ├── public/
-│   ├── index.html              ← Interface patron
-│   ├── planning.html           ← Interface staff
-│   ├── login.html              ← Page de connexion
-│   ├── set-password.html       ← Activation / reset mot de passe
-│   ├── script.js               ← Logique patron
-│   ├── style.css               ← Styles globaux
-│   ├── manifest.json           ← PWA manifest
-│   ├── sw.js                   ← Service Worker (cache offline)
+│   ├── index.html                 ← Interface patron / directeur
+│   ├── planning.html              ← Interface staff — planning + dispos + pointage responsable
+│   ├── pointage.html              ← Interface compte établissement — saisie heures réelles
+│   ├── login.html                 ← Page de connexion (email ou téléphone)
+│   ├── set-password.html          ← Activation / réinitialisation mot de passe
+│   ├── script.js                  ← Logique patron — planning, drag & drop, modales (~4700 lignes)
+│   ├── style.css                  ← Styles globaux
+│   ├── manifest.json              ← PWA manifest
+│   ├── sw.js                      ← Service Worker — cache offline + Web Push
 │   └── icons/
 │       ├── icon-192.png
 │       └── icon-512.png
 └── scripts/
-    ├── init-db.js              ← Initialise la base de données
-    ├── create-patron.js        ← Crée le compte patron en CLI
-    └── seed.js                 ← Insère des données de démonstration
+    ├── init-db.js                 ← Initialise collections et indexes MongoDB
+    ├── create-patron.js           ← Crée le compte patron en CLI
+    └── seed.js                    ← Insère des données de démonstration
 ```
 
 ---
@@ -52,7 +65,7 @@ npm install
 # Créer le fichier .env (voir section Variables d'environnement)
 npm run init
 npm run create-patron
-npm run seed      # optionnel
+npm run seed      # optionnel — données de démo
 npm run dev       # → http://localhost:3000
 ```
 
@@ -61,13 +74,34 @@ npm run dev       # → http://localhost:3000
 ## Variables d'environnement (.env)
 
 ```env
+# Obligatoire
 MONGO_URI=mongodb+srv://...
-PORT=3000
-SESSION_SECRET=chaine-aleatoire-longue
+SESSION_SECRET=chaine-aleatoire-longue-minimum-32-chars
 NODE_ENV=production
-RESEND_API_KEY=re_...
 APP_URL=https://ton-app.railway.app
+
+# Email
+RESEND_API_KEY=re_...
+
+# SMS (optionnel — invitations et reset par téléphone)
+TWILIO_ACCOUNT_SID=AC...
+TWILIO_AUTH_TOKEN=...
+TWILIO_FROM=+33...
+
+# Web Push notifications (optionnel)
+VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+VAPID_EMAIL=mailto:admin@templyo.fr
+
+# Monitoring (optionnel — Sentry inactif si absent)
+SENTRY_DSN=https://...
+SENTRY_TRACES=0.1
+
+# Port (optionnel, défaut 3000)
+PORT=3000
 ```
+
+> ⚠️ `SESSION_SECRET` est **obligatoire en production** — le serveur refuse de démarrer sans elle.
 
 ---
 
@@ -75,113 +109,74 @@ APP_URL=https://ton-app.railway.app
 
 | Commande | Description |
 |---|---|
-| `npm run dev` | Serveur avec rechargement automatique |
-| `npm start` | Serveur en production |
-| `npm run init` | Recrée les collections et index MongoDB |
+| `npm run dev` | Serveur avec rechargement automatique (`node --watch`) |
+| `npm start` | Serveur en production (remplace `%%BUILD_TIME%%` dans sw.js au démarrage) |
+| `npm run init` | Recrée les collections et indexes MongoDB |
 | `npm run create-patron` | Crée le compte patron en CLI |
 | `npm run seed` | Insère des shifts de démonstration |
+| `npm test` | Lance les 20 tests unitaires (`node --test`) |
+
+---
+
+## Rôles utilisateurs
+
+| Rôle | Description |
+|---|---|
+| `patron` | Super-admin — accès complet à tous les établissements et paramètres |
+| `directeur` | Manager — limité aux établissements assignés |
+| `staff` | Employé — lecture seule de son planning, envoi de disponibilités |
+| `etablissement` | Compte par lieu — accès pointage uniquement (`pointage.html`) |
 
 ---
 
 ## Fonctionnalités
 
 ### Authentification
-
-- Connexion email + mot de passe (bcryptjs, hash 12 rounds)
-- Sessions serveur stockées en MongoDB (7 jours), cookie httpOnly
-- Invitation par email via Resend API — lien d'activation 24h
-- Réinitialisation de mot de passe par lien email (expire 1h)
-- Fallback lien manuel si l'envoi email échoue
-- Deux rôles : `patron` (accès complet) et `staff` (lecture seule)
-
----
+- Connexion email + mot de passe ou numéro de téléphone + mot de passe
+- Sessions serveur MongoDB — TTL 7 jours, cookie `httpOnly`
+- Invitation par email (Resend) ou SMS (Twilio) — lien activation 24h
+- Réinitialisation mot de passe par email ou SMS (expire 1h)
+- Fallback lien manuel si l'envoi échoue
+- Rate limiting : 10 tentatives / 15 min / IP
 
 ### Vue patron (`index.html`)
-
-#### Header
-- Deux niveaux : actions en haut (Staff, Comptes, Dispos, toggle dispos, utilisateur, déconnexion) — établissements scrollables en dessous
-- Avatar initiale de l'utilisateur connecté
-- Badge rouge sur le bouton Dispos si des disponibilités sont en attente
-
-#### Navigation semaine
-- Flèches précédent / suivant, bouton Aujourd'hui
-- Deux vues : **Jour** (timeline) et **Semaine** (tableau de bord + agenda)
-
-#### Cards semaine
-- 7 cards cliquables (lundi → dimanche)
-- Points de couleur représentant le staff planifié ce jour
-- Aujourd'hui : bordure violette — Jour sélectionné : bordure noire — Vide : bordure rouge pointillée
-- Alerte `!` rouge si aucun responsable planifié ce jour (quand des rôles responsables existent)
-
-#### Timeline (vue jour)
-- Planning drag & drop par membre du staff
-- Snap à l'heure, resize gauche/droite
-- Détection des conflits et chevauchements entre établissements
-- Dispos confirmées affichées en fond semi-transparent
+- Timeline drag & drop par membre du staff — snap 15 min, resize gauche/droite
+- Détection conflits et chevauchements entre établissements
+- Le Joker — shift non attribué avec note, visible du staff
 - Copie d'un jour vers d'autres jours de la semaine
-- Bouton "Publier la semaine"
-
-#### Gestion du staff — onglet Membres
-- Couleur, nom, email par personne
-- Établissements préférentiels : le staff affecté apparaît en premier dans la barre (★ dorée)
-- Affectation de rôles : badges cliquables groupés Responsable / Informatif
-- Enregistrement individuel, suppression avec ses shifts
-
-#### Gestion du staff — onglet Rôles
-- Création libre de rôles avec nom et type
-- **Responsable** : alerte visuelle sur le planning si absent d'un service
-- **Informatif** : indication seulement côté patron
-- Suppression d'un rôle (retiré de tous les profils)
-
-#### Barre staff
-- Recherche par nom en temps réel
-- Filtres par rôle (pills dynamiques)
-- Staff préférentiel affiché en premier avec ★
-- Badge rôle sur chaque carte (priorité au responsable)
-- Drag & drop vers la timeline
-
-#### Gestion des comptes
-- Invitation Staff ou Patron par email avec lien d'activation
-- Liaison compte ↔ profil staff
-- Reset de mot de passe par le patron
-- Suppression de compte
-
-#### Disponibilités côté patron
-- Toggle ouverture / fermeture de la saisie
-- Validation : choisir l'établissement et créer le shift automatiquement
-- Refus en un clic
-
-#### Publication
-- "Publier la semaine" rend le planning visible côté staff
-- Dépublication possible à tout moment
-
----
+- Publication / dépublication de la semaine
+- Échange de shifts — demande staff à staff, validation patron avec raison
+- Gestion staff : couleur, email, téléphone, rôles, établissements préférentiels
+- Import en masse via CSV/tableau (nom + email ou téléphone)
+- Gestion établissements dans l'app (modale CRUD)
+- Disponibilités : toggle ouverture, deadline configurable (jour + heure), mode urgence
+- Validation dispo → création shift automatique
+- Récapitulatif mensuel planifié vs réel + export CSV
+- Notifications in-app (badge + historique activité)
 
 ### Vue staff (`planning.html`)
+- Mon planning : stats semaine, jours travaillés, collègues, heures par établissement
+- Delta heures vs semaine précédente
+- Mes dispos : Soir / Midi / Personnalisé / Indisponible + note par jour
+- Onglet Pointage : saisie heures réelles pour les responsables de soirée
+- Bouton Web Push — activation/désactivation des notifications
 
-#### Mon planning
-- Stats : jours travaillés, shifts, heures totales
-- Jours travaillés : bordure colorée, établissement, horaires, durée, collègues
-- Aujourd'hui : bordure violette
-- Jours de repos : grille compacte 5 colonnes (pas de lignes vides)
-- Semaine suivante visible si publiée par le patron
+### Pointage (`pointage.html`)
+- Interface dédiée au compte établissement
+- Saisie et modification des heures réelles (real_start / real_end)
+- Ajout de staff non planifié
+- Heure de bascule du jour configurable (`cutoff_hour`)
 
-#### Mes dispos
-- Saisie pour la semaine suivante, deadline vendredi 13h automatique
-- Par jour : **Soir** (16h→2h), **Midi** (10h→17h), **Personnalisé**, **Indisponible**
-- Note optionnelle par jour
-- Bouton "Envoyer mes dispos" fixe en bas d'écran
-
----
+### Web Push
+- Notifications natives iOS/Android via VAPID
+- Debounce 60s sur les modifications de shift (anti-spam drag/resize)
+- Ciblage : uniquement le staff concerné par les changements
+- Nettoyage automatique des abonnements expirés
 
 ### PWA
-
-Installable sur mobile sans App Store.
-
-- **iOS (Safari)** : partage → "Sur l'écran d'accueil"
-- **Android (Chrome)** : menu → "Installer l'application"
-
-Lance en plein écran. Le Service Worker met en cache les assets statiques (chargement instantané, partiel hors ligne). Les données API passent toujours par le réseau.
+- Installable sans App Store — iOS (Safari) et Android (Chrome)
+- Cache First sur les assets statiques, Network First sur l'API
+- Cache auto-invalidé à chaque déploiement Railway via `%%BUILD_TIME%%`
 
 ---
 
@@ -190,17 +185,20 @@ Lance en plein écran. Le Service Worker met en cache les assets statiques (char
 | Collection | Contenu |
 |---|---|
 | `establishments` | Bars/restaurants avec horaires |
-| `staff` | Membres (couleur, email, venues préférentiels, rôles) |
-| `shifts` | Shifts planifiés |
+| `staff` | Membres (couleur, email, téléphone, venues préférentiels, rôles) |
+| `shifts` | Shifts planifiés (inclut `is_joker`, `real_start`, `real_end`, `note`) |
 | `users` | Comptes de connexion |
-| `sessions` | Sessions actives (TTL automatique) |
+| `sessions` | Sessions actives (TTL automatique 7 jours) |
 | `availabilities` | Disponibilités soumises par le staff |
-| `roles` | Rôles créés par le patron |
-| `settings` | Paramètres (ouverture dispos, publication semaines) |
+| `roles` | Rôles créés par le patron (responsable / informatif) |
+| `settings` | Paramètres (dispos, publication, pointage) |
+| `push_subscriptions` | Endpoints VAPID par utilisateur |
+| `notifications` | Notifications in-app patron/directeur |
+| `shift_swaps` | Demandes d'échange de shifts |
 
 ---
 
-## Routes API
+## Routes API principales
 
 ### Auth
 | Méthode | Route | Accès |
@@ -208,77 +206,113 @@ Lance en plein écran. Le Service Worker met en cache les assets statiques (char
 | POST | `/auth/login` | Public |
 | POST | `/auth/logout` | Authentifié |
 | GET | `/auth/me` | Authentifié |
-| POST | `/auth/set-password` | Public (token) |
-| PATCH | `/auth/reset-password` | Public (token) |
+| POST | `/auth/set-password` | Public (token invitation) |
+| PATCH | `/auth/reset-password` | Public (token reset) |
 | POST | `/auth/forgot-password` | Public |
 
-### Comptes
+### Comptes & Staff
 | Méthode | Route | Accès |
 |---|---|---|
-| GET | `/api/users` | Patron |
-| POST | `/api/users` | Patron |
+| GET/POST | `/api/users` | Patron |
+| POST | `/api/users/bulk` | Admin (import en masse) |
 | PATCH | `/api/users/:id/reset-password` | Patron |
 | DELETE | `/api/users/:id` | Patron |
-
-### Staff
-| Méthode | Route | Accès |
-|---|---|---|
-| GET | `/api/staff` | Authentifié |
-| POST | `/api/staff` | Patron |
-| PATCH | `/api/staff/:id` | Patron |
-| DELETE | `/api/staff/:id` | Patron |
+| GET/POST | `/api/staff` | Authentifié / Patron |
+| PATCH/DELETE | `/api/staff/:id` | Patron |
 
 ### Établissements
 | Méthode | Route | Accès |
 |---|---|---|
 | GET | `/api/establishments` | Authentifié |
+| POST | `/api/establishments` | Admin |
+| PATCH/DELETE | `/api/establishments/:id` | Admin |
 
-### Shifts
+### Shifts & Pointage
 | Méthode | Route | Accès |
 |---|---|---|
 | GET | `/api/shifts/:establishmentId/:date` | Authentifié |
-| GET | `/api/week/:establishmentId?from=&to=` | Authentifié |
-| GET | `/api/my-shifts?from=&to=` | Authentifié |
+| GET | `/api/week-full/:establishmentId` | Authentifié |
+| GET | `/api/my-shifts` | Authentifié |
 | POST | `/api/shifts` | Patron |
-| PATCH | `/api/shifts/:id` | Patron |
-| DELETE | `/api/shifts/:id` | Patron |
+| PATCH/DELETE | `/api/shifts/:id` | Patron |
 | POST | `/api/copy-day` | Patron |
+| GET | `/api/pointage/:date` | Authentifié |
+| PATCH | `/api/shifts/:id/pointage` | Authentifié |
+| POST | `/api/shifts/extra` | Authentifié |
+| GET | `/api/recap-mensuel` | Patron |
 
 ### Disponibilités
 | Méthode | Route | Accès |
 |---|---|---|
-| GET | `/api/dispo-settings` | Authentifié |
-| PATCH | `/api/dispo-settings` | Patron |
-| GET | `/api/dispos/mine?from=&to=` | Authentifié |
-| POST | `/api/dispos` | Authentifié |
-| GET | `/api/dispos/pending?from=&to=` | Patron |
-| GET | `/api/dispos/count` | Patron |
+| GET/PATCH | `/api/dispo-settings` | Authentifié / Patron |
+| GET/POST | `/api/dispos` | Authentifié |
+| GET | `/api/dispos/pending` | Patron |
 | PATCH | `/api/dispos/:id/confirm` | Patron |
 | PATCH | `/api/dispos/:id/reject` | Patron |
-| GET | `/api/dispos/confirmed?from=&to=` | Patron |
 
-### Publication
+### Échanges de shifts
 | Méthode | Route | Accès |
 |---|---|---|
-| GET | `/api/publish/:weekStart` | Authentifié |
-| PATCH | `/api/publish/:weekStart` | Patron |
+| POST | `/api/shift-swaps` | Authentifié |
+| GET | `/api/shift-swaps/pending` | Patron |
+| GET | `/api/shift-swaps/mine` | Authentifié |
+| PATCH | `/api/shift-swaps/:id/approve` | Patron |
+| PATCH | `/api/shift-swaps/:id/reject` | Patron |
+| DELETE | `/api/shift-swaps/:id` | Authentifié |
 
-### Rôles
+### Web Push & Notifications
 | Méthode | Route | Accès |
 |---|---|---|
-| GET | `/api/roles` | Authentifié |
-| POST | `/api/roles` | Patron |
-| DELETE | `/api/roles/:id` | Patron |
+| GET | `/api/push/vapid-public-key` | Public |
+| POST/DELETE | `/api/push/subscribe` | Authentifié |
+| GET | `/api/notifications` | Patron |
+| PATCH | `/api/notifications/read-all` | Patron |
+
+### Infra
+| Méthode | Route | Accès |
+|---|---|---|
+| GET | `/health` | Public — ping MongoDB + uptime |
 
 ---
 
-## Points techniques à ne pas casser
+## Règles techniques à ne jamais casser
 
-### Bug timezone
-`toISOString()` retourne UTC. En UTC+2, minuit local = 22h UTC → décalage d'un jour. Tous les `toDateStr()` utilisent `getFullYear() / getMonth() / getDate()` (heure locale). **Ne jamais remplacer par `toISOString()`.**
+### Timezone — jamais `toISOString()`
+`toISOString()` retourne UTC. En UTC+2, minuit local = 22h UTC → décalage d'un jour.
+Toujours utiliser les méthodes locales ou le helper `toDateStr()` de `lib/utils.js` :
 
-### Sessions MongoDB
+```js
+// ✅ Correct
+function toDateStr(d) {
+    return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+}
+
+// ❌ Interdit
+d.toISOString().slice(0, 10)
+```
+
+### `script.js` — monolithique, ne pas découper
+`script.js` est volontairement gardé en un seul fichier (~4700 lignes) pour la stabilité. Ne pas refactoriser ni découper en modules sans décision architecturale explicite. Toute modification doit être **additive et ciblée**.
+
+### Sessions MongoDB — promesses uniquement
 MongoDB 6+ ne supporte plus les callbacks. Le `CustomMongoStore` utilise exclusivement `.then().catch()`.
 
-### Performance semaine
-`currentShiftsWeek` est construit depuis `weekFullData` déjà en mémoire après son chargement — aucun fetch supplémentaire pour les points couleur des cards.
+### Cache Service Worker — ne pas toucher `%%BUILD_TIME%%`
+`npm start` remplace ce token par `Date.now()` au démarrage Railway → invalidation automatique du cache à chaque déploiement.
+
+### Helpers purs → `lib/utils.js`
+Tout ce qui est testable sans Express/Mongo/réseau doit aller dans `lib/utils.js`. Ajouter un test dans `tests/utils.test.js` à chaque nouveau helper.
+
+---
+
+## Tests
+
+```bash
+npm test
+# Lance : node --test tests/utils.test.js
+# 20 tests — timezone, padding dates, téléphones, tokens, ObjectId
+```
+
+La CI GitHub Actions tourne automatiquement sur chaque push/PR vers `main` (Node 20 + 22).
