@@ -1035,6 +1035,16 @@
     </button>
     <a class="drawer-btn drawer-btn-pointage" href="/pointage.html" onclick="closeMobileDrawer()">⏱ Pointage</a>
     <button class="drawer-btn" onclick="closeMobileDrawer();document.getElementById('btn-recap').click()">📊 Récap mensuel</button>
+    <div class="drawer-section-label">Disponibilités</div>
+    <div class="drawer-btn" id="drawer-dispo-row" style="justify-content:space-between;cursor:default">
+        <span id="drawer-dispo-state-label" style="font-weight:600">🔒 Dispos fermées</span>
+        <label onclick="event.stopPropagation()" style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;flex-shrink:0" title="Ouvrir/fermer la saisie des disponibilités">
+            <input type="checkbox" id="drawer-dispo-check" style="opacity:0;width:0;height:0;position:absolute">
+            <span id="drawer-dispo-track" style="position:absolute;inset:0;background:#d0d0d0;border-radius:12px;transition:background 0.2s"></span>
+            <span id="drawer-dispo-thumb" style="position:absolute;top:4px;left:4px;width:16px;height:16px;background:white;border-radius:50%;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.25)"></span>
+        </label>
+    </div>
+    <button class="drawer-btn" onclick="openDispoSettingsMobile()">⚙ Paramètres dispos</button>
     <button class="drawer-btn" onclick="closeMobileDrawer();logout()" style="color:#e74c3c;border-color:#f5c6c6;margin-top:8px">🚪 Déconnexion</button>
 </div>
 
@@ -1050,6 +1060,7 @@ if ('serviceWorker' in navigator) {
 
 // ── Drawer mobile ─────────────────────────────────────────────────────────────
 function openMobileDrawer() {
+    syncDrawerDispoToggle();
     document.getElementById('mobile-drawer').classList.add('open');
     document.getElementById('mobile-drawer-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -1058,6 +1069,44 @@ function closeMobileDrawer() {
     document.getElementById('mobile-drawer').classList.remove('open');
     document.getElementById('mobile-drawer-overlay').classList.remove('open');
     document.body.style.overflow = '';
+}
+
+// ── Dispo toggle dans le drawer ───────────────────────────────────────────────
+function syncDrawerDispoToggle() {
+    const mainToggle = document.getElementById('dispo-toggle');
+    const check      = document.getElementById('drawer-dispo-check');
+    const label      = document.getElementById('drawer-dispo-state-label');
+    const track      = document.getElementById('drawer-dispo-track');
+    const thumb      = document.getElementById('drawer-dispo-thumb');
+    if (!mainToggle || !check) return;
+    const on = mainToggle.checked;
+    check.checked = on;
+    if (label) label.textContent = on ? '✅ Dispos ouvertes' : '🔒 Dispos fermées';
+    if (track) track.style.background = on ? '#10b981' : '#d0d0d0';
+    if (thumb) thumb.style.transform   = on ? 'translateX(20px)' : '';
+}
+
+function openDispoSettingsMobile() {
+    closeMobileDrawer();
+    const panel = document.getElementById('dispo-advanced-panel');
+    if (!panel || !panel.innerHTML.trim()) {
+        if (typeof showToast === 'function') showToast('Paramètres non chargés — réessaie');
+        return;
+    }
+    if (!panel._movedToBody) {
+        document.body.appendChild(panel);
+        panel._movedToBody = true;
+    }
+    panel.style.cssText = 'display:block;position:fixed;top:60px;left:16px;right:16px;min-width:auto;z-index:600;background:white;border:1.5px solid #e8eaed;border-radius:12px;padding:16px;box-shadow:0 8px 32px rgba(0,0,0,0.18);overflow-y:auto;max-height:calc(100vh - 80px)';
+    setTimeout(() => {
+        function _hidePanel(e) {
+            if (!panel.contains(e.target)) {
+                panel.style.display = 'none';
+                document.removeEventListener('click', _hidePanel);
+            }
+        }
+        document.addEventListener('click', _hidePanel);
+    }, 80);
 }
 
 // ── FAB staff (bottom sheet) ──────────────────────────────────────────────────
@@ -1103,6 +1152,23 @@ window.addEventListener('load', () => {
         });
         observer.observe(mainBadge, { attributes: true, childList: true, subtree: true, characterData: true });
     }
+
+    // Lier le toggle du drawer au toggle principal dispo
+    const drawerCheck = document.getElementById('drawer-dispo-check');
+    const mainToggle  = document.getElementById('dispo-toggle');
+    if (drawerCheck && mainToggle) {
+        drawerCheck.addEventListener('change', () => {
+            if (drawerCheck.checked !== mainToggle.checked) {
+                mainToggle.click();
+            }
+            syncDrawerDispoToggle();
+        });
+        // Écouter les changements sur le toggle principal pour garder le drawer à jour
+        mainToggle.addEventListener('change', () => syncDrawerDispoToggle());
+    }
+
+    // Sync initial après chargement des données dispo
+    setTimeout(syncDrawerDispoToggle, 600);
 });
 </script>
 </body>

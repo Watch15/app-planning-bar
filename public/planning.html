@@ -366,6 +366,8 @@
             .dispo-type-row { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
             .dispo-type-btn { min-width: 64px; flex-shrink: 0; padding: 6px 8px; }
             .btn-submit-dispos { font-size: 13px; padding: 14px 16px; }
+            .dispo-custom-row { gap: 10px; margin-top: 4px; }
+            .dispo-time-input { height: 52px; font-size: 17px; padding: 0 12px; border-radius: 10px; }
             .estab-hours-bar { padding: 0 14px 8px; }
             .estab-hours-chip { font-size: 11px; padding: 3px 8px; }
         }
@@ -1149,9 +1151,9 @@ function createDispoCard(date, d) {
                 }).join('') +
             '</div>' +
             '<div class="dispo-custom-row' + (sel.type === 'custom' ? ' visible' : '') + '" id="custom-' + date + '">' +
-                '<input class="dispo-time-input" id="start-' + date + '" type="text" placeholder="10h" value="' + (sel.start_time ? fmt(sel.start_time) : '') + '">' +
+                '<input class="dispo-time-input" id="start-' + date + '" type="text" inputmode="numeric" placeholder="10" value="' + (sel.start_time ? fmt(sel.start_time) : '') + '">' +
                 '<span style="color:#aaa;flex-shrink:0">→</span>' +
-                '<input class="dispo-time-input" id="end-' + date + '" type="text" placeholder="18h" value="' + (sel.end_time ? fmt(sel.end_time) : '') + '">' +
+                '<input class="dispo-time-input" id="end-' + date + '" type="text" inputmode="numeric" placeholder="18" value="' + (sel.end_time ? fmt(sel.end_time) : '') + '">' +
             '</div>' +
             '<textarea class="dispo-note-input" id="note-' + date + '" placeholder="Note optionnelle..." rows="1">' + (sel.note || '') + '</textarea>' +
         '</div>';
