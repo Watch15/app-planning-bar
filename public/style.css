@@ -770,6 +770,7 @@ label[for], select, .tab-btn, .staff-card, .shift-card {
   overflow-x: auto; overflow-y: visible;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin; scrollbar-color: var(--light-border) transparent;
+  overscroll-behavior-x: contain;
 }
 .timeline-scroll::-webkit-scrollbar { height: 4px; }
 .timeline-scroll::-webkit-scrollbar-thumb { background: var(--light-border); border-radius: 2px; }
