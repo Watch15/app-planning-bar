@@ -515,6 +515,7 @@ async function logout() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 let allStaff = [];
+let allEstablishments = [];
 
 async function init() {
     const user = await checkAuth();
@@ -534,11 +535,15 @@ async function init() {
 
     initTabs();
 
-    // Charger le staff pour les couleurs et name_color
+    // Charger le staff et les établissements
     try {
-        const staffRes = await fetch('/api/staff', { credentials: 'include' });
-        if (staffRes.ok) allStaff = await staffRes.json();
-    } catch { allStaff = []; }
+        const [staffRes, estabRes] = await Promise.all([
+            fetch('/api/staff', { credentials: 'include' }),
+            fetch('/api/establishments', { credentials: 'include' }),
+        ]);
+        if (staffRes.ok) allStaff          = await staffRes.json();
+        if (estabRes.ok) allEstablishments = await estabRes.json();
+    } catch { allStaff = []; allEstablishments = []; }
 
     // Charger les dispos quand on clique sur l'onglet
     document.querySelector('[data-tab="dispos"]').addEventListener('click', () => {
@@ -1003,13 +1008,8 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
 // ── Formatage nom établissement ───────────────────────────────────────────────
 
 function formatEstablishment(id) {
-    const map = {
-        'Josy_pub':          'Josy — Pub',
-        'Poni_restaurant':   'Poni — Restaurant',
-        'FanFan_restaurant': 'FanFan — Restaurant',
-        'Caval_restaurant':  'Caval — Restaurant',
-    };
-    return map[id] || id;
+    const estab = allEstablishments.find(e => e.id === id || String(e._id) === String(id));
+    return estab ? estab.name : id;
 }
 
 // ── Navigation onglets ───────────────────────────────────────────────────────
