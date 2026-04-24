@@ -132,7 +132,7 @@ async function sendEmail(to, subject, html) {
             'Content-Type':  'application/json',
         },
         body: JSON.stringify({
-            from:    'Templyo <onboarding@resend.dev>',
+            from:    'Templyo <noreply@templyo.fr>',
             to,
             subject,
             html,
