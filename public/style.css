@@ -229,12 +229,14 @@ a:hover { color: var(--accent-soft); }
 }
 .day-detail-title { font-size: 14px; font-weight: 700; color: var(--text-primary); flex: 1; }
 /* Boutons dans le header jour (fond clair) — surcharge le style header sombre */
-.day-detail-header .btn-manage-staff {
+.day-detail-header .btn-manage-staff,
+.modal .btn-manage-staff {
   color: var(--text-secondary);
   border-color: var(--light-border);
   background: var(--light-card);
 }
-.day-detail-header .btn-manage-staff:hover {
+.day-detail-header .btn-manage-staff:hover,
+.modal .btn-manage-staff:hover {
   color: var(--text-primary);
   border-color: var(--text-secondary);
   background: var(--light-bg);
