@@ -779,6 +779,8 @@ function renderSidebar() {
                 '<button class="btn-auto-color">Auto</button>' +
             '</div>';
 
+        applyCardNameContrast(card, staff.color, staff.name_color);
+
         card.addEventListener('dragstart', e => {
             if (e.target.closest('.color-controls')) { e.preventDefault(); return; }
             onSidebarDragStart(e, staff, card);
@@ -811,6 +813,7 @@ function renderSidebar() {
                 staff.name_color = newNameColor;
                 const nameEl = card.querySelector('.staff-info-name');
                 if (nameEl) nameEl.style.color = newNameColor || '';
+                applyCardNameContrast(card, staff.color, newNameColor);
                 document.querySelectorAll('.shift').forEach(el => {
                     const sd = currentShifts.find(s => String(s._id) === el.dataset.id);
                     if (sd && sd.staff_id === staff._id) {
@@ -4284,6 +4287,19 @@ function textColorFor(hex) {
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? '#1a1a2e' : '#ffffff';
 }
 
+// Applique un fond teinté sur la carte staff quand name_color est trop claire pour le blanc.
+// Réutilise textColorFor : si la police est "lisible sur fond sombre" → elle est claire → fond blanc KO.
+function applyCardNameContrast(card, staffColor, nameColor) {
+    if (nameColor && textColorFor(nameColor) === '#1a1a2e') {
+        const r = parseInt(staffColor.slice(1, 3), 16);
+        const g = parseInt(staffColor.slice(3, 5), 16);
+        const b = parseInt(staffColor.slice(5, 7), 16);
+        card.style.background = `rgba(${r},${g},${b},0.13)`;
+    } else {
+        card.style.background = '';
+    }
+}
+
 // Couleur de la police à utiliser sur un shift :
 // — si le staff a défini une couleur de texte personnalisée (name_color), on l'applique,
 // — sinon on choisit noir ou blanc automatiquement selon le contraste avec la couleur de fond.
@@ -4321,6 +4337,7 @@ async function updateStaffColor(staff, newColor, card) {
     }
     staff.color = newColor;
     card.querySelector('.staff-dot').style.background = newColor;
+    applyCardNameContrast(card, newColor, staff.name_color);
     // Synchroniser la valeur du font-color-picker si pas de couleur texte custom
     if (!staff.name_color) {
         const fp = card.querySelector('.font-color-picker');
