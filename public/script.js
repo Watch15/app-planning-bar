@@ -4339,21 +4339,10 @@ const AUTO_COLORS = [
 function generateColor(name) {
     let hash = 0;
     for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) % AUTO_COLORS.length;
-    const used = allStaff.map(s => s.color);
-    for (let i = 0; i < AUTO_COLORS.length; i++) {
-        const c = AUTO_COLORS[(hash + i) % AUTO_COLORS.length];
-        if (!used.includes(c)) return c;
-    }
     return AUTO_COLORS[hash];
 }
 
 async function updateStaffColor(staff, newColor, card) {
-    const duplicate = allStaff.find(s => s.color === newColor && s._id !== staff._id);
-    if (duplicate) {
-        showToast(`${duplicate.name} utilise déjà cette couleur`, true);
-        card.querySelector('.color-picker').value = staff.color;
-        return;
-    }
     staff.color = newColor;
     card.querySelector('.staff-dot').style.background = newColor;
     applyCardNameContrast(card, newColor, staff.name_color);
