@@ -1331,13 +1331,14 @@ function openMobileShiftEditModal(shift) {
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
 
     overlay.innerHTML =
-        '<div style="background:white;border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,0.18);padding-bottom:max(24px,env(safe-area-inset-bottom))">' +
+        '<div style="background:white;border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,0.18);padding-bottom:max(24px,env(safe-area-inset-bottom));max-height:85vh;overflow-y:auto">' +
             '<div style="width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 20px"></div>' +
             '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">' +
                 '<span style="width:12px;height:12px;border-radius:50%;background:' + (shift.color || '#888') + ';flex-shrink:0;display:inline-block"></span>' +
                 '<span style="font-size:15px;font-weight:700;color:#1a1a2e">' + shift.staff_name + '</span>' +
             '</div>' +
-            '<div style="display:flex;gap:12px;margin-bottom:20px">' +
+            '<div style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Horaires planifiés</div>' +
+            '<div style="display:flex;gap:12px;margin-bottom:16px">' +
                 '<div style="flex:1">' +
                     '<div style="font-size:11px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Début</div>' +
                     '<input id="_ms-start" type="time" value="' + fmt(shift.start_time) + '" style="width:100%;padding:10px 12px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:16px;outline:none;color:#1a1a2e">' +
@@ -1345,6 +1346,19 @@ function openMobileShiftEditModal(shift) {
                 '<div style="flex:1">' +
                     '<div style="font-size:11px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Fin</div>' +
                     '<input id="_ms-end" type="time" value="' + fmt(shift.end_time) + '" style="width:100%;padding:10px 12px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:16px;outline:none;color:#1a1a2e">' +
+                '</div>' +
+            '</div>' +
+            '<div style="border-top:1px solid #f0f0f0;padding-top:16px;margin-bottom:16px">' +
+                '<div style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Heures réelles</div>' +
+                '<div style="display:flex;gap:12px">' +
+                    '<div style="flex:1">' +
+                        '<div style="font-size:11px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Début réel</div>' +
+                        '<input id="_ms-real-start" type="time" value="' + fmt(shift.real_start) + '" style="width:100%;padding:10px 12px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:16px;outline:none;color:#1a1a2e">' +
+                    '</div>' +
+                    '<div style="flex:1">' +
+                        '<div style="font-size:11px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Fin réelle</div>' +
+                        '<input id="_ms-real-end" type="time" value="' + fmt(shift.real_end) + '" style="width:100%;padding:10px 12px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:16px;outline:none;color:#1a1a2e">' +
+                    '</div>' +
                 '</div>' +
             '</div>' +
             '<div style="display:flex;gap:8px">' +
@@ -1370,14 +1384,24 @@ function openMobileShiftEditModal(shift) {
             if (!v) return null;
             const [hh, mm] = v.split(':').map(Number);
             let h = hh + mm / 60;
-            // Gestion nuit (ex: 01:00 → 25)
             if (h < START_HOUR) h += 24;
+            return h;
+        };
+        const parseReal = (v, ref) => {
+            if (!v) return null;
+            const [hh, mm] = v.split(':').map(Number);
+            let h = hh + mm / 60;
+            if (ref != null && h < ref) h += 24;
             return h;
         };
         const newStart = parseT(overlay.querySelector('#_ms-start').value);
         const newEnd   = parseT(overlay.querySelector('#_ms-end').value);
         if (newStart == null || newEnd == null) { showToast('Horaires invalides', true); return; }
         if (newEnd <= newStart) { showToast('La fin doit être après le début', true); return; }
+
+        const rs = parseReal(overlay.querySelector('#_ms-real-start').value, null);
+        const re = parseReal(overlay.querySelector('#_ms-real-end').value, rs);
+        const hasReal = rs != null || re != null;
 
         const btn = overlay.querySelector('#_ms-save');
         btn.disabled    = true;
@@ -1392,17 +1416,30 @@ function openMobileShiftEditModal(shift) {
             if (!res.ok) throw new Error(data.error);
             if (data.warnings?.length) showConflictAlert(data.warnings, shift.staff_name);
 
+            if (hasReal) {
+                const r2 = await fetch('/api/shifts/' + shift._id + '/pointage', {
+                    method: 'PATCH', credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ real_start: rs, real_end: re }),
+                });
+                if (!r2.ok) { const d2 = await r2.json(); throw new Error(d2.error); }
+                shift.real_start = rs;
+                shift.real_end   = re;
+            }
+
             // Mettre à jour en mémoire
             const idx = currentShifts.findIndex(s => String(s._id) === String(shift._id));
             if (idx !== -1) {
                 currentShifts[idx].start_time = newStart;
                 currentShifts[idx].end_time   = newEnd;
+                if (hasReal) { currentShifts[idx].real_start = rs; currentShifts[idx].real_end = re; }
             }
             if (weekFullData[selectedDate]) {
                 const wIdx = weekFullData[selectedDate].findIndex(s => String(s._id) === String(shift._id));
                 if (wIdx !== -1) {
                     weekFullData[selectedDate][wIdx].start_time = newStart;
                     weekFullData[selectedDate][wIdx].end_time   = newEnd;
+                    if (hasReal) { weekFullData[selectedDate][wIdx].real_start = rs; weekFullData[selectedDate][wIdx].real_end = re; }
                 }
             }
             currentShiftsWeek = Object.values(weekFullData).flat();
