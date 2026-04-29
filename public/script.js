@@ -42,6 +42,48 @@ const MONTH_NAMES     = ['janvier','février','mars','avril','mai','juin','juill
 
 let currentUser    = null;  // utilisateur connecté
 let allStaff       = [];
+let staffDisplayNames = new Map(); // _id → prénom court (avec initiale si doublon)
+
+function buildStaffDisplayNames() {
+    staffDisplayNames = new Map();
+
+    // Grouper par prénom
+    const byFirstName = new Map();
+    for (const s of allStaff) {
+        const parts = s.name.trim().split(/\s+/);
+        const fn = parts[0];
+        if (!byFirstName.has(fn)) byFirstName.set(fn, []);
+        byFirstName.get(fn).push({ id: s._id, lastName: parts.slice(1).join(' ') });
+    }
+
+    for (const [fn, group] of byFirstName) {
+        if (group.length === 1 || group.every(g => !g.lastName)) {
+            // Prénom unique ou pas de nom → prénom seul
+            for (const g of group) staffDisplayNames.set(g.id, fn);
+        } else {
+            // Trouver le préfixe minimal du nom qui distingue chaque personne
+            const lastNames = group.map(g => g.lastName.toUpperCase());
+            let len = 1;
+            while (len <= Math.max(...lastNames.map(n => n.length))) {
+                const prefixes = lastNames.map(n => n.slice(0, len));
+                if (new Set(prefixes).size === group.length) break;
+                len++;
+            }
+            for (let i = 0; i < group.length; i++) {
+                const prefix = group[i].lastName.slice(0, len);
+                staffDisplayNames.set(group[i].id,
+                    prefix ? fn + ' ' + prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase() + '.' : fn
+                );
+            }
+        }
+    }
+}
+
+function displayName(staffId, fallbackName) {
+    if (staffDisplayNames.has(staffId)) return staffDisplayNames.get(staffId);
+    const n = (fallbackName || '').trim();
+    return n.split(/\s+/)[0] || n;
+}
 
 // ── Joker — slot non attribué ─────────────────────────────────────────────────
 const JOKER_STAFF = {
@@ -683,6 +725,7 @@ async function loadAllStaff() {
             { _id: 'sophie', name: 'Sophie', color: '#e67e22' },
         ];
     }
+    buildStaffDisplayNames();
     renderSidebar();
 }
 
@@ -784,7 +827,7 @@ function renderSidebar() {
         card.innerHTML =
             (isPref ? '<span class="staff-pref-dot" title="Affecté à cet établissement">★</span>' : '') +
             '<span class="staff-dot" style="background:' + staff.color + '"></span>' +
-            '<span class="staff-info-name"' + (staff.name_color ? ' style="color:' + staff.name_color + '"' : '') + '>' + staff.name + '</span>' +
+            '<span class="staff-info-name"' + (staff.name_color ? ' style="color:' + staff.name_color + '"' : '') + '>' + displayName(staff._id, staff.name) + '</span>' +
             (firstRole
                 ? '<span class="staff-role-badge ' + firstRole.type + '">' + firstRole.name + '</span>'
                 : '') +
@@ -1142,7 +1185,7 @@ function createStaffRow(staff) {
            <span style="font-style:italic;color:#888">${escapeHtml(staff.name)}</span>
            <button class="row-delete" onclick="removeStaffFromDay('${escapeHtml(staff._id)}')">×</button>`
         : `<span class="row-label-dot" style="background:${escapeHtml(staff.color)}"></span>
-           <span>${escapeHtml(staff.name)}</span>
+           <span>${escapeHtml(displayName(staff._id, staff.name))}</span>
            <button class="row-delete" onclick="removeStaffFromDay('${escapeHtml(staff._id)}')">×</button>`;
 
     const rail = document.createElement('div');
@@ -1271,7 +1314,7 @@ function createShiftEl(shift) {
 
     el.innerHTML = `
         <div class="resizer left"></div>
-        <span class="shift-name">${shift.staff_name}</span>
+        <span class="shift-name">${escapeHtml(displayName(shift.staff_id, shift.staff_name))}</span>
         <span class="shift-hours">${fmt(displayStart)} – ${fmt(displayEnd)}</span>
         ${realBadge}
         ${noteText}
@@ -2245,7 +2288,7 @@ function openCopyModal() {
         row.className = 'copy-shift-row';
         row.innerHTML = `
             <span class="copy-shift-dot" style="background:${shift.color}"></span>
-            <span class="copy-shift-name">${shift.staff_name}</span>
+            <span class="copy-shift-name">${escapeHtml(displayName(shift.staff_id, shift.staff_name))}</span>
             <div class="copy-shift-time">
                 <input class="copy-time-input" type="text" value="${fmt(shift.start_time)}" data-idx="${idx}" data-field="start">
                 <span class="copy-shift-sep">→</span>
@@ -2556,7 +2599,7 @@ function renderAgenda() {
                 pill.style.background = shift.color + '22';
                 pill.innerHTML = `
                     <span class="agenda-pill-dot" style="background:${escapeHtml(shift.color)}"></span>
-                    <span style="color:${escapeHtml(nameColor)}">${escapeHtml(shift.staff_name)}</span>
+                    <span style="color:${escapeHtml(nameColor)}">${escapeHtml(displayName(shift.staff_id, shift.staff_name))}</span>
                     <span style="color:#888;font-weight:400">${fmtA(dispStart)}-${fmtA(dispEnd)}</span>`;
                 pills.appendChild(pill);
             });
@@ -2655,7 +2698,7 @@ function renderWeekGantt() {
 
                 const nameEl = document.createElement('div');
                 nameEl.className   = 'gantt-name';
-                nameEl.textContent = isJoker ? 'Joker' : shift.staff_name;
+                nameEl.textContent = isJoker ? 'Joker' : displayName(shift.staff_id, shift.staff_name);
                 row.appendChild(nameEl);
 
                 const track = document.createElement('div');
@@ -4455,6 +4498,7 @@ function renderStaffManageList() {
                     if (!res.ok) throw new Error((await res.json()).error);
 
                     allStaff = allStaff.filter(s => s._id !== staff._id);
+                    buildStaffDisplayNames();
                     currentShifts  = currentShifts.filter(s => s.staff_id !== staff._id);
                     displayedStaff = displayedStaff.filter(s => s._id !== staff._id);
 
@@ -4494,6 +4538,7 @@ document.getElementById('btn-add-staff').addEventListener('click', async () => {
         if (!res.ok) throw new Error(data.error);
 
         allStaff.push(data);
+        buildStaffDisplayNames();
         renderSidebar();
         renderStaffManageList();
 
@@ -4702,6 +4747,7 @@ function openBulkStaffNamesModal() {
 
             if (Array.isArray(data.created) && data.created.length) {
                 allStaff.push(...data.created);
+                buildStaffDisplayNames();
                 renderSidebar();
                 renderStaffManageList();
             }
