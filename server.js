@@ -427,27 +427,50 @@ app.post('/auth/login', checkDB, async (req, res) => {
         return res.status(429).json({ error: 'Trop de tentatives, réessaie dans 15 min.' });
     try {
         let user = null;
+        const errMsg = phone ? 'Numéro ou mot de passe incorrect' : 'Email ou mot de passe incorrect';
+
         if (phone) {
             const normalized = normalizePhone(phone);
             user = await db.collection('users').findOne({ phone: normalized });
-            if (!user || !user.password_hash) return res.status(401).json({ error: 'Numéro ou mot de passe incorrect' });
-            const match = await bcrypt.compare(password, user.password_hash);
-            if (!match) return res.status(401).json({ error: 'Numéro ou mot de passe incorrect' });
         } else {
             user = await db.collection('users').findOne({ email: email.toLowerCase().trim() });
-            if (!user || !user.password_hash) return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
-            const match = await bcrypt.compare(password, user.password_hash);
-            if (!match) return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
         }
+
+        if (!user) return res.status(401).json({ error: errMsg });
+
+        // Si ce compte n'a pas de mot de passe, chercher un compte jumeau
+        // (même staff_id) qui en possède un — cas : compte phone + compte email séparés
+        let authUser = user;
+        if (!user.password_hash && user.staff_id) {
+            const sibling = await db.collection('users').findOne({
+                staff_id:      String(user.staff_id),
+                password_hash: { $ne: null },
+                _id:           { $ne: user._id },
+            });
+            if (sibling) authUser = sibling;
+        }
+
+        if (!authUser.password_hash) return res.status(401).json({ error: errMsg });
+
+        const match = await bcrypt.compare(password, authUser.password_hash);
+        if (!match) return res.status(401).json({ error: errMsg });
+
+        // Session : données du compte trouvé par l'identifiant soumis,
+        // complétées par le compte jumeau si certains champs manquent
+        const merged = authUser !== user ? Object.assign({}, authUser, {
+            _id:   user._id,
+            email: user.email  || authUser.email  || null,
+            phone: user.phone  || authUser.phone  || null,
+        }) : user;
         req.session.user = {
-            _id:                     String(user._id),
-            email:                   user.email  || null,
-            phone:                   user.phone  || null,
-            role:                    user.role,
-            staff_id:                user.staff_id || null,
-            name:                    user.name || '',
-            assigned_establishments: user.assigned_establishments || [],
-            establishment_id:        user.establishment_id || null,
+            _id:                     String(merged._id),
+            email:                   merged.email  || null,
+            phone:                   merged.phone  || null,
+            role:                    merged.role,
+            staff_id:                merged.staff_id || null,
+            name:                    merged.name || '',
+            assigned_establishments: merged.assigned_establishments || [],
+            establishment_id:        merged.establishment_id || null,
         };
         res.json({ message: 'Connecté', user: req.session.user });
     } catch (e) { res.status(500).json({ error: e.message }); }
