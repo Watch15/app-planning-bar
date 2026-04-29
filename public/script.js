@@ -331,13 +331,14 @@ async function checkAuth() {
 function renderUserBadge(user) {
     const badge  = document.getElementById('user-badge');
     const avatar = document.getElementById('user-avatar');
-    const name   = user.name || user.email || '';
+    const fullName  = user.name || user.email || '';
+    const firstName = fullName.split(' ')[0];
     const roleLabel = user.role === 'patron' ? ' · Patron' : ' · Directeur';
-    if (badge)  badge.textContent  = name + roleLabel;
-    if (avatar) avatar.textContent = name.charAt(0).toUpperCase();
+    if (badge)  badge.textContent  = firstName + roleLabel;
+    if (avatar) avatar.textContent = firstName.charAt(0).toUpperCase();
     // Brand mobile (header-left) — affiche le rôle en sous-texte
     const mobSub = document.getElementById('mobile-brand-sub');
-    if (mobSub) mobSub.textContent = user.role === 'patron' ? 'Patron · ' + name : 'Directeur · ' + name;
+    if (mobSub) mobSub.textContent = user.role === 'patron' ? 'Patron · ' + firstName : 'Directeur · ' + firstName;
 }
 
 function renderDateDisplay() {
