@@ -269,6 +269,11 @@ async function init() {
         document.getElementById('dispos-modal').style.display = 'none';
     });
 
+    const confirmDispoClose = document.getElementById('confirm-dispo-close');
+    if (confirmDispoClose) confirmDispoClose.addEventListener('click', () => {
+        document.getElementById('confirm-dispo-modal').style.display = 'none';
+    });
+
     const btnEstab = document.getElementById('btn-manage-establishments');
     if (btnEstab) {
         if (currentUser.role !== 'patron') {
