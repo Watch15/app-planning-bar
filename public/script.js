@@ -2601,7 +2601,12 @@ function renderWeekGantt() {
 
     const pctLeft  = h  => ((h - OPEN_H) / RANGE * 100).toFixed(2) + '%';
     const pctWidth = (s, e) => ((e - s) / RANGE * 100).toFixed(2) + '%';
-    const fmtH     = h  => h <= 24 ? h + 'h' : (h - 24) + 'h';
+    const fmtH     = h  => {
+        const totalMin = Math.round(h * 60);
+        const hh = Math.floor(totalMin / 60) % 24;
+        const mm = totalMin % 60;
+        return (hh === 0 ? '00' : hh) + 'h' + (mm > 0 ? String(mm).padStart(2, '0') : '');
+    };
 
     // Axe horaire
     const axis = document.createElement('div');
