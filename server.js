@@ -501,6 +501,7 @@ app.post('/auth/set-password', checkDB, async (req, res) => {
         if (!user) user = await db.collection('users').findOne({ invite_token: token });
         if (!user)                            return res.status(404).json({ error: 'Lien invalide' });
         if (user.invite_expires < new Date()) return res.status(410).json({ error: 'Lien expiré (24h)' });
+        if (user.password_hash)               return res.status(409).json({ error: 'Compte déjà activé, utilise la connexion' });
         const hash = await bcrypt.hash(password, 12);
         await db.collection('users').updateOne(
             { _id: user._id },
