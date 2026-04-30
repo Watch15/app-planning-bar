@@ -2729,44 +2729,53 @@ function renderWeekGantt() {
             empty.textContent = 'Aucun shift';
             dayDiv.appendChild(empty);
         } else {
+            // Grouper par staff_id (les jokers restent séparés)
+            const staffRows = new Map();
             shifts.forEach(shift => {
                 const isJoker = shift.is_joker || shift.staff_id === '__joker__';
+                const key = isJoker ? '__joker__' + shift._id : String(shift.staff_id);
+                if (!staffRows.has(key)) staffRows.set(key, { isJoker, shift, bars: [] });
                 const sH = shift.real_start != null ? shift.real_start : shift.start_time;
                 const eH = shift.real_end   != null ? shift.real_end   : shift.end_time;
                 const clampS = Math.max(sH, OPEN_H);
                 const clampE = Math.min(eH, CLOSE_H);
-                if (clampS >= clampE) return;
+                if (clampS < clampE) staffRows.get(key).bars.push({ shift, sH, eH, clampS, clampE });
+            });
+
+            staffRows.forEach(({ isJoker, shift: firstShift, bars }) => {
+                if (bars.length === 0) return;
 
                 const row = document.createElement('div');
                 row.className = 'gantt-row';
 
                 const nameEl = document.createElement('div');
                 nameEl.className   = 'gantt-name';
-                nameEl.textContent = isJoker ? 'Joker' : displayName(shift.staff_id, shift.staff_name);
+                nameEl.textContent = isJoker ? 'Joker' : displayName(firstShift.staff_id, firstShift.staff_name);
                 row.appendChild(nameEl);
 
                 const track = document.createElement('div');
                 track.className = 'gantt-track';
 
-                const bar = document.createElement('div');
-                bar.className = 'gantt-bar';
-                if (isJoker) {
-                    bar.style.background = 'repeating-linear-gradient(45deg,#bdc3c7,#bdc3c7 4px,#ecf0f1 4px,#ecf0f1 10px)';
-                    bar.style.color      = '#555';
-                    bar.style.border     = '1.5px dashed #95a5a6';
-                } else {
-                    bar.style.background = shift.color || '#3498db';
-                    bar.style.color      = textColorFor(shift.color || '#3498db');
-                }
-                bar.style.left  = pctLeft(clampS);
-                bar.style.width = pctWidth(clampS, clampE);
+                bars.forEach(({ shift, sH, eH, clampS, clampE }) => {
+                    const bar = document.createElement('div');
+                    bar.className = 'gantt-bar';
+                    if (isJoker) {
+                        bar.style.background = 'repeating-linear-gradient(45deg,#bdc3c7,#bdc3c7 4px,#ecf0f1 4px,#ecf0f1 10px)';
+                        bar.style.color      = '#555';
+                        bar.style.border     = '1.5px dashed #95a5a6';
+                    } else {
+                        bar.style.background = shift.color || '#3498db';
+                        bar.style.color      = textColorFor(shift.color || '#3498db');
+                    }
+                    bar.style.left  = pctLeft(clampS);
+                    bar.style.width = pctWidth(clampS, clampE);
+                    if ((clampE - clampS) >= 1.5) {
+                        bar.textContent = fmtH(sH) + '→' + fmtH(eH);
+                    }
+                    bar.addEventListener('click', () => switchToDayView(date));
+                    track.appendChild(bar);
+                });
 
-                if ((clampE - clampS) >= 1.5) {
-                    bar.textContent = fmtH(sH) + '→' + fmtH(eH);
-                }
-
-                bar.addEventListener('click', () => switchToDayView(date));
-                track.appendChild(bar);
                 row.appendChild(track);
                 dayDiv.appendChild(row);
             });
