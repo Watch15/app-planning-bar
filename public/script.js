@@ -2677,8 +2677,10 @@ function renderWeekGantt() {
     }
     if (!isFinite(minH) || !isFinite(maxH)) { minH = 10; maxH = 26; }
 
-    const OPEN_H  = Math.max(0,  Math.floor(minH));
-    const CLOSE_H = Math.min(30, Math.ceil(maxH));
+    const firstH  = Math.floor(minH);               // tick d'ouverture (heure d'avant si demi-heure)
+    const lastH   = Math.ceil(maxH);                 // tick de fermeture
+    const OPEN_H  = Math.max(0,  firstH - 1);        // 1h de marge avant
+    const CLOSE_H = Math.min(30, lastH  + 1);        // 1h de marge après
     const RANGE   = CLOSE_H - OPEN_H || 1;
 
     const pctLeft  = h       => ((h - OPEN_H) / RANGE * 100).toFixed(3) + '%';
@@ -2692,15 +2694,17 @@ function renderWeekGantt() {
     axis.className = 'gantt-axis';
     const axisTrack = document.createElement('div');
     axisTrack.className = 'gantt-axis-track';
-    // Premier tick pair >= OPEN_H
-    const tickStart = OPEN_H % 2 === 0 ? OPEN_H : OPEN_H + 1;
-    for (let h = tickStart; h <= CLOSE_H; h += 2) {
+    // Ticks toutes les 2h + firstH et lastH toujours présents
+    const tickSet  = new Set([firstH, lastH]);
+    const t2start  = OPEN_H % 2 === 0 ? OPEN_H : OPEN_H + 1;
+    for (let h = t2start; h <= CLOSE_H; h += 2) tickSet.add(h);
+    [...tickSet].sort((a, b) => a - b).forEach(h => {
         const tick = document.createElement('span');
         tick.className   = 'gantt-tick';
         tick.textContent = fmtH(h);
         tick.style.left  = pctLeft(h);
         axisTrack.appendChild(tick);
-    }
+    });
     axis.appendChild(axisTrack);
     wrap.appendChild(axis);
 
