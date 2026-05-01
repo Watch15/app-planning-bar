@@ -1590,9 +1590,10 @@ app.get('/api/dispo-settings', checkDB, requireAuth, async (req, res) => {
 
         // Vérifier si ce staff a le droit d'envoyer des dispos
         let staffCanSubmit = true;
+        let staffDoc = null;
         const staffId = req.session.user.staff_id;
         if (staffId && isValidObjectId(staffId)) {
-            const staffDoc = await db.collection('staff').findOne({ _id: new ObjectId(staffId) });
+            staffDoc = await db.collection('staff').findOne({ _id: new ObjectId(staffId) });
             if (staffDoc && staffDoc.can_submit_dispos === false) staffCanSubmit = false;
         }
 
