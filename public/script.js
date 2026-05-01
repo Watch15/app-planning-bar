@@ -4411,107 +4411,73 @@ function renderRestDaysTab() {
 
     const REST_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
     const REST_VALUES = [1, 2, 3, 4, 5, 6, 0];
+    const COL = '1fr repeat(7,44px)';
 
-    // Header row
+    // En-tête sticky
     const header = document.createElement('div');
-    header.style.cssText = 'display:grid;grid-template-columns:160px repeat(7,44px) auto;gap:4px 6px;align-items:center;padding:8px 12px 4px;border-bottom:1px solid #f0f0f0;font-size:11px;font-weight:600;color:#aaa;';
+    header.style.cssText = 'display:grid;grid-template-columns:' + COL + ';gap:0 6px;align-items:center;padding:8px 14px 6px;border-bottom:2px solid #ececec;font-size:11px;font-weight:600;color:#aaa;position:sticky;top:0;background:#fff;z-index:1;';
     header.innerHTML = '<span>Membre</span>' +
-        REST_LABELS.map(l => '<span style="text-align:center">' + l + '</span>').join('') +
-        '<span></span>';
+        REST_LABELS.map(l => '<span style="text-align:center">' + escapeHtml(l) + '</span>').join('');
     container.appendChild(header);
 
+    // Une ligne par staff avec checkboxes
     allStaff.forEach(staff => {
         const restDays = staff.rest_days || [];
         const row = document.createElement('div');
-        row.style.cssText = 'display:grid;grid-template-columns:160px repeat(7,44px) auto;gap:4px 6px;align-items:center;padding:6px 12px;border-bottom:1px solid #fafafa;';
+        row.style.cssText = 'display:grid;grid-template-columns:' + COL + ';gap:0 6px;align-items:center;padding:7px 14px;border-bottom:1px solid #f5f5f5;';
 
         const nameEl = document.createElement('span');
         nameEl.style.cssText = 'font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
         nameEl.title = staff.name;
-        nameEl.innerHTML = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + escapeHtml(staff.color) + ';margin-right:5px;vertical-align:middle"></span>' + escapeHtml(staff.name);
+        nameEl.innerHTML = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + escapeHtml(staff.color) + ';margin-right:6px;vertical-align:middle;flex-shrink:0"></span>' + escapeHtml(staff.name);
         row.appendChild(nameEl);
 
-        const dayBtns = [];
-        REST_VALUES.forEach((dayVal, idx) => {
+        REST_VALUES.forEach(dayVal => {
             const cell = document.createElement('div');
-            cell.style.cssText = 'display:flex;justify-content:center;';
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.dataset.day = String(dayVal);
-            const isRest = restDays.includes(dayVal);
-            btn.className = 'rest-day-tab-btn' + (isRest ? ' active' : '');
-            btn.style.cssText = 'width:36px;height:28px;border-radius:6px;border:1.5px solid ' +
-                (isRest ? '#e74c3c' : '#e0e0e0') + ';background:' + (isRest ? '#fff5f5' : 'white') +
-                ';color:' + (isRest ? '#e74c3c' : '#bbb') + ';font-size:11px;font-weight:600;cursor:pointer;transition:all 0.12s;';
-            btn.textContent = REST_LABELS[idx];
-            btn.addEventListener('click', () => {
-                btn.classList.toggle('active');
-                const active = btn.classList.contains('active');
-                btn.style.borderColor = active ? '#e74c3c' : '#e0e0e0';
-                btn.style.background  = active ? '#fff5f5' : 'white';
-                btn.style.color       = active ? '#e74c3c' : '#bbb';
-            });
-            dayBtns.push(btn);
-            cell.appendChild(btn);
+            cell.style.cssText = 'display:flex;justify-content:center;align-items:center;';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.dataset.day = String(dayVal);
+            cb.className = 'rest-day-tab-cb';
+            cb.checked = restDays.includes(dayVal);
+            cb.style.cssText = 'width:16px;height:16px;accent-color:#e74c3c;cursor:pointer;';
+            cell.appendChild(cb);
             row.appendChild(cell);
         });
 
-        const saveBtn = document.createElement('button');
-        saveBtn.type = 'button';
-        saveBtn.textContent = 'Enregistrer';
-        saveBtn.style.cssText = 'font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--accent);background:var(--accent-subtle);color:var(--accent);cursor:pointer;white-space:nowrap;';
-        saveBtn.addEventListener('click', async () => {
-            const newRestDays = dayBtns.filter(b => b.classList.contains('active')).map(b => parseInt(b.dataset.day));
-            try {
-                const res = await fetch('/api/staff/' + staff._id, {
-                    method: 'PATCH', credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ rest_days: newRestDays }),
-                });
-                if (!res.ok) throw new Error((await res.json()).error);
-                staff.rest_days = newRestDays;
-                saveBtn.textContent = '✓';
-                setTimeout(() => { saveBtn.textContent = 'Enregistrer'; }, 1500);
-            } catch (e) { showToast(e.message || 'Erreur', true); }
-        });
-        row.appendChild(saveBtn);
         container.appendChild(row);
     });
 
     // Bouton "Tout enregistrer"
-    if (allStaff.length > 1) {
-        const footer = document.createElement('div');
-        footer.style.cssText = 'display:flex;justify-content:flex-end;padding:10px 12px 4px;';
-        const saveAll = document.createElement('button');
-        saveAll.type = 'button';
-        saveAll.textContent = 'Tout enregistrer';
-        saveAll.style.cssText = 'font-size:12px;padding:6px 16px;border-radius:8px;border:none;background:var(--accent);color:white;cursor:pointer;font-weight:600;';
-        saveAll.addEventListener('click', async () => {
-            const rows = container.querySelectorAll('[data-staff-id]');
-            // collect per-staff from row buttons
-            let ok = 0, fail = 0;
-            const rowEls = Array.from(container.children).slice(1, -1); // skip header and footer
-            const promises = allStaff.map((s, i) => {
-                const rowEl = rowEls[i];
-                if (!rowEl) return Promise.resolve();
-                const btns = Array.from(rowEl.querySelectorAll('.rest-day-tab-btn'));
-                const newRestDays = btns.filter(b => b.classList.contains('active')).map(b => parseInt(b.dataset.day));
-                return fetch('/api/staff/' + s._id, {
-                    method: 'PATCH', credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ rest_days: newRestDays }),
-                }).then(res => {
-                    if (!res.ok) return res.json().then(d => { fail++; throw new Error(d.error); });
-                    s.rest_days = newRestDays;
-                    ok++;
-                }).catch(() => { fail++; });
-            });
-            await Promise.all(promises);
-            showToast(ok + ' membre(s) mis à jour' + (fail ? ', ' + fail + ' erreur(s)' : ''), fail > 0);
+    const footer = document.createElement('div');
+    footer.style.cssText = 'display:flex;justify-content:flex-end;padding:12px 14px 6px;';
+    const saveAll = document.createElement('button');
+    saveAll.type = 'button';
+    saveAll.textContent = 'Enregistrer';
+    saveAll.style.cssText = 'font-size:12px;padding:6px 18px;border-radius:8px;border:none;background:var(--accent);color:white;cursor:pointer;font-weight:600;';
+    saveAll.addEventListener('click', async () => {
+        let ok = 0, fail = 0;
+        const rowEls = Array.from(container.children).slice(1, -1); // skip header and footer
+        const promises = allStaff.map((s, i) => {
+            const rowEl = rowEls[i];
+            if (!rowEl) return Promise.resolve();
+            const newRestDays = Array.from(rowEl.querySelectorAll('.rest-day-tab-cb'))
+                .filter(cb => cb.checked).map(cb => parseInt(cb.dataset.day));
+            return fetch('/api/staff/' + s._id, {
+                method: 'PATCH', credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rest_days: newRestDays }),
+            }).then(res => {
+                if (!res.ok) return res.json().then(d => { fail++; });
+                s.rest_days = newRestDays;
+                ok++;
+            }).catch(() => { fail++; });
         });
-        footer.appendChild(saveAll);
-        container.appendChild(footer);
-    }
+        await Promise.all(promises);
+        showToast(ok + ' membre(s) mis à jour' + (fail ? ', ' + fail + ' erreur(s)' : ''), fail > 0);
+    });
+    footer.appendChild(saveAll);
+    container.appendChild(footer);
 }
 
 function renderRolesHeader() {
