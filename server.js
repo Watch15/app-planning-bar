@@ -1149,9 +1149,9 @@ app.post('/api/staff/bulk', checkDB, requirePatron, async (req, res) => {
 
 app.patch('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
-    const { color, name, email, venues, can_submit_dispos, groups } = req.body;
-    if (!color && !name && email === undefined && venues === undefined && can_submit_dispos === undefined && req.body.roles === undefined && groups === undefined && req.body.name_color === undefined)
-        return res.status(400).json({ error: 'color, name, email, venues, roles, groups, name_color ou can_submit_dispos requis' });
+    const { color, name, email, venues, can_submit_dispos, groups, rest_days } = req.body;
+    if (!color && !name && email === undefined && venues === undefined && can_submit_dispos === undefined && req.body.roles === undefined && groups === undefined && req.body.name_color === undefined && rest_days === undefined)
+        return res.status(400).json({ error: 'color, name, email, venues, roles, groups, name_color, can_submit_dispos ou rest_days requis' });
     try {
         const update = {};
         if (color)                           update.color             = color;
@@ -1161,6 +1161,7 @@ app.patch('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
         if (req.body.roles !== undefined)    update.roles             = req.body.roles;
         if (can_submit_dispos !== undefined) update.can_submit_dispos = !!can_submit_dispos;
         if (groups !== undefined)            update.groups            = Array.isArray(groups) ? groups : [];
+        if (Array.isArray(rest_days))        update.rest_days         = rest_days.map(Number).filter(n => n >= 0 && n <= 6);
         if (req.body.name_color !== undefined) update.name_color      = req.body.name_color || null;
         const result = await db.collection('staff').updateOne(
             { _id: new ObjectId(req.params.id) }, { $set: update }
@@ -1604,6 +1605,7 @@ app.get('/api/dispo-settings', checkDB, requireAuth, async (req, res) => {
             staffCanSubmit,
             force_open: forceOpen,
             custom_deadline: customDeadline,
+            rest_days: staffDoc ? (staffDoc.rest_days || []) : [],
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -1630,6 +1632,35 @@ app.get('/api/dispos/mine', checkDB, requireAuth, async (req, res) => {
     try {
         const dispos = await db.collection('availabilities').find({ staff_id: staffId, date: { $gte: from, $lte: to } }).toArray();
         res.json(dispos);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/dispos/week-note', checkDB, requireAuth, async (req, res) => {
+    const staffId = req.session.user.staff_id;
+    const { week_start } = req.query;
+    if (!week_start) return res.status(400).json({ error: 'week_start requis' });
+    if (!staffId) return res.json({ week_note: '' });
+    try {
+        const doc = await db.collection('availabilities').findOne({ staff_id: staffId, week_start, type: 'week_note' });
+        res.json({ week_note: doc ? doc.week_note : '' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dispos/week-note', checkDB, requireAuth, async (req, res) => {
+    const staffId = req.session.user.staff_id;
+    if (!staffId) return res.status(400).json({ error: 'Aucun profil staff lié' });
+    const { week_start, week_note } = req.body;
+    if (!week_start || !/^\d{4}-\d{2}-\d{2}$/.test(week_start))
+        return res.status(400).json({ error: 'week_start invalide (YYYY-MM-DD)' });
+    if (week_note !== undefined && String(week_note).length > 200)
+        return res.status(400).json({ error: 'Note trop longue (200 caractères max)' });
+    try {
+        await db.collection('availabilities').updateOne(
+            { staff_id: staffId, week_start, type: 'week_note' },
+            { $set: { staff_id: staffId, week_start, type: 'week_note', week_note: String(week_note || '').slice(0, 200) } },
+            { upsert: true }
+        );
+        res.json({ message: 'Note enregistrée' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

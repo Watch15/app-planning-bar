@@ -304,6 +304,34 @@
         .btn-submit-dispos:hover:not(:disabled) { background: var(--accent); }
         .btn-submit-dispos:disabled { background: #c8ccd6; cursor: not-allowed; }
 
+        /* ── Note globale semaine ── */
+        .week-note-block {
+            background: var(--light-card);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            border: 1.5px solid var(--light-border);
+        }
+        .week-note-label {
+            font-size: 11px; font-weight: 600; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px;
+        }
+        .week-note-textarea {
+            width: 100%; min-height: 64px; resize: vertical;
+            border: 1.5px solid var(--light-border); border-radius: 8px;
+            padding: 8px 10px; font-size: 13px; font-family: var(--font);
+            color: var(--text-primary); background: var(--light-bg);
+            outline: none; transition: border-color .15s;
+        }
+        .week-note-textarea:focus { border-color: var(--accent); background: #fff; }
+        .week-note-save {
+            padding: 6px 14px; border-radius: 8px; border: none;
+            background: var(--dark-surface); color: white;
+            font-size: 12px; font-weight: 600; cursor: pointer;
+            font-family: var(--font); transition: background .15s;
+        }
+        .week-note-save:hover:not(:disabled) { background: var(--accent); }
+        .week-note-save:disabled { background: #c8ccd6; cursor: not-allowed; }
+
         /* ── Empty week ── */
         .empty-week { padding: 48px 20px; text-align: center; }
         .empty-week-icon  { font-size: 36px; margin-bottom: 12px; }
@@ -1117,13 +1145,64 @@ async function loadDisposTab() {
         dispoSelections[d.date] = { type: d.type, start_time: d.start_time, end_time: d.end_time, note: d.note || '' };
     });
 
-    // Générer les 7 cartes
+    // Jours de repos à masquer
+    const restDays = dispoSettings.rest_days || [];
+
+    // Générer les cartes en sautant les jours de repos
     formEl.innerHTML = '';
     for (let i = 0; i < 7; i++) {
-        const date = toDateStr(addDays(nextMonday, i));
         const d    = addDays(nextMonday, i);
+        if (restDays.includes(d.getDay())) continue;
+        const date = toDateStr(d);
         formEl.appendChild(createDispoCard(date, d));
     }
+
+    // Bloc note globale semaine
+    const weekStart = toDateStr(nextMonday);
+    const noteBlock = document.createElement('div');
+    noteBlock.className = 'week-note-block';
+    noteBlock.innerHTML =
+        '<div class="week-note-label">Note pour la semaine</div>' +
+        '<textarea id="weekNoteInput" class="week-note-textarea" maxlength="200" placeholder="Ex : Dispo mardi au besoin…"></textarea>' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">' +
+            '<span id="weekNoteCount" style="font-size:11px;color:var(--text-muted)">0 / 200</span>' +
+            '<button id="saveWeekNote" class="week-note-save">Enregistrer la note</button>' +
+        '</div>';
+    formEl.appendChild(noteBlock);
+
+    // Charger la note existante
+    const nRes = await fetch('/api/dispos/week-note?week_start=' + weekStart, { credentials: 'include' });
+    if (nRes.ok) {
+        const nData = await nRes.json();
+        const ta = document.getElementById('weekNoteInput');
+        ta.value = nData.week_note || '';
+        document.getElementById('weekNoteCount').textContent = ta.value.length + ' / 200';
+    }
+
+    document.getElementById('weekNoteInput').addEventListener('input', e => {
+        document.getElementById('weekNoteCount').textContent = e.target.value.length + ' / 200';
+    });
+
+    document.getElementById('saveWeekNote').addEventListener('click', async () => {
+        const note = document.getElementById('weekNoteInput').value;
+        const btn  = document.getElementById('saveWeekNote');
+        btn.disabled    = true;
+        btn.textContent = 'Enregistrement…';
+        try {
+            const r = await fetch('/api/dispos/week-note', {
+                method: 'POST', credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ week_start: weekStart, week_note: note }),
+            });
+            if (!r.ok) throw new Error((await r.json()).error);
+            btn.textContent = '✓ Enregistré';
+            setTimeout(() => { btn.disabled = false; btn.textContent = 'Enregistrer la note'; }, 2000);
+        } catch (err) {
+            btn.disabled    = false;
+            btn.textContent = 'Enregistrer la note';
+            alert(err.message || 'Erreur');
+        }
+    });
 
     btnSubmit.replaceWith(btnSubmit.cloneNode(true));
     document.getElementById('btn-submit-dispos').addEventListener('click', submitDispos);
