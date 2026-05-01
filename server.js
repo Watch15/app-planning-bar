@@ -1636,6 +1636,15 @@ app.get('/api/dispos/mine', checkDB, requireAuth, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/api/dispos/week-notes', checkDB, requirePatron, async (req, res) => {
+    const { week_start } = req.query;
+    if (!week_start) return res.status(400).json({ error: 'week_start requis' });
+    try {
+        const docs = await db.collection('availabilities').find({ week_start, type: 'week_note' }).toArray();
+        res.json(docs.map(d => ({ staff_id: d.staff_id, week_note: d.week_note })));
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/dispos/week-note', checkDB, requireAuth, async (req, res) => {
     const staffId = req.session.user.staff_id;
     const { week_start } = req.query;

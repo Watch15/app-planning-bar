@@ -3925,9 +3925,16 @@ async function loadDisposList() {
     const from = toDateStr(nextMonday);
     const to   = toDateStr(addDays(nextMonday, 6));
     try {
-        const res    = await fetch('/api/dispos/pending?from=' + from + '&to=' + to, { credentials: 'include' });
+        const [res, notesRes] = await Promise.all([
+            fetch('/api/dispos/pending?from=' + from + '&to=' + to, { credentials: 'include' }),
+            fetch('/api/dispos/week-notes?week_start=' + from, { credentials: 'include' }),
+        ]);
         const dispos = await res.json();
         if (!res.ok) throw new Error(dispos.error);
+        const weekNotes = notesRes.ok ? await notesRes.json() : [];
+        const noteByStaff = {};
+        weekNotes.forEach(n => { noteByStaff[n.staff_id] = n.week_note; });
+
         if (dispos.length === 0) {
             list.innerHTML = '<div style="padding:24px;text-align:center;color:#ccc;font-size:13px">Aucune disponibilité en attente</div>';
             return;
@@ -4005,6 +4012,20 @@ async function loadDisposList() {
             });
 
             card.appendChild(grid);
+
+            // Note globale semaine
+            const weekNote = noteByStaff[staffId];
+            if (weekNote) {
+                const noteEl = document.createElement('div');
+                noteEl.style.cssText = 'padding:8px 14px 12px;border-top:1px solid #f0f0f0;display:flex;align-items:flex-start;gap:8px';
+                noteEl.innerHTML =
+                    '<span style="font-size:13px;flex-shrink:0">✎</span>' +
+                    '<div>' +
+                        '<div style="font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Note semaine</div>' +
+                        '<div style="font-size:12px;color:#555;line-height:1.4">' + escapeHtml(weekNote) + '</div>' +
+                    '</div>';
+                card.appendChild(noteEl);
+            }
 
             // Bouton "Tout confirmer"
             header.querySelector('.btn-confirm-all').addEventListener('click', () => {
