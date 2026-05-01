@@ -1608,7 +1608,7 @@ function openRealHoursModal(shift, shiftEl) {
                 '<p style="font-size:14px;font-weight:700;color:#1a1a2e">' + shift.staff_name + '</p>' +
             '</div>' +
             '<p style="font-size:12px;color:#aaa;margin-bottom:16px">Planifié : ' + fmtDisp(shift.start_time) + ' → ' + fmtDisp(shift.end_time) + '</p>' +
-            '<div style="display:flex;gap:10px;margin-bottom:18px">' +
+            '<div id="_rh-time-row" style="display:flex;gap:10px;margin-bottom:18px">' +
                 '<div style="flex:1">' +
                     '<div style="font-size:11px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px">Début réel</div>' +
                     '<input id="_rh-start" type="time" value="' + fmt(shift.real_start) + '" style="width:100%;padding:9px 10px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:15px;font-weight:600;outline:none">' +
@@ -1629,6 +1629,20 @@ function openRealHoursModal(shift, shiftEl) {
 
     document.body.appendChild(overlay);
     const close = () => document.body.removeChild(overlay);
+
+    // Centrer les inputs en portrait mobile
+    if (window.innerWidth <= 600 && window.innerHeight > window.innerWidth) {
+        const row = overlay.querySelector('#_rh-time-row');
+        row.style.justifyContent = 'center';
+        row.querySelectorAll('div[style*="flex:1"]').forEach(g => {
+            g.style.flex = '0 0 auto';
+            g.style.width = '110px';
+        });
+        row.querySelectorAll('input[type="time"]').forEach(i => {
+            i.style.padding = '7px 8px';
+            i.style.fontSize = '15px';
+        });
+    }
 
     const startInput = overlay.querySelector('#_rh-start');
     const endInput   = overlay.querySelector('#_rh-end');
