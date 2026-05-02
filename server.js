@@ -1,3 +1,4 @@
+process.env.TZ = 'Europe/Paris'; // doit être avant tout require de date — gère heure d'été/hiver
 require('dotenv').config();
 const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
@@ -1554,10 +1555,15 @@ function computeEffectiveDeadline(customDeadlineIso, now) {
     // Extraire jour-cible et heure depuis le patron (custom ou défaut vendredi 13h)
     let targetJsDay = 5, targetH = 13, targetM = 0;
     if (customDeadlineIso) {
-        const stored  = new Date(customDeadlineIso);
-        targetJsDay   = stored.getDay();
-        targetH       = stored.getHours();
-        targetM       = stored.getMinutes();
+        // Parser manuellement : "YYYY-MM-DDTHH:MM:SS" stocké en heure locale Paris.
+        // new Date(isoString) sur un serveur UTC interprèterait cette chaîne en UTC
+        // et décalerait l'heure de +2h en heure d'été → bug deadline décalée.
+        const [datePart, timePart = '13:00'] = customDeadlineIso.split('T');
+        const [y, mo, d] = datePart.split('-').map(Number);
+        const [h, m]     = timePart.split(':').map(Number);
+        targetJsDay = new Date(y, mo - 1, d).getDay(); // date locale, pas de conversion UTC
+        targetH     = h;
+        targetM     = m;
     }
     const wTarget = targetJsDay === 0 ? 7 : targetJsDay; // même normalisation
 
