@@ -93,6 +93,28 @@ test('normalizePhone gère un mix WhatsApp (NBSP + espaces + tirets)', () => {
     assert.equal(normalizePhone('+33' + nbsp + '6 12-34.56' + nbsp + '78'), '+33612345678');
 });
 
+test('normalizePhone gère "+33 6 12 34 56 78" (format iOS contacts)', () => {
+    assert.equal(normalizePhone('+33 6 12 34 56 78'), '+33612345678');
+});
+
+test('normalizePhone gère "0033..." (préfixe international double-zéro)', () => {
+    assert.equal(normalizePhone('0033612345678'), '+33612345678');
+});
+
+test('normalizePhone gère "+33(0)6..." (format copié depuis certains annuaires)', () => {
+    assert.equal(normalizePhone('+33(0)612345678'), '+33612345678');
+});
+
+test('normalizePhone retourne null pour un numéro invalide', () => {
+    assert.equal(normalizePhone('12345'), null);
+    assert.equal(normalizePhone('abcdef'), null);
+    assert.equal(normalizePhone(''), null);
+});
+
+test('normalizePhone retourne null pour null/undefined', () => {
+    assert.equal(normalizePhone(null), null);
+});
+
 // ── computeActiveDate ────────────────────────────────────────────────────────
 
 test('computeActiveDate : heure >= cutoff → date du jour', () => {
