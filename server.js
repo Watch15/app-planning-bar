@@ -618,10 +618,23 @@ app.get('/api/users', checkDB, requirePatron, async (req, res) => {
         const users = await db.collection('users')
             .find({}, { projection: { password_hash: 0, invite_token: 0 } })
             .toArray();
+
+        // Enrichir avec le téléphone depuis staff pour les comptes qui n'en ont pas dans users
+        const missing = users.filter(u => !u.phone && u.staff_id && isValidObjectId(u.staff_id));
+        if (missing.length > 0) {
+            const staffDocs = await db.collection('staff')
+                .find({ _id: { $in: missing.map(u => new ObjectId(u.staff_id)) } }, { projection: { phone: 1 } })
+                .toArray();
+            const phoneMap = {};
+            staffDocs.forEach(s => { if (s.phone) phoneMap[String(s._id)] = s.phone; });
+            users.forEach(u => { if (!u.phone && u.staff_id && phoneMap[u.staff_id]) u.phone = phoneMap[u.staff_id]; });
+        }
+
         // Directeur : ne voit pas les comptes patron ni les autres directeurs
         if (req.session.user.role === 'directeur') {
             return res.json(users.filter(u => u.role === 'staff' || String(u._id) === req.session.user._id));
-        }        res.json(users);
+        }
+        res.json(users);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
