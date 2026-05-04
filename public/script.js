@@ -1447,7 +1447,7 @@ function openMobileShiftEditModal(shift) {
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
 
     const isPortrait = window.innerHeight > window.innerWidth;
-    const inp = 'width:100%;padding:6px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:15px;outline:none;color:#1a1a2e';
+    const inp = 'width:100%;padding:6px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:18px;outline:none;color:#1a1a2e';
     const lbl = 'font-size:10px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px';
     const grp = 'flex:1';
     const row = isPortrait ? 'display:flex;gap:20px' : 'display:flex;gap:10px';
@@ -1674,9 +1674,11 @@ function openRealHoursModal(shift, shiftEl) {
     document.body.appendChild(overlay);
     const close = () => document.body.removeChild(overlay);
 
-    // Augmenter l'écart en portrait mobile
+    // Augmenter l'écart et la taille en portrait mobile
     if (window.innerWidth <= 600 && window.innerHeight > window.innerWidth) {
-        overlay.querySelector('#_rh-time-row').style.gap = '20px';
+        const row = overlay.querySelector('#_rh-time-row');
+        row.style.gap = '20px';
+        row.querySelectorAll('input[type="time"]').forEach(i => { i.style.fontSize = '18px'; });
     }
 
     const startInput = overlay.querySelector('#_rh-start');
