@@ -5734,7 +5734,7 @@ function generatePrintDashboard() {
         let totalH = 0;
         let row = '<tr><td style="padding:6px 10px;border:1px solid #ddd;white-space:nowrap">' +
             '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + staff.color + ';margin-right:5px;-webkit-print-color-adjust:exact;print-color-adjust:exact"></span>' +
-            escapeHtml(staff.name) + '</td>';
+            escapeHtml(displayName(staff._id, staff.name)) + '</td>';
         days.forEach(({ date }) => {
             const dayShifts = staff.shifts[date];
             if (dayShifts && dayShifts.length) {
