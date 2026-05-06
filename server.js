@@ -323,11 +323,6 @@ async function checkDispoRappels() {
                     title: 'Templyo — Rappel dispos', body: msg, tag: 'rappel-dispo', url: '/planning.html#dispos',
                     actions: [{ action: 'envoyer', title: 'Envoyer mes dispos' }],
                 });
-                await Promise.allSettled(targets.map(async s => {
-                    if (!s.phone) return;
-                    try { await sendSMS(normalizePhone(s.phone), msg); }
-                    catch (e) { console.error('❌ SMS J-2 ' + s.name + ':', e.message); }
-                }));
             }
             await db.collection('settings').updateOne({ key: 'dispo' }, { $set: { notif_sent_j2: now } });
             console.log('✅ Rappel J-2 →', targets.length, 'membres');
@@ -343,11 +338,6 @@ async function checkDispoRappels() {
                     title: 'Templyo — Rappel dispos', body: msg, tag: 'rappel-dispo', url: '/planning.html#dispos',
                     actions: [{ action: 'envoyer', title: 'Envoyer mes dispos' }],
                 });
-                await Promise.allSettled(targets.map(async s => {
-                    if (!s.phone) return;
-                    try { await sendSMS(normalizePhone(s.phone), msg); }
-                    catch (e) { console.error('❌ SMS J-1 ' + s.name + ':', e.message); }
-                }));
             }
             await db.collection('settings').updateOne({ key: 'dispo' }, { $set: { notif_sent_j1: now } });
             console.log('✅ Rappel J-1 →', targets.length, 'membres');
@@ -2432,12 +2422,6 @@ app.post('/api/dispos/rappel', checkDB, requirePatron, async (req, res) => {
             url:     '/planning.html#dispos',
             actions: [{ action: 'envoyer', title: 'Envoyer mes dispos' }],
         });
-
-        await Promise.allSettled(targets.map(async s => {
-            if (!s.phone) return;
-            try { await sendSMS(normalizePhone(s.phone), msgText); }
-            catch (e) { console.error('❌ SMS rappel ' + s.name + ':', e.message); }
-        }));
 
         await db.collection('notifications').insertOne({
             type:       'rappel_dispo',
