@@ -2808,14 +2808,10 @@ function renderWeekGantt() {
     const wrap = document.getElementById('week-gantt');
     wrap.innerHTML = '';
 
-    const fmtH = h => {
-        const totalMin = Math.round(h * 60);
-        const hh = Math.floor(totalMin / 60) % 24;
-        const mm = totalMin % 60;
-        return (hh === 0 ? '00' : hh) + 'h' + (mm > 0 ? String(mm).padStart(2, '0') : '');
-    };
+    const fmtH     = h => String(h >= 24 ? h - 24 : h).padStart(2, '0') + 'h';
+    const fmtRange = (s, e) => fmtH(s) + ' → ' + fmtH(e);
 
-    // ── Bornes dynamiques calculées depuis les shifts de la semaine ──
+    // ── Bornes dynamiques ─────────────────────────────────────────────────────
     let minH = Infinity, maxH = -Infinity;
     for (let i = 0; i < 7; i++) {
         const date = toDateStr(addDays(currentWeekStart, i));
@@ -2829,59 +2825,94 @@ function renderWeekGantt() {
     }
     if (!isFinite(minH) || !isFinite(maxH)) { minH = 10; maxH = 26; }
 
-    const firstH  = Math.floor(minH);               // tick d'ouverture (heure d'avant si demi-heure)
-    const lastH   = Math.ceil(maxH);                 // tick de fermeture
-    const OPEN_H  = Math.max(0,  firstH - 1);        // 1h de marge avant
-    const CLOSE_H = Math.min(30, lastH  + 1);        // 1h de marge après
+    const OPEN_H  = Math.max(0,  Math.floor(minH) - 1);
+    const CLOSE_H = Math.min(30, Math.ceil(maxH)  + 1);
     const RANGE   = CLOSE_H - OPEN_H || 1;
+    const pctLeft  = h     => ((h - OPEN_H) / RANGE * 100).toFixed(3) + '%';
+    const pctWidth = (s,e) => ((e - s)       / RANGE * 100).toFixed(3) + '%';
 
-    const pctLeft  = h       => ((h - OPEN_H) / RANGE * 100).toFixed(3) + '%';
-    const pctWidth = (s, e)  => ((e - s)       / RANGE * 100).toFixed(3) + '%';
-
-    // Variable CSS pour la grille (toutes les 1h)
     wrap.style.setProperty('--gantt-tick-pct', (1 / RANGE * 100).toFixed(3) + '%');
 
-    // ── Axe horaire avec ticks positionnés précisément ──
-    const axis = document.createElement('div');
-    axis.className = 'gantt-axis';
+    // ── Axe ───────────────────────────────────────────────────────────────────
+    const axisRow = document.createElement('div');
+    axisRow.className = 'gantt-axis';
+    const axisEmpty = document.createElement('div');
+    axisEmpty.className = 'gantt-axis-empty';
     const axisTrack = document.createElement('div');
     axisTrack.className = 'gantt-axis-track';
-    // Ticks chaque heure + firstH et lastH toujours présents
-    const tickSet  = new Set([firstH, lastH]);
-    for (let h = OPEN_H; h <= CLOSE_H; h += 1) tickSet.add(h);
-    [...tickSet].sort((a, b) => a - b).forEach(h => {
+    for (let h = OPEN_H; h <= CLOSE_H; h++) {
+        const isMajor    = h % 2 === 0;
+        const isMidnight = h === 24;
         const tick = document.createElement('span');
-        tick.className   = 'gantt-tick';
-        tick.textContent = fmtH(h);
+        tick.className = 'gantt-tick' + (isMajor ? ' major' : '') + (isMidnight ? ' midnight' : '');
         tick.style.left  = pctLeft(h);
+        tick.textContent = isMajor ? fmtH(h) : '';
         axisTrack.appendChild(tick);
-    });
-    axis.appendChild(axisTrack);
-    wrap.appendChild(axis);
+    }
+    axisRow.appendChild(axisEmpty);
+    axisRow.appendChild(axisTrack);
+    wrap.appendChild(axisRow);
+
+    // ── Collecte staff unique pour la légende ─────────────────────────────────
+    const staffMap = new Map();
+    for (let i = 0; i < 7; i++) {
+        const date = toDateStr(addDays(currentWeekStart, i));
+        for (const s of (weekFullData[date] || [])) {
+            if (!staffMatchesCurrentGroup(s.staff_id)) continue;
+            const isJoker = s.is_joker || s.staff_id === '__joker__';
+            const key = isJoker ? '__joker__' : String(s.staff_id);
+            const sH = s.real_start != null ? s.real_start : s.start_time;
+            const eH = s.real_end   != null ? s.real_end   : s.end_time;
+            const dur = (sH != null && eH != null) ? Math.max(0, eH - sH) : 0;
+            if (!staffMap.has(key)) staffMap.set(key, { name: isJoker ? 'Joker' : displayName(s.staff_id, s.staff_name), color: s.color || '#3498db', isJoker, totalH: 0 });
+            staffMap.get(key).totalH += dur;
+        }
+    }
+
+    // ── Stack 7 jours ─────────────────────────────────────────────────────────
+    const stack = document.createElement('div');
+    stack.className = 'gantt-stack';
 
     for (let i = 0; i < 7; i++) {
-        const d      = addDays(currentWeekStart, i);
-        const date   = toDateStr(d);
+        const d    = addDays(currentWeekStart, i);
+        const date = toDateStr(d);
+        const dayN = d.getDay();
+        const isWE = dayN === 0 || dayN === 6;
         const shifts = (weekFullData[date] || [])
             .filter(s => staffMatchesCurrentGroup(s.staff_id))
             .slice()
             .sort((a, b) => (a.start_time || 0) - (b.start_time || 0));
 
-        const dayDiv = document.createElement('div');
-        dayDiv.className = 'gantt-day';
+        const dayH = shifts.reduce((acc, s) => {
+            const sH = s.real_start != null ? s.real_start : s.start_time;
+            const eH = s.real_end   != null ? s.real_end   : s.end_time;
+            return acc + ((sH != null && eH != null) ? Math.max(0, eH - sH) : 0);
+        }, 0);
+        const dh = Math.floor(dayH), dm = Math.round((dayH - dh) * 60);
+        const hoursStr = dm === 0 ? dh + 'h' : dh + 'h' + String(dm).padStart(2, '0');
 
-        const label = document.createElement('div');
-        label.className   = 'gantt-day-label';
-        label.textContent = DAY_NAMES_LONG[d.getDay()] + ' ' + d.getDate();
-        dayDiv.appendChild(label);
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'gantt-day' + (isWE ? ' weekend' : '');
+
+        const tag = document.createElement('div');
+        tag.className = 'gantt-day-tag';
+        tag.innerHTML =
+            '<div class="gantt-day-name">' + DAY_NAMES_SHORT[dayN] + '.</div>' +
+            '<div class="gantt-day-num">'  + d.getDate() + '</div>' +
+            '<div class="gantt-day-meta">' + (shifts.length ? shifts.length + ' shift' + (shifts.length > 1 ? 's' : '') + ' · ' + hoursStr : 'Repos') + '</div>';
+
+        const rail = document.createElement('div');
+        rail.className = 'gantt-day-rail';
 
         if (shifts.length === 0) {
             const empty = document.createElement('div');
             empty.className   = 'gantt-empty';
             empty.textContent = 'Aucun shift';
-            dayDiv.appendChild(empty);
+            rail.appendChild(empty);
         } else {
-            // Grouper par staff_id (les jokers restent séparés)
+            const laneStack = document.createElement('div');
+            laneStack.className = 'gantt-lane-stack';
+
             const staffRows = new Map();
             shifts.forEach(shift => {
                 const isJoker = shift.is_joker || shift.staff_id === '__joker__';
@@ -2896,50 +2927,55 @@ function renderWeekGantt() {
 
             staffRows.forEach(({ isJoker, shift: firstShift, bars }) => {
                 if (bars.length === 0) return;
-
-                const row = document.createElement('div');
-                row.className = 'gantt-row';
-
-                const nameEl = document.createElement('div');
-                nameEl.className   = 'gantt-name';
-                nameEl.textContent = isJoker ? 'Joker' : displayName(firstShift.staff_id, firstShift.staff_name);
-                row.appendChild(nameEl);
-
-                const track = document.createElement('div');
-                track.className = 'gantt-track';
-
+                const lane = document.createElement('div');
+                lane.className = 'gantt-lane';
                 bars.forEach(({ shift, sH, eH, clampS, clampE }) => {
-                    const bar = document.createElement('div');
-                    bar.className = 'gantt-bar';
-                    if (isJoker) {
-                        bar.style.background = 'repeating-linear-gradient(45deg,#bdc3c7,#bdc3c7 4px,#ecf0f1 4px,#ecf0f1 10px)';
-                        bar.style.color      = '#555';
-                        bar.style.border     = '1.5px dashed #95a5a6';
-                    } else {
-                        bar.style.background = shift.color || '#3498db';
-                        bar.style.color      = textColorFor(shift.color || '#3498db');
+                    const block = document.createElement('div');
+                    block.className = 'gantt-block' + (isJoker ? ' joker' : '');
+                    block.style.left  = pctLeft(clampS);
+                    block.style.width = pctWidth(clampS, clampE);
+                    if (!isJoker) {
+                        block.style.background = shift.color || '#3498db';
+                        block.style.color = textColorFor(shift.color || '#3498db');
                     }
-                    bar.style.left  = pctLeft(clampS);
-                    bar.style.width = pctWidth(clampS, clampE);
-                    if ((clampE - clampS) >= 1.5) {
-                        bar.textContent = fmtH(sH) + '→' + fmtH(eH);
-                    }
-                    bar.addEventListener('click', () => switchToDayView(date));
-                    track.appendChild(bar);
+                    const name = isJoker ? 'Joker' : displayName(firstShift.staff_id, firstShift.staff_name);
+                    const showWhen = (clampE - clampS) >= 1.5;
+                    block.innerHTML =
+                        '<span class="gantt-block-who">' + name + '</span>' +
+                        (showWhen ? '<span class="gantt-block-when">' + fmtRange(sH, eH) + '</span>' : '');
+                    block.addEventListener('click', () => switchToDayView(date));
+                    lane.appendChild(block);
                 });
-
-                row.appendChild(track);
-                dayDiv.appendChild(row);
+                laneStack.appendChild(lane);
             });
+            rail.appendChild(laneStack);
         }
 
-        wrap.appendChild(dayDiv);
+        dayDiv.appendChild(tag);
+        dayDiv.appendChild(rail);
+        stack.appendChild(dayDiv);
+    }
+    wrap.appendChild(stack);
 
-        if (i < 6) {
-            const hr = document.createElement('hr');
-            hr.className = 'gantt-divider';
-            wrap.appendChild(hr);
-        }
+    // ── Légende ───────────────────────────────────────────────────────────────
+    if (staffMap.size > 0) {
+        const legendBar = document.createElement('div');
+        legendBar.className = 'gantt-legend-bar';
+        const legend = document.createElement('div');
+        legend.className = 'gantt-legend';
+        staffMap.forEach(({ name, color, isJoker, totalH }) => {
+            const dh = Math.floor(totalH), dm = Math.round((totalH - dh) * 60);
+            const tStr = dm === 0 ? dh + 'h' : dh + 'h' + String(dm).padStart(2, '0');
+            const item = document.createElement('div');
+            item.className = 'gantt-legend-item';
+            item.innerHTML =
+                '<span class="gantt-legend-swatch' + (isJoker ? ' joker' : '') + '"' +
+                (isJoker ? '' : ' style="background:' + color + '"') + '></span>' +
+                name + '<span class="gantt-legend-meta">· ' + tStr + '</span>';
+            legend.appendChild(item);
+        });
+        legendBar.appendChild(legend);
+        wrap.appendChild(legendBar);
     }
 }
 
@@ -5829,44 +5865,101 @@ function generatePrintDashboard() {
 }
 
 function generatePrintGantt() {
-    const ganttEl = document.getElementById('week-gantt');
-    if (!ganttEl || !ganttEl.children.length) {
-        showToast('Affiche d\'abord l\'onglet Gantt', true);
-        return;
-    }
+    const wrap    = document.getElementById('week-gantt');
+    const stackEl = wrap ? wrap.querySelector('.gantt-stack') : null;
+    if (!stackEl) { showToast('Affiche d\'abord l\'onglet Gantt', true); return; }
 
-    const tickPct = ganttEl.style.getPropertyValue('--gantt-tick-pct') || '6.25%';
-
-    const from  = currentWeekStart;
-    const to    = addDays(currentWeekStart, 6);
-    const title = 'Gantt ' + formatDateShort(from) + ' – ' + formatDateShort(to);
+    const tickPct   = wrap.style.getPropertyValue('--gantt-tick-pct') || '6.25%';
+    const axisEl    = wrap.querySelector('.gantt-axis');
+    const legendEl  = wrap.querySelector('.gantt-legend-bar');
+    const estab     = allEstablishments.find(e => String(e._id) === String(currentVenueId) || e.id === currentVenueId);
+    const venueName = estab ? estab.name : 'Mon établissement';
+    const from      = currentWeekStart;
+    const to        = addDays(currentWeekStart, 6);
+    const fmtD      = d => d.getDate() + ' ' + MONTH_NAMES[d.getMonth()];
+    const weekLabel = 'Semaine du ' + fmtD(from) + ' au ' + fmtD(to) + ' ' + to.getFullYear();
+    const today     = new Date();
+    const todayStr  = today.getDate() + ' ' + MONTH_NAMES[today.getMonth()] + ' ' + today.getFullYear();
 
     const css =
-        '@page{size:A4 landscape;margin:10mm}' +
-        '*{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}' +
-        'body{margin:0;padding:10px;background:#fff;font-family:Arial,sans-serif;font-size:12px;color:#1a1a2e}' +
-        'h2{font-size:14px;margin:0 0 12px}' +
+        '@import url(\'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap\');' +
         ':root{--gantt-tick-pct:' + tickPct + '}' +
-        '#week-gantt{padding:0}' +
-        '.gantt-day{margin-bottom:18px}' +
-        '.gantt-day-label{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}' +
-        '.gantt-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;height:26px}' +
-        '.gantt-name{font-size:11px;color:#888;width:68px;flex-shrink:0;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
-        '.gantt-track{flex:1;position:relative;height:22px;border-radius:4px;overflow:hidden;' +
-            'background-image:repeating-linear-gradient(90deg,rgba(0,0,0,0.08) 0,rgba(0,0,0,0.08) 1px,transparent 1px,transparent var(--gantt-tick-pct,6.25%))}' +
-        '.gantt-bar{position:absolute;top:2px;height:18px;border-radius:3px;display:flex;align-items:center;' +
-            'justify-content:center;font-size:10px;font-weight:600;overflow:hidden;white-space:nowrap;padding:0 4px}' +
-        '.gantt-axis{display:flex;padding-left:76px;margin-bottom:4px;border-bottom:1px solid #e0e0e0}' +
-        '.gantt-axis-track{position:relative;flex:1;height:16px}' +
-        '.gantt-tick{position:absolute;font-size:10px;color:#999;transform:translateX(-50%);white-space:nowrap}' +
-        '.gantt-tick:first-child{transform:none}' +
-        '.gantt-divider{border:none;border-top:1px solid #f0f0f0;margin:12px 0}' +
-        '.gantt-empty{font-size:11px;color:#ccc;margin-left:76px;padding:4px 0}';
+        '*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+        'html,body{font-family:\'Inter\',system-ui,sans-serif;color:#1a1a2e;background:#d9dde6;-webkit-font-smoothing:antialiased}' +
+        'body{display:flex;justify-content:center;padding:28px 0;min-height:100vh}' +
+        '.page{width:1123px;background:#fff;box-shadow:0 18px 50px rgba(15,15,26,.18);padding:24px 36px 18px;display:flex;flex-direction:column}' +
+        // En-tête
+        '.head{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:2px solid #1a1a2e;margin-bottom:10px}' +
+        '.brand{display:flex;align-items:center;gap:11px}' +
+        '.brand-mark{width:32px;height:32px;border-radius:8px;background:#6C63FF;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 10px rgba(108,99,255,.32)}' +
+        '.brand-name{font-size:13px;font-weight:700}' +
+        '.brand-tag{font-size:9.5px;color:#8892a4;text-transform:uppercase;letter-spacing:1.2px;font-weight:600}' +
+        '.head-center{text-align:center;flex:1;padding:0 20px}' +
+        '.venue-name{font-size:19px;font-weight:700;letter-spacing:-.5px}' +
+        '.week-lbl{font-size:11.5px;color:#4a4f63;font-weight:500;margin-top:2px}' +
+        '.view-tag{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid #6C63FF;border-radius:14px;color:#6C63FF;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}' +
+        '.view-tag::before{content:\'\';width:6px;height:6px;border-radius:50%;background:#6C63FF}' +
+        // Axe
+        '.gantt-axis{display:grid;grid-template-columns:76px 1fr;margin-bottom:4px}' +
+        '.gantt-axis-empty{border-right:1px solid #e6e8ee}' +
+        '.gantt-axis-track{position:relative;height:22px;padding:0 0 0 14px;border-bottom:1px solid #e6e8ee}' +
+        '.gantt-tick{position:absolute;top:0;bottom:0;border-left:1px solid #f0f2f6;padding-left:4px;font-size:9px;font-weight:600;color:#8892a4;display:flex;align-items:center;white-space:nowrap;line-height:1}' +
+        '.gantt-tick.major{border-left-color:#e6e8ee;color:#4a4f63;font-weight:700}' +
+        '.gantt-tick.midnight{color:#6C63FF}' +
+        // Stack
+        '.gantt-stack{display:flex;flex-direction:column}' +
+        '.gantt-day{display:grid;grid-template-columns:76px 1fr;align-items:stretch;min-height:44px}' +
+        '.gantt-day+.gantt-day{border-top:1px solid #f0f2f6}' +
+        '.gantt-day.weekend .gantt-day-name,.gantt-day.weekend .gantt-day-num{color:#6C63FF}' +
+        '.gantt-day-tag{padding:8px 8px 6px 0;border-right:1px solid #e6e8ee;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px}' +
+        '.gantt-day-name{font-size:9.5px;font-weight:700;color:#8892a4;text-transform:uppercase;letter-spacing:.9px}' +
+        '.gantt-day-num{font-size:18px;font-weight:700;color:#1a1a2e;line-height:1;letter-spacing:-.5px}' +
+        '.gantt-day-meta{font-size:9px;font-weight:500;color:#8892a4;margin-top:3px}' +
+        '.gantt-day-rail{position:relative;padding:6px 0 6px 14px;overflow:hidden}' +
+        '.gantt-day-rail::before{content:\'\';position:absolute;left:14px;right:6px;top:0;bottom:0;background-image:repeating-linear-gradient(to right,#e6e8ee 0,#e6e8ee 1px,transparent 1px,transparent var(--gantt-tick-pct,6.25%));pointer-events:none}' +
+        '.gantt-lane-stack{position:relative;z-index:1;display:flex;flex-direction:column;gap:3px}' +
+        '.gantt-lane{height:13px;position:relative}' +
+        '.gantt-block{position:absolute;height:13px;border-radius:3px;display:flex;align-items:center;padding:0 6px;font-size:9px;font-weight:600;color:#fff;overflow:hidden;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.12);line-height:1}' +
+        '.gantt-block-who{font-weight:700;margin-right:4px}' +
+        '.gantt-block-when{opacity:.9;font-weight:500;font-size:8.5px}' +
+        '.gantt-block.joker{background:repeating-linear-gradient(45deg,#cdd1da 0 4px,#e3e6ed 4px 8px)!important;color:#4a4f63;border:1px dashed #9ca3af}' +
+        '.gantt-empty{font-size:11px;color:#ccc;padding:8px 0}' +
+        // Légende
+        '.gantt-legend-bar{margin-top:8px;padding-top:8px;border-top:1px solid #e6e8ee;display:flex;align-items:center;gap:18px;flex-wrap:wrap}' +
+        '.gantt-legend{display:flex;align-items:center;gap:16px;flex-wrap:wrap}' +
+        '.gantt-legend-item{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;color:#1a1a2e}' +
+        '.gantt-legend-swatch{width:14px;height:10px;border-radius:2px;flex-shrink:0}' +
+        '.gantt-legend-swatch.joker{background:repeating-linear-gradient(45deg,#cdd1da 0 3px,#e3e6ed 3px 6px)!important;border:1px dashed #9ca3af}' +
+        '.gantt-legend-meta{font-size:9.5px;color:#8892a4;font-weight:500;margin-left:2px}' +
+        // Bas de page
+        '.legalbar{margin-top:6px;padding-top:6px;border-top:1px dashed #e8eaee;display:flex;justify-content:space-between;align-items:center;font-size:9px;color:#8892a4;font-weight:500;letter-spacing:.4px}' +
+        '@media print{body{background:#fff;padding:0}.page{box-shadow:none}@page{size:A4 landscape;margin:0}}';
 
-    const html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>' + title + '</title>' +
-        '<style>' + css + '</style></head>' +
-        '<body><h2>' + title + '</h2>' +
-        ganttEl.outerHTML +
+    const html =
+        '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">' +
+        '<title>Gantt · ' + venueName + '</title>' +
+        '<style>' + css + '</style></head><body>' +
+        '<div class="page">' +
+        '<header class="head">' +
+            '<div class="brand">' +
+                '<div class="brand-mark">T</div>' +
+                '<div><div class="brand-name">Templyo</div><div class="brand-tag">Planning bar &amp; resto</div></div>' +
+            '</div>' +
+            '<div class="head-center">' +
+                '<div class="venue-name">' + venueName + '</div>' +
+                '<div class="week-lbl">' + weekLabel + ' · Vue chronologique</div>' +
+            '</div>' +
+            '<div><span class="view-tag">Gantt</span></div>' +
+        '</header>' +
+        (axisEl ? axisEl.outerHTML : '') +
+        stackEl.outerHTML +
+        (legendEl ? legendEl.outerHTML : '') +
+        '<div class="legalbar">' +
+            '<div>Document généré par Templyo · templyo.com</div>' +
+            '<div>' + venueName + ' · ' + weekLabel + '</div>' +
+            '<div>Généré le ' + todayStr + '</div>' +
+        '</div>' +
+        '</div>' +
         '<script>window.onload=function(){window.print()};<\/script>' +
         '</body></html>';
 

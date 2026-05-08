@@ -696,60 +696,90 @@
             #recap-modal select { display: none !important; }
             #recap-content { max-height: none !important; overflow: visible !important; }
         }
-        #week-gantt { padding: 0 20px; }
-        .gantt-day { margin-bottom: 20px; }
-        .gantt-day-label {
-            font-size: 12px; font-weight: 500; color: var(--text-muted);
-            text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px;
-        }
-        .gantt-row {
-            display: flex; align-items: center; gap: 8px;
-            margin-bottom: 4px; height: 26px;
-        }
-        .gantt-name {
-            font-size: 12px; color: var(--text-muted); width: 68px;
-            flex-shrink: 0; text-align: right; white-space: nowrap;
-            overflow: hidden; text-overflow: ellipsis;
-        }
-        .gantt-track {
-            flex: 1; position: relative; height: 22px;
-            border-radius: 4px; overflow: hidden;
-            background-color: #f0f2f5;
-            background-image: repeating-linear-gradient(
-                to right,
-                rgba(0,0,0,0.13) 0,
-                rgba(0,0,0,0.13) 1px,
-                transparent 1px,
-                transparent var(--gantt-tick-pct, 12.5%)
-            );
-        }
-        .gantt-bar {
-            position: absolute; top: 2px; height: 18px; border-radius: 3px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 10px; white-space: nowrap; overflow: hidden; padding: 0 4px;
-            cursor: pointer; transition: opacity .15s;
-        }
-        .gantt-bar:hover { opacity: .85; }
+        /* ── Gantt ─────────────────────────────────────────────────────────── */
+        #week-gantt { padding: 0 20px 20px; }
+
+        /* Axe horaire */
         .gantt-axis {
-            display: flex; padding-left: 76px; margin-bottom: 0;
+            display: grid; grid-template-columns: 76px 1fr; margin-bottom: 4px;
             position: sticky; top: 96px; z-index: 50;
-            background: var(--light-card); padding-top: 6px; padding-bottom: 6px;
-            border-bottom: 1px solid var(--light-border);
+            background: var(--light-card);
         }
+        .gantt-axis-empty { border-right: 1px solid #e6e8ee; }
         .gantt-axis-track {
-            position: relative; flex: 1; height: 16px;
+            position: relative; height: 22px; padding: 0 0 0 14px;
+            border-bottom: 1px solid #e6e8ee;
         }
         .gantt-tick {
-            position: absolute; font-size: 10px; color: var(--text-muted);
-            transform: translateX(-50%); white-space: nowrap;
+            position: absolute; top: 0; bottom: 0;
+            border-left: 1px solid #f0f2f6; padding-left: 4px;
+            font-size: 9px; font-weight: 600; color: #8892a4;
+            display: flex; align-items: center; white-space: nowrap; line-height: 1;
         }
-        .gantt-tick:first-child { transform: none; }
-        .gantt-divider {
-            border: none; border-top: 1px solid #f0f0f0; margin: 14px 0;
+        .gantt-tick.major  { border-left-color: #e6e8ee; color: #4a4f63; font-weight: 700; }
+        .gantt-tick.midnight { color: #6C63FF; }
+
+        /* Stack 7 jours */
+        .gantt-stack { display: flex; flex-direction: column; }
+        .gantt-day {
+            display: grid; grid-template-columns: 76px 1fr;
+            align-items: stretch; min-height: 44px;
         }
-        .gantt-empty {
-            font-size: 12px; color: #ccc; margin-left: 76px; padding: 6px 0;
+        .gantt-day + .gantt-day { border-top: 1px solid #f0f2f6; }
+        .gantt-day.weekend .gantt-day-name,
+        .gantt-day.weekend .gantt-day-num { color: #6C63FF; }
+
+        .gantt-day-tag {
+            padding: 8px 8px 6px 0; border-right: 1px solid #e6e8ee;
+            display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 1px;
         }
+        .gantt-day-name { font-size: 9.5px; font-weight: 700; color: #8892a4; text-transform: uppercase; letter-spacing: .9px; }
+        .gantt-day-num  { font-size: 18px; font-weight: 700; color: #1a1a2e; line-height: 1; letter-spacing: -.5px; }
+        .gantt-day-meta { font-size: 9px; font-weight: 500; color: #8892a4; margin-top: 3px; }
+
+        .gantt-day-rail {
+            position: relative; padding: 6px 0 6px 14px; overflow: hidden;
+        }
+        .gantt-day-rail::before {
+            content: ''; position: absolute; left: 14px; right: 6px; top: 0; bottom: 0;
+            background-image: repeating-linear-gradient(to right,
+                #e6e8ee 0, #e6e8ee 1px,
+                transparent 1px, transparent var(--gantt-tick-pct, 6.25%));
+            pointer-events: none;
+        }
+        .gantt-lane-stack { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 3px; }
+        .gantt-lane { height: 13px; position: relative; }
+
+        .gantt-block {
+            position: absolute; height: 13px; border-radius: 3px;
+            display: flex; align-items: center; padding: 0 6px;
+            font-size: 9px; font-weight: 600; color: #fff;
+            overflow: hidden; white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,.12); line-height: 1;
+            cursor: pointer; transition: opacity .15s;
+        }
+        .gantt-block:hover { opacity: .85; }
+        .gantt-block-who  { font-weight: 700; margin-right: 4px; }
+        .gantt-block-when { opacity: .9; font-weight: 500; font-size: 8.5px; }
+        .gantt-block.joker {
+            background: repeating-linear-gradient(45deg,#cdd1da 0 4px,#e3e6ed 4px 8px) !important;
+            color: #4a4f63; border: 1px dashed #9ca3af;
+        }
+        .gantt-empty { font-size: 11px; color: #ccc; padding: 8px 0 8px 0; }
+
+        /* Légende */
+        .gantt-legend-bar {
+            margin-top: 10px; padding-top: 8px; border-top: 1px solid #e6e8ee;
+            display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+        }
+        .gantt-legend { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .gantt-legend-item { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; color: #1a1a2e; }
+        .gantt-legend-swatch { width: 14px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+        .gantt-legend-swatch.joker {
+            background: repeating-linear-gradient(45deg,#cdd1da 0 3px,#e3e6ed 3px 6px) !important;
+            border: 1px dashed #9ca3af;
+        }
+        .gantt-legend-meta { font-size: 9.5px; color: #8892a4; font-weight: 500; margin-left: 2px; }
     </style>
 </head>
 <body>
