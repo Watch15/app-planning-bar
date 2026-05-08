@@ -1853,6 +1853,28 @@ app.get('/api/dispos/mine', checkDB, requireAuth, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/api/dispos/previous', checkDB, requireAuth, async (req, res) => {
+    const { week_start } = req.query;
+    if (!week_start || !/^\d{4}-\d{2}-\d{2}$/.test(week_start))
+        return res.status(400).json({ error: 'week_start invalide (YYYY-MM-DD)' });
+    const staffId = req.session.user.staff_id;
+    if (!staffId) return res.status(400).json({ error: 'Aucun profil staff lié' });
+    try {
+        const [y, mo, day] = week_start.split('-').map(Number);
+        const pad = n => String(n).padStart(2, '0');
+        const prevMonday = new Date(y, mo - 1, day - 7);
+        const prevSunday = new Date(y, mo - 1, day - 1);
+        const prevFrom = prevMonday.getFullYear() + '-' + pad(prevMonday.getMonth() + 1) + '-' + pad(prevMonday.getDate());
+        const prevTo   = prevSunday.getFullYear() + '-' + pad(prevSunday.getMonth() + 1) + '-' + pad(prevSunday.getDate());
+        const docs = await db.collection('availabilities').find({
+            staff_id: staffId,
+            date: { $gte: prevFrom, $lte: prevTo },
+            type: { $ne: 'week_note' },
+        }).toArray();
+        res.json(docs.map(doc => ({ date: doc.date, type: doc.type, start_time: doc.start_time, end_time: doc.end_time, note: doc.note || '' })));
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/dispos/week-notes', checkDB, requirePatron, async (req, res) => {
     const { week_start } = req.query;
     if (!week_start) return res.status(400).json({ error: 'week_start requis' });
@@ -1972,21 +1994,22 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
     const { dispos } = req.body;
     if (!Array.isArray(dispos) || dispos.length === 0) return res.status(400).json({ error: 'Aucune disponibilité fournie' });
     try {
-        const dates = dispos.map(d => d.date);
-        const already = await db.collection('availabilities').findOne({
-            staff_id: staffId,
-            date: { $in: dates },
-            status: { $in: ['pending', 'confirmed'] },
-        });
-        if (already) return res.status(409).json({ error: 'Des disponibilités ont déjà été soumises pour cette période.' });
-        const docs = dispos.map(d => ({
-            staff_id: staffId, staff_name: req.session.user.name || '',
-            date: d.date, type: d.type || 'custom',
-            start_time: parseFloat(d.start_time), end_time: parseFloat(d.end_time),
-            note: d.note || '', status: 'pending', created_at: new Date(),
+        const ops = dispos.map(d => ({
+            updateOne: {
+                filter: { staff_id: staffId, date: d.date, type: d.type || 'custom' },
+                update: { $setOnInsert: {
+                    staff_id: staffId, staff_name: req.session.user.name || '',
+                    date: d.date, type: d.type || 'custom',
+                    start_time: parseFloat(d.start_time), end_time: parseFloat(d.end_time),
+                    note: d.note || '', status: 'pending', created_at: new Date(),
+                }},
+                upsert: true,
+            },
         }));
-        await db.collection('availabilities').insertMany(docs);
-        res.status(201).json({ message: docs.length + ' disponibilité(s) enregistrée(s)' });
+        const result = await db.collection('availabilities').bulkWrite(ops, { ordered: false });
+        const inserted = result.upsertedCount;
+        if (inserted === 0) return res.status(409).json({ error: 'Des disponibilités ont déjà été soumises pour cette période.' });
+        res.status(201).json({ message: inserted + ' disponibilité(s) enregistrée(s)' });
         touchLastUpdated();
     } catch (e) { res.status(500).json({ error: e.message }); }
 });

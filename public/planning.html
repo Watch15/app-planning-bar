@@ -1211,6 +1211,22 @@ async function loadDisposTab() {
     // Jours de repos à masquer
     const restDays = dispoSettings.rest_days || [];
 
+    // Pré-remplir depuis la semaine précédente si aucune dispo soumise
+    if (!alreadySubmitted && existingDispos.length === 0) {
+        const pRes = await fetch('/api/dispos/previous?week_start=' + from, { credentials: 'include' });
+        if (pRes.ok) {
+            const prevDispos = await pRes.json();
+            prevDispos.forEach(p => {
+                const [py, pm, pd] = p.date.split('-').map(Number);
+                const curDate    = addDays(new Date(py, pm - 1, pd), 7);
+                const curDateStr = toDateStr(curDate);
+                if (!restDays.includes(curDate.getDay())) {
+                    dispoSelections[curDateStr] = { type: p.type, start_time: p.start_time, end_time: p.end_time, note: p.note || '' };
+                }
+            });
+        }
+    }
+
     // Générer les cartes (jours de repos en lecture seule)
     formEl.innerHTML = '';
     for (let i = 0; i < 7; i++) {
