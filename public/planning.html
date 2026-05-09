@@ -110,6 +110,7 @@
         }
         .tab-btn.active { color: #fff; border-bottom-color: var(--accent); font-weight: 600; }
         .tab-btn:disabled { color: rgba(255,255,255,0.20); cursor: not-allowed; }
+        .tab-short { display: none; }
 
         /* ── Bonjour ── */
         .greeting { padding: 20px 20px 6px; }
@@ -392,11 +393,20 @@
 
         /* ── Responsive mobile ── */
         @media (max-width: 600px) {
-            .header { padding: 0 14px; }
+            .header { padding: 0 14px; height: 48px; }
             .header-logo { font-size: 13px; }
-            .tabs-bar { padding: 0 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-            .tab-btn { padding: 8px 12px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
-            .btn-pointage-tab { padding: 8px 12px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+            .header-week { display: none; }
+            .header-sep { display: none; }
+            .user-avatar-sm { width: 26px; height: 26px; font-size: 10px; }
+            #btn-notif-label { display: none; }
+            .btn-notif { padding: 0 8px; min-width: 32px; justify-content: center; }
+            .btn-logout-label { display: none; }
+            .btn-logout { padding: 0 8px; min-width: 32px; justify-content: center; }
+            .tabs-bar { padding: 0; top: 48px; }
+            .tab-btn { flex: 1; padding: 10px 4px; font-size: 11px; text-align: center; white-space: nowrap; }
+            .tab-full { display: none; }
+            .tab-short { display: inline; }
+            .btn-pointage-tab { flex: 1; padding: 10px 4px; font-size: 11px; text-align: center; white-space: nowrap; }
             .greeting { padding: 14px 14px 4px; }
             .greeting-name { font-size: 17px; }
             .week-stats { grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 10px 14px; }
@@ -539,13 +549,13 @@
             <span>🔔</span>
             <span id="btn-notif-label">Notifs</span>
         </button>
-        <button class="btn-logout" onclick="logout()">⎋ Sortir</button>
+        <button class="btn-logout" onclick="logout()">⎋ <span class="btn-logout-label">Sortir</span></button>
     </div>
 </div>
 
 <div class="tabs-bar">
-    <button class="tab-btn active" data-tab="planning">Mon planning</button>
-    <button class="tab-btn" data-tab="dispos" id="tab-dispos">Mes dispos</button>
+    <button class="tab-btn active" data-tab="planning"><span class="tab-full">Mon planning</span><span class="tab-short">Planning</span></button>
+    <button class="tab-btn" data-tab="dispos" id="tab-dispos"><span class="tab-full">Mes dispos</span><span class="tab-short">Dispos</span></button>
     <button class="tab-btn" data-tab="historique">Historique</button>
 </div>
 
@@ -804,8 +814,9 @@ async function init() {
             const tabNext = document.createElement('button');
             tabNext.className   = 'tab-btn';
             tabNext.dataset.tab = 'next-week';
-            tabNext.textContent = 'Semaine prochaine ✨';
-            tabBar.appendChild(tabNext);
+            tabNext.innerHTML = '<span class="tab-full">Semaine prochaine ✨</span><span class="tab-short">Prochaine</span>';
+            const histTab = tabBar.querySelector('[data-tab="historique"]');
+            tabBar.insertBefore(tabNext, histTab || null);
             initTabs(); // rebind pour inclure le nouvel onglet
 
             // Charger le contenu au premier clic
