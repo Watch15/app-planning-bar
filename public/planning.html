@@ -451,7 +451,11 @@
         .notif-toast-content { flex: 1; min-width: 0; }
         .notif-toast-title   { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
         .notif-toast-body    { font-size: 12px; opacity: 0.8; overflow: hidden;
-                               display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+                               display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+                               display: box; box-orient: vertical; line-clamp: 2;
+                               /* Fallback for browsers without line-clamp support */
+                               max-height: 2.8em;
+                               }
         .notif-toast-close   { font-size: 16px; flex-shrink: 0; opacity: 0.6;
                                line-height: 1; cursor: pointer; padding: 0 2px; }
         .notif-toast-close:hover { opacity: 1; }
