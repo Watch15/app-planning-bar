@@ -506,6 +506,18 @@
         }
         .hist-empty   { padding: 48px 20px; font-size: 14px; color: var(--text-muted); text-align: center; }
         .hist-loading { padding: 48px 20px; font-size: 14px; color: var(--text-muted); text-align: center; }
+        .hist-extra-row {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 14px 8px 54px;
+            border-top: 1px solid var(--light-border);
+            font-size: 13px;
+        }
+        .hist-extra-dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        }
+        .hist-extra-estab { flex: 1; font-weight: 600; color: var(--text-primary); }
+        .hist-extra-dur   { color: var(--text-muted); font-size: 12px; white-space: nowrap; }
+        .hist-hours-badge--sm { font-size: 11px; padding: 3px 7px; }
     </style>
 </head>
 <body>
@@ -1266,23 +1278,34 @@ function renderHistoriqueWeek(wrap, data) {
         return;
     }
 
+    // Grouper par date
+    const byDate = new Map();
+    shifts.forEach(s => {
+        if (!byDate.has(s.date)) byDate.set(s.date, []);
+        byDate.get(s.date).push(s);
+    });
+
+    const shiftDur = s => {
+        const dur = s.end_time - s.start_time;
+        const dh = Math.floor(dur), dm = Math.round((dur - dh) * 60);
+        return dh + 'h' + (dm > 0 ? String(dm).padStart(2, '0') : '');
+    };
+
     const list = document.createElement('div');
     list.className = 'hist-list';
 
-    shifts.forEach(s => {
-        const isJoker = s.is_joker || s.staff_id === '__joker__';
-        const [sy, sm, sd] = s.date.split('-').map(Number);
+    byDate.forEach((dayShifts, dateStr) => {
+        const first = dayShifts[0];
+        const [sy, sm, sd] = dateStr.split('-').map(Number);
         const d = new Date(sy, sm - 1, sd);
-        const dur = s.end_time - s.start_time;
-        const dh  = Math.floor(dur), dm = Math.round((dur - dh) * 60);
-        const durStr = dh + 'h' + (dm > 0 ? String(dm).padStart(2, '0') : '');
-        const color  = isJoker ? '#8892a4' : (s.color || '#534AB7');
+        const color = first.color || '#534AB7';
 
         const card = document.createElement('div');
         card.className = 'hist-card';
         card.style.borderLeftColor = color;
 
-        card.innerHTML =
+        // Premier shift — en-tête de la carte
+        let html =
             '<div class="hist-card-header">' +
                 '<div class="hist-date-block">' +
                     '<div class="hist-weekday">' + DAY_NAMES_LONG_HIST[d.getDay()].slice(0, 3).toUpperCase() + '</div>' +
@@ -1290,12 +1313,26 @@ function renderHistoriqueWeek(wrap, data) {
                 '</div>' +
                 '<div class="hist-vdivider"></div>' +
                 '<div class="hist-card-info">' +
-                    '<div class="hist-card-estab">' + formatEstablishment(s.establishment_id) + '</div>' +
-                    '<div class="hist-card-sub">' + (isJoker ? 'Collègue non désigné' : durStr) + '</div>' +
+                    '<div class="hist-card-estab">' + formatEstablishment(first.establishment_id) + '</div>' +
+                    '<div class="hist-card-sub">' + shiftDur(first) + '</div>' +
                 '</div>' +
-                '<span class="hist-hours-badge">' + fmtHour(s.start_time) + ' – ' + fmtHour(s.end_time) + '</span>' +
+                '<span class="hist-hours-badge">' + fmtHour(first.start_time) + ' – ' + fmtHour(first.end_time) + '</span>' +
             '</div>';
 
+        // Shifts supplémentaires du même jour
+        for (let i = 1; i < dayShifts.length; i++) {
+            const s = dayShifts[i];
+            const c = s.color || '#534AB7';
+            html +=
+                '<div class="hist-extra-row">' +
+                    '<span class="hist-extra-dot" style="background:' + c + '"></span>' +
+                    '<span class="hist-extra-estab">' + formatEstablishment(s.establishment_id) + '</span>' +
+                    '<span class="hist-extra-dur">' + shiftDur(s) + '</span>' +
+                    '<span class="hist-hours-badge hist-hours-badge--sm">' + fmtHour(s.start_time) + ' – ' + fmtHour(s.end_time) + '</span>' +
+                '</div>';
+        }
+
+        card.innerHTML = html;
         list.appendChild(card);
     });
 
