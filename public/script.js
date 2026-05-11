@@ -1636,7 +1636,6 @@ function openTransferShiftModal(shift) {
             const targetName = allEstablishments.find(e => e.id === targetEstabId)?.name || targetEstabId;
             close();
             showToast('Shift transféré vers ' + targetName);
-            if (data.warnings?.length) showConflictAlert(data.warnings, shift.staff_name);
             renderWeek();
         } catch (err) {
             showToast(err.message || 'Erreur', true);

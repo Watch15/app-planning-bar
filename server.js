@@ -1581,7 +1581,7 @@ app.post('/api/shifts', checkDB, requirePatron, async (req, res) => {
                         });
                     }
                     if (isPublished) {
-                        const estabDoc  = await db.collection('establishments').findOne({ _id: establishment_id }) || {};
+                        const estabDoc  = await db.collection('establishments').findOne({ id: establishment_id }) || {};
                         const estabName = estabDoc.name || establishment_id;
                         // Push au staff planifié
                         await sendPushToStaff([staff_id], {
@@ -1694,7 +1694,7 @@ app.patch('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
                     const finalShift = await db.collection('shifts').findOne({ _id: existing._id });
                     const fS = finalShift ? finalShift.start_time : newS;
                     const fE = finalShift ? finalShift.end_time   : newE;
-                    const estabDoc = await db.collection('establishments').findOne({ _id: capturedEstab }) || {};
+                    const estabDoc = await db.collection('establishments').findOne({ id: capturedEstab }) || {};
                     const estabName = estabDoc.name || capturedEstab;
                     await sendPushToStaff([targetStaffId], {
                         title:   '✏️ Shift modifié — ' + estabName,
@@ -1749,7 +1749,7 @@ app.delete('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
                         });
                     }
                     if (!isPublished) return;
-                    const estabDoc  = await db.collection('establishments').findOne({ _id: existing.establishment_id }) || {};
+                    const estabDoc  = await db.collection('establishments').findOne({ id: existing.establishment_id }) || {};
                     const estabName = estabDoc.name || existing.establishment_id;
                     await sendPushToStaff([existing.staff_id], {
                         title:   '❌ Shift annulé — ' + estabName,
