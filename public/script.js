@@ -2148,7 +2148,11 @@ async function openJokerModal(shift, el) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ open }),
                 });
-                if (!r.ok) throw new Error((await r.json()).error);
+                if (!r.ok) {
+                    let msg = 'Erreur ' + r.status;
+                    try { const j = await r.json(); msg = j.error || msg; } catch {}
+                    throw new Error(msg);
+                }
                 shift.joker_open = open;
                 if (!open) shift.joker_candidates = [];
                 // Mettre à jour le badge sur le bloc timeline

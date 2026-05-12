@@ -1,4 +1,4 @@
-process.env.TZ = 'Europe/Paris'; // doit être avant tout require de date — gère heure d'été/hiver
+﻿process.env.TZ = 'Europe/Paris'; // doit être avant tout require de date — gère heure d'été/hiver
 require('dotenv').config();
 const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
@@ -1641,6 +1641,44 @@ app.patch('/api/shifts/:id/transfer', checkDB, requirePatron, async (req, res) =
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// PATCH — Patron : ouvrir/fermer un Joker aux candidatures (route spécifique AVANT la générique /:id)
+app.patch('/api/shifts/:id/joker-open', checkDB, requirePatron, async (req, res) => {
+    if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
+    const { open } = req.body;
+    if (typeof open !== 'boolean') return res.status(400).json({ error: 'open (boolean) requis' });
+    try {
+        const shift = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
+        if (!shift) return res.status(404).json({ error: 'Shift introuvable' });
+        if (!shift.is_joker && shift.staff_id !== '__joker__') return res.status(400).json({ error: 'Ce shift n\'est pas un Joker' });
+        if (!canAccessEstablishment(req.session.user, shift.establishment_id)) return res.status(403).json({ error: 'Accès refusé' });
+
+        if (open) {
+            await db.collection('shifts').updateOne(
+                { _id: new ObjectId(req.params.id) },
+                { $set: { joker_open: true } }
+            );
+            const estabStaff = await db.collection('staff').find({ venues: shift.establishment_id }).toArray();
+            const staffIds   = estabStaff.map(s => String(s._id));
+            if (staffIds.length) {
+                const body = 'Un créneau est ouvert ' + formatDateFR(shift.date) + ' ' +
+                    formatShiftTime(shift.start_time) + '–' + formatShiftTime(shift.end_time) + '. Tu es disponible ?';
+                await sendPushToStaff(staffIds, {
+                    title: 'Templyo — Créneau disponible',
+                    body,
+                    tag:   'joker-ouvert-' + String(shift._id),
+                    url:   '/planning.html',
+                });
+            }
+        } else {
+            await db.collection('shifts').updateOne(
+                { _id: new ObjectId(req.params.id) },
+                { $set: { joker_open: false, joker_candidates: [] } }
+            );
+        }
+        res.json({ message: 'Joker mis à jour' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.patch('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const { start_time, end_time, staff_id, staff_name, color, is_joker, note } = req.body;
@@ -2414,45 +2452,6 @@ app.get('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
         if (!shift) return res.status(404).json({ error: 'Shift introuvable' });
         if (!canAccessEstablishment(req.session.user, shift.establishment_id)) return res.status(403).json({ error: 'Accès refusé' });
         res.json(shift);
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// PATCH — Patron : ouvrir/fermer un Joker aux candidatures
-app.patch('/api/shifts/:id/joker-open', checkDB, requirePatron, async (req, res) => {
-    if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
-    const { open } = req.body;
-    if (typeof open !== 'boolean') return res.status(400).json({ error: 'open (boolean) requis' });
-    try {
-        const shift = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
-        if (!shift) return res.status(404).json({ error: 'Shift introuvable' });
-        if (!shift.is_joker && shift.staff_id !== '__joker__') return res.status(400).json({ error: 'Ce shift n\'est pas un Joker' });
-        if (!canAccessEstablishment(req.session.user, shift.establishment_id)) return res.status(403).json({ error: 'Accès refusé' });
-
-        if (open) {
-            await db.collection('shifts').updateOne(
-                { _id: new ObjectId(req.params.id) },
-                { $set: { joker_open: true } }
-            );
-            // Notifier le staff de l'établissement
-            const estabStaff = await db.collection('staff').find({ venues: shift.establishment_id }).toArray();
-            const staffIds   = estabStaff.map(s => String(s._id));
-            if (staffIds.length) {
-                const body = 'Un créneau est ouvert ' + formatDateFR(shift.date) + ' ' +
-                    formatShiftTime(shift.start_time) + '–' + formatShiftTime(shift.end_time) + '. Tu es disponible ?';
-                await sendPushToStaff(staffIds, {
-                    title: 'Templyo — Créneau disponible',
-                    body,
-                    tag:   'joker-ouvert-' + String(shift._id),
-                    url:   '/planning.html',
-                });
-            }
-        } else {
-            await db.collection('shifts').updateOne(
-                { _id: new ObjectId(req.params.id) },
-                { $set: { joker_open: false, joker_candidates: [] } }
-            );
-        }
-        res.json({ message: 'Joker mis à jour' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
