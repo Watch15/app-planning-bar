@@ -5,7 +5,8 @@
       "Bash(git commit -m ':*)",
       "Bash(git push:*)",
       "Bash(grep -E \"^/c/Users/pierr/app-planning-bar/[^/]+\\\\.js$|^/c/Users/pierr/app-planning-bar/\\(server|app\\)\\\\.\")",
-      "Bash(ls -la /c/Users/pierr/app-planning-bar/*.js /c/Users/pierr/app-planning-bar/*.html /c/Users/pierr/app-planning-bar/*.json)"
+      "Bash(ls -la /c/Users/pierr/app-planning-bar/*.js /c/Users/pierr/app-planning-bar/*.html /c/Users/pierr/app-planning-bar/*.json)",
+      "Bash(node -e \"const { ObjectId } = require\\('mongodb'\\); const id = new ObjectId\\(\\); console.log\\(JSON.stringify\\({_id: id}\\)\\);\")"
     ]
   }
 }
