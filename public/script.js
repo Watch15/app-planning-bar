@@ -95,6 +95,11 @@ function displayName(staffId, fallbackName) {
     return n.split(/\s+/)[0] || n;
 }
 
+function normalizeStr(str) {
+    if (!str) return '';
+    return str.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
 // ── Joker — slot non attribué ─────────────────────────────────────────────────
 const JOKER_STAFF = {
     _id:   '__joker__',
@@ -858,16 +863,16 @@ function renderSidebar() {
         return a.name.localeCompare(b.name, 'fr');
     });
 
-    const searchVal = (document.getElementById('staff-search')?.value || '').toLowerCase().trim();
+    const searchVal = normalizeStr(document.getElementById('staff-search')?.value || '').trim();
 
     // Filtrage + tri par pertinence si recherche active
     if (searchVal) {
         // Garder uniquement ceux qui contiennent la recherche
-        sorted = sorted.filter(s => s.name.toLowerCase().includes(searchVal));
+        sorted = sorted.filter(s => normalizeStr(s.name).includes(searchVal));
         // Trier : commence par la recherche en premier, contient ensuite
         sorted.sort((a, b) => {
-            const aStarts = a.name.toLowerCase().startsWith(searchVal) ? 0 : 1;
-            const bStarts = b.name.toLowerCase().startsWith(searchVal) ? 0 : 1;
+            const aStarts = normalizeStr(a.name).startsWith(searchVal) ? 0 : 1;
+            const bStarts = normalizeStr(b.name).startsWith(searchVal) ? 0 : 1;
             if (aStarts !== bStarts) return aStarts - bStarts;
             return a.name.localeCompare(b.name, 'fr');
         });
@@ -4584,9 +4589,9 @@ function renderStaffNotesList() {
     if (!list) return;
 
     const searchInput = document.getElementById('staff-notes-search');
-    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    const query = searchInput ? normalizeStr(searchInput.value.trim()) : '';
     const filtered = query
-        ? _staffNotesData.filter(e => e.name.toLowerCase().includes(query))
+        ? _staffNotesData.filter(e => normalizeStr(e.name).includes(query))
         : _staffNotesData;
 
     list.innerHTML = '';
