@@ -2427,7 +2427,10 @@ app.get('/api/shifts/joker-ouverts', checkDB, requireAuth, async (req, res) => {
     const { establishment_id } = req.query;
     const staffId = req.session.user.staff_id || null;
     try {
-        const query = { is_joker: true, joker_open: true };
+        const query = {
+            joker_open: true,
+            $or: [{ is_joker: true }, { staff_id: '__joker__' }],
+        };
         if (establishment_id) query.establishment_id = establishment_id;
         const shifts = await db.collection('shifts').find(query, {
             projection: { _id: 1, date: 1, start_time: 1, end_time: 1, establishment_id: 1, joker_candidates: 1 }
