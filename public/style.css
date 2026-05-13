@@ -607,12 +607,12 @@ label[for], select, .tab-btn, .staff-card, .shift-card {
 
 /* ── Modale gestion staff ────────────────────────────────────────────────────*/
 .staff-manage-list {
-  display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px;
-  max-height: 340px; overflow-y: auto; margin-top: 16px;
+  display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;
+  max-height: 420px; overflow-y: auto; margin-top: 16px;
 }
 .staff-manage-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px; border-radius: var(--radius-md);
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px; border-radius: var(--radius-md);
   border: 1px solid var(--light-border); background: var(--light-bg); transition: border-color var(--transition);
 }
 .staff-manage-row:hover { border-color: #c8ccd6; background: var(--light-card); }
@@ -620,29 +620,32 @@ label[for], select, .tab-btn, .staff-card, .shift-card {
 .staff-manage-dot:hover { border-color: rgba(0,0,0,0.15); }
 .staff-manage-info { flex: 1; min-width: 0; }
 .staff-manage-name-input,
+.staff-manage-nickname-input,
 .staff-manage-email-input {
   border: none; background: transparent; font-family: var(--font); color: var(--text-primary);
-  width: 100%; outline: none; border-bottom: 1.5px solid transparent; transition: border-color var(--transition); padding: 1px 2px;
+  width: 100%; outline: none; border-bottom: 1.5px solid transparent; transition: border-color var(--transition); padding: 2px 2px;
 }
 .staff-manage-name-input { font-size: 13px; font-weight: 600; }
+.staff-manage-nickname-input { font-size: 12px; color: var(--text-secondary); margin-top: 2px; font-style: italic; }
 .staff-manage-email-input { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 .staff-manage-name-input:focus,
+.staff-manage-nickname-input:focus,
 .staff-manage-email-input:focus { border-bottom-color: var(--accent); }
-.staff-manage-color { width: 28px; height: 28px; border-radius: 50%; border: none; padding: 0; cursor: pointer; overflow: hidden; flex-shrink: 0; }
+.staff-manage-color { width: 28px; height: 28px; border-radius: 50%; border: none; padding: 0; cursor: pointer; overflow: hidden; flex-shrink: 0; margin-top: 2px; }
 .staff-manage-color::-webkit-color-swatch-wrapper { padding: 0; }
 .staff-manage-color::-webkit-color-swatch { border: none; border-radius: 50%; }
 .staff-manage-save {
-  padding: 4px 10px; border-radius: var(--radius-sm); border: 1px solid var(--light-border);
-  background: var(--light-card); color: var(--text-secondary);
+  padding: 5px 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--success);
+  background: var(--success-bg); color: var(--success-text);
   font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap;
-  transition: all var(--transition); font-family: var(--font);
+  transition: all var(--transition); font-family: var(--font); flex-shrink: 0;
 }
-.staff-manage-save:hover { border-color: var(--success); color: var(--success); }
+.staff-manage-save:hover { background: var(--success); color: white; }
 .staff-manage-delete {
   width: 28px; height: 28px; border-radius: var(--radius); border: 1px solid var(--light-border);
   background: var(--light-card); color: var(--text-muted); font-size: 16px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: all var(--transition); flex-shrink: 0; line-height: 1; font-family: var(--font);
+  transition: all var(--transition); flex-shrink: 0; line-height: 1; font-family: var(--font); margin-top: 2px;
 }
 .staff-manage-delete:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-bg); }
 
@@ -758,7 +761,7 @@ label[for], select, .tab-btn, .staff-card, .shift-card {
   font-size: 13px; font-weight: 500; color: var(--text-muted);
   cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all var(--transition); font-family: var(--font);
 }
-.staff-modal-tab.active { color: var(--text-primary); border-bottom-color: var(--text-primary); }
+.staff-modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 .staff-modal-tab:hover { color: var(--text-secondary); }
 
 /* ── Rôles dans modale staff ────────────────────────────────────────────────*/
@@ -773,8 +776,8 @@ label[for], select, .tab-btn, .staff-card, .shift-card {
   padding: 3px 9px; border-radius: 12px; border: 1px solid var(--light-border);
   background: var(--light-card); font-size: 11px; color: var(--text-muted); cursor: pointer; transition: all var(--transition); font-family: var(--font);
 }
-.venue-pref-btn:hover  { border-color: #aaa; color: var(--text-secondary); }
-.venue-pref-btn.active { background: var(--dark-surface); border-color: var(--dark-surface); color: white; }
+.venue-pref-btn:hover  { border-color: var(--accent); color: var(--accent); }
+.venue-pref-btn.active { background: var(--accent-glow,rgba(108,99,255,0.1)); border-color: var(--accent); color: var(--accent); font-weight: 600; }
 .roles-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
 .role-badge-pick {
   padding: 3px 9px; border-radius: 12px; border: 1px solid var(--light-border);
