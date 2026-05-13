@@ -2419,6 +2419,7 @@ app.patch('/api/shift-swaps/:id/reject', checkDB, requirePatron, async (req, res
         })();
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
+*/
 
 // ── Joker ouvert — système de candidature ────────────────────────────────────
 
@@ -2484,6 +2485,8 @@ app.post('/api/shifts/:id/joker-candidature', checkDB, requireAuth, async (req, 
         res.json({ message: 'Candidature envoyée' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
+/* ── Suite du bloc échanges de shifts (F-05) — DÉSACTIVÉ ─────────────────────
 
 // GET — staff : liste des shifts futurs échangeables (autres staff, ses établissements)
 app.get('/api/shifts-for-swap', checkDB, requireAuth, async (req, res) => {
