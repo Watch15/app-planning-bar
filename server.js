@@ -2436,13 +2436,21 @@ app.get('/api/shifts/joker-ouverts', checkDB, requireAuth, async (req, res) => {
         const shifts = await db.collection('shifts').find(query, {
             projection: { _id: 1, date: 1, start_time: 1, end_time: 1, establishment_id: 1, joker_candidates: 1 }
         }).toArray();
+        // Résoudre les noms d'établissements en une requête batch
+        const estabIds = [...new Set(shifts.map(s => s.establishment_id).filter(Boolean))];
+        const estabDocs = estabIds.length
+            ? await db.collection('establishments').find({ id: { $in: estabIds } }).toArray()
+            : [];
+        const estabNameById = {};
+        estabDocs.forEach(e => { estabNameById[e.id] = e.name || e.id; });
         const result = shifts.map(s => ({
-            _id:              s._id,
-            date:             s.date,
-            start_time:       s.start_time,
-            end_time:         s.end_time,
-            establishment_id: s.establishment_id,
-            has_applied:      staffId ? (s.joker_candidates || []).some(c => c.staff_id === staffId) : false,
+            _id:                s._id,
+            date:               s.date,
+            start_time:         s.start_time,
+            end_time:           s.end_time,
+            establishment_id:   s.establishment_id,
+            establishment_name: estabNameById[s.establishment_id] || s.establishment_id,
+            has_applied:        staffId ? (s.joker_candidates || []).some(c => c.staff_id === staffId) : false,
         }));
         res.json(result);
     } catch (e) { res.status(500).json({ error: e.message }); }
