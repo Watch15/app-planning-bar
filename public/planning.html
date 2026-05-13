@@ -954,9 +954,9 @@ async function renderOpenJokers(from, to, containerId) {
                     });
                     const data = await r.json();
                     if (!r.ok) throw new Error(data.error);
-                    btn.textContent = '✅ Candidature envoyée';
+                    btn.textContent = '✅ Disponibilité envoyée';
                     btn.classList.add('applied');
-                    showSwapToast('✅ Ta candidature a été envoyée !');
+                    showSwapToast('✅ Ta disponibilité   a été envoyée !');
                 } catch (e) {
                     btn.disabled = false;
                     showSwapToast(e.message || 'Erreur', true);
