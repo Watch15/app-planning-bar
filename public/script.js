@@ -1487,36 +1487,40 @@ function openMobileShiftEditModal(shift) {
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
 
-    const isPortrait = window.innerHeight > window.innerWidth;
-    const inp = 'width:100%;padding:6px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:18px;outline:none;color:#1a1a2e';
-    const lbl = 'font-size:10px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px';
+    const inp = 'width:100%;padding:10px 12px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:18px;font-weight:600;outline:none;color:#1a1a2e;background:#fafbfc;font-family:inherit';
+    const lbl = 'font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px';
     const grp = 'flex:1;min-width:0';
-    const row = isPortrait ? 'display:flex;gap:20px;padding-right:8px' : 'display:flex;gap:10px';
+    const row = 'display:flex;gap:10px';
+    const iconBtn = 'width:36px;height:36px;border-radius:9px;border:1px solid #e0e0e0;background:white;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0;font-family:inherit';
     overlay.innerHTML =
-        '<div style="background:white;border-radius:16px 16px 0 0;padding:16px 16px max(16px,env(safe-area-inset-bottom));width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,0.18);max-height:80vh;overflow-y:auto">' +
-            '<div style="width:36px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 12px"></div>' +
-            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">' +
-                '<span style="width:10px;height:10px;border-radius:50%;background:' + (shift.color || '#888') + ';flex-shrink:0;display:inline-block"></span>' +
-                '<span style="font-size:14px;font-weight:700;color:#1a1a2e">' + shift.staff_name + '</span>' +
+        '<div style="background:white;border-radius:18px 18px 0 0;padding:14px 16px max(16px,env(safe-area-inset-bottom));width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,0.18);max-height:88vh;overflow-y:auto">' +
+            '<div style="width:36px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 14px"></div>' +
+            // Header avec actions icônes
+            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">' +
+                '<span style="width:11px;height:11px;border-radius:50%;background:' + (shift.color || '#888') + ';flex-shrink:0;display:inline-block"></span>' +
+                '<span style="font-size:15px;font-weight:700;color:#1a1a2e;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + shift.staff_name + '</span>' +
+                '<button id="_ms-replace" title="Remplacer" style="' + iconBtn + ';color:#27ae60;border-color:#a7e0c0">↔</button>' +
+                '<button id="_ms-copy"    title="Transférer" style="' + iconBtn + ';color:#6C63FF;border-color:#c5beff">→</button>' +
+                '<button id="_ms-delete"  title="Supprimer"  style="' + iconBtn + ';color:#e74c3c;border-color:#f5c6c6">🗑</button>' +
             '</div>' +
-            '<div style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Horaires planifiés</div>' +
-            '<div style="' + row + ';margin-bottom:12px">' +
-                '<div style="' + grp + '"><div style="' + lbl + '">Début</div><input id="_ms-start" type="time" value="' + fmt(shift.start_time) + '" style="' + inp + '"></div>' +
-                '<div style="' + grp + '"><div style="' + lbl + '">Fin</div><input id="_ms-end" type="time" value="' + fmt(shift.end_time) + '" style="' + inp + '"></div>' +
+            // Section planifié
+            '<div style="' + lbl + '">Horaires planifiés</div>' +
+            '<div style="' + row + ';margin-bottom:16px">' +
+                '<div style="' + grp + '"><div style="font-size:10px;color:#aaa;font-weight:600;margin-bottom:4px">Début</div><input id="_ms-start" type="time" value="' + fmt(shift.start_time) + '" style="' + inp + '"></div>' +
+                '<div style="' + grp + '"><div style="font-size:10px;color:#aaa;font-weight:600;margin-bottom:4px">Fin</div><input id="_ms-end" type="time" value="' + fmt(shift.end_time) + '" style="' + inp + '"></div>' +
             '</div>' +
-            '<div style="border-top:1px solid #f0f0f0;padding-top:10px;margin-bottom:12px">' +
-                '<div style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Heures réelles</div>' +
+            // Section réelles (mise en valeur)
+            '<div style="background:#f8f9ff;border:1px solid #e5e3ff;border-radius:12px;padding:12px;margin-bottom:18px">' +
+                '<div style="' + lbl + ';color:#6C63FF">⏱ Heures réelles</div>' +
                 '<div style="' + row + '">' +
-                    '<div style="' + grp + '"><div style="' + lbl + '">Début réel</div><input id="_ms-real-start" type="time" value="' + fmt(shift.real_start) + '" style="' + inp + '"></div>' +
-                    '<div style="' + grp + '"><div style="' + lbl + '">Fin réelle</div><input id="_ms-real-end" type="time" value="' + fmt(shift.real_end) + '" style="' + inp + '"></div>' +
+                    '<div style="' + grp + '"><div style="font-size:10px;color:#888;font-weight:600;margin-bottom:4px">Début réel</div><input id="_ms-real-start" type="time" value="' + fmt(shift.real_start) + '" style="' + inp + ';background:white"></div>' +
+                    '<div style="' + grp + '"><div style="font-size:10px;color:#888;font-weight:600;margin-bottom:4px">Fin réelle</div><input id="_ms-real-end" type="time" value="' + fmt(shift.real_end) + '" style="' + inp + ';background:white"></div>' +
                 '</div>' +
             '</div>' +
-            '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
-                '<button id="_ms-delete" style="padding:9px 12px;border-radius:8px;border:1.5px solid #e74c3c;background:white;font-size:12px;cursor:pointer;color:#e74c3c;flex-shrink:0">Supprimer</button>' +
-                '<button id="_ms-replace" style="padding:9px 12px;border-radius:8px;border:1.5px solid #27ae60;background:white;font-size:12px;cursor:pointer;color:#27ae60;flex-shrink:0">Remplacer…</button>' +
-                '<button id="_ms-copy"   style="padding:9px 12px;border-radius:8px;border:1.5px solid #6C63FF;background:white;font-size:12px;cursor:pointer;color:#6C63FF;flex-shrink:0">Transférer vers…</button>' +
-                '<button id="_ms-cancel" style="padding:9px 12px;border-radius:8px;border:1px solid #e0e0e0;background:white;font-size:12px;cursor:pointer;color:#555;flex:1">Annuler</button>' +
-                '<button id="_ms-save"   style="padding:9px 12px;border-radius:8px;border:none;background:#1a1a2e;color:white;font-size:12px;font-weight:600;cursor:pointer;flex:1">Enregistrer</button>' +
+            // Actions principales
+            '<div style="display:flex;gap:10px">' +
+                '<button id="_ms-cancel" style="padding:13px 16px;border-radius:10px;border:1px solid #e0e0e0;background:white;font-size:14px;cursor:pointer;color:#555;flex:1;font-family:inherit">Annuler</button>' +
+                '<button id="_ms-save"   style="padding:13px 16px;border-radius:10px;border:none;background:#6C63FF;color:white;font-size:14px;font-weight:600;cursor:pointer;flex:1.4;font-family:inherit;box-shadow:0 2px 8px rgba(108,99,255,0.30)">Enregistrer</button>' +
             '</div>' +
         '</div>';
 
@@ -1757,30 +1761,36 @@ function openRealHoursModal(shift, shiftEl) {
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
 
+    const iconBtn = 'width:30px;height:30px;border-radius:7px;border:1px solid #e0e0e0;background:white;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;transition:all 0.15s';
     overlay.innerHTML =
-        '<div style="background:white;border-radius:14px;padding:24px;max-width:360px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.18)">' +
-            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">' +
+        '<div style="background:white;border-radius:14px;padding:20px 22px;max-width:440px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.18)">' +
+            // Header : nom + actions secondaires à droite
+            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">' +
                 '<span style="width:10px;height:10px;border-radius:50%;background:' + (shift.color || '#888') + ';flex-shrink:0;display:inline-block"></span>' +
-                '<p style="font-size:14px;font-weight:700;color:#1a1a2e">' + shift.staff_name + '</p>' +
+                '<p style="font-size:14px;font-weight:700;color:#1a1a2e;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + shift.staff_name + '</p>' +
+                '<button id="_rh-replace" title="Remplacer le staff" style="' + iconBtn + ';color:#27ae60;border-color:#a7e0c0">↔</button>' +
+                '<button id="_rh-copy"    title="Transférer vers un autre établissement" style="' + iconBtn + ';color:#6C63FF;border-color:#c5beff">→</button>' +
             '</div>' +
-            '<p style="font-size:12px;color:#aaa;margin-bottom:16px">Planifié : ' + fmtDisp(shift.start_time) + ' → ' + fmtDisp(shift.end_time) + '</p>' +
-            '<div id="_rh-time-row" style="display:flex;gap:10px;margin-bottom:18px">' +
-                '<div style="flex:1">' +
-                    '<div style="font-size:11px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px">Début réel</div>' +
-                    '<input id="_rh-start" type="time" value="' + fmt(shift.real_start) + '" style="width:100%;padding:9px 10px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:15px;font-weight:600;outline:none">' +
+            '<p style="font-size:12px;color:#888;margin-bottom:18px;padding-left:18px">Planifié : <strong style="color:#555">' + fmtDisp(shift.start_time) + ' → ' + fmtDisp(shift.end_time) + '</strong></p>' +
+            // Section heures réelles
+            '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Heures réelles</div>' +
+            '<div id="_rh-time-row" style="display:flex;gap:10px;margin-bottom:10px">' +
+                '<div style="flex:1;min-width:0">' +
+                    '<div style="font-size:10px;color:#aaa;font-weight:600;margin-bottom:4px">Début</div>' +
+                    '<input id="_rh-start" type="time" value="' + fmt(shift.real_start) + '" style="width:100%;padding:10px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:16px;font-weight:600;outline:none;background:#fafbfc;color:#1a1a2e">' +
                 '</div>' +
-                '<div style="flex:1">' +
-                    '<div style="font-size:11px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px">Fin réelle</div>' +
-                    '<input id="_rh-end" type="time" value="' + fmt(shift.real_end) + '" style="width:100%;padding:9px 10px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:15px;font-weight:600;outline:none">' +
+                '<div style="flex:1;min-width:0">' +
+                    '<div style="font-size:10px;color:#aaa;font-weight:600;margin-bottom:4px">Fin</div>' +
+                    '<input id="_rh-end" type="time" value="' + fmt(shift.real_end) + '" style="width:100%;padding:10px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:16px;font-weight:600;outline:none;background:#fafbfc;color:#1a1a2e">' +
                 '</div>' +
             '</div>' +
-            '<div id="_rh-ecart" style="text-align:center;font-size:12px;color:#aaa;min-height:18px;margin-bottom:14px"></div>' +
-            '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">' +
-                '<button id="_rh-replace" style="padding:8px 16px;border-radius:8px;border:1.5px solid #27ae60;background:white;font-size:13px;cursor:pointer;color:#27ae60">Remplacer…</button>' +
-                '<button id="_rh-copy"   style="padding:8px 16px;border-radius:8px;border:1.5px solid #6C63FF;background:white;font-size:13px;cursor:pointer;color:#6C63FF">Transférer vers…</button>' +
-                '<button id="_rh-cancel" style="padding:8px 16px;border-radius:8px;border:1px solid #e0e0e0;background:white;font-size:13px;cursor:pointer;color:#555">Annuler</button>' +
-                '<button id="_rh-clear"  style="padding:8px 16px;border-radius:8px;border:1px solid #e0e0e0;background:white;font-size:13px;cursor:pointer;color:#e74c3c">Effacer</button>' +
-                '<button id="_rh-save"   style="padding:8px 16px;border-radius:8px;border:none;background:#1a1a2e;color:white;font-size:13px;font-weight:600;cursor:pointer">Enregistrer</button>' +
+            '<div id="_rh-ecart" style="text-align:center;font-size:12px;color:#aaa;min-height:18px;margin-bottom:18px;font-weight:600"></div>' +
+            // Actions principales : effacer (gauche) + annuler + enregistrer (droite)
+            '<div style="display:flex;gap:8px;align-items:center">' +
+                '<button id="_rh-clear"  style="padding:9px 14px;border-radius:8px;border:none;background:transparent;font-size:12px;cursor:pointer;color:#e74c3c;text-decoration:underline">Effacer</button>' +
+                '<div style="flex:1"></div>' +
+                '<button id="_rh-cancel" style="padding:10px 18px;border-radius:8px;border:1px solid #e0e0e0;background:white;font-size:13px;cursor:pointer;color:#555;font-family:inherit">Annuler</button>' +
+                '<button id="_rh-save"   style="padding:10px 22px;border-radius:8px;border:none;background:#6C63FF;color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(108,99,255,0.30)">Enregistrer</button>' +
             '</div>' +
         '</div>';
 
