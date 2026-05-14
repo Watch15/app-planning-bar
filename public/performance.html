@@ -104,6 +104,67 @@
         .kpi-value { font-size: 22px; font-weight: 700; color: var(--text-primary); }
         .kpi-sub   { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 
+        /* ── Vue calendaire ── */
+        .calendar-wrap {
+            background: var(--light-card); border: 1px solid var(--light-border);
+            border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
+        }
+        .calendar-header {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+        }
+        .cal-nav {
+            border: 1px solid var(--light-border); background: var(--light-bg);
+            border-radius: 8px; width: 30px; height: 30px;
+            font-size: 18px; font-weight: 600; color: var(--text-secondary);
+            cursor: pointer; transition: all 0.15s; font-family: var(--font); line-height: 1;
+        }
+        .cal-nav:hover { border-color: var(--accent); color: var(--accent); }
+        .cal-nav.cal-today { width: auto; padding: 0 12px; font-size: 12px; font-weight: 600; margin-left: auto; }
+        .cal-label { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+        .calendar-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
+        }
+        .day-card {
+            background: var(--light-bg); border: 1.5px solid var(--light-border);
+            border-radius: 10px; padding: 10px 10px 12px;
+            display: flex; flex-direction: column; gap: 4px;
+            cursor: pointer; transition: all 0.15s; position: relative; min-height: 110px;
+        }
+        .day-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .day-card.today { border-color: var(--accent); }
+        .day-card .day-header {
+            display: flex; align-items: baseline; justify-content: space-between; gap: 4px;
+        }
+        .day-card .day-name { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; }
+        .day-card .day-num  { font-size: 18px; font-weight: 700; color: var(--text-primary); line-height: 1; }
+        .day-card .day-ca   { font-size: 13px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
+        .day-card .day-coeff { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 1px; }
+        .day-card .day-empty { font-size: 11px; color: var(--text-muted); font-style: italic; margin-top: 6px; }
+        .day-card .add-ca-hint {
+            position: absolute; bottom: 6px; right: 8px; font-size: 10px; color: var(--accent);
+            opacity: 0; transition: opacity 0.15s;
+        }
+        .day-card.empty:hover .add-ca-hint { opacity: 1; }
+
+        /* États perf : vert (sous l'objectif) / rouge (au-dessus) / gris (pas de données) */
+        .day-card.ok   { background: var(--success-bg); border-color: #6EE7B7; }
+        .day-card.ok   .day-ca    { color: var(--success-text); }
+        .day-card.ok   .day-coeff { color: var(--success-text); }
+        .day-card.bad  { background: var(--danger-bg); border-color: #fca5a5; }
+        .day-card.bad  .day-ca    { color: var(--danger-text); }
+        .day-card.bad  .day-coeff { color: var(--danger-text); }
+        .day-card.no-shifts { background: #fff8ec; border-color: #fcd34d; }
+        .day-card.no-shifts .day-ca { color: #b45309; }
+
+        @media (max-width: 720px) {
+            .calendar-grid { grid-template-columns: repeat(7, 1fr); gap: 4px; }
+            .day-card { padding: 7px 6px 8px; min-height: 92px; }
+            .day-card .day-num  { font-size: 15px; }
+            .day-card .day-ca   { font-size: 11px; }
+            .day-card .day-coeff { font-size: 10px; }
+            .day-card .day-name { font-size: 9px; }
+        }
+
         /* ── Tableau ── */
         .table-wrap {
             background: var(--light-card); border: 1px solid var(--light-border);
@@ -172,6 +233,49 @@
             padding: 40px 16px; text-align: center; color: var(--text-muted); font-size: 13px;
         }
 
+        /* ── Modale CA ── */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(15,15,26,0.45);
+            display: none; align-items: center; justify-content: center; z-index: 100;
+        }
+        .modal-overlay.visible { display: flex; }
+        .modal-box {
+            background: var(--light-card); border-radius: 14px; width: 420px; max-width: 92vw;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.30); overflow: hidden;
+        }
+        .modal-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 18px; border-bottom: 1px solid var(--light-border);
+        }
+        .modal-head .modal-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+        .modal-head .modal-close {
+            background: none; border: none; font-size: 22px; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 0 4px;
+        }
+        .modal-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 12px; }
+        .modal-body label {
+            display: block; font-size: 10px; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4px;
+        }
+        .modal-body input {
+            width: 100%; padding: 9px 12px; border: 1.5px solid var(--light-border);
+            border-radius: 8px; font-size: 13px; font-family: var(--font); background: var(--light-bg);
+            color: var(--text-primary); outline: none;
+        }
+        .modal-body input:focus { border-color: var(--accent); }
+        .input-eur { position: relative; }
+        .input-eur input { padding-right: 30px; }
+        .input-eur .eur-symbol { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-muted); pointer-events: none; }
+        .modal-body .btn-primary {
+            padding: 10px 16px; background: var(--accent); color: white; border: none;
+            border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font);
+        }
+        .modal-body .btn-primary:hover:not(:disabled) { background: var(--accent-soft); }
+        .modal-body .btn-primary:disabled { opacity: 0.6; cursor: wait; }
+        .modal-fb { font-size: 12px; text-align: center; display: none; }
+        .modal-fb.ok    { display: block; color: var(--success-text); }
+        .modal-fb.error { display: block; color: var(--danger); }
+        .modal-hint { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+
         @media (max-width: 640px) {
             .container { padding: 12px 10px 60px; }
             table.perf { font-size: 12px; }
@@ -217,12 +321,49 @@
     <!-- KPI ── -->
     <div class="kpis" id="kpis"></div>
 
+    <!-- Vue calendaire (semaine) ── -->
+    <div class="calendar-wrap" id="calendar-wrap">
+        <div class="calendar-header">
+            <button class="cal-nav" id="cal-prev" title="Semaine précédente">‹</button>
+            <span class="cal-label" id="cal-label"></span>
+            <button class="cal-nav" id="cal-next" title="Semaine suivante">›</button>
+            <button class="cal-nav cal-today" id="cal-today" title="Cette semaine">Aujourd'hui</button>
+        </div>
+        <div class="calendar-grid" id="calendar-grid"></div>
+    </div>
+
     <!-- Tableau ── -->
     <div class="table-wrap" id="table-wrap">
         <div class="loading-msg">Chargement…</div>
     </div>
 
     <!-- Objectifs -->
+    <!-- Modale CA -->
+    <div class="modal-overlay" id="ca-modal">
+        <div class="modal-box">
+            <div class="modal-head">
+                <span class="modal-title">💶 Saisir un CA</span>
+                <button class="modal-close" id="ca-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <label>Date</label>
+                    <input type="date" id="ca-date" readonly style="background:var(--light-bg);cursor:not-allowed">
+                </div>
+                <div>
+                    <label>Chiffre d'affaires</label>
+                    <div class="input-eur">
+                        <input type="number" min="0" step="0.01" id="ca-input" placeholder="0.00">
+                        <span class="eur-symbol">€</span>
+                    </div>
+                    <div class="modal-hint" id="ca-hint"></div>
+                </div>
+                <button class="btn-primary" id="ca-save">Enregistrer</button>
+                <div class="modal-fb" id="ca-feedback"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="targets">
         <div class="targets-title">⚙️ Objectifs coefficient</div>
         <div class="targets-form">
@@ -302,6 +443,7 @@ let allEstabs     = [];
 let currentEstab  = null;
 let targets       = { target_gross: 30, target_charged: 43 };
 let currentData   = [];
+let calendarWeekStart = null; // Lundi de la semaine affichée dans le calendrier
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -361,7 +503,7 @@ async function init() {
     if (allEstabs.length === 1) document.getElementById('estab-filter-group').style.display = 'none';
     currentEstab = allEstabs[0].id;
     sel.value = currentEstab;
-    sel.addEventListener('change', () => { currentEstab = sel.value; loadData(); });
+    sel.addEventListener('change', () => { currentEstab = sel.value; loadData(); loadCalendarWeek(); });
 
     // Sélecteur période
     document.getElementById('period-select').addEventListener('change', loadData);
@@ -369,7 +511,151 @@ async function init() {
     // Sauvegarde objectifs
     document.getElementById('btn-save-targets').addEventListener('click', saveTargets);
 
-    await loadData();
+    // Navigation calendrier
+    calendarWeekStart = getMondayOf(new Date());
+    document.getElementById('cal-prev').addEventListener('click', () => {
+        calendarWeekStart.setDate(calendarWeekStart.getDate() - 7);
+        loadCalendarWeek();
+    });
+    document.getElementById('cal-next').addEventListener('click', () => {
+        calendarWeekStart.setDate(calendarWeekStart.getDate() + 7);
+        loadCalendarWeek();
+    });
+    document.getElementById('cal-today').addEventListener('click', () => {
+        calendarWeekStart = getMondayOf(new Date());
+        loadCalendarWeek();
+    });
+
+    // Modale CA (depuis le calendrier)
+    document.getElementById('ca-modal-close').addEventListener('click', closeCAModal);
+    document.getElementById('ca-modal').addEventListener('click', e => {
+        if (e.target.id === 'ca-modal') closeCAModal();
+    });
+    document.getElementById('ca-save').addEventListener('click', saveCAFromModal);
+
+    await Promise.all([loadData(), loadCalendarWeek()]);
+}
+
+// ── Calendrier semaine ────────────────────────────────────────────────────────
+
+async function loadCalendarWeek() {
+    if (!calendarWeekStart || !currentEstab) return;
+    const monday = new Date(calendarWeekStart);
+    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+    const from = toDateStr(monday);
+    const to   = toDateStr(sunday);
+
+    const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+    const label  = (monday.getMonth() === sunday.getMonth())
+        ? (monday.getDate() + ' → ' + sunday.getDate() + ' ' + months[sunday.getMonth()] + ' ' + sunday.getFullYear())
+        : (monday.getDate() + ' ' + months[monday.getMonth()] + ' → ' + sunday.getDate() + ' ' + months[sunday.getMonth()] + ' ' + sunday.getFullYear());
+    document.getElementById('cal-label').textContent = label;
+
+    try {
+        const params = new URLSearchParams({ establishment_id: currentEstab, from, to });
+        const res = await fetch('/api/performance?' + params.toString(), { credentials: 'include' });
+        const data = res.ok ? await res.json() : [];
+        renderCalendarGrid(data);
+    } catch {
+        renderCalendarGrid([]);
+    }
+}
+
+function renderCalendarGrid(data) {
+    const grid = document.getElementById('calendar-grid');
+    const byDate = {};
+    data.forEach(d => { byDate[d.date] = d; });
+
+    const DAY_SHORT = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    const today = toDateStr(new Date());
+    grid.innerHTML = '';
+
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(calendarWeekStart);
+        d.setDate(d.getDate() + i);
+        const dateStr = toDateStr(d);
+        const isToday = dateStr === today;
+        const perf    = byDate[dateStr];
+
+        const card = document.createElement('div');
+        card.className = 'day-card' + (isToday ? ' today' : '');
+        card.dataset.date = dateStr;
+
+        let inner =
+            '<div class="day-header">' +
+                '<span class="day-name">' + DAY_SHORT[i] + '</span>' +
+                '<span class="day-num">' + d.getDate() + '</span>' +
+            '</div>';
+
+        if (perf) {
+            const hasShifts = perf.wage_bill_gross > 0;
+            if (hasShifts) {
+                card.classList.add(perf.coeff_gross < targets.target_gross ? 'ok' : 'bad');
+                inner += '<div class="day-ca">' + fmtEUR(perf.revenue) + '</div>';
+                inner += '<div class="day-coeff">' + fmtPct(perf.coeff_gross) + '</div>';
+            } else {
+                card.classList.add('no-shifts');
+                inner += '<div class="day-ca">' + fmtEUR(perf.revenue) + '</div>';
+                inner += '<div class="day-coeff" style="color:#b45309">Aucun shift pointé</div>';
+            }
+        } else {
+            card.classList.add('empty');
+            inner += '<div class="day-empty">Pas de CA</div>';
+            inner += '<span class="add-ca-hint">+ Saisir</span>';
+        }
+        card.innerHTML = inner;
+        card.addEventListener('click', () => openCAModal(dateStr, perf ? perf.revenue : null));
+        grid.appendChild(card);
+    }
+}
+
+// ── Modale CA ─────────────────────────────────────────────────────────────────
+
+function openCAModal(dateStr, existingRevenue) {
+    document.getElementById('ca-date').value = dateStr;
+    const input = document.getElementById('ca-input');
+    const hint  = document.getElementById('ca-hint');
+    const fb    = document.getElementById('ca-feedback');
+    fb.className = 'modal-fb'; fb.textContent = '';
+    if (existingRevenue != null) {
+        input.value = existingRevenue;
+        hint.textContent = '✏️ Un CA existe déjà pour ce jour, vous pouvez le corriger.';
+    } else {
+        input.value = '';
+        hint.textContent = '';
+    }
+    document.getElementById('ca-modal').classList.add('visible');
+    setTimeout(() => input.focus(), 50);
+}
+
+function closeCAModal() {
+    document.getElementById('ca-modal').classList.remove('visible');
+}
+
+async function saveCAFromModal() {
+    const date = document.getElementById('ca-date').value;
+    const v    = parseFloat(document.getElementById('ca-input').value);
+    const fb   = document.getElementById('ca-feedback');
+    const btn  = document.getElementById('ca-save');
+    if (Number.isNaN(v) || v < 0) { fb.className = 'modal-fb error'; fb.textContent = 'Montant invalide'; return; }
+    btn.disabled = true; const old = btn.textContent; btn.textContent = 'Enregistrement…';
+    try {
+        const res = await fetch('/api/revenue', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date, establishment_id: currentEstab, revenue: v }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        fb.className = 'modal-fb ok'; fb.textContent = '✅ CA enregistré';
+        // Rafraîchir calendrier + tableau
+        await Promise.all([loadCalendarWeek(), loadData()]);
+        setTimeout(closeCAModal, 600);
+    } catch (e) {
+        fb.className = 'modal-fb error'; fb.textContent = e.message || 'Erreur';
+    } finally {
+        btn.disabled = false; btn.textContent = old;
+    }
 }
 
 // ── Chargement données ──────────────────────────────────────────────────────────
@@ -556,6 +842,7 @@ async function saveTargets() {
         // Rerender pour appliquer les nouveaux seuils
         renderTable(currentData);
         renderKpis(currentData);
+        loadCalendarWeek();
     } catch (e) {
         fb.style.color = 'var(--danger)'; fb.textContent = e.message || 'Erreur';
     } finally {

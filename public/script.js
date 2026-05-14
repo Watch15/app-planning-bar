@@ -357,6 +357,19 @@ async function init() {
     const btnRecap = document.getElementById('btn-recap');
     if (btnRecap) btnRecap.addEventListener('click', openRecapModal);
 
+    const btnRevenue = document.getElementById('btn-revenue');
+    if (btnRevenue) btnRevenue.addEventListener('click', openRevenueModal);
+    const revenueClose = document.getElementById('revenue-modal-close');
+    if (revenueClose) revenueClose.addEventListener('click', () => {
+        document.getElementById('revenue-modal').style.display = 'none';
+    });
+    const revenueSave = document.getElementById('revenue-modal-save');
+    if (revenueSave) revenueSave.addEventListener('click', saveRevenueFromModal);
+    const revenueDate  = document.getElementById('revenue-modal-date');
+    const revenueEstab = document.getElementById('revenue-modal-estab');
+    if (revenueDate)  revenueDate.addEventListener('change', prefillRevenueModal);
+    if (revenueEstab) revenueEstab.addEventListener('change', prefillRevenueModal);
+
     const btnRefresh = document.getElementById('btn-refresh-day');
     if (btnRefresh) btnRefresh.addEventListener('click', async () => {
         if (selectedDate) {
@@ -3878,6 +3891,99 @@ async function deleteAccount(userId, userName) {
 }
 
 // ── Récap mensuel ────────────────────────────────────────────────────────────
+
+// ── Modale CA (saisie d'un CA en retard) ─────────────────────────────────────
+
+function openRevenueModal() {
+    const modal = document.getElementById('revenue-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    // Peupler les établissements
+    const sel = document.getElementById('revenue-modal-estab');
+    if (sel.children.length === 0) {
+        allEstablishments.forEach(e => {
+            const opt = document.createElement('option');
+            opt.value = e.id; opt.textContent = e.name;
+            sel.appendChild(opt);
+        });
+    }
+    // Masquer le sélecteur s'il n'y a qu'un seul établissement
+    const row = document.getElementById('revenue-modal-estab-row');
+    if (row) row.style.display = allEstablishments.length > 1 ? '' : 'none';
+    if (currentVenueId) sel.value = currentVenueId;
+
+    // Date par défaut : hier (CA saisi avec un jour de retard typiquement)
+    const dateInput = document.getElementById('revenue-modal-date');
+    const today = new Date();
+    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+    const ystr = yesterday.getFullYear() + '-' +
+        String(yesterday.getMonth() + 1).padStart(2, '0') + '-' +
+        String(yesterday.getDate()).padStart(2, '0');
+    dateInput.value = ystr;
+    // Limite future : aujourd'hui (pas de CA dans le futur)
+    const tstr = today.getFullYear() + '-' +
+        String(today.getMonth() + 1).padStart(2, '0') + '-' +
+        String(today.getDate()).padStart(2, '0');
+    dateInput.max = tstr;
+
+    // Reset feedback + input
+    const fb = document.getElementById('revenue-modal-feedback');
+    if (fb) { fb.style.display = 'none'; fb.textContent = ''; }
+    document.getElementById('revenue-modal-input').value = '';
+
+    prefillRevenueModal();
+}
+
+async function prefillRevenueModal() {
+    const date  = document.getElementById('revenue-modal-date').value;
+    const estab = document.getElementById('revenue-modal-estab').value;
+    const input = document.getElementById('revenue-modal-input');
+    const hint  = document.getElementById('revenue-modal-hint');
+    if (!date || !estab) return;
+    try {
+        const res = await fetch('/api/revenue/' + encodeURIComponent(estab) + '/' + date, { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.revenue != null) {
+            input.value = data.revenue;
+            if (hint) { hint.style.display = 'block'; hint.textContent = '✏️ Un CA existe déjà pour ce jour, vous pouvez le corriger.'; }
+        } else {
+            input.value = '';
+            if (hint) { hint.style.display = 'none'; hint.textContent = ''; }
+        }
+    } catch { /* silencieux */ }
+}
+
+async function saveRevenueFromModal() {
+    const date  = document.getElementById('revenue-modal-date').value;
+    const estab = document.getElementById('revenue-modal-estab').value;
+    const v     = parseFloat(document.getElementById('revenue-modal-input').value);
+    const fb    = document.getElementById('revenue-modal-feedback');
+    const btn   = document.getElementById('revenue-modal-save');
+    if (!date)  { fb.style.color = 'var(--danger)'; fb.style.display = 'block'; fb.textContent = 'Date requise'; return; }
+    if (!estab) { fb.style.color = 'var(--danger)'; fb.style.display = 'block'; fb.textContent = 'Établissement requis'; return; }
+    if (Number.isNaN(v) || v < 0) { fb.style.color = 'var(--danger)'; fb.style.display = 'block'; fb.textContent = 'Montant invalide'; return; }
+    btn.disabled = true; const old = btn.textContent; btn.textContent = 'Enregistrement…';
+    try {
+        const res = await fetch('/api/revenue', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date, establishment_id: estab, revenue: v }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        fb.style.color = 'var(--success-text)'; fb.style.display = 'block'; fb.textContent = '✅ CA enregistré';
+        showToast('CA enregistré pour le ' + date);
+        setTimeout(() => {
+            document.getElementById('revenue-modal').style.display = 'none';
+        }, 800);
+    } catch (e) {
+        fb.style.color = 'var(--danger)'; fb.style.display = 'block'; fb.textContent = e.message || 'Erreur';
+    } finally {
+        btn.disabled = false; btn.textContent = old;
+    }
+}
 
 function openRecapModal() {
     const modal = document.getElementById('recap-modal');
