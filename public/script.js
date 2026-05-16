@@ -4454,7 +4454,7 @@ function _renderReminderWeekLabel() {
 }
 
 async function loadReminderBadge() {
-    if (!_reminderWeekStart) _reminderWeekStart = getMondayOf(addDays(new Date(), 7));
+    if (!_reminderWeekStart) _reminderWeekStart = getMondayOf(new Date());
     const { from, to } = _reminderDateRange();
     try {
         const res = await fetch('/api/dispos/sans-dispo?from=' + from + '&to=' + to, { credentials: 'include' });
@@ -4467,14 +4467,32 @@ async function loadReminderBadge() {
     } catch { }
 }
 
+async function _isWeekPublished(weekStartStr) {
+    const res = await fetch('/api/publish/' + weekStartStr, { credentials: 'include' });
+    if (!res.ok) return false;
+    const data = await res.json();
+    return !!(data.published || data.auto);
+}
+
 async function loadReminderTab() {
-    if (!_reminderWeekStart) _reminderWeekStart = getMondayOf(addDays(new Date(), 7));
+    if (!_reminderWeekStart) _reminderWeekStart = getMondayOf(new Date());
     _renderReminderWeekLabel();
     const list = document.getElementById('dispos-reminder-list');
     if (!list) return;
     list.innerHTML = '<div style="padding:16px;text-align:center;color:#ccc;font-size:13px">Chargement…</div>';
     const { from, to } = _reminderDateRange();
     try {
+        // Vérifier si la semaine est publiée (semaine courante = auto-publiée)
+        const currentMonday = toDateStr(getMondayOf(new Date()));
+        if (from > currentMonday) {
+            const published = await _isWeekPublished(from);
+            if (!published) {
+                list.innerHTML = '<div style="padding:32px;text-align:center;color:#aaa;font-size:13px">📅 Planning non publié pour cette semaine — aucun rappel à envoyer</div>';
+                const badge = document.getElementById('reminder-tab-badge');
+                if (badge) badge.style.display = 'none';
+                return;
+            }
+        }
         const res = await fetch('/api/dispos/sans-dispo?from=' + from + '&to=' + to, { credentials: 'include' });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
