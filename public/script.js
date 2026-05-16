@@ -4437,12 +4437,12 @@ async function _isWeekPublished(weekStartStr) {
     return !!(data.published || data.auto);
 }
 
-// Détermine la semaine pertinente : semaine suivante si publiée, sinon semaine en cours
-async function _reminderResolveWeek() {
-    const nextMonday = getMondayOf(addDays(new Date(), 7));
-    const nextStr    = toDateStr(nextMonday);
-    const published  = await _isWeekPublished(nextStr);
-    return published ? nextMonday : getMondayOf(new Date());
+// Lundi→dim en cours ; autres jours→sem suivante.
+// Le lundi (service dom soir finissant lun matin), la semaine vient de commencer.
+function _reminderResolveWeek() {
+    const today = new Date();
+    if (today.getDay() === 1) return getMondayOf(today);
+    return getMondayOf(addDays(today, 7));
 }
 
 function _renderReminderWeekLabel(weekStart) {
@@ -4457,7 +4457,7 @@ function _renderReminderWeekLabel(weekStart) {
 
 async function loadReminderBadge() {
     try {
-        const weekStart = await _reminderResolveWeek();
+        const weekStart = _reminderResolveWeek();
         const from = toDateStr(weekStart);
         const to   = toDateStr(addDays(weekStart, 6));
         const res = await fetch('/api/dispos/sans-dispo?from=' + from + '&to=' + to, { credentials: 'include' });
@@ -4475,7 +4475,7 @@ async function loadReminderTab() {
     if (!list) return;
     list.innerHTML = '<div style="padding:16px;text-align:center;color:#ccc;font-size:13px">Chargement…</div>';
     try {
-        const weekStart = await _reminderResolveWeek();
+        const weekStart = _reminderResolveWeek();
         _renderReminderWeekLabel(weekStart);
         const from = toDateStr(weekStart);
         const to   = toDateStr(addDays(weekStart, 6));

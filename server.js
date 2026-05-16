@@ -306,14 +306,20 @@ async function checkDispoRappels() {
         weekEndD.setDate(weekMonday.getDate() + 6);
         const weekEnd = dateStr(weekEndD);
 
-        // Ne pas envoyer de rappels si la semaine cible n'est pas encore publiée
-        // (cas typique : le lundi matin, _disposWeekStart saute déjà à la semaine suivante)
+        // Le lundi, _disposWeekStart saute déjà à J+7 (semaine suivante).
+        // Si cette semaine n'est pas publiée, aucun rappel ne doit partir.
+        // La semaine en cours et les passées sont toujours auto-publiées.
         if (!_isAutoPublished(weekStart)) {
             const pub = await db.collection('settings').findOne({ key: 'publish_' + weekStart });
             if (!pub || !pub.published) {
                 console.log('⏭️  Rappels dispos ignorés : semaine du', weekStart, 'non publiée');
                 return;
             }
+        }
+        // Sécurité supplémentaire : le lundi, bloquer si la semaine cible ≠ semaine en cours
+        if (todayDay === 1 && weekStart !== dateStr(_weekStart(now))) {
+            console.log('⏭️  Rappels dispos ignorés : lundi — semaine cible non encore publiée');
+            return;
         }
 
         const j2Date = new Date(deadline); j2Date.setDate(deadline.getDate() - 2);
