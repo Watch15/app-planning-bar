@@ -341,21 +341,31 @@ async function checkDispoRappels() {
         }
 
         // ── Trigger 1 : ouverture ────────────────────────────────────────────
-        // Dédupliqué par weekStart cible : la notif ne part qu'une fois par semaine ciblée,
-        // pas une fois par jour. Évite le re-firing les lundis successifs.
+        // Dédup double : (1) ne part qu'une fois par weekStart cible, (2) skip si
+        // des dispos existent déjà pour la semaine (dispos déjà collectées/traitées).
         const openDay = settings.open_day;
         if (openDay !== null && openDay !== undefined && todayDay === openDay && settings.notif_sent_open_week !== weekStart) {
-            const allStaff = await db.collection('staff').find({ can_submit_dispos: true }).toArray();
-            const ids = allStaff.map(s => String(s._id));
-            await sendPushToStaff(ids, {
-                title:   'Templyo — Dispos ouvertes',
-                body:    '📅 Les disponibilités sont ouvertes ! Envoie les tiennes avant le ' + deadlineFmt,
-                tag:     'rappel-dispo',
-                url:     '/planning.html#dispos',
-                actions: [{ action: 'envoyer', title: 'Envoyer mes dispos' }],
+            const existingDispos = await db.collection('availabilities').countDocuments({
+                date: { $gte: weekStart, $lte: weekEnd },
+                type: { $ne: 'week_note' },
             });
-            await db.collection('settings').updateOne({ key: 'dispo' }, { $set: { notif_sent_open_week: weekStart, notif_sent_open: now } });
-            console.log('✅ Rappel ouverture dispos → semaine du', weekStart, '→', ids.length, 'membres');
+            if (existingDispos > 0) {
+                // Dispos déjà collectées pour cette semaine — marquer comme envoyé pour ne plus rechecker
+                await db.collection('settings').updateOne({ key: 'dispo' }, { $set: { notif_sent_open_week: weekStart } });
+                console.log('⏭️  Notif ouverture skip : dispos déjà existantes pour', weekStart, '(', existingDispos, 'enregistrées)');
+            } else {
+                const allStaff = await db.collection('staff').find({ can_submit_dispos: true }).toArray();
+                const ids = allStaff.map(s => String(s._id));
+                await sendPushToStaff(ids, {
+                    title:   'Templyo — Dispos ouvertes',
+                    body:    '📅 Les disponibilités sont ouvertes ! Envoie les tiennes avant le ' + deadlineFmt,
+                    tag:     'rappel-dispo',
+                    url:     '/planning.html#dispos',
+                    actions: [{ action: 'envoyer', title: 'Envoyer mes dispos' }],
+                });
+                await db.collection('settings').updateOne({ key: 'dispo' }, { $set: { notif_sent_open_week: weekStart, notif_sent_open: now } });
+                console.log('✅ Rappel ouverture dispos → semaine du', weekStart, '→', ids.length, 'membres');
+            }
         }
 
         // ── Trigger 2 : J-2 ─────────────────────────────────────────────────
