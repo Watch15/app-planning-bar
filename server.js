@@ -306,13 +306,25 @@ async function checkDispoRappels() {
         weekEndD.setDate(weekMonday.getDate() + 6);
         const weekEnd = dateStr(weekEndD);
 
-        // Le lundi, _disposWeekStart saute déjà à J+7 (semaine suivante).
-        // Si cette semaine n'est pas publiée, aucun rappel ne doit partir.
-        // La semaine en cours et les passées sont toujours auto-publiées.
+        // Guard 1 : la semaine cible (weekStart = N+2 le lundi, N+1 les autres jours)
+        // doit être publiée. La semaine en cours et les passées sont auto-publiées.
         if (!_isAutoPublished(weekStart)) {
             const pub = await db.collection('settings').findOne({ key: 'publish_' + weekStart });
             if (!pub || !pub.published) {
-                console.log('⏭️  Rappels dispos ignorés : semaine du', weekStart, 'non publiée');
+                console.log('⏭️  Rappels dispos ignorés : semaine cible du', weekStart, 'non publiée');
+                return;
+            }
+        }
+        // Guard 2 : la semaine EN COURS (= N+1 quand on est lundi N+1) doit avoir été
+        // publiée EXPLICITEMENT par le patron (doc publish_<weekStart> en base).
+        // Sans ça, le cycle est rompu et on ne sollicite pas N+2.
+        // Note : on by-pass _isAutoPublished et on lit la base directement, car le patron
+        // peut très bien ne pas avoir cliqué « Publier » même pour la semaine en cours.
+        const currentWeekStr = dateStr(_weekStart(now));
+        if (currentWeekStr !== weekStart) {
+            const currentPub = await db.collection('settings').findOne({ key: 'publish_' + currentWeekStr });
+            if (!currentPub || !currentPub.published) {
+                console.log('⏭️  Rappels dispos ignorés : semaine en cours du', currentWeekStr, 'non publiée par le patron');
                 return;
             }
         }
