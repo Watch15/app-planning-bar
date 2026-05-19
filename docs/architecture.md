@@ -39,6 +39,8 @@ app-planning-bar/
 │   ├── index.html              ← Interface patron/directeur
 │   ├── planning.html           ← Interface staff
 │   ├── pointage.html           ← Interface pointage (rôle etablissement)
+│   ├── performance.html        ← Pilotage économique patron/directeur (CA, coeff, KPIs)
+│   ├── politique-confidentialite.html  ← Page légale RGPD
 │   ├── login.html              ← Page de connexion
 │   ├── set-password.html       ← Activation / réinitialisation du mot de passe
 │   ├── script.js               ← Logique côté patron (monolithique — voir contrainte)
@@ -98,7 +100,7 @@ db.collection('sessions').findOne({ sid }, (err, doc) => { ... })
 
 ### 3.3 `script.js` — monolithique, ne pas découper
 
-`script.js` est la logique frontend côté patron (~4700 lignes). Il est volontairement gardé en un seul fichier pour la stabilité actuelle. Ne pas refactoriser en modules ni découper en plusieurs fichiers sans décision architecturale explicite. Ajouter toute nouvelle logique côté patron à l'intérieur de ce fichier.
+`script.js` est la logique frontend côté patron (~6800 lignes). Il est volontairement gardé en un seul fichier pour la stabilité actuelle. Ne pas refactoriser en modules ni découper en plusieurs fichiers sans décision architecturale explicite. Ajouter toute nouvelle logique côté patron à l'intérieur de ce fichier.
 
 ### 3.4 Frontend — aucun outillage de build
 
@@ -176,6 +178,7 @@ Rate limiter en mémoire basé sur `Map` (aucune dépendance externe). Login : 1
   ],
   "real_start": "number (pointage)",
   "real_end": "number (pointage)",
+  "hourly_rate_snapshot": "number (€/h figé au moment du pointage)",
   "pointage_resp": true,
   "extra": true
 }
@@ -185,6 +188,7 @@ Rate limiter en mémoire basé sur `Map` (aucune dépendance externe). Login : 1
 - `joker_candidates[]` = liste horodatée des staff ayant cliqué « Je suis disponible » — vidée à l'assignation ou la fermeture
 - `note` = note libre saisie par le patron sur un Joker (visible aussi par le staff assigné après conversion)
 - `real_start` / `real_end` = heures réelles saisies au pointage
+- `hourly_rate_snapshot` = copie du `hourly_rate` du staff au moment du pointage — stabilise les calculs Performance historiques même si le taux du staff change ensuite
 - `pointage_resp: true` = ce shift désigne le responsable de soirée pour l'établissement/date (un seul par soirée)
 - `extra: true` = shift créé directement au pointage (non planifié à l'avance)
 
@@ -223,6 +227,25 @@ Notifications in-app destinées au patron/directeur.
 }
 ```
 Notifications in-app destinées au staff (max 20 dernières non lues retournées par `/api/notifications/mine`).
+
+### `daily_revenue`
+```json
+{
+  "_id": ObjectId,
+  "establishment_id": "string",
+  "date": "YYYY-MM-DD",
+  "revenue": "number (€)"
+}
+```
+CA quotidien saisi par le patron / directeur depuis `performance.html`. Une entrée par couple `(establishment_id, date)`. Sert de dénominateur pour le coefficient de masse salariale.
+
+### `settings` — documents clés
+Collection polymorphe (clé `key` discriminante) :
+- `{ key: 'dispo', open_day, custom_deadline, force_open, notif_sent_open_week, notif_sent_j2, notif_sent_j1 }` — paramétrage des dispos + état des rappels push envoyés
+- `{ key: 'performance', target_gross, target_charged, charge_rate }` — objectifs coefficient + taux de charges patronales appliqué dans `/api/performance` (remplace l'ancienne valeur 1.45 codée en dur)
+- `{ key: 'pointage', cutoff_hour }` — heure de bascule du jour pour `pointage.html` (défaut 9h)
+- `{ key: 'publish_<YYYY-MM-DD>', published: true }` — une entrée par semaine publiée par le patron (clé = lundi de la semaine)
+- `{ key: 'lock_dispos_<YYYY-MM-DD>' }` — verrouillage de la saisie dispos pour une semaine
 
 ### `shift_swaps` *(feature F-05 — actuellement désactivée dans server.js)*
 ```json

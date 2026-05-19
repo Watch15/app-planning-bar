@@ -103,6 +103,25 @@ Ajouter les nouveaux éléments avec une description courte, un contexte et une 
 | D-46 | Hotfix — query `GET /api/shifts/joker-ouverts` utilise `$or` (`is_joker: true` OR `staff_id: '__joker__'`) pour matcher les Jokers historiques sans champ `is_joker` | 783464c |
 | D-47 | Hotfix critique — routes Joker accidentellement à l'intérieur du bloc `/* F-05 DÉSACTIVÉ */` lignes 2186→2550 → invisibles à Express, 404 silencieux. Bloc scindé en deux (2186→2422 et 2488→2550) pour libérer la section Joker | (à commit) |
 | D-48 | Création compte staff lie automatiquement le téléphone à un staff existant + greeting SMS/email trimé proprement | 0de5f7b ce7c0c2 2923718 |
+| D-49 | **Audit ergonomie tactile/mobile (7 pages)** — Bloquants levés sur l'ensemble du parcours : tailles tactiles ≥ 44 px (`.modal-close` 32→44, `.view-tab`, `.cal-nav` 30→44, `.dispo-time-input` 36→44, boutons login/set-password, onglets `.week-sub-tab`, `.staff-modal-tab`, 4 boutons inline du modal Dispos), anti-zoom iOS via règle globale `font-size:16px` sur inputs mobile (`style.css` + exceptions `.copy-time-input`, `.staff-search-input`), scrolls horizontaux ajoutés (`.table-wrap` perf, calendrier perf <480 px en `repeat(7, 64px)` scroll-snap, `.tabs-bar` planning, container onglets Staff & Dispos), `.modal-header` rendu `position:sticky` → close toujours accessible pendant scroll modal | (à commit) |
+
+---
+
+## P2 — Audit ergonomie restant (mai 2026)
+
+Items 🟠 Importants / 🟡 Cosmétiques relevés par l'audit D-49 mais non corrigés (UX dégradée mais page utilisable). À planifier si demande terrain.
+
+| ID | Description | Domaine | Statut |
+|---|---|---|---|
+| U-01 | `pointage.html` `.btn-save` utilise `var(--dark-surface)` au lieu de `var(--accent)` → CTA primaire incohérent avec le reste de l'app | pointage / cohérence | 🟠 |
+| U-02 | `pointage.html` `.validated-badge` : couleurs en dur (`#6EE7B7`, `#d1fae5`, `#065f46`) au lieu des tokens `--success-*`/`--validated-*` | pointage / tokens | 🟠 |
+| U-03 | `performance.html` `.targets-form` (3 inputs + bouton) sans `min-width` par groupe → wrap instable 360-400 px | performance / mobile | 🟠 |
+| U-04 | `performance.html` `.kpi-sub` 11 px font-weight 400 sur fond clair → contraste / hiérarchie faible | performance / typo | 🟠 |
+| U-05 | `planning.html` `.dispo-type-btn.selected-off` sur `--light-bg` (#f4f5f8) → état sélectionné peu distinctif | planning / contraste | 🟠 |
+| U-06 | `index.html` ~74 styles inline avec couleurs en dur (`#fff8e1`, `#fde8e8`, `rgba(108,99,255,0.1)`) → maintenance fragmentée (refactor lourd, à reporter sauf bug visuel) | index / dette | 🟡 |
+| U-07 | `politique-confidentialite.html` logo 34×34 vs standard 28×28, pas de breakpoint tablette (768-1024 px, saute desktop → mobile à 600 px) | politique / cohérence | 🟡 |
+| U-08 | `performance.html` `.day-card.empty` utilise `#fffbf0` / `#b45309` au lieu de `--warning-*` | performance / tokens | 🟡 |
+| U-09 | `index.html` `.resizer` timeline 16 px de large → difficile au doigt, mais élargir = risque de régression sur le drag/snap | index / timeline | 🟡 |
 
 ---
 

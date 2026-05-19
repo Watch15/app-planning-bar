@@ -27,7 +27,7 @@ Application web SaaS de gestion de plannings pour bars et restaurants multi-éta
 
 ```
 app-templyo/
-├── server.js                      ← Serveur Express — toutes les routes API et auth (~2400 lignes)
+├── server.js                      ← Serveur Express — toutes les routes API et auth (~3500 lignes)
 ├── package.json
 ├── .env                           ← Variables d'environnement (à créer, ne jamais commiter)
 ├── lib/
@@ -41,9 +41,11 @@ app-templyo/
 │   ├── index.html                 ← Interface patron / directeur
 │   ├── planning.html              ← Interface staff — planning + dispos + pointage responsable
 │   ├── pointage.html              ← Interface compte établissement — saisie heures réelles
+│   ├── performance.html           ← Pilotage économique patron/directeur — CA, coefficients, KPIs
+│   ├── politique-confidentialite.html  ← Page légale RGPD
 │   ├── login.html                 ← Page de connexion (email ou téléphone)
 │   ├── set-password.html          ← Activation / réinitialisation mot de passe
-│   ├── script.js                  ← Logique patron — planning, drag & drop, modales (~4700 lignes)
+│   ├── script.js                  ← Logique patron — planning, drag & drop, modales (~6800 lignes)
 │   ├── style.css                  ← Styles globaux
 │   ├── manifest.json              ← PWA manifest
 │   ├── sw.js                      ← Service Worker — cache offline + Web Push
@@ -164,8 +166,21 @@ PORT=3000
 ### Pointage (`pointage.html`)
 - Interface dédiée au compte établissement
 - Saisie et modification des heures réelles (real_start / real_end)
-- Ajout de staff non planifié
-- Heure de bascule du jour configurable (`cutoff_hour`)
+- Ré-édition possible par patron/directeur (établissement = verrouillé après enregistrement)
+- Badge « ✓ Validé » + carte verte sur les shifts pointés
+- Écart planifié vs réel coloré (vert/orange/gris)
+- Footer total soirée : heures réelles vs planifiées + nb shifts pointés
+- Ajout de staff non planifié (shift extra)
+- Heure de bascule du jour configurable (`cutoff_hour`, défaut 9h) — bandeau si date active = veille
+
+### Performance (`performance.html`)
+- Saisie CA quotidien depuis le calendrier (modale CA)
+- KPIs : CA total, heures travaillées, masse salariale brute/chargée + coefficients
+- Calendrier hebdo : couleur par jour (vert si coeff < objectif, rouge sinon)
+- Table détaillée + breakdown staff par soirée (heures, taux, salaire brut)
+- Filtre période suit la semaine sélectionnée dans le calendrier
+- Paramètres configurables : `target_gross`, `target_charged`, `charge_rate` (taux de charges patronales appliqué dynamiquement)
+- Snapshot `hourly_rate_snapshot` sur chaque shift pour stabilité historique
 
 ### Web Push
 - Notifications natives iOS/Android via VAPID
@@ -191,10 +206,12 @@ PORT=3000
 | `sessions` | Sessions actives (TTL automatique 7 jours) |
 | `availabilities` | Disponibilités soumises par le staff |
 | `roles` | Rôles créés par le patron (responsable / informatif) |
-| `settings` | Paramètres (dispos, publication, pointage) |
+| `settings` | Paramètres polymorphes (clé `key`) : `dispo`, `performance`, `pointage`, `publish_<weekStart>`, `lock_dispos_<weekStart>` |
 | `push_subscriptions` | Endpoints VAPID par utilisateur |
 | `notifications` | Notifications in-app patron/directeur |
-| `shift_swaps` | Demandes d'échange de shifts |
+| `staff_notifications` | Notifications in-app staff (max 20 dernières non lues) |
+| `shift_swaps` | Demandes d'échange de shifts *(routes désactivées dans server.js — collection conservée)* |
+| `daily_revenue` | CA quotidien saisi pour le module Performance |
 
 ---
 
@@ -235,22 +252,43 @@ PORT=3000
 | GET | `/api/my-shifts` | Authentifié |
 | POST | `/api/shifts` | Patron |
 | PATCH/DELETE | `/api/shifts/:id` | Patron |
+| PATCH | `/api/shifts/:id/transfer` | Patron — transfert cross-établissement |
+| PATCH | `/api/shifts/:id/joker-open` | Patron — ouvrir un Joker aux candidatures staff |
+| POST | `/api/shifts/:id/joker-candidature` | Staff — postuler sur un Joker ouvert |
+| GET | `/api/shifts/joker-ouverts` | Authentifié — Jokers ouverts par établissement |
 | POST | `/api/copy-day` | Patron |
 | GET | `/api/pointage/:date` | Authentifié |
-| PATCH | `/api/shifts/:id/pointage` | Authentifié |
-| POST | `/api/shifts/extra` | Authentifié |
+| PATCH | `/api/shifts/:id/pointage-resp` | Patron — désigner responsable de soirée |
+| GET/PATCH | `/api/pointage-settings` | Authentifié / Admin — `cutoff_hour` |
 | GET | `/api/recap-mensuel` | Patron |
 
 ### Disponibilités
 | Méthode | Route | Accès |
 |---|---|---|
 | GET/PATCH | `/api/dispo-settings` | Authentifié / Patron |
-| GET/POST | `/api/dispos` | Authentifié |
-| GET | `/api/dispos/pending` | Patron |
+| GET | `/api/dispos/mine` | Authentifié |
+| GET | `/api/dispos/previous` | Authentifié |
+| POST | `/api/dispos` | Authentifié |
+| GET | `/api/dispos/pending` | Patron — onglet « 📋 En attente » |
+| GET | `/api/dispos/count` | Patron — badge header |
+| GET | `/api/dispos/non-affectees` | Patron — onglet « 🔄 À réaffecter » |
+| GET | `/api/dispos/sans-dispo` | Patron — onglet « 🔔 Sans dispo » |
+| GET/POST | `/api/dispos/week-note` | Authentifié — note hebdo libre du staff |
+| GET | `/api/dispos/notes` | Patron — onglet « 📝 Notes » |
 | PATCH | `/api/dispos/:id/confirm` | Patron |
 | PATCH | `/api/dispos/:id/reject` | Patron |
+| PATCH | `/api/dispos/:id/ignore` | Patron |
+| POST | `/api/dispos/rappel` | Patron — envoi rappel push manuel |
 
-### Échanges de shifts
+### Performance / CA
+| Méthode | Route | Accès |
+|---|---|---|
+| POST | `/api/revenue` | Authentifié — saisie CA quotidien |
+| GET | `/api/revenue/:establishmentId/:date` | Authentifié |
+| GET | `/api/performance` | Patron — agrégats par soirée (CA, masse sal., coeff, breakdown staff) |
+| GET/PATCH | `/api/performance-settings` | Authentifié / Patron — `target_gross`, `target_charged`, `charge_rate` |
+
+### Échanges de shifts *(routes désactivées dans server.js mais conservées)*
 | Méthode | Route | Accès |
 |---|---|---|
 | POST | `/api/shift-swaps` | Authentifié |

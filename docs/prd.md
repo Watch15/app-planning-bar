@@ -117,9 +117,18 @@ Le patron peut choisir, shift par shift, d'**ouvrir un Joker aux candidatures du
 - Bouton fixe « Envoyer mes disponibilités » en bas d'écran
 
 ### 3.9 Disponibilités (côté Patron)
-- Toggle ouvrir / fermer l'envoi des disponibilités
-- Valider : choisir l'établissement, créer automatiquement le shift
-- Rejeter en un clic
+La modale **Disponibilités** est organisée en 4 onglets accessibles depuis le header :
+- **📋 En attente** — dispos envoyées par le staff à valider / rejeter (clic = création shift, choix de l'établissement)
+- **🔄 À réaffecter** — dispos acceptées mais sans shift correspondant à la date (cross-établissement : si le staff travaille ailleurs ce jour-là, la dispo est considérée comme couverte et n'apparaît pas)
+- **🔔 Sans dispo** — checklist des staff actifs avec login valide qui n'ont **pas** envoyé de dispo pour la semaine cible (toujours la semaine suivante, alignée avec `_disposWeekStart`)
+- **📝 Notes** — notes hebdo libres du staff par semaine
+
+Paramétrage global :
+- Toggle ouvrir / fermer l'envoi des disponibilités (`force_open`)
+- `open_day` : jour de la semaine où le rappel push « Dispos ouvertes » est envoyé (Trigger 1)
+- `custom_deadline` : deadline configurable (défaut : vendredi 13h00)
+- 3 rappels push automatiques quotidiens à 10h via `checkDispoRappels()` : Trigger 1 (ouverture le `open_day`), J-2, J-1
+- Garde anti-doublon : `notif_sent_open_week` mémorise la `weekStart` cible — Trigger 1 ne part qu'une fois par semaine cible
 
 ### 3.10 Publication
 - « Publier la semaine » rend le planning visible au staff
@@ -157,6 +166,30 @@ La barre staff (sidebar patron) et la modale « Notes staff » ignorent désorma
 - Normalisation des numéros mobiles français (06/07 → +336/+337)
 - Nécessite les variables d'environnement `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`
 
+### 3.16 Performance — Pilotage économique (`performance.html`)
+Page dédiée au patron / directeur pour suivre la masse salariale vs CA par soirée.
+
+- **Saisie du CA** : modale CA depuis le calendrier (clic sur un jour) ou depuis le header — collection `daily_revenue` (`{ establishment_id, date, revenue }`)
+- **KPIs** : CA total, **Heures travaillées** (somme `real_end - real_start` des shifts pointés), Masse salariale brute, Masse salariale chargée + coefficients %
+- **Vue calendaire** semaine par semaine : carte par jour avec CA + heures travaillées + coefficient brut. Code couleur : vert si coeff < `target_gross`, rouge sinon, orange si CA saisi mais aucun shift pointé
+- **Table détaillée** : Date, CA, Heures, Masse brute, Coeff brut, Masse chargée, Coeff chargé — scrollable horizontalement sur mobile (min-width 640 px)
+- **Détail par soirée** (ligne expandable) : staff, heures réelles, taux horaire, salaire brut + total ligne (heures + €)
+- **Filtre période** : « Tout l'historique », « Cette semaine », « Ce mois ». Les périodes semaine/mois suivent **la semaine actuellement affichée dans le calendrier** (navigation ‹ ›). Navigation calendrier recharge automatiquement le tableau si la période est week/month
+- **Paramètres** (section « ⚙️ Paramètres ») :
+  - `target_gross` (objectif coefficient brut, défaut 30 %)
+  - `target_charged` (objectif coefficient chargé, défaut 43 %)
+  - `charge_rate` (taux de charges patronales, défaut 45 % → multiplicateur ×1,45 sur la masse brute)
+- **Calcul** : `wage_bill_charged = wage_bill_gross × (1 + charge_rate/100)` — `charge_rate` lu dynamiquement depuis `settings.performance` (plus de valeur codée en dur)
+- **Snapshot taux horaire** : chaque shift conserve `hourly_rate_snapshot` au moment du pointage pour stabiliser les calculs historiques même si le `hourly_rate` du staff change ultérieurement
+
+### 3.17 Pointage avancé (`pointage.html`)
+- Saisie des heures réelles (`real_start` / `real_end`) — patron/directeur peuvent ré-éditer, compte établissement verrouillé après enregistrement
+- Badge « ✓ Validé » sur les shifts pointés (carte `validated-card`)
+- Écart planifié vs réel coloré : `.pos` (vert, dépassement), `.neg` (orange, sous-réalisation), `.zero` (gris)
+- Footer total soirée : réel / planifié + nombre de shifts pointés
+- Heure de bascule du jour configurable (`pointage_settings.cutoff_hour`, défaut 9h00) — bandeau si date active = veille
+- Ajout shift extra (non planifié) avec saisie directe nom + horaires
+
 ---
 
 ## 4. Collections MongoDB
@@ -175,6 +208,7 @@ La barre staff (sidebar patron) et la modale « Notes staff » ignorent désorma
 | `notifications` | Notifications in-app pour patron/directeur |
 | `staff_notifications` | Notifications in-app pour staff (planning.html) |
 | `shift_swaps` | Demandes d'échange entre shifts (feature F-05 — désactivée dans `server.js`) |
+| `daily_revenue` | CA quotidien saisi par établissement (`{ establishment_id, date, revenue }`) — module Performance |
 
 ---
 
