@@ -589,13 +589,17 @@ function renderCalendarGrid(data) {
 
         if (perf) {
             const hasShifts = perf.wage_bill_gross > 0;
+            const dayHours  = perf.staff_detail.reduce((a, s) => a + (s.hours_worked || 0), 0);
+            const hoursLine = dayHours > 0 ? '<div style="font-size:10px;font-weight:600;color:currentColor;opacity:0.7;margin-top:2px">' + fmtHours(dayHours) + ' travaillées</div>' : '';
             if (hasShifts) {
                 card.classList.add(perf.coeff_gross < targets.target_gross ? 'ok' : 'bad');
                 inner += '<div class="day-ca">' + fmtEUR(perf.revenue) + '</div>';
+                inner += hoursLine;
                 inner += '<div class="day-coeff">' + fmtPct(perf.coeff_gross) + '</div>';
             } else {
                 card.classList.add('no-shifts');
                 inner += '<div class="day-ca">' + fmtEUR(perf.revenue) + '</div>';
+                inner += hoursLine;
                 inner += '<div class="day-coeff" style="color:#b45309">Aucun shift pointé</div>';
             }
         } else {
