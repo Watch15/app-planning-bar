@@ -110,7 +110,7 @@
             padding: 3px; margin-bottom: 20px; gap: 2px;
         }
         .login-toggle-btn {
-            flex: 1; padding: 8px; border: none; border-radius: 8px;
+            flex: 1; padding: 12px 8px; min-height: 44px; border: none; border-radius: 8px;
             background: transparent; font-size: 13px; font-weight: 500; color: var(--text-muted);
             cursor: pointer; transition: all 0.15s; font-family: var(--font);
         }
@@ -130,9 +130,9 @@
         input[type="email"],
         input[type="password"],
         input[type="tel"] {
-            width: 100%; padding: 11px 14px;
+            width: 100%; padding: 13px 14px; min-height: 44px;
             border: 1.5px solid var(--light-border); border-radius: 8px;
-            font-size: 14px; font-family: var(--font); color: var(--text-primary);
+            font-size: 16px; font-family: var(--font); color: var(--text-primary);
             outline: none; transition: border-color 0.15s, box-shadow 0.15s;
             background: var(--light-bg);
         }
@@ -159,9 +159,9 @@
         .error-msg.visible { display: block; }
 
         .btn-login {
-            width: 100%; padding: 12px; border-radius: 8px; border: none;
+            width: 100%; padding: 14px; min-height: 48px; border-radius: 8px; border: none;
             background: var(--dark-surface); color: white;
-            font-size: 14px; font-weight: 600; cursor: pointer;
+            font-size: 15px; font-weight: 600; cursor: pointer;
             transition: background 0.15s; margin-top: 8px; font-family: var(--font);
         }
         .btn-login:hover:not(:disabled) { background: var(--accent); }

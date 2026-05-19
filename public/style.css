@@ -438,13 +438,20 @@ a:hover { color: var(--accent-soft); }
   padding: 24px; width: 480px; max-width: 95vw; max-height: 85vh; overflow-y: auto;
   box-shadow: var(--shadow-xl);
 }
-.modal-header { display: flex; align-items: center; margin-bottom: 0; padding-bottom: 16px; border-bottom: 1px solid var(--light-border); }
+.modal-header {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0; padding: 0 0 16px;
+  border-bottom: 1px solid var(--light-border);
+  background: var(--light-card);
+  position: sticky; top: 0; z-index: 2;
+}
 .modal-title  { font-size: 16px; font-weight: 700; flex: 1; color: var(--text-primary); }
 .modal-close  {
-  width: 32px; height: 32px; border-radius: var(--radius); border: 1px solid var(--light-border);
-  background: var(--light-bg); font-size: 16px; cursor: pointer;
+  width: 44px; height: 44px; border-radius: var(--radius); border: 1px solid var(--light-border);
+  background: var(--light-bg); font-size: 18px; cursor: pointer;
   display: flex; align-items: center; justify-content: center; color: var(--text-muted);
   transition: all var(--transition); font-family: var(--font);
+  flex-shrink: 0;
 }
 .modal-close:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-bg); }
 .modal-hint { font-size: 12px; color: var(--text-muted); margin: 16px 0 6px; }
@@ -681,7 +688,7 @@ label[for], select, .tab-btn, .staff-card, .shift-card {
   border: 1px solid var(--light-border);
 }
 .view-tab {
-  padding: 4px 14px; border-radius: 6px; border: none;
+  padding: 10px 14px; min-height: 36px; border-radius: 6px; border: none;
   background: transparent; font-size: 12px; font-weight: 500;
   color: var(--text-muted); cursor: pointer; transition: all var(--transition);
   white-space: nowrap; font-family: var(--font);
@@ -990,5 +997,29 @@ label[for], select, .tab-btn, .staff-card, .shift-card {
 }
 .rgpd-notice a:hover {
   color: var(--accent);
+}
+
+/* ── Anti-zoom iOS : tous les inputs mobiles ≥ 16px ─────────────────────────*/
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="search"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  input[type="url"],
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  /* Exceptions : cellules trop étroites pour 16px (badge horaire, mini-pills) */
+  .copy-time-input,
+  .staff-search-input,
+  .copy-staff-search-input {
+    font-size: 14px;
+  }
 }
 

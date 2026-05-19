@@ -101,12 +101,17 @@
             position: sticky;
             top: 52px;
             z-index: 9;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
         }
+        .tabs-bar::-webkit-scrollbar { display: none; }
         .tab-btn {
-            padding: 10px 18px; border: none; background: transparent;
+            padding: 12px 18px; min-height: 44px; border: none; background: transparent;
             font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.40);
             cursor: pointer; border-bottom: 2px solid transparent;
             margin-bottom: -1px; transition: all 0.15s; font-family: var(--font);
+            flex-shrink: 0;
         }
         .tab-btn.active { color: #fff; border-bottom-color: var(--accent); font-weight: 600; }
         .tab-btn:disabled { color: rgba(255,255,255,0.20); cursor: not-allowed; }
@@ -286,9 +291,9 @@
         .dispo-custom-row { display: none; gap: 8px; align-items: center; }
         .dispo-custom-row.visible { display: flex; }
         .dispo-time-input {
-            flex: 1; padding: 7px 10px;
+            flex: 1; padding: 10px 10px; min-height: 44px;
             border: 1.5px solid var(--light-border); border-radius: 8px;
-            font-size: 13px; text-align: center; outline: none; font-family: var(--font);
+            font-size: 14px; text-align: center; outline: none; font-family: var(--font);
             background: var(--light-bg); transition: border-color 0.15s;
         }
         .dispo-time-input:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px var(--accent-glow); }
@@ -403,10 +408,10 @@
             .btn-logout-label { display: none; }
             .btn-logout { padding: 0 8px; min-width: 32px; justify-content: center; }
             .tabs-bar { padding: 0; top: 48px; }
-            .tab-btn { flex: 1; padding: 10px 4px; font-size: 11px; text-align: center; white-space: nowrap; }
+            .tab-btn { flex: 1 1 0; min-width: 0; padding: 12px 6px; min-height: 44px; font-size: 11px; text-align: center; white-space: nowrap; }
             .tab-full { display: none; }
             .tab-short { display: inline; }
-            .btn-pointage-tab { flex: 1; padding: 10px 4px; font-size: 11px; text-align: center; white-space: nowrap; }
+            .btn-pointage-tab { flex: 1 1 0; min-width: 0; padding: 12px 6px; min-height: 44px; font-size: 11px; text-align: center; white-space: nowrap; }
             .greeting { padding: 14px 14px 4px; }
             .greeting-name { font-size: 17px; }
             .week-stats { grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 10px 14px; }
@@ -427,7 +432,7 @@
             .dispo-btn-sub { font-size: 9px; }
             .btn-submit-dispos { font-size: 13px; padding: 14px 16px; }
             .dispo-custom-row { gap: 8px; margin-top: 2px; justify-content: center; }
-            .dispo-time-input { height: 36px; font-size: 14px; padding: 0 8px; border-radius: 7px; flex: 0 0 auto; width: 76px; }
+            .dispo-time-input { height: 44px; font-size: 16px; padding: 0 8px; border-radius: 7px; flex: 0 0 auto; width: 84px; }
             .days-list { gap: 5px; }
             .estab-hours-bar { padding: 0 14px 8px; }
             .estab-hours-chip { font-size: 11px; padding: 3px 8px; }
