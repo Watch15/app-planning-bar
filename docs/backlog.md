@@ -114,8 +114,8 @@ Items 🟠 Importants / 🟡 Cosmétiques relevés par l'audit D-49 mais non cor
 
 | ID | Description | Domaine | Statut |
 |---|---|---|---|
-| U-01 | `pointage.html` `.btn-save` utilise `var(--dark-surface)` au lieu de `var(--accent)` → CTA primaire incohérent avec le reste de l'app | pointage / cohérence | 🟠 |
-| U-02 | `pointage.html` `.validated-badge` : couleurs en dur (`#6EE7B7`, `#d1fae5`, `#065f46`) au lieu des tokens `--success-*`/`--validated-*` | pointage / tokens | 🟠 |
+| ~~U-01~~ | ~~`pointage.html` `.btn-save` utilise `var(--dark-surface)` au lieu de `var(--accent)`~~ | pointage / cohérence | ✅ Done — `.btn-save` bg `var(--accent)` + hover `var(--accent-soft)` (pointage.html ligne 191/197) |
+| ~~U-02~~ | ~~`pointage.html` `.validated-badge` : couleurs en dur (`#6EE7B7`, `#d1fae5`, `#065f46`)~~ | pointage / tokens | ✅ Done — `.validated-badge` + `.shift-card.validated-card` + `.ecart-badge.pos/zero` migrés vers `--success-*` / `--validated-*` / `--gap-under-bg` ; tokens manquants ajoutés au `:root` de pointage.html |
 | U-03 | `performance.html` `.targets-form` (3 inputs + bouton) sans `min-width` par groupe → wrap instable 360-400 px | performance / mobile | 🟠 |
 | U-04 | `performance.html` `.kpi-sub` 11 px font-weight 400 sur fond clair → contraste / hiérarchie faible | performance / typo | 🟠 |
 | U-05 | `planning.html` `.dispo-type-btn.selected-off` sur `--light-bg` (#f4f5f8) → état sélectionné peu distinctif | planning / contraste | 🟠 |

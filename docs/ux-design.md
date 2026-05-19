@@ -82,8 +82,8 @@ Inter uniquement. Échelle : 11px (labels caps) → 13px (corps) → 14–15px (
 | ~~PT-04~~ | ~~Écart badge sans couleur différenciée (positif / négatif)~~ | Moyen | ✅ Done — déjà en place (`.pos` vert, `.neg` orange, `.zero` gris) |
 | ~~PT-05~~ | ~~Inputs heures + bouton Valider débordent sur mobile portrait~~ | Moyen | ✅ Done — déjà en place (media query 600px : 52px + flex-wrap) |
 | ~~PT-06~~ | ~~Heure de bascule (9h) non indiquée — date "hier" inexpliquée~~ | Moyen | ✅ Done — bandeau `session-banner` quand date active = veille |
-| PT-07 | `.btn-save` utilise `var(--dark-surface)` au lieu de `var(--accent)` → CTA principal moins distinctif que les autres pages | Moyen | 🟠 U-01 backlog |
-| PT-08 | `.validated-badge` couleurs en dur (`#6EE7B7`, `#d1fae5`, `#065f46`) — devraient utiliser `--success-*` / `--validated-*` | Faible | 🟡 U-02 backlog |
+| ~~PT-07~~ | ~~`.btn-save` utilise `var(--dark-surface)` au lieu de `var(--accent)`~~ | Moyen | ✅ Done (U-01) — bg accent + hover accent-soft |
+| ~~PT-08~~ | ~~`.validated-badge` couleurs en dur (`#6EE7B7`, `#d1fae5`, `#065f46`)~~ | Faible | ✅ Done (U-02) — migré vers tokens success/validated/gap-under |
 
 ### 2.6 performance.html (Patron / Directeur — pilotage économique)
 | # | Problème | Sévérité | Statut |
