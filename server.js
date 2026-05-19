@@ -122,6 +122,10 @@ async function connectDB() {
             { establishment_id: 1, date: 1 },
             { unique: true }
         ).catch(e => console.warn('⚠️ Index daily_revenue:', e.message));
+        // Index lookup notifications staff (find by staff_id + sort created_at desc, limit 20)
+        db.collection('staff_notifications').createIndex(
+            { staff_id: 1, created_at: -1 }
+        ).catch(e => console.warn('⚠️ Index staff_notifications:', e.message));
         scheduleDailyAt10();
         cleanupOldJokers();
     } catch (e) {
@@ -713,7 +717,7 @@ app.post('/auth/login', checkDB, async (req, res) => {
             establishment_id:        merged.establishment_id || null,
         };
         res.json({ message: 'Connecté', user: req.session.user });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.post('/auth/logout', (req, res) => {
@@ -736,9 +740,9 @@ app.post('/auth/set-password', checkDB, async (req, res) => {
     if (!token || !password) return res.status(400).json({ error: 'Token et mot de passe requis' });
     if (password.length < 8) return res.status(400).json({ error: 'Minimum 8 caractères' });
     try {
-        // Cherche d'abord le token hashé (nouveaux comptes), puis en clair (anciens comptes)
-        let user = await db.collection('users').findOne({ invite_token: hashToken(token) });
-        if (!user) user = await db.collection('users').findOne({ invite_token: token });
+        // Token toujours hashé en base (SHA-256). Tout token en clair antérieur à la migration
+        // est de fait expiré (TTL 24h sur les invitations), donc plus de fallback en clair.
+        const user = await db.collection('users').findOne({ invite_token: hashToken(token) });
         if (!user)                            return res.status(404).json({ error: 'Lien invalide' });
         if (user.invite_expires < new Date()) return res.status(410).json({ error: 'Lien expiré (24h)' });
         if (user.password_hash)               return res.status(409).json({ error: 'Compte déjà activé, utilise la connexion' });
@@ -748,7 +752,7 @@ app.post('/auth/set-password', checkDB, async (req, res) => {
             { $set: { password_hash: hash, active: true }, $unset: { invite_token: '', invite_expires: '' } }
         );
         res.json({ message: 'Mot de passe créé, tu peux te connecter' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // Reset mot de passe via token (lien email)
@@ -757,9 +761,9 @@ app.patch('/auth/reset-password', checkDB, async (req, res) => {
     if (!token || !password) return res.status(400).json({ error: 'Token et mot de passe requis' });
     if (password.length < 8) return res.status(400).json({ error: 'Minimum 8 caractères' });
     try {
-        // Cherche d'abord le token hashé (nouveaux resets), puis en clair (anciens)
-        let user = await db.collection('users').findOne({ reset_token: hashToken(token) });
-        if (!user) user = await db.collection('users').findOne({ reset_token: token });
+        // Token toujours hashé en base (SHA-256). Tout token en clair antérieur à la migration
+        // est de fait expiré (TTL 1h sur les resets), donc plus de fallback en clair.
+        const user = await db.collection('users').findOne({ reset_token: hashToken(token) });
         if (!user)                           return res.status(404).json({ error: 'Lien invalide' });
         if (user.reset_expires < new Date()) return res.status(410).json({ error: 'Lien expiré (1h)' });
         const hash = await bcrypt.hash(password, 12);
@@ -768,7 +772,7 @@ app.patch('/auth/reset-password', checkDB, async (req, res) => {
             { $set: { password_hash: hash, active: true }, $unset: { reset_token: '', reset_expires: '' } }
         );
         res.json({ message: 'Mot de passe mis à jour, tu peux te connecter' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // Mot de passe oublié — envoi lien reset par email ou par SMS
@@ -852,7 +856,7 @@ app.post('/auth/forgot-password', checkDB, async (req, res) => {
             message: 'Si cet email existe, un lien a été envoyé.',
             ...(manual && { link, manual: true }),
         });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // ── Comptes utilisateurs ──────────────────────────────────────────────────────
@@ -879,7 +883,7 @@ app.get('/api/users', checkDB, requirePatron, async (req, res) => {
             return res.json(users.filter(u => u.role === 'staff' || String(u._id) === req.session.user._id));
         }
         res.json(users);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // Inviter un utilisateur (staff, directeur ou etablissement)
@@ -1016,7 +1020,7 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
                 : 'Compte créé mais email non envoyé.' + (!smsOk && normalizedPhone ? ' SMS non envoyé.' : ''),
             ...(manual && { link, manual: true }),
         });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // Changer le rôle d'un utilisateur (patron admin uniquement)
@@ -1037,7 +1041,7 @@ app.patch('/api/users/:id/role', checkDB, requireAdmin, async (req, res) => {
         );
         if (result.matchedCount === 0) return res.status(404).json({ error: 'Utilisateur introuvable' });
         res.json({ message: 'Rôle mis à jour' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // Assigner des établissements à un directeur (patron admin uniquement)
@@ -1052,7 +1056,7 @@ app.patch('/api/users/:id/establishments', checkDB, requireAdmin, async (req, re
         );
         if (result.matchedCount === 0) return res.status(404).json({ error: 'Utilisateur introuvable' });
         res.json({ message: 'Établissements mis à jour' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // Reset mot de passe par le patron
@@ -1068,7 +1072,7 @@ app.patch('/api/users/:id/reset-password', checkDB, requirePatron, async (req, r
         );
         if (result.matchedCount === 0) return res.status(404).json({ error: 'Utilisateur introuvable' });
         res.json({ message: 'Mot de passe mis à jour' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.delete('/api/users/:id', checkDB, requirePatron, async (req, res) => {
@@ -1077,7 +1081,7 @@ app.delete('/api/users/:id', checkDB, requirePatron, async (req, res) => {
         const result = await db.collection('users').deleteOne({ _id: new ObjectId(req.params.id) });
         if (result.deletedCount === 0) return res.status(404).json({ error: 'Utilisateur introuvable' });
         res.json({ message: 'Compte supprimé' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // Création en masse depuis CSV (nom + téléphone ou email)
@@ -1276,7 +1280,7 @@ app.get('/api/establishments', checkDB, requireAuth, async (req, res) => {
         // Patron (admin) : accès total
         res.json(all);
     }
-    catch (e) { res.status(500).json({ error: e.message }); }
+    catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.post('/api/establishments', checkDB, requireAdmin, async (req, res) => {
@@ -1298,7 +1302,7 @@ app.post('/api/establishments', checkDB, requireAdmin, async (req, res) => {
         };
         const result = await db.collection('establishments').insertOne(doc);
         res.status(201).json({ ...doc, _id: result.insertedId });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.patch('/api/establishments/:id', checkDB, requireAdmin, async (req, res) => {
@@ -1319,7 +1323,7 @@ app.patch('/api/establishments/:id', checkDB, requireAdmin, async (req, res) => 
         );
         if (result.matchedCount === 0) return res.status(404).json({ error: 'Établissement introuvable' });
         res.json({ message: 'Établissement mis à jour' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.delete('/api/establishments/:id', checkDB, requireAdmin, async (req, res) => {
@@ -1337,7 +1341,7 @@ app.delete('/api/establishments/:id', checkDB, requireAdmin, async (req, res) =>
             { $pull: { assigned_establishments: estab.id } }
         );
         res.json({ message: 'Établissement et ses shifts supprimés' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // ── Groupes ───────────────────────────────────────────────────────────────────
@@ -1349,7 +1353,7 @@ app.get('/api/groups', checkDB, requireAuth, async (req, res) => {
         const staffG = await db.collection('staff').distinct('groups');
         const all = [...new Set([...estabG, ...staffG].flat())].filter(Boolean).sort();
         res.json(all);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // Supprimer un groupe (le retire de tous les établissements et membres du staff)
@@ -1366,14 +1370,14 @@ app.delete('/api/groups/:name', checkDB, requireAdmin, async (req, res) => {
             { $pull: { groups: name } }
         );
         res.json({ message: 'Groupe "' + name + '" supprimé' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // ── Staff ─────────────────────────────────────────────────────────────────────
 
 app.get('/api/staff', checkDB, requireAuth, async (req, res) => {
     try { res.json(await db.collection('staff').find().toArray()); }
-    catch (e) { res.status(500).json({ error: e.message }); }
+    catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.post('/api/staff', checkDB, requirePatron, async (req, res) => {
@@ -1383,7 +1387,7 @@ app.post('/api/staff', checkDB, requirePatron, async (req, res) => {
         const doc    = { name, color: color || '#3498db', email: email || '' };
         const result = await db.collection('staff').insertOne(doc);
         res.status(201).json({ ...doc, _id: result.insertedId });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // Création en masse de profils staff depuis une liste de noms — sans compte ni invitation
@@ -1460,7 +1464,7 @@ app.patch('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
         if (name)  await db.collection('shifts').updateMany({ staff_id: req.params.id }, { $set: { staff_name: name } });
         res.json({ message: 'Staff mis à jour', updated: update });
         touchLastUpdated();
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.delete('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
@@ -1470,7 +1474,7 @@ app.delete('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
         const result = await db.collection('staff').deleteOne({ _id: new ObjectId(req.params.id) });
         if (result.deletedCount === 0) return res.status(404).json({ error: 'Staff introuvable' });
         res.json({ message: 'Staff supprimé' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // ── Shifts — lecture ──────────────────────────────────────────────────────────
@@ -1481,7 +1485,7 @@ app.get('/api/shifts/:establishmentId/:date', checkDB, requireAuth, async (req, 
             .find({ establishment_id: req.params.establishmentId, date: req.params.date })
             .sort({ start_time: 1 }).toArray();
         res.json(shifts);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.get('/api/week/:establishmentId', checkDB, requireAuth, async (req, res) => {
@@ -1499,7 +1503,7 @@ app.get('/api/week/:establishmentId', checkDB, requireAuth, async (req, res) => 
         }
         shifts.forEach(s => { if (summary[s.date] !== undefined) summary[s.date]++; });
         res.json(summary);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.get('/api/my-shifts', checkDB, requireAuth, async (req, res) => {
@@ -1559,7 +1563,7 @@ app.get('/api/my-shifts', checkDB, requireAuth, async (req, res) => {
             colleagueMap[date] = await db.collection('shifts').find(colleagueQuery).toArray();
         }
         res.json({ shifts: myShifts, colleagues: colleagueMap });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // GET tous les shifts de la semaine (remplace 7 appels /api/shifts/:id/:date)
@@ -1580,7 +1584,7 @@ app.get('/api/week-full/:establishmentId', checkDB, requireAuth, async (req, res
         }
         shifts.forEach(s => { if (byDate[s.date] !== undefined) byDate[s.date].push(s); });
         res.json(byDate);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // ── Shifts — écriture ─────────────────────────────────────────────────────────
@@ -1655,7 +1659,7 @@ app.post('/api/shifts', checkDB, requirePatron, async (req, res) => {
 
         res.status(201).json({ ...shift, _id: result.insertedId, warnings });
         touchLastUpdated();
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // Transférer un shift vers un autre établissement / une autre date
@@ -1686,7 +1690,7 @@ app.patch('/api/shifts/:id/transfer', checkDB, requirePatron, async (req, res) =
 
         touchLastUpdated();
         res.json({ message: 'Shift transféré' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // PATCH — Patron : ouvrir/fermer un Joker aux candidatures (route spécifique AVANT la générique /:id)
@@ -1724,7 +1728,7 @@ app.patch('/api/shifts/:id/joker-open', checkDB, requirePatron, async (req, res)
             );
         }
         res.json({ message: 'Joker mis à jour' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.patch('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
@@ -1846,7 +1850,7 @@ app.patch('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
 
         res.json({ message: 'Shift mis à jour', warnings });
         touchLastUpdated();
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.delete('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
@@ -1892,7 +1896,7 @@ app.delete('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
                 } catch { /* silencieux */ }
             })();
         }
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.post('/api/copy-day', checkDB, requirePatron, async (req, res) => {
@@ -1910,7 +1914,7 @@ app.post('/api/copy-day', checkDB, requirePatron, async (req, res) => {
         }
         res.json({ message: created + ' shifts copiés sur ' + to_dates.length + ' jour(s)' });
         touchLastUpdated();
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // ── Disponibilités ────────────────────────────────────────────────────────────
@@ -1979,10 +1983,22 @@ app.get('/api/dispo-settings', checkDB, requireAuth, async (req, res) => {
             if (staffDoc && staffDoc.can_submit_dispos === false) staffCanSubmit = false;
         }
 
+        // Format local YYYY-MM-DDTHH:MM:SS (sans Z) — évite toISOString() qui retourne UTC
+        // et provoque un décalage d'heure côté client si serveur/client sont en TZ différents.
+        // Convention architecture.md §3.1.
+        const _pad = n => String(n).padStart(2, '0');
+        const deadlineLocalIso =
+            effectiveDeadline.getFullYear() + '-' +
+            _pad(effectiveDeadline.getMonth() + 1) + '-' +
+            _pad(effectiveDeadline.getDate()) + 'T' +
+            _pad(effectiveDeadline.getHours()) + ':' +
+            _pad(effectiveDeadline.getMinutes()) + ':' +
+            _pad(effectiveDeadline.getSeconds());
+
         res.json({
             open: settings.open,
             message: settings.message,
-            deadline: effectiveDeadline.toISOString(),
+            deadline: deadlineLocalIso,
             deadlinePassed: effectiveDeadlinePassed,
             canSubmit: staffCanSubmit && settings.open && (!effectiveDeadlinePassed || forceOpen),
             staffCanSubmit,
@@ -1991,7 +2007,7 @@ app.get('/api/dispo-settings', checkDB, requireAuth, async (req, res) => {
             open_day: settings.open_day ?? null,
             rest_days: staffDoc ? (staffDoc.rest_days || []) : [],
         });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.patch('/api/dispo-settings', checkDB, requirePatron, async (req, res) => {
@@ -2006,7 +2022,7 @@ app.patch('/api/dispo-settings', checkDB, requirePatron, async (req, res) => {
             { upsert: true }
         );
         res.json({ message: 'Paramètres mis à jour' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.get('/api/dispos/mine', checkDB, requireAuth, async (req, res) => {
@@ -2017,7 +2033,7 @@ app.get('/api/dispos/mine', checkDB, requireAuth, async (req, res) => {
     try {
         const dispos = await db.collection('availabilities').find({ staff_id: staffId, date: { $gte: from, $lte: to } }).toArray();
         res.json(dispos);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.get('/api/dispos/previous', checkDB, requireAuth, async (req, res) => {
@@ -2039,7 +2055,7 @@ app.get('/api/dispos/previous', checkDB, requireAuth, async (req, res) => {
             type: { $ne: 'week_note' },
         }).toArray();
         res.json(docs.map(doc => ({ date: doc.date, type: doc.type, start_time: doc.start_time, end_time: doc.end_time, note: doc.note || '' })));
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.get('/api/dispos/week-notes', checkDB, requirePatron, async (req, res) => {
@@ -2048,7 +2064,7 @@ app.get('/api/dispos/week-notes', checkDB, requirePatron, async (req, res) => {
     try {
         const docs = await db.collection('availabilities').find({ week_start, type: 'week_note' }).toArray();
         res.json(docs.map(d => ({ staff_id: d.staff_id, week_note: d.week_note })));
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.get('/api/dispos/notes', checkDB, requirePatron, async (req, res) => {
@@ -2113,7 +2129,7 @@ app.get('/api/dispos/notes', checkDB, requirePatron, async (req, res) => {
                 dispo_status: aggStatus(s.statuses),
             };
         }));
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.get('/api/dispos/week-note', checkDB, requireAuth, async (req, res) => {
@@ -2124,7 +2140,7 @@ app.get('/api/dispos/week-note', checkDB, requireAuth, async (req, res) => {
     try {
         const doc = await db.collection('availabilities').findOne({ staff_id: staffId, week_start, type: 'week_note' });
         res.json({ week_note: doc ? doc.week_note : '' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.post('/api/dispos/week-note', checkDB, requireAuth, async (req, res) => {
@@ -2142,7 +2158,7 @@ app.post('/api/dispos/week-note', checkDB, requireAuth, async (req, res) => {
             { upsert: true }
         );
         res.json({ message: 'Note enregistrée' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
@@ -2178,7 +2194,7 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
         if (inserted === 0) return res.status(409).json({ error: 'Des disponibilités ont déjà été soumises pour cette période.' });
         res.status(201).json({ message: inserted + ' disponibilité(s) enregistrée(s)' });
         touchLastUpdated();
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.get('/api/dispos/pending', checkDB, requirePatron, async (req, res) => {
@@ -2187,14 +2203,14 @@ app.get('/api/dispos/pending', checkDB, requirePatron, async (req, res) => {
     try {
         const dispos = await db.collection('availabilities').find({ date: { $gte: from, $lte: to }, status: 'pending' }).sort({ date: 1, start_time: 1 }).toArray();
         res.json(dispos);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.get('/api/dispos/count', checkDB, requirePatron, async (req, res) => {
     try {
         const count = await db.collection('availabilities').countDocuments({ status: 'pending' });
         res.json({ count });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.get('/api/dispos/non-affectees', checkDB, requirePatron, async (req, res) => {
@@ -2248,7 +2264,7 @@ app.get('/api/dispos/non-affectees', checkDB, requirePatron, async (req, res) =>
             }
         }
         res.json(results);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // Staff actifs sans dispo soumise pour une période donnée
@@ -2288,7 +2304,7 @@ app.get('/api/dispos/sans-dispo', checkDB, requirePatron, async (req, res) => {
             .filter(s => !withDispo.has(String(s._id)))
             .map(s => ({ id: String(s._id), name: s.name, color: s.color || '#888', phone: s.phone || '' }));
         res.json(result);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.patch('/api/dispos/:id/confirm', checkDB, requirePatron, async (req, res) => {
@@ -2310,7 +2326,7 @@ app.patch('/api/dispos/:id/confirm', checkDB, requirePatron, async (req, res) =>
         }
         res.json({ message: 'Dispo confirmée' + (create_shift ? ' et shift créé' : '') });
         touchLastUpdated();
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.patch('/api/dispos/:id/reject', checkDB, requirePatron, async (req, res) => {
@@ -2322,7 +2338,7 @@ app.patch('/api/dispos/:id/reject', checkDB, requirePatron, async (req, res) => 
         if (result.matchedCount === 0) return res.status(404).json({ error: 'Dispo introuvable' });
         res.json({ message: 'Dispo refusée' });
         touchLastUpdated();
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.patch('/api/dispos/:id/ignore', checkDB, requirePatron, async (req, res) => {
@@ -2334,7 +2350,7 @@ app.patch('/api/dispos/:id/ignore', checkDB, requirePatron, async (req, res) => 
         );
         if (result.matchedCount === 0) return res.status(404).json({ error: 'Dispo introuvable' });
         res.json({ message: 'Dispo ignorée' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 /* ── Échanges de shifts (F-05) — DÉSACTIVÉ ───────────────────────────────────
@@ -2429,7 +2445,7 @@ app.post('/api/shift-swaps', checkDB, requireAuth, async (req, res) => {
 
         res.status(201).json({ message: 'Demande d\'échange envoyée', swap_id: String(result.insertedId) });
         touchLastUpdated();
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // GET — patron : liste des demandes en attente
@@ -2442,7 +2458,7 @@ app.get('/api/shift-swaps/pending', checkDB, requirePatron, async (req, res) => 
             ? swaps
             : swaps.filter(s => canAccessEstablishment(user, s.from_establishment_id) || canAccessEstablishment(user, s.to_establishment_id));
         res.json(filtered);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // GET — patron : compteur pour badge header
@@ -2456,7 +2472,7 @@ app.get('/api/shift-swaps/count', checkDB, requirePatron, async (req, res) => {
         const swaps = await db.collection('shift_swaps').find({ status: 'pending' }).toArray();
         const count = swaps.filter(s => canAccessEstablishment(user, s.from_establishment_id) || canAccessEstablishment(user, s.to_establishment_id)).length;
         res.json({ count });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // GET — staff : ses propres demandes (pending + récentes)
@@ -2468,7 +2484,7 @@ app.get('/api/shift-swaps/mine', checkDB, requireAuth, async (req, res) => {
             $or: [{ from_staff_id: String(staffId) }, { to_staff_id: String(staffId) }],
         }).sort({ created_at: -1 }).limit(50).toArray();
         res.json(swaps);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // PATCH — patron approuve : swap effectif des staff sur les 2 shifts
@@ -2535,7 +2551,7 @@ app.patch('/api/shift-swaps/:id/approve', checkDB, requirePatron, async (req, re
                 });
             } catch {}
         })();
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // PATCH — patron refuse
@@ -2571,7 +2587,7 @@ app.patch('/api/shift-swaps/:id/reject', checkDB, requirePatron, async (req, res
                 });
             } catch {}
         })();
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 */
 
@@ -2607,7 +2623,7 @@ app.get('/api/shifts/joker-ouverts', checkDB, requireAuth, async (req, res) => {
             has_applied:        staffId ? (s.joker_candidates || []).some(c => c.staff_id === staffId) : false,
         }));
         res.json(result);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // GET — Patron : lire un shift complet (pour rafraîchir les candidatures)
@@ -2618,7 +2634,7 @@ app.get('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
         if (!shift) return res.status(404).json({ error: 'Shift introuvable' });
         if (!canAccessEstablishment(req.session.user, shift.establishment_id)) return res.status(403).json({ error: 'Accès refusé' });
         res.json(shift);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // POST — Staff : postuler à un Joker ouvert
@@ -2627,25 +2643,37 @@ app.post('/api/shifts/:id/joker-candidature', checkDB, requireAuth, async (req, 
     const user = req.session.user;
     if (!user.staff_id) return res.status(403).json({ error: 'Réservé au staff connecté' });
     try {
+        const staffDoc = await db.collection('staff').findOne({ _id: new ObjectId(user.staff_id) });
+
+        // Atomique : on push uniquement si Joker ouvert ET staff pas déjà candidat.
+        // Évite race condition au double-tap (deux candidatures simultanées).
+        const updated = await db.collection('shifts').findOneAndUpdate(
+            {
+                _id: new ObjectId(req.params.id),
+                $or: [{ is_joker: true }, { staff_id: '__joker__' }],
+                joker_open: true,
+                'joker_candidates.staff_id': { $ne: user.staff_id },
+            },
+            {
+                $push: { joker_candidates: {
+                    staff_id:     user.staff_id,
+                    staff_name:   staffDoc ? staffDoc.name : (user.name || ''),
+                    staff_color:  staffDoc ? staffDoc.color : '#3498db',
+                    submitted_at: new Date(),
+                }},
+            },
+            { returnDocument: 'before' }
+        );
+
+        if (updated) return res.json({ message: 'Candidature envoyée' });
+
+        // Le filter n'a rien matché — distinguer la cause pour un message clair
         const shift = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
         if (!shift)                                            return res.status(404).json({ error: 'Shift introuvable' });
         if (!shift.is_joker && shift.staff_id !== '__joker__') return res.status(400).json({ error: 'Ce shift n\'est pas un Joker' });
         if (!shift.joker_open)                                 return res.status(403).json({ error: 'Ce Joker n\'est pas ouvert aux candidatures' });
-        const candidates = shift.joker_candidates || [];
-        if (candidates.some(c => c.staff_id === user.staff_id)) return res.status(409).json({ error: 'Candidature déjà envoyée' });
-
-        const staffDoc = user.staff_id ? await db.collection('staff').findOne({ _id: new ObjectId(user.staff_id) }) : null;
-        await db.collection('shifts').updateOne(
-            { _id: new ObjectId(req.params.id) },
-            { $push: { joker_candidates: {
-                staff_id:     user.staff_id,
-                staff_name:   staffDoc ? staffDoc.name : (user.name || ''),
-                staff_color:  staffDoc ? staffDoc.color : '#3498db',
-                submitted_at: new Date(),
-            }}}
-        );
-        res.json({ message: 'Candidature envoyée' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+        return res.status(409).json({ error: 'Candidature déjà envoyée' });
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 /* ── Suite du bloc échanges de shifts (F-05) — DÉSACTIVÉ ─────────────────────
@@ -2694,7 +2722,7 @@ app.get('/api/shifts-for-swap', checkDB, requireAuth, async (req, res) => {
                 establishment_id: s.establishment_id,
             }));
         res.json(out);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // DELETE — staff annule sa propre demande (tant que pending)
@@ -2709,7 +2737,7 @@ app.delete('/api/shift-swaps/:id', checkDB, requireAuth, async (req, res) => {
         await db.collection('shift_swaps').deleteOne({ _id: swap._id });
         res.json({ message: 'Demande annulée' });
         touchLastUpdated();
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 ─────────────────────────────────────────────────────────────────────────── */
@@ -2723,7 +2751,7 @@ app.get('/api/publish/:weekStart', checkDB, requireAuth, async (req, res) => {
         if (_isAutoPublished(req.params.weekStart)) return res.json({ published: true, auto: true });
         const pub = await db.collection('settings').findOne({ key: 'publish_' + req.params.weekStart });
         res.json({ published: !!(pub && pub.published) });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // PATCH publier/dépublier une semaine (patron)
@@ -2767,7 +2795,7 @@ app.patch('/api/publish/:weekStart', checkDB, requirePatron, async (req, res) =>
 
         res.json({ message: published ? 'Planning publié' : 'Planning dépublié' });
         touchLastUpdated();
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // GET dispos confirmées pour une semaine (affichage fond planning patron)
@@ -2780,7 +2808,7 @@ app.get('/api/dispos/confirmed', checkDB, requirePatron, async (req, res) => {
             status: 'confirmed',
         }).toArray();
         res.json(dispos);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // ── Rappel dispo manuel (patron) ─────────────────────────────────────────────
@@ -2833,7 +2861,7 @@ app.post('/api/dispos/rappel', checkDB, requirePatron, async (req, res) => {
         });
 
         res.json({ sent: targets.length });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // ── Rôles ─────────────────────────────────────────────────────────────────────
@@ -2842,7 +2870,7 @@ app.get('/api/roles', checkDB, requireAuth, async (req, res) => {
     try {
         const roles = await db.collection('roles').find().sort({ type: 1, name: 1 }).toArray();
         res.json(roles);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.post('/api/roles', checkDB, requirePatron, async (req, res) => {
@@ -2854,7 +2882,7 @@ app.post('/api/roles', checkDB, requirePatron, async (req, res) => {
         if (existing) return res.status(409).json({ error: 'Ce rôle existe déjà' });
         const result = await db.collection('roles').insertOne({ name: name.trim(), type, created_at: new Date() });
         res.status(201).json({ _id: result.insertedId, name: name.trim(), type });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.delete('/api/roles/:id', checkDB, requirePatron, async (req, res) => {
@@ -2867,7 +2895,7 @@ app.delete('/api/roles/:id', checkDB, requirePatron, async (req, res) => {
             { $pull: { roles: req.params.id } }
         );
         res.json({ message: 'Rôle supprimé' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // GET shifts du jour avec alerte responsable manquant
@@ -2886,7 +2914,7 @@ app.get('/api/shifts/:establishmentId/:date/check-responsable', checkDB, require
         );
 
         res.json({ hasResponsable, count: shifts.length });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // ── Récap mensuel ────────────────────────────────────────────────────────────
@@ -2957,7 +2985,7 @@ app.get('/api/recap-mensuel', checkDB, requirePatron, async (req, res) => {
 
         result.sort((a, b) => a.staff_name.localeCompare(b.staff_name));
         res.json(result);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // ── Pointage (compte établissement) ──────────────────────────────────────────
@@ -3006,7 +3034,7 @@ app.get('/api/me/responsable-tonight', checkDB, requireAuth, async (req, res) =>
 
         if (accessibleEstabs.length === 0) return res.json({ isResponsable: false });
         res.json({ isResponsable: true, establishments: accessibleEstabs });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // ── Pilotage économique : CA + performance ───────────────────────────────────
@@ -3031,7 +3059,7 @@ app.post('/api/revenue', checkDB, requireAuth, async (req, res) => {
             { upsert: true }
         );
         res.json({ message: 'CA enregistré' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // GET le CA d'un établissement à une date (pour pré-remplir le champ)
@@ -3045,7 +3073,7 @@ app.get('/api/revenue/:establishmentId/:date', checkDB, requireAuth, async (req,
     try {
         const doc = await db.collection('daily_revenue').findOne({ establishment_id: establishmentId, date });
         res.json({ revenue: doc ? doc.revenue : null });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // GET performance (CA + masse salariale + coeff) — patron/directeur
@@ -3096,6 +3124,9 @@ app.get('/api/performance', checkDB, requirePatron, async (req, res) => {
             const staff_detail = [];
 
             dayShifts.forEach(s => {
+                // Exclure les jokers : créneaux ouverts non affectés à un staff réel
+                // (convention architecture.md §3 : is_joker || staff_id === '__joker__')
+                if (s.is_joker || s.staff_id === '__joker__') return;
                 const hours = (s.real_end - s.real_start);
                 const staffDoc = staffMap[String(s.staff_id)];
                 let rate = null;
@@ -3127,7 +3158,7 @@ app.get('/api/performance', checkDB, requirePatron, async (req, res) => {
         }).sort((a, b) => a.date < b.date ? 1 : -1);
 
         res.json(results);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // GET/PATCH objectifs performance (coefficient cible)
@@ -3139,7 +3170,7 @@ app.get('/api/performance-settings', checkDB, requireAuth, async (req, res) => {
             target_charged: s.target_charged ?? 43,
             charge_rate:    s.charge_rate    ?? 45,
         });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.patch('/api/performance-settings', checkDB, requirePatron, async (req, res) => {
@@ -3155,7 +3186,7 @@ app.patch('/api/performance-settings', checkDB, requirePatron, async (req, res) 
             { upsert: true }
         );
         res.json({ message: 'Paramètres mis à jour' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // GET/PATCH paramètres pointage (heure de bascule jour)
@@ -3166,7 +3197,7 @@ app.get('/api/pointage-settings', checkDB, requireAuth, async (req, res) => {
             cutoff_hour:      s.cutoff_hour      ?? 9,  // fin de fenêtre (défaut 9h)
             cutoff_open_hour: s.cutoff_open_hour ?? 0,  // début de fenêtre (défaut minuit)
         });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.patch('/api/pointage-settings', checkDB, requireAdmin, async (req, res) => {
@@ -3183,7 +3214,7 @@ app.patch('/api/pointage-settings', checkDB, requireAdmin, async (req, res) => {
             { upsert: true }
         );
         res.json({ message: 'Paramètres pointage mis à jour' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // GET shifts du jour pour l'établissement lié au compte
@@ -3199,7 +3230,7 @@ app.get('/api/pointage/:date', checkDB, requireAuth, async (req, res) => {
             .find({ establishment_id: estabId, date: req.params.date })
             .sort({ start_time: 1 }).toArray();
         res.json(shifts);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // PATCH désigner le responsable de pointage pour un établissement/date
@@ -3225,7 +3256,7 @@ app.patch('/api/shifts/:id/pointage-resp', checkDB, requirePatron, async (req, r
             value === true ? { $set: { pointage_resp: true } } : { $unset: { pointage_resp: '' } }
         );
         res.json({ message: 'Responsable pointage mis à jour' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // PATCH heures réelles sur un shift existant
@@ -3259,7 +3290,7 @@ app.patch('/api/shifts/:id/pointage', checkDB, requireAuth, async (req, res) => 
 
         await db.collection('shifts').updateOne({ _id: new ObjectId(req.params.id) }, { $set: update });
         res.json({ message: 'Heures réelles enregistrées' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // POST service non planifié (extra)
@@ -3309,7 +3340,7 @@ app.post('/api/shifts/extra', checkDB, requireAuth, async (req, res) => {
         };
         const result = await db.collection('shifts').insertOne(shift);
         res.status(201).json({ ...shift, _id: result.insertedId });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // ── Web Push — abonnement ─────────────────────────────────────────────────────
@@ -3334,7 +3365,7 @@ app.post('/api/push/subscribe', checkDB, requireAuth, async (req, res) => {
             { upsert: true }
         );
         res.json({ message: 'Abonnement enregistré' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // DELETE se désabonner
@@ -3347,7 +3378,7 @@ app.delete('/api/push/subscribe', checkDB, requireAuth, async (req, res) => {
             'subscription.endpoint': endpoint,
         });
         res.json({ message: 'Désabonné' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // POST envoyer une notification test à soi-même (diagnostic)
@@ -3372,7 +3403,7 @@ app.post('/api/push/test', checkDB, requireAuth, async (req, res) => {
         const errors  = results.filter(r => r.status === 'rejected').map(r => r.reason?.message);
         const ok      = results.filter(r => r.status === 'fulfilled').length;
         res.json({ sent: ok, errors });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // ── Utilitaire formatage heure shift ─────────────────────────────────────────
@@ -3426,7 +3457,7 @@ app.get('/api/notifications', checkDB, requirePatron, async (req, res) => {
             .limit(50)
             .toArray();
         res.json({ notifications });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // PATCH marquer toutes les notifications comme lues
@@ -3435,7 +3466,7 @@ app.patch('/api/notifications/read-all', checkDB, requirePatron, async (req, res
     try {
         await db.collection('notifications').deleteMany({ user_id: userId });
         res.json({ message: 'Notifications supprimées' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 
@@ -3450,7 +3481,7 @@ app.get('/api/notifications/mine', checkDB, requireAuth, async (req, res) => {
             .limit(20)
             .toArray();
         res.json({ notifications });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // PATCH marquer toutes les notifications staff comme lues
@@ -3463,7 +3494,7 @@ app.patch('/api/notifications/mine/read', checkDB, requireAuth, async (req, res)
             { $set: { read: true } }
         );
         res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // GET timestamp dernière modification (polling auto-refresh clients)
@@ -3471,7 +3502,7 @@ app.get('/api/last-updated', checkDB, requireAuth, async (req, res) => {
     try {
         const doc = await db.collection('settings').findOne({ key: 'last_updated' });
         res.json({ ts: doc ? doc.ts : 0 });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // ── Route racine ──────────────────────────────────────────────────────────────

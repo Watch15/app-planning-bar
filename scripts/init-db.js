@@ -32,7 +32,8 @@ async function main() {
         const collections = [
             'establishments', 'staff', 'shifts', 'users',
             'sessions', 'availabilities', 'push_subscriptions',
-            'notifications', 'shift_swaps', 'settings', 'roles'
+            'notifications', 'staff_notifications', 'shift_swaps',
+            'settings', 'roles', 'daily_revenue'
         ];
         for (const col of collections) {
             try {
@@ -62,6 +63,11 @@ async function main() {
         await db.collection('shift_swaps').createIndex({ to_staff_id: 1 });
         await db.collection('settings').createIndex({ key: 1 }, { unique: true });
         await db.collection('roles').createIndex({ type: 1, name: 1 });
+        await db.collection('daily_revenue').createIndex(
+            { establishment_id: 1, date: 1 },
+            { unique: true }
+        );
+        await db.collection('staff_notifications').createIndex({ staff_id: 1, created_at: -1 });
         console.log('✅ Index créés');
         // Paramètres par défaut : saisie ouverte
         await db.collection('settings').updateOne(

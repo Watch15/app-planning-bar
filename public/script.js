@@ -1418,7 +1418,7 @@ function createShiftEl(shift) {
         ${noteText}
         ${jokerOpenBadge}
         ${respBtn}
-        <button class="shift-delete" onclick="deleteShift(event, '${shift._id}', '${shift.staff_id}')">×</button>
+        <button class="shift-delete" onclick="deleteShift(event, '${escapeHtml(String(shift._id))}', '${escapeHtml(String(shift.staff_id))}')">×</button>
         <div class="resizer right"></div>`;
 
     // Clic sur un Joker → modale patron (note + toggle + candidatures)
