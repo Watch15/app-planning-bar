@@ -520,17 +520,22 @@ async function init() {
 
     // Navigation calendrier
     calendarWeekStart = getMondayOf(new Date());
+    const _reloadOnNav = () => {
+        const period = document.getElementById('period-select').value;
+        if (period === 'week' || period === 'month') return Promise.all([loadCalendarWeek(), loadData()]);
+        return loadCalendarWeek();
+    };
     document.getElementById('cal-prev').addEventListener('click', () => {
         calendarWeekStart.setDate(calendarWeekStart.getDate() - 7);
-        loadCalendarWeek();
+        _reloadOnNav();
     });
     document.getElementById('cal-next').addEventListener('click', () => {
         calendarWeekStart.setDate(calendarWeekStart.getDate() + 7);
-        loadCalendarWeek();
+        _reloadOnNav();
     });
     document.getElementById('cal-today').addEventListener('click', () => {
         calendarWeekStart = getMondayOf(new Date());
-        loadCalendarWeek();
+        _reloadOnNav();
     });
 
     // Modale CA (depuis le calendrier)
@@ -673,15 +678,15 @@ async function saveCAFromModal() {
 
 function _periodRange() {
     const period = document.getElementById('period-select').value;
-    const today = new Date();
+    const ref = calendarWeekStart ? new Date(calendarWeekStart) : new Date();
     if (period === 'week') {
-        const monday = getMondayOf(today);
+        const monday = getMondayOf(ref);
         const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
         return { from: toDateStr(monday), to: toDateStr(sunday) };
     }
     if (period === 'month') {
-        const first = new Date(today.getFullYear(), today.getMonth(), 1);
-        const last  = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        const first = new Date(ref.getFullYear(), ref.getMonth(), 1);
+        const last  = new Date(ref.getFullYear(), ref.getMonth() + 1, 0);
         return { from: toDateStr(first), to: toDateStr(last) };
     }
     return { from: null, to: null };
