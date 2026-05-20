@@ -892,9 +892,10 @@ async function saveTargets() {
         fb.style.color = 'var(--success-text)';
         fb.textContent = '✅ Paramètres enregistrés';
         setTimeout(() => { fb.textContent = ''; }, 2500);
-        // Rerender pour appliquer les nouveaux seuils
-        renderTable(currentData);
-        renderKpis(currentData);
+        // Refetch complet : charge_rate impacte wage_bill_charged et staff_detail.wage_charged
+        // côté serveur — un simple re-render des données existantes garderait les anciennes valeurs.
+        // Les seuils target_gross/target_charged sont aussi repris au passage (couleurs/KPIs).
+        loadData();
         loadCalendarWeek();
     } catch (e) {
         fb.style.color = 'var(--danger)'; fb.textContent = e.message || 'Erreur';
