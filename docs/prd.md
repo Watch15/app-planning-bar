@@ -173,7 +173,7 @@ Page dédiée au patron / directeur pour suivre la masse salariale vs CA par soi
 - **KPIs** : CA total, **Heures travaillées** (somme `real_end - real_start` des shifts pointés), Masse salariale brute, Masse salariale chargée + coefficients %
 - **Vue calendaire** semaine par semaine : carte par jour avec CA + heures travaillées + coefficient brut. Code couleur : vert si coeff < `target_gross`, rouge sinon, orange si CA saisi mais aucun shift pointé
 - **Table détaillée** : Date, CA, Heures, Masse brute, Coeff brut, Masse chargée, Coeff chargé — scrollable horizontalement sur mobile (min-width 640 px)
-- **Détail par soirée** (ligne expandable) : staff, heures réelles, taux (horaire `XX,XX €/h` ou forfait `Forfait XX €`), salaire brut + total ligne (heures + €)
+- **Détail par soirée** (ligne expandable) : staff, heures réelles, taux (horaire `XX,XX €/h` ou forfait `Forfait XX €`), **salaire brut + salaire chargé** (= brut × `chargeMultiplier(charge_rate)`) + ligne de total (heures, total brut, total chargé)
 - **Filtre période** : « Tout l'historique », « Cette semaine », « Ce mois ». Les périodes semaine/mois suivent **la semaine actuellement affichée dans le calendrier** (navigation ‹ ›). Navigation calendrier recharge automatiquement le tableau si la période est week/month
 - **Paramètres** (section « ⚙️ Paramètres ») :
   - `target_gross` (objectif coefficient brut, défaut 30 %)

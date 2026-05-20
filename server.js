@@ -3174,6 +3174,7 @@ app.get('/api/performance', checkDB, requirePatron, async (req, res) => {
                     fixed_rate:   is_fixed ? rate : null,
                     is_fixed,
                     wage_gross:   Math.round(wage * 100) / 100,
+                    wage_charged: Math.round(wage * chargeMult * 100) / 100,
                 });
             });
 

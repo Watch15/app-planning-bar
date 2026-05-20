@@ -818,13 +818,18 @@ function renderTable(data) {
             if (!wasOpen) {
                 detail.style.display = '';
                 row.classList.add('expanded');
-                renderDetail(detail.querySelector('td'), currentData[idx].staff_detail, currentData[idx].wage_bill_gross);
+                renderDetail(
+                    detail.querySelector('td'),
+                    currentData[idx].staff_detail,
+                    currentData[idx].wage_bill_gross,
+                    currentData[idx].wage_bill_charged
+                );
             }
         });
     });
 }
 
-function renderDetail(td, staff, totalWage) {
+function renderDetail(td, staff, totalWage, totalWageCharged) {
     if (!staff || staff.length === 0) {
         td.innerHTML = '<div class="detail-wrap" style="color:var(--text-muted)">Aucun shift pointé ce soir-là</div>';
         return;
@@ -839,13 +844,15 @@ function renderDetail(td, staff, totalWage) {
             rateLabel = s.hourly_rate.toFixed(2).replace('.', ',') + ' €/h';
         }
         const hasWage   = s.is_fixed ? s.fixed_rate != null : s.hourly_rate != null;
-        const wageLabel = hasWage ? fmtEUR(s.wage_gross) : '';
+        const wageLabel    = hasWage ? fmtEUR(s.wage_gross)   : '';
+        const wageChLabel  = hasWage ? fmtEUR(s.wage_charged) : '';
         return (
             '<tr>' +
                 '<td>' + escapeHtml(s.staff_name) + '</td>' +
                 '<td class="num">' + fmtHours(s.hours_worked) + '</td>' +
                 '<td class="num">' + rateLabel + '</td>' +
                 '<td class="num">' + wageLabel + '</td>' +
+                '<td class="num">' + wageChLabel + '</td>' +
             '</tr>'
         );
     }).join('');
@@ -853,9 +860,9 @@ function renderDetail(td, staff, totalWage) {
     td.innerHTML =
         '<div class="detail-wrap">' +
             '<table class="detail-table">' +
-                '<thead><tr><th>Staff</th><th>Heures</th><th>Taux</th><th>Salaire brut</th></tr></thead>' +
+                '<thead><tr><th>Staff</th><th>Heures</th><th>Taux</th><th>Salaire brut</th><th>Salaire chargé</th></tr></thead>' +
                 '<tbody>' + rows +
-                    '<tr class="total-row"><td>Total</td><td class="num">' + fmtHours(totalHoursDetail) + '</td><td></td><td class="num">' + fmtEUR(totalWage) + '</td></tr>' +
+                    '<tr class="total-row"><td>Total</td><td class="num">' + fmtHours(totalHoursDetail) + '</td><td></td><td class="num">' + fmtEUR(totalWage) + '</td><td class="num">' + fmtEUR(totalWageCharged) + '</td></tr>' +
                 '</tbody>' +
             '</table>' +
         '</div>';
