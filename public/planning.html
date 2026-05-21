@@ -122,6 +122,25 @@
         .greeting-name { font-size: 19px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.3px; }
         .greeting-sub  { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
 
+        /* ── Toggle Semaine / Mois ── */
+        .stats-toggle {
+            display: flex; gap: 6px;
+            padding: 14px 20px 0;
+        }
+        .stats-toggle button {
+            background: var(--light-card);
+            border: 1px solid var(--light-border);
+            color: var(--text-secondary);
+            font-size: 12px; font-weight: 600;
+            padding: 6px 14px; border-radius: 8px;
+            cursor: pointer; font-family: var(--font);
+            transition: all 0.15s;
+        }
+        .stats-toggle button:hover { color: var(--text-primary); border-color: var(--accent); }
+        .stats-toggle button.active {
+            background: var(--accent); border-color: var(--accent); color: #fff;
+        }
+
         /* ── Stats semaine ── */
         .week-stats {
             display: grid; grid-template-columns: repeat(3, 1fr);
@@ -414,6 +433,8 @@
             .btn-pointage-tab { flex: 1 1 0; min-width: 0; padding: 12px 6px; min-height: 44px; font-size: 11px; text-align: center; white-space: nowrap; }
             .greeting { padding: 14px 14px 4px; }
             .greeting-name { font-size: 17px; }
+            .stats-toggle { padding: 10px 14px 0; }
+            .stats-toggle button { font-size: 11px; padding: 5px 10px; }
             .week-stats { grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 10px 14px; }
             .stat-card { padding: 8px 10px; }
             .stat-value { font-size: 16px; }
@@ -609,6 +630,10 @@
 </div>
 
 <div id="view-planning">
+<div class="stats-toggle" id="stats-toggle">
+    <button type="button" data-period="week" class="active">Semaine</button>
+    <button type="button" data-period="month">Mois</button>
+</div>
 <div class="week-stats" id="week-stats"></div>
 <div id="open-jokers-section"></div>
 <div class="days-list" id="days-list">
@@ -739,6 +764,10 @@ async function logout() {
 
 let allStaff = [];
 let allEstablishments = [];
+let currentUser = null;
+let _statsPeriod = 'week';            // 'week' ou 'month'
+let _lastWeekData = null;             // { shifts, prevTotalH } pour switch instantané
+let _lastMonthData = null;            // idem pour le mois
 
 async function init() {
     const user = await checkAuth();
@@ -752,11 +781,13 @@ async function init() {
         window.location.href = '/pointage.html'; return;
     }
 
+    currentUser = user;
     document.getElementById('greeting-name').textContent = 'Bonjour ' + ((user.name || '').split(' ')[0]) + ' !';
     const av = document.getElementById('staff-avatar');
     if (av) av.textContent = (user.name || user.email || '?').charAt(0).toUpperCase();
 
     initTabs();
+    initStatsToggle();
 
     // Charger le staff et les établissements
     try {
@@ -1032,7 +1063,13 @@ async function loadPlanning(from, to, user) {
         const myShifts = data.shifts.filter(s => !s.is_joker && s.staff_id !== '__joker__');
         const jokers   = data.shifts.filter(s =>  s.is_joker || s.staff_id === '__joker__');
         // await loadMyPendingSwaps(); // F-05 désactivé
-        renderStats(myShifts, prevTotalH);
+        _lastWeekData = { shifts: myShifts, prevTotalH };
+        if (_statsPeriod === 'week') {
+            renderStats(myShifts, prevTotalH);
+        } else {
+            // L'utilisateur a basculé sur Mois — on l'a déjà rendu, rien à faire ici
+            loadMonthRecap();
+        }
         renderDays(from, myShifts, data.colleagues, jokers);
         renderOpenJokers(from, to, 'open-jokers-section');
 
@@ -1111,6 +1148,149 @@ function statCard(value, label, extra) {
         '<div class="stat-label">' + label + '</div>' +
         (extra || '') +
     '</div></div>';
+}
+
+// ── Toggle Semaine / Mois ─────────────────────────────────────────────────────
+
+function initStatsToggle() {
+    const wrap = document.getElementById('stats-toggle');
+    if (!wrap) return;
+    wrap.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const period = btn.dataset.period;
+            if (period === _statsPeriod) return;
+            _statsPeriod = period;
+            wrap.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.period === period));
+            applyStatsPeriod();
+        });
+    });
+}
+
+function applyStatsPeriod() {
+    const sub = document.getElementById('greeting-sub');
+    if (_statsPeriod === 'week') {
+        if (sub) sub.textContent = 'Voici ton planning de la semaine';
+        if (_lastWeekData) renderStats(_lastWeekData.shifts, _lastWeekData.prevTotalH);
+        return;
+    }
+    const now = new Date();
+    if (sub) sub.textContent = 'Récap de ' + MONTH_NAMES_LONG_HIST[now.getMonth()] + ' ' + now.getFullYear();
+    if (_lastMonthData) {
+        renderMonthStats(_lastMonthData.shifts, _lastMonthData.prevTotalH);
+    } else {
+        loadMonthRecap();
+    }
+}
+
+// ── Récap mensuel ─────────────────────────────────────────────────────────────
+
+async function loadMonthRecap() {
+    const el = document.getElementById('week-stats');
+    if (!el) return;
+    el.innerHTML = '<div class="state-msg" style="grid-column:1/-1">Chargement…</div>';
+
+    const now    = new Date();
+    const y      = now.getFullYear();
+    const m      = now.getMonth();
+    const first  = new Date(y, m, 1);
+    const last   = new Date(y, m + 1, 0);
+    const pFirst = new Date(y, m - 1, 1);
+    const pLast  = new Date(y, m, 0);
+
+    const monthFrom = toDateStr(first);
+    const monthTo   = toDateStr(last);
+    const prevFrom  = toDateStr(pFirst);
+    const prevTo    = toDateStr(pLast);
+
+    try {
+        const [res, prevRes] = await Promise.all([
+            fetch('/api/my-shifts?from=' + monthFrom + '&to=' + monthTo, { credentials: 'include' }),
+            fetch('/api/my-shifts?from=' + prevFrom + '&to=' + prevTo, { credentials: 'include' }).catch(() => null),
+        ]);
+
+        const ct = res.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) throw new Error('Erreur serveur (' + res.status + ')');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur inconnue');
+
+        const myShifts = (data.shifts || []).filter(s => !s.is_joker && s.staff_id !== '__joker__');
+
+        let prevTotalH = null;
+        if (prevRes && prevRes.ok) {
+            try {
+                const pData   = await prevRes.json();
+                const pShifts = (pData.shifts || []).filter(s => !s.is_joker && s.staff_id !== '__joker__');
+                prevTotalH = pShifts.reduce((a, s) => {
+                    const start = s.real_start != null ? s.real_start : s.start_time;
+                    const end   = s.real_end   != null ? s.real_end   : s.end_time;
+                    return a + (end - start);
+                }, 0);
+            } catch { /* silencieux */ }
+        }
+
+        _lastMonthData = { shifts: myShifts, prevTotalH };
+        if (_statsPeriod === 'month') renderMonthStats(myShifts, prevTotalH);
+    } catch (e) {
+        el.innerHTML = '<div class="state-msg error" style="grid-column:1/-1">' + e.message + '</div>';
+    }
+}
+
+function renderMonthStats(shifts, prevTotalH) {
+    const el = document.getElementById('week-stats');
+    if (!el) return;
+
+    const nbShifts = shifts.length;
+    const totalH = shifts.reduce((a, s) => {
+        const start = (s.real_start != null) ? s.real_start : s.start_time;
+        const end   = (s.real_end   != null) ? s.real_end   : s.end_time;
+        return a + (end - start);
+    }, 0);
+    const nbJours = new Set(shifts.map(s => s.date)).size;
+
+    let deltaHtml = '';
+    if (prevTotalH != null) {
+        const diff = totalH - prevTotalH;
+        if (Math.abs(diff) < 0.05) {
+            deltaHtml = '<div class="stat-delta even">= mois préc.</div>';
+        } else {
+            const sign = diff > 0 ? '+' : '−';
+            const cls  = diff > 0 ? 'up' : 'down';
+            deltaHtml = '<div class="stat-delta ' + cls + '">' + sign + fmtDuration(Math.abs(diff)) + ' vs mois préc.</div>';
+        }
+    }
+
+    el.style.display = '';
+    el.innerHTML =
+        statCard(nbJours,             'Jours',  '') +
+        statCard(nbShifts,            'Shifts', '') +
+        statCard(fmtDuration(totalH), 'Heures', deltaHtml);
+
+    // Répartition par établissement
+    const next = el.nextElementSibling;
+    if (next && next.classList && next.classList.contains('estab-hours-bar')) next.remove();
+
+    const byEstab = {};
+    shifts.forEach(s => {
+        const start = (s.real_start != null) ? s.real_start : s.start_time;
+        const end   = (s.real_end   != null) ? s.real_end   : s.end_time;
+        if (!byEstab[s.establishment_id]) byEstab[s.establishment_id] = { total: 0, color: s.color || '#8892a4' };
+        byEstab[s.establishment_id].total += (end - start);
+    });
+    const estabIds = Object.keys(byEstab);
+    if (estabIds.length > 1) {
+        const bar = document.createElement('div');
+        bar.className = 'estab-hours-bar';
+        estabIds.forEach(id => {
+            const { total, color } = byEstab[id];
+            bar.innerHTML +=
+                '<div class="estab-hours-chip">' +
+                    '<div class="estab-hours-dot" style="background:' + color + '"></div>' +
+                    '<span>' + formatEstablishment(id) + '</span>' +
+                    '<span style="font-weight:700;color:var(--text-primary);margin-left:4px">' + fmtDuration(total) + '</span>' +
+                '</div>';
+        });
+        el.after(bar);
+    }
 }
 
 // ── Rendu des jours ───────────────────────────────────────────────────────────
@@ -1378,29 +1558,103 @@ async function loadHistoriqueWeek() {
     document.getElementById('hist-btn-prev').addEventListener('click', () => { _histOffset++; loadHistoriqueWeek(); });
     document.getElementById('hist-btn-next').addEventListener('click', () => { _histOffset--; loadHistoriqueWeek(); });
 
-    if (_histCache[weekKey]) { renderHistoriqueWeek(wrap, _histCache[weekKey]); return; }
+    if (_histCache[weekKey]) { renderHistoriqueWeek(wrap, _histCache[weekKey].data, _histCache[weekKey].prevTotalH); return; }
 
     wrap.innerHTML = '<div class="hist-loading">Chargement…</div>';
+
+    // Semaine antérieure pour le delta
+    const prevMonday = addDays(weekMonday, -7);
+    const prevSunday = addDays(prevMonday, 6);
+
     try {
-        const r = await fetch('/api/my-shifts?from=' + weekKey + '&to=' + toDateStr(weekSunday), { credentials: 'include' });
+        const [r, prevR] = await Promise.all([
+            fetch('/api/my-shifts?from=' + weekKey + '&to=' + toDateStr(weekSunday), { credentials: 'include' }),
+            fetch('/api/my-shifts?from=' + toDateStr(prevMonday) + '&to=' + toDateStr(prevSunday), { credentials: 'include' }).catch(() => null),
+        ]);
         const data = r.ok ? await r.json() : { shifts: [] };
-        _histCache[weekKey] = data;
-        renderHistoriqueWeek(wrap, data);
+
+        let prevTotalH = null;
+        if (prevR && prevR.ok) {
+            try {
+                const pData   = await prevR.json();
+                const pShifts = (pData.shifts || []).filter(s => !s.is_joker && s.staff_id !== '__joker__');
+                prevTotalH = pShifts.reduce((a, s) => {
+                    const start = s.real_start != null ? s.real_start : s.start_time;
+                    const end   = s.real_end   != null ? s.real_end   : s.end_time;
+                    return a + (end - start);
+                }, 0);
+            } catch { /* silencieux */ }
+        }
+
+        _histCache[weekKey] = { data, prevTotalH };
+        renderHistoriqueWeek(wrap, data, prevTotalH);
     } catch {
         wrap.innerHTML = '<div class="hist-loading">Erreur de chargement.</div>';
     }
 }
 
-function renderHistoriqueWeek(wrap, data) {
+function buildHistStatsHtml(shifts, prevTotalH) {
+    const nbShifts = shifts.length;
+    const totalH = shifts.reduce((a, s) => {
+        const start = (s.real_start != null) ? s.real_start : s.start_time;
+        const end   = (s.real_end   != null) ? s.real_end   : s.end_time;
+        return a + (end - start);
+    }, 0);
+    const nbJours = new Set(shifts.map(s => s.date)).size;
+
+    let deltaHtml = '';
+    if (prevTotalH != null) {
+        const diff = totalH - prevTotalH;
+        if (Math.abs(diff) < 0.05) {
+            deltaHtml = '<div class="stat-delta even">= sem. préc.</div>';
+        } else {
+            const sign = diff > 0 ? '+' : '−';
+            const cls  = diff > 0 ? 'up' : 'down';
+            deltaHtml = '<div class="stat-delta ' + cls + '">' + sign + fmtDuration(Math.abs(diff)) + ' vs sem. préc.</div>';
+        }
+    }
+
+    let html = '<div class="week-stats" style="padding:12px 0 4px">' +
+        statCard(nbJours,             'Jours',  '') +
+        statCard(nbShifts,            'Shifts', '') +
+        statCard(fmtDuration(totalH), 'Heures', deltaHtml) +
+    '</div>';
+
+    // Répartition par établissement (si > 1)
+    const byEstab = {};
+    shifts.forEach(s => {
+        const start = (s.real_start != null) ? s.real_start : s.start_time;
+        const end   = (s.real_end   != null) ? s.real_end   : s.end_time;
+        if (!byEstab[s.establishment_id]) byEstab[s.establishment_id] = { total: 0, color: s.color || '#8892a4' };
+        byEstab[s.establishment_id].total += (end - start);
+    });
+    const estabIds = Object.keys(byEstab);
+    if (estabIds.length > 1) {
+        html += '<div class="estab-hours-bar" style="padding:0 0 12px">';
+        estabIds.forEach(id => {
+            const { total, color } = byEstab[id];
+            html +=
+                '<div class="estab-hours-chip">' +
+                    '<div class="estab-hours-dot" style="background:' + color + '"></div>' +
+                    '<span>' + formatEstablishment(id) + '</span>' +
+                    '<span style="font-weight:700;color:var(--text-primary);margin-left:4px">' + fmtDuration(total) + '</span>' +
+                '</div>';
+        });
+        html += '</div>';
+    }
+    return html;
+}
+
+function renderHistoriqueWeek(wrap, data, prevTotalH) {
     const shifts = (data.shifts || [])
         .filter(s => !s.is_joker && s.staff_id !== '__joker__')
         .slice().sort((a, b) =>
             a.date < b.date ? -1 : a.date > b.date ? 1 : (a.start_time || 0) - (b.start_time || 0)
         );
-    wrap.innerHTML = '';
+    wrap.innerHTML = buildHistStatsHtml(shifts, prevTotalH);
 
     if (shifts.length === 0) {
-        wrap.innerHTML = '<div class="hist-empty">Aucun shift cette semaine.</div>';
+        wrap.insertAdjacentHTML('beforeend', '<div class="hist-empty">Aucun shift cette semaine.</div>');
         return;
     }
 
