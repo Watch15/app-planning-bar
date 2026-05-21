@@ -6916,12 +6916,26 @@ async function saveDashboardPdf() {
 
     const from  = currentWeekStart;
     const to    = addDays(currentWeekStart, 6);
-    const title = 'Planning ' + formatDateShort(from) + ' – ' + formatDateShort(to);
+    const fmtDay = d => d.getDate() + ' ' + MONTH_NAMES[d.getMonth()];
+    const weekLabel = 'Semaine du ' + fmtDay(from) + ' au ' + fmtDay(to) + ' ' + to.getFullYear();
+    const estab     = allEstablishments.find(e => String(e._id) === String(currentVenueId) || e.id === currentVenueId);
+    const venueName = estab ? estab.name : 'Mon établissement';
 
     const container = document.createElement('div');
-    container.style.cssText = 'position:fixed;left:-10000px;top:0;width:1100px;background:#fff;padding:16px;font-family:Arial,sans-serif;font-size:12px;color:#1a1a2e';
+    container.style.cssText = 'position:fixed;left:-10000px;top:0;width:1100px;background:#fff;padding:20px 24px;font-family:Arial,sans-serif;font-size:12px;color:#1a1a2e';
     container.innerHTML =
-        '<h2 style="font-size:14px;margin:0 0 10px">' + title + '</h2>' +
+        '<header style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:2px solid #1a1a2e;margin-bottom:14px">' +
+            '<div style="display:flex;align-items:center;gap:11px">' +
+                '<div style="width:32px;height:32px;border-radius:8px;background:#6C63FF;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px">T</div>' +
+                '<div><div style="font-size:13px;font-weight:700">Templyo</div>' +
+                '<div style="font-size:9.5px;color:#8892a4;text-transform:uppercase;letter-spacing:1.2px;font-weight:600">Planning bar &amp; resto</div></div>' +
+            '</div>' +
+            '<div style="text-align:center;flex:1;padding:0 20px">' +
+                '<div style="font-size:19px;font-weight:700;letter-spacing:-.5px">' + escapeHtml(venueName) + '</div>' +
+                '<div style="font-size:11.5px;color:#4a4f63;font-weight:500;margin-top:2px">' + weekLabel + ' · Tableau de bord</div>' +
+            '</div>' +
+            '<div><span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid #6C63FF;border-radius:14px;color:#6C63FF;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase">Semaine</span></div>' +
+        '</header>' +
         '<table style="width:100%;border-collapse:collapse">' +
         '<thead>' + thead + '</thead><tbody>' + tbody + '</tbody></table>';
     document.body.appendChild(container);
