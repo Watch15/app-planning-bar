@@ -5,6 +5,8 @@ const STATIC = [
     '/script.js',
     '/style.css',
     '/manifest.json',
+    '/vendor/html2canvas.min.js',
+    '/vendor/jspdf.umd.min.js',
 ];
 
 // Installation — mise en cache des fichiers statiques
