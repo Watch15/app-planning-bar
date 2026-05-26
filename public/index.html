@@ -1110,6 +1110,7 @@
             <button id="dispos-tab-btn-list"     style="background:none;border:none;border-bottom:2px solid var(--accent);margin-bottom:-2px;padding:12px 14px;min-height:44px;font-size:13px;font-weight:600;color:var(--accent);cursor:pointer;white-space:nowrap;flex-shrink:0">📋 En attente</button>
             <button id="dispos-tab-btn-reassign" style="background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;padding:12px 14px;min-height:44px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap;flex-shrink:0">🔄 À réaffecter <span id="reassign-tab-badge" style="display:none;background:#ef4444;color:white;font-size:10px;font-weight:700;border-radius:10px;min-width:16px;height:16px;line-height:16px;padding:0 5px;text-align:center;vertical-align:middle;margin-left:2px"></span></button>
             <button id="dispos-tab-btn-reminder" style="background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;padding:12px 14px;min-height:44px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap;flex-shrink:0">🔔 Sans dispo <span id="reminder-tab-badge" style="display:none;background:#ef4444;color:white;font-size:10px;font-weight:700;border-radius:10px;min-width:16px;height:16px;line-height:16px;padding:0 5px;text-align:center;vertical-align:middle;margin-left:2px"></span></button>
+            <button id="dispos-tab-btn-modify"   style="background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;padding:12px 14px;min-height:44px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap;flex-shrink:0">🔓 Modifier dispo</button>
             <button id="dispos-tab-btn-notes"    style="background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;padding:12px 14px;min-height:44px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap;flex-shrink:0">📝 Notes</button>
         </div>
         <div id="dispos-tab-reminder" style="display:none">
@@ -1120,6 +1121,12 @@
         </div>
         <div id="dispos-tab-reassign" style="display:none">
             <div id="dispos-reassign-list" style="max-height:60vh;overflow-y:auto;padding:4px 0"></div>
+        </div>
+        <div id="dispos-tab-modify" style="display:none">
+            <div style="padding:8px 16px;border-bottom:1px solid var(--light-border)">
+                <span id="modify-week-label" style="font-size:13px;font-weight:600;color:var(--text-primary)"></span>
+            </div>
+            <div id="dispos-modify-list" style="max-height:55vh;overflow-y:auto;padding:4px 0"></div>
         </div>
         <div id="dispos-tab-list">
             <div id="dispos-list"></div>

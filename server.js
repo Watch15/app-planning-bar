@@ -2376,6 +2376,69 @@ app.get('/api/dispos/sans-dispo', checkDB, requirePatron, async (req, res) => {
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
+app.get('/api/dispos/with-dispo', checkDB, requirePatron, async (req, res) => {
+    const { establishment_id, from, to } = req.query;
+    if (!from || !to) return res.status(400).json({ error: 'from et to requis' });
+    try {
+        const dispos = await db.collection('availabilities').find({
+            date: { $gte: from, $lte: to },
+            type: { $ne: 'week_note' },
+        }, { projection: { staff_id: 1 } }).toArray();
+        if (dispos.length === 0) return res.json([]);
+
+        const countByStaff = new Map();
+        dispos.forEach(d => { countByStaff.set(d.staff_id, (countByStaff.get(d.staff_id) || 0) + 1); });
+
+        const staffIds = Array.from(countByStaff.keys()).filter(id => isValidObjectId(id));
+        if (staffIds.length === 0) return res.json([]);
+
+        const staffQuery = { _id: { $in: staffIds.map(id => new ObjectId(id)) } };
+        if (establishment_id) staffQuery.venues = establishment_id;
+
+        const allStaff = await db.collection('staff').find(staffQuery, {
+            projection: { name: 1, color: 1, phone: 1 }
+        }).toArray();
+
+        const settings = await db.collection('settings').findOne({ key: 'dispo' }) || {};
+        const forceOpenStaff = Array.isArray(settings.force_open_staff) ? settings.force_open_staff : [];
+        const reopenedSet = new Set(forceOpenStaff);
+
+        const result = allStaff
+            .map(s => ({
+                id: String(s._id),
+                name: s.name,
+                color: s.color || '#888',
+                phone: s.phone || '',
+                count: countByStaff.get(String(s._id)) || 0,
+                reopened: reopenedSet.has(String(s._id)),
+            }))
+            .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+        res.json(result);
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+app.post('/api/dispos/reopen-for-correction', checkDB, requirePatron, async (req, res) => {
+    const { staff_id, from, to } = req.body;
+    if (!staff_id || !from || !to)
+        return res.status(400).json({ error: 'staff_id, from et to requis' });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to))
+        return res.status(400).json({ error: 'from/to invalides (YYYY-MM-DD)' });
+    try {
+        const del = await db.collection('availabilities').deleteMany({
+            staff_id,
+            date: { $gte: from, $lte: to },
+            type: { $ne: 'week_note' },
+        });
+        await db.collection('settings').updateOne(
+            { key: 'dispo' },
+            { $addToSet: { force_open_staff: staff_id } },
+            { upsert: true }
+        );
+        res.json({ message: 'OK', deleted: del.deletedCount });
+        touchLastUpdated();
+    } catch (e) { console.error('[POST /api/dispos/reopen-for-correction]', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
 app.patch('/api/dispos/:id/confirm', checkDB, requirePatron, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const { establishment_id, create_shift } = req.body;

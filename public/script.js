@@ -320,6 +320,8 @@ async function init() {
     if (disposTabNotes)    disposTabNotes.addEventListener('click', () => switchDisposTab('notes'));
     if (disposTabReassign) disposTabReassign.addEventListener('click', () => switchDisposTab('reassign'));
     if (disposTabReminder) disposTabReminder.addEventListener('click', () => switchDisposTab('reminder'));
+    const disposTabModify = document.getElementById('dispos-tab-btn-modify');
+    if (disposTabModify) disposTabModify.addEventListener('click', () => switchDisposTab('modify'));
     const staffNotesPrev = document.getElementById('staff-notes-prev');
     if (staffNotesPrev) staffNotesPrev.addEventListener('click', () => {
         if (!staffNotesWeekStart) return;
@@ -4925,11 +4927,122 @@ async function loadReminderTab() {
     }
 }
 
+function _renderModifyWeekLabel(weekStart) {
+    const label = document.getElementById('modify-week-label');
+    if (!label || !weekStart) return;
+    const MONTHS = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
+    const end = addDays(weekStart, 6);
+    const startStr = weekStart.getDate() + ' ' + MONTHS[weekStart.getMonth()];
+    const endStr   = end.getDate() + ' ' + MONTHS[end.getMonth()] + ' ' + end.getFullYear();
+    label.textContent = 'Semaine du ' + startStr + ' au ' + endStr;
+}
+
+async function loadModifyTab() {
+    const list = document.getElementById('dispos-modify-list');
+    if (!list) return;
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:#ccc;font-size:13px">Chargement…</div>';
+    try {
+        const weekStart = _reminderResolveWeek();
+        _renderModifyWeekLabel(weekStart);
+        const from = toDateStr(weekStart);
+        const to   = toDateStr(addDays(weekStart, 6));
+        const res = await fetch('/api/dispos/with-dispo?from=' + from + '&to=' + to, { credentials: 'include' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        if (data.length === 0) {
+            list.innerHTML = '<div style="padding:32px;text-align:center;color:#aaa;font-size:13px">Aucun staff n\'a envoyé de dispos pour cette semaine</div>';
+            return;
+        }
+
+        list.innerHTML = '';
+        const counter = document.createElement('div');
+        counter.style.cssText = 'padding:8px 16px;font-size:12px;color:var(--text-secondary);border-bottom:1px solid var(--light-border)';
+        counter.textContent = data.length + ' personne' + (data.length > 1 ? 's' : '') + ' avec dispos envoyées';
+        list.appendChild(counter);
+
+        data.forEach(staff => {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--light-border)';
+
+            const dot = '<span style="width:10px;height:10px;border-radius:50%;background:' + escapeHtml(staff.color) + ';flex-shrink:0;display:inline-block"></span>';
+            const name = '<span style="flex:1;font-size:13px;font-weight:600;color:var(--text-primary)">' + escapeHtml(staff.name) + '</span>';
+            const countBadge = '<span style="font-size:11px;color:var(--text-secondary);background:var(--light-bg);border:1px solid var(--light-border);border-radius:10px;padding:2px 8px;flex-shrink:0">' + staff.count + ' dispo' + (staff.count > 1 ? 's' : '') + '</span>';
+
+            const btnId = 'modify-btn-' + staff.id;
+            const btnLabel = staff.reopened ? '🔒 Rouvert' : '🔓 Rouvrir';
+            const btnDisabled = staff.reopened ? 'disabled' : '';
+            const btnStyle = staff.reopened
+                ? 'background:none;border:1px solid var(--light-border);border-radius:6px;cursor:default;padding:3px 8px;color:var(--text-secondary);font-size:11px;flex-shrink:0;white-space:nowrap;opacity:0.5'
+                : 'background:none;border:1px solid var(--accent);border-radius:6px;cursor:pointer;padding:3px 8px;color:var(--accent);font-size:11px;flex-shrink:0;white-space:nowrap';
+
+            const btnHtml = '<button id="' + btnId + '" type="button" ' + btnDisabled + ' style="' + btnStyle + '">' + btnLabel + '</button>';
+            row.innerHTML = dot + name + countBadge + btnHtml;
+            list.appendChild(row);
+
+            if (staff.reopened) return;
+
+            const btn = row.querySelector('#' + btnId);
+            let confirming = false;
+            let timer = null;
+            btn.addEventListener('click', async () => {
+                if (!confirming) {
+                    confirming = true;
+                    btn.textContent = '⚠️ Confirmer suppression';
+                    btn.style.background = '#ef4444';
+                    btn.style.color = 'white';
+                    btn.style.borderColor = '#ef4444';
+                    timer = setTimeout(() => {
+                        confirming = false;
+                        btn.textContent = '🔓 Rouvrir';
+                        btn.style.background = 'none';
+                        btn.style.color = 'var(--accent)';
+                        btn.style.borderColor = 'var(--accent)';
+                    }, 4000);
+                    return;
+                }
+                clearTimeout(timer);
+                btn.disabled = true;
+                btn.textContent = 'Suppression…';
+                try {
+                    const r = await fetch('/api/dispos/reopen-for-correction', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ staff_id: staff.id, from, to }),
+                    });
+                    const d = await r.json();
+                    if (!r.ok) throw new Error(d.error);
+                    btn.textContent = '🔒 Rouvert';
+                    btn.style.background = 'none';
+                    btn.style.color = 'var(--text-secondary)';
+                    btn.style.borderColor = 'var(--light-border)';
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'default';
+                    const countEl = row.querySelector('span[style*="border-radius:10px"]');
+                    if (countEl) countEl.textContent = '0 dispo';
+                    if (typeof showToast === 'function') showToast('Dispos supprimées, ' + staff.name + ' peut resoumettre');
+                } catch (e) {
+                    btn.disabled = false;
+                    btn.textContent = '🔓 Rouvrir';
+                    btn.style.background = 'none';
+                    btn.style.color = 'var(--accent)';
+                    btn.style.borderColor = 'var(--accent)';
+                    if (typeof showToast === 'function') showToast('Erreur : ' + (e.message || 'inconnue'));
+                }
+            });
+        });
+    } catch (e) {
+        list.innerHTML = '<div style="padding:16px;text-align:center;color:#e74c3c;font-size:13px">' + escapeHtml(e.message || 'Erreur') + '</div>';
+    }
+}
+
 function switchDisposTab(tab) {
     const isNotes    = tab === 'notes';
     const isReassign = tab === 'reassign';
     const isReminder = tab === 'reminder';
-    const isList     = !isNotes && !isReassign && !isReminder;
+    const isModify   = tab === 'modify';
+    const isList     = !isNotes && !isReassign && !isReminder && !isModify;
 
     document.getElementById('dispos-tab-list').style.display  = isList ? '' : 'none';
     document.getElementById('dispos-tab-notes').style.display = isNotes ? '' : 'none';
@@ -4937,11 +5050,14 @@ function switchDisposTab(tab) {
     if (tabReassign) tabReassign.style.display = isReassign ? '' : 'none';
     const tabReminder = document.getElementById('dispos-tab-reminder');
     if (tabReminder) tabReminder.style.display = isReminder ? '' : 'none';
+    const tabModify = document.getElementById('dispos-tab-modify');
+    if (tabModify) tabModify.style.display = isModify ? '' : 'none';
 
     const btnList     = document.getElementById('dispos-tab-btn-list');
     const btnNotes    = document.getElementById('dispos-tab-btn-notes');
     const btnReassign = document.getElementById('dispos-tab-btn-reassign');
     const btnReminder = document.getElementById('dispos-tab-btn-reminder');
+    const btnModify   = document.getElementById('dispos-tab-btn-modify');
     if (btnList) {
         btnList.style.borderBottomColor = isList ? 'var(--accent)' : 'transparent';
         btnList.style.color             = isList ? 'var(--accent)' : 'var(--text-secondary)';
@@ -4962,6 +5078,11 @@ function switchDisposTab(tab) {
         btnReminder.style.color             = isReminder ? 'var(--accent)' : 'var(--text-secondary)';
         btnReminder.style.fontWeight        = isReminder ? '600' : '500';
     }
+    if (btnModify) {
+        btnModify.style.borderBottomColor = isModify ? 'var(--accent)' : 'transparent';
+        btnModify.style.color             = isModify ? 'var(--accent)' : 'var(--text-secondary)';
+        btnModify.style.fontWeight        = isModify ? '600' : '500';
+    }
     if (isNotes) {
         staffNotesWeekStart = getMondayOf(addDays(new Date(), 7));
         const srch = document.getElementById('staff-notes-search');
@@ -4971,6 +5092,7 @@ function switchDisposTab(tab) {
     }
     if (isReassign) loadNonAffectees();
     if (isReminder) loadReminderTab();
+    if (isModify)   loadModifyTab();
 }
 
 async function openDisposPanel() {
