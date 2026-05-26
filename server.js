@@ -2036,19 +2036,39 @@ app.get('/api/dispo-settings', checkDB, requireAuth, async (req, res) => {
             _pad(effectiveDeadline.getMinutes()) + ':' +
             _pad(effectiveDeadline.getSeconds());
 
+        const forceOpenStaff = Array.isArray(settings.force_open_staff) ? settings.force_open_staff : [];
+        const staffForceOpen = staffId ? forceOpenStaff.includes(staffId) : false;
         res.json({
             open: settings.open,
             message: settings.message,
             deadline: deadlineLocalIso,
             deadlinePassed: effectiveDeadlinePassed,
-            canSubmit: staffCanSubmit && settings.open && (!effectiveDeadlinePassed || forceOpen),
+            canSubmit: staffCanSubmit && settings.open && (!effectiveDeadlinePassed || forceOpen || staffForceOpen),
             staffCanSubmit,
             force_open: forceOpen,
+            force_open_staff: forceOpenStaff,
             custom_deadline: customDeadline,
             open_day: settings.open_day ?? null,
             rest_days: staffDoc ? (staffDoc.rest_days || []) : [],
         });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+app.patch('/api/dispo-settings/force-open-staff', checkDB, requirePatron, async (req, res) => {
+    const { staff_id, action } = req.body;
+    if (!staff_id || !['add', 'remove'].includes(action))
+        return res.status(400).json({ error: 'staff_id et action (add|remove) requis' });
+    try {
+        const op = action === 'add'
+            ? { $addToSet: { force_open_staff: staff_id } }
+            : { $pull:     { force_open_staff: staff_id } };
+        await db.collection('settings').updateOne(
+            { key: 'dispo' },
+            op,
+            { upsert: true }
+        );
+        res.json({ message: 'OK' });
+    } catch (e) { console.error('[PATCH /api/dispo-settings/force-open-staff]', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.patch('/api/dispo-settings', checkDB, requirePatron, async (req, res) => {
@@ -2213,7 +2233,9 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
     const now = new Date();
     if (!settings.open) return res.status(403).json({ error: 'La saisie des disponibilités est fermée.' });
     const effectiveDeadline = computeEffectiveDeadline(settings.custom_deadline || null, now);
-    if (!settings.force_open && now > effectiveDeadline)
+    const forceOpenStaff = Array.isArray(settings.force_open_staff) ? settings.force_open_staff : [];
+    const staffForceOpen = forceOpenStaff.includes(staffId);
+    if (!settings.force_open && !staffForceOpen && now > effectiveDeadline)
         return res.status(403).json({ error: 'La deadline est passée.' });
     const { dispos } = req.body;
     if (!Array.isArray(dispos) || dispos.length === 0) return res.status(400).json({ error: 'Aucune disponibilité fournie' });
@@ -2235,6 +2257,12 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
         if (inserted === 0) return res.status(409).json({ error: 'Des disponibilités ont déjà été soumises pour cette période.' });
         res.status(201).json({ message: inserted + ' disponibilité(s) enregistrée(s)' });
         touchLastUpdated();
+        if (staffForceOpen) {
+            db.collection('settings').updateOne(
+                { key: 'dispo' },
+                { $pull: { force_open_staff: staffId } }
+            ).catch(e => console.error('[force_open_staff cleanup]', e));
+        }
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 

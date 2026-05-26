@@ -4895,7 +4895,21 @@ async function loadReminderTab() {
                 '<input type="checkbox" id="' + cbId + '" style="width:15px;height:15px;accent-color:var(--success);cursor:pointer">' +
                 '<span style="font-size:11px;color:var(--text-secondary)">rappelé</span></label>';
 
-            row.innerHTML = dot + name + phoneHtml + cbHtml;
+            const reopenId = 'reopen-btn-' + staff.id;
+            const reopenHtml =
+                '<button id="' + reopenId + '" ' +
+                'style="background:none;border:1px solid var(--accent);border-radius:6px;cursor:pointer;' +
+                'padding:3px 8px;color:var(--accent);font-size:11px;flex-shrink:0;white-space:nowrap" ' +
+                'onclick="(async()=>{' +
+                    'this.disabled=true;this.textContent=\'🔒 Rouvert\';' +
+                    'this.style.opacity=\'0.5\';this.style.cursor=\'default\';' +
+                    'await fetch(\'/api/dispo-settings/force-open-staff\',' +
+                    '{method:\'PATCH\',credentials:\'include\',' +
+                    'headers:{\'Content-Type\':\'application/json\'},' +
+                    'body:JSON.stringify({staff_id:\'' + escapeHtml(staff.id) + '\',action:\'add\'})})' +
+                '})()">🔓 Rouvrir</button>';
+
+            row.innerHTML = dot + name + phoneHtml + cbHtml + reopenHtml;
 
             // Barrer le nom quand coché
             row.querySelector('#' + cbId).addEventListener('change', function() {
