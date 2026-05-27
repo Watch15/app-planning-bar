@@ -765,7 +765,7 @@ let allStaff = [];
 let allEstablishments = [];
 let currentUser = null;
 let _statsPeriod = 'week';            // 'week' ou 'month'
-let _lastWeekData = null;             // { shifts, prevTotalH } pour switch instantané
+let _lastWeekData = null;             // { shifts } pour switch instantané
 let _lastMonthData = null;            // idem pour le mois
 
 async function init() {
@@ -1007,16 +1007,7 @@ async function loadPlanning(from, to, user) {
     const list = document.getElementById('days-list');
 
     try {
-        // Semaine précédente pour la comparaison heures
-        const [fy, fm, fd] = from.split('-').map(Number);
-        const prevMon  = addDays(new Date(fy, fm - 1, fd, 0, 0, 0, 0), -7);
-        const prevFrom = toDateStr(prevMon);
-        const prevTo   = toDateStr(addDays(prevMon, 6));
-
-        const [res, prevRes] = await Promise.all([
-            fetch('/api/my-shifts?from=' + from + '&to=' + to, { credentials: 'include' }),
-            fetch('/api/my-shifts?from=' + prevFrom + '&to=' + prevTo, { credentials: 'include' }).catch(() => null),
-        ]);
+        const res = await fetch('/api/my-shifts?from=' + from + '&to=' + to, { credentials: 'include' });
 
         // Vérifier que la réponse est bien du JSON
         const contentType = res.headers.get('content-type') || '';
@@ -1045,26 +1036,12 @@ async function loadPlanning(from, to, user) {
             throw new Error(data.error || 'Erreur inconnue');
         }
 
-        // Calculer le total de la semaine précédente
-        let prevTotalH = null;
-        if (prevRes && prevRes.ok) {
-            try {
-                const prevData   = await prevRes.json();
-                const prevShifts = (prevData.shifts || []).filter(s => !s.is_joker && s.staff_id !== '__joker__');
-                prevTotalH = prevShifts.reduce((a, s) => {
-                    const start = s.real_start != null ? s.real_start : s.start_time;
-                    const end   = s.real_end   != null ? s.real_end   : s.end_time;
-                    return a + (end - start);
-                }, 0);
-            } catch { /* silencieux */ }
-        }
-
         const myShifts = data.shifts.filter(s => !s.is_joker && s.staff_id !== '__joker__');
         const jokers   = data.shifts.filter(s =>  s.is_joker || s.staff_id === '__joker__');
         // await loadMyPendingSwaps(); // F-05 désactivé
-        _lastWeekData = { shifts: myShifts, prevTotalH };
+        _lastWeekData = { shifts: myShifts };
         if (_statsPeriod === 'week') {
-            renderStats(myShifts, prevTotalH);
+            renderStats(myShifts);
         } else {
             // L'utilisateur a basculé sur Mois — on l'a déjà rendu, rien à faire ici
             loadMonthRecap();
@@ -1079,12 +1056,12 @@ async function loadPlanning(from, to, user) {
 
 // ── Stats semaine ─────────────────────────────────────────────────────────────
 
-function renderStats(shifts, prevTotalH) {
+function renderStats(shifts) {
     const el = document.getElementById('week-stats');
-    if (el) renderStatsInto(shifts, el, prevTotalH);
+    if (el) renderStatsInto(shifts, el);
 }
 
-function renderStatsInto(shifts, el, prevTotalH) {
+function renderStatsInto(shifts, el) {
     const nbShifts = shifts.length;
     // Utiliser les heures réelles si disponibles, sinon planifiées
     const totalH = shifts.reduce((a, s) => {
@@ -1094,24 +1071,11 @@ function renderStatsInto(shifts, el, prevTotalH) {
     }, 0);
     const nbJours = new Set(shifts.map(s => s.date)).size;
 
-    // Delta vs semaine précédente
-    let deltaHtml = '';
-    if (prevTotalH != null) {
-        const diff = totalH - prevTotalH;
-        if (Math.abs(diff) < 0.05) {
-            deltaHtml = '<div class="stat-delta even">= prec.</div>';
-        } else {
-            const sign = diff > 0 ? '+' : '−';
-            const cls  = diff > 0 ? 'up' : 'down';
-            deltaHtml = '<div class="stat-delta ' + cls + '">' + sign + fmtDuration(Math.abs(diff)) + ' vs prec.</div>';
-        }
-    }
-
     el.style.display = '';
     el.innerHTML =
         statCard(nbJours,             'Jours',  '') +
         statCard(nbShifts,            'Shifts', '') +
-        statCard(fmtDuration(totalH), 'Heures', deltaHtml);
+        statCard(fmtDuration(totalH), 'Heures', '');
 
     // Répartition par établissement (si > 1)
     const prev = el.nextElementSibling;
@@ -1168,7 +1132,7 @@ function applyStatsPeriod() {
     const sub = document.getElementById('greeting-sub');
     if (_statsPeriod === 'week') {
         if (sub) sub.textContent = 'Voici ton planning de la semaine';
-        if (_lastWeekData) renderStats(_lastWeekData.shifts, _lastWeekData.prevTotalH);
+        if (_lastWeekData) renderStats(_lastWeekData.shifts);
         return;
     }
     const now = new Date();
@@ -1555,42 +1519,22 @@ async function loadHistoriqueWeek() {
     document.getElementById('hist-btn-prev').addEventListener('click', () => { _histOffset++; loadHistoriqueWeek(); });
     document.getElementById('hist-btn-next').addEventListener('click', () => { _histOffset--; loadHistoriqueWeek(); });
 
-    if (_histCache[weekKey]) { renderHistoriqueWeek(wrap, _histCache[weekKey].data, _histCache[weekKey].prevTotalH); return; }
+    if (_histCache[weekKey]) { renderHistoriqueWeek(wrap, _histCache[weekKey].data); return; }
 
     wrap.innerHTML = '<div class="hist-loading">Chargement…</div>';
 
-    // Semaine antérieure pour le delta
-    const prevMonday = addDays(weekMonday, -7);
-    const prevSunday = addDays(prevMonday, 6);
-
     try {
-        const [r, prevR] = await Promise.all([
-            fetch('/api/my-shifts?from=' + weekKey + '&to=' + toDateStr(weekSunday), { credentials: 'include' }),
-            fetch('/api/my-shifts?from=' + toDateStr(prevMonday) + '&to=' + toDateStr(prevSunday), { credentials: 'include' }).catch(() => null),
-        ]);
+        const r = await fetch('/api/my-shifts?from=' + weekKey + '&to=' + toDateStr(weekSunday), { credentials: 'include' });
         const data = r.ok ? await r.json() : { shifts: [] };
 
-        let prevTotalH = null;
-        if (prevR && prevR.ok) {
-            try {
-                const pData   = await prevR.json();
-                const pShifts = (pData.shifts || []).filter(s => !s.is_joker && s.staff_id !== '__joker__');
-                prevTotalH = pShifts.reduce((a, s) => {
-                    const start = s.real_start != null ? s.real_start : s.start_time;
-                    const end   = s.real_end   != null ? s.real_end   : s.end_time;
-                    return a + (end - start);
-                }, 0);
-            } catch { /* silencieux */ }
-        }
-
-        _histCache[weekKey] = { data, prevTotalH };
-        renderHistoriqueWeek(wrap, data, prevTotalH);
+        _histCache[weekKey] = { data };
+        renderHistoriqueWeek(wrap, data);
     } catch {
         wrap.innerHTML = '<div class="hist-loading">Erreur de chargement.</div>';
     }
 }
 
-function buildHistStatsHtml(shifts, prevTotalH) {
+function buildHistStatsHtml(shifts) {
     const nbShifts = shifts.length;
     const totalH = shifts.reduce((a, s) => {
         const start = (s.real_start != null) ? s.real_start : s.start_time;
@@ -1599,22 +1543,10 @@ function buildHistStatsHtml(shifts, prevTotalH) {
     }, 0);
     const nbJours = new Set(shifts.map(s => s.date)).size;
 
-    let deltaHtml = '';
-    if (prevTotalH != null) {
-        const diff = totalH - prevTotalH;
-        if (Math.abs(diff) < 0.05) {
-            deltaHtml = '<div class="stat-delta even">= sem. préc.</div>';
-        } else {
-            const sign = diff > 0 ? '+' : '−';
-            const cls  = diff > 0 ? 'up' : 'down';
-            deltaHtml = '<div class="stat-delta ' + cls + '">' + sign + fmtDuration(Math.abs(diff)) + ' vs sem. préc.</div>';
-        }
-    }
-
     let html = '<div class="week-stats" style="padding:12px 0 4px">' +
         statCard(nbJours,             'Jours',  '') +
         statCard(nbShifts,            'Shifts', '') +
-        statCard(fmtDuration(totalH), 'Heures', deltaHtml) +
+        statCard(fmtDuration(totalH), 'Heures', '') +
     '</div>';
 
     // Répartition par établissement (si > 1)
@@ -1641,13 +1573,13 @@ function buildHistStatsHtml(shifts, prevTotalH) {
     return html;
 }
 
-function renderHistoriqueWeek(wrap, data, prevTotalH) {
+function renderHistoriqueWeek(wrap, data) {
     const shifts = (data.shifts || [])
         .filter(s => !s.is_joker && s.staff_id !== '__joker__')
         .slice().sort((a, b) =>
             a.date < b.date ? -1 : a.date > b.date ? 1 : (a.start_time || 0) - (b.start_time || 0)
         );
-    wrap.innerHTML = buildHistStatsHtml(shifts, prevTotalH);
+    wrap.innerHTML = buildHistStatsHtml(shifts);
 
     if (shifts.length === 0) {
         wrap.insertAdjacentHTML('beforeend', '<div class="hist-empty">Aucun shift cette semaine.</div>');
