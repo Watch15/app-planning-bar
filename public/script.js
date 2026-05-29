@@ -5246,7 +5246,7 @@ async function loadDisposList() {
                 shownMine = true;
                 const sec = document.createElement('div');
                 sec.style.cssText = 'margin:14px 16px 8px;padding:9px 14px;background:#fff7e6;border:1.5px solid var(--warning,#f59e0b);border-radius:10px;font-size:15px;font-weight:800;color:#b45309;display:flex;align-items:center;gap:8px';
-                sec.innerHTML = '<span style="font-size:17px;color:var(--warning,#f59e0b)">★</span> Mon staff';
+                sec.innerHTML = '<span style="font-size:17px;color:var(--warning,#f59e0b)">★</span> Staff de mon établissement';
                 list.appendChild(sec);
             }
             if (dirEstabs.length && !mine && shownMine && !shownOthers) {
