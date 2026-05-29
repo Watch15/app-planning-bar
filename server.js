@@ -3114,17 +3114,22 @@ app.get('/api/recap-mensuel', checkDB, requirePatron, async (req, res) => {
                 return a + (end - start);
             }, 0);
 
-            // Ventilation des heures planifiées par établissement
+            // Ventilation des heures par établissement : planifiées ET réelles
             const estabHours = {};
             entry.shifts.forEach(s => {
                 const eid = String(s.establishment_id || '');
-                if (!estabHours[eid]) estabHours[eid] = 0;
-                estabHours[eid] += (s.end_time - s.start_time);
+                if (!estabHours[eid]) estabHours[eid] = { planned: 0, real: 0, hasReal: false };
+                estabHours[eid].planned += (s.end_time - s.start_time);
+                if (s.real_start != null && s.real_end != null) {
+                    estabHours[eid].real += (s.real_end - s.real_start);
+                    estabHours[eid].hasReal = true;
+                }
             });
             const by_establishment = Object.entries(estabHours).map(([eid, h]) => ({
                 establishment_id:   eid,
                 establishment_name: estabMap[eid] ? estabMap[eid].name : '—',
-                planned_hours:      Math.round(h * 100) / 100,
+                planned_hours:      Math.round(h.planned * 100) / 100,
+                real_hours:         h.hasReal ? Math.round(h.real * 100) / 100 : null,
             })).sort((a, b) => a.establishment_name.localeCompare(b.establishment_name));
 
             const sm = staffMap[entry.staff_id];

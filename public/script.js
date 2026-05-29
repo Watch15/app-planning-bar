@@ -4280,19 +4280,39 @@ async function loadRecapData() {
         }
 
         let tableHTML = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px;min-width:560px">';
-        tableHTML += '<thead><tr style="background:#f8f8f8;border-bottom:2px solid #e0e0e0">' +
-            '<th style="text-align:left;padding:8px 10px">Nom</th>';
-        estabCols.forEach(e => {
-            tableHTML += '<th style="text-align:center;padding:8px 6px;white-space:nowrap" title="' + escapeHtml(e.name) + '">' + escapeHtml(e.name) + '</th>';
-        });
-        tableHTML +=
-            '<th style="text-align:center;padding:8px 6px">Jours</th>' +
-            '<th style="text-align:center;padding:8px 6px">H. planifiées</th>' +
-            '<th style="text-align:center;padding:8px 6px">H. réelles</th>' +
-            '<th style="text-align:center;padding:8px 6px">Écart</th>' +
-            '</tr></thead><tbody>';
+        tableHTML += '<thead>';
+        if (estabCols.length) {
+            // En-tête groupé : un bloc "détail planifié" + un bloc "détail réel"
+            tableHTML += '<tr style="background:#f8f8f8">' +
+                '<th rowspan="2" style="text-align:left;padding:8px 10px;vertical-align:bottom;border-bottom:2px solid #e0e0e0">Nom</th>' +
+                '<th colspan="' + estabCols.length + '" style="text-align:center;padding:6px;border-bottom:1px solid #e0e0e0;border-left:2px solid #e0e0e0;color:#555">Détail planifié</th>' +
+                '<th colspan="' + estabCols.length + '" style="text-align:center;padding:6px;border-bottom:1px solid #e0e0e0;border-left:2px solid #e0e0e0;color:#2980b9">Détail réel</th>' +
+                '<th rowspan="2" style="text-align:center;padding:8px 6px;vertical-align:bottom;border-bottom:2px solid #e0e0e0;border-left:2px solid #e0e0e0">Jours</th>' +
+                '<th rowspan="2" style="text-align:center;padding:8px 6px;vertical-align:bottom;border-bottom:2px solid #e0e0e0">H. planifiées</th>' +
+                '<th rowspan="2" style="text-align:center;padding:8px 6px;vertical-align:bottom;border-bottom:2px solid #e0e0e0">H. réelles</th>' +
+                '<th rowspan="2" style="text-align:center;padding:8px 6px;vertical-align:bottom;border-bottom:2px solid #e0e0e0">Écart</th>' +
+                '</tr>';
+            tableHTML += '<tr style="background:#f8f8f8;border-bottom:2px solid #e0e0e0">';
+            estabCols.forEach((e, i) => {
+                tableHTML += '<th style="text-align:center;padding:8px 6px;white-space:nowrap' + (i === 0 ? ';border-left:2px solid #e0e0e0' : '') + '" title="' + escapeHtml(e.name) + '">' + escapeHtml(e.name) + '</th>';
+            });
+            estabCols.forEach((e, i) => {
+                tableHTML += '<th style="text-align:center;padding:8px 6px;white-space:nowrap;color:#2980b9' + (i === 0 ? ';border-left:2px solid #e0e0e0' : '') + '" title="' + escapeHtml(e.name) + '">' + escapeHtml(e.name) + '</th>';
+            });
+            tableHTML += '</tr>';
+        } else {
+            tableHTML += '<tr style="background:#f8f8f8;border-bottom:2px solid #e0e0e0">' +
+                '<th style="text-align:left;padding:8px 10px">Nom</th>' +
+                '<th style="text-align:center;padding:8px 6px">Jours</th>' +
+                '<th style="text-align:center;padding:8px 6px">H. planifiées</th>' +
+                '<th style="text-align:center;padding:8px 6px">H. réelles</th>' +
+                '<th style="text-align:center;padding:8px 6px">Écart</th>' +
+                '</tr>';
+        }
+        tableHTML += '</thead><tbody>';
 
-        const estabTotals = estabCols.map(() => 0);
+        const estabPlannedTotals = estabCols.map(() => 0);
+        const estabRealTotals    = estabCols.map(() => 0);
 
         data.forEach(s => {
             totalPlanned += s.planned_hours;
@@ -4307,9 +4327,13 @@ async function loadRecapData() {
                 ? fmtH(s.real_hours) + (s.partial ? ' <span class="badge badge--warning" title="Certains shifts non pointés">partiel</span>' : '')
                 : '—';
 
-            // Ventilation par établissement (map pour lookup rapide)
-            const byEstabMap = {};
-            (s.by_establishment || []).forEach(b => { byEstabMap[b.establishment_id] = b.planned_hours; });
+            // Ventilation par établissement (maps pour lookup rapide)
+            const byEstabPlanned = {};
+            const byEstabReal    = {};
+            (s.by_establishment || []).forEach(b => {
+                byEstabPlanned[b.establishment_id] = b.planned_hours;
+                byEstabReal[b.establishment_id]    = b.real_hours;
+            });
 
             tableHTML += '<tr style="border-bottom:1px solid #f0f0f0">' +
                 '<td style="padding:8px 10px;display:flex;align-items:center;gap:6px">' +
@@ -4317,12 +4341,17 @@ async function loadRecapData() {
                     '<span style="font-weight:600">' + escapeHtml(s.staff_name) + '</span>' +
                 '</td>';
             estabCols.forEach((e, i) => {
-                const h = byEstabMap[e.id];
-                if (h != null) estabTotals[i] += h;
-                tableHTML += '<td style="text-align:center;padding:8px 6px">' + (h != null ? fmtH(h) : '') + '</td>';
+                const h = byEstabPlanned[e.id];
+                if (h != null) estabPlannedTotals[i] += h;
+                tableHTML += '<td style="text-align:center;padding:8px 6px' + (i === 0 ? ';border-left:2px solid #e0e0e0' : '') + '">' + (h != null ? fmtH(h) : '') + '</td>';
+            });
+            estabCols.forEach((e, i) => {
+                const h = byEstabReal[e.id];
+                if (h != null) estabRealTotals[i] += h;
+                tableHTML += '<td style="text-align:center;padding:8px 6px;color:#2980b9' + (i === 0 ? ';border-left:2px solid #e0e0e0' : '') + '">' + (h != null ? fmtH(h) : '') + '</td>';
             });
             tableHTML +=
-                '<td style="text-align:center;padding:8px 6px">' + s.days + '</td>' +
+                '<td style="text-align:center;padding:8px 6px;border-left:2px solid #e0e0e0">' + s.days + '</td>' +
                 '<td style="text-align:center;padding:8px 6px">' + fmtH(s.planned_hours) + '</td>' +
                 '<td style="text-align:center;padding:8px 6px">' + realStr + '</td>' +
                 '<td style="text-align:center;padding:8px 6px">' + ecartStr + '</td>' +
@@ -4337,11 +4366,14 @@ async function loadRecapData() {
 
         tableHTML += '<tr style="border-top:2px solid #e0e0e0;font-weight:700;background:#f8f8f8">' +
             '<td style="padding:8px 10px">Total (' + data.length + ' staff)</td>';
-        estabTotals.forEach(t => {
-            tableHTML += '<td style="text-align:center;padding:8px 6px">' + (t > 0 ? fmtH(t) : '—') + '</td>';
+        estabPlannedTotals.forEach((t, i) => {
+            tableHTML += '<td style="text-align:center;padding:8px 6px' + (i === 0 ? ';border-left:2px solid #e0e0e0' : '') + '">' + (t > 0 ? fmtH(t) : '—') + '</td>';
+        });
+        estabRealTotals.forEach((t, i) => {
+            tableHTML += '<td style="text-align:center;padding:8px 6px;color:#2980b9' + (i === 0 ? ';border-left:2px solid #e0e0e0' : '') + '">' + (t > 0 ? fmtH(t) : '—') + '</td>';
         });
         tableHTML +=
-            '<td style="text-align:center;padding:8px 6px">' + totalDays + '</td>' +
+            '<td style="text-align:center;padding:8px 6px;border-left:2px solid #e0e0e0">' + totalDays + '</td>' +
             '<td style="text-align:center;padding:8px 6px">' + fmtH(totalPlanned) + '</td>' +
             '<td style="text-align:center;padding:8px 6px">' + (hasAnyReal ? fmtH(totalReal) : '—') + '</td>' +
             '<td style="text-align:center;padding:8px 6px">' + totalEcartStr + '</td>' +
@@ -4389,7 +4421,8 @@ function exportRecapXlsx() {
     }
 
     const header = ['Nom']
-        .concat(estabCols.map(e => e.name))
+        .concat(estabCols.map(e => 'Plan. ' + e.name))
+        .concat(estabCols.map(e => 'R\u00E9el ' + e.name))
         .concat(['Jours', 'Heures planifi\u00E9es', 'Heures r\u00E9elles', '\u00C9cart', 'Partiel']);
 
     const rows = [
@@ -4399,20 +4432,30 @@ function exportRecapXlsx() {
     ];
 
     let totalPlanned = 0, totalReal = 0, totalDays = 0, hasAnyReal = false;
-    const estabTotals = estabCols.map(() => 0);
+    const estabPlannedTotals = estabCols.map(() => 0);
+    const estabRealTotals    = estabCols.map(() => 0);
 
     _recapLastData.forEach(s => {
         totalPlanned += s.planned_hours;
         totalDays    += s.days;
         if (s.real_hours != null) { totalReal += s.real_hours; hasAnyReal = true; }
 
-        const byEstabMap = {};
-        (s.by_establishment || []).forEach(b => { byEstabMap[b.establishment_id] = b.planned_hours; });
+        const byEstabPlanned = {};
+        const byEstabReal    = {};
+        (s.by_establishment || []).forEach(b => {
+            byEstabPlanned[b.establishment_id] = b.planned_hours;
+            byEstabReal[b.establishment_id]    = b.real_hours;
+        });
 
         const row = [s.staff_name];
         estabCols.forEach((e, i) => {
-            const h = byEstabMap[e.id];
-            if (h != null) estabTotals[i] += h;
+            const h = byEstabPlanned[e.id];
+            if (h != null) estabPlannedTotals[i] += h;
+            row.push(h != null ? fmtH(h) : '');
+        });
+        estabCols.forEach((e, i) => {
+            const h = byEstabReal[e.id];
+            if (h != null) estabRealTotals[i] += h;
             row.push(h != null ? fmtH(h) : '');
         });
         row.push(
@@ -4427,7 +4470,8 @@ function exportRecapXlsx() {
 
     const totalEcart = hasAnyReal ? totalReal - totalPlanned : null;
     const totalRow = ['Total (' + _recapLastData.length + ' staff)'];
-    estabTotals.forEach(t => totalRow.push(t > 0 ? fmtH(t) : ''));
+    estabPlannedTotals.forEach(t => totalRow.push(t > 0 ? fmtH(t) : ''));
+    estabRealTotals.forEach(t => totalRow.push(t > 0 ? fmtH(t) : ''));
     totalRow.push(
         totalDays,
         fmtH(totalPlanned),
