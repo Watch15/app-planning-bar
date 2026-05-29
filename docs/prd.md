@@ -115,13 +115,14 @@ Le patron peut choisir, shift par shift, d'**ouvrir un Joker aux candidatures du
 ### 3.8 Disponibilités (côté Staff — `planning.html`)
 - Le staff envoie ses disponibilités pour la semaine suivante ; deadline automatique vendredi 13h00
 - Par jour : **Soir** (16h→2h), **Midi** (10h→17h), **Personnalisé**, **Indisponible**
+- Les jours marqués **Indisponible** sont enregistrés (dispos `type: off`, sans horaire) : un staff indisponible **toute la semaine** peut quand même valider son envoi pour le signaler au responsable, au lieu d'être bloqué. Seuls les jours laissés vides (non renseignés) sont ignorés
 - Note optionnelle par jour
 - Bouton fixe « Envoyer mes disponibilités » en bas d'écran
 - Un staff rouvert individuellement par le patron (`force_open_staff`, onglets « Sans dispo » / « Modifier ») peut soumettre malgré la deadline dépassée ; il est retiré de la liste de réouverture dès sa soumission réussie
 
 ### 3.9 Disponibilités (côté Patron)
 La modale **Disponibilités** est organisée en 5 onglets accessibles depuis le header :
-- **📋 En attente** — dispos envoyées par le staff à valider / rejeter (clic = création shift, choix de l'établissement)
+- **📋 En attente** — dispos envoyées par le staff à valider / rejeter (clic = création shift, choix de l'établissement). Les jours **Indisponible** apparaissent en pastille rouge « Indispo » (sans horaire), acquittables d'un clic (aucun shift créé). **Pour un directeur** : les staff rattachés à ses établissements sont remontés en tête sous un encadré orange « ★ Staff de mon établissement » (étoile + fond orange sur leurs cartes), le reste du staff suit sous « Autres »
 - **🔄 À réaffecter** — dispos acceptées mais sans shift correspondant à la date (cross-établissement : si le staff travaille ailleurs ce jour-là, la dispo est considérée comme couverte et n'apparaît pas)
 - **🔔 Sans dispo** — checklist des staff actifs avec login valide qui n'ont **pas** envoyé de dispo pour la semaine cible (toujours la semaine suivante, alignée avec `_disposWeekStart`). Bouton « 🔓 Rouvrir » par ligne pour autoriser un staff à soumettre malgré la deadline
 - **🔓 Modifier** — staff ayant **déjà** envoyé des dispos pour la semaine, avec compteur. Bouton « 🔓 Rouvrir » à 2 clics (confirmation) : supprime toutes ses dispos de la semaine (`POST /api/dispos/reopen-for-correction`) et l'ajoute à `force_open_staff` pour qu'il puisse resoumettre. Pour corriger un staff qui s'est trompé après avoir envoyé / été validé
@@ -145,7 +146,7 @@ Paramétrage global :
 - Stats : jours travaillés, shifts, total d'heures
 - **Toggle Semaine / Mois** au-dessus des stats (défaut « Semaine ») :
   - Mode **Semaine** : jours / shifts / total d'heures, répartition par établissement si > 1. *(Le delta « vs semaine précédente » a été retiré à la demande utilisateur)*
-  - Mode **Mois** : récap du mois calendaire en cours (frontière à minuit), delta vs mois précédent, répartition par établissement
+  - Mode **Mois** : récap du mois calendaire en cours (frontière à minuit), répartition par établissement *(le delta « vs mois précédent » a été retiré — voir D-62, plus aucun delta côté staff)*
   - Cache mémoire (`_lastWeekData` / `_lastMonthData`) — bascule instantanée sans re-fetch
 - Jours travaillés : bordure colorée, établissement, horaires, durée, collègues
 - Aujourd'hui : bordure violette
@@ -212,8 +213,8 @@ Page dédiée au patron / directeur pour suivre la masse salariale vs CA par soi
 Synthèse mensuelle des heures par membre du staff, accessible depuis le bouton « Récap » de la barre d'actions.
 
 - **Filtres** : sélecteur de mois (12 derniers + mois en cours) et sélecteur d'établissement (« Tous les établissements » par défaut)
-- **Colonnes par établissement** : quand « Tous » est sélectionné, le tableau insère une colonne par établissement entre **Nom** et `Jours/H. planifiées/H. réelles/Écart`, avec une ligne de total par établissement en bas. Cellule **vide** si le staff n'a pas travaillé dans cet établissement ce mois. Backend : `GET /api/recap-mensuel` retourne `by_establishment[]` par staff. Lookup établissement via le champ custom `establishments.id` (pas `_id`)
-- **Export Excel `.xlsx`** : bouton « 📊 Excel » télécharge `recap-YYYY-MM-<estab>.xlsx` (SheetJS, feuille « Récap YYYY-MM », largeurs auto, mêmes colonnes que la modale). Remplace l'ancien export CSV
+- **Détail par établissement (planifié + réel)** : quand « Tous » est sélectionné, le tableau insère **deux blocs de colonnes par établissement** sous un en-tête groupé — « Détail planifié » puis « Détail réel » (en bleu) — entre **Nom** et `Jours/H. planifiées/H. réelles/Écart`, avec une ligne de total par bloc. Cellule **vide** si pas d'heures dans cet établissement. Backend : `GET /api/recap-mensuel` retourne `by_establishment[]` par staff avec `planned_hours` **et** `real_hours` (somme des shifts pointés, `null` si aucun). Lookup établissement via le champ custom `establishments.id` (pas `_id`)
+- **Export Excel `.xlsx`** : bouton « 📊 Excel » télécharge `recap-YYYY-MM-<estab>.xlsx` (SheetJS, feuille « Récap YYYY-MM », largeurs auto, mêmes colonnes que la modale). Les colonnes par établissement y sont différenciées par préfixe `Plan. <estab>` / `Réel <estab>`. Remplace l'ancien export CSV
 - **Impression** : bouton « 🖨 Imprimer » conservé (impression navigateur)
 
 ---

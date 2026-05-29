@@ -14,7 +14,7 @@
 | `--accent` | `#6C63FF` | CTA principal, focus, today |
 | `--light-bg` | `#f4f5f8` | Fond pages principales |
 | `--light-card` | `#ffffff` | Cartes, modales |
-| `--success` | `#10b981` | Heures validées, delta + |
+| `--success` | `#10b981` | Heures validées, écarts positifs |
 | `--warning` | `#f59e0b` | Shifts extra, alertes |
 | `--danger` | `#ef4444` | Erreurs, jours vides |
 
@@ -58,12 +58,13 @@ Inter uniquement. Échelle : 11px (labels caps) → 13px (corps) → 14–15px (
 | ~~I-11~~ | ~~Modal-header pouvait scroller hors viewport → close button hors d'atteinte~~ | Haut | ✅ Done (D-49) — `.modal-header` `position:sticky;top:0` |
 | I-12 | ~74 styles inline avec couleurs en dur (`#fff8e1`, `#fde8e8`, `rgba(108,99,255,0.1)`) → maintenance fragmentée | Faible | 🟡 U-06 backlog — refactor lourd à reporter |
 | I-13 | `.resizer` timeline 16 px de large → difficile au doigt | Faible | 🟡 U-09 backlog — risque régression drag/snap |
+| ~~I-14~~ | ~~Dispos « En attente » : un directeur devait chercher ses propres staff dans une liste à plat~~ | Moyen | ✅ Done (D-65) — staff de ses établissements remontés sous l'encadré orange « ★ Staff de mon établissement » (étoile + fond `--warning`), reste sous « Autres » ; pastille rouge « Indispo » pour les jours `off` (D-63) |
 
 ### 2.4 planning.html (Staff)
 | # | Problème | Sévérité | Statut |
 |---|---|---|---|
 | P-01 | Collègues en pastilles sans nom au tap mobile | Moyen | |
-| ~~P-02~~ | ~~Delta heures uniquement textuel, pas de couleur sur mobile portrait~~ | Faible | ✅ Obsolète — delta hebdo « vs sem. préc. » retiré côté staff (D-61). Le delta mensuel subsiste mais hors scope mobile portrait |
+| ~~P-02~~ | ~~Delta heures uniquement textuel, pas de couleur sur mobile portrait~~ | Faible | ✅ Obsolète — **tous** les deltas « vs préc. » (hebdo ET mensuel) ont été retirés côté staff (D-61 + D-62) |
 | ~~P-03~~ | ~~Onglet ⏱ Pointage actif seulement le jour J — disparu le lendemain~~ | Haut | ✅ Done — date de référence = date active (cutoff_hour) |
 | ~~P-04~~ | ~~Bouton fixe "Envoyer" dispos couvre le dernier jour sur petits écrans~~ | Moyen | ✅ Done — spacer 96px + safe-area-inset-bottom |
 | P-05 | Pas de confirmation visuelle post-envoi dispos au-delà du toast | Faible | |
