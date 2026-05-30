@@ -123,7 +123,6 @@ let weekSummary      = {};                       // { "YYYY-MM-DD": nbShifts }
 let weekFullData     = {};                       // { "YYYY-MM-DD": [shifts...] }
 let currentView      = 'day';                    // 'day' | 'week'
 let currentSubView   = 'dashboard';              // 'dashboard' | 'agenda'
-let isMultiVenueMode = false;                    // directeur — vue consolidée multi-établissements
 
 let activeEl     = null;
 let activeAction = null;
@@ -507,13 +506,7 @@ function setupWeekNav() {
 function initViewTabs() {
     // Onglets Jour / Semaine
     document.querySelectorAll('.view-tab').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            // En multi-mode, la vue Jour exige un seul établissement —
-            // on quitte le multi-mode en activant le premier onglet venue.
-            if (isMultiVenueMode && btn.dataset.view === 'day') {
-                const firstVenueTab = document.querySelector('.venue-tab:not(.venue-tab-multi)');
-                if (firstVenueTab) { firstVenueTab.click(); return; }
-            }
+        btn.addEventListener('click', () => {
             currentView = btn.dataset.view;
             document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -571,15 +564,10 @@ function renderWeekLabel() {
 }
 
 async function refreshWeek() {
-    if (!currentVenueId && !isMultiVenueMode) return;
+    if (!currentVenueId) return;
     renderWeekLabel();
-    if (!isMultiVenueMode) await loadWeekSummary();
+    await loadWeekSummary();
     await loadWeekFullData();
-    if (isMultiVenueMode) {
-        // weekSummary normalement servi par /api/week/<venue> — en multi on le dérive
-        weekSummary = {};
-        Object.entries(weekFullData).forEach(([date, shifts]) => { weekSummary[date] = shifts.length; });
-    }
     // Construire currentShiftsWeek depuis weekFullData (déjà chargé, 0 fetch supplémentaire)
     currentShiftsWeek = Object.values(weekFullData).flat();
     renderSidebar(); // Mettre à jour l'ordre staff APRÈS que currentVenueId est à jour
@@ -598,10 +586,10 @@ async function loadWeekFullData() {
     const from = toDateStr(currentWeekStart);
     const to   = toDateStr(addDays(currentWeekStart, 6));
     try {
-        const url = isMultiVenueMode
-            ? `/api/week-full-multi?from=${from}&to=${to}`
-            : `/api/week-full/${currentVenueId}?from=${from}&to=${to}`;
-        const res = await fetch(url, { credentials: 'include' });
+        const res = await fetch(
+            `/api/week-full/${currentVenueId}?from=${from}&to=${to}`,
+            { credentials: 'include' }
+        );
         if (res.ok) {
             weekFullData = await res.json();
         } else {
@@ -1207,7 +1195,6 @@ function renderTabs(list) {
         btn.addEventListener('click', async () => {
             document.querySelectorAll('.venue-tab').forEach(t => t.classList.remove('active'));
             btn.classList.add('active');
-            isMultiVenueMode = false;
             currentVenueId = v.id;
             applyVenueHours(v.id);
             renderSidebar(); // Mettre à jour immédiatement l'ordre staff
@@ -1216,26 +1203,6 @@ function renderTabs(list) {
         });
         container.appendChild(btn);
     });
-
-    // Directeur avec ≥ 2 établissements : onglet consolidé « ★ Tous mes bars »
-    if (currentUser && currentUser.role === 'directeur' && list.length >= 2) {
-        const btn = document.createElement('button');
-        btn.className = 'venue-tab venue-tab-multi';
-        btn.innerHTML = '<span style="color:var(--warning,#f59e0b)">★</span> Tous mes bars';
-        btn.title = 'Tableau de bord consolidé sur tous tes établissements';
-        btn.addEventListener('click', async () => {
-            document.querySelectorAll('.venue-tab').forEach(t => t.classList.remove('active'));
-            btn.classList.add('active');
-            isMultiVenueMode = true;
-            // Forcer vue Semaine + sous-onglet Tableau de bord (vue Jour pas adaptée au multi)
-            currentView    = 'week';
-            currentSubView = 'dashboard';
-            document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === 'week'));
-            document.querySelectorAll('.week-sub-tab').forEach(t => t.classList.toggle('active', t.dataset.sub === 'dashboard'));
-            await refreshWeek();
-        });
-        container.appendChild(btn);
-    }
 }
 
 // ── Planning (réutilisé de la version précédente) ─────────────────────────────
@@ -2974,23 +2941,11 @@ function renderDashboard() {
                     const dispEnd   = shift.real_end   != null ? shift.real_end   : shift.end_time;
                     const hasReal   = shift.real_start != null && shift.real_end != null;
                     const textColor = shiftTextColor(shift);
-                    const estabName = isMultiVenueMode
-                        ? (allEstablishments.find(e => e.id === shift.establishment_id)?.name || '')
-                        : '';
-                    const estabHtml = estabName
-                        ? `<span class="dash-shift-estab" style="display:block;font-size:9px;font-weight:600;opacity:0.85;margin-top:1px">${escapeHtml(estabName)}</span>`
-                        : '';
-                    // En multi-mode, pas de drill-down via clic (la vue Jour exige un seul établissement)
-                    const clickAttr = isMultiVenueMode ? '' : `onclick="switchToDayView('${date}')"`;
-                    const cursorStyle = isMultiVenueMode ? ';cursor:default' : '';
-                    const titleText = isMultiVenueMode
-                        ? `${hasReal ? 'Réel — ' : 'Planifié — '}${estabName ? escapeHtml(estabName) : ''}`
-                        : `${hasReal ? 'Réel — ' : 'Planifié — '}Cliquer pour voir ce jour`;
                     return `<span class="dash-shift-pill"
-                        style="background:${shift.color};color:${textColor}${cursorStyle}"
-                        ${clickAttr}
-                        title="${titleText}">
-                        ${fmtD(dispStart)}-${fmtD(dispEnd)}${estabHtml}
+                        style="background:${shift.color};color:${textColor}"
+                        onclick="switchToDayView('${date}')"
+                        title="${hasReal ? 'Réel — ' : 'Planifié — '}Cliquer pour voir ce jour">
+                        ${fmtD(dispStart)}-${fmtD(dispEnd)}
                     </span>`;
                 }).join('');
 

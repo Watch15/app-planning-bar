@@ -38,7 +38,6 @@ Templyo est une application web SaaS de planification du personnel multi-établi
 #### Navigation semaine
 - Flèches Précédent / Suivant, bouton Aujourd'hui
 - Deux vues : **Jour** (timeline) et **Semaine** (dashboard + agenda)
-- **Onglet « ★ Tous mes bars »** (directeur uniquement, ≥ 2 établissements assignés) : ajouté à la fin de la barre des onglets venue. Affiche un **Tableau de bord consolidé** sur tous les établissements accessibles via `GET /api/week-full-multi`, chaque pastille de shift portant une chip avec le nom de l'établissement. En multi-mode : vue Jour désactivée (clic → bascule automatique sur le premier onglet venue). Patron + directeur mono-établissement : comportement inchangé
 - **Export PDF du Tableau de bord** : bouton « 📄 PDF » télécharge directement `planning-YYYY-MM-DD.pdf` (A4 paysage, **toujours 1 page**). En-tête style Gantt (logo + nom établissement + libellé de semaine). Densité adaptative selon le nombre de personnes (≤15 / 16-25 / 26+). Colonne « Total » par personne volontairement omise. Bouton « 🖨 Imprimer » du Gantt conservé en parallèle.
 
 #### Cartes semaine
