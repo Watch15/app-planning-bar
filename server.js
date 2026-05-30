@@ -1618,6 +1618,33 @@ app.get('/api/week-full/:establishmentId', checkDB, requireAuth, async (req, res
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
+// Tableau de bord consolidé : agrège les shifts sur tous les établissements accessibles à l'utilisateur
+// (directeur → assigned_establishments ; patron → tous). Chaque shift conserve son establishment_id natif.
+app.get('/api/week-full-multi', checkDB, requireAuth, async (req, res) => {
+    const { from, to } = req.query;
+    if (!from || !to) return res.status(400).json({ error: 'from et to requis (YYYY-MM-DD)' });
+    const user = req.session.user;
+    if (user.role !== 'patron' && user.role !== 'directeur')
+        return res.status(403).json({ error: 'Accès réservé patron/directeur' });
+    try {
+        const query = { date: { $gte: from, $lte: to } };
+        if (user.role === 'directeur') {
+            const assigned = user.assigned_establishments || [];
+            if (assigned.length === 0) return res.json({});
+            query.establishment_id = { $in: assigned };
+        }
+        const shifts = await db.collection('shifts').find(query).sort({ date: 1, start_time: 1 }).toArray();
+
+        const byDate = {};
+        for (let d = new Date(from + 'T12:00:00'); d <= new Date(to + 'T12:00:00'); d.setDate(d.getDate() + 1)) {
+            const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+            byDate[key] = [];
+        }
+        shifts.forEach(s => { if (byDate[s.date] !== undefined) byDate[s.date].push(s); });
+        res.json(byDate);
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
 // ── Shifts — écriture ─────────────────────────────────────────────────────────
 
 app.post('/api/shifts', checkDB, requirePatron, async (req, res) => {
