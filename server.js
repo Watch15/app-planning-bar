@@ -3249,19 +3249,24 @@ app.get('/api/me/responsable-week', checkDB, requireAuth, async (req, res) => {
             $or: pairs.map(p => ({ date: p.date, establishment_id: p.establishment_id })),
         }).sort({ date: 1, start_time: 1 }).toArray();
 
-        // Augmenter chaque shift avec le téléphone du staff (le responsable doit
-        // pouvoir contacter son équipe depuis le tableau de bord)
+        // Augmenter chaque shift avec téléphone + nickname du staff (contact +
+        // affichage cohérent avec le tableau de bord patron : nickname si défini,
+        // sinon prénom + désambiguïsation côté client)
         const staffIds = [...new Set(teamShifts
             .map(s => s.staff_id)
             .filter(id => id && id !== '__joker__' && isValidObjectId(id)))];
         const staffDocs = staffIds.length
             ? await db.collection('staff').find(
                 { _id: { $in: staffIds.map(id => new ObjectId(id)) } },
-                { projection: { phone: 1 } }
+                { projection: { phone: 1, nickname: 1 } }
             ).toArray()
             : [];
-        const phoneMap = new Map(staffDocs.map(s => [String(s._id), s.phone || null]));
-        teamShifts.forEach(s => { s.phone = phoneMap.get(String(s.staff_id)) || null; });
+        const staffMeta = new Map(staffDocs.map(s => [String(s._id), { phone: s.phone || null, nickname: s.nickname || null }]));
+        teamShifts.forEach(s => {
+            const meta = staffMeta.get(String(s.staff_id)) || {};
+            s.phone    = meta.phone    || null;
+            s.nickname = meta.nickname || null;
+        });
 
         // Groupé par date (chaque jour de la période initialisé même si vide)
         const byDate = {};

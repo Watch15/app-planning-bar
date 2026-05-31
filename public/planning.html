@@ -1497,11 +1497,66 @@ function formatEstablishment(id) {
 
 // ── Tableau de bord du responsable ────────────────────────────────────────────
 
+// Système de noms cohérent avec le tableau de bord patron (script.js:47) :
+// nickname si défini, sinon prénom, avec désambiguïsation par initiale du nom
+// quand plusieurs staff partagent le même prénom (« Sébastien G. » vs « Sébastien M. »).
+function buildTeamDisplayNames(allShifts) {
+    const isJoker = s => s.is_joker || s.staff_id === '__joker__';
+    const uniq = new Map();
+    allShifts.forEach(s => {
+        if (isJoker(s) || !s.staff_id) return;
+        if (!uniq.has(String(s.staff_id))) {
+            uniq.set(String(s.staff_id), { id: String(s.staff_id), name: s.staff_name || '', nickname: s.nickname || null });
+        }
+    });
+
+    const map = new Map();
+    const withoutNickname = [];
+    for (const s of uniq.values()) {
+        if (s.nickname) map.set(s.id, s.nickname);
+        else            withoutNickname.push(s);
+    }
+
+    const byFirstName = new Map();
+    for (const s of withoutNickname) {
+        const parts = s.name.trim().split(/\s+/);
+        const fn    = parts[0] || s.name;
+        if (!byFirstName.has(fn)) byFirstName.set(fn, []);
+        byFirstName.get(fn).push({ id: s.id, lastName: parts.slice(1).join(' ') });
+    }
+
+    for (const [fn, group] of byFirstName) {
+        if (group.length === 1 || group.every(g => !g.lastName)) {
+            for (const g of group) map.set(g.id, fn);
+        } else {
+            const lastNames = group.map(g => g.lastName.toUpperCase());
+            let len = 1;
+            while (len <= Math.max(...lastNames.map(n => n.length))) {
+                const prefixes = lastNames.map(n => n.slice(0, len));
+                if (new Set(prefixes).size === group.length) break;
+                len++;
+            }
+            for (let i = 0; i < group.length; i++) {
+                const prefix = group[i].lastName.slice(0, len);
+                map.set(group[i].id,
+                    prefix ? fn + ' ' + prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase() + '.' : fn
+                );
+            }
+        }
+    }
+    return map;
+}
+
 function renderResponsableDashboard(days, container, monday) {
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const isJoker = s => s.is_joker || s.staff_id === '__joker__';
     container.innerHTML = '';
+
+    // Map staff_id → nom court désambigué, à partir de tous les shifts de la semaine
+    const allShifts = Object.values(days).flat();
+    const nameMap   = buildTeamDisplayNames(allShifts);
+    const shortName = (id, fallback) => nameMap.get(String(id)) || (fallback || '').trim().split(/\s+/)[0] || fallback || '';
 
     const todayStr = toDateStr(new Date());
     const myStaffId = (window._currentPlan && window._currentPlan.user && window._currentPlan.user.staff_id) || null;
@@ -1603,8 +1658,9 @@ function renderResponsableDashboard(days, container, monday) {
                 const isMe   = myStaffId && String(m.staff_id) === String(myStaffId);
                 const phone  = m.phone || '';
                 const canCall = !isMe && phone;
+                const display = shortName(m.staff_id, m.staff_name);
                 const rowAttrs = canCall
-                    ? ' data-phone="' + esc(phone) + '" data-name="' + esc(m.staff_name) + '" role="button" tabindex="0"'
+                    ? ' data-phone="' + esc(phone) + '" data-name="' + esc(display) + '" role="button" tabindex="0"'
                     : '';
                 const cursor   = canCall ? 'cursor:pointer;' : '';
                 const bg       = isMe ? 'rgba(108,99,255,0.07)' : '#f4f5f8';
@@ -1614,7 +1670,7 @@ function renderResponsableDashboard(days, container, monday) {
                         'display:flex;align-items:center;gap:10px;padding:10px;background:' + bg + ';border-radius:8px;min-height:44px">' +
                         '<span style="width:10px;height:10px;border-radius:50%;background:' + (m.color || '#888') + ';flex-shrink:0"></span>' +
                         '<span style="flex:1;font-weight:600;font-size:13px;color:#1a1a2e;display:flex;align-items:center;gap:6px;min-width:0">' +
-                            '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(m.staff_name) + '</span>' +
+                            '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(display) + '</span>' +
                             (m.is_resp ? '<span title="Responsable de la soirée" style="font-size:12px;flex-shrink:0">👑</span>' : '') +
                         '</span>' +
                         '<span style="font-size:13px;font-weight:600;color:#1a1a2e;font-variant-numeric:tabular-nums;white-space:nowrap">' + hours + '</span>' +
