@@ -7254,8 +7254,10 @@ async function saveDashboardPdf() {
     const estab     = allEstablishments.find(e => String(e._id) === String(currentVenueId) || e.id === currentVenueId);
     const venueName = estab ? estab.name : 'Mon établissement';
 
-    // Largeur source : on tend vers le ratio A4 paysage (≈1.41) pour minimiser le scaling perdu
-    const containerWidth = dense ? 1400 : 1200;
+    // Largeur source : tunée pour A4 portrait (194mm utile / 840px ≈ 0.231 mm/px)
+    // → réduit l'espace blanc en bas de page et donne plus de hauteur par row,
+    // surtout sur les plannings denses (15+ staff)
+    const containerWidth = dense ? 980 : 840;
     const container = document.createElement('div');
     container.style.cssText = 'position:fixed;left:-10000px;top:0;width:' + containerWidth + 'px;background:#fff;padding:20px 24px;font-family:Arial,sans-serif;font-size:' + rowFont + ';color:#1a1a2e';
     container.innerHTML =
@@ -7278,7 +7280,7 @@ async function saveDashboardPdf() {
     try {
         const canvas = await window.html2canvas(container, { scale: 2, backgroundColor: '#ffffff' });
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         const pageW = doc.internal.pageSize.getWidth();
         const pageH = doc.internal.pageSize.getHeight();
         const margin = 8;

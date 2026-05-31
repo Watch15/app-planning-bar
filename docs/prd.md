@@ -38,7 +38,7 @@ Templyo est une application web SaaS de planification du personnel multi-établi
 #### Navigation semaine
 - Flèches Précédent / Suivant, bouton Aujourd'hui
 - Deux vues : **Jour** (timeline) et **Semaine** (dashboard + agenda)
-- **Export PDF du Tableau de bord** : bouton « 📄 PDF » télécharge directement `planning-YYYY-MM-DD.pdf` (A4 paysage, **toujours 1 page**). En-tête style Gantt (logo + nom établissement + libellé de semaine). Densité adaptative selon le nombre de personnes (≤15 / 16-25 / 26+). Colonne « Total » par personne volontairement omise. Bouton « 🖨 Imprimer » du Gantt conservé en parallèle.
+- **Export PDF du Tableau de bord** : bouton « 📄 PDF » télécharge directement `planning-YYYY-MM-DD.pdf` (A4 **portrait**, **toujours 1 page**). En-tête style Gantt (logo + nom établissement + libellé de semaine). Densité adaptative selon le nombre de personnes (≤15 / 16-25 / 26+). Colonne « Total » par personne volontairement omise. Bouton « 🖨 Imprimer » du Gantt conservé en parallèle. *(Passé de paysage à portrait en juin 2026 — meilleur ratio source/page pour les plannings denses, moins d'espace blanc en bas.)*
 
 #### Cartes semaine
 - 7 cartes cliquables (Lun → Dim)
