@@ -7254,10 +7254,14 @@ async function saveDashboardPdf() {
     const estab     = allEstablishments.find(e => String(e._id) === String(currentVenueId) || e.id === currentVenueId);
     const venueName = estab ? estab.name : 'Mon établissement';
 
-    // Largeur source : tunée pour A4 portrait (194mm utile / 840px ≈ 0.231 mm/px)
-    // → réduit l'espace blanc en bas de page et donne plus de hauteur par row,
-    // surtout sur les plannings denses (15+ staff)
-    const containerWidth = dense ? 980 : 840;
+    // Largeur source : tunée pour A4 portrait (194mm utile)
+    //   ≤15 staff (non-dense)  → 840 : ratio source confortable, pas surchargé
+    //   16-25 (dense)          → 980 : équilibre entre densité et lisibilité
+    //   26+ (xDense)           → 650 : container plus étroit pour matcher le
+    //                            ratio portrait (~0.69) avec une grande hauteur
+    //                            source — réduit l'espace blanc en bas de page
+    //                            (~40 % de waste → ~10 % à 26 staff)
+    const containerWidth = xDense ? 650 : (dense ? 980 : 840);
     const container = document.createElement('div');
     container.style.cssText = 'position:fixed;left:-10000px;top:0;width:' + containerWidth + 'px;background:#fff;padding:20px 24px;font-family:Arial,sans-serif;font-size:' + rowFont + ';color:#1a1a2e';
     container.innerHTML =
