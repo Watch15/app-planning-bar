@@ -1020,6 +1020,7 @@ function renderSidebar() {
     jokerCard.className = 'staff-card staff-card-joker';
     jokerCard.draggable = true;
     jokerCard.dataset.staffId = '__joker__';
+    jokerCard.title = 'Joker : créneau ouvert sans staff désigné. Glisse-le sur la timeline pour créer un créneau à pourvoir (motif rayé). Tu pourras ensuite l’ouvrir aux candidatures du staff.';
     jokerCard.innerHTML =
         '<span class="joker-icon">?</span>' +
         '<span class="staff-info-name">Joker</span>' +
@@ -1431,6 +1432,7 @@ function createShiftEl(shift) {
     // Clic sur un Joker → modale patron (note + toggle + candidatures)
     if (isJoker) {
         el.style.cursor = 'pointer';
+        el.title = 'Créneau Joker (motif rayé) — créneau à pourvoir. Clic pour ouvrir aux candidatures du staff ou assigner directement.';
         el.addEventListener('click', e => {
             if (e.target.closest('.resizer') || e.target.closest('.shift-delete')) return;
             if (_shiftWasDragged) { _shiftWasDragged = false; return; }

@@ -833,7 +833,14 @@ async function init() {
     setTimeout(loadStaffNotifs, 500);
     setInterval(loadStaffNotifs, 90000); // re-check toutes les 90s (shifts debounced 60s)
     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') loadStaffNotifs();
+        if (document.visibilityState !== 'visible') return;
+        loadStaffNotifs();
+        // P-08 : rafraîchir le bloc « 📢 Créneau disponible » au retour au premier
+        // plan — le patron peut avoir ouvert un Joker pendant l'absence
+        const cur = window._currentPlan;
+        if (cur && cur.from && cur.to && document.getElementById('open-jokers-section')) {
+            renderOpenJokers(cur.from, cur.to, 'open-jokers-section');
+        }
     });
 
     // Vérifier si le staff est responsable de soirée ce soir → onglet Pointage
@@ -1442,9 +1449,14 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
                         const dotColor = c.is_joker ? '#95a5a6' : (c.color || '#888');
                         const ns       = nc ? ' style="color:' + nc + '"' : '';
                         const needsBg  = nc && textColorFor(nc) === '#1a1a2e';
-                        const pillBg   = needsBg ? ' style="background:' + dotColor + 'BF"' : '';
-                        const _cn = c.is_joker ? 'Joker' : (sm2 && sm2.nickname ? sm2.nickname : (c.staff_name || '').split(' ')[0]);
-                        return '<span class="colleague-pill"' + pillBg + '><span class="colleague-dot" style="background:' + dotColor + '"></span><span' + ns + '>' + _cn + '</span></span>';
+                        const pillBg   = needsBg ? ' style="background:' + dotColor + 'BF;cursor:pointer"' : ' style="cursor:pointer"';
+                        const _cn      = c.is_joker ? 'Joker' : (sm2 && sm2.nickname ? sm2.nickname : (c.staff_name || '').split(' ')[0]);
+                        const fullName = c.is_joker ? 'Joker (créneau ouvert)' : (c.staff_name || _cn);
+                        const dataAttr = ' data-pill-name="' + _esc(fullName) +
+                                         '" data-pill-start="' + (c.start_time != null ? c.start_time : '') +
+                                         '" data-pill-end="' + (c.end_time != null ? c.end_time : '') +
+                                         '" data-pill-color="' + dotColor + '"';
+                        return '<span class="colleague-pill"' + pillBg + dataAttr + '><span class="colleague-dot" style="background:' + dotColor + '"></span><span' + ns + '>' + _cn + '</span></span>';
                     }).join('') + '</div>'
                 : '';
 
@@ -2359,6 +2371,52 @@ function _dismissToast(toast) {
 
 function _esc(str) {
     return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// P-01 : taper une pastille collègue révèle nom complet + horaires en mini-toast
+// (sur mobile, le `title` HTML est inopérant ; sur desktop il reste utilisable
+// au hover et le tap fonctionne aussi).
+document.addEventListener('click', (ev) => {
+    const pill = ev.target.closest && ev.target.closest('.colleague-pill[data-pill-name]');
+    if (!pill) return;
+    const name  = pill.dataset.pillName  || '';
+    const st    = parseFloat(pill.dataset.pillStart);
+    const en    = parseFloat(pill.dataset.pillEnd);
+    const color = pill.dataset.pillColor || '#888';
+    const hours = (!Number.isNaN(st) && !Number.isNaN(en)) ? (fmtHour(st) + ' → ' + fmtHour(en)) : '';
+    _showColleagueToast(name, hours, color);
+});
+
+let _colleagueToastTimer = null;
+function _showColleagueToast(name, hours, color) {
+    const existing = document.getElementById('colleague-toast');
+    if (existing) existing.remove();
+    if (_colleagueToastTimer) { clearTimeout(_colleagueToastTimer); _colleagueToastTimer = null; }
+
+    const toast = document.createElement('div');
+    toast.id = 'colleague-toast';
+    toast.style.cssText =
+        'position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));' +
+        'transform:translate(-50%,20px);' +
+        'background:#1a1a2e;color:#fff;padding:10px 14px;border-radius:12px;' +
+        'font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;' +
+        'box-shadow:0 6px 20px rgba(0,0,0,0.25);max-width:calc(100% - 32px);' +
+        'z-index:9999;opacity:0;transition:opacity 0.18s ease,transform 0.22s cubic-bezier(0.32,0.72,0,1);' +
+        'pointer-events:none';
+    toast.innerHTML =
+        '<span style="width:10px;height:10px;border-radius:50%;background:' + _esc(color) + ';flex-shrink:0"></span>' +
+        '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + _esc(name) + '</span>' +
+        (hours ? '<span style="font-weight:500;opacity:0.75;font-variant-numeric:tabular-nums;white-space:nowrap">' + hours + '</span>' : '');
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => {
+        toast.style.opacity   = '1';
+        toast.style.transform = 'translate(-50%,0)';
+    });
+    _colleagueToastTimer = setTimeout(() => {
+        toast.style.opacity   = '0';
+        toast.style.transform = 'translate(-50%,20px)';
+        setTimeout(() => toast.remove(), 220);
+    }, 2400);
 }
 
 function showMsg(text, type) {

@@ -51,7 +51,7 @@ Inter uniquement. Échelle : 11px (labels caps) → 13px (corps) → 14–15px (
 | I-04 | Cartes semaine : pas de mois dans le titre jour en desktop | Faible | |
 | I-05 | Pas de panneau stats en vue Jour (seulement en vue Semaine) | Moyen | |
 | I-06 | Pas de confirmation visuelle après drag/drop | Faible | |
-| I-07 | Jokers sans légende — un nouveau patron ne comprend pas | Moyen | |
+| ~~I-07~~ | ~~Jokers sans légende — un nouveau patron ne comprend pas~~ | Moyen | ✅ Done — `title` hover sur staff-card-joker + sur chaque shift Joker timeline (mention « motif rayé » + workflow candidatures) |
 | ~~I-08~~ | ~~Modale Joker — toggle « 📢 Proposer au staff », badge timeline « 📢 Ouvert », liste candidatures horodatées (`HHhMM`) avec bouton Assigner, polling 30s~~ | Moyen | ✅ Done (F-06 / D-42) |
 | I-09 | Transfert de shift cross-établissement — accessible depuis la modale shift (entrée discrète, à promouvoir si usage récurrent) | Faible | F-07 livré, UX à affiner |
 | ~~I-10~~ | ~~`.modal-close` 32×32 + `.view-tab` ~24×24 + onglets internes Dispos/Staff inline ~32 px tactile + inputs modales 13 px (zoom iOS)~~ | Haut | ✅ Done (D-49) — `.modal-close` 44, `.view-tab` min-36, onglets internes ≥44 + `overflow-x:auto` partout, anti-zoom iOS global mobile |
@@ -63,14 +63,14 @@ Inter uniquement. Échelle : 11px (labels caps) → 13px (corps) → 14–15px (
 ### 2.4 planning.html (Staff)
 | # | Problème | Sévérité | Statut |
 |---|---|---|---|
-| P-01 | Collègues en pastilles sans nom au tap mobile | Moyen | |
+| ~~P-01~~ | ~~Collègues en pastilles sans nom au tap mobile~~ | Moyen | ✅ Done — tap sur `.colleague-pill` → mini-toast bas écran 2.4s (nom complet + horaires + couleur) ; `title` hover desktop conservé |
 | ~~P-02~~ | ~~Delta heures uniquement textuel, pas de couleur sur mobile portrait~~ | Faible | ✅ Obsolète — **tous** les deltas « vs préc. » (hebdo ET mensuel) ont été retirés côté staff (D-61 + D-62) |
 | ~~P-03~~ | ~~Onglet ⏱ Pointage actif seulement le jour J — disparu le lendemain~~ | Haut | ✅ Done — date de référence = date active (cutoff_hour) |
 | ~~P-04~~ | ~~Bouton fixe "Envoyer" dispos couvre le dernier jour sur petits écrans~~ | Moyen | ✅ Done — spacer 96px + safe-area-inset-bottom |
 | P-05 | Pas de confirmation visuelle post-envoi dispos au-delà du toast | Faible | |
 | P-06 | Aucun moyen pour le staff de voir les shifts des semaines passées | Moyen | |
 | ~~P-07~~ | ~~Bloc « 📢 Créneau disponible » en haut du planning + bouton « Je suis disponible » → POST candidature, désactivé après envoi avec « ✅ Candidature envoyée »~~ | Moyen | ✅ Done (F-06 / D-42) |
-| P-08 | Pas de rafraîchissement auto côté staff pour détecter de nouveaux Jokers ouverts — rechargement manuel nécessaire | Moyen | |
+| ~~P-08~~ | ~~Pas de rafraîchissement auto côté staff pour détecter de nouveaux Jokers ouverts~~ | Moyen | ✅ Done — `renderOpenJokers` branché sur `visibilitychange` (semaine courante) en plus de l'auto-refresh staff existant |
 | ~~P-09~~ | ~~`.tab-btn` ~24×24 + `.dispo-time-input` 36 px (sous seuil tactile) + risque débordement tabs sans scroll~~ | Haut | ✅ Done (D-49) — tabs min-44 + `overflow-x:auto`, `.dispo-time-input` 44px + font 16 |
 | P-10 | `.dispo-type-btn.selected-off` sur `--light-bg` → état sélectionné peu distinctif | Moyen | 🟠 U-05 backlog |
 
