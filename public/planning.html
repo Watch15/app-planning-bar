@@ -1494,9 +1494,10 @@ function renderResponsableDashboard(days, container, monday) {
         });
         const isToday = date === todayStr;
 
-        // Séparer équipe vs jokers, regrouper équipe par établissement
+        // Séparer équipe vs jokers ouverts (les Jokers fermés sont des placeholders
+        // patron au cas où, pas des créneaux à pourvoir — on les masque côté staff)
         const team   = dayShifts.filter(s => !isJoker(s));
-        const jokers = dayShifts.filter(isJoker);
+        const jokers = dayShifts.filter(s => isJoker(s) && s.joker_open === true);
 
         const byEstab = new Map();
         team.forEach(s => {
