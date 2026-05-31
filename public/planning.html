@@ -1464,26 +1464,16 @@ function renderResponsableDashboard(days, container, monday) {
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     container.innerHTML = '';
 
+    const todayStr = toDateStr(new Date());
+    const myStaffId = (window._currentPlan && window._currentPlan.user && window._currentPlan.user.staff_id) || null;
+
     const weekDates = Array.from({ length: 7 }, (_, i) => ({
         date: toDateStr(addDays(monday, i)),
         d:    addDays(monday, i),
-    }));
+    })).filter(({ date }) => (days[date] || []).length > 0);
 
-    // Map staff_id → { name, color, shifts: { date: [shift,...] } }
-    const staffMap = new Map();
-    weekDates.forEach(({ date }) => {
-        (days[date] || []).forEach(s => {
-            if (!staffMap.has(s.staff_id)) {
-                staffMap.set(s.staff_id, { _id: s.staff_id, name: s.staff_name, color: s.color, shifts: {} });
-            }
-            const entry = staffMap.get(s.staff_id);
-            if (!entry.shifts[date]) entry.shifts[date] = [];
-            entry.shifts[date].push(s);
-        });
-    });
-
-    if (staffMap.size === 0) {
-        container.innerHTML = '<div style="padding:32px;text-align:center;color:#aaa;font-size:13px">Aucune soirée à gérer cette semaine</div>';
+    if (weekDates.length === 0) {
+        container.innerHTML = '<div style="padding:32px;text-align:center;color:#aaa;font-size:13px">Aucune soirée cette semaine</div>';
         return;
     }
 
@@ -1493,61 +1483,63 @@ function renderResponsableDashboard(days, container, monday) {
     container.appendChild(intro);
 
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'padding:0 12px 20px;overflow-x:auto';
+    wrap.style.cssText = 'padding:0 12px 24px;display:flex;flex-direction:column;gap:12px';
 
-    const tbl = document.createElement('table');
-    tbl.style.cssText = 'width:100%;border-collapse:collapse;font-size:12px;min-width:560px;background:white;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06)';
-
-    const todayStr = toDateStr(new Date());
-    let thead = '<thead><tr style="background:#f8f8f8;border-bottom:2px solid #e0e0e0">'
-        + '<th style="text-align:left;padding:9px 10px;color:#555;font-weight:700">Staff</th>';
     weekDates.forEach(({ date, d }) => {
-        const isTd = date === todayStr;
-        thead += '<th style="text-align:center;padding:9px 4px;color:' + (isTd ? 'var(--accent,#6C63FF)' : '#555') + ';font-weight:700;font-size:11px">'
-            + DAY_NAMES[d.getDay()] + '<br>' + d.getDate() + '</th>';
-    });
-    thead += '<th style="text-align:center;padding:9px 6px;color:#555;font-weight:700">Total</th></tr></thead>';
-    tbl.innerHTML = thead;
+        const dayShifts = days[date].slice().sort((a, b) => {
+            if (a.establishment_id !== b.establishment_id)
+                return String(a.establishment_id).localeCompare(String(b.establishment_id));
+            return a.start_time - b.start_time;
+        });
+        const isToday = date === todayStr;
 
-    let tbody = '<tbody>';
-    let rowIdx = 0;
-    staffMap.forEach(staff => {
-        let totalH = 0;
-        const rowBg = rowIdx % 2 ? '#f9f9fb' : 'white';
-        let row = '<tr style="background:' + rowBg + ';border-bottom:1px solid #f0f0f0">'
-            + '<td style="padding:8px 10px"><div style="display:flex;align-items:center;gap:6px">'
-            +   '<span style="width:9px;height:9px;border-radius:50%;background:' + (staff.color || '#888') + ';flex-shrink:0;display:inline-block"></span>'
-            +   '<span style="font-weight:600;color:#333">' + esc(staff.name) + '</span>'
-            + '</div></td>';
+        // Regrouper par établissement (un responsable peut travailler dans 2 bars le même soir)
+        const byEstab = new Map();
+        dayShifts.forEach(s => {
+            if (!byEstab.has(s.establishment_id)) byEstab.set(s.establishment_id, []);
+            byEstab.get(s.establishment_id).push(s);
+        });
+        const multiEstab = byEstab.size > 1;
 
-        weekDates.forEach(({ date }) => {
-            const dayShifts = staff.shifts[date] || [];
-            if (dayShifts.length === 0) {
-                row += '<td style="text-align:center;padding:6px 4px;color:#ddd">—</td>';
-                return;
+        const card = document.createElement('div');
+        card.style.cssText =
+            'background:#fff;border-radius:12px;padding:14px 14px 12px;' +
+            'box-shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);' +
+            (isToday ? 'border-left:3px solid var(--accent,#6C63FF)' : 'border-left:3px solid transparent');
+
+        const dayLabel = DAY_NAMES[d.getDay()] + ' ' + d.getDate() + ' ' + MONTH_NAMES[d.getMonth()];
+        let html =
+            '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">' +
+                '<div style="font-weight:700;font-size:15px;color:' + (isToday ? 'var(--accent,#6C63FF)' : '#1a1a2e') + ';letter-spacing:-0.2px">' + dayLabel + '</div>' +
+                (isToday
+                    ? '<span style="font-size:10px;font-weight:700;color:#fff;background:var(--accent,#6C63FF);padding:3px 8px;border-radius:8px;letter-spacing:0.3px">Aujourd hui</span>'
+                    : (!multiEstab ? '<span style="font-size:11px;color:#8892a4;font-weight:600">' + esc(formatEstablishment(dayShifts[0].establishment_id)) + '</span>' : '')) +
+            '</div>';
+
+        byEstab.forEach((shiftList, estabId) => {
+            if (multiEstab) {
+                html += '<div style="font-size:10px;font-weight:700;color:#8892a4;text-transform:uppercase;letter-spacing:0.5px;margin:10px 0 6px">' +
+                    esc(formatEstablishment(estabId)) + '</div>';
             }
-            let cell = '<td style="text-align:center;padding:6px 4px"><div style="display:flex;flex-direction:column;gap:3px;align-items:center">';
-            dayShifts.forEach(s => {
+            html += '<div style="display:flex;flex-direction:column;gap:5px">';
+            shiftList.forEach(s => {
                 const st = s.real_start != null ? s.real_start : s.start_time;
                 const en = s.real_end   != null ? s.real_end   : s.end_time;
-                totalH += (en - st);
-                const estabName = formatEstablishment(s.establishment_id);
-                cell += '<span style="background:' + (s.color || '#888') + ';color:white;padding:3px 7px;border-radius:10px;font-size:10px;font-weight:600;white-space:nowrap;line-height:1.25">'
-                    +     fmtHour(st) + '-' + fmtHour(en)
-                    +     '<span style="display:block;font-size:8px;opacity:0.9;font-weight:500;margin-top:1px">' + esc(estabName) + '</span>'
-                    +   '</span>';
+                const isMe = myStaffId && String(s.staff_id) === String(myStaffId);
+                html +=
+                    '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:' + (isMe ? 'rgba(108,99,255,0.07)' : '#f4f5f8') + ';border-radius:8px">' +
+                        '<span style="width:10px;height:10px;border-radius:50%;background:' + (s.color || '#888') + ';flex-shrink:0"></span>' +
+                        '<span style="flex:1;font-weight:600;font-size:13px;color:#1a1a2e">' + esc(s.staff_name) + (isMe ? ' <span style="font-size:10px;font-weight:700;color:var(--accent,#6C63FF);margin-left:4px">· toi</span>' : '') + '</span>' +
+                        '<span style="font-size:13px;font-weight:600;color:#1a1a2e;font-variant-numeric:tabular-nums;white-space:nowrap">' + fmtHour(st) + '–' + fmtHour(en) + '</span>' +
+                    '</div>';
             });
-            cell += '</div></td>';
-            row += cell;
+            html += '</div>';
         });
 
-        row += '<td style="text-align:center;padding:6px;font-weight:700;color:var(--accent,#6C63FF)">' + fmtDuration(totalH) + '</td></tr>';
-        tbody += row;
-        rowIdx++;
+        card.innerHTML = html;
+        wrap.appendChild(card);
     });
-    tbody += '</tbody>';
-    tbl.innerHTML += tbody;
-    wrap.appendChild(tbl);
+
     container.appendChild(wrap);
 }
 
