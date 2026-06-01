@@ -428,6 +428,12 @@
     <select class="estab-select" id="estab-select"></select>
 </div>
 
+<div class="estab-select-bar" id="date-select-bar">
+    <span class="estab-select-label">📅 Date</span>
+    <input type="date" id="date-select" class="estab-select" style="flex:0 0 auto;max-width:180px;color-scheme:dark">
+    <button class="btn-back" id="btn-reset-date" type="button" style="display:none">↺ Aujourd'hui</button>
+</div>
+
 <div class="container">
     <div id="shifts-list"></div>
 
@@ -552,6 +558,58 @@ function getActiveDate() {
 }
 
 let today; // sera défini après chargement du cutoff
+let manualDate = false; // patron/directeur : date choisie manuellement (rattrapage)
+
+// Met à jour la bannière de soirée (cutoff ou rattrapage manuel)
+function refreshSessionBanner() {
+    const old = document.querySelector('.session-banner');
+    if (old) old.remove();
+
+    const todayReal = toDateStr(new Date());
+    if (today === todayReal && !manualDate) return;
+
+    const d = new Date(today + 'T12:00:00');
+    const dateStr = d.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    const dateStrCap = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+
+    const banner = document.createElement('div');
+    banner.className = 'session-banner';
+
+    if (manualDate) {
+        banner.style.background    = '#E8F1FF';
+        banner.style.borderColor   = '#3B82F6';
+        banner.style.color         = '#1E3A8A';
+        const verb = today < todayReal ? 'Rattrapage' : (today > todayReal ? 'Anticipation' : 'Sélection manuelle');
+        banner.innerHTML =
+            '<span class="session-banner-icon">📅</span>' +
+            '<span>' + verb + ' : soirée du <b>' + dateStrCap + '</b>.</span>';
+    } else {
+        const cutoffLabel = String(cutoffHour).padStart(2,'0') + 'h';
+        banner.innerHTML =
+            '<span class="session-banner-icon">🌙</span>' +
+            '<span>Soirée du <b>' + dateStrCap + '</b> — les saisies avant ' + cutoffLabel +
+            ' restent rattachées à la veille.</span>';
+    }
+    const container = document.querySelector('.container');
+    container.insertBefore(banner, container.firstChild);
+}
+
+// Change la date active (utilisé en init et par le sélecteur date patron/directeur)
+function setActiveDate(newDateStr, isManual) {
+    today      = newDateStr;
+    manualDate = !!isManual;
+
+    const d = new Date(today + 'T12:00:00');
+    const dateStr = d.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    document.getElementById('header-date').textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+
+    refreshSessionBanner();
+
+    const dateInput = document.getElementById('date-select');
+    if (dateInput && dateInput.value !== newDateStr) dateInput.value = newDateStr;
+    const btnReset = document.getElementById('btn-reset-date');
+    if (btnReset) btnReset.style.display = isManual ? '' : 'none';
+}
 
 async function checkAuth() {
     try {
@@ -592,27 +650,7 @@ async function init() {
             cutoffOpenHour = s.cutoff_open_hour ?? 0;
         }
     } catch { /* défauts */ }
-    today = getActiveDate();
-
-    // Date du jour affiché
-    const d = new Date(today + 'T12:00:00');
-    const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-    const dateStr = d.toLocaleDateString('fr-FR', opts);
-    document.getElementById('header-date').textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
-
-    // PT-06 : bandeau explicite si la date active est "hier" (avant l'heure de bascule)
-    const nowDate = new Date();
-    if (today !== toDateStr(nowDate)) {
-        const banner = document.createElement('div');
-        banner.className = 'session-banner';
-        const cutoffLabel = String(cutoffHour).padStart(2,'0') + 'h';
-        banner.innerHTML =
-            '<span class="session-banner-icon">🌙</span>' +
-            '<span>Soirée du <b>' + dateStr + '</b> — les saisies avant ' + cutoffLabel +
-            ' restent rattachées à la veille.</span>';
-        const container = document.querySelector('.container');
-        container.insertBefore(banner, container.firstChild);
-    }
+    setActiveDate(getActiveDate(), false);
 
     // Charger staff pour l'autocomplete (en parallèle avec les établissements)
     const [staffRes, estabRes] = await Promise.all([
@@ -679,6 +717,29 @@ async function init() {
                 loadRevenue();
             });
         }
+    }
+
+    // ── Sélecteur de date pour patron/directeur (saisie d'une soirée passée) ──
+    if (currentUser.role === 'patron' || currentUser.role === 'directeur') {
+        const bar       = document.getElementById('date-select-bar');
+        const dateInput = document.getElementById('date-select');
+        const btnReset  = document.getElementById('btn-reset-date');
+        dateInput.value = today;
+        dateInput.max   = toDateStr(new Date()); // pas de futur par défaut
+        bar.classList.add('visible');
+
+        dateInput.addEventListener('change', () => {
+            if (!dateInput.value) return;
+            const auto = getActiveDate();
+            setActiveDate(dateInput.value, dateInput.value !== auto);
+            loadShifts();
+            loadRevenue();
+        });
+        btnReset.addEventListener('click', () => {
+            setActiveDate(getActiveDate(), false);
+            loadShifts();
+            loadRevenue();
+        });
     }
 
     await loadShifts();
