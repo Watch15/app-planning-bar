@@ -1483,6 +1483,11 @@ function createShiftEl(shift) {
 function openMobileShiftEditModal(shift) {
     const fmt = h => h == null ? '' : String(Math.floor(h % 24)).padStart(2, '0') + ':' + String(Math.round((h % 1) * 60)).padStart(2, '0');
 
+    // Désignation responsable de soirée (uniquement si le staff a un rôle responsable)
+    const _staffMember  = allStaff.find(s => String(s._id) === String(shift.staff_id));
+    const _staffRoleIds = (_staffMember && _staffMember.roles) || [];
+    const _isResp       = allRoles.some(r => r.type === 'responsable' && _staffRoleIds.includes(String(r._id)));
+
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
 
@@ -1491,6 +1496,13 @@ function openMobileShiftEditModal(shift) {
     const grp = 'flex:1;min-width:0';
     const row = 'display:flex;gap:10px';
     const iconBtn = 'width:36px;height:36px;border-radius:9px;border:1px solid #e0e0e0;background:white;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0;font-family:inherit';
+    const respRowHtml = _isResp
+        ? ('<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid ' + (shift.pointage_resp ? '#f0c040' : '#e0e0e0') + ';border-radius:12px;margin-bottom:14px;background:' + (shift.pointage_resp ? '#fff8e0' : 'white') + '">' +
+              '<span style="font-size:18px;line-height:1">👑</span>' +
+              '<span style="font-size:13px;font-weight:600;color:#1a1a2e;flex:1">Responsable de la soirée</span>' +
+              '<button id="_ms-resp-toggle" type="button" style="padding:7px 16px;border-radius:20px;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;min-width:64px;background:' + (shift.pointage_resp ? '#f0c040' : '#e0e0e0') + ';color:' + (shift.pointage_resp ? '#1a1a2e' : '#666') + '">' + (shift.pointage_resp ? 'Oui' : 'Non') + '</button>' +
+          '</div>')
+        : '';
     overlay.innerHTML =
         '<div style="background:white;border-radius:18px 18px 0 0;padding:14px 16px max(16px,env(safe-area-inset-bottom));width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,0.18);max-height:88vh;overflow-y:auto">' +
             '<div style="width:36px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 14px"></div>' +
@@ -1516,6 +1528,7 @@ function openMobileShiftEditModal(shift) {
                     '<div style="' + grp + '"><div style="font-size:10px;color:#888;font-weight:600;margin-bottom:4px">Fin réelle</div><input id="_ms-real-end" type="time" value="' + fmt(shift.real_end) + '" style="' + inp + ';background:white"></div>' +
                 '</div>' +
             '</div>' +
+            respRowHtml +
             // Actions principales
             '<div style="display:flex;gap:10px">' +
                 '<button id="_ms-cancel" style="padding:13px 16px;border-radius:10px;border:1px solid #e0e0e0;background:white;font-size:14px;cursor:pointer;color:#555;flex:1;font-family:inherit">Annuler</button>' +
@@ -1539,6 +1552,42 @@ function openMobileShiftEditModal(shift) {
     const msCopyBtn = overlay.querySelector('#_ms-copy');
     if (allEstablishments.length <= 1) msCopyBtn.style.display = 'none';
     msCopyBtn.addEventListener('click', () => { close(); openTransferShiftModal(shift); });
+
+    // Toggle responsable de la soirée (PATCH immédiat, indépendant du bouton Enregistrer)
+    const respToggleBtn = overlay.querySelector('#_ms-resp-toggle');
+    if (respToggleBtn) {
+        respToggleBtn.addEventListener('click', async () => {
+            const newVal = !(shift.pointage_resp === true);
+            respToggleBtn.disabled = true;
+            try {
+                const r = await fetch('/api/shifts/' + shift._id + '/pointage-resp', {
+                    credentials: 'include', method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: newVal }),
+                });
+                const d = await r.json();
+                if (!r.ok) throw new Error(d.error);
+                shift.pointage_resp = newVal;
+                // MAJ visuelle du toggle et de son conteneur
+                respToggleBtn.textContent = newVal ? 'Oui' : 'Non';
+                respToggleBtn.style.background = newVal ? '#f0c040' : '#e0e0e0';
+                respToggleBtn.style.color      = newVal ? '#1a1a2e' : '#666';
+                const wrap = respToggleBtn.parentElement;
+                if (wrap) {
+                    wrap.style.background    = newVal ? '#fff8e0' : 'white';
+                    wrap.style.borderColor   = newVal ? '#f0c040' : '#e0e0e0';
+                }
+                // MAJ couronne sur la barre du shift sans recharger
+                const shiftEl = document.querySelector('.shift[data-id="' + shift._id + '"] .shift-resp-btn');
+                if (shiftEl) shiftEl.classList.toggle('active', newVal);
+                showToast(newVal ? shift.staff_name + ' — responsable pointage 👑' : 'Désignation retirée');
+            } catch (err) {
+                showToast(err.message || 'Erreur', true);
+            } finally {
+                respToggleBtn.disabled = false;
+            }
+        });
+    }
 
     overlay.querySelector('#_ms-save').addEventListener('click', async () => {
         const parseT = v => {
