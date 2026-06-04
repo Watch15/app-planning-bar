@@ -459,6 +459,17 @@ async function cleanupPastDispos() {
             ],
         });
         if (result.deletedCount > 0) console.log('🧹 Dispos des semaines passées purgées :', result.deletedCount);
+
+        // Purge aussi les notifications liées aux dispos devenues périmées
+        // (uniquement les types « rappel dispo » — on ne touche pas aux autres notifs).
+        const notifPatron = await db.collection('notifications').deleteMany({
+            type: 'rappel_dispo', week_start: { $lt: mondayStr },
+        });
+        const notifStaff = await db.collection('staff_notifications').deleteMany({
+            type: 'rappel-dispo', created_at: { $lt: mon },
+        });
+        const totalNotifs = notifPatron.deletedCount + notifStaff.deletedCount;
+        if (totalNotifs > 0) console.log('🧹 Notifications dispos périmées purgées :', totalNotifs);
     } catch (e) { console.error('❌ cleanupPastDispos error:', e.message); }
 }
 
