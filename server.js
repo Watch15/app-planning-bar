@@ -1756,8 +1756,15 @@ function buildShiftsIcs(shifts, estabMap) {
     return lines.join('\r\n') + '\r\n';
 }
 
+// ⚠️ Fonctionnalité agenda iCal DÉSACTIVÉE (D-83) — pas encore assez fiable pour la
+// prod (synchro iCal non temps réel : un changement met jusqu'à ~1 h à se propager).
+// Le code est conservé. Pour réactiver : passer CALENDAR_ENABLED à true (ou définir
+// la variable d'env CALENDAR_ENABLED=true) ET le flag client dans public/planning.js.
+const CALENDAR_ENABLED = process.env.CALENDAR_ENABLED === 'true';
+
 // URL d'abonnement agenda du staff connecté (génère le token au 1er appel)
 app.get('/api/calendar-url', checkDB, requireAuth, async (req, res) => {
+    if (!CALENDAR_ENABLED) return res.status(404).json({ error: 'Fonctionnalité indisponible' });
     const userId = req.session.user._id;
     if (!req.session.user.staff_id) return res.status(400).json({ error: 'Aucun profil staff lié à ce compte' });
     try {
@@ -1781,6 +1788,7 @@ app.get('/api/calendar-url', checkDB, requireAuth, async (req, res) => {
 // Flux iCal public — le token tient lieu d'authentification (lecture seule).
 // Expose les shifts du staff de la semaine en cours et des semaines futures PUBLIÉES.
 app.get('/api/calendar/:token([a-f0-9]+).ics', checkDB, async (req, res) => {
+    if (!CALENDAR_ENABLED) return res.status(404).send('Not found');
     try {
         const user = await db.collection('users').findOne({ calendar_token: req.params.token });
         if (!user || !user.staff_id) return res.status(404).send('Calendrier introuvable');

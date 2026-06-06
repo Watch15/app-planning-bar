@@ -1109,6 +1109,11 @@ function initTabs() {
     });
 }
 
+// ⚠️ Fonctionnalité agenda iCal DÉSACTIVÉE (D-83) — pas encore assez fiable pour la prod.
+// Doit rester aligné avec le flag serveur CALENDAR_ENABLED (server.js). Pour réactiver :
+// passer ce flag à true ET réactiver côté serveur.
+const CALENDAR_ENABLED = false;
+
 // Carte « Ajouter à mon agenda » : récupère l'URL d'abonnement iCal et propose
 // les raccourcis Apple (webcal) / Google + copie manuelle pour Outlook/autres.
 function initCalSync() {
@@ -1116,6 +1121,8 @@ function initCalSync() {
     const toggle = document.getElementById('cal-sync-toggle');
     const body   = document.getElementById('cal-sync-body');
     if (!card || !toggle || !body) return;
+    // Fonctionnalité désactivée → on masque la carte entièrement (D-83).
+    if (!CALENDAR_ENABLED) { card.style.display = 'none'; return; }
     // C-01 : sans profil staff lié (ex. directeur), aucun flux agenda perso possible
     // (l'API /api/calendar-url renverrait 400) → on masque la carte au lieu d'afficher une erreur.
     if (!currentUser || !currentUser.staff_id) { card.style.display = 'none'; return; }
