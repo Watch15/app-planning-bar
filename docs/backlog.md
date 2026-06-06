@@ -147,6 +147,7 @@ Items 🟠 Importants / 🟡 Cosmétiques relevés par l'audit D-49 mais non cor
 
 ## Notes pour les agents
 
+- **Nom staff dénormalisé (D-77)** : `staff.name` est la **source de vérité**. Copies dénormalisées : `shifts.staff_name`, `availabilities.staff_name`, `users.name`. `PATCH /api/staff/:id` les propage toutes quand le nom change, et `GET /api/users` réenrichit le nom depuis staff. Si tu ajoutes une nouvelle copie dénormalisée du nom, branche-la sur cette propagation.
 - **Timezone** : ne jamais utiliser `toISOString()` — toujours `getFullYear()/getMonth()/getDate()`. Voir `docs/architecture.md` §3.1. Helper pur : `toDateStr()` dans `lib/utils.js`.
 - **script.js** : fichier monolithique (~7300 lignes) — modifications additives et ciblées uniquement, pas de refactoring sans décision explicite.
 - **server.js** : monolithique (~3800 lignes). Helpers purs dans `lib/utils.js` (testés). Split en routers = chantier futur (#10 backlog). ⚠️ **Deux blocs `/* F-05 DÉSACTIVÉ */`** : ne JAMAIS y ajouter de nouvelles routes — elles seraient invisibles à Express (cf. D-47). Les n° de ligne ont bougé depuis (server.js a grossi) — repérer les blocs par le marqueur de commentaire, pas par le n° de ligne.
