@@ -11,7 +11,7 @@ const helmet  = require('helmet');
 const morgan  = require('morgan');
 const {
     isValidObjectId, hashToken, normalizePhone,
-    weekStart, currentWeekStart, disposWeekStart, isAutoPublished, chargeMultiplier,
+    weekStart, currentWeekStart, disposWeekStart, isAutoPublished, isDatePublished, chargeMultiplier,
     toDateStr,
 } = require('./lib/utils');
 
@@ -288,6 +288,17 @@ async function sendPushToStaff(staffIds, payload) {
 
 const _weekStart       = weekStart;
 const _isAutoPublished = isAutoPublished;
+
+// Ensemble des lundis ('YYYY-MM-DD') des semaines explicitement publiées par le patron.
+// Source unique pour les call sites « ce shift est-il sur une semaine publiée ? »
+// (à combiner avec isDatePublished, qui gère l'auto-publication). R-02.
+async function fetchPublishedWeeks() {
+    if (!db) return new Set();
+    const docs = await db.collection('settings')
+        .find({ key: { $regex: '^publish_' }, published: true }, { projection: { key: 1 } })
+        .toArray();
+    return new Set(docs.map(p => p.key.replace('publish_', '')));
+}
 
 // ── Rappels automatiques dispos ───────────────────────────────────────────────
 
@@ -1792,12 +1803,9 @@ app.get('/api/calendar/:token([a-f0-9]+).ics', checkDB, async (req, res) => {
 
         // Ne garder que les shifts des semaines publiées (auto pour la semaine en cours,
         // flag publish_<weekStart> pour les futures) et exclure les Jokers.
-        const pubDocs = await db.collection('settings')
-            .find({ key: { $regex: '^publish_' }, published: true }).toArray();
-        const publishedWeeks = new Set(pubDocs.map(p => p.key.replace('publish_', '')));
+        const publishedWeeks = await fetchPublishedWeeks();
         const visible = rawShifts.filter(s =>
-            !s.is_joker && s.staff_id !== '__joker__' &&
-            (isAutoPublished(s.date) || publishedWeeks.has(toDateStr(weekStart(new Date(s.date + 'T12:00:00')))))
+            !s.is_joker && s.staff_id !== '__joker__' && isDatePublished(s.date, publishedWeeks)
         );
 
         const estabIds = [...new Set(visible.map(s => s.establishment_id))];
@@ -1875,17 +1883,7 @@ app.post('/api/shifts', checkDB, requirePatron, async (req, res) => {
         if (!is_joker && staff_id !== '__joker__') {
             (async () => {
                 try {
-                    let isPublished = _isAutoPublished(date);
-                    if (!isPublished) {
-                        const allPubs = await db.collection('settings').find({
-                            key: { $regex: '^publish_' }, published: true,
-                        }).toArray();
-                        isPublished = allPubs.some(p => {
-                            const weekDate  = new Date(p.key.replace('publish_', '') + 'T12:00:00');
-                            const shiftDate = new Date(date + 'T12:00:00');
-                            return Math.abs(shiftDate - weekDate) < 8 * 24 * 60 * 60 * 1000;
-                        });
-                    }
+                    const isPublished = isDatePublished(date, await fetchPublishedWeeks());
                     if (isPublished) {
                         const estabDoc  = await db.collection('establishments').findOne({ id: establishment_id }) || {};
                         const estabName = estabDoc.name || establishment_id;
@@ -2064,17 +2062,7 @@ app.patch('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
                 async () => {
                     // B-10 : pas de push si le shift est dans le passé
                     if (capturedDate < toDateStr(new Date())) return;
-                    let isPublished = _isAutoPublished(capturedDate);
-                    if (!isPublished) {
-                        const allPubs = await db.collection('settings').find({
-                            key: { $regex: '^publish_' }, published: true,
-                        }).toArray();
-                        isPublished = allPubs.some(p => {
-                            const weekDate  = new Date(p.key.replace('publish_', '') + 'T12:00:00');
-                            const shiftDate = new Date(capturedDate + 'T12:00:00');
-                            return Math.abs(shiftDate - weekDate) < 8 * 24 * 60 * 60 * 1000;
-                        });
-                    }
+                    const isPublished = isDatePublished(capturedDate, await fetchPublishedWeeks());
                     if (!isPublished) return;
                     // Relire les horaires finaux depuis la base (après tous les resizes)
                     const finalShift = await db.collection('shifts').findOne({ _id: existing._id });
@@ -2125,15 +2113,7 @@ app.delete('/api/shifts/:id', checkDB, requirePatron, async (req, res) => {
         if (!existing.is_joker && existing.staff_id && existing.staff_id !== '__joker__') {
             (async () => {
                 try {
-                    let isPublished = _isAutoPublished(existing.date);
-                    if (!isPublished) {
-                        const allPubs = await db.collection('settings').find({ key: { $regex: '^publish_' }, published: true }).toArray();
-                        isPublished = allPubs.some(p => {
-                            const weekDate  = new Date(p.key.replace('publish_', '') + 'T12:00:00');
-                            const shiftDate = new Date(existing.date + 'T12:00:00');
-                            return Math.abs(shiftDate - weekDate) < 8 * 24 * 60 * 60 * 1000;
-                        });
-                    }
+                    const isPublished = isDatePublished(existing.date, await fetchPublishedWeeks());
                     if (!isPublished) return;
                     const estabDoc  = await db.collection('establishments').findOne({ id: existing.establishment_id }) || {};
                     const estabName = estabDoc.name || existing.establishment_id;

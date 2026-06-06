@@ -118,7 +118,7 @@ PORT=3000
 | `npm run init` | Recrée les collections et indexes MongoDB |
 | `npm run create-patron` | Crée le compte patron en CLI |
 | `npm run seed` | Insère des shifts de démonstration |
-| `npm test` | Lance les 64 tests unitaires (`node --test`, 3 suites) |
+| `npm test` | Lance les 69 tests unitaires (`node --test`, 3 suites) |
 
 ---
 
@@ -356,7 +356,7 @@ Tout ce qui est testable sans Express/Mongo/réseau doit aller dans `lib/utils.j
 ```bash
 npm test
 # Lance : node --test tests/utils.test.js tests/shift-hours.test.js tests/week.test.js
-# 64 tests (3 suites) — timezone, padding dates, téléphones, tokens, ObjectId,
+# 69 tests (3 suites) — timezone, padding dates, téléphones, tokens, ObjectId,
 # heures effectives d'un shift (réel/planifié, pointage partiel, shift de nuit),
 # lundi de semaine (weekStart : bascule mois/année, idempotence ;
 # currentWeekStart : cutoff hebdo 6h pour les fermetures ~2h)
