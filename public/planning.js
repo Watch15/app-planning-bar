@@ -914,8 +914,56 @@ function _kpiBarHtml(sent, total, big) {
     '</div>';
 }
 
+let _respKpiData = null;
+let _respKpiOpen = false;
+
+function _respKpiInnerHtml() {
+    const data = _respKpiData;
+    if (!data) return '';
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const o   = data.overall || { sent: 0, total: 0 };
+    const pct = o.total > 0 ? Math.round((o.sent / o.total) * 100) : 0;
+    const missing = data.missing || [];
+    let html = '<div id="resp-kpi-toggle" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;cursor:pointer" title="Voir qui n\'a pas envoyé">' +
+        '<span style="font-size:13px;font-weight:700;color:#1a1a2e">🗓️ Dispos envoyées — semaine prochaine</span>' +
+        '<span style="font-size:12px;color:#888;white-space:nowrap">' + pct + '% ' + (_respKpiOpen ? '▾' : '▸') + '</span>' +
+    '</div>' + _kpiBarHtml(o.sent, o.total, true);
+    const bars = (data.by_establishment || []).filter(b => b.total > 0 || b.sent > 0);
+    if (bars.length) {
+        html += '<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">';
+        bars.forEach(b => {
+            html += '<div style="display:flex;align-items:center;gap:10px">' +
+                '<span style="flex:0 0 96px;font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(b.establishment_name) + '">' + esc(b.establishment_name) + '</span>' +
+                '<div style="flex:1">' + _kpiBarHtml(b.sent, b.total, false) + '</div>' +
+            '</div>';
+        });
+        html += '</div>';
+    }
+    if (_respKpiOpen) {
+        html += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid #e8eaed">' +
+            '<div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Pas encore envoyé (' + missing.length + ')</div>';
+        if (!missing.length) {
+            html += '<div style="font-size:13px;color:#10b981;font-weight:600">✅ Tout le monde a envoyé ses dispos</div>';
+        } else {
+            html += '<div style="display:flex;flex-direction:column;gap:6px">';
+            missing.forEach(m => {
+                const estabs = (m.establishments || []).length ? ' <span style="color:#aaa">· ' + esc(m.establishments.join(', ')) + '</span>' : '';
+                html += '<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#1a1a2e">' +
+                    '<span style="width:8px;height:8px;border-radius:50%;background:' + esc(m.color || '#888') + ';flex-shrink:0;display:inline-block"></span>' +
+                    '<span style="font-weight:600">' + esc(m.name) + '</span>' + estabs +
+                '</div>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+    }
+    return html;
+}
+
 // KPI complétion des dispos (semaine prochaine), inséré en tête du tableau de bord
-// responsable. Le serveur scope déjà aux établissements du responsable.
+// responsable. Le serveur scope déjà aux établissements du responsable. Cliquable
+// pour dérouler la liste des staff qui n'ont pas encore envoyé.
 async function renderRespDispoKpi(container) {
     if (!container) return;
     try {
@@ -926,29 +974,21 @@ async function renderRespDispoKpi(container) {
         if (!res.ok) return;
         const data = await res.json();
         if (!data.authorized) return;
-        const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
-            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        const o   = data.overall || { sent: 0, total: 0 };
-        const pct = o.total > 0 ? Math.round((o.sent / o.total) * 100) : 0;
-        const block = document.createElement('div');
-        block.style.cssText = 'margin:14px 12px 4px;background:#fff;border:1px solid #e8eaed;border-radius:14px;padding:14px 16px';
-        let html = '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">' +
-            '<span style="font-size:13px;font-weight:700;color:#1a1a2e">🗓️ Dispos envoyées — semaine prochaine</span>' +
-            '<span style="font-size:12px;color:#888">' + pct + '%</span>' +
-        '</div>' + _kpiBarHtml(o.sent, o.total, true);
-        const bars = (data.by_establishment || []).filter(b => b.total > 0 || b.sent > 0);
-        if (bars.length) {
-            html += '<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">';
-            bars.forEach(b => {
-                html += '<div style="display:flex;align-items:center;gap:10px">' +
-                    '<span style="flex:0 0 96px;font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(b.establishment_name) + '">' + esc(b.establishment_name) + '</span>' +
-                    '<div style="flex:1">' + _kpiBarHtml(b.sent, b.total, false) + '</div>' +
-                '</div>';
-            });
-            html += '</div>';
+        _respKpiData = data;
+
+        let block = container.querySelector('#resp-kpi-block');
+        if (!block) {
+            block = document.createElement('div');
+            block.id = 'resp-kpi-block';
+            block.style.cssText = 'margin:14px 12px 4px;background:#fff;border:1px solid #e8eaed;border-radius:14px;padding:14px 16px';
+            container.insertBefore(block, container.firstChild);
         }
-        block.innerHTML = html;
-        container.insertBefore(block, container.firstChild);
+        const paint = () => {
+            block.innerHTML = _respKpiInnerHtml();
+            const t = block.querySelector('#resp-kpi-toggle');
+            if (t) t.addEventListener('click', () => { _respKpiOpen = !_respKpiOpen; paint(); });
+        };
+        paint();
     } catch { /* silencieux */ }
 }
 

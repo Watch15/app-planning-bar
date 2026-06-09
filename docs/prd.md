@@ -131,11 +131,14 @@ La modale **Disponibilités** est organisée en 5 onglets accessibles depuis le 
 La barre d'onglets passe sur 2 lignes (`flex-wrap`) si l'espace est insuffisant (mobile / modale étroite).
 
 **KPI de complétion (carte sur la vue planning)** — au-dessus de la grille semaine, une carte
-affiche le taux de dispos envoyées pour la **semaine prochaine** : barre globale « X/Y » +
-**déclinaison par établissement**. Visible pour le **patron** (tous les bars), le **directeur**
+affiche le taux de dispos envoyées : barre globale « X/Y » + **déclinaison par établissement**.
+La carte suit la **semaine affichée dans le planning** (navigation prev/next) et est
+**cliquable** : un clic déroule la **liste des staff qui n'ont pas encore envoyé** pour cette
+semaine (nom + établissement(s)). Visible pour le **patron** (tous les bars), le **directeur**
 (ses `assigned_establishments`) et le **responsable** (établissements de ses shifts de la
-semaine, dans l'onglet « 👥 Mon équipe »). Total = staff avec compte actif et
-`can_submit_dispos !== false`. Endpoint `GET /api/dispos/kpi?from&to` (scoping serveur par rôle).
+semaine, dans l'onglet « 👥 Mon équipe » — semaine prochaine). Total = staff avec compte actif
+et `can_submit_dispos !== false`. Endpoint `GET /api/dispos/kpi?from&to` (scoping serveur par
+rôle ; renvoie `overall`, `by_establishment` et `missing`).
 
 Paramétrage global :
 - Toggle ouvrir / fermer l'envoi des disponibilités (`force_open`)
