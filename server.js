@@ -3609,10 +3609,13 @@ app.get('/api/recap-mensuel', checkDB, requirePatron, async (req, res) => {
         });
 
         // ── Congés validés du mois ────────────────────────────────────────────
+        // Uniquement les congés DEMANDÉS au patron et validés (mode 'request' +
+        // status 'approved') — les déclarations informatives ne comptent pas.
         // Les congés sont personnels (non rattachés à un établissement). Si un
         // établissement est filtré, on ne compte que les congés des staff qui y
         // sont rattachés (venues). On agrège les jours de congé par staff sur le mois.
         const conges = await db.collection('time_off').find({
+            mode:       'request',
             status:     'approved',
             start_date: { $lte: lastDay },
             end_date:   { $gte: firstDay },

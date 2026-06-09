@@ -156,9 +156,11 @@ Mécanique **distincte des disponibilités** : long terme, personnelle (vaut sur
 - **Intégration planning** : un staff en congé approuvé un jour donné est **grisé + badge
   🌴 Congé** dans la barre staff, et son assignation à un shift ce jour-là requiert une
   **confirmation explicite** (blocage doux).
-- **Récap mensuel** : une colonne **🌴 Congés** (jours de congé validés sur le mois) est
-  ajoutée au récap et à l'export Excel ; un staff en congé sans aucun shift le mois donné y
-  apparaît quand même. Congés filtrés par établissement via les `venues` du staff.
+- **Récap mensuel** : une colonne **🌴 Congés** (jours de congé sur le mois) est ajoutée au
+  récap et à l'export Excel. **Seuls les congés demandés au patron et validés** (mode
+  `request` + statut `approved`) sont comptés — les déclarations informatives sont exclues.
+  Un staff en congé sans aucun shift le mois donné y apparaît quand même. Congés filtrés par
+  établissement via les `venues` du staff.
 - Endpoints : `POST /api/conges`, `GET /api/conges/mine`, `DELETE /api/conges/:id`,
   `GET /api/conges` (patron, filtre `from`/`to`/`status`), `GET /api/conges/pending-count`,
   `PATCH /api/conges/:id/decision`. Helpers purs testés : `datesOverlap`, `congeCoversDate`,
