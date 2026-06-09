@@ -301,16 +301,20 @@ async function init() {
     const btnDispos = document.getElementById('btn-dispos');
     if (btnDispos) btnDispos.addEventListener('click', openDisposPanel);
 
-    const btnConges = document.getElementById('btn-conges');
-    if (btnConges) btnConges.addEventListener('click', openCongesPanel);
-    const congesClose = document.getElementById('conges-modal-close');
-    if (congesClose) congesClose.addEventListener('click', () => {
-        document.getElementById('conges-modal').style.display = 'none';
+    const congesSearch = document.getElementById('conges-search');
+    if (congesSearch) congesSearch.addEventListener('input', renderCongesListPatron);
+    document.querySelectorAll('.conge-filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            _congesFilter = chip.dataset.filter;
+            document.querySelectorAll('.conge-filter-chip').forEach(c => {
+                const active = c.dataset.filter === _congesFilter;
+                c.style.borderColor      = active ? 'var(--accent)' : 'var(--light-border)';
+                c.style.background        = active ? 'var(--accent-subtle)' : 'white';
+                c.style.color             = active ? 'var(--accent)' : 'var(--text-secondary)';
+            });
+            renderCongesListPatron();
+        });
     });
-    const congesTabPending = document.getElementById('conges-tab-btn-pending');
-    if (congesTabPending) congesTabPending.addEventListener('click', () => switchCongesTab('pending'));
-    const congesTabAll = document.getElementById('conges-tab-btn-all');
-    if (congesTabAll) congesTabAll.addEventListener('click', () => switchCongesTab('all'));
 
     // F-05 échanges désactivé
     // const btnSwaps = document.getElementById('btn-swaps');
@@ -331,6 +335,8 @@ async function init() {
     if (disposTabReminder) disposTabReminder.addEventListener('click', () => switchDisposTab('reminder'));
     const disposTabModify = document.getElementById('dispos-tab-btn-modify');
     if (disposTabModify) disposTabModify.addEventListener('click', () => switchDisposTab('modify'));
+    const disposTabConges = document.getElementById('dispos-tab-btn-conges');
+    if (disposTabConges) disposTabConges.addEventListener('click', () => switchDisposTab('conges'));
     const staffNotesPrev = document.getElementById('staff-notes-prev');
     if (staffNotesPrev) staffNotesPrev.addEventListener('click', () => {
         if (!staffNotesWeekStart) return;
@@ -4797,9 +4803,14 @@ async function _decideSwap(swapId, action, card) {
 
 async function loadDisposBadge() {
     try {
-        const res = await fetch('/api/dispos/count', { credentials: 'include' });
-        if (!res.ok) return;
-        const { count } = await res.json();
+        // Le bouton « Dispos » est le hub absences : pastille = dispos + congés en attente
+        const [dispRes, congRes] = await Promise.all([
+            fetch('/api/dispos/count', { credentials: 'include' }),
+            fetch('/api/conges/pending-count', { credentials: 'include' }),
+        ]);
+        let count = 0;
+        if (dispRes.ok) count += (await dispRes.json()).count || 0;
+        if (congRes.ok) count += (await congRes.json()).count || 0;
         const badge = document.getElementById('dispos-badge');
         if (!badge) return;
         badge.textContent   = count;
@@ -4807,50 +4818,38 @@ async function loadDisposBadge() {
     } catch { }
 }
 
-// ── Congés / vacances — côté patron ──────────────────────────────────────────
+// ── Congés / vacances — côté patron (onglet de la modale Dispos) ─────────────
 
-let _congesTab = 'pending';
-
-async function loadCongesBadge() {
-    try {
-        const res = await fetch('/api/conges/pending-count', { credentials: 'include' });
-        if (!res.ok) return;
-        const { count } = await res.json();
-        const badge = document.getElementById('conges-badge');
-        if (!badge) return;
-        badge.textContent   = count;
-        badge.style.display = count > 0 ? 'flex' : 'none';
-    } catch { }
-}
-
-function openCongesPanel() {
-    document.getElementById('conges-modal').style.display = 'flex';
-    switchCongesTab('pending');
-}
-
-function switchCongesTab(tab) {
-    _congesTab = tab;
-    const btnPending = document.getElementById('conges-tab-btn-pending');
-    const btnAll     = document.getElementById('conges-tab-btn-all');
-    [[btnPending, tab === 'pending'], [btnAll, tab === 'all']].forEach(([btn, active]) => {
-        if (!btn) return;
-        btn.style.borderBottomColor = active ? 'var(--accent)' : 'transparent';
-        btn.style.color   = active ? 'var(--accent)' : 'var(--text-secondary)';
-        btn.style.fontWeight = active ? '600' : '500';
-    });
-    loadCongesList();
-}
+let _congesFilter = 'all';            // all | pending | approved
+let _congesAll    = [];               // congés à venir (cache, tous statuts)
+const _congesCollapsedMonths = new Set(); // clés 'YYYY-MM' repliées
 
 const _CONGE_STATUS_PATRON = {
-    pending:  { label: 'En attente', cls: 'badge--warning' },
-    approved: { label: 'Validé',     cls: 'badge--success' },
-    rejected: { label: 'Refusé',     cls: 'badge--danger'  },
+    pending:  { icon: '⏳', cls: 'badge--warning', label: 'En attente' },
+    approved: { icon: '✓',  cls: 'badge--success', label: 'Validé' },
+    rejected: { icon: '✗',  cls: 'badge--danger',  label: 'Refusé' },
 };
+
+const _MONTHS_FR = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 
 function _fmtCongeDateFr(iso) {
     const MONTHS = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
     const [, m, d] = iso.split('-').map(Number);
     return d + ' ' + MONTHS[m - 1];
+}
+
+// Badge de l'onglet Congés (demandes en attente). La pastille header est gérée
+// par loadDisposBadge() qui agrège dispos + congés.
+async function loadCongesBadge() {
+    try {
+        const res = await fetch('/api/conges/pending-count', { credentials: 'include' });
+        if (!res.ok) return;
+        const { count } = await res.json();
+        const badge = document.getElementById('conges-tab-badge');
+        if (!badge) return;
+        badge.textContent   = count;
+        badge.style.display = count > 0 ? 'inline-block' : 'none';
+    } catch { }
 }
 
 async function loadCongesList() {
@@ -4859,57 +4858,96 @@ async function loadCongesList() {
     list.innerHTML = '<div style="padding:24px;text-align:center;color:#aaa;font-size:13px">Chargement…</div>';
     try {
         const today = toDateStr(new Date());
-        // En attente : toutes les demandes pending. Tous : congés à venir, tous statuts.
-        const qs = _congesTab === 'pending' ? 'status=pending' : 'from=' + today;
-        const res = await fetch('/api/conges?' + qs, { credentials: 'include' });
+        const res = await fetch('/api/conges?from=' + today, { credentials: 'include' });
         if (!res.ok) throw new Error();
-        renderCongesListPatron(await res.json());
+        _congesAll = await res.json();
+        renderCongesListPatron();
     } catch {
         list.innerHTML = '<div style="padding:24px;text-align:center;color:#c0392b;font-size:13px">Erreur de chargement.</div>';
     }
 }
 
-function renderCongesListPatron(conges) {
+function renderCongesListPatron() {
     const list = document.getElementById('conges-list');
     if (!list) return;
-    if (!conges.length) {
-        list.innerHTML = '<div style="padding:24px;text-align:center;color:#999;font-size:13px">' +
-            (_congesTab === 'pending' ? 'Aucune demande en attente.' : 'Aucun congé à venir.') + '</div>';
+    const search = normalizeStr(document.getElementById('conges-search')?.value || '').trim();
+    let rows = _congesAll.slice();
+    if (_congesFilter !== 'all') rows = rows.filter(c => c.status === _congesFilter);
+    if (search) rows = rows.filter(c => normalizeStr(c.staff_name || '').includes(search));
+
+    if (!rows.length) {
+        list.innerHTML = '<div style="padding:24px;text-align:center;color:#999;font-size:13px">Aucun congé à afficher.</div>';
         return;
     }
-    list.innerHTML = '';
-    conges.forEach(c => {
-        const st = _CONGE_STATUS_PATRON[c.status] || _CONGE_STATUS_PATRON.pending;
-        const range = _fmtCongeDateFr(c.start_date) + (c.start_date === c.end_date ? '' : ' → ' + _fmtCongeDateFr(c.end_date));
-        const row = document.createElement('div');
-        row.style.cssText = 'padding:12px 16px;border-bottom:1px solid var(--light-border);display:flex;flex-direction:column;gap:6px';
-        const head = document.createElement('div');
-        head.style.cssText = 'display:flex;align-items:center;gap:8px;justify-content:space-between';
-        head.innerHTML =
-            '<span style="font-weight:600;color:var(--text-primary);font-size:14px">' + escapeHtml(c.staff_name || '?') + '</span>' +
-            '<span class="badge ' + st.cls + '">' + st.label + '</span>';
-        row.appendChild(head);
-        const meta = document.createElement('div');
-        meta.style.cssText = 'font-size:13px;color:var(--text-secondary)';
-        meta.textContent = '🌴 ' + range + ' · ' + (c.mode === 'info' ? 'Informatif' : 'Demande') + (c.reason ? ' · ' + c.reason : '');
-        row.appendChild(meta);
-        if (c.status === 'pending') {
-            const actions = document.createElement('div');
-            actions.style.cssText = 'display:flex;gap:8px;margin-top:4px';
-            const reject = document.createElement('button');
-            reject.textContent = 'Refuser';
-            reject.style.cssText = 'padding:6px 14px;border-radius:8px;border:1px solid var(--danger);background:white;color:var(--danger);font-size:13px;font-weight:600;cursor:pointer';
-            reject.addEventListener('click', () => decideConge(c._id, 'rejected'));
-            const approve = document.createElement('button');
-            approve.textContent = 'Valider';
-            approve.style.cssText = 'padding:6px 14px;border-radius:8px;border:none;background:#10b981;color:white;font-size:13px;font-weight:600;cursor:pointer';
-            approve.addEventListener('click', () => decideConge(c._id, 'approved'));
-            actions.appendChild(reject);
-            actions.appendChild(approve);
-            row.appendChild(actions);
-        }
-        list.appendChild(row);
+
+    // Regrouper par mois (clé 'YYYY-MM'), tri chronologique
+    const groups = new Map();
+    rows.sort((a, b) => a.start_date.localeCompare(b.start_date));
+    rows.forEach(c => {
+        const key = c.start_date.slice(0, 7);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(c);
     });
+
+    list.innerHTML = '';
+    [...groups.keys()].sort().forEach(key => {
+        const [y, m] = key.split('-').map(Number);
+        const collapsed = _congesCollapsedMonths.has(key);
+        const items = groups.get(key);
+
+        const header = document.createElement('button');
+        header.style.cssText = 'width:100%;text-align:left;background:var(--light-bg);border:none;border-bottom:1px solid var(--light-border);padding:8px 16px;font-size:12px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.4px;cursor:pointer;display:flex;align-items:center;gap:6px';
+        header.innerHTML = '<span style="display:inline-block;width:10px">' + (collapsed ? '▸' : '▾') + '</span>' +
+            _MONTHS_FR[m - 1] + ' ' + y + ' <span style="color:#aaa;font-weight:600">(' + items.length + ')</span>';
+        header.addEventListener('click', () => {
+            if (_congesCollapsedMonths.has(key)) _congesCollapsedMonths.delete(key);
+            else _congesCollapsedMonths.add(key);
+            renderCongesListPatron();
+        });
+        list.appendChild(header);
+        if (collapsed) return;
+
+        items.forEach(c => list.appendChild(_buildCongeRow(c)));
+    });
+}
+
+function _buildCongeRow(c) {
+    const st = _CONGE_STATUS_PATRON[c.status] || _CONGE_STATUS_PATRON.pending;
+    const range = _fmtCongeDateFr(c.start_date) + (c.start_date === c.end_date ? '' : ' → ' + _fmtCongeDateFr(c.end_date));
+    const row = document.createElement('div');
+    row.style.cssText = 'padding:8px 16px;border-bottom:1px solid var(--light-border);display:flex;align-items:center;gap:8px';
+
+    const info = document.createElement('div');
+    info.style.cssText = 'flex:1;min-width:0';
+    info.innerHTML =
+        '<div style="font-weight:600;color:var(--text-primary);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(c.staff_name || '?') + '</div>' +
+        '<div style="font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🌴 ' + range + (c.mode === 'info' ? ' · info' : '') + (c.reason ? ' · ' + escapeHtml(c.reason) : '') + '</div>';
+    row.appendChild(info);
+
+    if (c.status === 'pending') {
+        const actions = document.createElement('div');
+        actions.style.cssText = 'display:flex;gap:6px;flex-shrink:0';
+        const approve = document.createElement('button');
+        approve.textContent = '✓';
+        approve.title = 'Valider';
+        approve.style.cssText = 'width:30px;height:30px;border-radius:8px;border:none;background:#10b981;color:white;font-size:15px;font-weight:700;cursor:pointer';
+        approve.addEventListener('click', () => decideConge(c._id, 'approved'));
+        const reject = document.createElement('button');
+        reject.textContent = '✗';
+        reject.title = 'Refuser';
+        reject.style.cssText = 'width:30px;height:30px;border-radius:8px;border:1px solid var(--danger);background:white;color:var(--danger);font-size:15px;font-weight:700;cursor:pointer';
+        reject.addEventListener('click', () => decideConge(c._id, 'rejected'));
+        actions.appendChild(approve);
+        actions.appendChild(reject);
+        row.appendChild(actions);
+    } else {
+        const badge = document.createElement('span');
+        badge.className = 'badge ' + st.cls;
+        badge.style.flexShrink = '0';
+        badge.textContent = st.icon + ' ' + st.label;
+        row.appendChild(badge);
+    }
+    return row;
 }
 
 async function decideConge(id, decision) {
@@ -4922,9 +4960,12 @@ async function decideConge(id, decision) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
         showToast(data.message);
-        loadCongesList();
+        // MAJ optimiste du cache puis re-render (garde le scroll/repli)
+        const c = _congesAll.find(x => String(x._id) === String(id));
+        if (c) c.status = decision;
+        renderCongesListPatron();
         loadCongesBadge();
-        // Rafraîchir l'indicateur de congé sur le jour affiché si concerné
+        loadDisposBadge();
         if (selectedDate) loadDayDetail(selectedDate);
     } catch (e) { showToast(e.message || 'Erreur', true); }
 }
@@ -5346,7 +5387,8 @@ function switchDisposTab(tab) {
     const isReassign = tab === 'reassign';
     const isReminder = tab === 'reminder';
     const isModify   = tab === 'modify';
-    const isList     = !isNotes && !isReassign && !isReminder && !isModify;
+    const isConges   = tab === 'conges';
+    const isList     = !isNotes && !isReassign && !isReminder && !isModify && !isConges;
 
     document.getElementById('dispos-tab-list').style.display  = isList ? '' : 'none';
     document.getElementById('dispos-tab-notes').style.display = isNotes ? '' : 'none';
@@ -5356,12 +5398,15 @@ function switchDisposTab(tab) {
     if (tabReminder) tabReminder.style.display = isReminder ? '' : 'none';
     const tabModify = document.getElementById('dispos-tab-modify');
     if (tabModify) tabModify.style.display = isModify ? '' : 'none';
+    const tabConges = document.getElementById('dispos-tab-conges');
+    if (tabConges) tabConges.style.display = isConges ? '' : 'none';
 
     const btnList     = document.getElementById('dispos-tab-btn-list');
     const btnNotes    = document.getElementById('dispos-tab-btn-notes');
     const btnReassign = document.getElementById('dispos-tab-btn-reassign');
     const btnReminder = document.getElementById('dispos-tab-btn-reminder');
     const btnModify   = document.getElementById('dispos-tab-btn-modify');
+    const btnConges   = document.getElementById('dispos-tab-btn-conges');
     if (btnList) {
         btnList.style.borderBottomColor = isList ? 'var(--accent)' : 'transparent';
         btnList.style.color             = isList ? 'var(--accent)' : 'var(--text-secondary)';
@@ -5387,6 +5432,12 @@ function switchDisposTab(tab) {
         btnModify.style.color             = isModify ? 'var(--accent)' : 'var(--text-secondary)';
         btnModify.style.fontWeight        = isModify ? '600' : '500';
     }
+    if (btnConges) {
+        btnConges.style.borderBottomColor = isConges ? 'var(--accent)' : 'transparent';
+        btnConges.style.color             = isConges ? 'var(--accent)' : 'var(--text-secondary)';
+        btnConges.style.fontWeight        = isConges ? '600' : '500';
+    }
+    if (isConges) loadCongesList();
     if (isNotes) {
         staffNotesWeekStart = getMondayOf(addDays(new Date(), 7));
         const srch = document.getElementById('staff-notes-search');
@@ -5407,6 +5458,7 @@ async function openDisposPanel() {
     await loadDisposList();
     loadReassignBadge();
     loadReminderBadge();
+    loadCongesBadge();
 }
 
 async function sendRappelDispos() {

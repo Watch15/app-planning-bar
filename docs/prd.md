@@ -142,13 +142,17 @@ Paramétrage global :
 Mécanique **distincte des disponibilités** : long terme, personnelle (vaut sur tous les
 établissements du staff), et **non purgée** au changement de semaine. Collection dédiée
 `time_off` ; ne dépend ni de la deadline ni de l'ouverture hebdomadaire des dispos.
-- **Côté staff** (`planning.html`, onglet « Congés ») : saisie d'une **plage de dates**
-  (du… au…) en deux modes — **Demande de congé** (soumise au patron pour validation) ou
-  **À titre informatif** (visible immédiatement). Liste de ses congés à venir avec statut
-  (en attente / validé / refusé) et annulation possible.
-- **Côté patron** : bouton header **🌴 Congés** avec badge des demandes en attente, modale
-  à deux onglets (⏳ En attente / 📅 Tous les congés) pour **valider** ou **refuser** ;
-  notification push au staff à la décision.
+- **Côté staff** (`planning.html`, onglet **« Dispos & congés »** avec un sous-toggle
+  *Dispos | Congés*) : saisie d'une **plage de dates** (du… au…) en deux modes — **Demande
+  de congé** (soumise au patron pour validation) ou **À titre informatif** (visible
+  immédiatement). Liste de ses congés à venir avec statut (en attente / validé / refusé) et
+  annulation possible. Si la saisie des dispos est désactivée pour le staff, l'onglet ne
+  montre que les congés.
+- **Côté patron** : les congés sont un **onglet 🌴 Congés de la modale Dispos** (pas de
+  bouton header dédié — la pastille du bouton « Dispos » agrège dispos + congés en attente).
+  L'onglet offre une **recherche par nom**, des **filtres de statut** (Tous / ⏳ En attente /
+  ✓ Validés) et un **regroupement par mois repliable** ; chaque demande se **valide / refuse**
+  en un clic, avec notification push au staff à la décision.
 - **Intégration planning** : un staff en congé approuvé un jour donné est **grisé + badge
   🌴 Congé** dans la barre staff, et son assignation à un shift ce jour-là requiert une
   **confirmation explicite** (blocage doux).

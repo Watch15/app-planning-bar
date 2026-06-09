@@ -3,6 +3,10 @@
 const DAY_NAMES  = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 const MONTH_NAMES = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
 
+// Saisie des dispos désactivée pour ce staff → l'onglet « Dispos & congés » n'affiche
+// que la sous-vue Congés (cf. /api/dispo-settings staffCanSubmit).
+let _disposSubmitDisabled = false;
+
 // ── Utilitaires ───────────────────────────────────────────────────────────────
 
 function textColorFor(hex) {
@@ -111,8 +115,11 @@ async function init() {
         if (estabRes.ok) allEstablishments = await estabRes.json();
     } catch { allStaff = []; allEstablishments = []; }
 
-    // Charger les dispos quand on clique sur l'onglet
+    // Charger les dispos quand on clique sur l'onglet (réinitialise sur la sous-vue Dispos).
+    // Si la saisie des dispos est désactivée, l'onglet ne montre que les congés.
     document.querySelector('[data-tab="dispos"]').addEventListener('click', () => {
+        if (_disposSubmitDisabled) { showDisposSub('conges'); return; }
+        showDisposSub('dispos');
         loadDisposTab();
     });
 
@@ -120,9 +127,11 @@ async function init() {
         loadHistoriqueWeek();
     });
 
-    document.querySelector('[data-tab="conges"]').addEventListener('click', () => {
-        loadCongesTab();
-    });
+    // Sous-onglets Dispos | Congés à l'intérieur de l'onglet « Dispos & congés »
+    const subDispos = document.getElementById('subtab-dispos');
+    const subConges = document.getElementById('subtab-conges');
+    if (subDispos) subDispos.addEventListener('click', () => showDisposSub('dispos'));
+    if (subConges) subConges.addEventListener('click', () => showDisposSub('conges'));
     initCongesForm();
 
     // Vérifier les droits dispos + groupes du staff en parallèle
@@ -131,10 +140,20 @@ async function init() {
         if (sRes.ok) {
             const s = await sRes.json();
             if (s.staffCanSubmit === false) {
-                const tabDispos  = document.getElementById('tab-dispos');
-                const viewDispos = document.getElementById('view-dispos');
-                if (tabDispos)  tabDispos.style.display  = 'none';
-                if (viewDispos) viewDispos.style.display = 'none';
+                // La saisie des dispos est désactivée : on garde l'onglet (les congés y
+                // vivent désormais) mais on masque la sous-vue Dispos et son sous-onglet,
+                // et on force l'affichage sur Congés.
+                const tabDispos = document.getElementById('tab-dispos');
+                const tabFull   = tabDispos && tabDispos.querySelector('.tab-full');
+                const tabShort  = tabDispos && tabDispos.querySelector('.tab-short');
+                if (tabFull)  tabFull.textContent  = 'Mes congés';
+                if (tabShort) tabShort.textContent = 'Congés';
+                const subDisposBtn = document.getElementById('subtab-dispos');
+                if (subDisposBtn) subDisposBtn.style.display = 'none';
+                const subCongesBtn = document.getElementById('subtab-conges');
+                if (subCongesBtn) subCongesBtn.style.display = 'none'; // un seul contenu → pas de toggle
+                _disposSubmitDisabled = true;
+                showDisposSub('conges');
             }
         }
     } catch { /* silencieux */ }
@@ -1087,7 +1106,7 @@ function openContactSheet(name, phone) {
 
 function showTab(tab) {
     // Cacher toutes les vues connues
-    const views = ['view-planning', 'view-dispos', 'view-conges', 'view-next-week', 'view-historique', 'view-resp-dashboard'];
+    const views = ['view-planning', 'view-dispos', 'view-next-week', 'view-historique', 'view-resp-dashboard'];
     views.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -1684,6 +1703,23 @@ async function submitDispos() {
 
 // ── Congés / vacances ────────────────────────────────────────────────────────
 
+// Bascule entre les sous-vues « Dispos » et « Congés » de l'onglet Dispos & congés.
+function showDisposSub(sub) {
+    const isConges = sub === 'conges';
+    const dispPane = document.getElementById('dispos-sub-dispos');
+    const congPane = document.getElementById('dispos-sub-conges');
+    if (dispPane) dispPane.style.display = isConges ? 'none' : '';
+    if (congPane) congPane.style.display = isConges ? '' : 'none';
+    // Le bouton fixe « Envoyer mes dispos » n'a de sens que sur la sous-vue Dispos
+    const submitBtn = document.getElementById('btn-submit-dispos');
+    if (submitBtn) submitBtn.style.display = isConges ? 'none' : '';
+    const sd = document.getElementById('subtab-dispos');
+    const sc = document.getElementById('subtab-conges');
+    if (sd) sd.classList.toggle('dispos-subtab--active', !isConges);
+    if (sc) sc.classList.toggle('dispos-subtab--active', isConges);
+    if (isConges) loadCongesTab();
+}
+
 function fmtCongeDate(iso) {
     const [, m, d] = iso.split('-').map(Number);
     return d + ' ' + MONTH_NAMES[m - 1];
@@ -1862,7 +1898,11 @@ function _showNotifToast(notif) {
     toast.addEventListener('click', e => {
         if (e.target.classList.contains('notif-toast-close')) return;
         const url = notif.url || '';
-        if (url.includes('#dispos')) {
+        if (url.includes('#conges')) {
+            const t = document.querySelector('[data-tab="dispos"]');
+            if (t) t.click();
+            showDisposSub('conges');
+        } else if (url.includes('#dispos')) {
             const t = document.querySelector('[data-tab="dispos"]');
             if (t) t.click();
         } else {
