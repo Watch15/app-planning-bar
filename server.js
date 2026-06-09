@@ -2754,7 +2754,7 @@ app.get('/api/dispos/kpi', checkDB, requireAuth, async (req, res) => {
         const eligible = activeIds.length
             ? await db.collection('staff').find(
                 { _id: { $in: activeIds.map(id => new ObjectId(id)) }, can_submit_dispos: { $ne: false } },
-                { projection: { venues: 1 } }
+                { projection: { venues: 1, name: 1, color: 1 } }
             ).toArray()
             : [];
 
@@ -2771,20 +2771,32 @@ app.get('/api/dispos/kpi', checkDB, requireAuth, async (req, res) => {
 
         const overallSet = new Set();
         const overallSentSet = new Set();
+        const missing = [];
         eligible.forEach(s => {
             const sid = String(s._id);
             const venues = Array.isArray(s.venues) ? s.venues.map(String) : [];
             const inScope = venues.filter(v => scopeSet.has(v));
             // Le patron compte tout staff autorisé dans le global, même sans établissement.
             const inOverall = scope === 'patron' ? true : inScope.length > 0;
-            if (inOverall) { overallSet.add(sid); if (sentSet.has(sid)) overallSentSet.add(sid); }
-            inScope.forEach(v => { byId[v].total++; if (sentSet.has(sid)) byId[v].sent++; });
+            if (!inOverall) return;
+            const hasSent = sentSet.has(sid);
+            overallSet.add(sid);
+            if (hasSent) overallSentSet.add(sid);
+            inScope.forEach(v => { byId[v].total++; if (hasSent) byId[v].sent++; });
+            if (!hasSent) {
+                missing.push({
+                    id: sid, name: s.name || '—', color: s.color || '#888',
+                    establishments: inScope.map(v => estabNameById[v] || v),
+                });
+            }
         });
+        missing.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
 
         res.json({
             authorized: true, scope,
             overall: { sent: overallSentSet.size, total: overallSet.size },
             by_establishment: by.sort((a, b) => a.establishment_name.localeCompare(b.establishment_name)),
+            missing,
         });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });

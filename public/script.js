@@ -588,6 +588,7 @@ async function refreshWeek() {
     currentShiftsWeek = Object.values(weekFullData).flat();
     renderSidebar(); // Mettre à jour l'ordre staff APRÈS que currentVenueId est à jour
     renderWeekGrid();
+    loadDisposKpi(); // KPI dispos suit la semaine affichée
     if (currentView === 'week') {
         renderWeekFull();
     } else {
@@ -4844,41 +4845,80 @@ function _kpiProgressBar(sent, total, big) {
     '</div>';
 }
 
+let _kpiData = null;          // dernière réponse /api/dispos/kpi
+let _kpiMissingOpen = false;  // liste des non-envoyeurs dépliée ?
+
 async function loadDisposKpi() {
     const card = document.getElementById('dispos-kpi-card');
     if (!card) return;
     try {
-        const nextMonday = getMondayOf(addDays(new Date(), 7));
-        const from = toDateStr(nextMonday);
-        const to   = toDateStr(addDays(nextMonday, 6));
+        // Suit la semaine AFFICHÉE dans le planning (currentWeekStart)
+        const from = toDateStr(currentWeekStart);
+        const to   = toDateStr(addDays(currentWeekStart, 6));
         const res  = await fetch('/api/dispos/kpi?from=' + from + '&to=' + to, { credentials: 'include' });
         if (!res.ok) { card.style.display = 'none'; return; }
         const data = await res.json();
         if (!data.authorized) { card.style.display = 'none'; return; }
+        _kpiData = data;
+        renderDisposKpiCard();
+    } catch { card.style.display = 'none'; }
+}
 
-        const o   = data.overall || { sent: 0, total: 0 };
-        const pct = o.total > 0 ? Math.round((o.sent / o.total) * 100) : 0;
-        let html = '<div style="background:var(--light-card,#fff);border:1px solid var(--light-border,#e8eaed);border-radius:14px;padding:14px 16px;margin:0 0 12px">' +
-            '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">' +
-                '<span style="font-size:13px;font-weight:700;color:var(--text-primary,#1a1a2e)">🗓️ Dispos envoyées — semaine prochaine</span>' +
-                '<span style="font-size:12px;color:var(--text-secondary,#777)">' + pct + '%</span>' +
-            '</div>' +
-            _kpiProgressBar(o.sent, o.total, true);
-        const bars = (data.by_establishment || []).filter(b => b.total > 0 || b.sent > 0);
-        if (bars.length) {
-            html += '<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">';
-            bars.forEach(b => {
-                html += '<div style="display:flex;align-items:center;gap:10px">' +
-                    '<span style="flex:0 0 96px;font-size:12px;color:var(--text-secondary,#777);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + escapeHtml(b.establishment_name) + '">' + escapeHtml(b.establishment_name) + '</span>' +
-                    '<div style="flex:1">' + _kpiProgressBar(b.sent, b.total, false) + '</div>' +
+function renderDisposKpiCard() {
+    const card = document.getElementById('dispos-kpi-card');
+    if (!card || !_kpiData) return;
+    const data = _kpiData;
+    const o    = data.overall || { sent: 0, total: 0 };
+    const pct  = o.total > 0 ? Math.round((o.sent / o.total) * 100) : 0;
+    const missing = data.missing || [];
+    const weekLabel = 'semaine du ' + currentWeekStart.getDate() + ' ' + MONTH_NAMES[currentWeekStart.getMonth()];
+
+    let html = '<div style="background:var(--light-card,#fff);border:1px solid var(--light-border,#e8eaed);border-radius:14px;padding:14px 16px;margin:0 0 12px">';
+    // En-tête cliquable
+    html += '<div id="dispos-kpi-toggle" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;cursor:pointer" title="Voir qui n\'a pas envoyé">' +
+            '<span style="font-size:13px;font-weight:700;color:var(--text-primary,#1a1a2e)">🗓️ Dispos envoyées — ' + weekLabel + '</span>' +
+            '<span style="font-size:12px;color:var(--text-secondary,#777);white-space:nowrap">' + pct + '% ' + (_kpiMissingOpen ? '▾' : '▸') + '</span>' +
+        '</div>' +
+        _kpiProgressBar(o.sent, o.total, true);
+    const bars = (data.by_establishment || []).filter(b => b.total > 0 || b.sent > 0);
+    if (bars.length) {
+        html += '<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">';
+        bars.forEach(b => {
+            html += '<div style="display:flex;align-items:center;gap:10px">' +
+                '<span style="flex:0 0 96px;font-size:12px;color:var(--text-secondary,#777);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + escapeHtml(b.establishment_name) + '">' + escapeHtml(b.establishment_name) + '</span>' +
+                '<div style="flex:1">' + _kpiProgressBar(b.sent, b.total, false) + '</div>' +
+            '</div>';
+        });
+        html += '</div>';
+    }
+    // Liste dépliable des staff sans dispo
+    if (_kpiMissingOpen) {
+        html += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--light-border,#e8eaed)">' +
+            '<div style="font-size:12px;font-weight:700;color:var(--text-secondary,#777);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Pas encore envoyé (' + missing.length + ')</div>';
+        if (!missing.length) {
+            html += '<div style="font-size:13px;color:#10b981;font-weight:600">✅ Tout le monde a envoyé ses dispos</div>';
+        } else {
+            html += '<div style="display:flex;flex-direction:column;gap:6px">';
+            missing.forEach(m => {
+                const estabs = (m.establishments || []).length ? ' <span style="color:#aaa">· ' + escapeHtml(m.establishments.join(', ')) + '</span>' : '';
+                html += '<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-primary,#1a1a2e)">' +
+                    '<span style="width:8px;height:8px;border-radius:50%;background:' + escapeHtml(m.color || '#888') + ';flex-shrink:0;display:inline-block"></span>' +
+                    '<span style="font-weight:600">' + escapeHtml(m.name) + '</span>' + estabs +
                 '</div>';
             });
             html += '</div>';
         }
         html += '</div>';
-        card.innerHTML = html;
-        card.style.display = '';
-    } catch { card.style.display = 'none'; }
+    }
+    html += '</div>';
+    card.innerHTML = html;
+    card.style.display = '';
+
+    const toggle = document.getElementById('dispos-kpi-toggle');
+    if (toggle) toggle.addEventListener('click', () => {
+        _kpiMissingOpen = !_kpiMissingOpen;
+        renderDisposKpiCard();
+    });
 }
 
 // ── Congés / vacances — côté patron (onglet de la modale Dispos) ─────────────
@@ -7400,8 +7440,8 @@ async function silentRefresh() {
     try { await loadAllStaff(); } catch { /* silencieux */ }
     try { loadDisposBadge(); } catch { /* silencieux */ }
     try { loadCongesBadge(); } catch { /* silencieux */ }
-    try { loadDisposKpi(); } catch { /* silencieux */ }
     try { loadNotifBadge(); } catch { /* silencieux */ }
+    // loadDisposKpi() est déjà appelé par refreshWeek() ci-dessus
 }
 
 // ── Notifications patron/directeur ────────────────────────────────────────────
