@@ -1059,22 +1059,27 @@ body.observateur #staff-bar-overlay {
 .recap-subtab:hover { color: var(--text-primary); }
 .recap-subtab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-/* Calendrier congés : une ligne par jour */
-.conge-day-row {
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 7px 10px; border-radius: 8px; border: 1px solid transparent;
+/* Calendrier congés — format mois (grille type calendrier papier) */
+.conge-cal { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.cal-inner { min-width: 620px; }
+.cal-weekdays, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-weekdays { margin-bottom: 4px; }
+.cal-weekday { text-align: center; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; }
+.cal-cell {
+  min-height: 72px; border: 1px solid var(--light-border); border-radius: 8px;
+  padding: 4px 5px; background: var(--light-card); display: flex; flex-direction: column; gap: 3px;
 }
-.conge-day-row.has-conge { background: var(--warning-bg, #fff8ec); border-color: #f0d9a8; }
-.conge-day-date { flex: 0 0 96px; font-size: 12px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
-.conge-day-date.weekend { color: var(--accent); }
-.conge-day-people { flex: 1; display: flex; flex-wrap: wrap; gap: 6px; }
-.conge-pill {
-  display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
-  padding: 2px 8px; border-radius: 20px; background: var(--light-bg); color: var(--text-primary);
+.cal-cell.empty { background: transparent; border-color: transparent; }
+.cal-cell.weekend { background: #f7f8fa; }
+.cal-cell.has-conge { background: var(--warning-bg, #fff8ec); border-color: #f0d9a8; }
+.cal-day-num { font-size: 12px; font-weight: 700; color: var(--text-secondary); line-height: 1; }
+.cal-day-num.we { color: var(--accent); }
+.cal-names { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+.cal-name {
+  display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.conge-pill .conge-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.conge-pill .conge-tag { font-size: 10px; color: var(--text-muted); }
-.conge-day-empty { font-size: 12px; color: #cbd5e1; }
+.cal-name .d { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
 /* ── Modale « Copier la semaine » ───────────────────────────────────────────*/
 .cw-mode-grid { display: flex; gap: 8px; margin-top: 6px; }

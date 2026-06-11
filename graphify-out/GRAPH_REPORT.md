@@ -1,7 +1,7 @@
 # Graph Report - app-planning-bar  (2026-06-11)
 
 ## Corpus Check
-- 30 files · ~139,968 words
+- 30 files · ~140,083 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f63e273e`
+- Built from commit: `0bee34f2`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -163,7 +163,7 @@ Nodes (10): background_color, description, display, icons, name, orientation, sh
 
 ### Community 14 - "Staff Card Styling"
 Cohesion: 0.15
-Nodes (17): applyCardNameContrast(), _buildCongeRow(), createShiftEl(), createStaffRow(), displayName(), escapeHtml(), _fmtCongeDateFr(), loadStaffNotesList() (+9 more)
+Nodes (17): applyCardNameContrast(), _buildCongeRow(), createShiftEl(), createStaffRow(), displayName(), escapeHtml(), _fmtCongeDateFr(), _kpiEstabRow() (+9 more)
 
 ### Community 15 - "Week Calculation Module"
 Cohesion: 0.31
@@ -258,8 +258,8 @@ Cohesion: 0.33
 Nodes (6): Cache Service Worker — ne pas toucher `%%BUILD_TIME%%`, Helpers purs → `lib/utils.js`, Règles techniques à ne jamais casser, `script.js` — monolithique, ne pas découper, Sessions MongoDB — promesses uniquement, Timezone — jamais `toISOString()`
 
 ### Community 40 - "Community 40"
-Cohesion: 0.67
-Nodes (4): _kpiEstabRow(), _kpiProgressBar(), loadDisposKpi(), renderDisposKpiCard()
+Cohesion: 0.50
+Nodes (4): loadStaffNotesList(), normalizeStr(), renderCongesListPatron(), renderStaffNotesList()
 
 ### Community 41 - "Community 41"
 Cohesion: 0.39

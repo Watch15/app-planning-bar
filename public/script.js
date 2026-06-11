@@ -4518,35 +4518,44 @@ function renderCongesCalendar(month, conges) {
     const [y, m] = month.split('-').map(Number);
     const daysInMonth = new Date(y, m, 0).getDate();
     const pad = n => String(n).padStart(2, '0');
-    const colorOf = sid => (allStaff.find(s => String(s._id) === String(sid)) || {}).color || '#888';
+    const colorOf     = sid => (allStaff.find(s => String(s._id) === String(sid)) || {}).color || '#888';
+    const firstNameOf = n   => (n || '—').trim().split(/\s+/)[0];
 
     const totalPeople = new Set(conges.map(g => g.staff_id)).size;
+    const monthLabel  = MONTH_NAMES[m - 1].charAt(0).toUpperCase() + MONTH_NAMES[m - 1].slice(1) + ' ' + y;
+
+    // Grille lundi-first : getDay() 0=dim..6=sam → décalage 0=lun..6=dim.
+    const firstWd    = new Date(y, m - 1, 1).getDay();
+    const lead       = (firstWd + 6) % 7;
+    const totalCells = Math.ceil((lead + daysInMonth) / 7) * 7;
+    const WD = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+
     let html = '<div style="font-size:12px;color:var(--text-muted);margin:2px 0 12px">' +
-        'Congés de toute l’équipe (indépendant de l’établissement) — ' +
+        '🌴 ' + monthLabel + ' — congés de toute l’équipe (indépendant de l’établissement) · ' +
         conges.length + ' période(s), ' + totalPeople + ' personne(s).</div>';
-    html += '<div style="display:flex;flex-direction:column;gap:4px">';
-    for (let day = 1; day <= daysInMonth; day++) {
+    html += '<div class="conge-cal"><div class="cal-inner">';
+    html += '<div class="cal-weekdays">' + WD.map(d => '<div class="cal-weekday">' + d + '</div>').join('') + '</div>';
+    html += '<div class="cal-grid">';
+    for (let i = 0; i < totalCells; i++) {
+        const day = i - lead + 1;
+        if (day < 1 || day > daysInMonth) { html += '<div class="cal-cell empty"></div>'; continue; }
         const dateStr = y + '-' + pad(m) + '-' + pad(day);
-        const wd = new Date(y, m - 1, day).getDay();
-        const isWeekend = wd === 0 || wd === 6;
-        const people = conges.filter(g => g.start_date <= dateStr && g.end_date >= dateStr);
-        let pills;
+        const isWe    = (i % 7) >= 5; // sam/dim
+        const people  = conges.filter(g => g.start_date <= dateStr && g.end_date >= dateStr);
+        let names = '';
         if (people.length) {
-            pills = people.map(p =>
-                '<span class="conge-pill"><span class="conge-dot" style="background:' + escapeHtml(colorOf(p.staff_id)) + '"></span>' +
-                escapeHtml(p.staff_name || '—') +
-                (p.mode === 'info' ? '<span class="conge-tag">info</span>' : '') +
+            names = '<div class="cal-names">' + people.map(p =>
+                '<span class="cal-name" title="' + escapeHtml((p.staff_name || '') + (p.mode === 'info' ? ' (info)' : '')) + '">' +
+                '<span class="d" style="background:' + escapeHtml(colorOf(p.staff_id)) + '"></span>' +
+                escapeHtml(firstNameOf(p.staff_name)) +
                 '</span>'
-            ).join('');
-        } else {
-            pills = '<span class="conge-day-empty">—</span>';
+            ).join('') + '</div>';
         }
-        html += '<div class="conge-day-row' + (people.length ? ' has-conge' : '') + '">' +
-            '<span class="conge-day-date' + (isWeekend ? ' weekend' : '') + '">' + DAY_NAMES_SHORT[wd] + ' ' + day + '</span>' +
-            '<span class="conge-day-people">' + pills + '</span>' +
+        html += '<div class="cal-cell' + (people.length ? ' has-conge' : '') + (isWe ? ' weekend' : '') + '">' +
+            '<div class="cal-day-num' + (isWe ? ' we' : '') + '">' + day + '</div>' + names +
         '</div>';
     }
-    html += '</div>';
+    html += '</div></div></div>';
     c.innerHTML = html;
 }
 
