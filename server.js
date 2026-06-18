@@ -2665,24 +2665,41 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
     const { dispos } = req.body;
     if (!Array.isArray(dispos) || dispos.length === 0) return res.status(400).json({ error: 'Aucune disponibilité fournie' });
     try {
-        // Un jour couvert par un congé posé (non refusé) ne peut pas recevoir de dispo.
+        // Un jour couvert par un congé posé (non refusé) ne reçoit pas de dispo.
+        // On IGNORE silencieusement ces jours (au lieu de rejeter tout le lot en 409) :
+        // ainsi un préremplissage de la semaine précédente, une saisie tardive ou un
+        // état client désynchronisé qui retombe sur un congé n'empêche JAMAIS
+        // l'enregistrement des autres jours. Le serveur reste la source de vérité.
+        let dispos2 = dispos;
+        let skippedConges = [];
         const dates = dispos.map(d => d.date).filter(Boolean).sort();
         if (dates.length) {
             const conges = await db.collection('time_off')
                 .find({ staff_id: staffId, status: { $ne: 'rejected' },
                         start_date: { $lte: dates[dates.length - 1] }, end_date: { $gte: dates[0] } })
                 .toArray();
-            const blocked = [...new Set(dispos
-                .filter(d => conges.some(c => congeCoversDate(c, d.date)))
-                .map(d => d.date))].sort();
-            if (blocked.length)
-                return res.status(409).json({ error: 'Impossible d\'envoyer des dispos sur des jours de congé : ' + blocked.join(', ') + '.' });
+            if (conges.length) {
+                const onConge = d => conges.some(c => congeCoversDate(c, d.date));
+                skippedConges = [...new Set(dispos.filter(onConge).map(d => d.date))].sort();
+                dispos2 = dispos.filter(d => !onConge(d));
+                // Purger d'éventuelles dispos déjà posées sur ces jours de congé.
+                if (skippedConges.length)
+                    await db.collection('availabilities').deleteMany({
+                        staff_id: staffId, date: { $in: skippedConges }, type: { $ne: 'week_note' },
+                    });
+            }
+        }
+        if (dispos2.length === 0) {
+            touchLastUpdated();
+            return res.status(200).json({ message: skippedConges.length
+                ? skippedConges.length + ' jour(s) de congé ignoré(s) — aucune autre dispo à enregistrer.'
+                : 'Aucune disponibilité à enregistrer.' });
         }
         // Modifiable jusqu'à la deadline : on UPSERT par (staff_id, date) — une seule
         // dispo par jour. Re-soumettre met à jour le type/les horaires/la note et
         // repasse la dispo en 'pending' (le patron re-valide la version modifiée).
         // `type: { $ne: 'week_note' }` protège la note de semaine (autre code path).
-        const ops = dispos.map(d => ({
+        const ops = dispos2.map(d => ({
             updateOne: {
                 filter: { staff_id: staffId, date: d.date, type: { $ne: 'week_note' } },
                 update: {
@@ -2702,7 +2719,9 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
         }));
         const result = await db.collection('availabilities').bulkWrite(ops, { ordered: false });
         const n = (result.upsertedCount || 0) + (result.modifiedCount || 0);
-        res.status(201).json({ message: n > 0 ? n + ' disponibilité(s) enregistrée(s)' : 'Disponibilités à jour' });
+        let message = n > 0 ? n + ' disponibilité(s) enregistrée(s)' : 'Disponibilités à jour';
+        if (skippedConges.length) message += ' · ' + skippedConges.length + ' jour(s) de congé ignoré(s)';
+        res.status(201).json({ message });
         touchLastUpdated();
         if (staffForceOpen) {
             db.collection('settings').updateOne(

@@ -4323,7 +4323,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_ua",
-      "community": 2,
+      "community": 20,
       "norm_label": "ua()"
     },
     {
@@ -4333,7 +4333,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_la",
-      "community": 2,
+      "community": 20,
       "norm_label": "la()"
     },
     {
@@ -4353,7 +4353,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_fa",
-      "community": 2,
+      "community": 20,
       "norm_label": "fa()"
     },
     {
@@ -4363,7 +4363,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_ha",
-      "community": 2,
+      "community": 20,
       "norm_label": "ha()"
     },
     {
@@ -4373,7 +4373,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_da",
-      "community": 2,
+      "community": 20,
       "norm_label": "da()"
     },
     {
@@ -4673,7 +4673,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_support_word_breaking",
-      "community": 20,
+      "community": 3,
       "norm_label": "support_word_breaking()"
     },
     {
@@ -4873,7 +4873,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_on",
-      "community": 20,
+      "community": 2,
       "norm_label": "on()"
     },
     {
@@ -4883,7 +4883,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_qn",
-      "community": 20,
+      "community": 2,
       "norm_label": "qn()"
     },
     {
@@ -4893,7 +4893,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_cn",
-      "community": 20,
+      "community": 2,
       "norm_label": "cn()"
     },
     {
@@ -5213,7 +5213,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "vendor_jspdf_umd_min_g",
-      "community": 20,
+      "community": 3,
       "norm_label": "g()"
     },
     {
@@ -6090,7 +6090,7 @@
       "label": "weekEndStr()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3568",
+      "source_location": "L3587",
       "_origin": "ast",
       "id": "server_weekendstr",
       "community": 5,
@@ -6100,7 +6100,7 @@
       "label": "formatShiftTime()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4501",
+      "source_location": "L4520",
       "_origin": "ast",
       "id": "server_formatshifttime",
       "community": 5,
@@ -6110,7 +6110,7 @@
       "label": "formatDateFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4508",
+      "source_location": "L4527",
       "_origin": "ast",
       "id": "server_formatdatefr",
       "community": 5,
@@ -6120,7 +6120,7 @@
       "label": "formatDateShortFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4514",
+      "source_location": "L4533",
       "_origin": "ast",
       "id": "server_formatdateshortfr",
       "community": 5,
@@ -6130,7 +6130,7 @@
       "label": "formatWeekFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4520",
+      "source_location": "L4539",
       "_origin": "ast",
       "id": "server_formatweekfr",
       "community": 5,
@@ -6140,7 +6140,7 @@
       "label": "touchLastUpdated()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4528",
+      "source_location": "L4547",
       "_origin": "ast",
       "id": "server_touchlastupdated",
       "community": 5,
@@ -9044,9 +9044,9 @@
       "source_file": "eslint.config.js",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "eslint_config",
-      "target": "eslint_config_globals",
-      "confidence_score": 1.0
+      "target": "eslint_config_globals"
     },
     {
       "relation": "contains",
@@ -9054,9 +9054,9 @@
       "source_file": "eslint.config.js",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "eslint_config",
-      "target": "eslint_config_js",
-      "confidence_score": 1.0
+      "target": "eslint_config_js"
     },
     {
       "relation": "contains",
@@ -9064,9 +9064,9 @@
       "source_file": "eslint.config.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "eslint_config",
-      "target": "eslint_config_sharedrules",
-      "confidence_score": 1.0
+      "target": "eslint_config_sharedrules"
     },
     {
       "relation": "contains",
@@ -9651,9 +9651,9 @@
       "source_file": "package.json",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "package",
-      "target": "package_devdependencies",
-      "confidence_score": 1.0
+      "target": "package_devdependencies"
     },
     {
       "relation": "contains",
@@ -9751,9 +9751,9 @@
       "source_file": "package.json",
       "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "package_scripts",
-      "target": "package_scripts_lint",
-      "confidence_score": 1.0
+      "target": "package_scripts_lint"
     },
     {
       "relation": "contains",
@@ -9891,9 +9891,9 @@
       "source_file": "package.json",
       "source_location": "L31",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "package_devdependencies",
-      "target": "package_devdependencies_eslint",
-      "confidence_score": 1.0
+      "target": "package_devdependencies_eslint"
     },
     {
       "relation": "contains",
@@ -9901,9 +9901,9 @@
       "source_file": "package.json",
       "source_location": "L30",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "package_devdependencies",
-      "target": "package_devdependencies_eslint_js",
-      "confidence_score": 1.0
+      "target": "package_devdependencies_eslint_js"
     },
     {
       "relation": "contains",
@@ -9911,9 +9911,9 @@
       "source_file": "package.json",
       "source_location": "L32",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "package_devdependencies",
-      "target": "package_devdependencies_globals",
-      "confidence_score": 1.0
+      "target": "package_devdependencies_globals"
     },
     {
       "relation": "contains",
@@ -22154,9 +22154,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd",
-      "target": "docs_methodologie_et_cicd_m\u00e9thode_de_travail_ci_cd_templyo",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_m\u00e9thode_de_travail_ci_cd_templyo"
     },
     {
       "relation": "contains",
@@ -22164,9 +22164,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_m\u00e9thode_de_travail_ci_cd_templyo",
-      "target": "docs_methodologie_et_cicd_1_notre_m\u00e9thode_de_travail_c_est_de_l_agile_l\u00e9ger_pas_du_scrum",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_1_notre_m\u00e9thode_de_travail_c_est_de_l_agile_l\u00e9ger_pas_du_scrum"
     },
     {
       "relation": "contains",
@@ -22174,9 +22174,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L45",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_m\u00e9thode_de_travail_ci_cd_templyo",
-      "target": "docs_methodologie_et_cicd_2_ci_cd_on_a_une_vraie_ci_un_cd_d\u00e9coupl\u00e9_donc_pas_un_pipeline_ci_cd_int\u00e9gr\u00e9",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_2_ci_cd_on_a_une_vraie_ci_un_cd_d\u00e9coupl\u00e9_donc_pas_un_pipeline_ci_cd_int\u00e9gr\u00e9"
     },
     {
       "relation": "contains",
@@ -22184,9 +22184,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L86",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_m\u00e9thode_de_travail_ci_cd_templyo",
-      "target": "docs_methodologie_et_cicd_3_axes_d_am\u00e9lioration_prioris\u00e9s",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_3_axes_d_am\u00e9lioration_prioris\u00e9s"
     },
     {
       "relation": "contains",
@@ -22194,9 +22194,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L121",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_m\u00e9thode_de_travail_ci_cd_templyo",
-      "target": "docs_methodologie_et_cicd_4_r\u00e9sum\u00e9_ex\u00e9cutif",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_4_r\u00e9sum\u00e9_ex\u00e9cutif"
     },
     {
       "relation": "contains",
@@ -22204,9 +22204,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L33",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_1_notre_m\u00e9thode_de_travail_c_est_de_l_agile_l\u00e9ger_pas_du_scrum",
-      "target": "docs_methodologie_et_cicd_ce_qui_est_sain",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_ce_qui_est_sain"
     },
     {
       "relation": "contains",
@@ -22214,9 +22214,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L38",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_1_notre_m\u00e9thode_de_travail_c_est_de_l_agile_l\u00e9ger_pas_du_scrum",
-      "target": "docs_methodologie_et_cicd_ce_qui_manque_pour_m\u00fbrir_la_m\u00e9thode",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_ce_qui_manque_pour_m\u00fbrir_la_m\u00e9thode"
     },
     {
       "relation": "contains",
@@ -22224,9 +22224,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L26",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_1_notre_m\u00e9thode_de_travail_c_est_de_l_agile_l\u00e9ger_pas_du_scrum",
-      "target": "docs_methodologie_et_cicd_comment_\u00e7a_se_traduit_concr\u00e8tement",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_comment_\u00e7a_se_traduit_concr\u00e8tement"
     },
     {
       "relation": "contains",
@@ -22234,9 +22234,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L15",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_1_notre_m\u00e9thode_de_travail_c_est_de_l_agile_l\u00e9ger_pas_du_scrum",
-      "target": "docs_methodologie_et_cicd_preuves_dans_le_d\u00e9p\u00f4t",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_preuves_dans_le_d\u00e9p\u00f4t"
     },
     {
       "relation": "contains",
@@ -22244,9 +22244,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L11",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_1_notre_m\u00e9thode_de_travail_c_est_de_l_agile_l\u00e9ger_pas_du_scrum",
-      "target": "docs_methodologie_et_cicd_verdict",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_verdict"
     },
     {
       "relation": "contains",
@@ -22254,9 +22254,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L71",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_2_ci_cd_on_a_une_vraie_ci_un_cd_d\u00e9coupl\u00e9_donc_pas_un_pipeline_ci_cd_int\u00e9gr\u00e9",
-      "target": "docs_methodologie_et_cicd_niveau_de_maturit\u00e9_auto_\u00e9valuation",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_niveau_de_maturit\u00e9_auto_\u00e9valuation"
     },
     {
       "relation": "contains",
@@ -22264,9 +22264,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L52",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_2_ci_cd_on_a_une_vraie_ci_un_cd_d\u00e9coupl\u00e9_donc_pas_un_pipeline_ci_cd_int\u00e9gr\u00e9",
-      "target": "docs_methodologie_et_cicd_preuves",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_preuves"
     },
     {
       "relation": "contains",
@@ -22274,9 +22274,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L62",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_2_ci_cd_on_a_une_vraie_ci_un_cd_d\u00e9coupl\u00e9_donc_pas_un_pipeline_ci_cd_int\u00e9gr\u00e9",
-      "target": "docs_methodologie_et_cicd_sch\u00e9ma_de_ce_qui_se_passe_aujourd_hui",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_sch\u00e9ma_de_ce_qui_se_passe_aujourd_hui"
     },
     {
       "relation": "contains",
@@ -22284,9 +22284,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L47",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_2_ci_cd_on_a_une_vraie_ci_un_cd_d\u00e9coupl\u00e9_donc_pas_un_pipeline_ci_cd_int\u00e9gr\u00e9",
-      "target": "docs_methodologie_et_cicd_verdict_47",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_verdict_47"
     },
     {
       "relation": "contains",
@@ -22294,9 +22294,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L112",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_3_axes_d_am\u00e9lioration_prioris\u00e9s",
-      "target": "docs_methodologie_et_cicd_c\u00f4t\u00e9_m\u00e9thode_process",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_c\u00f4t\u00e9_m\u00e9thode_process"
     },
     {
       "relation": "contains",
@@ -22304,9 +22304,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L90",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_3_axes_d_am\u00e9lioration_prioris\u00e9s",
-      "target": "docs_methodologie_et_cicd_p1_fermer_le_trou_prod_d\u00e9ploy\u00e9e_m\u00eame_si_ci_rouge",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_p1_fermer_le_trou_prod_d\u00e9ploy\u00e9e_m\u00eame_si_ci_rouge"
     },
     {
       "relation": "contains",
@@ -22314,9 +22314,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L97",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_3_axes_d_am\u00e9lioration_prioris\u00e9s",
-      "target": "docs_methodologie_et_cicd_p2_\u00e9lever_la_qualit\u00e9_statique_et_la_couverture",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_p2_\u00e9lever_la_qualit\u00e9_statique_et_la_couverture"
     },
     {
       "relation": "contains",
@@ -22324,9 +22324,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L104",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_3_axes_d_am\u00e9lioration_prioris\u00e9s",
-      "target": "docs_methodologie_et_cicd_p3_industrialiser_le_process_l_environnement",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_p3_industrialiser_le_process_l_environnement"
     },
     {
       "relation": "contains",
@@ -23771,5 +23771,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "3611fa1520ff55bf721335aa83ceb19132599907"
+  "built_at_commit": "15c6a2241c5dd626c6376066d8f2d36e5b9d18f1"
 }
