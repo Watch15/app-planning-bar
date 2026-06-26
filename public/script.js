@@ -2079,6 +2079,22 @@ function openRealHoursModal(shift, shiftEl) {
 
 // ── Drop zone (listener unique) ────────────────────────────────────────────────
 
+// Retire tous les surlignages de drag (joker, réaffectation, rail survolé)
+function clearDragHighlights() {
+    document.querySelectorAll('.shift-joker').forEach(s => s.classList.remove('joker-target'));
+    document.querySelectorAll('.shift-reassign-target').forEach(s => s.classList.remove('shift-reassign-target'));
+    document.querySelectorAll('.row-rail').forEach(r => r.classList.remove('drag-over'));
+}
+
+// Cible de réaffectation : shift assigné à quelqu'un d'autre, survolé par un vrai staff.
+// Renvoie l'élément shift visé, ou null.
+function reassignTarget(e) {
+    const el = e.target.closest('.shift:not(.shift-joker)');
+    if (!el || draggedStaff.isJoker || !el.dataset.id) return null;
+    const sh = currentShifts.find(s => String(s._id) === el.dataset.id);
+    return (sh && String(sh.staff_id) !== String(draggedStaff._id)) ? el : null;
+}
+
 function initDropZone() {
     // On s'attache sur .day-detail (conteneur stable, jamais recréé)
     // plutôt que sur #timeline-body qui est vidé/recréé à chaque renderBody()
@@ -2088,34 +2104,25 @@ function initDropZone() {
         if (!draggedStaff) return;
         updateAutoScrollPos(e.clientX, e.clientY);
 
-        const clearHL = () => {
-            document.querySelectorAll('.shift-joker').forEach(s => s.classList.remove('joker-target'));
-            document.querySelectorAll('.shift-reassign-target').forEach(s => s.classList.remove('shift-reassign-target'));
-            document.querySelectorAll('.row-rail').forEach(r => r.classList.remove('drag-over'));
-        };
-
         // Survol d'un shift Joker par un vrai staff → highlight d'assignation
         const jokerShift = e.target.closest('.shift-joker');
         if (jokerShift && !draggedStaff.isJoker) {
             e.preventDefault();
-            clearHL();
+            clearDragHighlights();
             jokerShift.classList.add('joker-target');
             return;
         }
 
         // Survol d'un shift déjà assigné à quelqu'un d'autre → réaffectation
-        const shiftEl = e.target.closest('.shift:not(.shift-joker)');
-        if (shiftEl && !draggedStaff.isJoker && shiftEl.dataset.id) {
-            const sh = currentShifts.find(s => String(s._id) === shiftEl.dataset.id);
-            if (sh && String(sh.staff_id) !== String(draggedStaff._id)) {
-                e.preventDefault();
-                clearHL();
-                shiftEl.classList.add('shift-reassign-target');
-                return;
-            }
+        const shiftEl = reassignTarget(e);
+        if (shiftEl) {
+            e.preventDefault();
+            clearDragHighlights();
+            shiftEl.classList.add('shift-reassign-target');
+            return;
         }
 
-        clearHL();
+        clearDragHighlights();
         const rail = e.target.closest('.row-rail');
         if (rail) {
             e.preventDefault();
@@ -2126,20 +2133,14 @@ function initDropZone() {
     });
 
     container.addEventListener('dragleave', e => {
-        if (!container.contains(e.relatedTarget)) {
-            document.querySelectorAll('.row-rail').forEach(r => r.classList.remove('drag-over'));
-            document.querySelectorAll('.shift-joker').forEach(s => s.classList.remove('joker-target'));
-            document.querySelectorAll('.shift-reassign-target').forEach(s => s.classList.remove('shift-reassign-target'));
-        }
+        if (!container.contains(e.relatedTarget)) clearDragHighlights();
     });
 
     container.addEventListener('drop', async e => {
         e.preventDefault();
         e.stopPropagation();
         stopAutoScroll();
-        document.querySelectorAll('.row-rail').forEach(r => r.classList.remove('drag-over'));
-        document.querySelectorAll('.shift-joker').forEach(s => s.classList.remove('joker-target'));
-        document.querySelectorAll('.shift-reassign-target').forEach(s => s.classList.remove('shift-reassign-target'));
+        clearDragHighlights();
         document.getElementById('drop-hint').classList.remove('visible');
         if (!draggedStaff) return;
 
@@ -2156,13 +2157,10 @@ function initDropZone() {
         }
 
         // Drop sur un shift déjà assigné à quelqu'un d'autre → réaffectation
-        const reassignEl = e.target.closest('.shift:not(.shift-joker)');
-        if (reassignEl && !draggedStaff.isJoker && reassignEl.dataset.id) {
-            const sh = currentShifts.find(s => String(s._id) === reassignEl.dataset.id);
-            if (sh && String(sh.staff_id) !== String(draggedStaff._id)) {
-                await reassignShift(draggedStaff, reassignEl);
-                return;
-            }
+        const reassignEl = reassignTarget(e);
+        if (reassignEl) {
+            await reassignShift(draggedStaff, reassignEl);
+            return;
         }
 
         const rail = e.target.closest('.row-rail');
@@ -2188,16 +2186,14 @@ function onSidebarDragStart(e, staff, card) {
     document.getElementById('drop-hint').classList.add('visible');
     e.dataTransfer.effectAllowed = 'copy';
     e.dataTransfer.setData('text/plain', staff._id);
-    startAutoScroll('both');
+    startAutoScroll(); // vertical (fenêtre) + horizontal (timeline)
 }
 
 function onSidebarDragEnd(card) {
     card.classList.remove('dragging');
     draggedStaff = null;
     document.getElementById('drop-hint').classList.remove('visible');
-    document.querySelectorAll('.row-rail').forEach(r => r.classList.remove('drag-over'));
-    document.querySelectorAll('.shift-joker').forEach(s => s.classList.remove('joker-target'));
-    document.querySelectorAll('.shift-reassign-target').forEach(s => s.classList.remove('shift-reassign-target'));
+    clearDragHighlights();
     stopAutoScroll();
 }
 
@@ -2205,25 +2201,29 @@ function onSidebarDragEnd(card) {
 // Quand le curseur/doigt approche un bord, on fait défiler automatiquement :
 //   • vertical   → la fenêtre (les lignes staff débordent vers le bas)
 //   • horizontal → la timeline (#timeline-scroll, déroulé des heures)
-const _autoScroll = { raf: null, x: 0, y: 0, axis: 'both' };
+const _autoScroll = { raf: null, x: 0, y: 0, vertical: true, scroller: null };
 const AUTOSCROLL_EDGE  = 64; // px depuis le bord où le défilement s'amorce
 const AUTOSCROLL_SPEED = 20; // px/frame max
 
 function updateAutoScrollPos(x, y) { _autoScroll.x = x; _autoScroll.y = y; }
 
-function startAutoScroll(axis) {
-    _autoScroll.axis = axis || 'both';
+function startAutoScroll(vertical = true) {
+    _autoScroll.vertical = vertical;
     if (_autoScroll.raf == null) _autoScroll.raf = requestAnimationFrame(_autoScrollTick);
 }
 
 function stopAutoScroll() {
     if (_autoScroll.raf != null) { cancelAnimationFrame(_autoScroll.raf); _autoScroll.raf = null; }
+    _autoScroll.scroller = null;
 }
 
 function _autoScrollTick() {
-    const { x, y, axis } = _autoScroll;
+    const { x, y, vertical } = _autoScroll;
+    // Réf. mise en cache pour la durée du drag (la timeline n'est pas recréée pendant)
+    const scroller = _autoScroll.scroller
+        || (_autoScroll.scroller = document.getElementById('timeline-scroll'));
 
-    if (axis === 'both') {
+    if (vertical) {
         const vh = window.innerHeight;
         let dy = 0;
         if (y < AUTOSCROLL_EDGE)            dy = -AUTOSCROLL_SPEED * (1 - y / AUTOSCROLL_EDGE);
@@ -2231,7 +2231,6 @@ function _autoScrollTick() {
         if (dy) window.scrollBy(0, dy);
     }
 
-    const scroller = document.getElementById('timeline-scroll');
     if (scroller) {
         const r = scroller.getBoundingClientRect();
         if (x > r.left && x < r.right) {
@@ -2254,33 +2253,52 @@ function _autoScrollTick() {
 
 let _createShiftPending = false; // anti-doublon drop
 
-// ── Assigner un staff à un shift Joker ───────────────────────────────────────
+// ── Assigner un staff à un shift (PATCH commun : joker + réaffectation) ───────
+// PATCH côté serveur puis synchronise weekFullData (grille semaine) et signale
+// les conflits. Renvoie la couleur résolue du staff, ou null si l'appel échoue.
+async function applyShiftAssignment(staff, shift) {
+    const staffMember = allStaff.find(s => String(s._id) === String(staff._id));
+    const staffColor  = staffMember ? staffMember.color : (staff.color || '#3498db');
 
+    const res = await fetch(`/api/shifts/${shift._id}`, {
+        method:      'PATCH',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            staff_id:   String(staff._id),
+            staff_name: staff.name,
+            color:      staffColor,
+            is_joker:   false,
+            start_time: shift.start_time,
+            end_time:   shift.end_time,
+        }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || 'Erreur', true); return null; }
+
+    if (weekFullData[selectedDate]) {
+        const wIdx = weekFullData[selectedDate].findIndex(s => String(s._id) === String(shift._id));
+        if (wIdx !== -1) {
+            Object.assign(weekFullData[selectedDate][wIdx], {
+                staff_id: String(staff._id), staff_name: staff.name, color: staffColor, is_joker: false,
+            });
+        }
+    }
+    currentShiftsWeek = Object.values(weekFullData).flat();
+
+    if (data.warnings?.length) showConflictAlert(data.warnings, staff.name);
+    return staffColor;
+}
+
+// ── Assigner un staff à un shift Joker ───────────────────────────────────────
 async function assignStaffToJoker(staff, jokerEl) {
     const shiftId = jokerEl.dataset.id;
     const shift   = currentShifts.find(s => String(s._id) === shiftId);
     if (!shift) { showToast('Shift introuvable', true); return; }
 
-    // Trouver la vraie couleur du staff depuis allStaff
-    const staffMember = allStaff.find(s => String(s._id) === String(staff._id));
-    const staffColor  = staffMember ? staffMember.color : (staff.color || '#3498db');
-
     try {
-        const res = await fetch(`/api/shifts/${shiftId}`, {
-            method:      'PATCH',
-            credentials: 'include',
-            headers:     { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                staff_id:   String(staff._id),
-                staff_name: staff.name,
-                color:      staffColor,
-                is_joker:   false,
-                start_time: shift.start_time,
-                end_time:   shift.end_time,
-            }),
-        });
-        const data = await res.json();
-        if (!res.ok) { showToast(data.error || 'Erreur', true); return; }
+        const staffColor = await applyShiftAssignment(staff, shift);
+        if (staffColor == null) return;
 
         // Mettre à jour currentShifts en mémoire
         shift.staff_id   = String(staff._id);
@@ -2288,40 +2306,19 @@ async function assignStaffToJoker(staff, jokerEl) {
         shift.color      = staffColor;
         shift.is_joker   = false;
 
-        // Retrouver la ligne Joker dans displayedStaff
         // La ligne Joker a _id = shiftId (voir buildDisplayedStaff)
         const jokerRowIdx = displayedStaff.findIndex(s => s.isJoker && s._id === shiftId);
         if (jokerRowIdx !== -1) {
-            // Remplacer la ligne Joker par la ligne du vrai staff
             const existingRow = displayedStaff.find(s => s._id === String(staff._id) && !s.isJoker);
             if (existingRow) {
                 // Le staff a déjà une ligne — retirer la ligne Joker
                 displayedStaff.splice(jokerRowIdx, 1);
             } else {
                 // Transformer la ligne Joker en ligne staff réelle
-                displayedStaff[jokerRowIdx] = {
-                    _id:   String(staff._id),
-                    name:  staff.name,
-                    color: staffColor,
-                };
+                displayedStaff[jokerRowIdx] = { _id: String(staff._id), name: staff.name, color: staffColor };
             }
         }
 
-        // Mettre à jour weekFullData aussi
-        if (weekFullData[selectedDate]) {
-            const wIdx = weekFullData[selectedDate].findIndex(s => String(s._id) === shiftId);
-            if (wIdx !== -1) {
-                weekFullData[selectedDate][wIdx].staff_id   = String(staff._id);
-                weekFullData[selectedDate][wIdx].staff_name = staff.name;
-                weekFullData[selectedDate][wIdx].color      = staffColor;
-                weekFullData[selectedDate][wIdx].is_joker   = false;
-            }
-        }
-        currentShiftsWeek = Object.values(weekFullData).flat();
-
-        if (data.warnings?.length) showConflictAlert(data.warnings, staff.name);
-
-        // Re-rendre la timeline
         renderBody();
         renderWeekGrid();
         renderStats();
@@ -2331,45 +2328,12 @@ async function assignStaffToJoker(staff, jokerEl) {
 
 // ── Réaffecter un shift déjà assigné vers un autre staff (drag-and-drop) ──────
 async function reassignShift(staff, shiftEl) {
-    const shiftId = shiftEl.dataset.id;
-    const shift   = currentShifts.find(s => String(s._id) === shiftId);
+    const shift = currentShifts.find(s => String(s._id) === shiftEl.dataset.id);
     if (!shift) { showToast('Shift introuvable', true); return; }
-    if (String(shift.staff_id) === String(staff._id)) return; // déjà sur cette personne
-
-    const staffMember = allStaff.find(s => String(s._id) === String(staff._id));
-    const staffColor  = staffMember ? staffMember.color : (staff.color || '#3498db');
 
     try {
-        const res = await fetch(`/api/shifts/${shiftId}`, {
-            method:      'PATCH',
-            credentials: 'include',
-            headers:     { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                staff_id:   String(staff._id),
-                staff_name: staff.name,
-                color:      staffColor,
-                is_joker:   false,
-                start_time: shift.start_time,
-                end_time:   shift.end_time,
-            }),
-        });
-        const data = await res.json();
-        if (!res.ok) { showToast(data.error || 'Erreur', true); return; }
-
-        // Synchroniser weekFullData (la grille semaine s'en sert) ; le détail du
-        // jour est ensuite reconstruit proprement par loadDayDetail (lignes, totaux).
-        if (weekFullData[selectedDate]) {
-            const wIdx = weekFullData[selectedDate].findIndex(s => String(s._id) === shiftId);
-            if (wIdx !== -1) {
-                Object.assign(weekFullData[selectedDate][wIdx], {
-                    staff_id: String(staff._id), staff_name: staff.name, color: staffColor, is_joker: false,
-                });
-            }
-        }
-        currentShiftsWeek = Object.values(weekFullData).flat();
-
-        if (data.warnings?.length) showConflictAlert(data.warnings, staff.name);
-
+        if (await applyShiftAssignment(staff, shift) == null) return;
+        // loadDayDetail reconstruit lignes/totaux proprement (le shift change de ligne)
         await loadDayDetail(selectedDate);
         renderWeekGrid();
         showToast('Shift réaffecté à ' + staff.name);
@@ -2875,7 +2839,7 @@ function onTouchMove(e) {
     if (_touchIntent === 'drag') {
         e.preventDefault();
         updateAutoScrollPos(touch.clientX, touch.clientY);
-        startAutoScroll('x'); // défilement horizontal auto près des bords
+        startAutoScroll(false); // horizontal (timeline) seulement
         // Corriger le clientX avec le scroll courant du conteneur (suit le doigt)
         const scroller = document.getElementById('timeline-scroll');
         const scrollDelta = scroller ? (scroller.scrollLeft - _touchScrollLeft) : 0;
