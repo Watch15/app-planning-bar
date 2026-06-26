@@ -903,6 +903,10 @@ label[for], select, .tab-btn, .staff-card, .shift-card {
 .shift-joker.joker-target .shift-name { color: var(--success-text) !important; font-style: normal !important; }
 .shift-joker.joker-target::after { content: '+ Assigner'; position: absolute; bottom: 2px; right: 6px; font-size: 9px; font-weight: 700; color: var(--success); pointer-events: none; }
 
+/* ── Réaffectation : survol d'un shift assigné par une autre personne ─────────*/
+.shift.shift-reassign-target { outline: 2px solid var(--accent); outline-offset: 1px; box-shadow: 0 0 0 4px var(--accent-glow); position: relative; }
+.shift.shift-reassign-target::after { content: '↪ Réaffecter'; position: absolute; bottom: 2px; right: 6px; font-size: 9px; font-weight: 700; color: #fff; background: var(--accent); border-radius: 4px; padding: 0 4px; pointer-events: none; }
+
 /* ── Staff card sélectionnée tap-to-place ────────────────────────────────────*/
 .staff-tap-selected {
   outline: 2.5px solid var(--accent);

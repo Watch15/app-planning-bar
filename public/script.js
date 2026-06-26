@@ -2086,20 +2086,39 @@ function initDropZone() {
 
     container.addEventListener('dragover', e => {
         if (!draggedStaff) return;
+        updateAutoScrollPos(e.clientX, e.clientY);
+
+        const clearHL = () => {
+            document.querySelectorAll('.shift-joker').forEach(s => s.classList.remove('joker-target'));
+            document.querySelectorAll('.shift-reassign-target').forEach(s => s.classList.remove('shift-reassign-target'));
+            document.querySelectorAll('.row-rail').forEach(r => r.classList.remove('drag-over'));
+        };
+
         // Survol d'un shift Joker par un vrai staff → highlight d'assignation
         const jokerShift = e.target.closest('.shift-joker');
         if (jokerShift && !draggedStaff.isJoker) {
             e.preventDefault();
-            document.querySelectorAll('.shift-joker').forEach(s => s.classList.remove('joker-target'));
-            document.querySelectorAll('.row-rail').forEach(r => r.classList.remove('drag-over'));
+            clearHL();
             jokerShift.classList.add('joker-target');
             return;
         }
-        document.querySelectorAll('.shift-joker').forEach(s => s.classList.remove('joker-target'));
+
+        // Survol d'un shift déjà assigné à quelqu'un d'autre → réaffectation
+        const shiftEl = e.target.closest('.shift:not(.shift-joker)');
+        if (shiftEl && !draggedStaff.isJoker && shiftEl.dataset.id) {
+            const sh = currentShifts.find(s => String(s._id) === shiftEl.dataset.id);
+            if (sh && String(sh.staff_id) !== String(draggedStaff._id)) {
+                e.preventDefault();
+                clearHL();
+                shiftEl.classList.add('shift-reassign-target');
+                return;
+            }
+        }
+
+        clearHL();
         const rail = e.target.closest('.row-rail');
         if (rail) {
             e.preventDefault();
-            document.querySelectorAll('.row-rail').forEach(r => r.classList.remove('drag-over'));
             rail.classList.add('drag-over');
         } else if (e.target.closest('#timeline-body')) {
             e.preventDefault();
@@ -2110,14 +2129,17 @@ function initDropZone() {
         if (!container.contains(e.relatedTarget)) {
             document.querySelectorAll('.row-rail').forEach(r => r.classList.remove('drag-over'));
             document.querySelectorAll('.shift-joker').forEach(s => s.classList.remove('joker-target'));
+            document.querySelectorAll('.shift-reassign-target').forEach(s => s.classList.remove('shift-reassign-target'));
         }
     });
 
     container.addEventListener('drop', async e => {
         e.preventDefault();
         e.stopPropagation();
+        stopAutoScroll();
         document.querySelectorAll('.row-rail').forEach(r => r.classList.remove('drag-over'));
         document.querySelectorAll('.shift-joker').forEach(s => s.classList.remove('joker-target'));
+        document.querySelectorAll('.shift-reassign-target').forEach(s => s.classList.remove('shift-reassign-target'));
         document.getElementById('drop-hint').classList.remove('visible');
         if (!draggedStaff) return;
 
@@ -2131,6 +2153,16 @@ function initDropZone() {
         if (jokerShift && !draggedStaff.isJoker) {
             await assignStaffToJoker(draggedStaff, jokerShift);
             return;
+        }
+
+        // Drop sur un shift déjà assigné à quelqu'un d'autre → réaffectation
+        const reassignEl = e.target.closest('.shift:not(.shift-joker)');
+        if (reassignEl && !draggedStaff.isJoker && reassignEl.dataset.id) {
+            const sh = currentShifts.find(s => String(s._id) === reassignEl.dataset.id);
+            if (sh && String(sh.staff_id) !== String(draggedStaff._id)) {
+                await reassignShift(draggedStaff, reassignEl);
+                return;
+            }
         }
 
         const rail = e.target.closest('.row-rail');
@@ -2156,6 +2188,7 @@ function onSidebarDragStart(e, staff, card) {
     document.getElementById('drop-hint').classList.add('visible');
     e.dataTransfer.effectAllowed = 'copy';
     e.dataTransfer.setData('text/plain', staff._id);
+    startAutoScroll('both');
 }
 
 function onSidebarDragEnd(card) {
@@ -2163,6 +2196,58 @@ function onSidebarDragEnd(card) {
     draggedStaff = null;
     document.getElementById('drop-hint').classList.remove('visible');
     document.querySelectorAll('.row-rail').forEach(r => r.classList.remove('drag-over'));
+    document.querySelectorAll('.shift-joker').forEach(s => s.classList.remove('joker-target'));
+    document.querySelectorAll('.shift-reassign-target').forEach(s => s.classList.remove('shift-reassign-target'));
+    stopAutoScroll();
+}
+
+// ── Auto-scroll pendant un drag (dnd natif desktop + drag tactile) ────────────
+// Quand le curseur/doigt approche un bord, on fait défiler automatiquement :
+//   • vertical   → la fenêtre (les lignes staff débordent vers le bas)
+//   • horizontal → la timeline (#timeline-scroll, déroulé des heures)
+const _autoScroll = { raf: null, x: 0, y: 0, axis: 'both' };
+const AUTOSCROLL_EDGE  = 64; // px depuis le bord où le défilement s'amorce
+const AUTOSCROLL_SPEED = 20; // px/frame max
+
+function updateAutoScrollPos(x, y) { _autoScroll.x = x; _autoScroll.y = y; }
+
+function startAutoScroll(axis) {
+    _autoScroll.axis = axis || 'both';
+    if (_autoScroll.raf == null) _autoScroll.raf = requestAnimationFrame(_autoScrollTick);
+}
+
+function stopAutoScroll() {
+    if (_autoScroll.raf != null) { cancelAnimationFrame(_autoScroll.raf); _autoScroll.raf = null; }
+}
+
+function _autoScrollTick() {
+    const { x, y, axis } = _autoScroll;
+
+    if (axis === 'both') {
+        const vh = window.innerHeight;
+        let dy = 0;
+        if (y < AUTOSCROLL_EDGE)            dy = -AUTOSCROLL_SPEED * (1 - y / AUTOSCROLL_EDGE);
+        else if (y > vh - AUTOSCROLL_EDGE)  dy =  AUTOSCROLL_SPEED * (1 - (vh - y) / AUTOSCROLL_EDGE);
+        if (dy) window.scrollBy(0, dy);
+    }
+
+    const scroller = document.getElementById('timeline-scroll');
+    if (scroller) {
+        const r = scroller.getBoundingClientRect();
+        if (x > r.left && x < r.right) {
+            let dx = 0;
+            if (x < r.left + AUTOSCROLL_EDGE)       dx = -AUTOSCROLL_SPEED * (1 - (x - r.left) / AUTOSCROLL_EDGE);
+            else if (x > r.right - AUTOSCROLL_EDGE) dx =  AUTOSCROLL_SPEED * (1 - (r.right - x) / AUTOSCROLL_EDGE);
+            if (dx) scroller.scrollLeft += dx;
+        }
+    }
+
+    // Drag tactile d'un shift : le garder collé sous le doigt pendant le défilement
+    if (activeEl && _touchIntent === 'drag' && scroller) {
+        onMove({ clientX: _autoScroll.x + (scroller.scrollLeft - _touchScrollLeft) });
+    }
+
+    _autoScroll.raf = requestAnimationFrame(_autoScrollTick);
 }
 
 // ── Créer un shift ────────────────────────────────────────────────────────────
@@ -2241,6 +2326,53 @@ async function assignStaffToJoker(staff, jokerEl) {
         renderWeekGrid();
         renderStats();
         showToast(staff.name + ' assigné au shift Joker');
+    } catch { showToast('Erreur réseau', true); }
+}
+
+// ── Réaffecter un shift déjà assigné vers un autre staff (drag-and-drop) ──────
+async function reassignShift(staff, shiftEl) {
+    const shiftId = shiftEl.dataset.id;
+    const shift   = currentShifts.find(s => String(s._id) === shiftId);
+    if (!shift) { showToast('Shift introuvable', true); return; }
+    if (String(shift.staff_id) === String(staff._id)) return; // déjà sur cette personne
+
+    const staffMember = allStaff.find(s => String(s._id) === String(staff._id));
+    const staffColor  = staffMember ? staffMember.color : (staff.color || '#3498db');
+
+    try {
+        const res = await fetch(`/api/shifts/${shiftId}`, {
+            method:      'PATCH',
+            credentials: 'include',
+            headers:     { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                staff_id:   String(staff._id),
+                staff_name: staff.name,
+                color:      staffColor,
+                is_joker:   false,
+                start_time: shift.start_time,
+                end_time:   shift.end_time,
+            }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showToast(data.error || 'Erreur', true); return; }
+
+        // Synchroniser weekFullData (la grille semaine s'en sert) ; le détail du
+        // jour est ensuite reconstruit proprement par loadDayDetail (lignes, totaux).
+        if (weekFullData[selectedDate]) {
+            const wIdx = weekFullData[selectedDate].findIndex(s => String(s._id) === shiftId);
+            if (wIdx !== -1) {
+                Object.assign(weekFullData[selectedDate][wIdx], {
+                    staff_id: String(staff._id), staff_name: staff.name, color: staffColor, is_joker: false,
+                });
+            }
+        }
+        currentShiftsWeek = Object.values(weekFullData).flat();
+
+        if (data.warnings?.length) showConflictAlert(data.warnings, staff.name);
+
+        await loadDayDetail(selectedDate);
+        renderWeekGrid();
+        showToast('Shift réaffecté à ' + staff.name);
     } catch { showToast('Erreur réseau', true); }
 }
 
@@ -2742,16 +2874,19 @@ function onTouchMove(e) {
 
     if (_touchIntent === 'drag') {
         e.preventDefault();
-        // Corriger le clientX avec le scroll courant du conteneur
+        updateAutoScrollPos(touch.clientX, touch.clientY);
+        startAutoScroll('x'); // défilement horizontal auto près des bords
+        // Corriger le clientX avec le scroll courant du conteneur (suit le doigt)
         const scroller = document.getElementById('timeline-scroll');
         const scrollDelta = scroller ? (scroller.scrollLeft - _touchScrollLeft) : 0;
-        onMove({ clientX: touch.clientX - scrollDelta });
+        onMove({ clientX: touch.clientX + scrollDelta });
     }
 }
 
 function onTouchEnd() {
     _touchIntent = null;
     _touchActive = false;
+    stopAutoScroll();
     if (!activeEl) return;
 
     if (!_shiftWasDragged) {
