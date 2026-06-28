@@ -129,8 +129,11 @@ let currentSubView   = 'dashboard';              // 'dashboard' | 'agenda'
 
 let activeEl     = null;
 let activeAction = null;
-let startX, startLeft, startWidth;
+let startX, startY, startLeft, startWidth;
 let _shiftWasDragged = false; // bloque le click après un drag/resize mouse
+let _dragIntent  = null;      // 'slide' (horaire, horizontal) | 'swap' (échange, vertical) — décidé au 1er mouvement
+const SWAP_VTHRESHOLD  = 20;  // px verticaux avant de basculer en mode échange
+const SLIDE_HTHRESHOLD = 6;   // px horizontaux avant de verrouiller le glissement d'horaire
 
 let draggedStaff = null;
 let draggedWeekShift = null; // { id, fromDate } — chip de shift glissé entre jours (grille semaine)
@@ -2872,8 +2875,10 @@ document.addEventListener('mousedown', e => {
     refreshPxPerHour();
 
     _shiftWasDragged = false; // réinitialiser au début de chaque interaction
+    _dragIntent = null;       // intention (slide/swap) décidée au 1er mouvement
     activeEl   = shiftEl;
     startX     = e.clientX;
+    startY     = e.clientY;
     startLeft  = activeEl.offsetLeft;
     startWidth = activeEl.offsetWidth;
 
@@ -2889,12 +2894,34 @@ document.addEventListener('mousedown', e => {
 function onMove(e) {
     if (!activeEl) return;
     _shiftWasDragged = true; // un mouvement réel a eu lieu → bloquer le click suivant
+
+    // Décider l'intention au 1er mouvement significatif (souris uniquement : en tactile
+    // onMove n'a pas de clientY → reste null → jamais 'swap'). Un resize n'échange jamais ;
+    // un joker glissé n'initie pas d'échange.
+    const canSwap = activeAction === 'drag' && !activeEl.classList.contains('shift-joker');
+    if (_dragIntent === null && canSwap && e.clientY != null) {
+        const dX = Math.abs(e.clientX - startX), dY = Math.abs(e.clientY - startY);
+        if (dY > SWAP_VTHRESHOLD && dY > dX)        _dragIntent = 'swap';
+        else if (dX > SLIDE_HTHRESHOLD && dX >= dY) _dragIntent = 'slide';
+    }
+
+    // Mode échange : on fige l'horaire (le bloc reste en place) et on surligne la cible.
+    if (_dragIntent === 'swap') {
+        if (activeEl.style.left !== startLeft + 'px') {
+            activeEl.style.left = startLeft + 'px';
+            updateShiftText(activeEl);
+        }
+        const tgt = _shiftElAtPoint(e.clientX, e.clientY, activeEl);
+        _setSwapTarget(_validSwapTarget(tgt) ? tgt : null);
+        return;
+    }
+
+    // Mode glissement / resize : déplacement horaire habituel.
     const deltaX = e.clientX - startX;
     const SNAP   = PX_PER_HOUR / 4; // 15 minutes
     const snapX  = Math.round(deltaX / SNAP) * SNAP;
     const maxW   = TOTAL_HOURS * PX_PER_HOUR;
-
-    const minL = (OPEN_TIME - START_HOUR) * PX_PER_HOUR; // borne gauche = heure d'ouverture
+    const minL   = (OPEN_TIME - START_HOUR) * PX_PER_HOUR; // borne gauche = heure d'ouverture
 
     if (activeAction === 'res-right') {
         const newW = startWidth + snapX;
@@ -2907,13 +2934,6 @@ function onMove(e) {
         if (newL >= minL && newL + activeEl.offsetWidth <= maxW) activeEl.style.left = newL + 'px';
     }
     updateShiftText(activeEl);
-
-    // Détection cible d'échange (souris uniquement : en tactile onMove n'a pas de clientY).
-    // Un joker glissé n'échange pas — seuls les shifts assignés initient le geste.
-    if (activeAction === 'drag' && e.clientY != null && !activeEl.classList.contains('shift-joker')) {
-        const tgt = _shiftElAtPoint(e.clientX, e.clientY, activeEl);
-        _setSwapTarget(_validSwapTarget(tgt) ? tgt : null);
-    }
 }
 
 async function onUp() {
@@ -2921,17 +2941,23 @@ async function onUp() {
     document.removeEventListener('mouseup',   onUp);
     if (!activeEl) return;
 
-    // Lâché sur un autre shift / joker → échange ou déplacement (pas de changement d'heure)
-    const swapEl = _swapTarget;
-    _setSwapTarget(null);
-    if (swapEl && _shiftWasDragged && !activeEl.dataset.saving) {
+    // Mode échange (intention 'swap' verrouillée) : on n'applique jamais de changement
+    // d'heure. Si lâché sur une cible valide → échange/déplacement, sinon on annule.
+    if (_dragIntent === 'swap') {
+        const swapEl = _swapTarget;
+        _setSwapTarget(null);
         const el = activeEl;
-        el.dataset.saving = '1';
-        el.style.opacity  = '0.6';
         activeEl = null; activeAction = null;
-        await performShiftSwap(el.dataset.id, swapEl.dataset.id);
-        return; // loadDayDetail a re-rendu la journée
+        if (swapEl && !el.dataset.saving) {
+            el.dataset.saving = '1';
+            el.style.opacity  = '0.6';
+            await performShiftSwap(el.dataset.id, swapEl.dataset.id);
+        } else {
+            renderBody(); // pas de cible → remettre le bloc à sa place
+        }
+        return;
     }
+    _setSwapTarget(null);
 
     // Anti-doublon : ignorer si un save est déjà en cours sur cet élément
     if (activeEl.dataset.saving) { activeEl = null; activeAction = null; return; }
@@ -3003,6 +3029,7 @@ function onTouchStart(e) {
 
     _touchActive     = true;
     _shiftWasDragged = false;
+    _dragIntent      = null; // tactile ne déclenche jamais 'swap', mais on repart propre
     refreshPxPerHour();
     const touch = e.touches[0];
 
