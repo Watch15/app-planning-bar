@@ -1,16 +1,16 @@
 # Graph Report - app-planning-bar  (2026-06-28)
 
 ## Corpus Check
-- 35 files · ~148,280 words
+- 35 files · ~148,477 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 912 nodes · 1474 edges · 59 communities (47 shown, 12 thin omitted)
+- 912 nodes · 1474 edges · 58 communities (46 shown, 12 thin omitted)
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 81 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c58f1637`
+- Built from commit: `95c829ab`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -27,7 +27,6 @@
 - [[_COMMUNITY_Dispo Control Init|Dispo Control Init]]
 - [[_COMMUNITY_Shift CRUD & Rendering|Shift CRUD & Rendering]]
 - [[_COMMUNITY_Shared Utils & Validation|Shared Utils & Validation]]
-- [[_COMMUNITY_Week View Rendering|Week View Rendering]]
 - [[_COMMUNITY_PWA Manifest|PWA Manifest]]
 - [[_COMMUNITY_Staff Card Styling|Staff Card Styling]]
 - [[_COMMUNITY_Week Calculation Module|Week Calculation Module]]
@@ -106,7 +105,7 @@
 - **Sûreté timezone via toDateStr** — architecture_timezone_rule, architecture_todatestr, architecture_push_past_shift_guard [EXTRACTED 0.85]
 - **Cycle de vie feature iCal (livrée puis désactivée)** — backlog_f09_ical, architecture_ical_feed, architecture_calendar_enabled_flag [EXTRACTED 0.90]
 
-## Communities (59 total, 12 thin omitted)
+## Communities (58 total, 12 thin omitted)
 
 ### Community 0 - "Planning Board UI"
 Cohesion: 0.05
@@ -126,15 +125,15 @@ Nodes (34): Ae(), mr(), QB(), re(), se(), w(), _(), a() (+26 more)
 
 ### Community 4 - "Main Planning Script (State)"
 Cohesion: 0.03
-Nodes (65): allEstablishments, allGroups, allRoles, allStaff, AUTO_COLORS, _autoScroll, _autoScrollTick(), _btnCopyWeek (+57 more)
+Nodes (61): allEstablishments, allGroups, allRoles, allStaff, AUTO_COLORS, _autoScroll, _autoScrollTick(), _btnCopyWeek (+53 more)
 
 ### Community 5 - "Express Server & API"
 Cohesion: 0.04
 Nodes (21): app, bcrypt, cleanupOldJokers(), client, connectDB(), cors, crypto, dispoOpenVenues() (+13 more)
 
 ### Community 6 - "Week Data Loading"
-Cohesion: 0.11
-Nodes (36): addDays(), applyVenueHours(), exportWeekCSV(), formatDateShort(), getMondayOf(), isToday(), _kpiEstabRow(), _kpiProgressBar() (+28 more)
+Cohesion: 0.10
+Nodes (41): addDays(), applyVenueHours(), exportWeekCSV(), formatDateShort(), getMondayOf(), isToday(), _kpiEstabRow(), _kpiProgressBar() (+33 more)
 
 ### Community 7 - "NPM Dependencies"
 Cohesion: 0.07
@@ -145,8 +144,8 @@ Cohesion: 0.16
 Nodes (18): allStaff, buildShiftCard(), checkAuth(), fmtH(), getActiveDate(), init(), initExtraForm(), initRevenueForm() (+10 more)
 
 ### Community 9 - "Dispo Control Init"
-Cohesion: 0.08
-Nodes (28): acknowledgeOffDispo(), buildRoleFilters(), buildStaffDisplayNames(), checkAuth(), decideConge(), init(), initDropZone(), initNotifListeners() (+20 more)
+Cohesion: 0.11
+Nodes (21): acknowledgeOffDispo(), buildStaffDisplayNames(), checkAuth(), decideConge(), init(), initDropZone(), initNotifListeners(), initStaffSearch() (+13 more)
 
 ### Community 10 - "Shift CRUD & Rendering"
 Cohesion: 0.20
@@ -156,17 +155,13 @@ Nodes (10): Auth, Comptes & Staff, Disponibilités, Infra, Performance / CA, Rou
 Cohesion: 0.17
 Nodes (18): chargeMultiplier(), computeActiveDate(), crypto, disposWeekStart(), hashToken(), isAutoPublished(), isDatePublished(), isFullRangeOnConge() (+10 more)
 
-### Community 12 - "Week View Rendering"
-Cohesion: 0.33
-Nodes (6): applyViewMode(), renderDashboard(), renderWeekFull(), renderWeekGantt(), staffMatchesCurrentGroup(), switchToDayView()
-
 ### Community 13 - "PWA Manifest"
 Cohesion: 0.18
 Nodes (10): background_color, description, display, icons, name, orientation, short_name, shortcuts (+2 more)
 
 ### Community 14 - "Staff Card Styling"
-Cohesion: 0.21
-Nodes (13): applyCardNameContrast(), _buildCongeRow(), createShiftEl(), createStaffRow(), displayName(), escapeHtml(), _fmtCongeDateFr(), openNotifPanel() (+5 more)
+Cohesion: 0.13
+Nodes (19): applyCardNameContrast(), applyViewMode(), _buildCongeRow(), createShiftEl(), createStaffRow(), displayName(), escapeHtml(), _fmtCongeDateFr() (+11 more)
 
 ### Community 15 - "Week Calculation Module"
 Cohesion: 0.36
@@ -253,8 +248,8 @@ Cohesion: 0.50
 Nodes (3): globals, js, sharedRules
 
 ### Community 38 - "Community 38"
-Cohesion: 0.19
-Nodes (21): applyShiftAssignment(), assignStaffToJoker(), createShift(), deleteShift(), exportRecapXlsx(), generatePrintGantt(), _ignoreNonAffectee(), _nonAffecteesAfterRemove() (+13 more)
+Cohesion: 0.21
+Nodes (19): applyShiftAssignment(), assignStaffToJoker(), createShift(), deleteShift(), exportRecapXlsx(), generatePrintGantt(), _ignoreNonAffectee(), _nonAffecteesAfterRemove() (+11 more)
 
 ### Community 39 - "Community 39"
 Cohesion: 0.33
@@ -281,8 +276,8 @@ Cohesion: 0.18
 Nodes (11): A(), CA(), fr(), Hn(), Xt(), C(), Dt(), n() (+3 more)
 
 ### Community 47 - "Community 47"
-Cohesion: 0.25
-Nodes (9): buildDisplayedStaff(), extendDisplayForRealHours(), formatDateLong(), loadDayDetail(), loadPublishButton(), parseDate(), _publishEstabs(), renderPublishControl() (+1 more)
+Cohesion: 0.12
+Nodes (17): buildDisplayedStaff(), buildRoleFilters(), extendDisplayForRealHours(), formatDateLong(), getPxPerHour(), loadCongesList(), loadDayDetail(), loadPublishButton() (+9 more)
 
 ### Community 57 - "Community 57"
 Cohesion: 0.33
@@ -302,7 +297,7 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Architecture technique — Templyo` connect `Tap Selection` to `Architecture & Design Rationale`?**
   _High betweenness centrality (0.012) - this node is a cross-community bridge._
-- **Why does `fmtH()` connect `Time Clock (Pointage)` to `Main Planning Script (State)`, `Week View Rendering`, `Community 38`?**
+- **Why does `fmtH()` connect `Time Clock (Pointage)` to `Main Planning Script (State)`, `Community 38`, `Staff Card Styling`?**
   _High betweenness centrality (0.011) - this node is a cross-community bridge._
 - **Why does `server.js (serveur Express monolithique)` connect `Community 43` to `Architecture & Design Rationale`, `Shift CRUD & Rendering`, `Timeline Rendering`?**
   _High betweenness centrality (0.010) - this node is a cross-community bridge._

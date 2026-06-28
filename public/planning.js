@@ -1461,6 +1461,7 @@ function renderHistoriqueWeek(wrap, data) {
 const DISPO_TYPES = {
     soir:   { label: 'Soir',   start: 16, end: 26 },
     midi:   { label: 'Midi',   start: 10, end: 17 },
+    long:   { label: 'Long',   start: 10, end: 26 },
     custom: { label: 'Horaires précis', start: null, end: null },
     off:    { label: 'Indisponible', start: null, end: null },
 };
@@ -1639,6 +1640,7 @@ function createDispoCard(date, d) {
     const BTN_CONFIG = {
         soir:   { label: 'Soir',        sub: '16h → 02h', col: '#1a1a2e' },
         midi:   { label: 'Midi',        sub: '10h → 17h', col: '#534AB7' },
+        long:   { label: 'Long',        sub: '10h → 02h', col: '#e74c3c' },
         custom: { label: 'Personnalisé', sub: 'horaires libres', col: '#2ecc71' },
         off:    { label: 'Indispo',     sub: null,           col: '#888' },
     };
@@ -1658,7 +1660,7 @@ function createDispoCard(date, d) {
         '</div>' +
         '<div class="dispo-body">' +
             '<div class="dispo-type-row">' +
-                ['soir', 'midi', 'custom', 'off'].map(type => {
+                ['soir', 'midi', 'long', 'custom', 'off'].map(type => {
                     const cfg    = BTN_CONFIG[type];
                     const active = sel.type === type ? ' selected-' + type : '';
                     return '<button class="dispo-type-btn' + active + '" data-date="' + date + '" data-type="' + type + '">' +

@@ -5413,6 +5413,7 @@ async function loadNonAffectees() {
     const fmtH = ShiftHours.fmtHourOfDay;
     const slotOrder = dispo => {
         if (dispo.type === 'midi') return [0, 0];
+        if (dispo.type === 'long') return [0, 1];
         if (dispo.type === 'soir') return [1, 0];
         return [2, Number(dispo.start_time) || 0];
     };
@@ -5471,6 +5472,7 @@ async function loadNonAffectees() {
             dispos.forEach(dispo => {
                 const dispoLabel = dispo.type === 'soir' ? 'Soir'
                     : dispo.type === 'midi' ? 'Midi'
+                    : dispo.type === 'long' ? 'Long'
                     : (fmtH(dispo.start_time) + '–' + fmtH(dispo.end_time));
 
                 const row = document.createElement('div');
@@ -6021,7 +6023,7 @@ async function loadDisposList() {
                 const typeColor = !dispo
                     ? '#ccc'
                     : isOff ? '#e74c3c'
-                    : (dispo.type === 'midi' ? '#534AB7' : '#1a1a2e');
+                    : (dispo.type === 'midi' ? '#534AB7' : dispo.type === 'long' ? '#e74c3c' : '#1a1a2e');
 
                 pill.innerHTML =
                     '<div style="font-size:10px;color:#aaa;margin-bottom:2px">' + DAY_SHORT[d.getDay()] + ' ' + d.getDate() + '</div>' +
@@ -6030,7 +6032,7 @@ async function loadDisposList() {
                         : isOff
                             ? '<div style="font-size:12px;font-weight:700;color:' + typeColor + '">Indispo</div>' +
                               (dispo.note ? '<div style="font-size:9px;color:#f39c12;margin-top:2px">✎ note</div>' : '')
-                            : '<div style="font-size:12px;font-weight:700;color:' + typeColor + '">' + (dispo.type === 'soir' ? 'Soir' : dispo.type === 'midi' ? 'Midi' : 'Perso') + '</div>' +
+                            : '<div style="font-size:12px;font-weight:700;color:' + typeColor + '">' + (dispo.type === 'soir' ? 'Soir' : dispo.type === 'midi' ? 'Midi' : dispo.type === 'long' ? 'Long' : 'Perso') + '</div>' +
                               '<div style="font-size:10px;color:#999;margin-top:1px">' + fmt(dispo.start_time) + '→' + fmt(dispo.end_time) + '</div>' +
                               (dispo.note ? '<div style="font-size:9px;color:#f39c12;margin-top:2px">✎ note</div>' : ''));
 
@@ -7951,6 +7953,13 @@ async function saveDashboardPdf() {
         return hh + 'h' + (mm > 0 ? String(mm).padStart(2, '0') : '');
     };
 
+    // Type de service d'après les horaires planifiés du shift, pour l'encadrement
+    // couleur : matin = finit ≤ 17h · soir = commence ≥ 16h · long = matin + soirée
+    // (commence le matin ET finit tard → chevauche les deux services).
+    const SERVICE_COLORS = { matin: '#f39c12', soir: '#534AB7', long: '#e74c3c' };
+    const serviceColor = (start, end) =>
+        SERVICE_COLORS[(start < 16 && end > 17) ? 'long' : (end <= 17 ? 'matin' : 'soir')];
+
     const staffMap = new Map();
     days.forEach(({ date }) => {
         (weekFullData[date] || []).forEach(shift => {
@@ -7998,7 +8007,8 @@ async function saveDashboardPdf() {
                     const ds = s.real_start != null ? s.real_start : s.start_time;
                     const de = s.real_end   != null ? s.real_end   : s.end_time;
                     const tc = textColorFor(s.color || '#3498db');
-                    return '<div style="background:' + s.color + ';color:' + tc + ';border-radius:4px;padding:' + pillPad + ';font-size:' + pillFont + ';margin-bottom:' + pillMargin + ';line-height:1.25">' +
+                    const sc = serviceColor(s.start_time, s.end_time); // bordure = type de service
+                    return '<div style="background:' + s.color + ';color:' + tc + ';border:2px solid ' + sc + ';border-radius:4px;padding:' + pillPad + ';font-size:' + pillFont + ';margin-bottom:' + pillMargin + ';line-height:1.25">' +
                         escapeHtml(fmtD(ds)) + '–' + escapeHtml(fmtD(de)) + '</div>';
                 }).join('');
                 row += '<td style="padding:' + cellPad + ';border:1px solid #ddd">' + pills + '</td>';
@@ -8040,6 +8050,13 @@ async function saveDashboardPdf() {
             '</div>' +
             '<div><span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid #6C63FF;border-radius:14px;color:#6C63FF;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase">Semaine</span></div>' +
         '</header>' +
+        '<div style="display:flex;gap:14px;align-items:center;margin-bottom:10px;font-size:10px;color:#4a4f63">' +
+            '<span style="font-weight:700;color:#8892a4;text-transform:uppercase;letter-spacing:.6px">Service</span>' +
+            [['Matin', SERVICE_COLORS.matin], ['Soir', SERVICE_COLORS.soir], ['Long', SERVICE_COLORS.long]].map(([lbl, c]) =>
+                '<span style="display:inline-flex;align-items:center;gap:5px">' +
+                    '<span style="width:12px;height:12px;border-radius:3px;border:2px solid ' + c + ';background:#fff;display:inline-block"></span>' + lbl +
+                '</span>').join('') +
+        '</div>' +
         '<table style="width:100%;border-collapse:collapse;table-layout:fixed;flex:1 1 auto">' +
         '<thead>' + thead + '</thead><tbody>' + tbody + '</tbody></table>';
     document.body.appendChild(container);
