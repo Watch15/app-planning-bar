@@ -7954,11 +7954,11 @@ async function saveDashboardPdf() {
     };
 
     // Type de service d'après les horaires planifiés du shift, pour l'encadrement
-    // couleur : matin = finit ≤ 17h · soir = commence ≥ 16h · long = matin + soirée
+    // couleur : matin = finit ≤ 18h · soir = commence ≥ 16h · long = matin + soirée
     // (commence le matin ET finit tard → chevauche les deux services).
     const SERVICE_COLORS = { matin: '#f39c12', soir: '#534AB7', long: '#e74c3c' };
     const serviceColor = (start, end) =>
-        SERVICE_COLORS[(start < 16 && end > 17) ? 'long' : (end <= 17 ? 'matin' : 'soir')];
+        SERVICE_COLORS[(start < 16 && end > 18) ? 'long' : (end <= 18 ? 'matin' : 'soir')];
 
     const staffMap = new Map();
     days.forEach(({ date }) => {
@@ -8007,9 +8007,15 @@ async function saveDashboardPdf() {
                     const ds = s.real_start != null ? s.real_start : s.start_time;
                     const de = s.real_end   != null ? s.real_end   : s.end_time;
                     const tc = textColorFor(s.color || '#3498db');
-                    const sc = serviceColor(s.start_time, s.end_time); // bordure = type de service
-                    return '<div style="background:' + s.color + ';color:' + tc + ';border:2px solid ' + sc + ';border-radius:4px;padding:' + pillPad + ';font-size:' + pillFont + ';margin-bottom:' + pillMargin + ';line-height:1.25">' +
-                        escapeHtml(fmtD(ds)) + '–' + escapeHtml(fmtD(de)) + '</div>';
+                    const sc = serviceColor(s.start_time, s.end_time); // encadrement = type de service
+                    // Liseré blanc entre le fond (couleur staff) et le cadre coloré :
+                    // garantit que l'encadrement reste visible même si la couleur du
+                    // staff est proche de celle du service.
+                    return '<div style="border:2px solid ' + sc + ';background:#fff;border-radius:5px;padding:2px;margin-bottom:' + pillMargin + '">' +
+                        '<div style="background:' + s.color + ';color:' + tc + ';border-radius:3px;padding:' + pillPad + ';font-size:' + pillFont + ';line-height:1.25">' +
+                            escapeHtml(fmtD(ds)) + '–' + escapeHtml(fmtD(de)) +
+                        '</div>' +
+                    '</div>';
                 }).join('');
                 row += '<td style="padding:' + cellPad + ';border:1px solid #ddd">' + pills + '</td>';
             } else {
