@@ -144,7 +144,8 @@ Base `gestion_bar`. Détail des champs dans `architecture.md` §5 — résumé :
 | `staff` | fiches staff + **rémunération** | `hourly_rate` **XOR** `fixed_rate` (mutual exclusion forcée serveur) |
 | `shifts` | créneaux planifiés | `start/end_time` = **heures décimales** (`end_time ≥ 24` = shift de nuit), Jokers (`is_joker`/`joker_open`/`joker_candidates`), pointage (`real_start/end`, `*_rate_snapshot`) |
 | `availabilities` | disponibilités du staff | `status: pending/approved/...`, 1 doc par `(staff_id, date)`, `type:'week_note'` à part |
-| `conges` | congés déclarés/validés | `mode: info` (déclaration) ou demande à valider |
+| `time_off` | congés du **staff** déclarés/validés | `mode: info` (déclaration, auto-`approved`) ou `request` (demande à valider) ; `status: pending/approved/rejected` |
+| `manager_time_off` | absences des **directeurs** (E-19) | keyé sur `user_id` (un directeur n'a **pas** de `staff_id`), période `start/end_date`, `type:'off'`, pas de validation — isolé du pipeline staff |
 | `daily_revenue` | CA quotidien par établissement | dénominateur du coefficient masse salariale |
 | `settings` | **polymorphe** (clé `key`) | `dispo`, `performance`, `pointage`, `publish_<weekStart>`, `lock_dispos_<weekStart>` |
 | `notifications` | notifs in-app patron/directeur | |
@@ -200,10 +201,16 @@ Base `gestion_bar`. Détail des champs dans `architecture.md` §5 — résumé :
 `PATCH /api/dispos/:id/confirm|reject|ignore` · `POST /api/dispos/reopen-for-correction` ·
 `POST /api/dispos/rappel` (push) · `GET/PATCH /api/dispo-settings` (+ `/force-open-staff`).
 
-### Congés
+### Congés (staff)
 `POST /api/conges` · `GET /api/conges/mine` · `DELETE /api/conges/:id` ·
 `GET /api/conges` (patron, filtres `from/to/status`) · `/api/conges/pending-count` ·
 `PATCH /api/conges/:id/decision`.
+
+### Absences directeurs (E-19 — collection `manager_time_off`, hors pipeline staff)
+`POST /api/me/manager-off` (directeur déclare une période) · `GET /api/me/manager-off` ·
+`DELETE /api/me/manager-off/:id` (les 3 gardées par `requireDirecteur`) ·
+`GET /api/managers-off` (patron/directeur/observateur, filtres `from/to`, **scopé par établissement** via `scopeManagerOff`).
+Le sous-onglet **Congés** patron (`loadCongesList`) et le calendrier récap (`loadCongesCalendar`) fusionnent ces absences avec les congés staff (`status:'manager'`, lecture seule).
 
 ### Pointage & rémunération
 `GET/PATCH /api/pointage-settings` · `GET /api/pointage/:date` ·
@@ -244,7 +251,10 @@ Organisé en blocs fonctionnels. Repères principaux (n° de ligne indicatifs) :
 | **Comptes/établissements** | `openAccountsModal`, `openEstablishmentsModal`, `openChangeRoleModal`, `openAssignBarsModal` |
 | **Récap & CA** | `openRecapModal`, `showRecapSub`, `loadCongesCalendar`, `renderCongesCalendar`, `exportRecapXlsx`, `openRevenueModal` |
 | **Dispos (patron)** | `loadDisposKpi`, `openDisposPanel`, `loadDisposList`, `confirmAllForStaff`, `sendRappelDispos`, `loadNonAffectees` |
-| **Congés (patron)** | `loadCongesList`, `renderCongesListPatron`, `decideConge` |
+| **Congés (patron)** | `loadCongesList`, `renderCongesListPatron`, `decideConge` (fusionne les absences directeurs `manager_time_off`) |
+| **Absences directeur (E-19)** | `openManagerOffModal`, `loadManagerOff`, `renderManagerOffList`, `addManagerOff`, `removeManagerOff` |
+| **Vue équipe** | `renderTeamDashboard` (onglet « équipe » — shifts staff) |
+| **Recherche** | `normalizeStr`, `matchesWordPrefix` (match par **début de mot**, partagé par toutes les recherches nom : staff, congés, notes, gestion) |
 | **Jokers/Swaps** | `loadSwapsBadge`, `openSwapsPanel` |
 
 ### `planning.js` — Espace staff (2440 l.)

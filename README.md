@@ -218,6 +218,8 @@ PORT=3000
 | `users` | Comptes de connexion |
 | `sessions` | Sessions actives (TTL 30 jours glissant) |
 | `availabilities` | Disponibilités soumises par le staff |
+| `time_off` | Congés du staff (déclaration `info` ou demande `request` à valider) |
+| `manager_time_off` | Absences des directeurs (E-19) — keyé sur `user_id`, isolé du pipeline staff |
 | `roles` | Rôles créés par le patron (responsable / informatif) |
 | `settings` | Paramètres polymorphes (clé `key`) : `dispo`, `performance`, `pointage`, `publish_<weekStart>`, `lock_dispos_<weekStart>` |
 | `push_subscriptions` | Endpoints VAPID par utilisateur |

@@ -183,6 +183,22 @@ Mécanique **distincte des disponibilités** : long terme, personnelle (vaut sur
   `PATCH /api/conges/:id/decision`. Helpers purs testés : `datesOverlap`, `congeCoversDate`,
   `congeDaysInRange`.
 
+### 3.9.ter Absences des directeurs (E-19)
+- Un **directeur** n'a pas de profil `staff` (`staff_id` null par design) : il ne peut donc
+  pas poser de congé via le flux staff `time_off`. Ses **absences** sont stockées à part dans
+  la collection **`manager_time_off`**, keyée sur son `user_id`, **totalement isolée du
+  pipeline staff** (Option B) — un directeur n'est jamais planifiable ni compté comme un employé.
+- **Côté directeur** : déclaration d'une **période** (du… au…, note libre) sans validation
+  (l'absence est *déclarée*, pas *demandée*). Anti-chevauchement avec ses absences déjà posées.
+- **Visibilité** : les absences directeur remontent dans le **sous-onglet 🌴 Congés** patron
+  (`loadCongesList`) et dans le **calendrier congés** du récap (`loadCongesCalendar`), fusionnées
+  avec les congés staff en lignes **lecture seule** (badge « Directeur » / pastille rouge « DIR »).
+  Portée **scopée par établissement** : patron et observateur voient toutes les absences ; un
+  directeur ne voit que celles des directeurs partageant au moins un de ses établissements.
+- Endpoints : `POST` / `GET /api/me/manager-off`, `DELETE /api/me/manager-off/:id`
+  (gardés par `requireDirecteur`), `GET /api/managers-off` (filtre `from`/`to`, patron/
+  directeur/observateur). Helpers purs testés : `validateOffPeriod`, `scopeManagerOff`.
+
 ### 3.10 Publication
 - « Publier la semaine » rend le planning visible au staff
 - Dépublication possible à tout moment
