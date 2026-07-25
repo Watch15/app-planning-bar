@@ -1,11 +1,11 @@
 {
   "lib/utils.js": {
-    "mtime": 1784717264.333763,
+    "mtime": 1784752460.7519827,
     "ast_hash": "9a26d897450c775b8b0c79e8d584ccab",
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1784545146.0973222,
+    "mtime": 1784752460.7549891,
     "ast_hash": "5232eee86bab6b03ab9f57d36b663d28",
     "semantic_hash": ""
   },
@@ -30,13 +30,13 @@
     "semantic_hash": ""
   },
   "public/pointage.js": {
-    "mtime": 1784749372.3664243,
+    "mtime": 1784752460.763513,
     "ast_hash": "dc65ae196ec950a21563316ea750ed37",
     "semantic_hash": ""
   },
   "public/script.js": {
-    "mtime": 1784749370.7936928,
-    "ast_hash": "841a2ac7f661c69737c7fb16be255d07",
+    "mtime": 1784752460.769513,
+    "ast_hash": "6f65b31085b989f4fe9738b597bbd05b",
     "semantic_hash": ""
   },
   "public/sw.js": {
@@ -75,7 +75,7 @@
     "semantic_hash": "a06d5a6e2e883b2b4a3d570fff6a9600"
   },
   "server.js": {
-    "mtime": 1784717250.7054713,
+    "mtime": 1784752460.7810311,
     "ast_hash": "ef3f36d3c0756ba005ace29c2e23f3cb",
     "semantic_hash": ""
   },
@@ -100,13 +100,13 @@
     "semantic_hash": "1bcc0bc98038e58b8a2636c98c88f892"
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1781776369.0754788,
-    "ast_hash": "828b1b8837022c88ac5a329fd3f6be2c",
+    "mtime": 1784810994.1765294,
+    "ast_hash": "3dd5fdc33804a399aa1190c29cb5729b",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1781250745.918929,
-    "ast_hash": "57982e0c206f0f3d7a39a117e423fba8",
+    "mtime": 1784757672.1968868,
+    "ast_hash": "3996287ce93c936137c39181302958b3",
     "semantic_hash": ""
   },
   "docs/architecture.md": {
@@ -115,13 +115,13 @@
     "semantic_hash": ""
   },
   "docs/backlog.md": {
-    "mtime": 1781250745.9219213,
-    "ast_hash": "3377b6e79b0566c5ef3e4e040809ca34",
+    "mtime": 1784757621.7534652,
+    "ast_hash": "40779d14b11e5f6433188763b2328a36",
     "semantic_hash": ""
   },
   "docs/prd.md": {
-    "mtime": 1781250745.922921,
-    "ast_hash": "32ddde97293de1fe783ecdb92906ac8b",
+    "mtime": 1784757648.1937544,
+    "ast_hash": "b41dd9967f149a50e179ff47f5b3c99d",
     "semantic_hash": ""
   },
   "docs/ux-design.md": {
@@ -130,7 +130,7 @@
     "semantic_hash": "b08e527857ae0b58a84a24cdd1f2fd8a"
   },
   "public/index.html": {
-    "mtime": 1784743332.192343,
+    "mtime": 1784752460.7599914,
     "ast_hash": "068e7a8849f2c82103a5be9126133a4b",
     "semantic_hash": ""
   },
@@ -140,8 +140,8 @@
     "semantic_hash": ""
   },
   "public/performance.html": {
-    "mtime": 1782733583.1215215,
-    "ast_hash": "cfd6cd1c491d9efeac5e5fc41b3cc1a4",
+    "mtime": 1784970273.6968944,
+    "ast_hash": "287dd28cefc1b48a7d698b65d53913da",
     "semantic_hash": ""
   },
   "public/planning.html": {
@@ -150,8 +150,8 @@
     "semantic_hash": ""
   },
   "public/pointage.html": {
-    "mtime": 1781250746.2721183,
-    "ast_hash": "98f90c0c2997ff395f58d784a53f5ead",
+    "mtime": 1784970260.1021814,
+    "ast_hash": "5a600b0a8b0bd03375a7e386d4632e54",
     "semantic_hash": ""
   },
   "public/politique-confidentialite.html": {
@@ -190,8 +190,8 @@
     "semantic_hash": ""
   },
   "public/sw-register.js": {
-    "mtime": 1781250746.2811172,
-    "ast_hash": "86295099042c44ea4d062286764855c9",
+    "mtime": 1784970161.7410972,
+    "ast_hash": "fd26929bee0b8fc2b23791439af556d1",
     "semantic_hash": ""
   },
   "public/login.js": {
@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "docs/onboarding.md": {
-    "mtime": 1781769820.2265885,
-    "ast_hash": "774233a8cc8bf8fb578ec47218ed877d",
+    "mtime": 1784757569.3424697,
+    "ast_hash": "4896750d33c9b595023b0bf1427d64ce",
     "semantic_hash": ""
   },
   "eslint.config.js": {
@@ -225,8 +225,8 @@
     "semantic_hash": ""
   },
   "tests/manager-off.test.js": {
-    "mtime": 1784547669.46963,
-    "ast_hash": "d1af7aebd6c8a60562573c1281050acb",
+    "mtime": 1784752460.7840972,
+    "ast_hash": "606ce206b3871e8ed81959c0e8977261",
     "semantic_hash": ""
   }
 }

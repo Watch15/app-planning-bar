@@ -50,7 +50,13 @@ jobs:
     needs: test
     # Uniquement le repo canonique : le fork « castanui » lance les tests mais ne
     # déploie pas la prod (il n'a pas les secrets Railway, et ne le doit pas).
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'Watch15/app-planning-bar'
+    # `vars.RAILWAY_SERVICE != ''` → le job est IGNORÉ (pas en échec) tant que la
+    # variable n'est pas définie : la CI reste verte avant l'activation de CD-01.
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      github.repository == 'Watch15/app-planning-bar' &&
+      vars.RAILWAY_SERVICE != ''
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-production
@@ -67,7 +73,21 @@ jobs:
         run: npm i -g @railway/cli
 
       - name: Deploy to Railway
-        run: railway up --service "$RAILWAY_SERVICE" --ci
+        # Railway renvoie parfois une erreur TRANSITOIRE de son orchestrateur de build
+        # (ex. « StartSnapshotAndBuild UNAVAILABLE / ECONNREFUSED 10.x.x.x » ou
+        # « Failed to stream build logs ») : c'est côté plateforme, pas notre code.
+        # Dans ces cas le build n'a pas démarré → on réessaie avant d'échouer.
+        run: |
+          for attempt in 1 2 3; do
+            echo "→ Déploiement Railway — tentative $attempt/3"
+            if railway up --service "$RAILWAY_SERVICE" --ci; then
+              exit 0
+            fi
+            echo "::warning::railway up a échoué (tentative $attempt/3) — nouvelle tentative dans 20s…"
+            sleep 20
+          done
+          echo "::error::railway up a échoué après 3 tentatives — vérifier status.railway.app et les Build Logs ci-dessus."
+          exit 1
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
