@@ -12,6 +12,7 @@ const {
     isDatePublished,
     normalizePublishDoc,
     chargeMultiplier,
+    resolvePerfSettings,
 } = require('../lib/utils');
 
 // ── isValidObjectId ──────────────────────────────────────────────────────────
@@ -342,4 +343,33 @@ test('chargeMultiplier : null/undefined → défaut 45 %', () => {
 
 test('chargeMultiplier : taux 100 % → 2', () => {
     assert.equal(chargeMultiplier(100), 2);
+});
+
+// ── resolvePerfSettings (E-14/E-24 — paramètres perf par établissement) ────────
+
+test('resolvePerfSettings : tout absent → défauts 30/43/45', () => {
+    assert.deepEqual(resolvePerfSettings(null, null), { target_gross: 30, target_charged: 43, charge_rate: 45 });
+});
+
+test('resolvePerfSettings : global seul → hérité, pas de défaut', () => {
+    const global = { key: 'performance', target_gross: 28, target_charged: 40, charge_rate: 42 };
+    assert.deepEqual(resolvePerfSettings(global, null), { target_gross: 28, target_charged: 40, charge_rate: 42 });
+});
+
+test('resolvePerfSettings : override établissement gagne sur le global', () => {
+    const global   = { target_gross: 30, target_charged: 43, charge_rate: 45 };
+    const perEstab = { target_gross: 25, target_charged: 38, charge_rate: 50 };
+    assert.deepEqual(resolvePerfSettings(global, perEstab), { target_gross: 25, target_charged: 38, charge_rate: 50 });
+});
+
+test('resolvePerfSettings : fallback champ par champ (override partiel)', () => {
+    // L'établissement ne surcharge QUE charge_rate → objectifs hérités du global.
+    const global   = { target_gross: 30, target_charged: 43, charge_rate: 45 };
+    const perEstab = { charge_rate: 52 };
+    assert.deepEqual(resolvePerfSettings(global, perEstab), { target_gross: 30, target_charged: 43, charge_rate: 52 });
+});
+
+test('resolvePerfSettings : charge_rate 0 explicite est respecté (pas écrasé par le défaut)', () => {
+    const perEstab = { charge_rate: 0 };
+    assert.equal(resolvePerfSettings(null, perEstab).charge_rate, 0);
 });

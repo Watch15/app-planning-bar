@@ -78,11 +78,9 @@ async function init() {
     currentUser = await checkAuth();
     if (!currentUser) return;
 
-    // Charger établissements + objectifs en parallèle
-    const [estabRes, targetsRes] = await Promise.all([
-        fetch('/api/establishments', { credentials: 'include' }),
-        fetch('/api/performance-settings', { credentials: 'include' }),
-    ]);
+    // Les objectifs/charge sont désormais PAR établissement (E-14/E-24) : on les
+    // charge après avoir déterminé l'établissement courant (loadTargets), pas ici.
+    const estabRes = await fetch('/api/establishments', { credentials: 'include' });
     if (!estabRes.ok) { document.getElementById('table-wrap').innerHTML = '<div class="empty-msg">Erreur chargement</div>'; return; }
     allEstabs = await estabRes.json();
 
@@ -97,11 +95,6 @@ async function init() {
         return;
     }
 
-    if (targetsRes.ok) targets = await targetsRes.json();
-    document.getElementById('target-gross').value   = targets.target_gross;
-    document.getElementById('target-charged').value = targets.target_charged;
-    document.getElementById('charge-rate').value    = targets.charge_rate ?? 45;
-
     // Sélecteur établissement
     const sel = document.getElementById('estab-select');
     allEstabs.forEach(e => {
@@ -112,7 +105,8 @@ async function init() {
     if (allEstabs.length === 1) document.getElementById('estab-filter-group').style.display = 'none';
     currentEstab = allEstabs[0].id;
     sel.value = currentEstab;
-    sel.addEventListener('change', () => { currentEstab = sel.value; loadData(); loadCalendarWeek(); });
+    await loadTargets(); // paramètres de l'établissement courant
+    sel.addEventListener('change', () => { currentEstab = sel.value; loadTargets(); loadData(); loadCalendarWeek(); });
 
     // Sélecteur période
     document.getElementById('period-select').addEventListener('change', loadData);
@@ -507,6 +501,24 @@ function renderDetail(td, staff, totalWage, totalWageCharged) {
 
 // ── Objectifs ─────────────────────────────────────────────────────────────────
 
+// Paramètres (objectifs + taux de charges) de l'établissement COURANT (E-14/E-24).
+// Rechargé à chaque changement d'établissement ; le serveur applique le fallback
+// global si l'établissement n'a pas encore de réglage propre.
+async function loadTargets() {
+    try {
+        const res = await fetch('/api/performance-settings?establishment_id=' + encodeURIComponent(currentEstab), { credentials: 'include' });
+        if (res.ok) targets = await res.json();
+    } catch { /* on garde les valeurs courantes */ }
+    document.getElementById('target-gross').value   = targets.target_gross;
+    document.getElementById('target-charged').value = targets.target_charged;
+    document.getElementById('charge-rate').value    = targets.charge_rate ?? 45;
+    const scope = document.getElementById('targets-scope');
+    if (scope) {
+        const est = allEstabs.find(e => e.id === currentEstab);
+        scope.textContent = est ? ' — ' + est.name : '';
+    }
+}
+
 async function saveTargets() {
     const btn = document.getElementById('btn-save-targets');
     const fb  = document.getElementById('targets-feedback');
@@ -522,7 +534,7 @@ async function saveTargets() {
         const res = await fetch('/api/performance-settings', {
             method: 'PATCH', credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ target_gross: tg, target_charged: tc, charge_rate: cr }),
+            body: JSON.stringify({ target_gross: tg, target_charged: tc, charge_rate: cr, establishment_id: currentEstab }),
         });
         if (!res.ok) throw new Error((await res.json()).error);
         targets = { target_gross: tg, target_charged: tc, charge_rate: cr };

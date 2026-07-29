@@ -13,7 +13,7 @@ const {
     isValidObjectId, hashToken, normalizePhone,
     weekStart, currentWeekStart, disposWeekStart, isAutoPublished, isDatePublished, normalizePublishDoc, chargeMultiplier,
     toDateStr, datesOverlap, congeDaysInRange, splitDisposByConges, isFullRangeOnConge,
-    validateOffPeriod, scopeManagerOff,
+    validateOffPeriod, scopeManagerOff, resolvePerfSettings,
 } = require('./lib/utils');
 
 // Sentry — initialisation conditionnelle (ne se charge que si SENTRY_DSN fourni).
@@ -4264,6 +4264,17 @@ app.get('/api/revenue/:establishmentId/:date', checkDB, requireAuth, async (req,
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
+// Charge les paramètres Performance EFFECTIFS d'un établissement (E-14/E-24) :
+// override `performance_<id>` par-dessus le défaut global `performance`, champ par
+// champ (cf. resolvePerfSettings). Sans establishment_id → défaut global seul.
+async function loadPerfSettings(establishmentId) {
+    const global   = await db.collection('settings').findOne({ key: 'performance' });
+    const perEstab = establishmentId
+        ? await db.collection('settings').findOne({ key: 'performance_' + establishmentId })
+        : null;
+    return resolvePerfSettings(global, perEstab);
+}
+
 // GET performance (CA + masse salariale + coeff) — patron/directeur
 app.get('/api/performance', checkDB, requirePatron, async (req, res) => {
     const { establishment_id, from, to } = req.query;
@@ -4280,7 +4291,7 @@ app.get('/api/performance', checkDB, requirePatron, async (req, res) => {
         const revenues = await db.collection('daily_revenue').find(revQuery).toArray();
         if (revenues.length === 0) return res.json([]);
 
-        const perfSettings = await db.collection('settings').findOne({ key: 'performance' }) || {};
+        const perfSettings = await loadPerfSettings(establishment_id);
         const chargeMult = chargeMultiplier(perfSettings.charge_rate);
 
         const dates = revenues.map(r => r.date);
@@ -4373,18 +4384,24 @@ app.get('/api/performance', checkDB, requirePatron, async (req, res) => {
 // GET/PATCH objectifs performance (coefficient cible)
 app.get('/api/performance-settings', checkDB, requireAuth, async (req, res) => {
     try {
-        const s = await db.collection('settings').findOne({ key: 'performance' }) || {};
-        res.json({
-            target_gross:   s.target_gross   ?? 30,
-            target_charged: s.target_charged ?? 43,
-            charge_rate:    s.charge_rate    ?? 45,
-        });
+        // establishment_id optionnel → paramètres effectifs de cet établissement
+        // (override + fallback global) ; absent → défaut global (rétro-compat).
+        res.json(await loadPerfSettings(req.query.establishment_id));
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 app.patch('/api/performance-settings', checkDB, requirePatron, async (req, res) => {
-    const { target_gross, target_charged, charge_rate } = req.body;
-    const update = { key: 'performance' };
+    const { target_gross, target_charged, charge_rate, establishment_id } = req.body;
+    // establishment_id fourni → on écrit l'override propre à cet établissement
+    // (settings.performance_<id>), après contrôle d'accès. Absent → défaut global.
+    if (establishment_id != null) {
+        if (typeof establishment_id !== 'string' || !establishment_id.trim())
+            return res.status(400).json({ error: 'establishment_id invalide' });
+        if (!canAccessEstablishment(req.session.user, establishment_id))
+            return res.status(403).json({ error: 'Accès refusé' });
+    }
+    const key = establishment_id ? 'performance_' + establishment_id : 'performance';
+    const update = { key };
     // Bornes raisonnables : 0–100 % pour les objectifs coeff, 0–200 % pour le taux de charges
     if (target_gross != null) {
         const v = parseFloat(target_gross);
@@ -4403,7 +4420,7 @@ app.patch('/api/performance-settings', checkDB, requirePatron, async (req, res) 
     }
     try {
         await db.collection('settings').updateOne(
-            { key: 'performance' },
+            { key },
             { $set: update },
             { upsert: true }
         );
