@@ -1140,7 +1140,7 @@
       "label": "openCAModal()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L232",
+      "source_location": "L235",
       "_origin": "ast",
       "id": "public_performance_opencamodal",
       "community": 33,
@@ -1150,7 +1150,7 @@
       "label": "closeCAModal()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L249",
+      "source_location": "L252",
       "_origin": "ast",
       "id": "public_performance_closecamodal",
       "community": 33,
@@ -1160,7 +1160,7 @@
       "label": "saveCAFromModal()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L253",
+      "source_location": "L256",
       "_origin": "ast",
       "id": "public_performance_savecafrommodal",
       "community": 33,
@@ -1170,7 +1170,7 @@
       "label": "_periodRange()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L281",
+      "source_location": "L284",
       "_origin": "ast",
       "id": "public_performance_periodrange",
       "community": 33,
@@ -1180,7 +1180,7 @@
       "label": "loadData()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L297",
+      "source_location": "L300",
       "_origin": "ast",
       "id": "public_performance_loaddata",
       "community": 33,
@@ -1190,7 +1190,7 @@
       "label": "renderKpis()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L363",
+      "source_location": "L366",
       "_origin": "ast",
       "id": "public_performance_renderkpis",
       "community": 33,
@@ -1200,7 +1200,7 @@
       "label": "renderTable()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L381",
+      "source_location": "L385",
       "_origin": "ast",
       "id": "public_performance_rendertable",
       "community": 33,
@@ -1210,7 +1210,7 @@
       "label": "renderDetail()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L463",
+      "source_location": "L467",
       "_origin": "ast",
       "id": "public_performance_renderdetail",
       "community": 33,
@@ -1220,7 +1220,7 @@
       "label": "loadTargets()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L507",
+      "source_location": "L511",
       "_origin": "ast",
       "id": "public_performance_loadtargets",
       "community": 33,
@@ -1230,7 +1230,7 @@
       "label": "saveTargets()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L522",
+      "source_location": "L526",
       "_origin": "ast",
       "id": "public_performance_savetargets",
       "community": 33,
@@ -9854,9 +9854,9 @@
       "source_file": "lib/utils.js",
       "source_location": "L194",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_utils",
-      "target": "lib_utils_perf_defaults",
-      "confidence_score": 1.0
+      "target": "lib_utils_perf_defaults"
     },
     {
       "relation": "contains",
@@ -9864,9 +9864,9 @@
       "source_file": "lib/utils.js",
       "source_location": "L195",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_utils",
-      "target": "lib_utils_resolveperfsettings",
-      "confidence_score": 1.0
+      "target": "lib_utils_resolveperfsettings"
     },
     {
       "relation": "contains",
@@ -10420,9 +10420,9 @@
       "source_file": "server.js",
       "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "lib_utils_resolveperfsettings",
-      "confidence_score": 1.0
+      "target": "lib_utils_resolveperfsettings"
     },
     {
       "relation": "calls",
@@ -10442,9 +10442,9 @@
       "source_file": "tests/utils.test.js",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_utils_test",
-      "target": "lib_utils_resolveperfsettings",
-      "confidence_score": 1.0
+      "target": "lib_utils_resolveperfsettings"
     },
     {
       "relation": "imports",
@@ -11490,9 +11490,9 @@
       "source_file": "public/performance.js",
       "source_location": "L507",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_performance",
-      "target": "public_performance_loadtargets",
-      "confidence_score": 1.0
+      "target": "public_performance_loadtargets"
     },
     {
       "relation": "contains",
@@ -11841,9 +11841,9 @@
       "source_file": "public/performance.js",
       "source_location": "L108",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_performance_init",
-      "target": "public_performance_loadtargets",
-      "confidence_score": 1.0
+      "target": "public_performance_loadtargets"
     },
     {
       "relation": "calls",
@@ -22419,9 +22419,9 @@
       "source_file": "server.js",
       "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "server_isvalidobjectid_hashtoken_normalizephone_weekstart_currentweekstart_disposweekstart_isautopublished_isdatepublished_normalizepublishdoc_chargemultiplier_todatestr_datesoverlap_congedaysinrange_splitdisposbyconges_isfullrangeonconge_validateoffperiod_scopemanageroff_resolveperfsettings",
-      "confidence_score": 1.0
+      "target": "server_isvalidobjectid_hashtoken_normalizephone_weekstart_currentweekstart_disposweekstart_isautopublished_isdatepublished_normalizepublishdoc_chargemultiplier_todatestr_datesoverlap_congedaysinrange_splitdisposbyconges_isfullrangeonconge_validateoffperiod_scopemanageroff_resolveperfsettings"
     },
     {
       "relation": "contains",
@@ -22429,9 +22429,9 @@
       "source_file": "server.js",
       "source_location": "L4270",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "server_loadperfsettings",
-      "confidence_score": 1.0
+      "target": "server_loadperfsettings"
     },
     {
       "relation": "contains",
@@ -23206,9 +23206,9 @@
       "source_file": "tests/utils.test.js",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_utils_test",
-      "target": "tests_utils_test_isvalidobjectid_hashtoken_normalizephone_computeactivedate_todatestr_weekstart_disposweekstart_isautopublished_isdatepublished_normalizepublishdoc_chargemultiplier_resolveperfsettings",
-      "confidence_score": 1.0
+      "target": "tests_utils_test_isvalidobjectid_hashtoken_normalizephone_computeactivedate_todatestr_weekstart_disposweekstart_isautopublished_isdatepublished_normalizepublishdoc_chargemultiplier_resolveperfsettings"
     },
     {
       "relation": "contains",
@@ -25813,5 +25813,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "29bc8822f16f7d7f000ec864ea59479f38bb5576"
+  "built_at_commit": "eabd5141343ec51c3e82311deadd3ced50b19397"
 }

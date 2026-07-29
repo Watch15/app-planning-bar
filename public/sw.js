@@ -70,7 +70,20 @@ self.addEventListener('fetch', e => {
         return;
     }
 
-    // Assets statiques — Cache First avec fallback réseau
+    // Navigations (documents HTML) — Network First. Sinon une navigation vers une
+    // coquille (ex. le lien « ← Dashboard » → `/`) ressort l'ancien HTML en cache
+    // après un déploiement (header périmé, etc.). En ligne = toujours frais ;
+    // hors ligne = repli sur la coquille préchargée (STATIC), puis index.html.
+    if (e.request.mode === 'navigate') {
+        e.respondWith(
+            fetch(e.request).catch(() =>
+                caches.match(e.request).then(c => c || caches.match('/index.html') || caches.match('/login.html'))
+            )
+        );
+        return;
+    }
+
+    // Assets statiques (JS/CSS/vendor) — Cache First avec fallback réseau
     e.respondWith(
         caches.match(e.request).then(cached => {
             if (cached) return cached;

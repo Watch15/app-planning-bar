@@ -206,10 +206,13 @@ function renderCalendarGrid(data) {
             const dayHours  = perf.staff_detail.reduce((a, s) => a + (s.hours_worked || 0), 0);
             const hoursLine = dayHours > 0 ? '<div style="font-size:10px;font-weight:600;color:currentColor;opacity:0.7;margin-top:2px">' + fmtHours(dayHours) + ' travaillées</div>' : '';
             if (hasShifts) {
-                card.classList.add(perf.coeff_gross < targets.target_gross ? 'ok' : 'bad');
+                // E-23 : le coefficient CHARGÉ est la référence (couleur ok/bad + valeur
+                // principale, comparée à l'objectif chargé) ; le brut reste en secondaire.
+                card.classList.add(perf.coeff_charged < targets.target_charged ? 'ok' : 'bad');
                 inner += '<div class="day-ca">' + fmtEUR(perf.revenue) + '</div>';
                 inner += hoursLine;
-                inner += '<div class="day-coeff">' + fmtPct(perf.coeff_gross) + '</div>';
+                inner += '<div class="day-coeff">' + fmtPct(perf.coeff_charged) + '</div>';
+                inner += '<div style="font-size:9px;font-weight:600;opacity:0.6;margin-top:1px">brut ' + fmtPct(perf.coeff_gross) + '</div>';
             } else {
                 card.classList.add('no-shifts');
                 inner += '<div class="day-ca">' + fmtEUR(perf.revenue) + '</div>';
@@ -374,8 +377,9 @@ function renderKpis(data) {
     wrap.innerHTML =
         '<div class="kpi-card"><div class="kpi-label">CA total</div><div class="kpi-value num">' + fmtEUR(totalRevenue) + '</div><div class="kpi-sub">' + data.length + ' soirée' + (data.length > 1 ? 's' : '') + '</div></div>' +
         '<div class="kpi-card"><div class="kpi-label">Heures travaillées</div><div class="kpi-value num">' + fmtHours(totalHours) + '</div><div class="kpi-sub">heures réelles</div></div>' +
-        '<div class="kpi-card"><div class="kpi-label">Masse sal. brute</div><div class="kpi-value num">' + fmtEUR(totalWage) + '</div><div class="kpi-sub">Coeff. ' + fmtPct(coeffG) + '</div></div>' +
-        '<div class="kpi-card"><div class="kpi-label">Masse sal. chargée</div><div class="kpi-value num">' + fmtEUR(totalWageCh) + '</div><div class="kpi-sub">Coeff. ' + fmtPct(coeffC) + '</div></div>';
+        // E-23 : masse chargée (référence) présentée avant la brute.
+        '<div class="kpi-card"><div class="kpi-label">Masse sal. chargée</div><div class="kpi-value num">' + fmtEUR(totalWageCh) + '</div><div class="kpi-sub">Coeff. ' + fmtPct(coeffC) + '</div></div>' +
+        '<div class="kpi-card"><div class="kpi-label">Masse sal. brute</div><div class="kpi-value num">' + fmtEUR(totalWage) + '</div><div class="kpi-sub">Coeff. ' + fmtPct(coeffG) + '</div></div>';
 }
 
 function renderTable(data) {
