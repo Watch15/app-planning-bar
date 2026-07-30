@@ -140,8 +140,8 @@
     "semantic_hash": ""
   },
   "public/performance.html": {
-    "mtime": 1785283382.540504,
-    "ast_hash": "ac7c5168565b95054810a4a989b3d588",
+    "mtime": 1785396223.906081,
+    "ast_hash": "a70ba47324d2f67cfa1ab6afaa7a25f0",
     "semantic_hash": ""
   },
   "public/planning.html": {
@@ -185,8 +185,8 @@
     "semantic_hash": ""
   },
   "public/performance.js": {
-    "mtime": 1785314419.5154698,
-    "ast_hash": "213981bd101c948a3614dd6a8dabbda9",
+    "mtime": 1785396218.1231573,
+    "ast_hash": "2a7f187d46eccd76bd88c0e1c29823ed",
     "semantic_hash": ""
   },
   "public/sw-register.js": {

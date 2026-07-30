@@ -206,13 +206,12 @@ function renderCalendarGrid(data) {
             const dayHours  = perf.staff_detail.reduce((a, s) => a + (s.hours_worked || 0), 0);
             const hoursLine = dayHours > 0 ? '<div style="font-size:10px;font-weight:600;color:currentColor;opacity:0.7;margin-top:2px">' + fmtHours(dayHours) + ' travaillées</div>' : '';
             if (hasShifts) {
-                // E-23 : le coefficient CHARGÉ est la référence (couleur ok/bad + valeur
-                // principale, comparée à l'objectif chargé) ; le brut reste en secondaire.
+                // E-23 : seul le coefficient CHARGÉ est affiché (couleur ok/bad + valeur,
+                // comparée à l'objectif chargé). Le brut a été retiré de l'affichage.
                 card.classList.add(perf.coeff_charged < targets.target_charged ? 'ok' : 'bad');
                 inner += '<div class="day-ca">' + fmtEUR(perf.revenue) + '</div>';
                 inner += hoursLine;
                 inner += '<div class="day-coeff">' + fmtPct(perf.coeff_charged) + '</div>';
-                inner += '<div style="font-size:9px;font-weight:600;opacity:0.6;margin-top:1px">brut ' + fmtPct(perf.coeff_gross) + '</div>';
             } else {
                 card.classList.add('no-shifts');
                 inner += '<div class="day-ca">' + fmtEUR(perf.revenue) + '</div>';
@@ -342,7 +341,6 @@ async function loadData(opts) {
                     renderDetail(
                         detail.querySelector('td'),
                         data[newIdx].staff_detail,
-                        data[newIdx].wage_bill_gross,
                         data[newIdx].wage_bill_charged
                     );
                 }
@@ -368,18 +366,15 @@ function renderKpis(data) {
     if (data.length === 0) { wrap.innerHTML = ''; return; }
 
     const totalRevenue = data.reduce((a, r) => a + (r.revenue || 0), 0);
-    const totalWage    = data.reduce((a, r) => a + (r.wage_bill_gross || 0), 0);
     const totalWageCh  = data.reduce((a, r) => a + (r.wage_bill_charged || 0), 0);
     const totalHours   = data.reduce((a, r) => a + r.staff_detail.reduce((b, s) => b + (s.hours_worked || 0), 0), 0);
-    const coeffG = totalRevenue > 0 ? (totalWage   / totalRevenue) * 100 : 0;
     const coeffC = totalRevenue > 0 ? (totalWageCh / totalRevenue) * 100 : 0;
 
+    // E-23 : seule la masse salariale CHARGÉE est affichée (le brut a été retiré).
     wrap.innerHTML =
         '<div class="kpi-card"><div class="kpi-label">CA total</div><div class="kpi-value num">' + fmtEUR(totalRevenue) + '</div><div class="kpi-sub">' + data.length + ' soirée' + (data.length > 1 ? 's' : '') + '</div></div>' +
         '<div class="kpi-card"><div class="kpi-label">Heures travaillées</div><div class="kpi-value num">' + fmtHours(totalHours) + '</div><div class="kpi-sub">heures réelles</div></div>' +
-        // E-23 : masse chargée (référence) présentée avant la brute.
-        '<div class="kpi-card"><div class="kpi-label">Masse sal. chargée</div><div class="kpi-value num">' + fmtEUR(totalWageCh) + '</div><div class="kpi-sub">Coeff. ' + fmtPct(coeffC) + '</div></div>' +
-        '<div class="kpi-card"><div class="kpi-label">Masse sal. brute</div><div class="kpi-value num">' + fmtEUR(totalWage) + '</div><div class="kpi-sub">Coeff. ' + fmtPct(coeffG) + '</div></div>';
+        '<div class="kpi-card"><div class="kpi-label">Masse sal. chargée</div><div class="kpi-value num">' + fmtEUR(totalWageCh) + '</div><div class="kpi-sub">Coeff. ' + fmtPct(coeffC) + '</div></div>';
 }
 
 function renderTable(data) {
@@ -389,32 +384,26 @@ function renderTable(data) {
         return;
     }
 
-    let totalRevenue = 0, totalWage = 0, totalWageCh = 0, totalHoursTable = 0;
+    let totalRevenue = 0, totalWageCh = 0, totalHoursTable = 0;
     const rows = data.map((r, idx) => {
         totalRevenue += r.revenue || 0;
-        totalWage    += r.wage_bill_gross || 0;
         totalWageCh  += r.wage_bill_charged || 0;
         const rowHours = r.staff_detail.reduce((a, s) => a + (s.hours_worked || 0), 0);
         totalHoursTable += rowHours;
-        const okG = r.coeff_gross   < targets.target_gross;
         const okC = r.coeff_charged < targets.target_charged;
         return (
             '<tr class="perf-row" data-idx="' + idx + '">' +
                 '<td class="date-cell"><span class="expand-icon">▸</span>' + dateLabel(r.date) + '</td>' +
                 '<td class="num">' + fmtEUR(r.revenue) + '</td>' +
                 '<td class="num">' + (rowHours > 0 ? fmtHours(rowHours) : '—') + '</td>' +
-                '<td class="num">' + fmtEUR(r.wage_bill_gross) + '</td>' +
-                '<td><span class="coeff-pill ' + (okG ? 'ok' : 'bad') + '">' + fmtPct(r.coeff_gross) + '</span></td>' +
                 '<td class="num">' + fmtEUR(r.wage_bill_charged) + '</td>' +
                 '<td><span class="coeff-pill ' + (okC ? 'ok' : 'bad') + '">' + fmtPct(r.coeff_charged) + '</span></td>' +
             '</tr>' +
-            '<tr class="perf-detail" data-detail-for="' + idx + '" style="display:none"><td colspan="7"></td></tr>'
+            '<tr class="perf-detail" data-detail-for="' + idx + '" style="display:none"><td colspan="5"></td></tr>'
         );
     }).join('');
 
-    const totalCoeffG = totalRevenue > 0 ? (totalWage   / totalRevenue) * 100 : 0;
     const totalCoeffC = totalRevenue > 0 ? (totalWageCh / totalRevenue) * 100 : 0;
-    const okTG = totalCoeffG < targets.target_gross;
     const okTC = totalCoeffC < targets.target_charged;
 
     wrap.innerHTML =
@@ -423,8 +412,6 @@ function renderTable(data) {
                 '<th>Date</th>' +
                 '<th class="num">CA</th>' +
                 '<th class="num">Heures</th>' +
-                '<th class="num">Masse sal. brute</th>' +
-                '<th>Coeff. brut</th>' +
                 '<th class="num">Masse sal. chargée</th>' +
                 '<th>Coeff. chargé</th>' +
             '</tr></thead>' +
@@ -433,8 +420,6 @@ function renderTable(data) {
                 '<td>Total période</td>' +
                 '<td class="num">' + fmtEUR(totalRevenue) + '</td>' +
                 '<td class="num">' + (totalHoursTable > 0 ? fmtHours(totalHoursTable) : '—') + '</td>' +
-                '<td class="num">' + fmtEUR(totalWage) + '</td>' +
-                '<td><span class="coeff-pill ' + (okTG ? 'ok' : 'bad') + '">' + fmtPct(totalCoeffG) + '</span></td>' +
                 '<td class="num">' + fmtEUR(totalWageCh) + '</td>' +
                 '<td><span class="coeff-pill ' + (okTC ? 'ok' : 'bad') + '">' + fmtPct(totalCoeffC) + '</span></td>' +
             '</tr></tfoot>' +
@@ -456,7 +441,6 @@ function renderTable(data) {
                 renderDetail(
                     detail.querySelector('td'),
                     currentData[idx].staff_detail,
-                    currentData[idx].wage_bill_gross,
                     currentData[idx].wage_bill_charged
                 );
             }
@@ -464,7 +448,7 @@ function renderTable(data) {
     });
 }
 
-function renderDetail(td, staff, totalWage, totalWageCharged) {
+function renderDetail(td, staff, totalWageCharged) {
     if (!staff || staff.length === 0) {
         td.innerHTML = '<div class="detail-wrap" style="color:var(--text-muted)">Aucun shift pointé ce soir-là</div>';
         return;
@@ -478,26 +462,25 @@ function renderDetail(td, staff, totalWage, totalWageCharged) {
         } else if (s.hourly_rate != null) {
             rateLabel = s.hourly_rate.toFixed(2).replace('.', ',') + ' €/h';
         }
-        const hasWage   = s.is_fixed ? s.fixed_rate != null : s.hourly_rate != null;
-        const wageLabel    = hasWage ? fmtEUR(s.wage_gross)   : '';
-        const wageChLabel  = hasWage ? fmtEUR(s.wage_charged) : '';
+        const hasWage     = s.is_fixed ? s.fixed_rate != null : s.hourly_rate != null;
+        const wageChLabel = hasWage ? fmtEUR(s.wage_charged) : '';
         return (
             '<tr>' +
                 '<td>' + escapeHtml(s.staff_name) + '</td>' +
                 '<td class="num">' + fmtHours(s.hours_worked) + '</td>' +
                 '<td class="num">' + rateLabel + '</td>' +
-                '<td class="num">' + wageLabel + '</td>' +
                 '<td class="num">' + wageChLabel + '</td>' +
             '</tr>'
         );
     }).join('');
 
+    // E-23 : seul le salaire CHARGÉ est affiché (le brut a été retiré).
     td.innerHTML =
         '<div class="detail-wrap">' +
             '<table class="detail-table">' +
-                '<thead><tr><th>Staff</th><th class="num">Heures</th><th class="num">Taux</th><th class="num">Salaire brut</th><th class="num">Salaire chargé</th></tr></thead>' +
+                '<thead><tr><th>Staff</th><th class="num">Heures</th><th class="num">Taux</th><th class="num">Salaire chargé</th></tr></thead>' +
                 '<tbody>' + rows +
-                    '<tr class="total-row"><td>Total</td><td class="num">' + fmtHours(totalHoursDetail) + '</td><td></td><td class="num">' + fmtEUR(totalWage) + '</td><td class="num">' + fmtEUR(totalWageCharged) + '</td></tr>' +
+                    '<tr class="total-row"><td>Total</td><td class="num">' + fmtHours(totalHoursDetail) + '</td><td></td><td class="num">' + fmtEUR(totalWageCharged) + '</td></tr>' +
                 '</tbody>' +
             '</table>' +
         '</div>';
@@ -513,7 +496,6 @@ async function loadTargets() {
         const res = await fetch('/api/performance-settings?establishment_id=' + encodeURIComponent(currentEstab), { credentials: 'include' });
         if (res.ok) targets = await res.json();
     } catch { /* on garde les valeurs courantes */ }
-    document.getElementById('target-gross').value   = targets.target_gross;
     document.getElementById('target-charged').value = targets.target_charged;
     document.getElementById('charge-rate').value    = targets.charge_rate ?? 45;
     const scope = document.getElementById('targets-scope');
@@ -526,10 +508,9 @@ async function loadTargets() {
 async function saveTargets() {
     const btn = document.getElementById('btn-save-targets');
     const fb  = document.getElementById('targets-feedback');
-    const tg  = parseFloat(document.getElementById('target-gross').value);
     const tc  = parseFloat(document.getElementById('target-charged').value);
     const cr  = parseFloat(document.getElementById('charge-rate').value);
-    if (Number.isNaN(tg) || Number.isNaN(tc) || Number.isNaN(cr)) {
+    if (Number.isNaN(tc) || Number.isNaN(cr)) {
         fb.style.color = 'var(--danger)'; fb.textContent = 'Valeurs invalides';
         return;
     }
@@ -538,10 +519,10 @@ async function saveTargets() {
         const res = await fetch('/api/performance-settings', {
             method: 'PATCH', credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ target_gross: tg, target_charged: tc, charge_rate: cr, establishment_id: currentEstab }),
+            body: JSON.stringify({ target_charged: tc, charge_rate: cr, establishment_id: currentEstab }),
         });
         if (!res.ok) throw new Error((await res.json()).error);
-        targets = { target_gross: tg, target_charged: tc, charge_rate: cr };
+        targets = { ...targets, target_charged: tc, charge_rate: cr };
         fb.style.color = 'var(--success-text)';
         fb.textContent = '✅ Paramètres enregistrés';
         setTimeout(() => { fb.textContent = ''; }, 2500);

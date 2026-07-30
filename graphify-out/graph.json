@@ -1140,7 +1140,7 @@
       "label": "openCAModal()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L235",
+      "source_location": "L234",
       "_origin": "ast",
       "id": "public_performance_opencamodal",
       "community": 33,
@@ -1150,7 +1150,7 @@
       "label": "closeCAModal()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L252",
+      "source_location": "L251",
       "_origin": "ast",
       "id": "public_performance_closecamodal",
       "community": 33,
@@ -1160,7 +1160,7 @@
       "label": "saveCAFromModal()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L256",
+      "source_location": "L255",
       "_origin": "ast",
       "id": "public_performance_savecafrommodal",
       "community": 33,
@@ -1170,7 +1170,7 @@
       "label": "_periodRange()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L284",
+      "source_location": "L283",
       "_origin": "ast",
       "id": "public_performance_periodrange",
       "community": 33,
@@ -1180,7 +1180,7 @@
       "label": "loadData()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L300",
+      "source_location": "L299",
       "_origin": "ast",
       "id": "public_performance_loaddata",
       "community": 33,
@@ -1190,7 +1190,7 @@
       "label": "renderKpis()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L366",
+      "source_location": "L364",
       "_origin": "ast",
       "id": "public_performance_renderkpis",
       "community": 33,
@@ -1200,7 +1200,7 @@
       "label": "renderTable()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L385",
+      "source_location": "L380",
       "_origin": "ast",
       "id": "public_performance_rendertable",
       "community": 33,
@@ -1210,7 +1210,7 @@
       "label": "renderDetail()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L467",
+      "source_location": "L451",
       "_origin": "ast",
       "id": "public_performance_renderdetail",
       "community": 33,
@@ -1220,7 +1220,7 @@
       "label": "loadTargets()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L511",
+      "source_location": "L494",
       "_origin": "ast",
       "id": "public_performance_loadtargets",
       "community": 33,
@@ -1230,7 +1230,7 @@
       "label": "saveTargets()",
       "file_type": "code",
       "source_file": "public/performance.js",
-      "source_location": "L526",
+      "source_location": "L508",
       "_origin": "ast",
       "id": "public_performance_savetargets",
       "community": 33,
@@ -2253,7 +2253,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "public_script_applyvenuehours",
-      "community": 6,
+      "community": 60,
       "norm_label": "applyvenuehours()"
     },
     {
@@ -2553,7 +2553,7 @@
       "source_location": "L255",
       "_origin": "ast",
       "id": "public_script_parsedate",
-      "community": 20,
+      "community": 6,
       "norm_label": "parsedate()"
     },
     {
@@ -2593,7 +2593,7 @@
       "source_location": "L277",
       "_origin": "ast",
       "id": "public_script_formatdatelong",
-      "community": 20,
+      "community": 38,
       "norm_label": "formatdatelong()"
     },
     {
@@ -2743,7 +2743,7 @@
       "source_location": "L695",
       "_origin": "ast",
       "id": "public_script_renderweeklabel",
-      "community": 6,
+      "community": 60,
       "norm_label": "renderweeklabel()"
     },
     {
@@ -2753,7 +2753,7 @@
       "source_location": "L703",
       "_origin": "ast",
       "id": "public_script_refreshweek",
-      "community": 6,
+      "community": 60,
       "norm_label": "refreshweek()"
     },
     {
@@ -2763,7 +2763,7 @@
       "source_location": "L723",
       "_origin": "ast",
       "id": "public_script_loadweekfulldata",
-      "community": 6,
+      "community": 60,
       "norm_label": "loadweekfulldata()"
     },
     {
@@ -2773,7 +2773,7 @@
       "source_location": "L753",
       "_origin": "ast",
       "id": "public_script_loadweeksummary",
-      "community": 6,
+      "community": 60,
       "norm_label": "loadweeksummary()"
     },
     {
@@ -2793,7 +2793,7 @@
       "source_location": "L834",
       "_origin": "ast",
       "id": "public_script_loaddaydetail",
-      "community": 20,
+      "community": 38,
       "norm_label": "loaddaydetail()"
     },
     {
@@ -2803,7 +2803,7 @@
       "source_location": "L880",
       "_origin": "ast",
       "id": "public_script_loadpublishbutton",
-      "community": 20,
+      "community": 6,
       "norm_label": "loadpublishbutton()"
     },
     {
@@ -2813,7 +2813,7 @@
       "source_location": "L910",
       "_origin": "ast",
       "id": "public_script_publishestabs",
-      "community": 20,
+      "community": 6,
       "norm_label": "_publishestabs()"
     },
     {
@@ -2823,7 +2823,7 @@
       "source_location": "L916",
       "_origin": "ast",
       "id": "public_script_renderpublishcontrol",
-      "community": 20,
+      "community": 6,
       "norm_label": "renderpublishcontrol()"
     },
     {
@@ -2833,7 +2833,7 @@
       "source_location": "L931",
       "_origin": "ast",
       "id": "public_script_updatepublishbtnlabel",
-      "community": 20,
+      "community": 6,
       "norm_label": "updatepublishbtnlabel()"
     },
     {
@@ -2843,7 +2843,7 @@
       "source_location": "L952",
       "_origin": "ast",
       "id": "public_script_openpublishpopover",
-      "community": 38,
+      "community": 6,
       "norm_label": "openpublishpopover()"
     },
     {
@@ -2853,7 +2853,7 @@
       "source_location": "L1018",
       "_origin": "ast",
       "id": "public_script_patchpublish",
-      "community": 38,
+      "community": 6,
       "norm_label": "patchpublish()"
     },
     {
@@ -2933,7 +2933,7 @@
       "source_location": "L1381",
       "_origin": "ast",
       "id": "public_script_loadestablishments",
-      "community": 6,
+      "community": 60,
       "norm_label": "loadestablishments()"
     },
     {
@@ -2953,7 +2953,7 @@
       "source_location": "L1437",
       "_origin": "ast",
       "id": "public_script_extenddisplayforrealhours",
-      "community": 20,
+      "community": 38,
       "norm_label": "extenddisplayforrealhours()"
     },
     {
@@ -2963,7 +2963,7 @@
       "source_location": "L1455",
       "_origin": "ast",
       "id": "public_script_staffmatchescurrentgroup",
-      "community": 6,
+      "community": 20,
       "norm_label": "staffmatchescurrentgroup()"
     },
     {
@@ -2973,7 +2973,7 @@
       "source_location": "L1464",
       "_origin": "ast",
       "id": "public_script_builddisplayedstaff",
-      "community": 20,
+      "community": 38,
       "norm_label": "builddisplayedstaff()"
     },
     {
@@ -3063,7 +3063,7 @@
       "source_location": "L2200",
       "_origin": "ast",
       "id": "public_script_cleardraghighlights",
-      "community": 38,
+      "community": 4,
       "norm_label": "cleardraghighlights()"
     },
     {
@@ -3103,7 +3103,7 @@
       "source_location": "L2317",
       "_origin": "ast",
       "id": "public_script_onsidebardragend",
-      "community": 38,
+      "community": 4,
       "norm_label": "onsidebardragend()"
     },
     {
@@ -3153,7 +3153,7 @@
       "source_location": "L2358",
       "_origin": "ast",
       "id": "public_script_stopautoscroll",
-      "community": 38,
+      "community": 4,
       "norm_label": "stopautoscroll()"
     },
     {
@@ -3333,7 +3333,7 @@
       "source_location": "L3146",
       "_origin": "ast",
       "id": "public_script_ontouchend",
-      "community": 38,
+      "community": 4,
       "norm_label": "ontouchend()"
     },
     {
@@ -3343,7 +3343,7 @@
       "source_location": "L3175",
       "_origin": "ast",
       "id": "public_script_updateshifttext",
-      "community": 38,
+      "community": 4,
       "norm_label": "updateshifttext()"
     },
     {
@@ -3463,7 +3463,7 @@
       "source_location": "L3480",
       "_origin": "ast",
       "id": "public_script_renderweekfull",
-      "community": 6,
+      "community": 20,
       "norm_label": "renderweekfull()"
     },
     {
@@ -3473,7 +3473,7 @@
       "source_location": "L3492",
       "_origin": "ast",
       "id": "public_script_renderteamdashboard",
-      "community": 6,
+      "community": 20,
       "norm_label": "renderteamdashboard()"
     },
     {
@@ -3483,7 +3483,7 @@
       "source_location": "L3616",
       "_origin": "ast",
       "id": "public_script_renderdashboard",
-      "community": 6,
+      "community": 20,
       "norm_label": "renderdashboard()"
     },
     {
@@ -3503,7 +3503,7 @@
       "source_location": "L3867",
       "_origin": "ast",
       "id": "public_script_renderweekgantt",
-      "community": 6,
+      "community": 20,
       "norm_label": "renderweekgantt()"
     },
     {
@@ -3773,7 +3773,7 @@
       "source_location": "L5574",
       "_origin": "ast",
       "id": "public_script_kpiprogressbar",
-      "community": 6,
+      "community": 60,
       "norm_label": "_kpiprogressbar()"
     },
     {
@@ -3793,7 +3793,7 @@
       "source_location": "L5589",
       "_origin": "ast",
       "id": "public_script_loaddisposkpi",
-      "community": 6,
+      "community": 60,
       "norm_label": "loaddisposkpi()"
     },
     {
@@ -3803,7 +3803,7 @@
       "source_location": "L5607",
       "_origin": "ast",
       "id": "public_script_kpiestabrow",
-      "community": 6,
+      "community": 60,
       "norm_label": "_kpiestabrow()"
     },
     {
@@ -3813,7 +3813,7 @@
       "source_location": "L5631",
       "_origin": "ast",
       "id": "public_script_renderdisposkpicard",
-      "community": 6,
+      "community": 60,
       "norm_label": "renderdisposkpicard()"
     },
     {
@@ -25813,5 +25813,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "eabd5141343ec51c3e82311deadd3ced50b19397"
+  "built_at_commit": "9ce1e456d3c348fbe15f7819e756389e3916b921"
 }
