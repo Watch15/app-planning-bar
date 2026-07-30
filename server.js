@@ -3309,36 +3309,39 @@ app.get('/api/me/manager-dispos', checkDB, requireDirecteur, async (req, res) =>
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-// POST — le directeur pose/modifie sa dispo d'un jour (auto-validée = confirmed)
-app.post('/api/me/manager-dispos', checkDB, requireDirecteur, async (req, res) => {
+// PUT — le directeur remplace ses dispos de TOUTE une semaine (la semaine suivante en
+// pratique). Modèle « source de vérité » : on purge ses dispos de la semaine puis on
+// insère les jours fournis, auto-validés (confirmed). Miroir du système staff (types
+// Soir/Midi/Long/Perso → horaires côté client) mais sans deadline ni validation patron.
+const MANAGER_DISPO_TYPES = ['soir', 'midi', 'long', 'custom'];
+app.put('/api/me/manager-dispos/week', checkDB, requireDirecteur, async (req, res) => {
     const staffId = requireManagerStaffId(req, res); if (!staffId) return;
-    const { date } = req.body;
-    if (!ISO_DATE_RE.test(date)) return res.status(400).json({ error: 'date invalide (YYYY-MM-DD)' });
-    if (date < toDateStr(new Date())) return res.status(400).json({ error: 'La date doit être à venir.' });
-    const s = parseFloat(req.body.start_time), e = parseFloat(req.body.end_time);
-    if (Number.isNaN(s) || Number.isNaN(e) || s < 0 || e > 30 || e <= s)
-        return res.status(400).json({ error: 'Horaires invalides (la fin doit être après le début).' });
+    const { week_start } = req.body;
+    if (!ISO_DATE_RE.test(week_start)) return res.status(400).json({ error: 'week_start invalide (YYYY-MM-DD)' });
+    const weekEnd = toDateStr(new Date(new Date(week_start + 'T12:00:00').getTime() + 6 * 864e5));
+    const days    = Array.isArray(req.body.days) ? req.body.days : [];
+    const now     = new Date();
+    const clean   = [];
+    for (const d of days) {
+        if (!ISO_DATE_RE.test(d.date) || d.date < week_start || d.date > weekEnd)
+            return res.status(400).json({ error: 'Jour hors semaine : ' + d.date });
+        const s = parseFloat(d.start_time), e = parseFloat(d.end_time);
+        if (Number.isNaN(s) || Number.isNaN(e) || s < 0 || e > 30 || e <= s)
+            return res.status(400).json({ error: 'Horaires invalides pour le ' + d.date });
+        clean.push({
+            staff_id: staffId, date: d.date,
+            type: MANAGER_DISPO_TYPES.includes(d.type) ? d.type : 'custom',
+            start_time: s, end_time: e, note: '', status: 'confirmed',
+            staff_name: req.session.user.name || '', created_at: now, updated_at: now,
+        });
+    }
     try {
-        await db.collection('availabilities').updateOne(
-            { staff_id: staffId, date, type: { $ne: 'week_note' } },
-            { $set: {
-                type: 'custom', start_time: s, end_time: e, note: '', status: 'confirmed',
-                staff_name: req.session.user.name || '', updated_at: new Date(),
-              }, $setOnInsert: { created_at: new Date() } },
-            { upsert: true }
-        );
-        res.status(201).json({ message: 'Disponibilité enregistrée' });
-        touchLastUpdated();
-    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
-});
-
-// DELETE — le directeur retire sa dispo d'un jour
-app.delete('/api/me/manager-dispos/:date', checkDB, requireDirecteur, async (req, res) => {
-    const staffId = requireManagerStaffId(req, res); if (!staffId) return;
-    if (!ISO_DATE_RE.test(req.params.date)) return res.status(400).json({ error: 'date invalide' });
-    try {
-        await db.collection('availabilities').deleteOne({ staff_id: staffId, date: req.params.date, type: { $ne: 'week_note' } });
-        res.json({ message: 'Disponibilité retirée' });
+        // Remplace la semaine : les jours non renseignés sont retirés (source de vérité).
+        await db.collection('availabilities').deleteMany({
+            staff_id: staffId, type: { $ne: 'week_note' }, date: { $gte: week_start, $lte: weekEnd },
+        });
+        if (clean.length) await db.collection('availabilities').insertMany(clean);
+        res.json({ message: clean.length + ' disponibilité(s) enregistrée(s)' });
         touchLastUpdated();
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });

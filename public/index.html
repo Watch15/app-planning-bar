@@ -969,22 +969,15 @@
             <span class="modal-title">🟢 Mes disponibilités</span>
             <button class="modal-close" id="manager-dispos-close">&times;</button>
         </div>
-        <p style="font-size:12.5px;color:#5a5f6e;line-height:1.4;margin:0 0 14px">
-            Indique un jour et un créneau où tu es disponible. C'est validé automatiquement et visible du patron sur le planning.
+        <p style="font-size:12.5px;color:#5a5f6e;line-height:1.4;margin:0 0 4px;font-weight:700" id="manager-dispos-weeklabel"></p>
+        <p style="font-size:12px;color:#8a8f9e;line-height:1.4;margin:0 0 14px">
+            Un créneau par jour (Soir / Midi / Long / Perso), sur la semaine suivante. Validé automatiquement et visible du patron sur le planning. Re-clique un type pour retirer le jour.
         </p>
-        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px">
-            <label style="flex:1 1 110px;min-width:0;font-size:11px;font-weight:600;color:#5a5f6e;display:flex;flex-direction:column;gap:4px">Jour
-                <input type="date" id="manager-dispos-date" style="height:36px;padding:0 10px;border:1px solid #d0d4dc;border-radius:8px;font-size:13px;color:#1a1a2e;background:#fff;font-family:var(--font)">
-            </label>
-            <label style="flex:1 1 78px;min-width:0;font-size:11px;font-weight:600;color:#5a5f6e;display:flex;flex-direction:column;gap:4px">De
-                <input type="time" id="manager-dispos-start" step="900" style="height:36px;padding:0 10px;border:1px solid #d0d4dc;border-radius:8px;font-size:13px;color:#1a1a2e;background:#fff;font-family:var(--font)">
-            </label>
-            <label style="flex:1 1 78px;min-width:0;font-size:11px;font-weight:600;color:#5a5f6e;display:flex;flex-direction:column;gap:4px">À
-                <input type="time" id="manager-dispos-end" step="900" style="height:36px;padding:0 10px;border:1px solid #d0d4dc;border-radius:8px;font-size:13px;color:#1a1a2e;background:#fff;font-family:var(--font)">
-            </label>
-            <button id="manager-dispos-add" style="height:36px;padding:0 16px;background:#2ecc71;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap">＋ Ajouter</button>
+        <div id="manager-dispos-days" style="display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow-y:auto;margin-bottom:16px"></div>
+        <div style="display:flex;align-items:center;gap:12px">
+            <button id="manager-dispos-save" style="height:38px;padding:0 18px;background:#2ecc71;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)">Enregistrer</button>
+            <span id="manager-dispos-feedback" style="font-size:12px;color:#5a5f6e"></span>
         </div>
-        <div id="manager-dispos-list" style="display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto"></div>
     </div>
 </div>
 

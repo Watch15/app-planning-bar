@@ -614,23 +614,32 @@ async function removeManagerOff(id) {
     } catch (e) { showToast(e.message, true); }
 }
 
-// ── Disponibilités directeur (E-22 Phase 1) — modale « Mes disponibilités » ────
-// Le directeur (profil staff, Modèle A) pose ses dispos ici : elles sont écrites
-// auto-validées (confirmed) et s'affichent sur le planning comme une dispo staff.
-const _mgrHmToDec = v => { const [h, m] = String(v).split(':').map(Number); return h + (m || 0) / 60; };
-const _mgrFmtHM   = dec => { const h = Math.floor(dec % 24); const m = Math.round((dec - Math.floor(dec)) * 60); return h + 'h' + (m ? String(m).padStart(2, '0') : ''); };
+// ── Disponibilités directeur (E-22 Phase 1) — même système que l'onglet planning ─
+// staff : cartes des jours de la SEMAINE SUIVANTE + types Soir/Midi/Long/Perso.
+// Le directeur (profil staff, Modèle A) les pose ici ; écrites auto-validées
+// (confirmed) → elles s'affichent sur le planning comme une dispo staff.
+const _MGR_DISPO_TYPES = {
+    soir:   { label: 'Soir',  start: 16, end: 26 },
+    midi:   { label: 'Midi',  start: 10, end: 17 },
+    long:   { label: 'Long',  start: 10, end: 26 },
+    custom: { label: 'Perso', start: null, end: null },
+};
+let _mgrDispoSel = {};          // { 'YYYY-MM-DD': { type, start_time, end_time } }
+let _mgrDispoWeekStart = null;  // lundi de la semaine suivante (YYYY-MM-DD)
+
+const _mgrHmToDec = v => { if (!v) return null; const [h, m] = String(v).split(':').map(Number); return h + (m || 0) / 60; };
+const _mgrDecToHM = dec => { if (dec == null) return ''; const h = Math.floor(dec % 24); const m = Math.round((dec - Math.floor(dec)) * 60); return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'); };
+const _mgrBtnStyle = active => 'flex:1;min-width:56px;height:34px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);border:1px solid ' +
+    (active ? '#2ecc71;background:#2ecc71;color:#fff' : '#d0d4dc;background:#fff;color:#5a5f6e');
 
 function openManagerDisposModal() {
     const modal = document.getElementById('manager-dispos-modal');
     if (!modal) return;
-    const today  = toDateStr(new Date());
-    const dateEl = document.getElementById('manager-dispos-date');
-    if (dateEl) { dateEl.min = today; if (!dateEl.value) dateEl.value = today; }
     if (!modal._bound) {
         modal._bound = true;
         document.getElementById('manager-dispos-close').addEventListener('click', () => { modal.style.display = 'none'; });
         modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
-        document.getElementById('manager-dispos-add').addEventListener('click', addManagerDispo);
+        document.getElementById('manager-dispos-save').addEventListener('click', saveManagerDispos);
     }
     const dd = document.getElementById('user-menu-dropdown');
     if (dd) dd.classList.remove('open');
@@ -639,68 +648,118 @@ function openManagerDisposModal() {
 }
 
 async function loadManagerDispos() {
-    const list = document.getElementById('manager-dispos-list');
-    if (!list) return;
-    list.innerHTML = '<p style="text-align:center;color:#ccc;font-size:13px;padding:12px 0">Chargement…</p>';
+    const wrap = document.getElementById('manager-dispos-days');
+    if (!wrap) return;
+    const nextMonday = getMondayOf(addDays(new Date(), 7));   // semaine suivante, comme le staff
+    _mgrDispoWeekStart = toDateStr(nextMonday);
+    _mgrDispoSel = {};
+    const label = document.getElementById('manager-dispos-weeklabel');
+    if (label) {
+        const end = addDays(nextMonday, 6);
+        label.textContent = 'Semaine du ' + nextMonday.getDate() + ' ' + MONTH_NAMES[nextMonday.getMonth()] +
+            ' au ' + end.getDate() + ' ' + MONTH_NAMES[end.getMonth()];
+    }
+    const fb = document.getElementById('manager-dispos-feedback');
+    if (fb) fb.textContent = '';
+    wrap.innerHTML = '<div style="text-align:center;color:#ccc;font-size:13px;padding:12px 0">Chargement…</div>';
     try {
         const res = await fetch('/api/me/manager-dispos', { credentials: 'include' });
-        if (!res.ok) throw new Error();
-        renderManagerDisposList(await res.json());
-    } catch {
-        list.innerHTML = '<p style="text-align:center;color:#e74c3c;font-size:13px;padding:12px 0">Erreur de chargement</p>';
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Erreur');
+        const dispos = await res.json();
+        const weekEnd = toDateStr(addDays(nextMonday, 6));
+        dispos.forEach(d => {
+            if (d.date >= _mgrDispoWeekStart && d.date <= weekEnd)
+                _mgrDispoSel[d.date] = { type: d.type || 'custom', start_time: d.start_time, end_time: d.end_time };
+        });
+        renderManagerDisposDays();
+    } catch (e) {
+        wrap.innerHTML = '<div style="text-align:center;color:#e74c3c;font-size:13px;padding:12px 0">' + escapeHtml(e.message || 'Erreur de chargement') + '</div>';
     }
 }
 
-function renderManagerDisposList(dispos) {
-    const list = document.getElementById('manager-dispos-list');
-    list.innerHTML = '';
-    if (!dispos.length) {
-        list.innerHTML = '<p style="text-align:center;color:#aaa;font-size:13px;padding:12px 0">Aucune disponibilité déclarée</p>';
-        return;
+function renderManagerDisposDays() {
+    const wrap = document.getElementById('manager-dispos-days');
+    if (!wrap || !_mgrDispoWeekStart) return;
+    const monday = new Date(_mgrDispoWeekStart + 'T12:00:00');
+    wrap.innerHTML = '';
+    for (let i = 0; i < 7; i++) {
+        const d = addDays(monday, i);
+        wrap.appendChild(_buildMgrDispoCard(toDateStr(d), d));
     }
-    const fmtDay = ds => formatDateLong(new Date(ds + 'T12:00:00'));
-    dispos.forEach(d => {
-        const hours = (d.start_time != null && d.end_time != null) ? ' · ' + _mgrFmtHM(d.start_time) + '→' + _mgrFmtHM(d.end_time) : '';
-        const row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;gap:10px;background:#eafaf1;border:1px solid #b7e4c7;border-radius:8px;padding:8px 12px';
-        row.innerHTML =
-            '<span style="flex:1;font-size:13px;font-weight:600;color:#1a1a2e">🟢 ' + escapeHtml(fmtDay(d.date)) + hours + '</span>' +
-            '<button class="mgr-dispo-del" data-date="' + escapeHtml(d.date) + '" title="Retirer" style="background:none;border:none;color:#e74c3c;font-size:16px;cursor:pointer;line-height:1">✕</button>';
-        list.appendChild(row);
+}
+
+function _buildMgrDispoCard(date, d) {
+    const sel  = _mgrDispoSel[date] || { type: null };
+    const card = document.createElement('div');
+    card.style.cssText = 'border:1px solid #e8eaed;border-radius:10px;padding:8px 10px;background:#fff';
+    const dayName   = DAY_NAMES_LONG[d.getDay()] + ' ' + d.getDate() + ' ' + MONTH_NAMES[d.getMonth()];
+    const btns = ['soir', 'midi', 'long', 'custom'].map(type =>
+        '<button data-type="' + type + '" class="mgr-dispo-btn" style="' + _mgrBtnStyle(sel.type === type) + '">' + _MGR_DISPO_TYPES[type].label + '</button>'
+    ).join('');
+    const showCustom = sel.type === 'custom';
+    card.innerHTML =
+        '<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:6px">' + escapeHtml(dayName) + '</div>' +
+        '<div style="display:flex;gap:6px">' + btns + '</div>' +
+        '<div style="display:' + (showCustom ? 'flex' : 'none') + ';gap:6px;align-items:center;margin-top:8px">' +
+            '<input type="time" step="900" class="mgr-dispo-start" value="' + (showCustom ? _mgrDecToHM(sel.start_time) : '') + '" style="height:32px;padding:0 8px;border:1px solid #d0d4dc;border-radius:8px;font-size:13px;font-family:var(--font)">' +
+            '<span style="color:#aaa">→</span>' +
+            '<input type="time" step="900" class="mgr-dispo-end" value="' + (showCustom ? _mgrDecToHM(sel.end_time) : '') + '" style="height:32px;padding:0 8px;border:1px solid #d0d4dc;border-radius:8px;font-size:13px;font-family:var(--font)">' +
+        '</div>';
+    card.querySelectorAll('.mgr-dispo-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const type = btn.dataset.type;
+            if (_mgrDispoSel[date] && _mgrDispoSel[date].type === type) {
+                delete _mgrDispoSel[date];                       // re-clic → jour retiré
+            } else if (type === 'custom') {
+                _mgrDispoSel[date] = { type: 'custom', start_time: null, end_time: null };
+            } else {
+                _mgrDispoSel[date] = { type, start_time: _MGR_DISPO_TYPES[type].start, end_time: _MGR_DISPO_TYPES[type].end };
+            }
+            card.replaceWith(_buildMgrDispoCard(date, d));
+        });
     });
-    list.querySelectorAll('.mgr-dispo-del').forEach(btn =>
-        btn.addEventListener('click', () => removeManagerDispo(btn.dataset.date)));
+    const startEl = card.querySelector('.mgr-dispo-start');
+    const endEl   = card.querySelector('.mgr-dispo-end');
+    const sync = () => {
+        if (!_mgrDispoSel[date] || _mgrDispoSel[date].type !== 'custom') return;
+        let s = _mgrHmToDec(startEl.value), e = _mgrHmToDec(endEl.value);
+        if (s != null && e != null && e <= s) e += 24;          // fin après minuit (ex. 16h→02h)
+        _mgrDispoSel[date].start_time = s;
+        _mgrDispoSel[date].end_time   = e;
+    };
+    if (startEl) startEl.addEventListener('change', sync);
+    if (endEl)   endEl.addEventListener('change', sync);
+    return card;
 }
 
-async function addManagerDispo() {
-    const date  = document.getElementById('manager-dispos-date').value;
-    const start = document.getElementById('manager-dispos-start').value;
-    const end   = document.getElementById('manager-dispos-end').value;
-    if (!date)          { showToast('Choisis un jour', true); return; }
-    if (!start || !end) { showToast('Choisis un créneau (de / à)', true); return; }
-    const s = _mgrHmToDec(start), e = _mgrHmToDec(end);
-    if (e <= s) { showToast('La fin doit être après le début', true); return; }
+async function saveManagerDispos() {
+    const btn = document.getElementById('manager-dispos-save');
+    const fb  = document.getElementById('manager-dispos-feedback');
+    const days = [];
+    for (const [date, sel] of Object.entries(_mgrDispoSel)) {
+        if (!sel || sel.type == null) continue;
+        if (sel.start_time == null || sel.end_time == null) {
+            if (fb) { fb.style.color = '#c0392b'; fb.textContent = 'Renseigne les horaires (Perso) du ' + date + '.'; }
+            return;
+        }
+        days.push({ date, type: sel.type, start_time: sel.start_time, end_time: sel.end_time });
+    }
+    btn.disabled = true;
+    const prev = btn.textContent; btn.textContent = 'Envoi…';
     try {
-        const res = await fetch('/api/me/manager-dispos', {
-            method: 'POST', credentials: 'include',
+        const res  = await fetch('/api/me/manager-dispos/week', {
+            method: 'PUT', credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date, start_time: s, end_time: e }),
+            body: JSON.stringify({ week_start: _mgrDispoWeekStart, days }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Erreur');
-        showToast(data.message || 'Disponibilité enregistrée');
-        await loadManagerDispos();
-    } catch (e) { showToast(e.message, true); }
-}
-
-async function removeManagerDispo(date) {
-    try {
-        const res  = await fetch('/api/me/manager-dispos/' + encodeURIComponent(date), { method: 'DELETE', credentials: 'include' });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Erreur');
-        showToast(data.message || 'Disponibilité retirée');
-        await loadManagerDispos();
-    } catch (e) { showToast(e.message, true); }
+        if (fb) { fb.style.color = '#27ae60'; fb.textContent = '✅ ' + (data.message || 'Enregistré'); setTimeout(() => { if (fb) fb.textContent = ''; }, 2500); }
+    } catch (e) {
+        if (fb) { fb.style.color = '#c0392b'; fb.textContent = e.message || 'Erreur'; }
+    } finally {
+        btn.disabled = false; btn.textContent = prev;
+    }
 }
 
 function renderDateDisplay() {
