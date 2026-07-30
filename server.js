@@ -1072,6 +1072,23 @@ app.get('/api/users', checkDB, requirePatron, async (req, res) => {
 });
 
 // Inviter un utilisateur (staff, directeur ou etablissement)
+// E-22 / Modèle A : un directeur est aussi un staff (planifiable, compté comme un
+// staff normal). À la création d'un compte directeur on crée son profil staff lié,
+// marqué `is_manager` (traçabilité — pas d'exclusion paie). `venues` = ses
+// établissements assignés pour qu'il soit pertinent sur leur planning.
+const MANAGER_STAFF_COLORS = ['#3498db','#9b59b6','#e67e22','#2ecc71','#e74c3c','#1abc9c','#e91e8c','#f39c12','#16a085','#8e44ad','#d35400','#27ae60','#2980b9','#c0392b','#7f8c8d'];
+async function createManagerStaffProfile({ name, email, phone, venues }) {
+    const used  = new Set((await db.collection('staff').find({}, { projection: { color: 1 } }).toArray()).map(s => s.color));
+    const color = MANAGER_STAFF_COLORS.find(c => !used.has(c)) || MANAGER_STAFF_COLORS[Math.floor(Math.random() * MANAGER_STAFF_COLORS.length)];
+    const { insertedId } = await db.collection('staff').insertOne({
+        name: name || 'Directeur', color,
+        email: email || '', phone: phone || '',
+        venues: venues || [], roles: [], can_submit_dispos: true,
+        is_manager: true, created_at: new Date(),
+    });
+    return String(insertedId);
+}
+
 app.post('/api/users', checkDB, requirePatron, async (req, res) => {
     const { email, phone, staff_id, name, role, assigned_establishments, establishment_id } = req.body;
     const validRoles = ['staff', 'directeur', 'etablissement', 'observateur'];
@@ -1117,11 +1134,14 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
 
             const token   = crypto.randomBytes(32).toString('hex');
             const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 jours
+            const managerStaffId = userRole === 'directeur'
+                ? await createManagerStaffProfile({ name, email, phone: normalizedPhone, venues: assigned_establishments })
+                : null;
             await db.collection('users').insertOne({
                 phone:                   normalizedPhone,
                 password_hash:           null,
                 role:                    userRole,
-                staff_id:                userRole === 'staff' ? (staff_id || null) : null,
+                staff_id:                userRole === 'staff' ? (staff_id || null) : managerStaffId,
                 assigned_establishments: userRole === 'directeur' ? (assigned_establishments || []) : [],
                 establishment_id:        userRole === 'etablissement' ? establishment_id : null,
                 name:                    name || '',
@@ -1153,13 +1173,16 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
         // Compte email (avec ou sans téléphone secondaire)
         const token   = crypto.randomBytes(32).toString('hex');
         const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        const managerStaffId = userRole === 'directeur'
+            ? await createManagerStaffProfile({ name, email, phone: normalizedPhone, venues: assigned_establishments })
+            : null;
 
         await db.collection('users').insertOne({
             email:                   email.toLowerCase().trim(),
             ...(normalizedPhone && { phone: normalizedPhone }),
             password_hash:           null,
             role:                    userRole,
-            staff_id:                userRole === 'staff' ? (staff_id || null) : null,
+            staff_id:                userRole === 'staff' ? (staff_id || null) : managerStaffId,
             assigned_establishments: userRole === 'directeur' ? (assigned_establishments || []) : [],
             establishment_id:        userRole === 'etablissement' ? establishment_id : null,
             name:                    name || '',

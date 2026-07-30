@@ -5,8 +5,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1784752460.7549891,
-    "ast_hash": "5232eee86bab6b03ab9f57d36b663d28",
+    "mtime": 1785403232.0517612,
+    "ast_hash": "45446e889d1370c52df67d257dfeb999",
     "semantic_hash": ""
   },
   "public/lib/shift-hours.js": {
@@ -75,8 +75,8 @@
     "semantic_hash": "a06d5a6e2e883b2b4a3d570fff6a9600"
   },
   "server.js": {
-    "mtime": 1785399142.0411265,
-    "ast_hash": "21b0bcb0472e14d02d9b008e84b8457d",
+    "mtime": 1785403199.5803995,
+    "ast_hash": "74f3395df1db1e4a0b13528b94dbe824",
     "semantic_hash": ""
   },
   "tests/routes.test.js": {
@@ -227,6 +227,16 @@
   "tests/manager-off.test.js": {
     "mtime": 1784752460.7840972,
     "ast_hash": "606ce206b3871e8ed81959c0e8977261",
+    "semantic_hash": ""
+  },
+  "scripts/backfill-director-staff.js": {
+    "mtime": 1785403212.0305207,
+    "ast_hash": "f2d2dacdc4a69e31d3b1a5ee13d511b0",
+    "semantic_hash": ""
+  },
+  "docs/design-e22-dispos-directeur.md": {
+    "mtime": 1785403097.9244468,
+    "ast_hash": "906f20a52dc5c94425acc86e366bb5ac",
     "semantic_hash": ""
   }
 }
