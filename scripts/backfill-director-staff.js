@@ -4,9 +4,8 @@
 //
 // Usage : node scripts/backfill-director-staff.js   (MONGO_URI dans .env)
 const { MongoClient } = require('mongodb');
+const { pickStaffColor } = require('../lib/utils');
 require('dotenv').config();
-
-const COLORS = ['#3498db','#9b59b6','#e67e22','#2ecc71','#e74c3c','#1abc9c','#e91e8c','#f39c12','#16a085','#8e44ad','#d35400','#27ae60','#2980b9','#c0392b','#7f8c8d'];
 
 async function main() {
     const client = new MongoClient(process.env.MONGO_URI);
@@ -22,7 +21,7 @@ async function main() {
         let created = 0, skipped = 0;
         for (const u of directors) {
             if (u.staff_id) { skipped++; continue; } // promu depuis un staff → déjà lié
-            const color = COLORS.find(c => !used.has(c)) || COLORS[Math.floor(Math.random() * COLORS.length)];
+            const color = pickStaffColor(used);
             used.add(color);
             const { insertedId } = await db.collection('staff').insertOne({
                 name:   u.name || 'Directeur',

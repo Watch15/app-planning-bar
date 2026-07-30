@@ -511,9 +511,11 @@ function renderUserBadge(user) {
     // Brand mobile (header-left) — affiche le rôle en sous-texte
     const mobSub = document.getElementById('mobile-brand-sub');
     if (mobSub) mobSub.textContent = roleName + ' · ' + firstName;
-    // Entrée « Mes absences » réservée au directeur (E-19)
+    // Entrées « Mes absences » (E-19) et « Mes disponibilités » (E-22) réservées au directeur
     const mesAbs = document.getElementById('menu-mes-absences');
     if (mesAbs) mesAbs.style.display = user.role === 'directeur' ? '' : 'none';
+    const mesDispos = document.getElementById('menu-mes-dispos');
+    if (mesDispos) mesDispos.style.display = user.role === 'directeur' ? '' : 'none';
 }
 
 // ── Absences directeur (E-19) — modale « Mes absences » ────────────────────────
@@ -609,6 +611,95 @@ async function removeManagerOff(id) {
         if (!res.ok) throw new Error(data.error || 'Erreur');
         showToast(data.message || 'Absence retirée');
         await loadManagerOff();
+    } catch (e) { showToast(e.message, true); }
+}
+
+// ── Disponibilités directeur (E-22 Phase 1) — modale « Mes disponibilités » ────
+// Le directeur (profil staff, Modèle A) pose ses dispos ici : elles sont écrites
+// auto-validées (confirmed) et s'affichent sur le planning comme une dispo staff.
+const _mgrHmToDec = v => { const [h, m] = String(v).split(':').map(Number); return h + (m || 0) / 60; };
+const _mgrFmtHM   = dec => { const h = Math.floor(dec % 24); const m = Math.round((dec - Math.floor(dec)) * 60); return h + 'h' + (m ? String(m).padStart(2, '0') : ''); };
+
+function openManagerDisposModal() {
+    const modal = document.getElementById('manager-dispos-modal');
+    if (!modal) return;
+    const today  = toDateStr(new Date());
+    const dateEl = document.getElementById('manager-dispos-date');
+    if (dateEl) { dateEl.min = today; if (!dateEl.value) dateEl.value = today; }
+    if (!modal._bound) {
+        modal._bound = true;
+        document.getElementById('manager-dispos-close').addEventListener('click', () => { modal.style.display = 'none'; });
+        modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
+        document.getElementById('manager-dispos-add').addEventListener('click', addManagerDispo);
+    }
+    const dd = document.getElementById('user-menu-dropdown');
+    if (dd) dd.classList.remove('open');
+    modal.style.display = 'flex';
+    loadManagerDispos();
+}
+
+async function loadManagerDispos() {
+    const list = document.getElementById('manager-dispos-list');
+    if (!list) return;
+    list.innerHTML = '<p style="text-align:center;color:#ccc;font-size:13px;padding:12px 0">Chargement…</p>';
+    try {
+        const res = await fetch('/api/me/manager-dispos', { credentials: 'include' });
+        if (!res.ok) throw new Error();
+        renderManagerDisposList(await res.json());
+    } catch {
+        list.innerHTML = '<p style="text-align:center;color:#e74c3c;font-size:13px;padding:12px 0">Erreur de chargement</p>';
+    }
+}
+
+function renderManagerDisposList(dispos) {
+    const list = document.getElementById('manager-dispos-list');
+    list.innerHTML = '';
+    if (!dispos.length) {
+        list.innerHTML = '<p style="text-align:center;color:#aaa;font-size:13px;padding:12px 0">Aucune disponibilité déclarée</p>';
+        return;
+    }
+    const fmtDay = ds => formatDateLong(new Date(ds + 'T12:00:00'));
+    dispos.forEach(d => {
+        const hours = (d.start_time != null && d.end_time != null) ? ' · ' + _mgrFmtHM(d.start_time) + '→' + _mgrFmtHM(d.end_time) : '';
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:10px;background:#eafaf1;border:1px solid #b7e4c7;border-radius:8px;padding:8px 12px';
+        row.innerHTML =
+            '<span style="flex:1;font-size:13px;font-weight:600;color:#1a1a2e">🟢 ' + escapeHtml(fmtDay(d.date)) + hours + '</span>' +
+            '<button class="mgr-dispo-del" data-date="' + escapeHtml(d.date) + '" title="Retirer" style="background:none;border:none;color:#e74c3c;font-size:16px;cursor:pointer;line-height:1">✕</button>';
+        list.appendChild(row);
+    });
+    list.querySelectorAll('.mgr-dispo-del').forEach(btn =>
+        btn.addEventListener('click', () => removeManagerDispo(btn.dataset.date)));
+}
+
+async function addManagerDispo() {
+    const date  = document.getElementById('manager-dispos-date').value;
+    const start = document.getElementById('manager-dispos-start').value;
+    const end   = document.getElementById('manager-dispos-end').value;
+    if (!date)          { showToast('Choisis un jour', true); return; }
+    if (!start || !end) { showToast('Choisis un créneau (de / à)', true); return; }
+    const s = _mgrHmToDec(start), e = _mgrHmToDec(end);
+    if (e <= s) { showToast('La fin doit être après le début', true); return; }
+    try {
+        const res = await fetch('/api/me/manager-dispos', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date, start_time: s, end_time: e }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        showToast(data.message || 'Disponibilité enregistrée');
+        await loadManagerDispos();
+    } catch (e) { showToast(e.message, true); }
+}
+
+async function removeManagerDispo(date) {
+    try {
+        const res  = await fetch('/api/me/manager-dispos/' + encodeURIComponent(date), { method: 'DELETE', credentials: 'include' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        showToast(data.message || 'Disponibilité retirée');
+        await loadManagerDispos();
     } catch (e) { showToast(e.message, true); }
 }
 

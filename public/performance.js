@@ -49,7 +49,7 @@ function dateLabel(s) {
 let currentUser   = null;
 let allEstabs     = [];
 let currentEstab  = null;
-let targets       = { target_gross: 30, target_charged: 43, charge_rate: 45 };
+let targets       = { target_charged: 43, charge_rate: 45 };
 let currentData   = [];
 let calendarWeekStart = null; // Lundi de la semaine affichée dans le calendrier
 
