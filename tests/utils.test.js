@@ -13,6 +13,8 @@ const {
     normalizePublishDoc,
     chargeMultiplier,
     resolvePerfSettings,
+    mondayFirstDow,
+    resolveManagerAvailability,
 } = require('../lib/utils');
 
 // ── isValidObjectId ──────────────────────────────────────────────────────────
@@ -372,4 +374,50 @@ test('resolvePerfSettings : fallback champ par champ (override partiel)', () => 
 test('resolvePerfSettings : charge_rate 0 explicite est respecté (pas écrasé par le défaut)', () => {
     const perEstab = { charge_rate: 0 };
     assert.equal(resolvePerfSettings(null, perEstab).charge_rate, 0);
+});
+
+// ── mondayFirstDow / resolveManagerAvailability (E-22 — dispos directeur) ───────
+
+test('mondayFirstDow : lundi → 0, dimanche → 6', () => {
+    assert.equal(mondayFirstDow('2026-05-11'), 0); // lundi
+    assert.equal(mondayFirstDow('2026-05-17'), 6); // dimanche
+    assert.equal(mondayFirstDow('2026-05-13'), 2); // mercredi
+});
+
+const _tpl = { days: {
+    0: { available: true,  start_time: 18, end_time: 24 }, // lundi
+    2: { available: false },                               // mercredi indispo
+} };
+
+test('resolveManagerAvailability : override prioritaire sur le modèle', () => {
+    const ov = { available: true, start_time: 12, end_time: 20 };
+    const r = resolveManagerAvailability(_tpl, ov, '2026-05-11'); // lundi (modèle 18→24)
+    assert.deepEqual(r, { date: '2026-05-11', available: true, start_time: 12, end_time: 20, source: 'override' });
+});
+
+test('resolveManagerAvailability : override indispo → horaires nullés', () => {
+    const ov = { available: false, start_time: 12, end_time: 20 };
+    const r = resolveManagerAvailability(_tpl, ov, '2026-05-11');
+    assert.deepEqual(r, { date: '2026-05-11', available: false, start_time: null, end_time: null, source: 'override' });
+});
+
+test('resolveManagerAvailability : sans override → case du modèle (jour de semaine)', () => {
+    const r = resolveManagerAvailability(_tpl, null, '2026-05-11'); // lundi → dispo 18→24
+    assert.deepEqual(r, { date: '2026-05-11', available: true, start_time: 18, end_time: 24, source: 'template' });
+});
+
+test('resolveManagerAvailability : case modèle indispo → horaires nullés', () => {
+    const r = resolveManagerAvailability(_tpl, null, '2026-05-13'); // mercredi indispo
+    assert.deepEqual(r, { date: '2026-05-13', available: false, start_time: null, end_time: null, source: 'template' });
+});
+
+test('resolveManagerAvailability : ni override ni case modèle → none', () => {
+    const r = resolveManagerAvailability(_tpl, null, '2026-05-12'); // mardi absent du modèle
+    assert.deepEqual(r, { date: '2026-05-12', available: false, start_time: null, end_time: null, source: 'none' });
+});
+
+test('resolveManagerAvailability : modèle null → none', () => {
+    const r = resolveManagerAvailability(null, null, '2026-05-11');
+    assert.equal(r.source, 'none');
+    assert.equal(r.available, false);
 });

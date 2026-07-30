@@ -14,6 +14,7 @@ const {
     weekStart, currentWeekStart, disposWeekStart, isAutoPublished, isDatePublished, normalizePublishDoc, chargeMultiplier,
     toDateStr, datesOverlap, congeDaysInRange, splitDisposByConges, isFullRangeOnConge,
     validateOffPeriod, scopeManagerOff, resolvePerfSettings,
+    mondayFirstDow, resolveManagerAvailability,
 } = require('./lib/utils');
 
 // Sentry — initialisation conditionnelle (ne se charge que si SENTRY_DSN fourni).
@@ -3286,6 +3287,116 @@ app.get('/api/managers-off', checkDB, requirePatron, async (req, res) => {
             : [];
         const metaById = new Map(users.map(u => [String(u._id), { name: u.name || '', estabs: u.assigned_establishments || [] }]));
         res.json(scopeManagerOff(offs, metaById, viewer, canAccessEstablishment));
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+// ── Disponibilités des directeurs (E-22) ───────────────────────────────────────
+// Informatif : le directeur note ses dispos pour que le patron s'organise, mais il
+// reste NON planifiable (isolation E-19). Collection isolée `manager_availability`,
+// keyée user_id, deux types de docs : { kind:'template', days:{0..6} } (semaine type
+// récurrente) et { kind:'day', date, available, start_time, end_time } (override
+// d'une semaine atypique). Dispo effective = override sinon case du modèle.
+
+// Nettoie une case jour : available bool + horaires décimaux 0–30 optionnels.
+// Indispo → horaires nullés. Horaires incohérents (fin ≤ début) → « toute la journée ».
+function sanitizeAvailabilityCell(src) {
+    if (!src || !src.available) return { available: false, start_time: null, end_time: null };
+    const num = v => (v === null || v === undefined || v === '' ? null : Number(v));
+    let s = num(src.start_time), e = num(src.end_time);
+    if (s === null || e === null || Number.isNaN(s) || Number.isNaN(e) || s < 0 || e > 30 || e <= s) { s = null; e = null; }
+    return { available: true, start_time: s, end_time: e };
+}
+
+// GET — le directeur connecté récupère sa semaine type + ses overrides à venir
+app.get('/api/me/manager-availability', checkDB, requireDirecteur, async (req, res) => {
+    try {
+        const userId = req.session.user._id;
+        const today  = toDateStr(new Date());
+        const [template, overrides] = await Promise.all([
+            db.collection('manager_availability').findOne({ user_id: userId, kind: 'template' }),
+            db.collection('manager_availability').find({ user_id: userId, kind: 'day', date: { $gte: today } }).sort({ date: 1 }).toArray(),
+        ]);
+        res.json({ days: (template && template.days) || {}, overrides });
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+// PUT — enregistre la semaine type récurrente (7 cases lundi=0 … dimanche=6)
+app.put('/api/me/manager-availability/template', checkDB, requireDirecteur, async (req, res) => {
+    const src = req.body && req.body.days;
+    if (!src || typeof src !== 'object') return res.status(400).json({ error: 'days requis' });
+    const days = {};
+    for (let d = 0; d <= 6; d++) if (src[d]) days[d] = sanitizeAvailabilityCell(src[d]);
+    try {
+        await db.collection('manager_availability').updateOne(
+            { user_id: req.session.user._id, kind: 'template' },
+            { $set: { days, updated_at: new Date() } },
+            { upsert: true }
+        );
+        res.json({ message: 'Semaine type enregistrée' });
+        touchLastUpdated();
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+// PUT — override d'un jour précis (semaine atypique)
+app.put('/api/me/manager-availability/day', checkDB, requireDirecteur, async (req, res) => {
+    const date = req.body && req.body.date;
+    if (!ISO_DATE_RE.test(date)) return res.status(400).json({ error: 'date invalide (YYYY-MM-DD)' });
+    if (date < toDateStr(new Date())) return res.status(400).json({ error: 'La date doit être à venir.' });
+    const cell = sanitizeAvailabilityCell(req.body);
+    try {
+        await db.collection('manager_availability').updateOne(
+            { user_id: req.session.user._id, kind: 'day', date },
+            { $set: { ...cell, updated_at: new Date() } },
+            { upsert: true }
+        );
+        res.json({ message: 'Disponibilité du jour enregistrée' });
+        touchLastUpdated();
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+// DELETE — retire l'override d'un jour → retour à la semaine type
+app.delete('/api/me/manager-availability/day/:date', checkDB, requireDirecteur, async (req, res) => {
+    if (!ISO_DATE_RE.test(req.params.date)) return res.status(400).json({ error: 'date invalide' });
+    try {
+        await db.collection('manager_availability').deleteOne({ user_id: req.session.user._id, kind: 'day', date: req.params.date });
+        res.json({ message: 'Retour à la semaine type pour ce jour' });
+        touchLastUpdated();
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+// GET (patron/directeur/observateur) — dispos EFFECTIVES des directeurs sur [from,to],
+// scopées aux établissements accessibles. Ne renvoie que les jours « disponible ».
+app.get('/api/managers-availability', checkDB, requirePatron, async (req, res) => {
+    const { from, to } = req.query;
+    if (!ISO_DATE_RE.test(from) || !ISO_DATE_RE.test(to)) return res.status(400).json({ error: 'from et to requis (YYYY-MM-DD)' });
+    try {
+        const viewer = req.session.user;
+        const directors = await db.collection('users')
+            .find({ role: 'directeur' }, { projection: { name: 1, assigned_establishments: 1 } }).toArray();
+        // Scope établissement (patron/observateur voient tout ; directeur → établissements partagés)
+        const visible = directors.filter(u =>
+            viewer.role === 'patron' || viewer.role === 'observateur' ||
+            (u.assigned_establishments || []).some(e => canAccessEstablishment(viewer, e)));
+        if (!visible.length) return res.json([]);
+        const ids  = visible.map(u => String(u._id));
+        const docs = await db.collection('manager_availability').find({ user_id: { $in: ids } }).toArray();
+        const tplByUser = new Map(), ovByUser = new Map();
+        for (const d of docs) {
+            const uid = String(d.user_id);
+            if (d.kind === 'template') tplByUser.set(uid, d);
+            else if (d.kind === 'day') { (ovByUser.get(uid) || ovByUser.set(uid, new Map()).get(uid)).set(d.date, d); }
+        }
+        // Dates de la fenêtre (midi local → insensible au DST)
+        const dates = [];
+        for (let dt = from; dt <= to; dt = toDateStr(new Date(new Date(dt + 'T12:00:00').getTime() + 864e5))) dates.push(dt);
+        const out = visible.map(u => {
+            const uid = String(u._id);
+            const tpl = tplByUser.get(uid) || null;
+            const ov  = ovByUser.get(uid) || new Map();
+            const days = dates.map(dstr => resolveManagerAvailability(tpl, ov.get(dstr), dstr)).filter(x => x.available);
+            return { user_id: uid, name: u.name || 'Directeur', days };
+        }).filter(x => x.days.length);
+        res.json(out);
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
