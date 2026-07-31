@@ -13,7 +13,7 @@ const {
     isValidObjectId, hashToken, normalizePhone,
     weekStart, currentWeekStart, disposWeekStart, isAutoPublished, isDatePublished, normalizePublishDoc, chargeMultiplier,
     toDateStr, datesOverlap, congeDaysInRange, splitDisposByConges, isFullRangeOnConge,
-    validateOffPeriod, scopeManagerOff, resolvePerfSettings, pickStaffColor,
+    validateOffPeriod, scopeManagerOff, resolvePerfSettings, pickStaffColor, buildTemplateDispos,
 } = require('./lib/utils');
 
 // Sentry — initialisation conditionnelle (ne se charge que si SENTRY_DSN fourni).
@@ -550,9 +550,11 @@ function scheduleDailyAt10() {
         checkDispoRappels();
         cleanupOldJokers();
         cleanupPastDispos();
+        materializeAllManagerTemplates();
         setInterval(checkDispoRappels, 24 * 60 * 60 * 1000);
         setInterval(cleanupOldJokers, 24 * 60 * 60 * 1000);
         setInterval(cleanupPastDispos, 24 * 60 * 60 * 1000);
+        setInterval(materializeAllManagerTemplates, 24 * 60 * 60 * 1000);
     }, msUntil10);
     console.log('⏰ Rappels auto dispos programmés — prochain check 10h00');
 }
@@ -3342,6 +3344,83 @@ app.put('/api/me/manager-dispos/week', checkDB, requireDirecteur, async (req, re
         });
         if (clean.length) await db.collection('availabilities').insertMany(clean);
         res.json({ message: clean.length + ' disponibilité(s) enregistrée(s)' });
+        touchLastUpdated();
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+// ── Semaine-type récurrente du directeur (E-22 v2) ─────────────────────────────
+// Collection `manager_dispo_templates` (doc par staff_id) : { days: {0..6:{type,start,end}} }.
+// Le modèle se MATÉRIALISE dans `availabilities` (marqué `from_template`, confirmed)
+// sur la semaine suivante, via un cron quotidien + à chaque sauvegarde du modèle.
+// Une semaine contenant une dispo MANUELLE (from_template ≠ true) est un override et
+// n'est jamais touchée. Idempotent (relançable).
+async function materializeManagerTemplateWeek(staffId, staffName, template, weekStartStr) {
+    const weekEnd = toDateStr(new Date(new Date(weekStartStr + 'T12:00:00').getTime() + 6 * 864e5));
+    const manual = await db.collection('availabilities').countDocuments({
+        staff_id: staffId, type: { $ne: 'week_note' }, from_template: { $ne: true },
+        date: { $gte: weekStartStr, $lte: weekEnd },
+    });
+    if (manual > 0) return 0; // override manuel → on ne touche pas la semaine
+    // Rafraîchit : purge les dispos issues du modèle puis réinsère (reflète un modèle modifié).
+    await db.collection('availabilities').deleteMany({
+        staff_id: staffId, from_template: true, date: { $gte: weekStartStr, $lte: weekEnd },
+    });
+    const now  = new Date();
+    const docs = buildTemplateDispos(template, weekStartStr, new Set()).map(d => ({
+        staff_id: staffId, date: d.date, type: d.type, start_time: d.start_time, end_time: d.end_time,
+        note: '', status: 'confirmed', staff_name: staffName || '', from_template: true,
+        created_at: now, updated_at: now,
+    }));
+    if (docs.length) await db.collection('availabilities').insertMany(docs);
+    return docs.length;
+}
+
+// Cron : matérialise chaque semaine-type directeur sur la semaine suivante.
+async function materializeAllManagerTemplates() {
+    if (!db) return;
+    try {
+        const nextMonday = toDateStr(weekStart(new Date(Date.now() + 7 * 864e5)));
+        const templates  = await db.collection('manager_dispo_templates').find({}).toArray();
+        for (const t of templates) {
+            if (!isValidObjectId(t.staff_id)) continue;
+            const staff = await db.collection('staff').findOne({ _id: new ObjectId(t.staff_id) }, { projection: { name: 1 } });
+            await materializeManagerTemplateWeek(t.staff_id, staff ? staff.name : '', t, nextMonday);
+        }
+    } catch (e) { console.error('❌ materializeAllManagerTemplates error:', e.message); }
+}
+
+// GET — la semaine-type du directeur connecté
+app.get('/api/me/manager-dispo-template', checkDB, requireDirecteur, async (req, res) => {
+    const staffId = requireManagerStaffId(req, res); if (!staffId) return;
+    try {
+        const tpl = await db.collection('manager_dispo_templates').findOne({ staff_id: staffId });
+        res.json({ days: (tpl && tpl.days) || {} });
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+// PUT — enregistre la semaine-type + matérialise la semaine suivante
+app.put('/api/me/manager-dispo-template', checkDB, requireDirecteur, async (req, res) => {
+    const staffId = requireManagerStaffId(req, res); if (!staffId) return;
+    const src = req.body && req.body.days;
+    if (!src || typeof src !== 'object') return res.status(400).json({ error: 'days requis' });
+    const days = {};
+    for (let i = 0; i <= 6; i++) {
+        const c = src[i];
+        if (!c || !c.type) continue; // jour non renseigné dans la semaine-type
+        const s = parseFloat(c.start_time), e = parseFloat(c.end_time);
+        if (Number.isNaN(s) || Number.isNaN(e) || s < 0 || e > 30 || e <= s)
+            return res.status(400).json({ error: 'Horaires invalides dans la semaine-type.' });
+        days[i] = { type: MANAGER_DISPO_TYPES.includes(c.type) ? c.type : 'custom', start_time: s, end_time: e };
+    }
+    try {
+        await db.collection('manager_dispo_templates').updateOne(
+            { staff_id: staffId },
+            { $set: { days, staff_name: req.session.user.name || '', updated_at: new Date() } },
+            { upsert: true }
+        );
+        const nextMonday = toDateStr(weekStart(new Date(Date.now() + 7 * 864e5)));
+        await materializeManagerTemplateWeek(staffId, req.session.user.name || '', { days }, nextMonday);
+        res.json({ message: 'Semaine-type enregistrée' });
         touchLastUpdated();
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });

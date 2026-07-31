@@ -15,6 +15,7 @@ const {
     resolvePerfSettings,
     mondayFirstDow,
     resolveManagerAvailability,
+    buildTemplateDispos,
 } = require('../lib/utils');
 
 // ── isValidObjectId ──────────────────────────────────────────────────────────
@@ -420,4 +421,34 @@ test('resolveManagerAvailability : modèle null → none', () => {
     const r = resolveManagerAvailability(null, null, '2026-05-11');
     assert.equal(r.source, 'none');
     assert.equal(r.available, false);
+});
+
+// ── buildTemplateDispos (E-22 v2 — matérialisation semaine-type) ───────────────
+
+const _tplV2 = { days: {
+    0: { type: 'soir', start_time: 16, end_time: 26 }, // lundi
+    2: { type: 'midi', start_time: 10, end_time: 17 }, // mercredi
+} };
+
+test('buildTemplateDispos : matérialise les bons jours de la semaine (lundi-first)', () => {
+    const out = buildTemplateDispos(_tplV2, '2026-05-11', new Set()); // lundi 11 mai
+    assert.deepEqual(out, [
+        { date: '2026-05-11', type: 'soir', start_time: 16, end_time: 26 },
+        { date: '2026-05-13', type: 'midi', start_time: 10, end_time: 17 },
+    ]);
+});
+
+test('buildTemplateDispos : saute les jours déjà pris (override manuel)', () => {
+    const out = buildTemplateDispos(_tplV2, '2026-05-11', new Set(['2026-05-11']));
+    assert.deepEqual(out.map(d => d.date), ['2026-05-13']);
+});
+
+test('buildTemplateDispos : modèle vide/null → aucune dispo', () => {
+    assert.deepEqual(buildTemplateDispos(null, '2026-05-11', new Set()), []);
+    assert.deepEqual(buildTemplateDispos({ days: {} }, '2026-05-11', new Set()), []);
+});
+
+test('buildTemplateDispos : case sans horaires ignorée', () => {
+    const tpl = { days: { 1: { type: 'custom', start_time: null, end_time: null } } };
+    assert.deepEqual(buildTemplateDispos(tpl, '2026-05-11', new Set()), []);
 });
