@@ -711,8 +711,9 @@ function openManagerDisposModal() {
     if (dd) dd.classList.remove('open');
     modal.style.display = 'flex';
     _mgrPopulateEstabs();
-    loadManagerTemplate();
-    loadManagerDispos();
+    // Séquentiel : le template pose l'établissement par défaut, puis la semaine enregistrée
+    // (source de vérité) le remplace si elle a déjà des shifts — ordre déterministe voulu.
+    loadManagerTemplate().then(loadManagerDispos);
 }
 
 // ── Semaine-type (modèle récurrent) ──
@@ -798,10 +799,17 @@ async function loadManagerDispos() {
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Erreur');
         const shifts = await res.json();
         const weekEnd = toDateStr(addDays(nextMonday, 6));
+        const weekEstabs = new Set();
         shifts.forEach(sh => {
-            if (sh.date >= _mgrDispoWeekStart && sh.date <= weekEnd)
+            if (sh.date >= _mgrDispoWeekStart && sh.date <= weekEnd) {
                 _mgrDispoSel[sh.date] = { type: sh.type || _mgrInferType(sh.start_time, sh.end_time), start_time: sh.start_time, end_time: sh.end_time };
+                if (sh.establishment_id) weekEstabs.add(sh.establishment_id);
+            }
         });
+        // La semaine déjà enregistrée fait foi sur le sélecteur (prime sur le template) :
+        // sans ça, sauver une semaine réassignerait ses shifts à l'établissement du template.
+        const estabSel = document.getElementById('manager-dispos-estab');
+        if (estabSel && weekEstabs.size === 1) estabSel.value = [...weekEstabs][0];
         renderManagerDisposDays();
     } catch (e) {
         wrap.innerHTML = '<div style="text-align:center;color:#e74c3c;font-size:13px;padding:12px 0">' + escapeHtml(e.message || 'Erreur de chargement') + '</div>';

@@ -1,7 +1,7 @@
 # Graph Report - app-planning-bar  (2026-07-31)
 
 ## Corpus Check
-- 38 files · ~160,570 words
+- 38 files · ~160,651 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `321c75f3`
+- Built from commit: `ec10605b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -127,11 +127,11 @@ Nodes (14): hourly_rate_snapshot / fixed_rate_snapshot, Modèle de données shif
 
 ### Community 2 - "html2canvas Render Engine"
 Cohesion: 0.04
-Nodes (17): an(), Be(), cn(), Cs(), E(), fn(), gs(), I() (+9 more)
+Nodes (19): an(), Be(), Cs(), dA(), E(), FA(), fn(), gs() (+11 more)
 
 ### Community 3 - "html2canvas Parser"
-Cohesion: 0.13
-Nodes (36): Ae(), mr(), QB(), re(), se(), SUPPORT_WORD_BREAKING(), w(), _() (+28 more)
+Cohesion: 0.14
+Nodes (34): Ae(), mr(), QB(), re(), se(), w(), _(), a() (+26 more)
 
 ### Community 4 - "Main Planning Script (State)"
 Cohesion: 0.03
@@ -307,7 +307,7 @@ Nodes (6): public/lib/shift-hours.js (heures effectives), Module UMD partagé na
 
 ### Community 60 - "Community 60"
 Cohesion: 0.40
-Nodes (5): dA(), FA(), hA(), lA(), UA()
+Nodes (5): cn(), on(), Qn(), SUPPORT_WORD_BREAKING(), g()
 
 ### Community 61 - "Community 61"
 Cohesion: 0.33
@@ -358,4 +358,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Planning Board UI` be split into smaller, more focused modules?**
   _Cohesion score 0.0532724505327245 - nodes in this community are weakly interconnected._
 - **Should `html2canvas Render Engine` be split into smaller, more focused modules?**
-  _Cohesion score 0.04011299435028248 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.03966155473294553 - nodes in this community are weakly interconnected._

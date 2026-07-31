@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "public/script.js": {
-    "mtime": 1785502915.359151,
-    "ast_hash": "35681dc127eb4e2b89a4842e26baf9ff",
+    "mtime": 1785503806.8943298,
+    "ast_hash": "ff4e40f3b8099c2e46d58b111db3503b",
     "semantic_hash": ""
   },
   "public/sw.js": {
@@ -75,8 +75,8 @@
     "semantic_hash": "a06d5a6e2e883b2b4a3d570fff6a9600"
   },
   "server.js": {
-    "mtime": 1785502903.3407967,
-    "ast_hash": "7e57fd904e69d48701017641c8cc9d19",
+    "mtime": 1785503769.0515873,
+    "ast_hash": "0191205b5873fd750944863b4e2e7488",
     "semantic_hash": ""
   },
   "tests/routes.test.js": {

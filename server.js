@@ -3311,7 +3311,7 @@ const MANAGER_DISPO_TYPES = ['soir', 'midi', 'long', 'custom'];
 
 // Établissement fourni + autorisé, sinon 400. Retourne l'id, ou null (réponse déjà envoyée).
 function requireEstablishment(req, res) {
-    const establishment_id = req.body.establishment_id;
+    const establishment_id = (req.body || {}).establishment_id;
     if (!establishment_id || !canAccessEstablishment(req.session.user, establishment_id)) {
         res.status(400).json({ error: 'Établissement invalide ou non autorisé.' }); return null;
     }
