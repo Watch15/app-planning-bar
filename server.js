@@ -3285,11 +3285,12 @@ app.delete('/api/me/manager-off/:id', checkDB, requireDirecteur, async (req, res
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-// ── Disponibilités des directeurs (E-22 Phase 1) ───────────────────────────────
-// Le directeur a désormais un profil staff (Modèle A) : il déclare ses dispos depuis
-// index.html. Écriture AUTO-VALIDÉE (status:'confirmed') dans le pipeline
-// `availabilities` standard → elles s'affichent sur le planning comme une dispo staff,
-// sans passer par la file « En attente ». Pas de deadline (le directeur gère sa présence).
+// ── Disponibilités des directeurs (E-22) ───────────────────────────────────────
+// Le directeur a un profil staff (Modèle A) : il déclare ses dispos depuis index.html.
+// L'auto-acceptation CRÉE DIRECTEMENT UN SHIFT (collection `shifts`) pour chaque jour
+// saisi, à l'établissement choisi → il apparaît sur le planning (vues Jour ET Semaine)
+// comme un créneau planifié. Marqueur `source:'manager_dispo'` (+ `from_template`) pour
+// remplacer/rafraîchir ces shifts sans jamais toucher à ceux créés par le patron.
 
 // staff_id du directeur connecté. Un directeur d'avant la migration Modèle A peut ne
 // pas encore l'avoir en session (cache) → message explicite invitant à se reconnecter.
@@ -3299,29 +3300,40 @@ function requireManagerStaffId(req, res) {
     return staffId;
 }
 
-// GET — dispos à venir du directeur connecté (pour peupler la modale)
+const MANAGER_DISPO_TYPES = ['soir', 'midi', 'long', 'custom'];
+
+// Nom + couleur du profil staff du directeur (pour les shifts créés).
+async function managerStaffMeta(staffId, sessionName) {
+    const doc = isValidObjectId(staffId)
+        ? await db.collection('staff').findOne({ _id: new ObjectId(staffId) }, { projection: { name: 1, color: 1 } })
+        : null;
+    return { name: sessionName || (doc && doc.name) || '', color: (doc && doc.color) || '#3498db' };
+}
+
+// GET — les shifts auto-créés du directeur (source manager_dispo) à venir → prefill modale
 app.get('/api/me/manager-dispos', checkDB, requireDirecteur, async (req, res) => {
     const staffId = requireManagerStaffId(req, res); if (!staffId) return;
     try {
-        const today = toDateStr(new Date());
-        const dispos = await db.collection('availabilities')
-            .find({ staff_id: staffId, type: { $ne: 'week_note' }, date: { $gte: today } })
+        const today  = toDateStr(new Date());
+        const shifts = await db.collection('shifts')
+            .find({ staff_id: staffId, source: 'manager_dispo', date: { $gte: today } })
             .sort({ date: 1 }).toArray();
-        res.json(dispos);
+        res.json(shifts);
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-// PUT — le directeur remplace ses dispos de TOUTE une semaine (la semaine suivante en
-// pratique). Modèle « source de vérité » : on purge ses dispos de la semaine puis on
-// insère les jours fournis, auto-validés (confirmed). Miroir du système staff (types
-// Soir/Midi/Long/Perso → horaires côté client) mais sans deadline ni validation patron.
-const MANAGER_DISPO_TYPES = ['soir', 'midi', 'long', 'custom'];
+// PUT — le directeur remplace ses créneaux de TOUTE une semaine (source de vérité) :
+// purge ses shifts manager de la semaine puis crée un shift par jour saisi, à
+// l'établissement choisi. Auto-accepté, sans deadline ni validation patron.
 app.put('/api/me/manager-dispos/week', checkDB, requireDirecteur, async (req, res) => {
     const staffId = requireManagerStaffId(req, res); if (!staffId) return;
-    const { week_start } = req.body;
+    const { week_start, establishment_id } = req.body;
     if (!ISO_DATE_RE.test(week_start)) return res.status(400).json({ error: 'week_start invalide (YYYY-MM-DD)' });
+    if (!establishment_id || !canAccessEstablishment(req.session.user, establishment_id))
+        return res.status(400).json({ error: 'Établissement invalide ou non autorisé.' });
     const weekEnd = toDateStr(new Date(new Date(week_start + 'T12:00:00').getTime() + 6 * 864e5));
     const days    = Array.isArray(req.body.days) ? req.body.days : [];
+    const meta    = await managerStaffMeta(staffId, req.session.user.name);
     const now     = new Date();
     const clean   = [];
     for (const d of days) {
@@ -3331,47 +3343,48 @@ app.put('/api/me/manager-dispos/week', checkDB, requireDirecteur, async (req, re
         if (Number.isNaN(s) || Number.isNaN(e) || s < 0 || e > 30 || e <= s)
             return res.status(400).json({ error: 'Horaires invalides pour le ' + d.date });
         clean.push({
-            staff_id: staffId, date: d.date,
-            type: MANAGER_DISPO_TYPES.includes(d.type) ? d.type : 'custom',
-            start_time: s, end_time: e, note: '', status: 'confirmed',
-            staff_name: req.session.user.name || '', created_at: now, updated_at: now,
+            staff_id: staffId, staff_name: meta.name, establishment_id, date: d.date,
+            start_time: s, end_time: e, color: meta.color,
+            source: 'manager_dispo', from_template: false, created_at: now,
         });
     }
     try {
-        // Remplace la semaine : les jours non renseignés sont retirés (source de vérité).
-        await db.collection('availabilities').deleteMany({
-            staff_id: staffId, type: { $ne: 'week_note' }, date: { $gte: week_start, $lte: weekEnd },
+        // Remplace la semaine : purge des shifts manager du directeur (les patron sont intacts).
+        await db.collection('shifts').deleteMany({
+            staff_id: staffId, source: 'manager_dispo', date: { $gte: week_start, $lte: weekEnd },
         });
-        if (clean.length) await db.collection('availabilities').insertMany(clean);
-        res.json({ message: clean.length + ' disponibilité(s) enregistrée(s)' });
+        if (clean.length) await db.collection('shifts').insertMany(clean);
+        res.json({ message: clean.length + ' créneau(x) enregistré(s)' });
         touchLastUpdated();
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
 // ── Semaine-type récurrente du directeur (E-22 v2) ─────────────────────────────
-// Collection `manager_dispo_templates` (doc par staff_id) : { days: {0..6:{type,start,end}} }.
-// Le modèle se MATÉRIALISE dans `availabilities` (marqué `from_template`, confirmed)
-// sur la semaine suivante, via un cron quotidien + à chaque sauvegarde du modèle.
-// Une semaine contenant une dispo MANUELLE (from_template ≠ true) est un override et
-// n'est jamais touchée. Idempotent (relançable).
-async function materializeManagerTemplateWeek(staffId, staffName, template, weekStartStr) {
+// Collection `manager_dispo_templates` (doc par staff_id) : { days:{0..6}, establishment_id }.
+// Le modèle se MATÉRIALISE en SHIFTS (source:'manager_dispo', from_template:true) sur la
+// semaine suivante, via un cron quotidien + à chaque sauvegarde du modèle. Une semaine
+// contenant un shift manager MANUEL (from_template ≠ true) est un override et n'est jamais
+// touchée. Idempotent (relançable).
+async function materializeManagerTemplateWeek(staffId, meta, template, weekStartStr) {
+    if (!template || !template.establishment_id) return 0;
     const weekEnd = toDateStr(new Date(new Date(weekStartStr + 'T12:00:00').getTime() + 6 * 864e5));
-    const manual = await db.collection('availabilities').countDocuments({
-        staff_id: staffId, type: { $ne: 'week_note' }, from_template: { $ne: true },
+    const manual = await db.collection('shifts').countDocuments({
+        staff_id: staffId, source: 'manager_dispo', from_template: { $ne: true },
         date: { $gte: weekStartStr, $lte: weekEnd },
     });
     if (manual > 0) return 0; // override manuel → on ne touche pas la semaine
-    // Rafraîchit : purge les dispos issues du modèle puis réinsère (reflète un modèle modifié).
-    await db.collection('availabilities').deleteMany({
-        staff_id: staffId, from_template: true, date: { $gte: weekStartStr, $lte: weekEnd },
+    // Rafraîchit : purge les shifts issus du modèle puis réinsère (reflète un modèle modifié).
+    await db.collection('shifts').deleteMany({
+        staff_id: staffId, source: 'manager_dispo', from_template: true,
+        date: { $gte: weekStartStr, $lte: weekEnd },
     });
     const now  = new Date();
     const docs = buildTemplateDispos(template, weekStartStr, new Set()).map(d => ({
-        staff_id: staffId, date: d.date, type: d.type, start_time: d.start_time, end_time: d.end_time,
-        note: '', status: 'confirmed', staff_name: staffName || '', from_template: true,
-        created_at: now, updated_at: now,
+        staff_id: staffId, staff_name: meta.name, establishment_id: template.establishment_id,
+        date: d.date, start_time: d.start_time, end_time: d.end_time, color: meta.color,
+        source: 'manager_dispo', from_template: true, created_at: now,
     }));
-    if (docs.length) await db.collection('availabilities').insertMany(docs);
+    if (docs.length) await db.collection('shifts').insertMany(docs);
     return docs.length;
 }
 
@@ -3382,25 +3395,28 @@ async function materializeAllManagerTemplates() {
         const nextMonday = toDateStr(weekStart(new Date(Date.now() + 7 * 864e5)));
         const templates  = await db.collection('manager_dispo_templates').find({}).toArray();
         for (const t of templates) {
-            if (!isValidObjectId(t.staff_id)) continue;
-            const staff = await db.collection('staff').findOne({ _id: new ObjectId(t.staff_id) }, { projection: { name: 1 } });
-            await materializeManagerTemplateWeek(t.staff_id, staff ? staff.name : '', t, nextMonday);
+            if (!isValidObjectId(t.staff_id) || !t.establishment_id) continue;
+            const meta = await managerStaffMeta(t.staff_id, t.staff_name);
+            await materializeManagerTemplateWeek(t.staff_id, meta, t, nextMonday);
         }
     } catch (e) { console.error('❌ materializeAllManagerTemplates error:', e.message); }
 }
 
-// GET — la semaine-type du directeur connecté
+// GET — la semaine-type du directeur connecté (+ établissement)
 app.get('/api/me/manager-dispo-template', checkDB, requireDirecteur, async (req, res) => {
     const staffId = requireManagerStaffId(req, res); if (!staffId) return;
     try {
         const tpl = await db.collection('manager_dispo_templates').findOne({ staff_id: staffId });
-        res.json({ days: (tpl && tpl.days) || {} });
+        res.json({ days: (tpl && tpl.days) || {}, establishment_id: (tpl && tpl.establishment_id) || null });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-// PUT — enregistre la semaine-type + matérialise la semaine suivante
+// PUT — enregistre la semaine-type (+ établissement) + matérialise la semaine suivante
 app.put('/api/me/manager-dispo-template', checkDB, requireDirecteur, async (req, res) => {
     const staffId = requireManagerStaffId(req, res); if (!staffId) return;
+    const { establishment_id } = req.body;
+    if (!establishment_id || !canAccessEstablishment(req.session.user, establishment_id))
+        return res.status(400).json({ error: 'Établissement invalide ou non autorisé.' });
     const src = req.body && req.body.days;
     if (!src || typeof src !== 'object') return res.status(400).json({ error: 'days requis' });
     const days = {};
@@ -3415,11 +3431,12 @@ app.put('/api/me/manager-dispo-template', checkDB, requireDirecteur, async (req,
     try {
         await db.collection('manager_dispo_templates').updateOne(
             { staff_id: staffId },
-            { $set: { days, staff_name: req.session.user.name || '', updated_at: new Date() } },
+            { $set: { days, establishment_id, staff_name: req.session.user.name || '', updated_at: new Date() } },
             { upsert: true }
         );
+        const meta       = await managerStaffMeta(staffId, req.session.user.name);
         const nextMonday = toDateStr(weekStart(new Date(Date.now() + 7 * 864e5)));
-        await materializeManagerTemplateWeek(staffId, req.session.user.name || '', { days }, nextMonday);
+        await materializeManagerTemplateWeek(staffId, meta, { days, establishment_id }, nextMonday);
         res.json({ message: 'Semaine-type enregistrée' });
         touchLastUpdated();
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
