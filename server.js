@@ -3291,6 +3291,13 @@ app.delete('/api/me/manager-off/:id', checkDB, requireDirecteur, async (req, res
 // saisi, à l'établissement choisi → il apparaît sur le planning (vues Jour ET Semaine)
 // comme un créneau planifié. Marqueur `source:'manager_dispo'` (+ `from_template`) pour
 // remplacer/rafraîchir ces shifts sans jamais toucher à ceux créés par le patron.
+//
+// VOLONTAIRE (ne pas « corriger ») :
+//  • Pas de détection de conflit multi-établissement ici (contrairement à POST /api/shifts) :
+//    le directeur gère lui-même sa présence, sans validation patron — un chevauchement
+//    éventuel est de sa responsabilité, on ne le bloque pas.
+//  • Bascule `availabilities` → `shifts` sans script de migration : cette feature n'a jamais
+//    matérialisé de dispos directeur en prod, donc aucune ligne orpheline à nettoyer.
 
 // staff_id du directeur connecté. Un directeur d'avant la migration Modèle A peut ne
 // pas encore l'avoir en session (cache) → message explicite invitant à se reconnecter.
@@ -3324,6 +3331,7 @@ async function managerStaffMeta(staffId, sessionName) {
 function buildManagerShift(staffId, meta, establishmentId, day, fromTemplate, now) {
     return {
         staff_id: staffId, staff_name: meta.name, establishment_id: establishmentId, date: day.date,
+        type: MANAGER_DISPO_TYPES.includes(day.type) ? day.type : 'custom',
         start_time: day.start_time, end_time: day.end_time, color: meta.color,
         source: 'manager_dispo', from_template: fromTemplate, created_at: now,
     };
@@ -3359,7 +3367,7 @@ app.put('/api/me/manager-dispos/week', checkDB, requireDirecteur, async (req, re
         const s = parseFloat(d.start_time), e = parseFloat(d.end_time);
         if (Number.isNaN(s) || Number.isNaN(e) || s < 0 || e > 30 || e <= s)
             return res.status(400).json({ error: 'Horaires invalides pour le ' + d.date });
-        validDays.push({ date: d.date, start_time: s, end_time: e });
+        validDays.push({ date: d.date, type: d.type, start_time: s, end_time: e });
     }
     const meta  = await managerStaffMeta(staffId, req.session.user.name);
     const clean = validDays.map(d => buildManagerShift(staffId, meta, establishment_id, d, false, now));

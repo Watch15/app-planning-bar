@@ -635,7 +635,8 @@ const _mgrBtnStyle = active => 'flex:1;min-width:52px;height:34px;border-radius:
 const _mgrInputStyle = 'height:32px;padding:0 8px;border:1px solid #d0d4dc;border-radius:8px;font-size:13px;font-family:var(--font)';
 
 // Établissement des shifts créés : sélecteur peuplé des établissements du directeur
-// (masqué s'il n'y en a qu'un). Type d'un shift inféré depuis ses horaires (soir/midi/long).
+// (masqué s'il n'y en a qu'un). Le type est désormais persisté sur le shift ; _mgrInferType
+// n'est qu'un fallback pour les shifts créés avant cette persistance.
 function _mgrPopulateEstabs() {
     const sel = document.getElementById('manager-dispos-estab');
     const group = document.getElementById('manager-dispos-estab-group');
@@ -799,7 +800,7 @@ async function loadManagerDispos() {
         const weekEnd = toDateStr(addDays(nextMonday, 6));
         shifts.forEach(sh => {
             if (sh.date >= _mgrDispoWeekStart && sh.date <= weekEnd)
-                _mgrDispoSel[sh.date] = { type: _mgrInferType(sh.start_time, sh.end_time), start_time: sh.start_time, end_time: sh.end_time };
+                _mgrDispoSel[sh.date] = { type: sh.type || _mgrInferType(sh.start_time, sh.end_time), start_time: sh.start_time, end_time: sh.end_time };
         });
         renderManagerDisposDays();
     } catch (e) {

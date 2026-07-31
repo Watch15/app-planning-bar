@@ -1,7 +1,7 @@
 # Graph Report - app-planning-bar  (2026-07-31)
 
 ## Corpus Check
-- 38 files · ~160,472 words
+- 38 files · ~160,570 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e0e2ceea`
+- Built from commit: `321c75f3`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -127,11 +127,11 @@ Nodes (14): hourly_rate_snapshot / fixed_rate_snapshot, Modèle de données shif
 
 ### Community 2 - "html2canvas Render Engine"
 Cohesion: 0.04
-Nodes (19): an(), Be(), Cs(), dA(), E(), FA(), fn(), gs() (+11 more)
+Nodes (17): an(), Be(), cn(), Cs(), E(), fn(), gs(), I() (+9 more)
 
 ### Community 3 - "html2canvas Parser"
-Cohesion: 0.14
-Nodes (34): Ae(), mr(), QB(), re(), se(), w(), _(), a() (+26 more)
+Cohesion: 0.13
+Nodes (36): Ae(), mr(), QB(), re(), se(), SUPPORT_WORD_BREAKING(), w(), _() (+28 more)
 
 ### Community 4 - "Main Planning Script (State)"
 Cohesion: 0.03
@@ -154,12 +154,12 @@ Cohesion: 0.14
 Nodes (22): allStaff, buildShiftCard(), checkAuth(), fmtH(), getActiveDate(), init(), initExtraForm(), initRevenueForm() (+14 more)
 
 ### Community 9 - "Dispo Control Init"
-Cohesion: 0.10
-Nodes (21): acknowledgeOffDispo(), buildStaffDisplayNames(), checkAuth(), decideConge(), init(), initDropZone(), initNotifListeners(), initStaffSearch() (+13 more)
+Cohesion: 0.11
+Nodes (20): acknowledgeOffDispo(), buildStaffDisplayNames(), checkAuth(), init(), initDropZone(), initNotifListeners(), initStaffSearch(), initTimelineBodyTap() (+12 more)
 
 ### Community 10 - "Shift CRUD & Rendering"
-Cohesion: 0.18
-Nodes (11): buildRoleFilters(), loadCongesList(), loadStaffNotesList(), matchesWordPrefix(), normalizeStr(), openStaffModal(), populateStaffManageFilters(), renderCongesListPatron() (+3 more)
+Cohesion: 0.11
+Nodes (20): buildDisplayedStaff(), buildRoleFilters(), decideConge(), extendDisplayForRealHours(), formatDateLong(), loadCongesList(), loadDayDetail(), loadPublishButton() (+12 more)
 
 ### Community 11 - "Shared Utils & Validation"
 Cohesion: 0.12
@@ -294,12 +294,12 @@ Cohesion: 0.25
 Nodes (8): Authentification, Fonctionnalités, Performance (`performance.html`), Pointage (`pointage.html`), PWA, Vue patron (`index.html`), Vue staff (`planning.html`), Web Push
 
 ### Community 57 - "Community 57"
-Cohesion: 0.10
-Nodes (25): applyVenueHours(), applyViewMode(), buildDisplayedStaff(), extendDisplayForRealHours(), formatDateLong(), _kpiEstabRow(), _kpiProgressBar(), loadDayDetail() (+17 more)
+Cohesion: 0.14
+Nodes (16): addEstablishment(), applyVenueHours(), _kpiEstabRow(), _kpiProgressBar(), loadDisposKpi(), loadEstablishments(), loadGroups(), loadWeekFullData() (+8 more)
 
 ### Community 58 - "Community 58"
-Cohesion: 0.33
-Nodes (6): addEstablishment(), loadGroups(), openEstablishmentsModal(), renderEstablishmentsList(), renderGroupFilter(), renderTabs()
+Cohesion: 0.29
+Nodes (7): applyViewMode(), renderDashboard(), renderTeamDashboard(), renderWeekFull(), renderWeekGantt(), staffMatchesCurrentGroup(), switchToDayView()
 
 ### Community 59 - "Community 59"
 Cohesion: 0.40
@@ -307,7 +307,7 @@ Nodes (6): public/lib/shift-hours.js (heures effectives), Module UMD partagé na
 
 ### Community 60 - "Community 60"
 Cohesion: 0.40
-Nodes (5): cn(), on(), Qn(), SUPPORT_WORD_BREAKING(), g()
+Nodes (5): dA(), FA(), hA(), lA(), UA()
 
 ### Community 61 - "Community 61"
 Cohesion: 0.33
@@ -345,7 +345,7 @@ Nodes (4): Flag CALENDAR_ENABLED (iCal désactivé D-83), Synchronisation agenda
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `fmtH()` connect `Time Clock (Pointage)` to `Community 57`, `Main Planning Script (State)`, `Community 38`?**
+- **Why does `fmtH()` connect `Time Clock (Pointage)` to `Community 58`, `Main Planning Script (State)`, `Community 38`?**
   _High betweenness centrality (0.012) - this node is a cross-community bridge._
 - **Why does `Architecture technique — Templyo` connect `Tap Selection` to `Architecture & Design Rationale`, `Community 20`?**
   _High betweenness centrality (0.010) - this node is a cross-community bridge._
@@ -358,4 +358,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Planning Board UI` be split into smaller, more focused modules?**
   _Cohesion score 0.0532724505327245 - nodes in this community are weakly interconnected._
 - **Should `html2canvas Render Engine` be split into smaller, more focused modules?**
-  _Cohesion score 0.03966155473294553 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.04011299435028248 - nodes in this community are weakly interconnected._
