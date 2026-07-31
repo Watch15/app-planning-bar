@@ -648,6 +648,12 @@ const _mgrInferType = (s, e) => {
     return 'custom';
 };
 const _mgrEstabId = () => (document.getElementById('manager-dispos-estab') || {}).value || '';
+// Établissement choisi, sinon affiche l'erreur dans `fb` et retourne ''.
+const _mgrRequireEstab = fb => {
+    const id = _mgrEstabId();
+    if (!id && fb) { fb.style.color = '#c0392b'; fb.textContent = 'Choisis un établissement.'; }
+    return id;
+};
 
 // Carte générique (jour daté OU jour de semaine) : boutons Soir/Midi/Long/Perso +
 // horaires libres (Perso). getSel/setSel branchent la carte sur son store ; re-clic
@@ -753,8 +759,8 @@ async function saveManagerTemplate() {
         }
         days[i] = { type: sel.type, start_time: sel.start_time, end_time: sel.end_time };
     }
-    const establishment_id = _mgrEstabId();
-    if (!establishment_id) { if (fb) { fb.style.color = '#c0392b'; fb.textContent = 'Choisis un établissement.'; } return; }
+    const establishment_id = _mgrRequireEstab(fb);
+    if (!establishment_id) return;
     btn.disabled = true; const prev = btn.textContent; btn.textContent = 'Envoi…';
     try {
         const res = await fetch('/api/me/manager-dispo-template', {
@@ -826,8 +832,8 @@ async function saveManagerDispos() {
         }
         days.push({ date, type: sel.type, start_time: sel.start_time, end_time: sel.end_time });
     }
-    const establishment_id = _mgrEstabId();
-    if (!establishment_id) { if (fb) { fb.style.color = '#c0392b'; fb.textContent = 'Choisis un établissement.'; } return; }
+    const establishment_id = _mgrRequireEstab(fb);
+    if (!establishment_id) return;
     btn.disabled = true;
     const prev = btn.textContent; btn.textContent = 'Envoi…';
     try {

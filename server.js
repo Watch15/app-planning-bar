@@ -3302,12 +3302,31 @@ function requireManagerStaffId(req, res) {
 
 const MANAGER_DISPO_TYPES = ['soir', 'midi', 'long', 'custom'];
 
+// Établissement fourni + autorisé, sinon 400. Retourne l'id, ou null (réponse déjà envoyée).
+function requireEstablishment(req, res) {
+    const establishment_id = req.body.establishment_id;
+    if (!establishment_id || !canAccessEstablishment(req.session.user, establishment_id)) {
+        res.status(400).json({ error: 'Établissement invalide ou non autorisé.' }); return null;
+    }
+    return establishment_id;
+}
+
 // Nom + couleur du profil staff du directeur (pour les shifts créés).
 async function managerStaffMeta(staffId, sessionName) {
     const doc = isValidObjectId(staffId)
         ? await db.collection('staff').findOne({ _id: new ObjectId(staffId) }, { projection: { name: 1, color: 1 } })
         : null;
     return { name: sessionName || (doc && doc.name) || '', color: (doc && doc.color) || '#3498db' };
+}
+
+// Forme unique du shift d'un directeur (source manager_dispo), partagée par la saisie
+// manuelle (/week) et la matérialisation de la semaine-type.
+function buildManagerShift(staffId, meta, establishmentId, day, fromTemplate, now) {
+    return {
+        staff_id: staffId, staff_name: meta.name, establishment_id: establishmentId, date: day.date,
+        start_time: day.start_time, end_time: day.end_time, color: meta.color,
+        source: 'manager_dispo', from_template: fromTemplate, created_at: now,
+    };
 }
 
 // GET — les shifts auto-créés du directeur (source manager_dispo) à venir → prefill modale
@@ -3327,27 +3346,23 @@ app.get('/api/me/manager-dispos', checkDB, requireDirecteur, async (req, res) =>
 // l'établissement choisi. Auto-accepté, sans deadline ni validation patron.
 app.put('/api/me/manager-dispos/week', checkDB, requireDirecteur, async (req, res) => {
     const staffId = requireManagerStaffId(req, res); if (!staffId) return;
-    const { week_start, establishment_id } = req.body;
+    const { week_start } = req.body;
     if (!ISO_DATE_RE.test(week_start)) return res.status(400).json({ error: 'week_start invalide (YYYY-MM-DD)' });
-    if (!establishment_id || !canAccessEstablishment(req.session.user, establishment_id))
-        return res.status(400).json({ error: 'Établissement invalide ou non autorisé.' });
+    const establishment_id = requireEstablishment(req, res); if (!establishment_id) return;
     const weekEnd = toDateStr(new Date(new Date(week_start + 'T12:00:00').getTime() + 6 * 864e5));
     const days    = Array.isArray(req.body.days) ? req.body.days : [];
-    const meta    = await managerStaffMeta(staffId, req.session.user.name);
     const now     = new Date();
-    const clean   = [];
+    const validDays = [];
     for (const d of days) {
         if (!ISO_DATE_RE.test(d.date) || d.date < week_start || d.date > weekEnd)
             return res.status(400).json({ error: 'Jour hors semaine : ' + d.date });
         const s = parseFloat(d.start_time), e = parseFloat(d.end_time);
         if (Number.isNaN(s) || Number.isNaN(e) || s < 0 || e > 30 || e <= s)
             return res.status(400).json({ error: 'Horaires invalides pour le ' + d.date });
-        clean.push({
-            staff_id: staffId, staff_name: meta.name, establishment_id, date: d.date,
-            start_time: s, end_time: e, color: meta.color,
-            source: 'manager_dispo', from_template: false, created_at: now,
-        });
+        validDays.push({ date: d.date, start_time: s, end_time: e });
     }
+    const meta  = await managerStaffMeta(staffId, req.session.user.name);
+    const clean = validDays.map(d => buildManagerShift(staffId, meta, establishment_id, d, false, now));
     try {
         // Remplace la semaine : purge des shifts manager du directeur (les patron sont intacts).
         await db.collection('shifts').deleteMany({
@@ -3379,11 +3394,8 @@ async function materializeManagerTemplateWeek(staffId, meta, template, weekStart
         date: { $gte: weekStartStr, $lte: weekEnd },
     });
     const now  = new Date();
-    const docs = buildTemplateDispos(template, weekStartStr, new Set()).map(d => ({
-        staff_id: staffId, staff_name: meta.name, establishment_id: template.establishment_id,
-        date: d.date, start_time: d.start_time, end_time: d.end_time, color: meta.color,
-        source: 'manager_dispo', from_template: true, created_at: now,
-    }));
+    const docs = buildTemplateDispos(template, weekStartStr, new Set())
+        .map(d => buildManagerShift(staffId, meta, template.establishment_id, d, true, now));
     if (docs.length) await db.collection('shifts').insertMany(docs);
     return docs.length;
 }
@@ -3414,9 +3426,7 @@ app.get('/api/me/manager-dispo-template', checkDB, requireDirecteur, async (req,
 // PUT — enregistre la semaine-type (+ établissement) + matérialise la semaine suivante
 app.put('/api/me/manager-dispo-template', checkDB, requireDirecteur, async (req, res) => {
     const staffId = requireManagerStaffId(req, res); if (!staffId) return;
-    const { establishment_id } = req.body;
-    if (!establishment_id || !canAccessEstablishment(req.session.user, establishment_id))
-        return res.status(400).json({ error: 'Établissement invalide ou non autorisé.' });
+    const establishment_id = requireEstablishment(req, res); if (!establishment_id) return;
     const src = req.body && req.body.days;
     if (!src || typeof src !== 'object') return res.status(400).json({ error: 'days requis' });
     const days = {};
