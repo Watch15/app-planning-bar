@@ -1,8 +1,9 @@
 'use strict';
 // Mini base Mongo en mémoire pour les tests d'intégration de routes (CD-05).
 // Implémente UNIQUEMENT ce que les routes testées utilisent : findOne, find().toArray(),
-// insertOne, deleteMany, updateOne (avec upsert/$set/$pull), bulkWrite (updateOne+upsert),
-// countDocuments — et les opérateurs $ne/$lte/$gte/$lt/$gt/$in. Pas un clone fidèle de
+// insertOne, insertMany, deleteMany, updateOne (avec upsert/$set/$pull), bulkWrite
+// (updateOne+upsert), countDocuments — et les opérateurs $ne/$lte/$gte/$lt/$gt/$in.
+// Le 2e argument de find() (projection) est ignoré. Pas un clone fidèle de
 // Mongo : juste assez pour piloter la logique métier sans serveur réel.
 
 function isObjId(x) {
@@ -61,6 +62,7 @@ function makeCollection(initialDocs) {
             return { sort() { return this; }, limit() { return this; }, async toArray() { return res.slice(); } };
         },
         async insertOne(doc)      { docs.push({ ...doc }); return { insertedId: doc._id || null, acknowledged: true }; },
+        async insertMany(arr)     { (arr || []).forEach(d => docs.push({ ...d })); return { insertedCount: (arr || []).length, acknowledged: true }; },
         async countDocuments(q)   { return docs.filter(d => matchDoc(d, q || {})).length; },
         async deleteMany(query)   {
             let n = 0;

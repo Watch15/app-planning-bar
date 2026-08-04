@@ -1,0 +1,188 @@
+// E-22 (corrigé le 2026-08-04) — le directeur passe par le pipeline `availabilities`
+// STANDARD : ses dispos sont validées par le patron, sa semaine-type ne fait que
+// pré-remplir. Ces tests couvrent ce que les helpers purs ne peuvent pas atteindre :
+//   • la jointure `manager_time_off` dans le filtre congés de POST /api/dispos ;
+//   • le pré-remplissage EN CRÉATION SEULE (le régresser = revenir au bug où le cron
+//     réécrivait la semaine et annulait les corrections du patron) ;
+//   • la purge des dispos quand une absence est déclarée ;
+//   • le repère « Directeur » dans la file de validation du patron.
+// Harnais CD-05 : faux `db` en mémoire (app.locals.setTestDb) + session simulée par
+// l'en-tête `x-test-user`. Aucun Mongo, aucune dépendance.
+
+process.env.NODE_ENV       = 'test';
+process.env.MONGO_URI      = process.env.MONGO_URI      || 'mongodb://127.0.0.1:27017/templyo_test';
+process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'integration-test-secret-0123456789abcdef';
+
+const { test, before, after } = require('node:test');
+const assert = require('node:assert/strict');
+const { weekStart, toDateStr } = require('../lib/utils');
+const { makeDb } = require('./helpers/fake-db');
+const app = require('../server');
+
+const MGR_STAFF   = '0123456789abcdef0123aaaa';
+const MGR_USER    = '0123456789abcdef0123bbbb';
+const STAFF_ID    = '0123456789abcdef0123cccc';
+const DIRECTEUR   = { _id: MGR_USER, staff_id: MGR_STAFF, name: 'Dir Test', role: 'directeur' };
+const PATRON      = { role: 'patron' };
+
+// Le serveur matérialise TOUJOURS sur le lundi de la semaine suivante : on le
+// recalcule ici avec le même helper plutôt que de figer une date (sinon le test
+// pourrirait au fil du temps).
+const NEXT_MONDAY = toDateStr(weekStart(new Date(Date.now() + 7 * 864e5)));
+const dayOf = i => toDateStr(new Date(new Date(NEXT_MONDAY + 'T12:00:00').getTime() + i * 864e5));
+
+// Semaine-type : lundi (0) + mercredi (2).
+const TEMPLATE_DAYS = {
+    0: { type: 'soir', start_time: 16, end_time: 26 },
+    2: { type: 'midi', start_time: 10, end_time: 17 },
+};
+
+let server, base;
+
+before(async () => {
+    server = app.listen(0);
+    await new Promise((resolve, reject) => {
+        server.once('listening', resolve);
+        server.once('error', reject);
+    });
+    base = 'http://127.0.0.1:' + server.address().port;
+});
+
+after(() => { if (server) server.close(); });
+
+const req = (path, user, init = {}) => fetch(base + path, {
+    ...init,
+    headers: { 'content-type': 'application/json', 'x-test-user': JSON.stringify(user), ...(init.headers || {}) },
+});
+
+const putTemplate = (days = TEMPLATE_DAYS) =>
+    req('/api/me/manager-dispo-template', DIRECTEUR, { method: 'PUT', body: JSON.stringify({ days }) });
+
+// Base minimale : le directeur, son profil staff, la saisie ouverte.
+function seed(extra = {}) {
+    return makeDb({
+        settings:       [{ key: 'dispo', open: true, force_open: true }],
+        users:          [{ _id: MGR_USER, role: 'directeur', staff_id: MGR_STAFF, name: 'Dir Test' }],
+        staff:          [{ _id: MGR_STAFF, name: 'Dir Test', venues: [], can_submit_dispos: true }],
+        availabilities: [],
+        manager_time_off: [],
+        ...extra,
+    });
+}
+
+const disposOf = db => db.collection('availabilities')._docs;
+
+// ── Semaine-type : pré-remplissage en CRÉATION SEULE ──────────────────────────
+
+test('semaine-type : matérialise les jours du modèle en dispos `pending`', async () => {
+    const db = seed();
+    app.locals.setTestDb(db);
+    const res = await putTemplate();
+    assert.equal(res.status, 200);
+
+    const saved = disposOf(db);
+    assert.deepEqual(saved.map(d => d.date).sort(), [dayOf(0), dayOf(2)]);
+    assert.ok(saved.every(d => d.status === 'pending'), 'les dispos partent en attente de validation patron');
+    assert.ok(saved.every(d => d.staff_id === MGR_STAFF));
+    // Aucun shift créé : une dispo n'est pas un créneau planifié.
+    assert.equal(db.collection('shifts')._docs.length, 0);
+});
+
+test('semaine-type : un jour ayant DÉJÀ une dispo n\'est jamais écrasé', async () => {
+    // Le lundi porte une dispo déjà validée par le patron, avec d'autres horaires.
+    const existing = {
+        staff_id: MGR_STAFF, date: dayOf(0), type: 'custom',
+        start_time: 20, end_time: 25, status: 'confirmed',
+    };
+    const db = seed({ availabilities: [existing] });
+    app.locals.setTestDb(db);
+    assert.equal((await putTemplate()).status, 200);
+
+    const saved = disposOf(db);
+    assert.equal(saved.length, 2, 'le lundi n\'est pas dupliqué');
+    const monday = saved.find(d => d.date === dayOf(0));
+    assert.equal(monday.status, 'confirmed', 'la validation du patron survit');
+    assert.equal(monday.start_time, 20, 'les horaires du patron survivent');
+    assert.ok(saved.some(d => d.date === dayOf(2)), 'le jour vide est bien comblé');
+});
+
+test('semaine-type : idempotente — deux passages ne créent rien de plus', async () => {
+    const db = seed();
+    app.locals.setTestDb(db);
+    await putTemplate();
+    await putTemplate();
+    assert.equal(disposOf(db).length, 2);
+});
+
+test('semaine-type : saute un jour couvert par une absence déclarée (E-19)', async () => {
+    const db = seed({
+        manager_time_off: [{ user_id: MGR_USER, start_date: dayOf(2), end_date: dayOf(2) }],
+    });
+    app.locals.setTestDb(db);
+    assert.equal((await putTemplate()).status, 200);
+    assert.deepEqual(disposOf(db).map(d => d.date), [dayOf(0)]);
+});
+
+// ── POST /api/dispos : la jointure manager_time_off ───────────────────────────
+
+test('POST /api/dispos : une absence directeur ignore le jour, comme un congé staff', async () => {
+    const db = seed({
+        manager_time_off: [{ user_id: MGR_USER, start_date: '2099-01-06', end_date: '2099-01-06' }],
+    });
+    app.locals.setTestDb(db);
+    const res = await req('/api/dispos', DIRECTEUR, {
+        method: 'POST',
+        body: JSON.stringify({ dispos: [
+            { date: '2099-01-05', type: 'custom', start_time: 18, end_time: 24 },
+            { date: '2099-01-06', type: 'custom', start_time: 18, end_time: 24 }, // absence
+            { date: '2099-01-07', type: 'custom', start_time: 18, end_time: 24 },
+        ] }),
+    });
+    assert.equal(res.status, 201);
+    assert.match((await res.json()).message, /congé ignoré/);
+    assert.deepEqual(disposOf(db).map(d => d.date).sort(), ['2099-01-05', '2099-01-07']);
+});
+
+// ── Déclarer une absence purge les dispos de la période ───────────────────────
+
+test('POST /api/me/manager-off : purge les dispos posées sur la période, pas les shifts', async () => {
+    const db = seed({
+        availabilities: [
+            { staff_id: MGR_STAFF, date: '2099-03-02', type: 'soir', status: 'pending' },
+            { staff_id: MGR_STAFF, date: '2099-03-09', type: 'soir', status: 'pending' }, // hors période
+        ],
+        shifts: [{ staff_id: MGR_STAFF, date: '2099-03-02', establishment_id: 'bar1' }],
+    });
+    app.locals.setTestDb(db);
+    const res = await req('/api/me/manager-off', DIRECTEUR, {
+        method: 'POST',
+        body: JSON.stringify({ start_date: '2099-03-01', end_date: '2099-03-03' }),
+    });
+    assert.equal(res.status, 201);
+    assert.deepEqual(disposOf(db).map(d => d.date), ['2099-03-09']);
+    // Le planning reste la décision du patron : son shift n'est pas touché.
+    assert.equal(db.collection('shifts')._docs.length, 1);
+});
+
+// ── File de validation du patron : même onglet, repère « Directeur » ──────────
+
+test('GET /api/dispos/pending : les dispos directeur et staff sont dans la même file', async () => {
+    const db = seed({
+        users: [
+            { _id: MGR_USER, role: 'directeur', staff_id: MGR_STAFF, name: 'Dir Test' },
+            { _id: 'u-staff', role: 'staff', staff_id: STAFF_ID, name: 'Bob' },
+        ],
+        availabilities: [
+            { staff_id: MGR_STAFF, date: '2099-01-05', status: 'pending', start_time: 18, end_time: 24 },
+            { staff_id: STAFF_ID,  date: '2099-01-05', status: 'pending', start_time: 18, end_time: 24 },
+            { staff_id: STAFF_ID,  date: '2099-01-06', status: 'confirmed', start_time: 18, end_time: 24 },
+        ],
+    });
+    app.locals.setTestDb(db);
+    const res = await req('/api/dispos/pending?from=2099-01-01&to=2099-01-31', PATRON);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.length, 2, 'seules les `pending`, directeur ET staff mélangés');
+    assert.equal(body.find(d => d.staff_id === MGR_STAFF).is_directeur, true);
+    assert.equal(body.find(d => d.staff_id === STAFF_ID).is_directeur, undefined);
+});
