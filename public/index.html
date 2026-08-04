@@ -969,13 +969,9 @@
             <span class="modal-title">🟢 Mes disponibilités</span>
             <button class="modal-close" id="manager-dispos-close">&times;</button>
         </div>
-        <div id="manager-dispos-estab-group" style="margin:0 0 12px;display:flex;flex-direction:column;gap:4px">
-            <label style="font-size:11px;font-weight:600;color:#5a5f6e">Établissement</label>
-            <select id="manager-dispos-estab" style="width:100%;height:36px;padding:0 10px;border:1px solid #d0d4dc;border-radius:8px;font-size:13px;color:#1a1a2e;background:#fff;font-family:var(--font)"></select>
-        </div>
         <details id="manager-tpl-details" style="margin:0 0 14px;border:1px solid #e8eaed;border-radius:10px;padding:8px 10px;background:#fafbfc">
-            <summary style="cursor:pointer;font-size:13px;font-weight:700;color:#1a1a2e;user-select:none;list-style:none">🔁 Ma semaine-type <span style="font-weight:500;color:#8a8f9e">— appliquée auto chaque semaine</span></summary>
-            <p style="font-size:11.5px;color:#8a8f9e;line-height:1.4;margin:8px 0 10px">Tes dispos habituelles par jour. Elles se posent automatiquement sur les semaines à venir ; ajuste une semaine ci-dessous sans changer le modèle.</p>
+            <summary style="cursor:pointer;font-size:13px;font-weight:700;color:#1a1a2e;user-select:none;list-style:none">🔁 Ma semaine-type <span style="font-weight:500;color:#8a8f9e">— pré-remplit les semaines à venir</span></summary>
+            <p style="font-size:11.5px;color:#8a8f9e;line-height:1.4;margin:8px 0 10px">Tes dispos habituelles par jour. Elles pré-remplissent les jours encore vides des semaines à venir ; ce que tu saisis à la main ci-dessous n'est jamais écrasé.</p>
             <div id="manager-tpl-days" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
             <div style="display:flex;align-items:center;gap:12px">
                 <button id="manager-tpl-save" style="height:34px;padding:0 16px;background:#6C63FF;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)">Enregistrer la semaine-type</button>
@@ -984,7 +980,7 @@
         </details>
         <p style="font-size:12.5px;color:#5a5f6e;line-height:1.4;margin:0 0 4px;font-weight:700" id="manager-dispos-weeklabel"></p>
         <p style="font-size:12px;color:#8a8f9e;line-height:1.4;margin:0 0 14px">
-            Un créneau par jour (Soir / Midi / Long / Perso), sur la semaine suivante. Validé automatiquement et visible du patron sur le planning. Re-clique un type pour retirer le jour.
+            Un créneau par jour (Soir / Midi / Long / Perso), sur la semaine suivante. Tes dispos partent chez le patron, qui les valide et choisit l'établissement — comme pour le reste de l'équipe. Re-clique un type pour retirer le jour.
         </p>
         <div id="manager-dispos-days" style="display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow-y:auto;margin-bottom:16px"></div>
         <div style="display:flex;align-items:center;gap:12px">

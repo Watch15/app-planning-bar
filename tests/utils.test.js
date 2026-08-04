@@ -13,8 +13,7 @@ const {
     normalizePublishDoc,
     chargeMultiplier,
     resolvePerfSettings,
-    mondayFirstDow,
-    resolveManagerAvailability,
+    datesCoveredByPeriods,
     buildTemplateDispos,
 } = require('../lib/utils');
 
@@ -377,53 +376,41 @@ test('resolvePerfSettings : charge_rate 0 explicite est respecté (pas écrasé 
     assert.equal(resolvePerfSettings(null, perEstab).charge_rate, 0);
 });
 
-// ── mondayFirstDow / resolveManagerAvailability (E-22 — dispos directeur) ───────
+// ── datesCoveredByPeriods (E-22 — absences directeur exclues du pré-remplissage) ─
 
-test('mondayFirstDow : lundi → 0, dimanche → 6', () => {
-    assert.equal(mondayFirstDow('2026-05-11'), 0); // lundi
-    assert.equal(mondayFirstDow('2026-05-17'), 6); // dimanche
-    assert.equal(mondayFirstDow('2026-05-13'), 2); // mercredi
+test('datesCoveredByPeriods : une période au milieu de la fenêtre', () => {
+    const p = [{ start_date: '2026-05-13', end_date: '2026-05-14' }];
+    assert.deepEqual(datesCoveredByPeriods(p, '2026-05-11', '2026-05-17'),
+        ['2026-05-13', '2026-05-14']);
 });
 
-const _tpl = { days: {
-    0: { available: true,  start_time: 18, end_time: 24 }, // lundi
-    2: { available: false },                               // mercredi indispo
-} };
-
-test('resolveManagerAvailability : override prioritaire sur le modèle', () => {
-    const ov = { available: true, start_time: 12, end_time: 20 };
-    const r = resolveManagerAvailability(_tpl, ov, '2026-05-11'); // lundi (modèle 18→24)
-    assert.deepEqual(r, { date: '2026-05-11', available: true, start_time: 12, end_time: 20, source: 'override' });
+test('datesCoveredByPeriods : période débordant la fenêtre → bornée à la fenêtre', () => {
+    const p = [{ start_date: '2026-04-01', end_date: '2026-12-31' }];
+    assert.equal(datesCoveredByPeriods(p, '2026-05-11', '2026-05-17').length, 7);
 });
 
-test('resolveManagerAvailability : override indispo → horaires nullés', () => {
-    const ov = { available: false, start_time: 12, end_time: 20 };
-    const r = resolveManagerAvailability(_tpl, ov, '2026-05-11');
-    assert.deepEqual(r, { date: '2026-05-11', available: false, start_time: null, end_time: null, source: 'override' });
+test('datesCoveredByPeriods : périodes disjointes cumulées, sans doublon', () => {
+    const p = [
+        { start_date: '2026-05-11', end_date: '2026-05-12' },
+        { start_date: '2026-05-12', end_date: '2026-05-13' }, // chevauche la 1re
+    ];
+    assert.deepEqual(datesCoveredByPeriods(p, '2026-05-11', '2026-05-17'),
+        ['2026-05-11', '2026-05-12', '2026-05-13']);
 });
 
-test('resolveManagerAvailability : sans override → case du modèle (jour de semaine)', () => {
-    const r = resolveManagerAvailability(_tpl, null, '2026-05-11'); // lundi → dispo 18→24
-    assert.deepEqual(r, { date: '2026-05-11', available: true, start_time: 18, end_time: 24, source: 'template' });
+test('datesCoveredByPeriods : période hors fenêtre → aucune date', () => {
+    const p = [{ start_date: '2026-06-01', end_date: '2026-06-10' }];
+    assert.deepEqual(datesCoveredByPeriods(p, '2026-05-11', '2026-05-17'), []);
 });
 
-test('resolveManagerAvailability : case modèle indispo → horaires nullés', () => {
-    const r = resolveManagerAvailability(_tpl, null, '2026-05-13'); // mercredi indispo
-    assert.deepEqual(r, { date: '2026-05-13', available: false, start_time: null, end_time: null, source: 'template' });
+test('datesCoveredByPeriods : liste vide / fenêtre invalide → aucune date', () => {
+    assert.deepEqual(datesCoveredByPeriods([], '2026-05-11', '2026-05-17'), []);
+    assert.deepEqual(datesCoveredByPeriods(null, '2026-05-11', '2026-05-17'), []);
+    const p = [{ start_date: '2026-05-11', end_date: '2026-05-17' }];
+    assert.deepEqual(datesCoveredByPeriods(p, '2026-05-17', '2026-05-11'), []); // from > to
 });
 
-test('resolveManagerAvailability : ni override ni case modèle → none', () => {
-    const r = resolveManagerAvailability(_tpl, null, '2026-05-12'); // mardi absent du modèle
-    assert.deepEqual(r, { date: '2026-05-12', available: false, start_time: null, end_time: null, source: 'none' });
-});
-
-test('resolveManagerAvailability : modèle null → none', () => {
-    const r = resolveManagerAvailability(null, null, '2026-05-11');
-    assert.equal(r.source, 'none');
-    assert.equal(r.available, false);
-});
-
-// ── buildTemplateDispos (E-22 v2 — matérialisation semaine-type) ───────────────
+// ── buildTemplateDispos (E-22 v2 — pré-remplissage semaine-type) ───────────────
 
 const _tplV2 = { days: {
     0: { type: 'soir', start_time: 16, end_time: 26 }, // lundi
@@ -438,9 +425,17 @@ test('buildTemplateDispos : matérialise les bons jours de la semaine (lundi-fir
     ]);
 });
 
-test('buildTemplateDispos : saute les jours déjà pris (override manuel)', () => {
+test('buildTemplateDispos : saute un jour ayant déjà une dispo (jamais d\'écrasement)', () => {
     const out = buildTemplateDispos(_tplV2, '2026-05-11', new Set(['2026-05-11']));
     assert.deepEqual(out.map(d => d.date), ['2026-05-13']);
+});
+
+test('buildTemplateDispos : saute les jours d\'absence déclarée (E-19)', () => {
+    // Le mercredi 13 est couvert par une absence → le modèle ne le pré-remplit pas.
+    const offs  = [{ start_date: '2026-05-12', end_date: '2026-05-13' }];
+    const taken = new Set(datesCoveredByPeriods(offs, '2026-05-11', '2026-05-17'));
+    assert.deepEqual(buildTemplateDispos(_tplV2, '2026-05-11', taken).map(d => d.date),
+        ['2026-05-11']);
 });
 
 test('buildTemplateDispos : modèle vide/null → aucune dispo', () => {

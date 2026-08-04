@@ -1,7 +1,41 @@
 # E-22 — Dispos des directeurs · note de design
 
 > Statut : **décidé (2026-07-30) → Modèle A**. Implémentation par phases (cf. §6bis).
-> Rédigé le 2026-07-30. Le backend isolé prototypé (`manager_availability`) est **abandonné** ; seuls les helpers purs `resolveManagerAvailability`/`mondayFirstDow` sont conservés pour la semaine-type (Phase 2 / v2).
+> Rédigé le 2026-07-30. Le backend isolé prototypé (`manager_availability`) est **abandonné** ; les helpers purs `resolveManagerAvailability`/`mondayFirstDow` l'ont suivi (2026-08-04, plus aucun appelant).
+>
+> ⚠️ **Correction de trajectoire (2026-08-04)** — cf. §8.
+
+## 8. Correction de trajectoire (2026-08-04) — la dispo n'est pas un shift
+
+L'implémentation avait dérivé de la Phase 1 : au lieu d'écrire dans `availabilities`, elle
+**créait directement des shifts** (`source:'manager_dispo'`, `from_template`) et les
+auto-validait. Deux conséquences, remontées en revue :
+
+- **Un objet à deux propriétaires.** Le cron quotidien réécrivait la semaine (`deleteMany`
+  + réinsertion), donc toute correction, suppression ou « copier la semaine » faite par le
+  patron sur un créneau du directeur était **annulée le lendemain matin**, sans trace. Une
+  semaine vidée par le directeur revenait aussi, le garde-fou « override manuel » étant
+  déduit d'un `countDocuments` qui vaut 0 quand il ne reste rien.
+- **Un modèle faux.** Une semaine-type est une **indication de disponibilité**, pas un
+  planning : se déclarer dispo toute la journée n'engage pas le patron à planifier la
+  journée entière.
+
+**Décidé** : le directeur repasse par le pipeline `availabilities` **standard** —
+`POST /api/dispos`, mêmes règles (deadline, congés), et **validation par le patron** dans
+la même file que le staff (`/api/dispos/pending` → `PATCH /api/dispos/:id/confirm`, qui
+choisit l'établissement et crée le shift). Conséquences :
+
+- plus aucun marqueur `source:'manager_dispo'` / `from_template` ni chemin parallèle ;
+- la semaine-type devient une **commodité de saisie** : elle pré-remplit en `pending` les
+  jours **encore vides** de la semaine suivante (création seule), sans jamais écraser une
+  saisie manuelle ni une dispo déjà validée ;
+- l'**établissement** n'est plus choisi par le directeur : c'est le patron qui le pose en
+  validant, comme pour un staff ;
+- **E-19 inchangé** (`manager_time_off` conservé, cf. §5.5) — les absences sont simplement
+  jointes au filtre congés de `POST /api/dispos` et au pré-remplissage, et déclarer une
+  absence retire les dispos déjà posées sur la période (jamais les shifts du patron).
+
+Aucune migration : la version « shifts » n'a jamais tourné en prod.
 
 ## Décisions arrêtées (2026-07-30)
 
@@ -88,4 +122,4 @@ Compte tenu de « planifiable » + « comme les autres staff », la cible est le
 **Phase 1 — Saisie dispos directeur (index.html).**
 - Section « Mes disponibilités » sur index.html (le directeur n'a pas accès à planning.html), écrit dans `availabilities` avec son `staff_id`, statut `confirmed` d'office (auto-validé) → overlay planning standard.
 
-**Phase 2 (v2) — Semaine-type récurrente** (helpers `resolveManagerAvailability`/`mondayFirstDow` déjà prêts).
+**Phase 2 (v2) — Semaine-type récurrente** (helper `buildTemplateDispos`, collection `manager_dispo_templates`). Livrée, puis recadrée en pré-remplissage — cf. §8.

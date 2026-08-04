@@ -627,6 +627,7 @@ const _MGR_WEEKDAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samed
 let _mgrDispoSel = {};          // semaine : { 'YYYY-MM-DD': { type, start_time, end_time } }
 let _mgrTplSel   = {};          // semaine-type : { 0..6: { type, start_time, end_time } }
 let _mgrDispoWeekStart = null;  // lundi de la semaine suivante (YYYY-MM-DD)
+let _mgrDispoStatus = {};       // statut patron par date : { 'YYYY-MM-DD': 'pending'|'confirmed'|'rejected' }
 
 const _mgrHmToDec = v => { if (!v) return null; const [h, m] = String(v).split(':').map(Number); return h + (m || 0) / 60; };
 const _mgrDecToHM = dec => { if (dec == null) return ''; const h = Math.floor(dec % 24); const m = Math.round((dec - Math.floor(dec)) * 60); return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'); };
@@ -634,27 +635,16 @@ const _mgrBtnStyle = active => 'flex:1;min-width:52px;height:34px;border-radius:
     (active ? '#2ecc71;background:#2ecc71;color:#fff' : '#d0d4dc;background:#fff;color:#5a5f6e');
 const _mgrInputStyle = 'height:32px;padding:0 8px;border:1px solid #d0d4dc;border-radius:8px;font-size:13px;font-family:var(--font)';
 
-// Établissement des shifts créés : sélecteur peuplé des établissements du directeur
-// (masqué s'il n'y en a qu'un). Le type est désormais persisté sur le shift ; _mgrInferType
-// n'est qu'un fallback pour les shifts créés avant cette persistance.
-function _mgrPopulateEstabs() {
-    const sel = document.getElementById('manager-dispos-estab');
-    const group = document.getElementById('manager-dispos-estab-group');
-    if (!sel) return;
-    sel.innerHTML = allEstablishments.map(e => '<option value="' + escapeHtml(e.id) + '">' + escapeHtml(e.name) + '</option>').join('');
-    if (group) group.style.display = allEstablishments.length <= 1 ? 'none' : '';
-}
+// Pas de sélecteur d'établissement ici : une dispo n'est pas rattachée à un bar.
+// Comme pour un staff, c'est le patron qui choisit l'établissement en validant la
+// dispo. Le type est persisté ; _mgrInferType n'est qu'un fallback pour les dispos
+// enregistrées avant cette persistance.
 const _mgrInferType = (s, e) => {
     for (const [k, v] of Object.entries(_MGR_DISPO_TYPES)) if (v.start === s && v.end === e) return k;
     return 'custom';
 };
-const _mgrEstabId = () => (document.getElementById('manager-dispos-estab') || {}).value || '';
-// Établissement choisi, sinon affiche l'erreur dans `fb` et retourne ''.
-const _mgrRequireEstab = fb => {
-    const id = _mgrEstabId();
-    if (!id && fb) { fb.style.color = '#c0392b'; fb.textContent = 'Choisis un établissement.'; }
-    return id;
-};
+// Libellé du statut d'une dispo côté directeur (le patron valide, cf. E-22).
+const _MGR_STATUS_LABEL = { pending: '⏳ en attente', confirmed: '✅ validée', rejected: '❌ refusée' };
 
 // Carte générique (jour daté OU jour de semaine) : boutons Soir/Midi/Long/Perso +
 // horaires libres (Perso). getSel/setSel branchent la carte sur son store ; re-clic
@@ -710,10 +700,8 @@ function openManagerDisposModal() {
     const dd = document.getElementById('user-menu-dropdown');
     if (dd) dd.classList.remove('open');
     modal.style.display = 'flex';
-    _mgrPopulateEstabs();
-    // Séquentiel : le template pose l'établissement par défaut, puis la semaine enregistrée
-    // (source de vérité) le remplace si elle a déjà des shifts — ordre déterministe voulu.
-    loadManagerTemplate().then(loadManagerDispos);
+    loadManagerTemplate();
+    loadManagerDispos();
 }
 
 // ── Semaine-type (modèle récurrent) ──
@@ -727,10 +715,8 @@ async function loadManagerTemplate() {
     try {
         const res = await fetch('/api/me/manager-dispo-template', { credentials: 'include' });
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Erreur');
-        const { days, establishment_id } = await res.json();
+        const { days } = await res.json();
         Object.entries(days || {}).forEach(([i, c]) => { _mgrTplSel[i] = { type: c.type || 'custom', start_time: c.start_time, end_time: c.end_time }; });
-        const estabSel = document.getElementById('manager-dispos-estab');
-        if (estabSel && establishment_id) estabSel.value = establishment_id;
         renderManagerTemplate();
     } catch (e) {
         wrap.innerHTML = '<div style="text-align:center;color:#e74c3c;font-size:13px;padding:8px 0">' + escapeHtml(e.message || 'Erreur') + '</div>';
@@ -761,19 +747,17 @@ async function saveManagerTemplate() {
         }
         days[i] = { type: sel.type, start_time: sel.start_time, end_time: sel.end_time };
     }
-    const establishment_id = _mgrRequireEstab(fb);
-    if (!establishment_id) return;
     btn.disabled = true; const prev = btn.textContent; btn.textContent = 'Envoi…';
     try {
         const res = await fetch('/api/me/manager-dispo-template', {
             method: 'PUT', credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ days, establishment_id }),
+            body: JSON.stringify({ days }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Erreur');
         if (fb) { fb.style.color = '#27ae60'; fb.textContent = '✅ ' + (data.message || 'Enregistré'); setTimeout(() => { if (fb) fb.textContent = ''; }, 2500); }
-        loadManagerDispos(); // la matérialisation a pu (re)remplir la semaine suivante
+        loadManagerDispos(); // le modèle a pu pré-remplir les jours vides de la semaine suivante
     } catch (e) {
         if (fb) { fb.style.color = '#c0392b'; fb.textContent = e.message || 'Erreur'; }
     } finally { btn.disabled = false; btn.textContent = prev; }
@@ -785,6 +769,7 @@ async function loadManagerDispos() {
     const nextMonday = getMondayOf(addDays(new Date(), 7));   // semaine suivante, comme le staff
     _mgrDispoWeekStart = toDateStr(nextMonday);
     _mgrDispoSel = {};
+    _mgrDispoStatus = {};
     const label = document.getElementById('manager-dispos-weeklabel');
     if (label) {
         const end = addDays(nextMonday, 6);
@@ -794,22 +779,16 @@ async function loadManagerDispos() {
     const fb = document.getElementById('manager-dispos-feedback');
     if (fb) fb.textContent = '';
     wrap.innerHTML = '<div style="text-align:center;color:#ccc;font-size:13px;padding:12px 0">Chargement…</div>';
+    const weekEnd = toDateStr(addDays(nextMonday, 6));
     try {
-        const res = await fetch('/api/me/manager-dispos', { credentials: 'include' });
+        // Pipeline standard : ses dispos sont des `availabilities` comme celles du staff.
+        const res = await fetch('/api/dispos/mine?from=' + _mgrDispoWeekStart + '&to=' + weekEnd, { credentials: 'include' });
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Erreur');
-        const shifts = await res.json();
-        const weekEnd = toDateStr(addDays(nextMonday, 6));
-        const weekEstabs = new Set();
-        shifts.forEach(sh => {
-            if (sh.date >= _mgrDispoWeekStart && sh.date <= weekEnd) {
-                _mgrDispoSel[sh.date] = { type: sh.type || _mgrInferType(sh.start_time, sh.end_time), start_time: sh.start_time, end_time: sh.end_time };
-                if (sh.establishment_id) weekEstabs.add(sh.establishment_id);
-            }
+        (await res.json()).forEach(d => {
+            if (d.type === 'week_note') return;
+            _mgrDispoSel[d.date] = { type: d.type || _mgrInferType(d.start_time, d.end_time), start_time: d.start_time, end_time: d.end_time };
+            _mgrDispoStatus[d.date] = d.status || 'pending';
         });
-        // La semaine déjà enregistrée fait foi sur le sélecteur (prime sur le template) :
-        // sans ça, sauver une semaine réassignerait ses shifts à l'établissement du template.
-        const estabSel = document.getElementById('manager-dispos-estab');
-        if (estabSel && weekEstabs.size === 1) estabSel.value = [...weekEstabs][0];
         renderManagerDisposDays();
     } catch (e) {
         wrap.innerHTML = '<div style="text-align:center;color:#e74c3c;font-size:13px;padding:12px 0">' + escapeHtml(e.message || 'Erreur de chargement') + '</div>';
@@ -823,7 +802,10 @@ function renderManagerDisposDays() {
     wrap.innerHTML = '';
     for (let i = 0; i < 7; i++) {
         const d = addDays(monday, i), date = toDateStr(d);
-        wrap.appendChild(_mgrBuildCard(DAY_NAMES_LONG[d.getDay()] + ' ' + d.getDate() + ' ' + MONTH_NAMES[d.getMonth()],
+        // Le patron valide : le directeur voit où en est chacune de ses dispos.
+        const status = _MGR_STATUS_LABEL[_mgrDispoStatus[date]] || '';
+        wrap.appendChild(_mgrBuildCard(DAY_NAMES_LONG[d.getDay()] + ' ' + d.getDate() + ' ' + MONTH_NAMES[d.getMonth()] +
+            (status ? '  ·  ' + status : ''),
             () => _mgrDispoSel[date],
             v => { if (v) _mgrDispoSel[date] = v; else delete _mgrDispoSel[date]; }));
     }
@@ -832,28 +814,32 @@ function renderManagerDisposDays() {
 async function saveManagerDispos() {
     const btn = document.getElementById('manager-dispos-save');
     const fb  = document.getElementById('manager-dispos-feedback');
-    const days = [];
+    const dispos = [];
     for (const [date, sel] of Object.entries(_mgrDispoSel)) {
         if (!sel || sel.type == null) continue;
         if (sel.start_time == null || sel.end_time == null) {
             if (fb) { fb.style.color = '#c0392b'; fb.textContent = 'Renseigne les horaires (Perso) du ' + date + '.'; }
             return;
         }
-        days.push({ date, type: sel.type, start_time: sel.start_time, end_time: sel.end_time });
+        dispos.push({ date, type: sel.type, start_time: sel.start_time, end_time: sel.end_time });
     }
-    const establishment_id = _mgrRequireEstab(fb);
-    if (!establishment_id) return;
+    if (dispos.length === 0) {
+        if (fb) { fb.style.color = '#c0392b'; fb.textContent = 'Sélectionne au moins un jour.'; }
+        return;
+    }
     btn.disabled = true;
     const prev = btn.textContent; btn.textContent = 'Envoi…';
     try {
-        const res  = await fetch('/api/me/manager-dispos/week', {
-            method: 'PUT', credentials: 'include',
+        // Pipeline standard (mêmes règles que le staff : deadline, congés, validation patron).
+        const res  = await fetch('/api/dispos', {
+            method: 'POST', credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ week_start: _mgrDispoWeekStart, establishment_id, days }),
+            body: JSON.stringify({ dispos }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Erreur');
         if (fb) { fb.style.color = '#27ae60'; fb.textContent = '✅ ' + (data.message || 'Enregistré'); setTimeout(() => { if (fb) fb.textContent = ''; }, 2500); }
+        loadManagerDispos();  // rafraîchit les statuts (re-soumettre repasse en « en attente »)
     } catch (e) {
         if (fb) { fb.style.color = '#c0392b'; fb.textContent = e.message || 'Erreur'; }
     } finally {
@@ -6717,6 +6703,9 @@ async function loadDisposList() {
                     '<div style="font-size:13px;font-weight:700;color:#333">' +
                         (mine ? '<span class="staff-pref-dot" title="Affecté à ton établissement" style="margin-right:4px">★</span>' : '') +
                         name +
+                        (staffDispos.some(d => d.is_directeur)
+                            ? '<span title="Compte directeur" style="margin-left:6px;padding:1px 6px;border-radius:6px;background:#eaf2fb;color:#2980b9;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;vertical-align:middle">Directeur</span>'
+                            : '') +
                     '</div>' +
                     '<div style="font-size:11px;color:#aaa">' + subLabel + '</div>' +
                 '</div>' +
