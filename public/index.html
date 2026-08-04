@@ -883,7 +883,7 @@
             <button class="week-sub-tab active" data-sub="dashboard">Tableau de bord</button>
             <button class="week-sub-tab" data-sub="agenda">Agenda</button>
             <button class="week-sub-tab" data-sub="gantt">Gantt</button>
-            <button class="week-sub-tab" data-sub="team">👥 Équipe</button>
+            <button class="week-sub-tab" data-sub="team">Équipe</button>
             <div style="margin-left:auto;display:flex;align-items:center;gap:6px;padding:4px 0 4px 8px">
                 <button id="btn-export-csv" title="Exporter le planning en CSV" style="font-size:11px;padding:4px 10px;border:1px solid #ccc;border-radius:6px;background:#fff;color:#555;cursor:pointer;white-space:nowrap">⬇ CSV</button>
                 <button id="btn-print-dashboard" title="Enregistrer le tableau de bord en PDF" style="font-size:11px;padding:4px 10px;border:1px solid #ccc;border-radius:6px;background:#fff;color:#555;cursor:pointer;white-space:nowrap">📄 PDF</button>
@@ -1099,7 +1099,7 @@
             <button class="modal-close" id="accounts-modal-close">&times;</button>
         </div>
         <div style="display:flex;gap:0;border-bottom:2px solid var(--light-border);padding:0 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none">
-            <button id="accounts-tab-btn-active"  style="background:none;border:none;border-bottom:2px solid var(--accent);margin-bottom:-2px;padding:12px 14px;min-height:44px;font-size:13px;font-weight:600;color:var(--accent);cursor:pointer;white-space:nowrap;flex-shrink:0">✅ Actifs</button>
+            <button id="accounts-tab-btn-active"  style="background:none;border:none;border-bottom:2px solid var(--accent);margin-bottom:-2px;padding:12px 14px;min-height:44px;font-size:13px;font-weight:600;color:var(--accent);cursor:pointer;white-space:nowrap;flex-shrink:0">Actifs</button>
             <button id="accounts-tab-btn-pending" style="background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;padding:12px 14px;min-height:44px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap;flex-shrink:0">🔔 Invitations en attente <span id="pending-tab-badge" style="display:none;background:#ef4444;color:white;font-size:10px;font-weight:700;border-radius:10px;min-width:16px;height:16px;line-height:16px;padding:0 5px;text-align:center;vertical-align:middle;margin-left:2px"></span></button>
         </div>
         <div id="accounts-tab-active"><div id="accounts-list"></div></div>
@@ -1193,12 +1193,12 @@
             <button class="modal-close" id="dispos-modal-close">&times;</button>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:0;border-bottom:2px solid var(--light-border);padding:0 12px" class="dispos-tabs-bar">
-            <button id="dispos-tab-btn-list"     style="background:none;border:none;border-bottom:2px solid var(--accent);padding:10px 12px;min-height:40px;font-size:13px;font-weight:600;color:var(--accent);cursor:pointer;white-space:nowrap">📋 En attente</button>
-            <button id="dispos-tab-btn-reassign" style="background:none;border:none;border-bottom:2px solid transparent;padding:10px 12px;min-height:40px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap">🔄 À réaffecter <span id="reassign-tab-badge" style="display:none;background:#ef4444;color:white;font-size:10px;font-weight:700;border-radius:10px;min-width:16px;height:16px;line-height:16px;padding:0 5px;text-align:center;vertical-align:middle;margin-left:2px"></span></button>
+            <button id="dispos-tab-btn-list"     style="background:none;border:none;border-bottom:2px solid var(--accent);padding:10px 12px;min-height:40px;font-size:13px;font-weight:600;color:var(--accent);cursor:pointer;white-space:nowrap">En attente</button>
+            <button id="dispos-tab-btn-reassign" style="background:none;border:none;border-bottom:2px solid transparent;padding:10px 12px;min-height:40px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap">À réaffecter <span id="reassign-tab-badge" style="display:none;background:#ef4444;color:white;font-size:10px;font-weight:700;border-radius:10px;min-width:16px;height:16px;line-height:16px;padding:0 5px;text-align:center;vertical-align:middle;margin-left:2px"></span></button>
             <button id="dispos-tab-btn-reminder" style="background:none;border:none;border-bottom:2px solid transparent;padding:10px 12px;min-height:40px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap">🔔 Sans dispo <span id="reminder-tab-badge" style="display:none;background:#ef4444;color:white;font-size:10px;font-weight:700;border-radius:10px;min-width:16px;height:16px;line-height:16px;padding:0 5px;text-align:center;vertical-align:middle;margin-left:2px"></span></button>
-            <button id="dispos-tab-btn-modify"   style="background:none;border:none;border-bottom:2px solid transparent;padding:10px 12px;min-height:40px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap">🔓 Modifier</button>
-            <button id="dispos-tab-btn-notes"    style="background:none;border:none;border-bottom:2px solid transparent;padding:10px 12px;min-height:40px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap">📝 Notes</button>
-            <button id="dispos-tab-btn-conges"   style="background:none;border:none;border-bottom:2px solid transparent;padding:10px 12px;min-height:40px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap">🌴 Congés <span id="conges-tab-badge" style="display:none;background:#ef4444;color:white;font-size:10px;font-weight:700;border-radius:10px;min-width:16px;height:16px;line-height:16px;padding:0 5px;text-align:center;vertical-align:middle;margin-left:2px"></span></button>
+            <button id="dispos-tab-btn-modify"   style="background:none;border:none;border-bottom:2px solid transparent;padding:10px 12px;min-height:40px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap">Modifier</button>
+            <button id="dispos-tab-btn-notes"    style="background:none;border:none;border-bottom:2px solid transparent;padding:10px 12px;min-height:40px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap">Notes</button>
+            <button id="dispos-tab-btn-conges"   style="background:none;border:none;border-bottom:2px solid transparent;padding:10px 12px;min-height:40px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap">Congés <span id="conges-tab-badge" style="display:none;background:#ef4444;color:white;font-size:10px;font-weight:700;border-radius:10px;min-width:16px;height:16px;line-height:16px;padding:0 5px;text-align:center;vertical-align:middle;margin-left:2px"></span></button>
         </div>
         <div id="dispos-tab-conges" style="display:none">
             <div style="padding:10px 16px;border-bottom:1px solid var(--light-border);display:flex;flex-direction:column;gap:8px">
@@ -1337,8 +1337,8 @@
             <button id="recap-print" class="btn-manage-staff" style="font-size:11px;padding:4px 10px" title="Imprimer ce récap">🖨 Imprimer</button>
         </div>
         <div class="recap-subtabs" id="recap-subtabs">
-            <button type="button" class="recap-subtab active" data-sub="recap">📋 Récap</button>
-            <button type="button" class="recap-subtab" data-sub="conges">🌴 Calendrier congés</button>
+            <button type="button" class="recap-subtab active" data-sub="recap">Récap</button>
+            <button type="button" class="recap-subtab" data-sub="conges">Calendrier congés</button>
         </div>
         <div id="recap-content" style="max-height:60vh;overflow-y:auto"></div>
         <div id="recap-conges-content" style="max-height:60vh;overflow-y:auto;display:none"></div>
