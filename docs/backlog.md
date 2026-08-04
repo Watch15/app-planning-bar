@@ -39,6 +39,64 @@ Ajouter les nouveaux éléments avec une description courte, un contexte et une 
 
 ---
 
+## Tests & sécurité — ouvert (revue du 2026-08-04/05)
+
+Contexte : revue complète du code (`/code-review`) puis correction de trajectoire E-22
+(cf. `docs/design-e22-dispos-directeur.md` §8). Ce qui suit est ce qui **reste**.
+
+### État actuel des tests (pour mémoire)
+
+149 tests, deux niveaux : **~132 unitaires** (helpers purs de `lib/utils.js` — aucun Express,
+aucun `db`) et **~17 d'intégration HTTP** (`routes`, `manager-dispos`, moitié de `dispos`) qui
+démarrent la vraie app Express sur un port éphémère et ne remplacent que Mongo, par
+`tests/helpers/fake-db.js`. Session simulée par l'en-tête `x-test-user`.
+**Rien ne couvre le front ni un vrai Mongo.**
+
+### À écrire
+
+| ID | Ce qui n'est pas couvert | Faisable avec l'infra actuelle ? |
+|---|---|---|
+| T-01 | Boucle du cron `materializeAllManagerTemplates` (lecture des templates, résolution du nom). Seule la fonction par semaine est testée, via la route. | **Oui** — même harnais que `manager-dispos.test.js` |
+| T-02 | Branche **ObjectId** de `managerOffPeriods` (`server.js`) : le filtre tolère `user_id` en chaîne **ou** en ObjectId, mais `fake-db` n'utilise que des chaînes → la branche ObjectId n'est **jamais exercée**. Si `manager_time_off.user_id` est stocké en ObjectId en prod, rien ne le prouve. | Non — exige un vrai Mongo |
+| T-03 | **Tout le front** : `script.js`, `planning.js`, `performance.js`. Zéro test. Concerne notamment la modale dispos directeur, les statuts, le badge « Directeur ». | Non — aucune infra front |
+| T-04 | Aucun test E2E navigateur. | Non |
+| T-05 | **Premier lancement d'E-22 contre la vraie base.** Le chemin corrigé n'a jamais tourné en conditions réelles (l'ancien non plus : jamais matérialisé en prod). | — validation manuelle |
+
+Limite assumée : les tests d'intégration sont **boîte blanche** (ils lisent `_docs` du faux
+Mongo), donc couplés au nom des collections et des champs.
+
+### Sécurité — à traiter
+
+| ID | Point | Fichier |
+|---|---|---|
+| S-01 | **`NODE_ENV` est le seul rempart du harnais de test.** Le middleware `x-test-user` fabrique une session (rôle compris) à partir d'un simple en-tête. Il est bien enfermé dans `if (NODE_ENV === 'test')` — **vérifié, non monté en prod**. Mais si `NODE_ENV` valait `test` en prod (var oubliée, image reconstruite), c'est un **contournement total de l'authentification**. Durcir : double garde, ou refus de démarrer dans cette combinaison. | `server.js:685-694`, `:5007-5009` |
+| S-02 | `PATCH /api/performance-settings` : le contrôle d'accès ne tourne que si `establishment_id` est fourni. Sans le champ → écriture du doc **global**, dont `charge_rate` alimente tous les établissements par fallback. Un directeur limité à un bar déplace les chiffres des autres. **Et** `requirePatron` laisse passer l'`observateur` : cette route n'a pas de `denyObservateurEdit`, donc un rôle lecture seule peut écrire. | `server.js:4591`, `:745` |
+| S-03 | `GET /api/performance-settings` : `requireAuth` seul, `establishment_id` transmis tel quel. N'importe quel staff lit objectifs et taux de charges de n'importe quel bar en devinant l'id (slug `Nom_bar`). | `server.js:4583` |
+
+### Findings de revue restants (hors sécurité)
+
+| ID | Point | Priorité |
+|---|---|---|
+| R-06 | **`staff.venues` jamais resynchronisé** avec `assigned_establishments` (`PATCH /api/users/:id/establishments` ne met à jour que `users`). **Devenu critique** avec la correction E-22 : le directeur tombe désormais sous `staffDispoOpen(settings, staffDoc.venues)` → un directeur réaffecté **ne peut plus saisir de dispo du tout**. Idem, promouvoir un `observateur` en `directeur` ne crée aucun profil staff → 400 permanent, réparable seulement par `npm run backfill-directors`. | **Haute** |
+| R-04 | Les push de rappel dispo pointent vers `/planning.html`, page que le directeur ne peut pas ouvrir. | Moyenne |
+| R-05 | Invitation directeur : nom générique `'Directeur'` si aucun staff choisi (N directeurs = N lignes homonymes) ; inviter un staff **existant** comme directeur crée un **second** profil staff (taux, rôles, historique restent sur l'ancien). | Moyenne |
+| R-09 | `sw.js` : `caches.match(...) || caches.match('/login.html')` — `caches.match()` retourne une Promise, toujours truthy → branche login morte, et si `/index.html` manque du cache la chaîne résout `undefined` → erreur réseau au lieu du shell. | Moyenne |
+| R-10 | `performance.js` : `loadTargets()` non-awaité dans le handler `change` d'établissement → le premier rendu colore les pastilles contre l'objectif du bar **précédent**, ce qui vide E-24 de son sens. | Moyenne |
+| R-12 | Orphelins : profil staff créé **avant** `users.insertOne` (échec = staff fantôme) ; `DELETE /api/users/:id` ne supprime pas le profil lié ni son `manager_dispo_templates`. | Basse |
+| ~~R-11~~ | ~~`PUT /api/me/manager-dispos/week` sans borne temporelle~~ | ✅ Résolu — route supprimée par la correction E-22 |
+
+### Questions en attente de réponse
+
+1. ~~Emojis de la barre de navigation principale et du drawer mobile~~ — ✅ **Tranché (2026-08-05) : retirés.** Onglets, sous-onglets, `.header-nav` et drawer sont nettoyés. **Conservés** : 🔔 (notifications, exception demandée), et les boutons **sans libellé** dont l'icône EST le bouton (⚙ paramètres dispos, ☰ menu mobile) — les vider laisserait un bouton blanc. Les 3 zones voisines (menu utilisateur, chips de filtre Congés, boutons d'action + titres de modale concernés) ont été nettoyées dans la foulée. **Restent, hors périmètre demandé** : les icônes de statut injectées par le JS (`script.js` — ⏳ badges de congés), les placeholders de recherche (🔎/🔍/⏰), quelques libellés internes de modale (🔁 Ma semaine-type, 💶 Import taux, ⬆ Import CSV, 👥 Garder les staffs, 🔒 mention RGPD) et le hint ★ de la barre staff. Non touché aussi : `⇄ Échanges`, dans le bloc F-05 commenté — reviendra avec le symbole si F-05 est réactivé.
+2. **Décocher un jour puis enregistrer ne supprime pas la dispo** côté serveur (`POST /api/dispos` ne fait qu'upsert). Limite **partagée avec le flux staff** — la corriger pour tout le monde, ou laisser ?
+3. **T-01** (test de la boucle cron) : à écrire maintenant ou plus tard ?
+
+### Divers
+
+- `graphify update .` **refuse** de s'exécuter (994 nœuds contre 997 en base, soupçon de chunks manquants). Non forcé — `--force` écrase le graphe. Le graphe est donc **périmé** depuis la correction E-22.
+
+---
+
 ## Déjà livré / non prioritaire
 
 | ID | Description | Décision |

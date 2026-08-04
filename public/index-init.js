@@ -25,7 +25,7 @@ function syncDrawerDispoToggle() {
     if (!mainToggle || !check) return;
     const on = mainToggle.checked;
     check.checked = on;
-    if (label) label.textContent = on ? '✅ Dispos ouvertes' : '🔒 Dispos fermées';
+    if (label) label.textContent = on ? 'Dispos ouvertes' : 'Dispos fermées';
     if (track) track.style.background = on ? '#10b981' : '#d0d0d0';
     if (thumb) thumb.style.transform   = on ? 'translateX(20px)' : '';
 }
