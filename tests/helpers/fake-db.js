@@ -27,8 +27,11 @@ function isOperator(cond) {
 // CONTIENT la valeur. C'est ce que font `{ venues: 'bar1' }` (S-04, `staffDispoOpen`) et
 // `{ assigned_establishments: estab.id }` (DELETE établissement). Sans ça, ces filtres
 // ne renvoient jamais rien ici et les tests passeraient à côté.
-// Volontairement limité à `$in` et à l'égalité simple : `$ne` garde la sémantique
-// scalaire, seul usage actuel (`type: { $ne: 'week_note' }`).
+const contains = (val, v) => Array.isArray(val) ? val.some(x => eq(x, v)) : eq(val, v);
+
+// `$ne`/`$nin` gardent volontairement la sémantique SCALAIRE : leur seul usage
+// (`type: { $ne: 'week_note' }`) porte sur un champ scalaire, et la vraie sémantique
+// Mongo sur tableau (« ne contient pas ») changerait le résultat de filtres existants.
 function matchField(val, cond) {
     if (isOperator(cond)) {
         return Object.entries(cond).every(([op, v]) => {
@@ -38,14 +41,13 @@ function matchField(val, cond) {
                 case '$gte': return val >= v;
                 case '$lt':  return val < v;
                 case '$gt':  return val > v;
-                case '$in':  return Array.isArray(v)
-                    && (Array.isArray(val) ? val.some(x => v.some(y => eq(x, y))) : v.some(x => eq(val, x)));
+                case '$in':  return Array.isArray(v) && v.some(y => contains(val, y));
                 case '$nin': return Array.isArray(v) && !v.some(x => eq(val, x));
                 default:     throw new Error('fake-db: opérateur non supporté ' + op);
             }
         });
     }
-    return Array.isArray(val) ? val.some(x => eq(x, cond)) : eq(val, cond);
+    return contains(val, cond);
 }
 
 function matchDoc(doc, query) {

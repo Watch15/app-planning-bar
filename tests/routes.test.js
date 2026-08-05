@@ -9,30 +9,15 @@
 // Variables d'env sûres AVANT le require — `dotenv.config()` (dans server.js) ne
 // réécrit pas les vars déjà définies. Évite le hard-crash prod et toute connexion
 // à la vraie base (connectDB n'est de toute façon jamais appelé en require).
-process.env.NODE_ENV     = 'test';
-process.env.ALLOW_TEST_AUTH = '1'; // S-01 : 2e garde du harnais `x-test-user`
-process.env.MONGO_URI     = process.env.MONGO_URI     || 'mongodb://127.0.0.1:27017/templyo_test';
-process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'integration-test-secret-0123456789abcdef';
-
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
-const app = require('../server');
+const { startApp, stopApp, baseUrl } = require('./helpers/harness');
 
-let server, base;
-
-before(async () => {
-    server = app.listen(0); // port éphémère
-    await new Promise((resolve, reject) => {
-        server.once('listening', resolve);
-        server.once('error', reject);
-    });
-    base = 'http://127.0.0.1:' + server.address().port;
-});
-
-after(() => { if (server) server.close(); });
+before(startApp);
+after(stopApp);
 
 test('GET /auth/me sans session → 401 JSON', async () => {
-    const res = await fetch(base + '/auth/me');
+    const res = await fetch(baseUrl() + '/auth/me');
     assert.equal(res.status, 401);
     assert.match(res.headers.get('content-type') || '', /application\/json/);
     const body = await res.json();
@@ -40,7 +25,7 @@ test('GET /auth/me sans session → 401 JSON', async () => {
 });
 
 test('GET /api/establishments sans base → 503 (middleware checkDB)', async () => {
-    const res = await fetch(base + '/api/establishments');
+    const res = await fetch(baseUrl() + '/api/establishments');
     assert.equal(res.status, 503);
     const body = await res.json();
     assert.equal(body.error, 'Base de données non disponible');
@@ -49,7 +34,7 @@ test('GET /api/establishments sans base → 503 (middleware checkDB)', async () 
 // Anti-injection NoSQL : un opérateur Mongo passé en query (`?from[$gt]=x`) est
 // parsé en objet par qs → rejeté en 400 AVANT d'atteindre la moindre requête.
 test('query param objet ($gt) → 400 (anti-injection NoSQL)', async () => {
-    const res = await fetch(base + '/api/establishments?' + encodeURIComponent('from[$gt]') + '=2020');
+    const res = await fetch(baseUrl() + '/api/establishments?' + encodeURIComponent('from[$gt]') + '=2020');
     assert.equal(res.status, 400);
     const body = await res.json();
     assert.equal(body.error, 'Paramètre de requête invalide');
@@ -58,6 +43,6 @@ test('query param objet ($gt) → 400 (anti-injection NoSQL)', async () => {
 // Contre-épreuve : un query param scalaire normal n'est PAS bloqué par le
 // middleware (il poursuit jusqu'à checkDB → 503 sans base).
 test('query param scalaire normal → traverse le middleware anti-injection', async () => {
-    const res = await fetch(base + '/api/establishments?from=2020-01-01');
+    const res = await fetch(baseUrl() + '/api/establishments?from=2020-01-01');
     assert.equal(res.status, 503);
 });

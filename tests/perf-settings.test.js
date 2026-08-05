@@ -11,15 +11,10 @@
 //
 // Harnais CD-05 : faux `db` en mémoire + session simulée par l'en-tête `x-test-user`.
 
-process.env.NODE_ENV        = 'test';
-process.env.ALLOW_TEST_AUTH = '1'; // S-01 : 2e garde du harnais `x-test-user`
-process.env.MONGO_URI       = process.env.MONGO_URI       || 'mongodb://127.0.0.1:27017/templyo_test';
-process.env.SESSION_SECRET  = process.env.SESSION_SECRET  || 'integration-test-secret-0123456789abcdef';
-
 const { test, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const { makeDb } = require('./helpers/fake-db');
-const app = require('../server');
+const { app, startApp, stopApp, req } = require('./helpers/harness');
 
 const PATRON      = { _id: 'u-patron', role: 'patron', name: 'Chef' };
 const OBSERVATEUR = { _id: 'u-obs',    role: 'observateur', name: 'Audit' };
@@ -27,23 +22,8 @@ const OBSERVATEUR = { _id: 'u-obs',    role: 'observateur', name: 'Audit' };
 const DIRECTEUR   = { _id: 'u-dir', role: 'directeur', name: 'Dir', assigned_establishments: ['bar1'] };
 const STAFF       = { _id: 'u-staff', role: 'staff', name: 'Bob', staff_id: '0123456789abcdef0123cccc' };
 
-let server, base;
-
-before(async () => {
-    server = app.listen(0);
-    await new Promise((resolve, reject) => {
-        server.once('listening', resolve);
-        server.once('error', reject);
-    });
-    base = 'http://127.0.0.1:' + server.address().port;
-});
-
-after(() => { if (server) server.close(); });
-
-const req = (path, user, init = {}) => fetch(base + path, {
-    ...init,
-    headers: { 'content-type': 'application/json', 'x-test-user': JSON.stringify(user), ...(init.headers || {}) },
-});
+before(startApp);
+after(stopApp);
 
 const patch = (user, body) => req('/api/performance-settings', user, { method: 'PATCH', body: JSON.stringify(body) });
 

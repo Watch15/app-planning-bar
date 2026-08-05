@@ -178,6 +178,11 @@ function showConfirm(message, onConfirm, onCancel) {
     overlay.addEventListener('click', e => { if (e.target === overlay) { close(); if (onCancel) onCancel(); } });
 }
 
+// Version « await » de showConfirm — pour les enchaînements où la suite du traitement
+// dépend de la réponse (`if (!await askConfirm(...)) return;`).
+const askConfirm = message => new Promise(resolve =>
+    showConfirm(message, () => resolve(true), () => resolve(false)));
+
 function showPrompt(message, placeholder, onConfirm) {
     const mob = window.innerWidth < 768;
     const overlay = document.createElement('div');
@@ -5791,7 +5796,7 @@ async function loadDisposBadge() {
     try {
         // Le bouton « Dispos » est le hub absences : pastille = dispos + congés en attente
         const [dispRes, congRes] = await Promise.all([
-            fetch('/api/dispos/count', { credentials: 'include' }),
+            fetch('/api/dispos/count' + disposScopeQS(), { credentials: 'include' }),
             fetch('/api/conges/pending-count', { credentials: 'include' }),
         ]);
         let count = 0;
@@ -6611,7 +6616,11 @@ async function sendRappelDispos() {
 // demande la file complète au serveur. Le filtre est côté serveur : sans elle, les
 // autres dispos ne sont plus dans la réponse (avant, elles arrivaient toutes et le
 // front se contentait de les trier en sections).
+// `disposScopeQS()` est partagé par la LISTE et la PASTILLE : si seule la liste
+// transmettait le périmètre, la pastille annoncerait 3 en attente pendant que la file
+// en affiche 12.
 let disposScopeAll = false;
+const disposScopeQS = (sep = '?') => (disposScopeAll ? sep + 'scope=all' : '');
 
 async function loadDisposList() {
     const list = document.getElementById('dispos-list');
@@ -6635,7 +6644,7 @@ async function loadDisposList() {
         // La bascule décide du LOT (« mon staff » ou tout le monde) ; l'établissement
         // cible est choisi dans la modale — une dispo ne peut aller que dans UN bar.
         const isDirecteur = !!currentUser && currentUser.role === 'directeur';
-        const renderListHeader = (pending) => {
+        const renderListHeader = () => {
             const bar = document.createElement('div');
             bar.style.cssText = 'display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:10px 16px 0';
 
@@ -6647,13 +6656,13 @@ async function loadDisposList() {
                 bar.appendChild(toggle);
             }
 
-            if (pending && pending.length) {
+            if (dispos.length) {
                 const all = document.createElement('button');
                 all.style.cssText = 'padding:5px 12px;border-radius:8px;border:1.5px solid #2ecc71;background:#eafaf1;color:#27ae60;font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--font)';
-                all.textContent = '✓ Tout confirmer (' + pending.length + ')';
+                all.textContent = '✓ Tout confirmer (' + dispos.length + ')';
                 all.title = 'Confirme toutes les dispos affichées sur un même établissement';
-                all.onclick = () => confirmDisposBatch(pending, {
-                    preferStaffId: pending[0]?.staff_id,
+                all.onclick = () => confirmDisposBatch(dispos, {
+                    preferStaffId: dispos[0]?.staff_id,
                     onDone: () => loadDisposList(),
                 });
                 bar.appendChild(all);
@@ -6661,9 +6670,10 @@ async function loadDisposList() {
             list.appendChild(bar);
         };
 
+        list.innerHTML = '';
+        renderListHeader();
+
         if (dispos.length === 0) {
-            list.innerHTML = '';
-            renderListHeader(null);
             const empty = document.createElement('div');
             empty.style.cssText = 'padding:24px;text-align:center;color:#ccc;font-size:13px';
             empty.textContent = disposScopeAll
@@ -6680,45 +6690,45 @@ async function loadDisposList() {
             byStaff[d.staff_id].dispos.push(d);
         });
 
-        list.innerHTML = '';
-        renderListHeader(dispos);
-
         // Semaine : lun → dim
         const weekDays = [];
         for (let i = 0; i < 7; i++) weekDays.push(toDateStr(addDays(nextMonday, i)));
         const DAY_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
-        // Un directeur voit en priorité les staff rattachés à ses établissements
-        const dirEstabs = (currentUser && currentUser.role === 'directeur')
-            ? (currentUser.assigned_establishments || [])
-            : [];
+        // Sections « ★ Staff de mon établissement » / « Autres ».
+        // Depuis S-04, le serveur ne renvoie QUE mon staff par défaut : le tri et les
+        // en-têtes ne veulent plus rien dire (bandeau « mon établissement » au-dessus
+        // d'une liste qui ne contient que ça, branche « Autres » inatteignable). Ils ne
+        // servent donc plus que dans la vue « tout le staff ».
+        const dirEstabs = isDirecteur ? (currentUser.assigned_establishments || []) : [];
+        const showSections = dirEstabs.length > 0 && disposScopeAll;
+        const staffById = new Map(allStaff.map(s => [String(s._id), s]));
         const isMyStaff = (staffId) => {
-            if (dirEstabs.length === 0) return false;
-            const sm = allStaff.find(s => String(s._id) === String(staffId));
+            const sm = staffById.get(String(staffId));
             return !!(sm && sm.venues && sm.venues.some(v => dirEstabs.includes(v)));
         };
 
         const staffEntries = Object.entries(byStaff);
-        if (dirEstabs.length) {
+        if (showSections) {
             staffEntries.sort((a, b) =>
                 (isMyStaff(a[0]) ? 0 : 1) - (isMyStaff(b[0]) ? 0 : 1) || a[1].name.localeCompare(b[1].name));
         }
 
         let shownMine = false, shownOthers = false;
         staffEntries.forEach(([staffId, { name, dispos: staffDispos }]) => {
-            const sm    = allStaff.find(s => String(s._id) === staffId);
+            const sm    = staffById.get(staffId);
             const color = sm ? sm.color : '#888';
-            const mine  = isMyStaff(staffId);
+            const mine  = showSections && isMyStaff(staffId);
 
             // En-têtes de section pour un directeur : "Mon staff" puis "Autres"
-            if (dirEstabs.length && mine && !shownMine) {
+            if (showSections && mine && !shownMine) {
                 shownMine = true;
                 const sec = document.createElement('div');
                 sec.style.cssText = 'margin:14px 16px 8px;padding:9px 14px;background:#fff7e6;border:1.5px solid var(--warning,#f59e0b);border-radius:10px;font-size:15px;font-weight:800;color:#b45309;display:flex;align-items:center;gap:8px';
                 sec.innerHTML = '<span style="font-size:17px;color:var(--warning,#f59e0b)">★</span> Staff de mon établissement';
                 list.appendChild(sec);
             }
-            if (dirEstabs.length && !mine && shownMine && !shownOthers) {
+            if (showSections && !mine && shownMine && !shownOthers) {
                 shownOthers = true;
                 const sec = document.createElement('div');
                 sec.style.cssText = 'margin:20px 16px 6px;padding:0 4px;font-size:12px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:0.5px';
@@ -6838,56 +6848,86 @@ async function loadDisposList() {
 // Rappel du modèle (E-22) : une dispo en attente n'a pas d'établissement — confirmer,
 // c'est justement l'affecter à un bar (et créer le shift si la case est cochée). Il n'y
 // a donc pas de « confirmer pour tous les bars » : le lot varie, la cible reste unique.
-// Séquentiel volontairement : la route `confirm` vérifie l'absence de shift existant
-// avant d'en créer un ; en parallèle, deux requêtes sur le même (staff, date, bar)
-// pourraient passer la garde ensemble et créer un doublon.
+// PATCH `action` sur chaque dispo, par vagues parallèles. Deux requêtes ne peuvent PAS
+// se retrouver dans la même vague si elles partagent (staff_id, date) : la route `confirm`
+// vérifie l'absence de shift avant d'en créer un, et deux requêtes concurrentes sur la
+// même clé franchiraient la garde ensemble. Le groupement rend le parallélisme sûr là où
+// le tout-séquentiel faisait payer 40 allers-retours en série pour protéger un cas rare.
+// Retourne { ok, failed } — un lot à moitié raté ne doit pas s'annoncer comme réussi.
+async function patchEachDispo(dispos, action, body) {
+    const byKey = new Map();
+    dispos.forEach(d => {
+        const k = d.staff_id + '|' + d.date;
+        if (!byKey.has(k)) byKey.set(k, []);
+        byKey.get(k).push(d);
+    });
+    const chains = [...byKey.values()];
+    let ok = 0, failed = 0;
+    const POOL = 6;
+    for (let i = 0; i < chains.length; i += POOL) {
+        await Promise.all(chains.slice(i, i + POOL).map(async chain => {
+            for (const dispo of chain) { // séquentiel À L'INTÉRIEUR d'une même clé
+                try {
+                    const res = await fetch('/api/dispos/' + dispo._id + '/' + action, {
+                        credentials: 'include', method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: body ? JSON.stringify(body) : undefined,
+                    });
+                    if (res.ok) ok++; else failed++;
+                } catch { failed++; }
+            }
+        }));
+    }
+    return { ok, failed };
+}
+
+const batchToast = (n, verb, failed) =>
+    showToast(n + ' dispo(s) ' + verb + (failed ? ' · ' + failed + ' échec(s)' : ''));
+
 async function confirmDisposBatch(dispos, { preferStaffId, onDone, onCancel }) {
     const modal = document.getElementById('confirm-dispo-modal');
+    const btnOk = document.getElementById('confirm-dispo-btn');
+    const btnKo = document.getElementById('confirm-dispo-cancel');
     if (!modal || !dispos.length) return;
     modal.style.display = 'flex';
     buildEstablishmentSelect(preferStaffId);
 
-    document.getElementById('confirm-dispo-btn').onclick = async () => {
+    // Les deux boutons sont des éléments PERMANENTS du DOM : sans ce nettoyage, leur
+    // handler retient `dispos` et tout le scope de rendu de la liste jusqu'au prochain lot.
+    const release = () => { btnOk.onclick = null; btnKo.onclick = null; };
+
+    btnOk.onclick = async () => {
         const establishmentId = document.getElementById('confirm-dispo-establishment').value;
         const createShift     = document.getElementById('confirm-create-shift').checked;
 
         // Garde-fou : affecter en masse à un bar où le staff ne travaille pas est
         // possible mais rarement voulu — et si `create_shift` est coché, ça crée de
         // vrais shifts. On le dit avant, avec le nombre exact.
+        // ⚠️ Confort d'alerte, PAS un contrôle : le serveur ne l'applique pas (cf. R-16).
+        const staffById = new Map(allStaff.map(s => [String(s._id), s]));
         const outsiders = new Set(dispos
             .filter(d => d.type !== 'off')
-            .filter(d => {
-                const sm = allStaff.find(s => String(s._id) === String(d.staff_id));
-                return sm && Array.isArray(sm.venues) && !sm.venues.includes(establishmentId);
-            })
-            .map(d => d.staff_id));
+            .map(d => staffById.get(String(d.staff_id)))
+            .filter(sm => sm && Array.isArray(sm.venues) && !sm.venues.includes(establishmentId))
+            .map(sm => String(sm._id)));
         if (outsiders.size) {
             const estabName = (allEstablishments.find(e => e.id === establishmentId) || {}).name || 'ce bar';
-            const ok = await new Promise(resolve => showConfirm(
-                outsiders.size + ' membre(s) du lot ne sont pas rattachés à ' + estabName + '. Les affecter quand même ?',
-                () => resolve(true), () => resolve(false)));
-            if (!ok) return;
+            if (!await askConfirm(outsiders.size + ' membre(s) du lot ne sont pas rattachés à '
+                + estabName + '. Les affecter quand même ?')) return;
         }
         modal.style.display = 'none';
+        release();
 
-        let confirmed = 0;
-        for (const dispo of dispos) {
-            try {
-                await fetch('/api/dispos/' + dispo._id + '/confirm', {
-                    credentials: 'include', method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ establishment_id: establishmentId, create_shift: createShift }),
-                });
-                confirmed++;
-            } catch { }
-        }
+        const { ok, failed } = await patchEachDispo(dispos, 'confirm',
+            { establishment_id: establishmentId, create_shift: createShift });
         loadDisposBadge();
         if (createShift) await refreshWeek();
-        showToast(confirmed + ' dispo(s) confirmée(s)');
+        batchToast(ok, 'confirmée(s)', failed);
         if (onDone) onDone();
     };
-    document.getElementById('confirm-dispo-cancel').onclick = () => {
+    btnKo.onclick = () => {
         modal.style.display = 'none';
+        release();
         if (onCancel) onCancel();
     };
 }
@@ -6898,16 +6938,10 @@ function confirmAllForStaff(dispos, card) {
         onDone: () => card.remove(),
         // Sur une carte staff, « Annuler » propose de refuser tout le membre (existant).
         onCancel: () => showConfirm('Refuser toutes les dispos de ce membre ?', async () => {
-            let refused = 0;
-            for (const dispo of dispos) {
-                try {
-                    await fetch('/api/dispos/' + dispo._id + '/reject', { credentials: 'include', method: 'PATCH' });
-                    refused++;
-                } catch { }
-            }
+            const { ok, failed } = await patchEachDispo(dispos, 'reject', null);
             card.remove();
             loadDisposBadge();
-            showToast(refused + ' dispo(s) refusée(s)');
+            batchToast(ok, 'refusée(s)', failed);
         }),
     });
 }

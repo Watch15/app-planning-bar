@@ -9,16 +9,11 @@
 // Harnais CD-05 : faux `db` en mémoire (app.locals.setTestDb) + session simulée par
 // l'en-tête `x-test-user`. Aucun Mongo, aucune dépendance.
 
-process.env.NODE_ENV       = 'test';
-process.env.ALLOW_TEST_AUTH = '1'; // S-01 : 2e garde du harnais `x-test-user`
-process.env.MONGO_URI      = process.env.MONGO_URI      || 'mongodb://127.0.0.1:27017/templyo_test';
-process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'integration-test-secret-0123456789abcdef';
-
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const { weekStart, toDateStr } = require('../lib/utils');
 const { makeDb } = require('./helpers/fake-db');
-const app = require('../server');
+const { app, startApp, stopApp, req } = require('./helpers/harness');
 
 const MGR_STAFF   = '0123456789abcdef0123aaaa';
 const MGR_USER    = '0123456789abcdef0123bbbb';
@@ -38,23 +33,8 @@ const TEMPLATE_DAYS = {
     2: { type: 'midi', start_time: 10, end_time: 17 },
 };
 
-let server, base;
-
-before(async () => {
-    server = app.listen(0);
-    await new Promise((resolve, reject) => {
-        server.once('listening', resolve);
-        server.once('error', reject);
-    });
-    base = 'http://127.0.0.1:' + server.address().port;
-});
-
-after(() => { if (server) server.close(); });
-
-const req = (path, user, init = {}) => fetch(base + path, {
-    ...init,
-    headers: { 'content-type': 'application/json', 'x-test-user': JSON.stringify(user), ...(init.headers || {}) },
-});
+before(startApp);
+after(stopApp);
 
 const putTemplate = (days = TEMPLATE_DAYS) =>
     req('/api/me/manager-dispo-template', DIRECTEUR, { method: 'PUT', body: JSON.stringify({ days }) });

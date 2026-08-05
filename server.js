@@ -81,25 +81,30 @@ if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
     process.exit(1);
 }
 
-// S-01 — DOUBLE GARDE sur le harnais de test.
+// S-01 — TRIPLE GARDE sur le harnais de test.
 // Le middleware `x-test-user` fabrique une session complète (rôle compris) à partir d'un
-// simple en-tête HTTP : s'il était monté en prod, c'est un contournement TOTAL de
-// l'authentification. `NODE_ENV` seul ne suffit pas comme rempart — c'est exactement le
-// genre de variable qu'on oublie dans une config de déploiement ou une image reconstruite.
-// Il faut donc DEUX variables, dont une que rien d'autre n'utilise et qu'aucune plateforme
-// ne pose par défaut. Les fichiers de tests les arment eux-mêmes (cf. en-tête de
-// `tests/*.test.js`), donc `node --test` fonctionne sans passer par npm.
-const TEST_HARNESS = process.env.NODE_ENV === 'test' && process.env.ALLOW_TEST_AUTH === '1';
+// simple en-tête HTTP : monté en prod, c'est un contournement TOTAL de l'authentification.
+// La garde qui compte est la PREMIÈRE, parce qu'elle n'est pas configurable :
+//   • `require.main !== module` — le harnais n'existe que si server.js est REQUIS (un
+//     fichier de test), jamais s'il est LANCÉ (`npm start` → `node server.js`). Aucune
+//     variable d'environnement, aucun `.env` traîné dans une image ne peut l'armer.
+//   • les deux variables ensuite : `NODE_ENV` seul s'oublie dans une config de déploiement,
+//     et `ALLOW_TEST_AUTH` n'est utilisée nulle part ailleurs. Les fichiers de tests les
+//     arment eux-mêmes, donc `node --test` marche sans passer par npm.
+const TEST_HARNESS = require.main !== module
+    && process.env.NODE_ENV === 'test'
+    && process.env.ALLOW_TEST_AUTH === '1';
 
-// Combinaison contradictoire : quelqu'un a armé le harnais sur une prod. Ne pas démarrer.
-if (TEST_HARNESS && process.env.NODE_ENV === 'production') {
-    console.error('❌ Harnais de test armé en production — refus de démarrer.');
+// Intention contradictoire : quelqu'un a posé la variable du harnais hors test. Le harnais
+// n'est de toute façon pas monté (garde ci-dessus) — mais c'est le signe d'une config
+// dangereuse, on refuse de démarrer plutôt que de tourner avec.
+// ⚠️ Tester la VARIABLE BRUTE, pas `TEST_HARNESS` : ce dernier exige déjà `NODE_ENV=test`,
+// donc le croiser avec `production` donnerait une condition insatisfiable — un garde-fou
+// qui rassure sans jamais s'exécuter.
+if (process.env.ALLOW_TEST_AUTH === '1' && process.env.NODE_ENV !== 'test') {
+    console.error('❌ ALLOW_TEST_AUTH=1 hors environnement de test — refus de démarrer.');
     process.exit(1);
 }
-if (process.env.NODE_ENV === 'test' && !TEST_HARNESS) {
-    console.warn('⚠️  NODE_ENV=test sans ALLOW_TEST_AUTH=1 — harnais de test NON monté, authentification normale.');
-}
-if (TEST_HARNESS) console.warn('⚠️  HARNAIS DE TEST ACTIF — l\'en-tête x-test-user fabrique une session. Jamais en prod.');
 
 // Dev local : génère un secret aléatoire au boot si non défini, plutôt qu'une
 // constante connue. Les sessions ne survivent pas au restart — comportement
@@ -174,6 +179,18 @@ async function connectDB() {
             { created_at: 1 },
             { expireAfterSeconds: 30 * 24 * 60 * 60 }
         ).catch(e => console.warn('⚠️ TTL staff_notifications:', e.message));
+        // S-04 — `pendingStaffScope` interroge `staff` par `venues` (multikey) à chaque
+        // ouverture de la file ET à chaque rafraîchissement de la pastille : sans index,
+        // c'est un collscan de toute la collection staff.
+        db.collection('staff').createIndex(
+            { venues: 1 }
+        ).catch(e => console.warn('⚠️ Index staff.venues:', e.message));
+        // Idem : le count des dispos en attente était index-only sur `{status:1}` ; le
+        // filtre de périmètre y ajoute `staff_id`, d'où l'index composé (sinon Mongo doit
+        // charger chaque document `pending` pour tester l'appartenance au $in).
+        db.collection('availabilities').createIndex(
+            { status: 1, staff_id: 1 }
+        ).catch(e => console.warn('⚠️ Index availabilities.status+staff_id:', e.message));
         scheduleDailyAt10();
         cleanupOldJokers();
     } catch (e) {
@@ -2857,23 +2874,28 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
 // ⚠️ Ce n'est PAS un cloisonnement : `scope=all` est ouvert à tout directeur (décision
 // produit du 2026-08-05, bascule « voir tout le staff »). C'est le défaut d'affichage
 // qui change, pas le droit d'accès.
-// Retourne null = aucun filtre (patron, observateur, ou bascule active).
-async function pendingStaffScope(user, scope) {
-    if (user.role !== 'directeur' || scope === 'all') return null;
+// Retourne le FRAGMENT de filtre à fusionner dans la requête : `{}` (aucun filtre) ou
+// `{ staff_id: { $in: [...] } }`. Rendre un fragment plutôt qu'un tableau d'ids évite le
+// tri-état null/[]/ids, où le `[]` (directeur sans bar ⇒ ne voit rien) est *truthy* et
+// tombe au premier `if (ids?.length)` écrit par réflexe.
+async function pendingScopeFilter(user, scope) {
+    if (user.role !== 'directeur' || scope === 'all') return {};
     const venues = user.assigned_establishments || [];
-    if (!venues.length) return []; // aucun bar assigné ⇒ aucun staff (cohérent avec canAccessEstablishment)
+    // Aucun bar assigné ⇒ aucun staff, et non « tous » : cohérent avec canAccessEstablishment.
+    if (!venues.length) return { staff_id: { $in: [] } };
     const staff = await db.collection('staff')
         .find({ venues: { $in: venues } }, { projection: { _id: 1 } }).toArray();
-    return staff.map(s => String(s._id));
+    return { staff_id: { $in: staff.map(s => String(s._id)) } };
 }
 
 app.get('/api/dispos/pending', checkDB, requirePatron, async (req, res) => {
     const { from, to, scope } = req.query;
     if (!from || !to) return res.status(400).json({ error: 'from et to requis' });
     try {
-        const query = { date: { $gte: from, $lte: to }, status: 'pending' };
-        const scopeIds = await pendingStaffScope(req.session.user, scope);
-        if (scopeIds) query.staff_id = { $in: scopeIds };
+        const query = {
+            date: { $gte: from, $lte: to }, status: 'pending',
+            ...(await pendingScopeFilter(req.session.user, scope)),
+        };
         const dispos = await db.collection('availabilities').find(query).sort({ date: 1, start_time: 1 }).toArray();
         // Repère « Directeur » (E-22) : ses dispos arrivent dans la MÊME file que celles
         // du staff — le patron voit simplement de qui il s'agit avant de valider.
@@ -2890,10 +2912,10 @@ app.get('/api/dispos/pending', checkDB, requirePatron, async (req, res) => {
 app.get('/api/dispos/count', checkDB, requirePatron, async (req, res) => {
     try {
         // Même périmètre que la liste, sinon la pastille annonce 12 et la file en montre 3.
-        const query = { status: 'pending' };
-        const scopeIds = await pendingStaffScope(req.session.user, req.query.scope);
-        if (scopeIds) query.staff_id = { $in: scopeIds };
-        const count = await db.collection('availabilities').countDocuments(query);
+        const count = await db.collection('availabilities').countDocuments({
+            status: 'pending',
+            ...(await pendingScopeFilter(req.session.user, req.query.scope)),
+        });
         res.json({ count });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -4673,16 +4695,18 @@ app.get('/api/performance', checkDB, requirePatron, async (req, res) => {
 //  • absent → doc GLOBAL `performance`, dont `charge_rate` alimente TOUS les
 //    établissements par fallback (`resolvePerfSettings`). Un directeur limité à un bar
 //    qui l'écrit déplace les chiffres de bars qu'il ne voit même pas → patron seulement.
-// Retourne un message d'erreur, ou null si l'accès est accordé.
+// Retourne `null` (accès accordé) ou la réponse d'erreur { status, error } — statut
+// COMPRIS, pour que l'appelant n'ait pas à le redériver du texte du message.
 function perfScopeDenial(user, establishmentId) {
     if (establishmentId == null || establishmentId === '') {
-        return user.role === 'patron' || user.role === 'observateur'
-            ? null
-            : 'Réglage global réservé au patron — précise un établissement.';
+        // Lecture globale : patron et observateur (le rôle « lecture seule globale »).
+        // En écriture, `denyObservateurEdit` a déjà arrêté l'observateur en amont.
+        return user.role === 'patron' || user.role === 'observateur' ? null
+            : { status: 403, error: 'Réglage global réservé au patron — précise un établissement.' };
     }
     if (typeof establishmentId !== 'string' || !establishmentId.trim())
-        return 'establishment_id invalide';
-    return canAccessEstablishment(user, establishmentId) ? null : 'Accès refusé';
+        return { status: 400, error: 'establishment_id invalide' };
+    return canAccessEstablishment(user, establishmentId) ? null : { status: 403, error: 'Accès refusé' };
 }
 
 // GET/PATCH objectifs performance (coefficient cible)
@@ -4691,7 +4715,7 @@ function perfScopeDenial(user, establishmentId) {
 // voisine `GET /api/performance`, qui a toujours fait le bon contrôle.
 app.get('/api/performance-settings', checkDB, requirePatron, async (req, res) => {
     const denial = perfScopeDenial(req.session.user, req.query.establishment_id);
-    if (denial) return res.status(denial === 'establishment_id invalide' ? 400 : 403).json({ error: denial });
+    if (denial) return res.status(denial.status).json({ error: denial.error });
     try {
         // establishment_id fourni → paramètres effectifs de cet établissement
         // (override + fallback global) ; absent → défaut global.
@@ -4704,7 +4728,7 @@ app.get('/api/performance-settings', checkDB, requirePatron, async (req, res) =>
 app.patch('/api/performance-settings', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
     const { target_gross, target_charged, charge_rate, establishment_id } = req.body;
     const denial = perfScopeDenial(req.session.user, establishment_id);
-    if (denial) return res.status(denial === 'establishment_id invalide' ? 400 : 403).json({ error: denial });
+    if (denial) return res.status(denial.status).json({ error: denial.error });
     const key = establishment_id ? 'performance_' + establishment_id : 'performance';
     const update = { key };
     // Bornes raisonnables : 0–100 % pour les objectifs coeff, 0–200 % pour le taux de charges

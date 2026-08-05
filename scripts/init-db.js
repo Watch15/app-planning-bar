@@ -56,6 +56,8 @@ async function main() {
         await db.collection('availabilities').createIndex({ staff_id: 1, date: 1 });
         await db.collection('availabilities').createIndex({ date: 1, status: 1 });
         await db.collection('availabilities').createIndex({ status: 1 });
+        await db.collection('availabilities').createIndex({ status: 1, staff_id: 1 }); // S-04 — count scopé
+        await db.collection('staff').createIndex({ venues: 1 });                       // S-04 — périmètre directeur (multikey)
         await db.collection('push_subscriptions').createIndex({ user_id: 1 });
         await db.collection('notifications').createIndex({ user_id: 1, read: 1, created_at: -1 });
         await db.collection('shift_swaps').createIndex({ status: 1, created_at: -1 });

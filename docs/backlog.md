@@ -131,6 +131,48 @@ sur le même (staff, date, bar) pourraient franchir la garde ensemble.
 **Suite possible** : une vraie route serveur de confirmation en lot (aujourd'hui N appels
 HTTP depuis le client, hérité du bouton par carte) — non fait, pas demandé.
 
+### Revue `/simplify` du palier 2/3 (2026-08-05)
+
+**Corrigé.** Le plus important d'abord : **le garde-fou S-01 « harnais armé en prod » était
+du code mort** — `TEST_HARNESS` exigeait déjà `NODE_ENV=test`, donc le croiser avec
+`production` donnait une condition insatisfiable. Le commentaire promettait une protection
+qui ne s'exécutait jamais, ce qui est pire que pas de protection. Remplacé par (a) une garde
+**structurelle** `require.main !== module` — le harnais n'existe que si `server.js` est
+*requis* (test), jamais s'il est *lancé* (`npm start`), donc **aucune variable d'env ne peut
+l'armer** — et (b) un refus de démarrer testé sur la **variable brute**.
+Ensuite : `perfScopeDenial` rend `{status, error}` au lieu d'une chaîne dont les 2 appelants
+redérivaient le code HTTP par comparaison de littéral ; `pendingStaffScope` → `pendingScopeFilter`
+qui rend un fragment de filtre (fini le tri-état `null`/`[]`/ids où le `[]` truthy piège) ;
+**la pastille transmet enfin `scope`** — sans ça elle affichait 3 pendant que la file en
+montrait 12, exactement l'asymétrie que mon commentaire prétendait corriger ; sections
+« mon staff / Autres » du front conditionnées à `scope=all` (**code mort** depuis S-04 : le
+serveur ne renvoyait plus que mon staff, le bandeau s'affichait toujours et la branche
+« Autres » était inatteignable) ; `patchEachDispo` remplace les 2 boucles séquentielles par
+des vagues parallèles **groupées par (staff_id, date)** — la course sur la création de shift
+est préservée exactement là où elle existe, au lieu de faire payer 40 allers-retours en série
+à tout le monde — et rapporte enfin les échecs au lieu de les avaler ; helper `askConfirm`,
+`Map` d'index staff, handlers de modale libérés (ils retenaient le lot + tout le scope de
+rendu sur des boutons permanents du DOM).
+
+**Deux index manquants, ajoutés** (`server.js` au boot + `init-db.js`) : S-04 avait fait
+passer `/api/dispos/count` d'un count **index-only** à un count avec fetch de tous les
+`pending`, et introduit un **collscan de `staff`** à chaque rafraîchissement de pastille.
+`{ venues: 1 }` sur `staff` et `{ status: 1, staff_id: 1 }` sur `availabilities`.
+
+**Harnais de tests extrait** dans `tests/helpers/harness.js`. S-01 avait rendu le coût
+visible : ajouter *une* variable d'env avait demandé la même édition dans 4 fichiers, et un
+oubli aurait échoué en 401 opaque. Les 4 fichiers d'intégration s'y branchent ; la config
+d'env vit désormais à **un seul endroit** (vérifié : `grep ALLOW_TEST_AUTH` ne la trouve plus
+que dans `harness.js`), et la désarmer fait tomber **36 tests**.
+
+**Écarté, remonté en backlog plutôt que corrigé ici** : S-05 et S-06 (trous de contrôle
+d'accès **hors diff**, dont S-05 qui rend S-04 partiellement décoratif) ; un middleware
+`requireEstablishmentAccess` qui remplacerait les **14 contrôles `canAccessEstablishment`
+copiés à la main** et couvrirait les 5 routes qui les oublient (→ R-16) ; une route serveur
+`POST /api/dispos/confirm-batch` ; la **péremption du périmètre en session** — `role` et
+`assigned_establishments` sont figés au login et les routes qui les modifient n'invalident
+pas les sessions (TTL 30 j), ce qui affaiblit S-02/S-03/S-04 à la fois (→ R-17).
+
 ### Palier 3 — outillage & documentation (2026-08-05)
 
 **`graphify` réparé** (cf. Divers) et **DOC-01 → DOC-06 tous traités** (cf. tableau
@@ -177,7 +219,9 @@ Mongo), donc couplés au nom des collections et des champs.
 | ~~S-01~~ | ~~`NODE_ENV` est le seul rempart du harnais de test~~ | ✅ **Résolu (2026-08-05)** — **double garde** : le harnais exige désormais `NODE_ENV === 'test'` **ET** `ALLOW_TEST_AUTH === '1'`, condensées en une constante `TEST_HARNESS` qui commande à la fois le middleware `x-test-user` et `app.locals.setTestDb`. Une seule variable oubliée dans une config de déploiement ne suffit plus. `ALLOW_TEST_AUTH` n'est utilisée nulle part ailleurs et aucune plateforme ne la pose. Refus de démarrer si la combinaison contredit `NODE_ENV=production` ; avertissement au boot dans les deux sens (harnais actif / `NODE_ENV=test` sans la 2e garde). Les fichiers de tests l'arment eux-mêmes → `node --test` marche sans passer par npm. **Non-vacuité vérifiée** : neutraliser la 2e garde fait tomber **20 tests** d'intégration. |
 | ~~S-02~~ | ~~`PATCH /api/performance-settings` : contrôle d'accès seulement si `establishment_id` fourni + observateur non bloqué~~ | ✅ **Résolu (2026-08-05)** — helper `perfScopeDenial(user, establishmentId)` : **absence** d'`establishment_id` = doc global (dont `charge_rate` alimente tous les bars par fallback) → **patron/observateur uniquement** ; présence = `canAccessEstablishment`. Plus de chemin sans contrôle. `denyObservateurEdit` ajouté sur le PATCH. Son message a été généralisé (« Accès en lecture seule pour ce rôle », il disait « sur le planning ») et son commentaire d'invariant élargi : il ne garde plus seulement le planning. 6 tests. |
 | ~~S-03~~ | ~~`GET /api/performance-settings` en `requireAuth` seul~~ | ✅ **Résolu (2026-08-05)** — passé en `requirePatron` + `perfScopeDenial`, exactement le contrôle que la route voisine `GET /api/performance` faisait déjà. Le seul appelant front (`performance.js`, chargé par `performance.html` seule) envoie toujours `establishment_id` → aucun client cassé. 5 tests. ℹ️ **Précision issue de la mutation** : l'exclusion du **staff** vient de `requirePatron`, pas de `perfScopeDenial` — c'est `requirePatron` qui porte cette moitié-là. |
-| ~~S-04~~ | ~~`GET /api/dispos/pending` n'est scopé par aucun établissement~~ | ✅ **Tranché et livré (2026-08-05)** — helper `pendingStaffScope(user, scope)` : un directeur ne reçoit par défaut que les dispos des staff dont les `venues` croisent ses `assigned_establishments` (même critère que `staffDispoOpen` et que le tri en sections déjà présent côté front). `GET /api/dispos/count` suit le même périmètre, sinon la pastille annonce 12 et la file en montre 3. ⚠️ **À enregistrer clairement : ce n'est PAS un cloisonnement.** `scope=all` est ouvert à tout directeur (bascule « Voir tout le staff ») — décision produit assumée. C'est le **défaut d'affichage** qui change, pas le droit d'accès ; un directeur curieux voit toujours tout s'il le demande. S-04 est donc fermé comme **choix d'UX**, pas comme correctif de sécurité. 5 tests. |
+| S-05 | **`PATCH /api/dispos/:id/confirm` ne contrôle RIEN sur l'établissement cible.** Relevé par la revue `/simplify` du 2026-08-05. Un directeur `assigned_establishments: ['bar1']` peut envoyer `{establishment_id:'bar2', create_shift:true}` sur n'importe quelle dispo dont il a l'`_id` : la dispo est affectée à bar2 et **un vrai shift y est créé**. Aucune vérification non plus que la dispo est dans son périmètre. **Conséquence directe : S-04 filtre l'AFFICHAGE d'une file dont l'ACTION reste globale** — et la bascule `scope=all`, ouverte à tout directeur, fournit les `_id`. C'est aussi ce qui rend le garde-fou « membres non rattachés » de `confirmDisposBatch` purement cosmétique : il vit dans le navigateur. **À faire** : `canAccessEstablishment` sur la route + refus si `staff.venues` ne contient pas le bar, avec opt-in explicite `{force:true}` envoyé par le client après confirmation. | `server.js` (route confirm) |
+| S-06 | **Même classe que S-03, encore ouverte sur 5 routes.** `GET /api/pointage/:date`, `GET /api/shifts/:establishmentId/:date`, `GET /api/week/:establishmentId`, `GET /api/week-full/:establishmentId` : `requireAuth` seul, sans `canAccessEstablishment` → n'importe quel compte staff connecté lit les shifts nominatifs (noms, horaires, pointages) d'un bar où il n'a jamais travaillé, l'id se devinant (slug `Nom_bar`). Et `GET /api/recap-mensuel` reproduit la forme exacte de S-02 : `establishment_id` **optionnel**, omis ⇒ **tous les bars**. | `server.js` (5 routes) |
+| ~~S-04~~ | ~~`GET /api/dispos/pending` n'est scopé par aucun établissement~~ | ✅ **Tranché et livré (2026-08-05)** — helper `pendingScopeFilter(user, scope)` : un directeur ne reçoit par défaut que les dispos des staff dont les `venues` croisent ses `assigned_establishments` (même critère que `staffDispoOpen` et que le tri en sections déjà présent côté front). `GET /api/dispos/count` suit le même périmètre, sinon la pastille annonce 12 et la file en montre 3. ⚠️ **À enregistrer clairement : ce n'est PAS un cloisonnement.** `scope=all` est ouvert à tout directeur (bascule « Voir tout le staff ») — décision produit assumée. C'est le **défaut d'affichage** qui change, pas le droit d'accès ; un directeur curieux voit toujours tout s'il le demande. S-04 est donc fermé comme **choix d'UX**, pas comme correctif de sécurité. 5 tests. |
 
 ### Findings de revue restants (hors sécurité)
 
@@ -192,6 +236,8 @@ Mongo), donc couplés au nom des collections et des champs.
 | R-12 | Orphelins : profil staff créé **avant** `users.insertOne` (échec = staff fantôme) ; `DELETE /api/users/:id` ne supprime pas le profil lié ni son `manager_dispo_templates`. | Basse |
 | ~~R-13~~ | ~~Requête `users.findOne` de trop sur `POST /api/dispos`~~ | ✅ **Résolu (2026-08-05)** — `managerOffPeriods(…, knownUserId)` : la session porte déjà l'`_id`, la recherche du user disparaît. **Première tentative rejetée par la revue** : court-circuiter l'appel sur `req.session.user.role === 'directeur'` économisait la requête mais introduisait un trou — le rôle en session est figé au login, un compte promu directeur aurait perdu la jointure `manager_time_off` jusqu'à sa reconnexion et aurait pu poser une dispo un jour d'absence déclarée. La version retenue ne teste aucun rôle. Les 2 lectures restantes (`time_off` + `manager_time_off`) sont passées en `Promise.all`. ⚠️ **La 2e moitié du constat était fausse** : le `users.find` de `/api/dispos/pending` est porteur (repère `is_directeur`) — conservé délibérément. |
 | ~~R-14~~ | ~~Résidus inertes~~ | ✅ **Traité (2026-08-05)**, partiellement. `is_manager` : commentaire explicite ajouté aux **2** sites d'écriture (`server.js` `createManagerStaffProfile`, `scripts/backfill-director-staff.js`) — « informatif, aucun code ne le lit, ne filtre NI la paie NI rien ». Le constat disait 3 sites : le 3e (`public/script.js:5287`) est un **autre objet** (marqueur de période de congé) et il **est lu** (`:5343`) — rien à faire. **Reste ouvert** : le champ `establishment_id` résiduel sur les docs `manager_dispo_templates` déjà en base — donnée, pas code : exige un script de migration, non fait. | Basse |
+| R-16 | **Il manque un middleware `requireEstablishmentAccess`.** Relevé par la revue `/simplify` du 2026-08-05 : `server.js` contient **14 copies inline** de `if (!canAccessEstablishment(...)) return res.status(403)`, et **5 routes qui l'oublient** (cf. S-06). `perfScopeDenial` en a ajouté une 15e forme. 14 contrôles manuels contre 5 oublis, c'est la définition d'un middleware manquant. **Piste** : `requireEstablishmentAccess(pick, { whenAbsent })` avec 3 modes (`patronOnly`, `deny`, `scopeAll`) monté déclarativement, ce qui rend les oublis greppables. La partie vraiment spécifique à la perf (le doc global dont `charge_rate` retombe partout) reste près de la route. | Moyenne |
+| R-17 | **Le périmètre d'un utilisateur est figé au login.** `req.session.user.role` et `assigned_establishments` sont écrits une seule fois à la connexion ; `PATCH /api/users/:id/role` et `/establishments` mettent Mongo à jour **sans invalider les sessions** (TTL 30 j, `rolling`). Un directeur retiré d'un bar, ou rétrogradé, garde son ancien périmètre jusqu'à sa reconnexion — potentiellement un mois. **Ça affaiblit S-02, S-03 et S-04 à la fois**, puisqu'ils s'appuient tous sur des données de session. ⚠️ **Antérieur à cette session** (`canAccessEstablishment` lit déjà la session partout), donc pas une régression — mais devenu structurant maintenant que trois correctifs en dépendent. **Piste peu coûteuse** : un `session_epoch` sur le user, incrémenté à chaque changement de rôle/périmètre et vérifié par `requireAuth`. | Moyenne |
 | ~~R-11~~ | ~~`PUT /api/me/manager-dispos/week` sans borne temporelle~~ | ✅ Résolu — route supprimée par la correction E-22 |
 
 ### Questions en attente de réponse

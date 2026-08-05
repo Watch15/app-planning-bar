@@ -2,35 +2,20 @@
 // S'appuie sur le harnais CD-05 : faux `db` en mémoire (app.locals.setTestDb)
 // + session simulée par en-tête `x-test-user`. Aucun Mongo, aucune dépendance.
 
-process.env.NODE_ENV       = 'test';
-process.env.ALLOW_TEST_AUTH = '1'; // S-01 : 2e garde du harnais `x-test-user`
-process.env.MONGO_URI      = process.env.MONGO_URI      || 'mongodb://127.0.0.1:27017/templyo_test';
-process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'integration-test-secret-0123456789abcdef';
-
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const { splitDisposByConges, isFullRangeOnConge } = require('../lib/utils');
 const { makeDb } = require('./helpers/fake-db');
-const app = require('../server');
+const { app, startApp, stopApp, baseUrl } = require('./helpers/harness');
 
 const STAFF_ID = '0123456789abcdef01234567';
 const USER = { staff_id: STAFF_ID, name: 'Test Staff' };
 
-let server, base;
-
-before(async () => {
-    server = app.listen(0);
-    await new Promise((resolve, reject) => {
-        server.once('listening', resolve);
-        server.once('error', reject);
-    });
-    base = 'http://127.0.0.1:' + server.address().port;
-});
-
-after(() => { if (server) server.close(); });
+before(startApp);
+after(stopApp);
 
 function postDispos(dispos) {
-    return fetch(base + '/api/dispos', {
+    return fetch(baseUrl() + '/api/dispos', {
         method:  'POST',
         headers: { 'content-type': 'application/json', 'x-test-user': JSON.stringify(USER) },
         body:    JSON.stringify({ dispos }),
@@ -114,7 +99,7 @@ function seedKpiDb() {
 }
 
 function getJson(path, user) {
-    return fetch(base + path, { headers: { 'x-test-user': JSON.stringify(user) } });
+    return fetch(baseUrl() + path, { headers: { 'x-test-user': JSON.stringify(user) } });
 }
 
 test('KPI — staff en congé toute la semaine compté couvert, pas en manquant', async () => {
