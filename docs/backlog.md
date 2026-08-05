@@ -341,6 +341,136 @@ ensuite. Deux conséquences à garder en tête :
   sur chaque requête, on voudra **un seul endroit** où ce filtre vit. R-16 n'est pas du
   nettoyage, c'est la préparation du multi-clients.
 
+### `npm run smoke` — tests de bout en bout sur une instance réelle (2026-08-05)
+
+**Le trou qu'il comble.** `npm test` (176 tests) tape un **faux Mongo** : il prouve la
+logique, pas le câblage. Rien ne vérifiait qu'une instance déployée fonctionne vraiment —
+c'était T-05, refait à la main à chaque fois. `scripts/smoke.js` parle HTTP à un serveur qui
+tourne, sur une vraie base, et rejoue les parcours anciens **et** nouveaux.
+
+    npm run smoke                                   # → http://localhost:3000
+    SMOKE_URL=https://dev.templyo.fr npm run smoke
+
+**20 vérifications** : socle (session, établissements, staff, planning patron, planning
+staff, rejet anonyme), S-04 (périmètre, bascule, pastille), S-02/S-03 (lecture et écriture
+des réglages perf par rôle, + contrôle que la valeur interdite n'a pas atterri), §9.1
+(directeur accepté / staff refusé après deadline), F-10, R-06 (réaffectation puis remise en
+état). Sortie `0` / `1` → **exploitable en CI ou après déploiement**, vérifié dans les deux sens.
+
+⚠️ **Garde-fou** : il se connecte avec les comptes `@templyo.test` de `seed-dev.js`. Sur une
+base client ils n'existent pas → arrêt à la première étape, **sans rien écrire**. C'est
+délibéré : ce script ÉCRIT (dispos, validations, réaffectation), il ne doit jamais viser un
+client. Vérifié : mauvais identifiants ⇒ arrêt immédiat, code 1.
+
+### Environnement `main` — cluster dédié (2026-08-05)
+
+`main` a désormais **son propre cluster Atlas**, vierge et distinct de celui de dev (choix
+du client, meilleur que la base séparée sur cluster partagé que je proposais : l'isolation
+est réelle, pas conventionnelle). Config locale dans `.env.main` (gitignoré), base
+`templyo_main`.
+
+ℹ️ `MONGO_DB=Cluster0` — nom retenu par le client bien que ce soit aussi le nom du cluster.
+Fonctionne (vérifié par un `ping` sur cette base) ; simple ambiguïté de lecture.
+
+⚠️ **Erreur `SSL alert number 80` au déploiement — ce n'est PAS un problème de code.**
+`tlsv1 alert internal error` sur Atlas est le symptôme d'une **IP non autorisée** : le proxy
+Atlas coupe la poignée de main TLS au lieu de rejeter proprement, d'où une erreur OpenSSL
+illisible. Diagnostic par élimination : la même URI, les mêmes identifiants et la même base
+se connectent **sans erreur depuis le poste** → réseau, pas configuration. Un cluster neuf
+n'autorise que l'IP présente à sa création. **Correctif : Atlas → Network Access →
+`0.0.0.0/0`** (Railway n'a pas d'IP de sortie stable sur les offres standard). La sécurité
+repose alors sur l'utilisateur/mot de passe — d'où l'intérêt d'un **utilisateur distinct par
+cluster**, ce qui est le cas ici.
+
+⚠️ **Bug latent corrigé au passage** : `allowedOrigin` (CORS) lisait `process.env.APP_URL`
+**brut**. Le navigateur envoie un `Origin` **sans** slash final et `cors` compare par égalité
+de chaîne : un `APP_URL` copié depuis une barre d'adresse (donc terminé par « / ») ne
+matcherait jamais. Invisible tant que le front est servi par le même Express, mais réel dès
+qu'un domaine personnalisé coexiste avec l'URL `.up.railway.app` — c'est le cas de `dev`.
+Corrigé en passant par `appUrl()`, qui normalise déjà (préfixe https + retrait du slash).
+
+**Ordre à respecter — c'est le point important.** `dev` est **20 commits devant `main`**.
+Il faut poser les variables Railway sur `main` (nouveau cluster + `MONGO_DB=templyo_main` +
+`OUTBOUND_ENABLED=false` + `CRON_ENABLED=false`) **AVANT** de merger `dev` → `main`. Merger
+d'abord, c'est déployer 20 commits qui bootent contre la base de Castanui : création
+d'index, cron, tout. Le merge sera un fast-forward (`main` est un ancêtre direct de `dev`).
+
+### Processus de livraison — décidé le 2026-08-05
+
+> « Il faut attendre que les corrections soient validées dans l'environnement dev pour
+> atteindre le client. »
+
+**Trois étages, chacun avec sa porte de sortie :**
+
+| Étage | Cible | Ce qu'on y prouve | Porte |
+|---|---|---|---|
+| 1 · `dev` | `dev.templyo.fr` (`app-planning-bar`/dev) | la feature marche | `npm test` + `SMOKE_URL=https://dev.templyo.fr npm run smoke` |
+| 2 · `main` | `…-production.up.railway.app` (`app-planning-bar`/main) | elle marche **en conditions de prod** (`NODE_ENV=production`, cookies `secure`, CORS strict) | smoke sur l'URL de main |
+| 3 · client | `castaniu-family.templyo.fr` (**dépôt `app-planning-bar-castaniu-family`**/main) | — | accord explicite du user, cf. mémoire `no-merge-to-client` |
+
+**La propagation est techniquement triviale** : le remote `castanui` est déjà configuré et
+`castanui/main` est un **ancêtre strict** de `origin/dev` (`0 20` — aucun commit propre côté
+client). Donc `git push castanui origin/dev:main` est un fast-forward, sans conflit.
+L'étage 2 n'est pas décoratif : c'est le seul endroit où l'on teste `NODE_ENV=production`
+avant le client — et c'est précisément la variable qui était mal réglée chez lui.
+
+⚠️ **« Validé sur dev » ne suffira pas pour CE lot-ci.** Les 20 commits en attente
+contiennent E-22 (Modèle A), qui exige que **tout compte `directeur` ait un profil `staff`
+lié**. `syncManagerStaffVenues` ne le crée qu'à la prochaine modification du compte : les
+directeurs existants chez le client resteraient sans `staff_id` et **ne pourraient plus
+saisir de dispo** (400 permanent). La livraison client devra donc inclure
+`npm run backfill-directors` sur sa base — c'est une **migration de données**, pas un simple
+push. À vérifier d'abord : ce client a-t-il des comptes `directeur` ? (lecture seule, non
+faite — base cliente).
+
+Autres changements visibles par les utilisateurs finaux dans ce lot : suppression des emojis
+d'interface, nouveau périmètre de la file de dispos (S-04), exemption de deadline directeur
+(§9.1). À annoncer, pas seulement à déployer.
+
+### Audit Railway complet (2026-08-05) — origine, variables, secrets
+
+Fait via `railway api` (GraphQL) après avoir constaté que `railway status` n'expose pas la
+branche source. Requête : `serviceInstances { source { repo } latestDeployment { meta } }`.
+
+| Env / Service | Dépôt / branche | Cluster | `MONGO_DB` | `NODE_ENV` |
+|---|---|---|---|---|
+| Dev / `Dev` | `app-planning-bar` / **dev** | vab3u2w | `templyo_dev` | development |
+| Prod / `Dev` (« main ») | `app-planning-bar` / **main** | vab3u2w | `templyo_main` | production |
+| Prod / `Castaniu Family` | **`app-planning-bar-castaniu-family`** / main | gqfynu8 | *(absent)* | production |
+
+**A-01 — Le client est sur un DÉPÔT FORK séparé.** Conséquence rassurante : merger
+`dev` → `main` ne l'atteint pas. Conséquence inquiétante, **plus importante** : aucun
+correctif ne lui parvient automatiquement. Il tourne au commit `29bc8822`, sans S-01→S-04,
+sans R-06, sans les index. Chaque correctif de sécurité devra être **porté à la main** sur
+ce fork — ou les deux dépôts refusionnés. À décider avant que l'écart ne grandisse.
+
+**A-02 — Secrets IDENTIQUES entre `dev` et le client** (vérifié par empreinte SHA-256) :
+`SESSION_SECRET`, `TWILIO_AUTH_TOKEN`, `RESEND_API_KEY`, `VAPID_PRIVATE_KEY`.
+Impact réel, par ordre : *(a)* dev peut envoyer des SMS **facturés sur le compte Twilio du
+client** et des e-mails qui engagent la **réputation de son domaine** ; *(b)* `SESSION_SECRET`
+partagé — impact limité en pratique (les sessions vivent dans des bases Mongo distinctes,
+donc un cookie de dev ne résout aucune session chez le client), mais un secret de session
+commun entre un bac à sable et une prod n'a aucune raison d'exister. **Rotation à prévoir,
+client d'abord.**
+
+**A-03 — `dev` peut joindre de vraies personnes.** `OUTBOUND_ENABLED` n'y est pas posé et
+les clés Twilio/Resend/VAPID sont actives. Inviter quelqu'un depuis dev envoie un vrai SMS.
+Correctif : une variable (`OUTBOUND_ENABLED=false`). **Non posé — en attente d'arbitrage**,
+car cela empêcherait aussi de tester le parcours d'invitation en conditions réelles.
+
+**A-04 — `PATRON_EMAIL` / `PATRON_PASSWORD` sont du code mort.** Présents sur les **trois**
+services, **lus nulle part** (vérifié sur `dev` ET sur `origin/main`). Un mot de passe traîne
+donc dans l'environnement d'un déploiement client sans aucun usage. À supprimer.
+
+**A-05 — Aucun `healthcheckPath` configuré**, alors que `/health` existe et teste la base.
+Railway ne sait donc pas distinguer un démarrage réussi d'un serveur qui répond mais n'a pas
+de base. `numReplicas` est `null` (= 1) sur les trois → pas de risque de double cron par
+réplication, ce qui reste vrai tant que personne ne monte ce nombre.
+
+**Divergences mineures** : `TWILIO_FROM` vaut `PlanningBar` sur main contre `Templyo`
+ailleurs ; `SESSION_SECRET` fait 30 caractères sur dev et chez le client (le README en
+demande 32).
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique.
