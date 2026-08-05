@@ -1,12 +1,9 @@
-const { MongoClient } = require('mongodb');
-require('dotenv').config();
+const { openDb } = require('./_db');
 
 async function main() {
-    const client = new MongoClient(process.env.MONGO_URI);
+    // destructive: les deleteMany ci-dessous effacent comptes, staff et plannings.
+    const { client, db } = await openDb({ destructive: true });
     try {
-        await client.connect();
-        const db = client.db('gestion_bar');
-
         await db.collection('establishments').deleteMany({});
         await db.collection('staff').deleteMany({});
         await db.collection('shifts').deleteMany({});

@@ -207,7 +207,7 @@ démarrent la vraie app Express sur un port éphémère et ne remplacent que Mon
 | T-02 | Branche **ObjectId** de `managerOffPeriods` (`server.js`) : le filtre tolère `user_id` en chaîne **ou** en ObjectId, mais `fake-db` n'utilise que des chaînes → la branche ObjectId n'est **jamais exercée**. Si `manager_time_off.user_id` est stocké en ObjectId en prod, rien ne le prouve. | Non — exige un vrai Mongo |
 | T-03 | **Tout le front** : `script.js`, `planning.js`, `performance.js`. Zéro test. Concerne notamment la modale dispos directeur, les statuts, le badge « Directeur ». | Non — aucune infra front |
 | T-04 | Aucun test E2E navigateur. | Non |
-| T-05 | **Premier lancement d'E-22 contre la vraie base.** Le chemin corrigé n'a jamais tourné en conditions réelles (l'ancien non plus : jamais matérialisé en prod). | — validation manuelle |
+| ~~T-05~~ | ~~Premier lancement d'E-22 contre la vraie base~~ | ✅ **Fait le 2026-08-05**, sur la base de recette `gestion_bar_dev` (cf. « Base de recette » ci-dessous). Vérifiés contre un **vrai Mongo**, pas `fake-db` : connexion réelle (les 3 rôles), **S-04** (patron 7 dispos / directeur 4 / `scope=all` 7, **pastille alignée** 4 et 7), **S-03** (200 sur son bar, 403 sur un autre, 403 en global, 403 pour un staff), **S-02** (patron→global 200, directeur→global **403**, directeur→autre bar 403, directeur→son bar 200, observateur 403 ; le `charge_rate:99` n'a atterri nulle part), **§9.1** (directeur accepté après deadline, staff refusé), **R-06** (réaffecter le directeur propage bien sur `staff.venues` et sa file suit). |
 
 Limite assumée : les tests d'intégration sont **boîte blanche** (ils lisent `_docs` du faux
 Mongo), donc couplés au nom des collections et des champs.
@@ -263,6 +263,83 @@ Vérifiées **contre le code actuel**, pas supposées. **✅ Toutes traitées le
 | DOC-06 | `graphify-out/` | **Périmé par construction.** `GRAPH_REPORT.md` date du 2026-07-31 : antérieur à E-22 v2 **et** à sa correction. Il décrit donc des routes supprimées (`PUT /api/me/manager-dispos/week`…) comme existantes. Aggravé par le fait que `CLAUDE.md` **impose** de l'interroger en premier pour toute question d'architecture (cf. Divers). ✅ **Résolu (2026-08-05)** — `graphify update .` **passe de nouveau** (il refusait depuis une session précédente) : 1045 nœuds, 1699 arêtes, 72 communautés ; l'ancien graphe est sauvegardé dans `graphify-out/2026-08-05/`. **Fraîcheur vérifiée, pas supposée** : les routes supprimées par E-22 (`manager-dispos/week`) sont à **0 occurrence**, et les 5 helpers créés cette session (`dispoDeadlineWaived`, `syncManagerStaffVenues`, `perfScopeDenial`, `pendingStaffScope`, `confirmDisposBatch`) sont bien présents. |
 
 **Non audités** (hors périmètre de cette passe, aucune vérification faite) : `docs/architecture.md` (2026-06-12), `docs/methodologie-et-cicd.md`, `docs/ux-design.md`, `task.md`, `ui_kits/*.md` — tous antérieurs de 2 à 4 mois, donc **présumés dérivés**.
+
+### Base de recette (2026-08-05)
+
+**Ce qu'on a évité.** `npm run init` visait une base écrite **en dur** (`gestion_bar`) et
+faisait `deleteMany({})` sur `users`, `staff`, `shifts`, `sessions`. Avec le `.env` de prod
+dans le dossier — c'était le cas — la commande **effaçait les comptes réels**, sans
+confirmation ni message. Trois autres scripts avaient le même défaut.
+
+**Mise en place.** `MONGO_DB` choisit la base (défaut : `gestion_bar`, comportement
+inchangé) ; `ENV_FILE` choisit le fichier d'env. `scripts/_db.js` centralise la connexion
+et **refuse tout script destructif visant `gestion_bar`** sauf `--force` explicite (vérifié :
+le refus se déclenche). `.env.dev` → même cluster, base `gestion_bar_dev`,
+`NODE_ENV=development` — indispensable, car `production` met le cookie de session en
+`secure:true` et **la connexion échoue en silence sur http://localhost**.
+`scripts/dev-run.js` pose `ENV_FILE` par **spawn** et non `require`, pour que l'enfant garde
+`require.main === module` : sinon le `app.listen` ne part pas *et* la garde structurelle du
+harnais de test (S-01) basculerait du mauvais côté.
+
+    npm run dev:seed      # (re)construit gestion_bar_dev — idempotent
+    npm run dev:server    # serveur sur cette base, http://localhost:3000
+
+**Jeu de données** (`scripts/seed-dev.js`, dates **relatives** donc il ne périme pas) : 3
+bars, 6 comptes couvrant les 4 rôles, staff réparti pour rendre le périmètre S-04
+**observable** (Alice/Bruno sur Josy = bar du directeur, Chloé/David ailleurs), un directeur
+avec profil staff + `venues` (E-22/R-06), semaine passée avec heures réelles + CA (récap,
+pointage, coefficient), semaine courante publiée, Joker ouvert, 7 dispos en attente dont
+celle du directeur, congés posés, absence directeur, deadline volontairement dépassée pour
+tester l'exemption sans attendre.
+
+**Cluster partagé, dossier partagé.** `gestion_bar` (1,9 Mo, 253 shifts) et
+`gestion_bar_dev` (88 Ko) cohabitent sur le même cluster Atlas, avec les **mêmes
+identifiants** dans les deux fichiers d'env. La séparation tient donc à `MONGO_DB` + le
+garde-fou. Un vrai cloisonnement demanderait un second cluster ou un utilisateur Atlas
+restreint à `gestion_bar_dev` — à envisager si la recette devient une habitude.
+
+### Environnements & déploiements (2026-08-05)
+
+**Le problème constaté.** Le Railway `main` (env prod), dont le rôle déclaré est
+« vérifier que la CI/CD fonctionne », est **branché sur la MongoDB de Castanui**, le premier
+client. Deux conséquences, la seconde bien plus grave que la première :
+1. Deux instances sur la même base ⇒ **deux crons**. Tous les jours à 10h, le staff de
+   Castanui reçoit ses rappels de dispos **en double**. ⚠️ *Rectification* : ce sont des
+   **push uniquement** (`sendPushToStaff` ×3 dans `checkDispoRappels`), **pas** des SMS —
+   Twilio ne sert qu'aux invitations et aux resets. Pas de surcoût, mais visible côté client.
+2. **Une cible de test est câblée sur des données client.** Le cron n'y fait pas que lire :
+   `cleanupPastDispos` et `cleanupOldJokers` **suppriment**. Et le jour où une release se
+   valide en lançant un script depuis ce contexte, on écrit chez le client.
+
+**Livré (code).** Deux garde-fous, `true` PAR DÉFAUT — un déploiement client dont les
+variables ne changent pas garde exactement le comportement actuel :
+- `OUTBOUND_ENABLED=false` ⇒ l'instance ne peut joindre personne : ni Resend, ni Twilio, ni
+  Web Push. Les notifications **in-app** restent écrites (elles ne sortent pas du système).
+  `sendEmail`/`sendSMS` **lèvent** au lieu de faire semblant : les 11 appels sont dans un
+  `try/catch` qui bascule sur le repli « lien manuel » — donc en dev le lien d'activation
+  s'affiche à l'écran, ce qui est plus pratique qu'un mail non parti.
+- `CRON_ENABLED=false` ⇒ aucune tâche planifiée. Nécessaire même après découplage : deux
+  **replicas Railway** du même service rejouent le doublon.
+- Log de démarrage récapitulatif (base · envois · tâches) — la ligne qu'on relira le jour
+  où un client reçoit un rappel en double.
+- Posés à `false` dans `.env.dev`.
+
+**Reste à faire, côté Railway (non fait — accès dashboard requis)** : repointer `main` sur
+une base à lui (`MONGO_DB=templyo_main`, même cluster que dev, gratuit) et y poser les deux
+flags à `false`. Sur `dev` : `OUTBOUND_ENABLED=false` et `CRON_ENABLED=true` (le cron devient
+observable sans danger puisqu'il ne peut plus rien envoyer — utile pour T-01).
+Sur **Castanui** : ne rien changer, les défauts préservent le comportement.
+
+**Trajectoire décidée** : un déploiement + une base par client d'abord, app multi-clients
+ensuite. Deux conséquences à garder en tête :
+- Le modèle par client ne tient que si le déploiement reste **automatique**. `npm run init`
+  est destructif, ce n'est pas un outil de migration : toute évolution de schéma doit être
+  **idempotente et appliquée au boot** (c'est déjà le cas des index ajoutés aujourd'hui).
+- Pour le multi-clients, le travail utile commence maintenant et ne demande aucun code
+  spécifique : **R-16**. Le cloisonnement est aujourd'hui dispersé en 14 copies de
+  `canAccessEstablishment` + 5 routes qui l'oublient. Le jour où il faudra un `tenant_id`
+  sur chaque requête, on voudra **un seul endroit** où ce filtre vit. R-16 n'est pas du
+  nettoyage, c'est la préparation du multi-clients.
 
 ### Divers — outillage & process
 

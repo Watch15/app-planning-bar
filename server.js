@@ -1,5 +1,7 @@
 ﻿process.env.TZ = 'Europe/Paris'; // doit être avant tout require de date — gère heure d'été/hiver
-require('dotenv').config();
+// `ENV_FILE` permet de pointer un autre fichier que `.env` (ex. `.env.dev` pour la base
+// de recette). Sans lui, comportement inchangé.
+require('dotenv').config({ path: process.env.ENV_FILE || '.env' });
 const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
 const cors    = require('cors');
@@ -73,6 +75,29 @@ const allowedOrigin = process.env.NODE_ENV === 'production'
     ? process.env.APP_URL
     : true;
 app.use(cors({ origin: allowedOrigin, credentials: true }));
+
+// Base cible. Par défaut la base historique ; `MONGO_DB` permet d'en viser une autre
+// (recette / dev) SANS toucher aux données réelles — un même cluster héberge les deux.
+const PROD_DB_NAME = 'gestion_bar';
+const DB_NAME = process.env.MONGO_DB || PROD_DB_NAME;
+
+// ── Garde-fous d'environnement ────────────────────────────────────────────────
+// Les deux valent `true` par défaut : un déploiement client existant ne change PAS
+// de comportement si la variable n'est pas posée. On coupe explicitement là où il faut.
+
+// OUTBOUND_ENABLED=false ⇒ l'instance ne peut JOINDRE PERSONNE : ni e-mail (Resend),
+// ni SMS (Twilio), ni Web Push. Les notifications IN-APP continuent d'être écrites —
+// elles ne sortent pas du système et servent à tester l'UI.
+// À poser sur dev et sur main : leurs bases contiennent de vrais numéros et de vraies
+// adresses (testeurs, comptes internes) et rien n'empêche aujourd'hui un rappel de partir.
+const OUTBOUND_ENABLED = process.env.OUTBOUND_ENABLED !== 'false';
+
+// CRON_ENABLED=false ⇒ pas de tâches planifiées sur cette instance.
+// Le cron n'est pas idempotent au sens « inoffensif » : `cleanupPastDispos` et
+// `cleanupOldJokers` SUPPRIMENT. Or il démarre sur CHAQUE instance connectée à la base
+// — deux déploiements (ou deux replicas Railway du même service) = deux crons sur les
+// mêmes données, donc rappels en double. Règle : une seule instance par base l'active.
+const CRON_ENABLED = process.env.CRON_ENABLED !== 'false';
 
 // Sécurité : en prod, un SESSION_SECRET explicite est obligatoire.
 // Sans ça, le fallback est connu et les sessions deviennent forgeables.
@@ -159,8 +184,13 @@ let db;
 async function connectDB() {
     try {
         await client.connect();
-        db = client.db('gestion_bar');
-        console.log('✅ Connecté à MongoDB Atlas');
+        db = client.db(DB_NAME);
+        // Récapitulatif au démarrage : quelle base, et cette instance peut-elle agir sur
+        // le monde extérieur ? C'est la ligne qu'on relit quand un client reçoit un rappel
+        // en double ou qu'un mail de test part chez quelqu'un.
+        console.log('✅ MongoDB — base « ' + DB_NAME + ' »'
+            + ' · envois sortants : ' + (OUTBOUND_ENABLED ? 'ACTIFS' : 'coupés')
+            + ' · tâches planifiées : ' + (CRON_ENABLED ? 'ACTIVES' : 'coupées'));
         // Index unique pour daily_revenue (un CA par établissement et par date)
         db.collection('daily_revenue').createIndex(
             { establishment_id: 1, date: 1 },
@@ -191,8 +221,13 @@ async function connectDB() {
         db.collection('availabilities').createIndex(
             { status: 1, staff_id: 1 }
         ).catch(e => console.warn('⚠️ Index availabilities.status+staff_id:', e.message));
-        scheduleDailyAt10();
-        cleanupOldJokers();
+        // Une seule instance par base doit porter le cron (cf. CRON_ENABLED).
+        if (CRON_ENABLED) {
+            scheduleDailyAt10();
+            cleanupOldJokers();
+        } else {
+            console.log('⏸️  Tâches planifiées DÉSACTIVÉES sur cette instance (CRON_ENABLED=false)');
+        }
     } catch (e) {
         console.error('❌ Connexion échouée :', e.message);
         process.exit(1);
@@ -202,6 +237,13 @@ async function connectDB() {
 // ── Email via Resend ──────────────────────────────────────────────────────────
 
 async function sendEmail(to, subject, html) {
+    // Bloqué hors environnement client. On LÈVE au lieu de faire semblant : les 11 appels
+    // sont dans un try/catch qui bascule sur le repli « lien manuel » — donc en dev le lien
+    // d'activation s'affiche à l'écran, ce qui est plus pratique qu'un mail non parti.
+    if (!OUTBOUND_ENABLED) {
+        console.log('🔇 E-mail bloqué (OUTBOUND_ENABLED=false) → ' + to + ' · ' + subject);
+        throw new Error('Envois sortants désactivés sur cet environnement (OUTBOUND_ENABLED=false)');
+    }
     const res = await fetch('https://api.resend.com/emails', {
         method:  'POST',
         headers: {
@@ -232,6 +274,11 @@ function appUrl() {
 }
 
 async function sendSMS(to, body) {
+    // Idem sendEmail : bloqué hors client, et on lève pour déclencher le repli manuel.
+    if (!OUTBOUND_ENABLED) {
+        console.log('🔇 SMS bloqué (OUTBOUND_ENABLED=false) → ' + to);
+        throw new Error('Envois sortants désactivés sur cet environnement (OUTBOUND_ENABLED=false)');
+    }
     const sid   = process.env.TWILIO_ACCOUNT_SID;
     const token = process.env.TWILIO_AUTH_TOKEN;
     const from  = process.env.TWILIO_FROM;
@@ -271,6 +318,12 @@ async function sendPushToStaff(staffIds, payload) {
         } catch (e) { console.error('❌ staff_notifications insert error:', e.message); }
     }
 
+    // La notif in-app ci-dessus est conservée (elle ne quitte pas l'app) ; c'est le push,
+    // qui part sur un vrai téléphone, qui est coupé hors environnement client.
+    if (!OUTBOUND_ENABLED) {
+        console.log('🔇 Push bloqué (OUTBOUND_ENABLED=false) → ' + (payload.title || '') + ' · ' + staffIds.length + ' destinataire(s)');
+        return;
+    }
     if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
         console.warn('⚠️  Web Push ignoré : VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY non configurés');
         return;

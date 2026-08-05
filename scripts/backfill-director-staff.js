@@ -2,17 +2,16 @@
 // `staff` lié (planifiable + compté comme un staff). Les directeurs promus depuis un
 // staff ont déjà un `staff_id` → ignorés. Idempotent : relançable sans effet de bord.
 //
-// Usage : node scripts/backfill-director-staff.js   (MONGO_URI dans .env)
-const { MongoClient } = require('mongodb');
+// Usage : node scripts/backfill-director-staff.js
+//         node scripts/dev-run.js scripts/backfill-director-staff.js   (base de recette)
 const { pickStaffColor } = require('../lib/utils');
-require('dotenv').config();
+const { openDb } = require('./_db');
 
 async function main() {
-    const client = new MongoClient(process.env.MONGO_URI);
+    // Non destructif (création seule), mais il ÉCRIT : il doit respecter `MONGO_DB`,
+    // sinon un rattrapage lancé « sur la recette » atterrit en réalité sur la prod.
+    const { client, db } = await openDb();
     try {
-        await client.connect();
-        const db = client.db('gestion_bar');
-
         const directors = await db.collection('users').find({ role: 'directeur' }).toArray();
         const used = new Set(
             (await db.collection('staff').find({}, { projection: { color: 1 } }).toArray()).map(s => s.color)

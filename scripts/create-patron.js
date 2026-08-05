@@ -1,16 +1,13 @@
-const { MongoClient } = require('mongodb');
-const bcrypt          = require('bcryptjs');
-const readline        = require('readline');
-require('dotenv').config();
+const bcrypt   = require('bcryptjs');
+const readline = require('readline');
+const { openDb } = require('./_db');
 
 const rl  = readline.createInterface({ input: process.stdin, output: process.stdout });
 const ask = (q) => new Promise(r => rl.question(q, r));
 
 async function main() {
-    const client = new MongoClient(process.env.MONGO_URI);
+    const { client, db } = await openDb(); // non destructif : insertion seule
     try {
-        await client.connect();
-        const db = client.db('gestion_bar');
         console.log('\n🔐 Création du compte patron\n');
 
         const email    = await ask('Email patron    : ');

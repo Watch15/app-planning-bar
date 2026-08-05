@@ -1,12 +1,8 @@
-const { MongoClient } = require('mongodb');
-require('dotenv').config();
+const { openDb } = require('./_db');
 
 async function run() {
-    const client = new MongoClient(process.env.MONGO_URI);
+    const { client, db } = await openDb({ destructive: true }); // deleteMany sur shifts
     try {
-        await client.connect();
-        const db = client.db('gestion_bar');
-
         await db.collection('shifts').deleteMany({});
 
         const shifts = [

@@ -8,6 +8,8 @@
     "dev": "node --watch server.js",
     "init": "node scripts/init-db.js",
     "seed": "node scripts/seed.js",
+    "dev:seed": "node scripts/dev-run.js scripts/seed-dev.js",
+    "dev:server": "node scripts/dev-run.js server.js",
     "create-patron": "node scripts/create-patron.js",
     "backfill-directors": "node scripts/backfill-director-staff.js",
     "lint": "eslint .",
