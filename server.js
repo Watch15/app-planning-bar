@@ -71,8 +71,12 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 app.use(express.json());
 
+// `appUrl()` normalise (préfixe https, retire le slash final). Indispensable ici :
+// le navigateur envoie un `Origin` SANS slash final, et la comparaison du middleware
+// cors est une égalité de chaîne — un `APP_URL` copié depuis une barre d'adresse
+// (donc terminé par « / ») ne matcherait jamais.
 const allowedOrigin = process.env.NODE_ENV === 'production'
-    ? process.env.APP_URL
+    ? appUrl()
     : true;
 app.use(cors({ origin: allowedOrigin, credentials: true }));
 
