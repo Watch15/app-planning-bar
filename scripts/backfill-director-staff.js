@@ -31,7 +31,7 @@ async function main() {
                 venues: u.assigned_establishments || [],
                 roles:  [],
                 can_submit_dispos: true,
-                is_manager: true,
+                is_manager: true, // informatif — cf. createManagerStaffProfile (server.js)
                 created_at: new Date(),
             });
             await db.collection('users').updateOne({ _id: u._id }, { $set: { staff_id: String(insertedId) } });

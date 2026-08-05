@@ -14,7 +14,7 @@ const {
     weekStart, currentWeekStart, disposWeekStart, isAutoPublished, isDatePublished, normalizePublishDoc, chargeMultiplier,
     toDateStr, datesOverlap, congeDaysInRange, splitDisposByConges, isFullRangeOnConge,
     validateOffPeriod, scopeManagerOff, resolvePerfSettings, pickStaffColor, buildTemplateDispos,
-    datesCoveredByPeriods,
+    datesCoveredByPeriods, dispoDeadlineWaived,
 } = require('./lib/utils');
 
 // Sentry — initialisation conditionnelle (ne se charge que si SENTRY_DSN fourni).
@@ -1085,9 +1085,38 @@ async function createManagerStaffProfile({ name, email, phone, venues }) {
         name: name || 'Directeur', color,
         email: email || '', phone: phone || '',
         venues: venues || [], roles: [], can_submit_dispos: true,
+        // R-14 : `is_manager` est PUREMENT INFORMATIF — aucun code ne le lit. Il ne
+        // filtre rien : ni la paie (décision arrêtée « directeur = COMPTÉ »), ni la
+        // barre staff, ni les dispos. Ne pas s'en servir comme garde sans le câbler.
         is_manager: true, created_at: new Date(),
     });
     return String(insertedId);
+}
+
+// R-06 — `users.assigned_establishments` et `staff.venues` sont DEUX champs pour la
+// même réalité : les bars du directeur. Le premier ouvre les écrans (canAccessEstablishment),
+// le second ouvre la saisie des dispos (staffDispoOpen). Depuis la correction E-22 le
+// directeur passe par le pipeline staff : les laisser diverger, c'est un directeur qui
+// voit son planning mais ne peut plus envoyer une seule dispo — sans message d'erreur
+// qui l'explique. Toute route qui écrit `assigned_establishments` DOIT appeler ceci.
+// À appeler APRÈS l'écriture : la base fait foi, pas ce que l'appelant croit avoir écrit.
+async function syncManagerStaffVenues(userId) {
+    const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+    if (!user || user.role !== 'directeur') return; // rétrogradé : profil staff intact (historique)
+    const venues = Array.isArray(user.assigned_establishments) ? user.assigned_establishments : [];
+    if (user.staff_id && isValidObjectId(user.staff_id)) {
+        await db.collection('staff').updateOne(
+            { _id: new ObjectId(user.staff_id) },
+            { $set: { venues } }
+        );
+        return;
+    }
+    // Pas de profil staff (compte créé avant E-22, ou promu depuis observateur/staff
+    // sans profil) : sans lui, POST /api/dispos répond 400 en permanence.
+    const staffId = await createManagerStaffProfile({
+        name: user.name, email: user.email, phone: user.phone, venues,
+    });
+    await db.collection('users').updateOne({ _id: new ObjectId(userId) }, { $set: { staff_id: staffId } });
 }
 
 app.post('/api/users', checkDB, requirePatron, async (req, res) => {
@@ -1254,6 +1283,9 @@ app.patch('/api/users/:id/role', checkDB, requirePatronOnly, async (req, res) =>
             { $set: update }
         );
         if (result.matchedCount === 0) return res.status(404).json({ error: 'Utilisateur introuvable' });
+        // R-06 : promotion en directeur ⇒ profil staff + venues alignés, sinon il ne
+        // pourra jamais envoyer de dispo (400 « Aucun profil staff lié »).
+        await syncManagerStaffVenues(req.params.id);
         res.json({ message: 'Rôle mis à jour' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -1269,6 +1301,9 @@ app.patch('/api/users/:id/establishments', checkDB, requireAdmin, async (req, re
             { $set: { assigned_establishments } }
         );
         if (result.matchedCount === 0) return res.status(404).json({ error: 'Utilisateur introuvable' });
+        // R-06 : recaler `staff.venues` — sans ça, un directeur réaffecté garde les
+        // anciens bars côté staff et perd l'accès à la saisie des dispos.
+        await syncManagerStaffVenues(req.params.id);
         res.json({ message: 'Établissements mis à jour' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -1566,11 +1601,20 @@ app.delete('/api/establishments/:id', checkDB, requireAdmin, async (req, res) =>
         await db.collection('shifts').deleteMany({ establishment_id: estab.id });
         // Supprimer l'établissement
         await db.collection('establishments').deleteOne({ _id: new ObjectId(req.params.id) });
-        // Retirer l'id des assigned_establishments des directeurs
-        await db.collection('users').updateMany(
-            { assigned_establishments: estab.id },
-            { $pull: { assigned_establishments: estab.id } }
-        );
+        // Retirer l'id des assigned_establishments des directeurs — et symétriquement
+        // des `staff.venues` (R-06 : les deux champs décrivent les mêmes bars). Sans le
+        // second $pull, `staffDispoOpen` continuerait de calculer l'ouverture de la
+        // saisie sur un établissement qui n'existe plus.
+        await Promise.all([
+            db.collection('users').updateMany(
+                { assigned_establishments: estab.id },
+                { $pull: { assigned_establishments: estab.id } }
+            ),
+            db.collection('staff').updateMany(
+                { venues: estab.id },
+                { $pull: { venues: estab.id } }
+            ),
+        ]);
         res.json({ message: 'Établissement et ses shifts supprimés' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -2487,13 +2531,17 @@ app.get('/api/dispo-settings', checkDB, requireAuth, async (req, res) => {
         // open : ouvert POUR CE STAFF (≥1 venue ouvert). open_venues : pour l'UI patron.
         const staffOpen = staffDispoOpen(settings, staffDoc ? staffDoc.venues : []);
         const openVenuesNorm = dispoOpenVenues(settings);
+        // Même règle que POST /api/dispos — le client ne doit jamais afficher un
+        // formulaire que le serveur refusera, ni le fermer alors qu'il l'accepterait.
+        const deadlineWaived = dispoDeadlineWaived(settings, req.session.user.role, staffForceOpen);
         res.json({
             open: staffOpen,
             open_venues: openVenuesNorm === 'ALL' ? 'ALL' : [...openVenuesNorm],
             message: settings.message,
             deadline: deadlineLocalIso,
             deadlinePassed: effectiveDeadlinePassed,
-            canSubmit: staffCanSubmit && staffOpen && (!effectiveDeadlinePassed || forceOpen || staffForceOpen),
+            deadlineWaived,
+            canSubmit: staffCanSubmit && staffOpen && (!effectiveDeadlinePassed || deadlineWaived),
             staffCanSubmit,
             force_open: forceOpen,
             force_open_staff: forceOpenStaff,
@@ -2700,7 +2748,7 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
     const effectiveDeadline = computeEffectiveDeadline(settings.custom_deadline || null, now);
     const forceOpenStaff = Array.isArray(settings.force_open_staff) ? settings.force_open_staff : [];
     const staffForceOpen = forceOpenStaff.includes(staffId);
-    if (!settings.force_open && !staffForceOpen && now > effectiveDeadline)
+    if (!dispoDeadlineWaived(settings, req.session.user.role, staffForceOpen) && now > effectiveDeadline)
         return res.status(403).json({ error: 'La deadline est passée.' });
     const { dispos } = req.body;
     if (!Array.isArray(dispos) || dispos.length === 0) return res.status(400).json({ error: 'Aucune disponibilité fournie' });
@@ -2714,14 +2762,19 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
         let skippedConges = [];
         const dates = dispos.map(d => d.date).filter(Boolean).sort();
         if (dates.length) {
-            const conges = await db.collection('time_off')
-                .find({ staff_id: staffId, status: { $ne: 'rejected' },
-                        start_date: { $lte: dates[dates.length - 1] }, end_date: { $gte: dates[0] } })
-                .toArray();
             // Un directeur déclare ses absences dans `manager_time_off` (E-19, keyé
             // user_id) et non dans `time_off` : sans cette jointure il pourrait poser
             // une dispo un jour où il s'est déclaré absent. Vide pour un staff ordinaire.
-            const mgrOffs = await managerOffPeriods(staffId, dates[0], dates[dates.length - 1]);
+            // R-13 : la session porte déjà l'`_id` → une seule requête, pas deux. NE PAS
+            // remplacer par un test sur le rôle en session : celui-ci est figé au login,
+            // un compte promu directeur perdrait la jointure jusqu'à sa reconnexion.
+            const [conges, mgrOffs] = await Promise.all([
+                db.collection('time_off')
+                    .find({ staff_id: staffId, status: { $ne: 'rejected' },
+                            start_date: { $lte: dates[dates.length - 1] }, end_date: { $gte: dates[0] } })
+                    .toArray(),
+                managerOffPeriods(staffId, dates[0], dates[dates.length - 1], req.session.user._id),
+            ]);
             const split   = splitDisposByConges(dispos, conges.concat(mgrOffs));
             dispos2       = split.kept;
             skippedConges = split.skippedDates;
@@ -3350,12 +3403,19 @@ async function managerStaffName(staffId, sessionName) {
 // Retourne des périodes { start_date, end_date } — la forme attendue par
 // `splitDisposByConges` / `datesCoveredByPeriods`. Jamais d'erreur : un staff
 // ordinaire n'a simplement aucune période.
-async function managerOffPeriods(staffId, fromStr, toStr) {
+// `knownUserId` évite le `users.findOne` quand l'appelant a déjà l'utilisateur sous la
+// main (session) — c'est le cas du chemin chaud `POST /api/dispos`. Sans lui, on
+// retrouve l'utilisateur depuis son `staff_id`.
+async function managerOffPeriods(staffId, fromStr, toStr, knownUserId) {
     try {
-        const user = await db.collection('users').findOne({ staff_id: staffId }, { projection: { _id: 1 } });
-        if (!user) return [];
+        let userId = knownUserId;
+        if (!userId) {
+            const user = await db.collection('users').findOne({ staff_id: staffId }, { projection: { _id: 1 } });
+            if (!user) return [];
+            userId = user._id;
+        }
         return await db.collection('manager_time_off').find({
-            user_id: { $in: [String(user._id), user._id] },
+            user_id: { $in: [String(userId), userId] },
             start_date: { $lte: toStr }, end_date: { $gte: fromStr },
         }, { projection: { start_date: 1, end_date: 1 } }).toArray();
     } catch (e) { console.error('[managerOffPeriods]', e.message); return []; }

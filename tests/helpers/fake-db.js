@@ -52,6 +52,12 @@ function plainEq(query) {
     return out;
 }
 
+// _id auto-généré, format ObjectId (24 hex) pour passer `isValidObjectId`.
+let _idSeq = 0;
+function nextObjectIdHex() {
+    return 'fa9e0000' + String(++_idSeq).padStart(16, '0');
+}
+
 function makeCollection(initialDocs) {
     const docs = (initialDocs || []).map(d => ({ ...d }));
     return {
@@ -61,8 +67,18 @@ function makeCollection(initialDocs) {
             const res = docs.filter(d => matchDoc(d, query));
             return { sort() { return this; }, limit() { return this; }, async toArray() { return res.slice(); } };
         },
-        async insertOne(doc)      { docs.push({ ...doc }); return { insertedId: doc._id || null, acknowledged: true }; },
-        async insertMany(arr)     { (arr || []).forEach(d => docs.push({ ...d })); return { insertedCount: (arr || []).length, acknowledged: true }; },
+        // Mongo attribue toujours un _id : le simuler est nécessaire dès qu'une route
+        // réutilise l'`insertedId` (ex. createManagerStaffProfile, dont le retour
+        // devient le `staff_id` du user).
+        async insertOne(doc)      {
+            const stored = { ...doc, _id: doc._id || nextObjectIdHex() };
+            docs.push(stored);
+            return { insertedId: stored._id, acknowledged: true };
+        },
+        async insertMany(arr)     {
+            (arr || []).forEach(d => docs.push({ ...d, _id: d._id || nextObjectIdHex() }));
+            return { insertedCount: (arr || []).length, acknowledged: true };
+        },
         async countDocuments(q)   { return docs.filter(d => matchDoc(d, q || {})).length; },
         async deleteMany(query)   {
             let n = 0;

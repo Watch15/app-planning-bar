@@ -71,6 +71,8 @@ function seed(extra = {}) {
 }
 
 const disposOf = db => db.collection('availabilities')._docs;
+const staffOf  = db => db.collection('staff')._docs;
+const usersOf  = db => db.collection('users')._docs;
 
 // ── Semaine-type : pré-remplissage en CRÉATION SEULE ──────────────────────────
 
@@ -185,4 +187,112 @@ test('GET /api/dispos/pending : les dispos directeur et staff sont dans la même
     assert.equal(body.length, 2, 'seules les `pending`, directeur ET staff mélangés');
     assert.equal(body.find(d => d.staff_id === MGR_STAFF).is_directeur, true);
     assert.equal(body.find(d => d.staff_id === STAFF_ID).is_directeur, undefined);
+});
+
+// ── Exemption de deadline (câblage ; le POURQUOI est sur `dispoDeadlineWaived`) ─
+//
+// Deadline garantie passée quelle que soit la date d'exécution : cible = LUNDI 00:00.
+// computeEffectiveDeadline ramène toujours la deadline dans la semaine courante ;
+// un lundi minuit est donc soit aujourd'hui à 0h (déjà passé), soit un jour révolu.
+const PAST_DEADLINE = '2026-01-05T00:00'; // 5 janvier 2026 = un lundi
+const closedSettings = { key: 'dispo', open: true, force_open: false, custom_deadline: PAST_DEADLINE };
+const STAFF_USER = { _id: '0123456789abcdef0123eeee', staff_id: STAFF_ID, name: 'Bob', role: 'staff' };
+
+const postOneDispo = user => req('/api/dispos', user, {
+    method: 'POST',
+    body: JSON.stringify({ dispos: [{ date: '2099-06-01', type: 'custom', start_time: 18, end_time: 24 }] }),
+});
+
+test('deadline passée : le directeur peut quand même envoyer ses dispos', async () => {
+    const db = seed({ settings: [closedSettings] });
+    app.locals.setTestDb(db);
+    const res = await postOneDispo(DIRECTEUR);
+    assert.equal(res.status, 201, 'le directeur n\'est pas bloqué par la deadline');
+    assert.deepEqual(disposOf(db).map(d => d.date), ['2099-06-01']);
+});
+
+test('deadline passée : le staff ordinaire reste bloqué', async () => {
+    // Garde-fou : l'exemption est une exception de RÔLE, pas un trou dans la deadline.
+    const db = seed({
+        settings: [closedSettings],
+        staff: [{ _id: STAFF_ID, name: 'Bob', venues: [], can_submit_dispos: true }],
+    });
+    app.locals.setTestDb(db);
+    const res = await postOneDispo(STAFF_USER);
+    assert.equal(res.status, 403);
+    assert.match((await res.json()).error, /deadline/i);
+    assert.equal(disposOf(db).length, 0);
+});
+
+test('GET /api/dispo-settings : le client voit la même règle que le serveur', async () => {
+    const db = seed({
+        settings: [closedSettings],
+        staff: [
+            { _id: MGR_STAFF, name: 'Dir Test', venues: [], can_submit_dispos: true },
+            { _id: STAFF_ID,  name: 'Bob',      venues: [], can_submit_dispos: true },
+        ],
+    });
+    app.locals.setTestDb(db);
+
+    const dir = await (await req('/api/dispo-settings', DIRECTEUR)).json();
+    assert.equal(dir.deadlinePassed, true, 'la deadline EST passée — on ne la maquille pas');
+    assert.equal(dir.deadlineWaived, true);
+    assert.equal(dir.canSubmit, true, 'le formulaire doit rester ouvert au directeur');
+
+    const bob = await (await req('/api/dispo-settings', STAFF_USER)).json();
+    assert.equal(bob.deadlineWaived, false);
+    assert.equal(bob.canSubmit, false, 'sinon le staff voit un formulaire que le serveur refusera');
+});
+
+// ── R-06 : `users.assigned_establishments` ↔ `staff.venues` ───────────────────
+
+test('R-06 : réaffecter un directeur recale ses `staff.venues`', async () => {
+    const db = seed({
+        staff: [{ _id: MGR_STAFF, name: 'Dir Test', venues: ['bar1'], can_submit_dispos: true }],
+    });
+    app.locals.setTestDb(db);
+    const res = await req('/api/users/' + MGR_USER + '/establishments', PATRON, {
+        method: 'PATCH',
+        body: JSON.stringify({ assigned_establishments: ['bar2', 'bar3'] }),
+    });
+    assert.equal(res.status, 200);
+    const staffDoc = staffOf(db).find(s => String(s._id) === MGR_STAFF);
+    assert.deepEqual(staffDoc.venues, ['bar2', 'bar3'],
+        'sans ça le directeur garde bar1 et perd la saisie des dispos sur ses vrais bars');
+});
+
+test('R-06 : promouvoir un compte sans profil staff en directeur en crée un', async () => {
+    const OBS = '0123456789abcdef0123dddd';
+    const db = seed({
+        users: [{ _id: OBS, role: 'observateur', name: 'Chloé', email: 'c@x.fr' }],
+        staff: [],
+    });
+    app.locals.setTestDb(db);
+    const res = await req('/api/users/' + OBS + '/role', PATRON, {
+        method: 'PATCH',
+        body: JSON.stringify({ role: 'directeur', assigned_establishments: ['bar1'] }),
+    });
+    assert.equal(res.status, 200);
+
+    const staffDocs = staffOf(db);
+    assert.equal(staffDocs.length, 1, 'un profil staff est créé, sinon POST /api/dispos répond 400 à vie');
+    assert.deepEqual(staffDocs[0].venues, ['bar1']);
+    assert.equal(staffDocs[0].name, 'Chloé');
+    const user = usersOf(db).find(u => String(u._id) === OBS);
+    assert.equal(String(user.staff_id), String(staffDocs[0]._id), 'le lien user → staff est posé');
+});
+
+test('R-06 : rétrograder un directeur ne détruit pas son profil staff', async () => {
+    // Son historique (shifts passés, heures, taux) vit sur le profil staff.
+    const db = seed({
+        staff: [{ _id: MGR_STAFF, name: 'Dir Test', venues: ['bar1'], can_submit_dispos: true }],
+    });
+    app.locals.setTestDb(db);
+    const res = await req('/api/users/' + MGR_USER + '/role', PATRON, {
+        method: 'PATCH',
+        body: JSON.stringify({ role: 'staff' }),
+    });
+    assert.equal(res.status, 200);
+    assert.equal(staffOf(db).length, 1);
+    assert.deepEqual(staffOf(db)[0].venues, ['bar1']);
 });

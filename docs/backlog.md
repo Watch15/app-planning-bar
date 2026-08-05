@@ -36,6 +36,8 @@ Ajouter les nouveaux éléments avec une description courte, un contexte et une 
 | F-05 | **Échange de shifts avec validation patron** | Shifts / Notifications | ⏸️ Code livré (D-18) mais **désactivé en attente validation client** — collection `shift_swaps` conservée, 7 routes commentées via `/* */` dans `server.js` lignes 2186→2422 et 2488→2550. Modales front/back fonctionnelles, à réactiver d'un seul retrait de commentaires |
 | F-11 | **KPI de complétion des dispos (par bar)** | Dispos / Pilotage | ✅ Done — carte sur la vue planning : barre globale « X/Y dispos envoyées » + déclinaison par établissement. Suit la **semaine affichée** (navigation) et **cliquable** → déroule la liste des staff sans dispo (nom + bar). Scopé par rôle : patron (tous bars), directeur (`assigned_establishments`), responsable (ses établissements, dans « 👥 Mon équipe »). Endpoint `GET /api/dispos/kpi?from&to` (`overall`/`by_establishment`/`missing`). Staff comptés = compte actif + `can_submit_dispos !== false`. |
 | F-10 | **Congés / vacances déclarés à l'avance par le staff** | Staff / Planning | ✅ Done — collection `time_off` dédiée (long terme, non purgée, valable sur tous les établissements du staff). Le staff pose une **demande** (validation patron) ou une **déclaration informative** par **plage de dates** depuis l'onglet **« Dispos & congés »** de `planning.html` (sous-toggle Dispos/Congés). Côté patron : **onglet 🌴 Congés de la modale Dispos** (recherche par nom + filtres statut + regroupement par mois repliable, valider/refuser en un clic ; la pastille « Dispos » agrège dispos + congés en attente). Dans le planning, le staff en congé est **grisé + badge 🌴**, avec **confirmation requise** avant assignation. **Récap mensuel** : colonne 🌴 Congés (jours validés) + export Excel, staff en congé sans shift inclus. Endpoints `/api/conges*`, helpers purs `datesOverlap`/`congeCoversDate`/`congeDaysInRange` (testés). |
+| F-12 | **Journal d'audit des dispos (historique des versions)** | Dispos / Traçabilité | 🆕 Demandé le 2026-08-05. **Besoin** : en cas de litige patron ↔ employé (« j'avais mis dispo », « non »), pouvoir prouver qui a saisi quoi et quand — y compris les versions **avant** modification. **Le trou aujourd'hui** : `POST /api/dispos` fait un `bulkWrite` en **upsert** sur `(staff_id, date)` → l'ancienne version est **écrasée sans trace**, et le statut repasse en `pending`. Idem `PATCH /confirm` et `/reject` (statut écrasé sur place), la purge congés (`deleteMany` silencieux) et la purge d'absence directeur. **Rien n'est conservé.** **Piste** : collection **append-only** `dispo_events`, un doc par changement — `{ staff_id, date, at, by:{user_id, role}, action: 'submit'\|'update'\|'confirm'\|'reject'\|'ignore'\|'reopen'\|'purge_conge', before:{…}, after:{…} }`. **Contrainte « ne prend pas de place »** : ne stocker que le **delta** (champs réellement modifiés), pas le doc complet ; **index TTL** (durée à fixer, cf. RGPD) ; ~150–250 octets par événement. **Points d'accrochage** : `POST /api/dispos` (⚠️ le `bulkWrite` actuel ne lit pas l'avant → un `find` préalable est nécessaire), `PATCH /api/dispos/:id/confirm` `/reject` `/ignore`, `POST /api/dispos/reopen-for-correction`, la purge congés, `POST /api/me/manager-off`, et la matérialisation semaine-type. **UI** : lecture seule côté patron, historique par staff/semaine, « qui · quoi · quand ». **RGPD** : donnée salarié conservée à titre de preuve → durée de conservation à arrêter et à ajouter à `politique-confidentialite.html`. |
+| F-13 | **Comptes staff « fantômes » (archivés)** | Staff / Comptes | 🆕 Demandé le 2026-08-05. **Besoin** : sortir un staff de la vie courante de l'app **sans perdre son historique**. ⚠️ *À confirmer* : « en gardant leur erreur » lu comme **leur historique / leurs heures** — à valider avant de coder. **Le trou aujourd'hui** : la seule sortie est destructive et incohérente — `DELETE /api/users/:id` supprime le compte mais **laisse le profil `staff` derrière** (cf. R-12), et rien ne distingue « parti » de « actif ». **Piste** : flag `archived: true` + `archived_at` sur le doc `staff`, **jamais de suppression** (sinon les récaps passés perdent le nom). **Exclu de** : barre staff, population dispos (`can_submit_dispos`), rappels J-2/J-1, KPI de complétion, liste « sans dispo », assignation de nouveaux shifts. **Conservé dans** : shifts passés, pointage, récap mensuel des mois écoulés, masse salariale historique. **Réversible** (désarchiver). **Attention** : désactiver aussi le compte `users` lié, sinon la personne peut encore se connecter. **Endroits à toucher** : les requêtes `can_submit_dispos: true` (`server.js:446`, `:462`, `:477`, `:2994`, `:4065`), `/api/staff`, la barre staff, le récap, le KPI. |
 
 ---
 
@@ -44,10 +46,70 @@ Ajouter les nouveaux éléments avec une description courte, un contexte et une 
 Contexte : revue complète du code (`/code-review`) puis correction de trajectoire E-22
 (cf. `docs/design-e22-dispos-directeur.md` §8). Ce qui suit est ce qui **reste**.
 
+### Livré pendant la session du 2026-08-04/05
+
+1. **Revue complète** (`/code-review`) : 12 findings. La moitié n'étaient pas indépendants —
+   ils remontaient tous à un même objet mal modélisé (cf. point 2).
+2. **Correction E-22 — la dispo n'est pas un shift.** Le directeur repasse par le pipeline
+   `availabilities` standard : `POST /api/dispos`, mêmes règles (deadline, congés), **même
+   file de validation que le staff**, le patron choisit l'établissement et crée le shift.
+   Supprimés : `PUT /api/me/manager-dispos/week`, `GET /api/me/manager-dispos`,
+   `buildManagerShift`, `managerStaffMeta`, `requireEstablishment`, les marqueurs
+   `source:'manager_dispo'` / `from_template`, et le sélecteur d'établissement côté directeur.
+   La semaine-type ne fait plus que **pré-remplir les jours vides** (création seule).
+   Résout les findings 1, 2, 3, 11 et le doublon de « copier la semaine ». Aucune migration
+   (la version « shifts » n'a jamais tourné en prod).
+3. **Absences (E-19 conservé)** : `manager_time_off` joint au filtre congés
+   (`managerOffPeriods` + helper pur `datesCoveredByPeriods`) ; déclarer une absence purge
+   les dispos de la période, **jamais les shifts du patron**.
+4. **Tests** : 142 → **149**. Nouveau `tests/manager-dispos.test.js` (7 tests d'intégration
+   HTTP). `insertMany` ajouté à `fake-db`. Helpers morts `resolveManagerAvailability` /
+   `mondayFirstDow` supprimés avec leurs 7 tests (couverture qui portait sur du code sans
+   appelant). **Non-vacuité vérifiée par mutation** : casser la garde « création seule » fait
+   tomber 3 tests, retirer la jointure congés en fait tomber 1.
+5. **Emojis** : retirés des onglets, sous-onglets, barre de nav principale, drawer mobile,
+   menu utilisateur, chips de filtre Congés, boutons d'action et titres de modale concernés.
+   **Conservés** : 🔔 (notifications) et les boutons sans libellé (⚙, ☰).
+   ⚠️ Piège rencontré : `index-init.js` réécrivait le libellé du drawer au premier rendu —
+   corriger le HTML seul ne suffisait pas.
+
+### Livré pendant la session du 2026-08-05 (palier 1 — refermer E-22)
+
+Décidé en début de session : **palier 1 d'abord**, parce que R-06 était le seul endroit où
+du code **déjà poussé sur `origin/dev`** cassait un usage réel.
+
+1. **R-06 corrigé** — `syncManagerStaffVenues()` recale `staff.venues` sur
+   `users.assigned_establishments`, sur les **deux** routes qui touchaient l'un sans l'autre
+   (`/establishments` **et** `/role`, ce second point n'était pas dans le constat initial).
+   Crée aussi le profil staff manquant à la promotion. Un directeur réaffecté ou promu peut
+   de nouveau saisir ses dispos.
+2. **Exemption de deadline pour le directeur** (question 4 tranchée) — helper pur
+   `dispoDeadlineWaived`, appliqué serveur **et** client.
+3. **R-13** corrigé (une moitié du constat était fausse, cf. tableau), **R-14** documenté.
+4. **Tests : 149 → 160.** 5 unitaires (`dispoDeadlineWaived`) + 6 d'intégration (2 deadline,
+   1 cohérence client/serveur, 3 R-06). `fake-db.insertOne` génère désormais un `_id`
+   (24 hex) quand le doc n'en porte pas — sans ça une route qui réutilise son `insertedId`
+   n'était pas testable. **Non-vacuité vérifiée par mutation** : annuler l'exemption de rôle
+   + le resync `venues` fait tomber **4 tests**.
+5. `npm test` 160/160, `eslint` 0 erreur.
+6. **Revue `/simplify` passée sur le diff** (4 angles : réutilisation, simplification,
+   efficacité, altitude). Appliqué : signature du helper réduite à `(userId)` — il relit
+   le user, donc `role`/`assigned` étaient redérivables, ce qui supprime un `users.findOne`
+   entier par réaffectation ; `$pull` symétrique manquant sur `DELETE /api/establishments/:id` ;
+   R-13 refait sans test de rôle (cf. tableau) ; `deadline_waived` → `deadlineWaived`
+   (la réponse de cette route est snake_case pour les champs **stockés**, camelCase pour les
+   **calculés**) ; emoji 🔓 restauré — je l'avais retiré au passage alors que rien ne le
+   demandait. **Non fait, remonté en R-15** : la règle « venues = assigned_establishments »
+   vit en 4 copies et un site de mutation fuit encore.
+
+**Ce qui reste du palier 1 : T-05** — le smoke test contre la vraie base. Aucune des
+corrections ci-dessus n'a tourné contre un Mongo réel. À faire **avant** de considérer E-22
+comme refermé.
+
 ### État actuel des tests (pour mémoire)
 
-149 tests, deux niveaux : **~132 unitaires** (helpers purs de `lib/utils.js` — aucun Express,
-aucun `db`) et **~17 d'intégration HTTP** (`routes`, `manager-dispos`, moitié de `dispos`) qui
+160 tests (149 avant cette session), deux niveaux : **~137 unitaires** (helpers purs de `lib/utils.js` — aucun Express,
+aucun `db`) et **~23 d'intégration HTTP** (`routes`, `manager-dispos`, moitié de `dispos`) qui
 démarrent la vraie app Express sur un port éphémère et ne remplacent que Mongo, par
 `tests/helpers/fake-db.js`. Session simulée par l'en-tête `x-test-user`.
 **Rien ne couvre le front ni un vrai Mongo.**
@@ -72,17 +134,21 @@ Mongo), donc couplés au nom des collections et des champs.
 | S-01 | **`NODE_ENV` est le seul rempart du harnais de test.** Le middleware `x-test-user` fabrique une session (rôle compris) à partir d'un simple en-tête. Il est bien enfermé dans `if (NODE_ENV === 'test')` — **vérifié, non monté en prod**. Mais si `NODE_ENV` valait `test` en prod (var oubliée, image reconstruite), c'est un **contournement total de l'authentification**. Durcir : double garde, ou refus de démarrer dans cette combinaison. | `server.js:685-694`, `:5007-5009` |
 | S-02 | `PATCH /api/performance-settings` : le contrôle d'accès ne tourne que si `establishment_id` est fourni. Sans le champ → écriture du doc **global**, dont `charge_rate` alimente tous les établissements par fallback. Un directeur limité à un bar déplace les chiffres des autres. **Et** `requirePatron` laisse passer l'`observateur` : cette route n'a pas de `denyObservateurEdit`, donc un rôle lecture seule peut écrire. | `server.js:4591`, `:745` |
 | S-03 | `GET /api/performance-settings` : `requireAuth` seul, `establishment_id` transmis tel quel. N'importe quel staff lit objectifs et taux de charges de n'importe quel bar en devinant l'id (slug `Nom_bar`). | `server.js:4583` |
+| S-04 | **`GET /api/dispos/pending` n'est scopé par aucun établissement** — la requête ne filtre que sur date + statut, et `requirePatron` laisse passer **directeur** et **observateur**. Un directeur limité à un bar voit donc les dispos en attente de **tout le staff, tous bars confondus**. Difficilement évitable en l'état (une dispo n'a pas d'établissement avant validation — c'est le modèle rétabli par la correction E-22), mais devient une vraie question maintenant que les directeurs alimentent cette file. Décider : scoper via les `venues` du staff, ou assumer. | `server.js:2772`, `:745` |
 
 ### Findings de revue restants (hors sécurité)
 
 | ID | Point | Priorité |
 |---|---|---|
-| R-06 | **`staff.venues` jamais resynchronisé** avec `assigned_establishments` (`PATCH /api/users/:id/establishments` ne met à jour que `users`). **Devenu critique** avec la correction E-22 : le directeur tombe désormais sous `staffDispoOpen(settings, staffDoc.venues)` → un directeur réaffecté **ne peut plus saisir de dispo du tout**. Idem, promouvoir un `observateur` en `directeur` ne crée aucun profil staff → 400 permanent, réparable seulement par `npm run backfill-directors`. | **Haute** |
+| R-06 | **`staff.venues` ↔ `assigned_establishments`** — 🟡 **Partiellement résolu (2026-08-05).** Helper `syncManagerStaffVenues(userId)` (relit le user, la base fait foi) appelé par `PATCH /api/users/:id/establishments` **et** `PATCH /api/users/:id/role` ; recale `staff.venues` et **crée le profil staff manquant** en posant `users.staff_id` → plus de 400 permanent, plus besoin de `npm run backfill-directors`. Rétrograder ne détruit jamais le profil. `DELETE /api/establishments/:id` fait désormais le `$pull` **symétrique** sur `staff.venues`. 4 tests. ⚠️ **Reste ouvert, cf. R-15** : `PATCH /api/staff/:id` écrit `staff.venues` sans recaler `users` (sens inverse), et la règle « venues = assigned_establishments » existe en 4 copies littérales. | **Moyenne** (le blocage dispos est levé ; l'invariant n'est pas verrouillé) |
+| R-15 | **L'invariant R-06 n'est pas verrouillé — il repose sur un commentaire.** Relevé par la revue `/simplify` du 2026-08-05, angle altitude. 3 des 4 sites de mutation passent par le helper, mais **`PATCH /api/staff/:id` (`server.js:~1740`) écrit `staff.venues` sans recaler `users.assigned_establishments`** : le patron coche des bars dans « Gestion staff » sur une ligne de directeur (`GET /api/staff` ne les filtre pas, `public/script.js` PATCHe `venues` pour n'importe quelle ligne) → la saisie de dispos suit, l'accès aux écrans reste sur les anciens bars. Divergence atteignable en 2 clics. **Deux paliers possibles** : (1) mutateur unique `setUserEstablishments(userId, venues)` qui écrit les deux collections, plus aucun `$set: { assigned_establishments }` en direct — couvre 4/4 pour le même coût ; (2) **vraie** source unique : supprimer `users.assigned_establishments` pour le rôle directeur et le dériver de `staff.venues` (touche la session `server.js:~895`, 6 lectures serveur et 5 côté front — bien plus lourd). Alternative honnête au palier 1 : rendre `venues` non éditable sur un profil de directeur. | Moyenne |
 | R-04 | Les push de rappel dispo pointent vers `/planning.html`, page que le directeur ne peut pas ouvrir. | Moyenne |
 | R-05 | Invitation directeur : nom générique `'Directeur'` si aucun staff choisi (N directeurs = N lignes homonymes) ; inviter un staff **existant** comme directeur crée un **second** profil staff (taux, rôles, historique restent sur l'ancien). | Moyenne |
 | R-09 | `sw.js` : `caches.match(...) || caches.match('/login.html')` — `caches.match()` retourne une Promise, toujours truthy → branche login morte, et si `/index.html` manque du cache la chaîne résout `undefined` → erreur réseau au lieu du shell. | Moyenne |
 | R-10 | `performance.js` : `loadTargets()` non-awaité dans le handler `change` d'établissement → le premier rendu colore les pastilles contre l'objectif du bar **précédent**, ce qui vide E-24 de son sens. | Moyenne |
 | R-12 | Orphelins : profil staff créé **avant** `users.insertOne` (échec = staff fantôme) ; `DELETE /api/users/:id` ne supprime pas le profil lié ni son `manager_dispo_templates`. | Basse |
+| ~~R-13~~ | ~~Requête `users.findOne` de trop sur `POST /api/dispos`~~ | ✅ **Résolu (2026-08-05)** — `managerOffPeriods(…, knownUserId)` : la session porte déjà l'`_id`, la recherche du user disparaît. **Première tentative rejetée par la revue** : court-circuiter l'appel sur `req.session.user.role === 'directeur'` économisait la requête mais introduisait un trou — le rôle en session est figé au login, un compte promu directeur aurait perdu la jointure `manager_time_off` jusqu'à sa reconnexion et aurait pu poser une dispo un jour d'absence déclarée. La version retenue ne teste aucun rôle. Les 2 lectures restantes (`time_off` + `manager_time_off`) sont passées en `Promise.all`. ⚠️ **La 2e moitié du constat était fausse** : le `users.find` de `/api/dispos/pending` est porteur (repère `is_directeur`) — conservé délibérément. |
+| ~~R-14~~ | ~~Résidus inertes~~ | ✅ **Traité (2026-08-05)**, partiellement. `is_manager` : commentaire explicite ajouté aux **2** sites d'écriture (`server.js` `createManagerStaffProfile`, `scripts/backfill-director-staff.js`) — « informatif, aucun code ne le lit, ne filtre NI la paie NI rien ». Le constat disait 3 sites : le 3e (`public/script.js:5287`) est un **autre objet** (marqueur de période de congé) et il **est lu** (`:5343`) — rien à faire. **Reste ouvert** : le champ `establishment_id` résiduel sur les docs `manager_dispo_templates` déjà en base — donnée, pas code : exige un script de migration, non fait. | Basse |
 | ~~R-11~~ | ~~`PUT /api/me/manager-dispos/week` sans borne temporelle~~ | ✅ Résolu — route supprimée par la correction E-22 |
 
 ### Questions en attente de réponse
@@ -90,10 +156,28 @@ Mongo), donc couplés au nom des collections et des champs.
 1. ~~Emojis de la barre de navigation principale et du drawer mobile~~ — ✅ **Tranché (2026-08-05) : retirés.** Onglets, sous-onglets, `.header-nav` et drawer sont nettoyés. **Conservés** : 🔔 (notifications, exception demandée), et les boutons **sans libellé** dont l'icône EST le bouton (⚙ paramètres dispos, ☰ menu mobile) — les vider laisserait un bouton blanc. Les 3 zones voisines (menu utilisateur, chips de filtre Congés, boutons d'action + titres de modale concernés) ont été nettoyées dans la foulée. **Restent, hors périmètre demandé** : les icônes de statut injectées par le JS (`script.js` — ⏳ badges de congés), les placeholders de recherche (🔎/🔍/⏰), quelques libellés internes de modale (🔁 Ma semaine-type, 💶 Import taux, ⬆ Import CSV, 👥 Garder les staffs, 🔒 mention RGPD) et le hint ★ de la barre staff. Non touché aussi : `⇄ Échanges`, dans le bloc F-05 commenté — reviendra avec le symbole si F-05 est réactivé.
 2. **Décocher un jour puis enregistrer ne supprime pas la dispo** côté serveur (`POST /api/dispos` ne fait qu'upsert). Limite **partagée avec le flux staff** — la corriger pour tout le monde, ou laisser ?
 3. **T-01** (test de la boucle cron) : à écrire maintenant ou plus tard ?
+4. ~~Le directeur tombe désormais sous la deadline des dispos~~ — ✅ **Tranché (2026-08-05) : exempté.** Helper pur `dispoDeadlineWaived(settings, role, staffForceOpen)` dans `lib/utils.js`, trois portes dans l'ordre : `force_open` global → réouverture nominative → rôle `directeur`. Utilisé aux **deux** endroits (`POST /api/dispos` et `GET /api/dispo-settings`) pour que le client n'affiche jamais un formulaire que le serveur refusera, ni l'inverse. Nouveau champ `deadline_waived` dans la réponse ; `planning.js` affiche « Deadline dépassée le … — saisie encore ouverte pour toi » au lieu d'une deadline périmée présentée comme courante. **Portée volontairement étroite** : l'exemption ne lève QUE la deadline. `staffDispoOpen` (ouverture par établissement) continue de s'appliquer au directeur — la vraie cause du blocage sur ce front était R-06, désormais corrigé. 5 tests unitaires dont un qui vérifie que l'exemption ne fuit vers **aucun** autre rôle, + 3 tests d'intégration. **Reste à décider si le cas se présente** : que faire si le patron ferme la saisie sur TOUS les bars du directeur — aujourd'hui il est bloqué comme les autres.
+5. **F-13** : « en gardant leur **erreur** » — lu comme *leur historique / leurs heures*. À confirmer avant tout code.
 
-### Divers
+### Documentation — contradictions relevées (audit du 2026-08-05)
 
-- `graphify update .` **refuse** de s'exécuter (994 nœuds contre 997 en base, soupçon de chunks manquants). Non forcé — `--force` écrase le graphe. Le graphe est donc **périmé** depuis la correction E-22.
+Vérifiées **contre le code actuel**, pas supposées. Non corrigées : à traiter plus tard.
+
+| ID | Où | Ce qui est faux / contradictoire |
+|---|---|---|
+| DOC-01 | `docs/prd.md:187-190` (§3.9.ter) | **Faux sur deux points.** « Un directeur n'a pas de profil `staff` (`staff_id` null **par design**) » et « un directeur n'est **jamais planifiable ni compté** comme un employé ». E-22 Modèle A a inversé les deux : tout directeur a un profil staff (`createManagerStaffProfile`), il est planifiable, et la décision arrêtée est **paie = COMPTÉ**. Un lecteur qui commence par le PRD conclut l'inverse de ce que fait le code. |
+| DOC-02 | `docs/onboarding.md:148` | **Faux.** « keyé sur `user_id` (un directeur n'a **pas** de `staff_id`) ». Même inversion que DOC-01. Le fait que `manager_time_off` reste keyé sur `user_id` est vrai ; la justification donnée ne l'est plus. |
+| DOC-03 | `docs/design-e22-dispos-directeur.md` | **Se contredit lui-même.** §Décisions (l. 44) « v1 = saisie semaine par semaine, **auto-validée** » et §6bis Phase 1 (l. 123) « statut **`confirmed` d'office (auto-validé)** » — alors que §8 (2026-08-04) impose `pending` + **validation patron**. Les sections antérieures n'ont pas été marquées comme supersédées. ⚠️ Omission de la session du 2026-08-04 : c'est le doc qui fait autorité sur E-22, à corriger en premier. |
+| DOC-04 | `README.md:222` | **Ambigu, devenu trompeur.** « `manager_time_off` — keyé sur `user_id`, **isolé du pipeline staff** ». La collection l'est toujours ; le **directeur**, lui, ne l'est plus. Formulation à préciser. |
+| DOC-05 | `README.md:290/292/295`, `docs/prd.md:125-129, 139, 161, 165, 176, 193, 279` | **Périmé depuis le nettoyage des emojis** (2026-08-05). La doc décrit l'UI actuelle avec des libellés qui n'existent plus : « 📋 En attente », « 🔄 À réaffecter », « 📝 Notes », « 🔓 Modifier », « 🌴 Congés », « 👥 Mon équipe », « 👥 Staff », « 📊 Excel »… Cosmétique, mais nombreux. **N'inclut pas** les entrées historiques `D-xx` de ce backlog, qui décrivent l'état au moment de la livraison et n'ont pas à être réécrites. |
+| DOC-06 | `graphify-out/` | **Périmé par construction.** `GRAPH_REPORT.md` date du 2026-07-31 : antérieur à E-22 v2 **et** à sa correction. Il décrit donc des routes supprimées (`PUT /api/me/manager-dispos/week`…) comme existantes. Aggravé par le fait que `CLAUDE.md` **impose** de l'interroger en premier pour toute question d'architecture (cf. Divers). |
+
+**Non audités** (hors périmètre de cette passe, aucune vérification faite) : `docs/architecture.md` (2026-06-12), `docs/methodologie-et-cicd.md`, `docs/ux-design.md`, `task.md`, `ui_kits/*.md` — tous antérieurs de 2 à 4 mois, donc **présumés dérivés**.
+
+### Divers — outillage & process
+
+- **`graphify` est en panne, et le `CLAUDE.md` l'impose.** `graphify update .` **refuse** de s'exécuter (994 nœuds contre 997 en base → soupçon de chunks manquants d'une session précédente). Non forcé : `--force` écrase le graphe. Or les instructions projet demandent de lancer `graphify update .` après toute modification de code **et** de s'appuyer sur le graphe pour les questions d'architecture. Conséquence : **chaque session future recevra la consigne d'interroger un graphe périmé, sans le savoir.** Ce n'est pas une corvée en attente, c'est un outil cassé qui dégradera silencieusement le travail. À réparer (rebuild propre) ou à retirer temporairement du `CLAUDE.md`.
+- **Commit + push automatiques.** L'environnement committe et pousse sans demande explicite : 4 commits sont partis sur `origin/dev` pendant la session du 2026-08-04/05 (`469efee`, `bb5b479`, `36b65f2`, `83028ff`). Deux conséquences : (a) **la correction E-22 est sur le remote alors qu'elle n'a jamais tourné contre une vraie base** (cf. T-05) ; (b) **les messages ne décrivent pas ce qui s'est passé** — `feat: update manager availability process for directors` livre en réalité un **revirement** d'un design déjà en place. Qui relira l'historique dans six mois ne verra pas qu'une décision a été annulée : seul `docs/design-e22-dispos-directeur.md` §8 le dit. Si `dev` est déployé automatiquement quelque part, le point (a) devient urgent.
 
 ---
 

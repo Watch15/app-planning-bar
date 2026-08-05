@@ -1493,10 +1493,13 @@ async function loadDisposTab() {
         return;
     }
 
-    statusEl.textContent = dispoSettings.force_open
-        ? '🔓 Saisie ouverte en urgence par le responsable'
+    // Deadline dépassée mais saisie quand même acceptée (force_open, réouverture
+    // nominative, ou rôle directeur) : ne pas l'afficher comme si elle courait encore.
+    const late = dispoSettings.deadlinePassed && dispoSettings.deadlineWaived;
+    statusEl.textContent = late  ? 'Deadline dépassée le ' + fmtDate + ' — saisie encore ouverte pour toi.'
+        : dispoSettings.force_open ? '🔓 Saisie ouverte en urgence par le responsable'
         : 'Deadline : ' + fmtDate;
-    statusEl.style.color = dispoSettings.force_open ? '#27ae60' : '#aaa';
+    statusEl.style.color = (late || dispoSettings.force_open) ? '#27ae60' : '#aaa';
 
     // Semaine suivante
     const nextMonday = getMondayOf(addDays(new Date(), 7));

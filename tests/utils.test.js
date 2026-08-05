@@ -14,6 +14,7 @@ const {
     chargeMultiplier,
     resolvePerfSettings,
     datesCoveredByPeriods,
+    dispoDeadlineWaived,
     buildTemplateDispos,
 } = require('../lib/utils');
 
@@ -446,4 +447,31 @@ test('buildTemplateDispos : modèle vide/null → aucune dispo', () => {
 test('buildTemplateDispos : case sans horaires ignorée', () => {
     const tpl = { days: { 1: { type: 'custom', start_time: null, end_time: null } } };
     assert.deepEqual(buildTemplateDispos(tpl, '2026-05-11', new Set()), []);
+});
+
+// ── dispoDeadlineWaived (exemption deadline — décision du 2026-08-05) ─────────
+
+test('dispoDeadlineWaived : par défaut, personne n\'est exempté', () => {
+    assert.equal(dispoDeadlineWaived({}, 'staff', false), false);
+    assert.equal(dispoDeadlineWaived(null, 'staff', false), false);
+});
+
+test('dispoDeadlineWaived : force_open global lève la deadline pour tout le monde', () => {
+    assert.equal(dispoDeadlineWaived({ force_open: true }, 'staff', false), true);
+});
+
+test('dispoDeadlineWaived : réouverture nominative lève la deadline pour ce staff', () => {
+    assert.equal(dispoDeadlineWaived({ force_open: false }, 'staff', true), true);
+});
+
+test('dispoDeadlineWaived : le directeur est exempté sans réglage patron', () => {
+    assert.equal(dispoDeadlineWaived({ force_open: false }, 'directeur', false), true);
+});
+
+test('dispoDeadlineWaived : l\'exemption ne déborde sur aucun autre rôle', () => {
+    // Le point sensible : c'est une exception de rôle dans un pipeline qu'on vient
+    // d'unifier. Si elle fuit vers `staff`, la deadline ne veut plus rien dire.
+    // Liste = les rôles de session valides (cf. PATCH /api/users/:id/role), + absent.
+    for (const role of ['staff', 'patron', 'observateur', 'etablissement', undefined])
+        assert.equal(dispoDeadlineWaived({ force_open: false }, role, false), false, 'rôle ' + role);
 });
