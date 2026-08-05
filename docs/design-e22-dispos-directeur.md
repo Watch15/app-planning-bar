@@ -4,6 +4,48 @@
 > Rédigé le 2026-07-30. Le backend isolé prototypé (`manager_availability`) est **abandonné** ; les helpers purs `resolveManagerAvailability`/`mondayFirstDow` l'ont suivi (2026-08-04, plus aucun appelant).
 >
 > ⚠️ **Correction de trajectoire (2026-08-04)** — cf. §8.
+> ⚠️ **Décisions complémentaires (2026-08-05)** — cf. §9.
+>
+> 🧭 **Comment lire ce document.** Il est écrit par couches successives, la plus récente
+> en premier. **§8 et §9 font autorité** ; tout ce qui suit date du 2026-07-30 et décrit
+> l'intention initiale, pas le code actuel. Les passages annulés sont marqués
+> ~~barrés~~ + « SUPERSÉDÉ » **à l'endroit où ils sont**, volontairement : les effacer
+> ferait disparaître la trace qu'une décision a été prise puis annulée — c'est justement
+> ce qu'on veut pouvoir relire dans six mois.
+
+## 9. Décisions complémentaires (2026-08-05)
+
+Trois questions que §8 ouvrait sans les trancher, arrivées en conséquence directe de
+« le directeur est un staff comme les autres ».
+
+**9.1 — Le directeur est EXEMPTÉ de la deadline.** §8 le fait tomber sous les « mêmes
+règles » que le staff, deadline comprise. Conséquence non voulue : s'il rate l'heure, il ne
+peut plus déclarer **ses propres heures**, et il n'y a personne au-dessus de lui pour
+rouvrir la saisie (`force_open_staff` est une action du patron). Décidé : exemption, via le
+helper pur `dispoDeadlineWaived(settings, role, staffForceOpen)` — trois portes, dans
+l'ordre : `force_open` global → réouverture nominative → rôle `directeur`.
+**Portée volontairement étroite** : l'exemption ne lève **que** la deadline.
+`staffDispoOpen` (ouverture par établissement) continue de s'appliquer au directeur comme à
+tout le monde. Si le patron ferme la saisie sur **tous** les bars d'un directeur, celui-ci
+est bloqué comme les autres — cas non rencontré, à trancher s'il se présente.
+
+**9.2 — `staff.venues` est resynchronisé (R-06).** §8 fait passer le directeur par
+`staffDispoOpen(settings, staffDoc.venues)`, or `venues` n'était jamais recalé sur
+`users.assigned_establishments` : un directeur réaffecté ne pouvait **plus saisir aucune
+dispo**, sans message qui l'explique. Helper `syncManagerStaffVenues(userId)`, appelé après
+toute écriture de `assigned_establishments` ; il crée aussi le profil staff manquant.
+⚠️ L'invariant n'est pas verrouillé — `PATCH /api/staff/:id` écrit `venues` dans l'autre
+sens sans recaler `users` (cf. R-15 au backlog).
+
+**9.3 — Périmètre de la file de validation (S-04).** Une dispo en attente n'a pas
+d'établissement — c'est le modèle rétabli par §8, le bar est choisi **à la validation**. Le
+seul rattachement disponible passe donc par les `venues` du **staff** qui l'envoie. Décidé :
+un directeur ne voit par défaut que les dispos des staff de ses bars, avec une bascule
+« Voir tout le staff » (`scope=all`) ouverte à tout directeur. **Ce n'est pas un
+cloisonnement** : c'est le défaut d'affichage qui change, pas le droit d'accès.
+Corollaire pour la **validation en masse** : le *lot* peut varier (mon staff / tout le
+monde), mais la *cible* reste **un seul établissement** — « valider pour tous les bars »
+n'existe pas et ne peut pas exister dans ce modèle.
 
 ## 8. Correction de trajectoire (2026-08-04) — la dispo n'est pas un shift
 
@@ -41,14 +83,17 @@ Aucune migration : la version « shifts » n'a jamais tourné en prod.
 
 1. **Modèle A** — tous les directeurs deviennent de vrais staff (planifiables), population mixte normalisée.
 2. **Paie : COMPTÉ** — les shifts du directeur comptent dans la masse salariale / coefficient, comme un staff (taux réglable dans la gestion staff). ⇒ **pas** d'exclusion `is_manager` du wage bill.
-3. **Semaine-type récurrente : v2** — v1 = saisie semaine par semaine, auto-validée.
+3. **Semaine-type récurrente : v2** — v1 = saisie semaine par semaine, ~~auto-validée~~.
+   ⛔ **SUPERSÉDÉ par §8** : les dispos du directeur partent en `pending` et passent par la
+   **validation du patron**, dans la même file que le staff. Rien n'est auto-validé.
 4. **E-19** (`manager_time_off`) : **inchangé** en v1 (les absences directeur restent gérées via « Mes absences »). Migration éventuelle vers les congés staff = plus tard.
 5. **Périmètre** : directeurs uniquement (le patron reste hors scope pour l'instant, même si « idem patron » a été évoqué).
 
 ## 1. Besoin exprimé
 
 - Le directeur **note ses dispos lui-même**, façon « Mes absences » (côté son interface).
-- **Auto-validées** : pas de passage par la file « En attente » du patron.
+- ~~**Auto-validées** : pas de passage par la file « En attente » du patron.~~
+  ⛔ **SUPERSÉDÉ par §8** : passage par la file « En attente », comme le staff.
 - Affichées **comme celles d'un staff** et le directeur doit être **planifiable** (assignable à des shifts).
 - **Dispos prédéfinies** : une **semaine-type récurrente**, modifiable pour une semaine atypique.
 - Paie / coefficient : **à définir plus tard**.
@@ -120,6 +165,8 @@ Compte tenu de « planifiable » + « comme les autres staff », la cible est le
 - Script `scripts/backfill-director-staff.js` (idempotent, lancé manuellement) : pour chaque `users` role=directeur avec `staff_id` null, créer le profil staff manquant. Les promus (staff_id déjà présent) sont ignorés.
 
 **Phase 1 — Saisie dispos directeur (index.html).**
-- Section « Mes disponibilités » sur index.html (le directeur n'a pas accès à planning.html), écrit dans `availabilities` avec son `staff_id`, statut `confirmed` d'office (auto-validé) → overlay planning standard.
+- Section « Mes disponibilités » sur index.html (le directeur n'a pas accès à planning.html), écrit dans `availabilities` avec son `staff_id`, ~~statut `confirmed` d'office (auto-validé)~~ → overlay planning standard.
+  ⛔ **SUPERSÉDÉ par §8** : statut **`pending`**, validé par le patron, qui choisit
+  l'établissement et crée le shift.
 
 **Phase 2 (v2) — Semaine-type récurrente** (helper `buildTemplateDispos`, collection `manager_dispo_templates`). Livrée, puis recadrée en pré-remplissage — cf. §8.

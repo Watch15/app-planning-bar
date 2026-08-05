@@ -122,11 +122,11 @@ Le patron peut choisir, shift par shift, d'**ouvrir un Joker aux candidatures du
 
 ### 3.9 Disponibilités (côté Patron)
 La modale **Disponibilités** est organisée en 5 onglets accessibles depuis le header :
-- **📋 En attente** — dispos envoyées par le staff à valider / rejeter (clic = création shift, choix de l'établissement). Les jours **Indisponible** apparaissent en pastille rouge « Indispo » (sans horaire), acquittables d'un clic (aucun shift créé). **Pour un directeur** : les staff rattachés à ses établissements sont remontés en tête sous un encadré orange « ★ Staff de mon établissement » (étoile + fond orange sur leurs cartes), le reste du staff suit sous « Autres »
-- **🔄 À réaffecter** — dispos acceptées mais sans shift correspondant à la date (cross-établissement : si le staff travaille ailleurs ce jour-là, la dispo est considérée comme couverte et n'apparaît pas)
+- **En attente** — dispos envoyées par le staff à valider / rejeter (clic = création shift, choix de l'établissement). Les jours **Indisponible** apparaissent en pastille rouge « Indispo » (sans horaire), acquittables d'un clic (aucun shift créé). **Pour un directeur** : les staff rattachés à ses établissements sont remontés en tête sous un encadré orange « ★ Staff de mon établissement » (étoile + fond orange sur leurs cartes), le reste du staff suit sous « Autres »
+- **À réaffecter** — dispos acceptées mais sans shift correspondant à la date (cross-établissement : si le staff travaille ailleurs ce jour-là, la dispo est considérée comme couverte et n'apparaît pas)
 - **🔔 Sans dispo** — checklist des staff actifs avec login valide qui n'ont **pas** envoyé de dispo pour la semaine cible (toujours la semaine suivante, alignée avec `_disposWeekStart`). Bouton « 🔓 Rouvrir » par ligne pour autoriser un staff à soumettre malgré la deadline
-- **🔓 Modifier** — staff ayant **déjà** envoyé des dispos pour la semaine, avec compteur. Bouton « 🔓 Rouvrir » à 2 clics (confirmation) : supprime toutes ses dispos de la semaine (`POST /api/dispos/reopen-for-correction`) et l'ajoute à `force_open_staff` pour qu'il puisse resoumettre. Pour corriger un staff qui s'est trompé après avoir envoyé / été validé
-- **📝 Notes** — notes hebdo libres du staff par semaine
+- **Modifier** — staff ayant **déjà** envoyé des dispos pour la semaine, avec compteur. Bouton « 🔓 Rouvrir » à 2 clics (confirmation) : supprime toutes ses dispos de la semaine (`POST /api/dispos/reopen-for-correction`) et l'ajoute à `force_open_staff` pour qu'il puisse resoumettre. Pour corriger un staff qui s'est trompé après avoir envoyé / été validé
+- **Notes** — notes hebdo libres du staff par semaine
 
 La barre d'onglets passe sur 2 lignes (`flex-wrap`) si l'espace est insuffisant (mobile / modale étroite).
 
@@ -158,11 +158,11 @@ Mécanique **distincte des disponibilités** : long terme, personnelle (vaut sur
   immédiatement). Liste de ses congés à venir avec statut (en attente / validé / refusé) et
   annulation possible. Si la saisie des dispos est désactivée pour le staff, l'onglet ne
   montre que les congés.
-- **Droits par staff** : dans l'onglet 👥 Staff, le patron choisit par personne les modes de
+- **Droits par staff** : dans l'onglet Staff, le patron choisit par personne les modes de
   congé autorisés — **Les deux** (défaut), **Demande au patron** seulement, ou **Informatif**
   seulement (champ `conge_modes`). Le formulaire staff n'affiche que les modes permis et le
   serveur refuse un mode non autorisé.
-- **Côté patron** : les congés sont un **onglet 🌴 Congés de la modale Dispos** (pas de
+- **Côté patron** : les congés sont un **onglet Congés de la modale Dispos** (pas de
   bouton header dédié — la pastille du bouton « Dispos » agrège dispos + congés en attente).
   L'onglet offre une **recherche par nom**, des **filtres de statut** (Tous / ⏳ En attente /
   ✓ Validés) et un **regroupement par mois repliable** ; chaque demande se **valide / refuse**
@@ -184,13 +184,20 @@ Mécanique **distincte des disponibilités** : long terme, personnelle (vaut sur
   `congeDaysInRange`.
 
 ### 3.9.ter Absences des directeurs (E-19)
-- Un **directeur** n'a pas de profil `staff` (`staff_id` null par design) : il ne peut donc
-  pas poser de congé via le flux staff `time_off`. Ses **absences** sont stockées à part dans
-  la collection **`manager_time_off`**, keyée sur son `user_id`, **totalement isolée du
-  pipeline staff** (Option B) — un directeur n'est jamais planifiable ni compté comme un employé.
+- ⚠️ **Corrigé le 2026-08-05.** Ce paragraphe affirmait l'inverse de ce que fait le code
+  (« un directeur n'a pas de profil `staff` », « jamais planifiable ni compté »). **E-22
+  Modèle A a inversé les deux** : tout directeur a un profil `staff` lié
+  (`createManagerStaffProfile`), il **est planifiable**, et la décision arrêtée est
+  **paie = COMPTÉ**. Cf. `docs/design-e22-dispos-directeur.md`, qui fait autorité.
+- Ce qui reste vrai : ses **absences** sont stockées à part dans la collection
+  **`manager_time_off`**, keyée sur son `user_id` — pour des raisons historiques (E-19), pas
+  parce qu'il lui manquerait un `staff_id`. La **collection** reste distincte de `time_off` ;
+  le **directeur**, lui, n'est plus isolé du pipeline staff : ses dispos passent par
+  `POST /api/dispos` et la file de validation du patron, et ses absences sont jointes au
+  filtre congés de ce même pipeline.
 - **Côté directeur** : déclaration d'une **période** (du… au…, note libre) sans validation
   (l'absence est *déclarée*, pas *demandée*). Anti-chevauchement avec ses absences déjà posées.
-- **Visibilité** : les absences directeur remontent dans le **sous-onglet 🌴 Congés** patron
+- **Visibilité** : les absences directeur remontent dans le **sous-onglet Congés** patron
   (`loadCongesList`) et dans le **calendrier congés** du récap (`loadCongesCalendar`), fusionnées
   avec les congés staff en lignes **lecture seule** (badge « Directeur » / pastille rouge « DIR »).
   Portée **scopée par établissement** : patron et observateur voient toutes les absences ; un
@@ -276,7 +283,7 @@ Synthèse mensuelle des heures par membre du staff, accessible depuis le bouton 
 
 - **Filtres** : sélecteur de mois (12 derniers + mois en cours) et sélecteur d'établissement (« Tous les établissements » par défaut)
 - **Détail par établissement (planifié + réel)** : quand « Tous » est sélectionné, le tableau insère **deux blocs de colonnes par établissement** sous un en-tête groupé — « Détail planifié » puis « Détail réel » (en bleu) — entre **Nom** et `Jours/H. planifiées/H. réelles/Écart`, avec une ligne de total par bloc. Cellule **vide** si pas d'heures dans cet établissement. Backend : `GET /api/recap-mensuel` retourne `by_establishment[]` par staff avec `planned_hours` **et** `real_hours` (somme des shifts pointés, `null` si aucun). Lookup établissement via le champ custom `establishments.id` (pas `_id`)
-- **Export Excel `.xlsx`** : bouton « 📊 Excel » télécharge `recap-YYYY-MM-<estab>.xlsx` (SheetJS, feuille « Récap YYYY-MM », largeurs auto, mêmes colonnes que la modale). Les colonnes par établissement y sont différenciées par préfixe `Plan. <estab>` / `Réel <estab>`. Remplace l'ancien export CSV
+- **Export Excel `.xlsx`** : bouton « Excel » télécharge `recap-YYYY-MM-<estab>.xlsx` (SheetJS, feuille « Récap YYYY-MM », largeurs auto, mêmes colonnes que la modale). Les colonnes par établissement y sont différenciées par préfixe `Plan. <estab>` / `Réel <estab>`. Remplace l'ancien export CSV
 - **Impression** : bouton « 🖨 Imprimer » conservé (impression navigateur)
 
 ---

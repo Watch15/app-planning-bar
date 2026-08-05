@@ -81,6 +81,26 @@ if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
     process.exit(1);
 }
 
+// S-01 — DOUBLE GARDE sur le harnais de test.
+// Le middleware `x-test-user` fabrique une session complète (rôle compris) à partir d'un
+// simple en-tête HTTP : s'il était monté en prod, c'est un contournement TOTAL de
+// l'authentification. `NODE_ENV` seul ne suffit pas comme rempart — c'est exactement le
+// genre de variable qu'on oublie dans une config de déploiement ou une image reconstruite.
+// Il faut donc DEUX variables, dont une que rien d'autre n'utilise et qu'aucune plateforme
+// ne pose par défaut. Les fichiers de tests les arment eux-mêmes (cf. en-tête de
+// `tests/*.test.js`), donc `node --test` fonctionne sans passer par npm.
+const TEST_HARNESS = process.env.NODE_ENV === 'test' && process.env.ALLOW_TEST_AUTH === '1';
+
+// Combinaison contradictoire : quelqu'un a armé le harnais sur une prod. Ne pas démarrer.
+if (TEST_HARNESS && process.env.NODE_ENV === 'production') {
+    console.error('❌ Harnais de test armé en production — refus de démarrer.');
+    process.exit(1);
+}
+if (process.env.NODE_ENV === 'test' && !TEST_HARNESS) {
+    console.warn('⚠️  NODE_ENV=test sans ALLOW_TEST_AUTH=1 — harnais de test NON monté, authentification normale.');
+}
+if (TEST_HARNESS) console.warn('⚠️  HARNAIS DE TEST ACTIF — l\'en-tête x-test-user fabrique une session. Jamais en prod.');
+
 // Dev local : génère un secret aléatoire au boot si non défini, plutôt qu'une
 // constante connue. Les sessions ne survivent pas au restart — comportement
 // volontaire pour forcer la définition d'un .env en dev sérieux.
@@ -682,7 +702,7 @@ function setupSession() {
         }
     }
 
-    if (process.env.NODE_ENV === 'test') {
+    if (TEST_HARNESS) {
         // Harnais de test (CD-05) : session simulée via l'en-tête `x-test-user`
         // (JSON), sans store Mongo ni cookie. JAMAIS monté hors test.
         app.use((req, _res, next) => {
@@ -770,13 +790,15 @@ function requirePatronOnly(req, res, next) {
     next();
 }
 
-// Bloque l'observateur sur les écritures liées au PLANNING (shifts, publication,
-// validation des dispos). À placer APRÈS requirePatron sur ces routes uniquement.
-// ⚠️ Invariant : toute NOUVELLE route qui crée/modifie un shift, publie le planning
-// ou valide une dispo doit ajouter ce middleware, sinon l'observateur pourrait y toucher.
+// Bloque l'observateur en ÉCRITURE. À placer APRÈS `requirePatron`, qui le laisse passer.
+// Historiquement limité au planning (shifts, publication, validation des dispos), étendu
+// aux réglages de performance (S-02) — le rôle est en lecture seule, pas « lecture seule
+// du planning ».
+// ⚠️ Invariant : toute NOUVELLE route d'écriture montée derrière `requirePatron` doit
+// ajouter ce middleware, sinon l'observateur peut y toucher.
 function denyObservateurEdit(req, res, next) {
     if (req.session?.user?.role === 'observateur')
-        return res.status(403).json({ error: 'Accès en lecture seule sur le planning pour ce rôle' });
+        return res.status(403).json({ error: 'Accès en lecture seule pour ce rôle' });
     next();
 }
 
@@ -2827,11 +2849,32 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
+// S-04 — périmètre de la file de validation pour un directeur.
+// Une dispo en attente n'a PAS d'établissement : c'est le modèle rétabli par E-22, le
+// bar est choisi AU MOMENT de la validation. Le seul rattachement disponible passe donc
+// par le STAFF qui l'envoie, via ses `venues` — exactement le critère qui gouverne déjà
+// l'ouverture de la saisie (`staffDispoOpen`) et le tri en sections côté front.
+// ⚠️ Ce n'est PAS un cloisonnement : `scope=all` est ouvert à tout directeur (décision
+// produit du 2026-08-05, bascule « voir tout le staff »). C'est le défaut d'affichage
+// qui change, pas le droit d'accès.
+// Retourne null = aucun filtre (patron, observateur, ou bascule active).
+async function pendingStaffScope(user, scope) {
+    if (user.role !== 'directeur' || scope === 'all') return null;
+    const venues = user.assigned_establishments || [];
+    if (!venues.length) return []; // aucun bar assigné ⇒ aucun staff (cohérent avec canAccessEstablishment)
+    const staff = await db.collection('staff')
+        .find({ venues: { $in: venues } }, { projection: { _id: 1 } }).toArray();
+    return staff.map(s => String(s._id));
+}
+
 app.get('/api/dispos/pending', checkDB, requirePatron, async (req, res) => {
-    const { from, to } = req.query;
+    const { from, to, scope } = req.query;
     if (!from || !to) return res.status(400).json({ error: 'from et to requis' });
     try {
-        const dispos = await db.collection('availabilities').find({ date: { $gte: from, $lte: to }, status: 'pending' }).sort({ date: 1, start_time: 1 }).toArray();
+        const query = { date: { $gte: from, $lte: to }, status: 'pending' };
+        const scopeIds = await pendingStaffScope(req.session.user, scope);
+        if (scopeIds) query.staff_id = { $in: scopeIds };
+        const dispos = await db.collection('availabilities').find(query).sort({ date: 1, start_time: 1 }).toArray();
         // Repère « Directeur » (E-22) : ses dispos arrivent dans la MÊME file que celles
         // du staff — le patron voit simplement de qui il s'agit avant de valider.
         const staffIds = [...new Set(dispos.map(d => d.staff_id).filter(Boolean))];
@@ -2846,7 +2889,11 @@ app.get('/api/dispos/pending', checkDB, requirePatron, async (req, res) => {
 
 app.get('/api/dispos/count', checkDB, requirePatron, async (req, res) => {
     try {
-        const count = await db.collection('availabilities').countDocuments({ status: 'pending' });
+        // Même périmètre que la liste, sinon la pastille annonce 12 et la file en montre 3.
+        const query = { status: 'pending' };
+        const scopeIds = await pendingStaffScope(req.session.user, req.query.scope);
+        if (scopeIds) query.staff_id = { $in: scopeIds };
+        const count = await db.collection('availabilities').countDocuments(query);
         res.json({ count });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -4620,25 +4667,44 @@ app.get('/api/performance', checkDB, requirePatron, async (req, res) => {
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
+// S-02 / S-03 — portée d'un accès aux réglages de performance.
+// Deux cas et deux règles différentes :
+//  • `establishment_id` fourni → réglage d'UN bar : accès si l'utilisateur y a droit.
+//  • absent → doc GLOBAL `performance`, dont `charge_rate` alimente TOUS les
+//    établissements par fallback (`resolvePerfSettings`). Un directeur limité à un bar
+//    qui l'écrit déplace les chiffres de bars qu'il ne voit même pas → patron seulement.
+// Retourne un message d'erreur, ou null si l'accès est accordé.
+function perfScopeDenial(user, establishmentId) {
+    if (establishmentId == null || establishmentId === '') {
+        return user.role === 'patron' || user.role === 'observateur'
+            ? null
+            : 'Réglage global réservé au patron — précise un établissement.';
+    }
+    if (typeof establishmentId !== 'string' || !establishmentId.trim())
+        return 'establishment_id invalide';
+    return canAccessEstablishment(user, establishmentId) ? null : 'Accès refusé';
+}
+
 // GET/PATCH objectifs performance (coefficient cible)
-app.get('/api/performance-settings', checkDB, requireAuth, async (req, res) => {
+// S-03 : `requireAuth` seul laissait n'importe quel staff lire les objectifs et le taux
+// de charges de n'importe quel bar en devinant l'id (slug `Nom_bar`). Aligné sur la route
+// voisine `GET /api/performance`, qui a toujours fait le bon contrôle.
+app.get('/api/performance-settings', checkDB, requirePatron, async (req, res) => {
+    const denial = perfScopeDenial(req.session.user, req.query.establishment_id);
+    if (denial) return res.status(denial === 'establishment_id invalide' ? 400 : 403).json({ error: denial });
     try {
-        // establishment_id optionnel → paramètres effectifs de cet établissement
-        // (override + fallback global) ; absent → défaut global (rétro-compat).
+        // establishment_id fourni → paramètres effectifs de cet établissement
+        // (override + fallback global) ; absent → défaut global.
         res.json(await loadPerfSettings(req.query.establishment_id));
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-app.patch('/api/performance-settings', checkDB, requirePatron, async (req, res) => {
+// S-02 : `denyObservateurEdit` manquait — `requirePatron` laisse passer l'observateur,
+// donc un rôle lecture seule pouvait écrire les objectifs et le taux de charges.
+app.patch('/api/performance-settings', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
     const { target_gross, target_charged, charge_rate, establishment_id } = req.body;
-    // establishment_id fourni → on écrit l'override propre à cet établissement
-    // (settings.performance_<id>), après contrôle d'accès. Absent → défaut global.
-    if (establishment_id != null) {
-        if (typeof establishment_id !== 'string' || !establishment_id.trim())
-            return res.status(400).json({ error: 'establishment_id invalide' });
-        if (!canAccessEstablishment(req.session.user, establishment_id))
-            return res.status(403).json({ error: 'Accès refusé' });
-    }
+    const denial = perfScopeDenial(req.session.user, establishment_id);
+    if (denial) return res.status(denial === 'establishment_id invalide' ? 400 : 403).json({ error: denial });
     const key = establishment_id ? 'performance_' + establishment_id : 'performance';
     const update = { key };
     // Bornes raisonnables : 0–100 % pour les objectifs coeff, 0–200 % pour le taux de charges
@@ -5063,8 +5129,8 @@ if (require.main === module) {
 }
 
 // Harnais de test (CD-05) : injecte un faux `db` en mémoire pour piloter les
-// routes avec données, sans Mongo. Inerte hors test.
-if (process.env.NODE_ENV === 'test') {
+// routes avec données, sans Mongo. Inerte hors test (S-01 : même double garde).
+if (TEST_HARNESS) {
     app.locals.setTestDb = (testDb) => { db = testDb; };
 }
 

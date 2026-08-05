@@ -10,6 +10,7 @@
 // l'en-tête `x-test-user`. Aucun Mongo, aucune dépendance.
 
 process.env.NODE_ENV       = 'test';
+process.env.ALLOW_TEST_AUTH = '1'; // S-01 : 2e garde du harnais `x-test-user`
 process.env.MONGO_URI      = process.env.MONGO_URI      || 'mongodb://127.0.0.1:27017/templyo_test';
 process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'integration-test-secret-0123456789abcdef';
 
@@ -187,6 +188,64 @@ test('GET /api/dispos/pending : les dispos directeur et staff sont dans la même
     assert.equal(body.length, 2, 'seules les `pending`, directeur ET staff mélangés');
     assert.equal(body.find(d => d.staff_id === MGR_STAFF).is_directeur, true);
     assert.equal(body.find(d => d.staff_id === STAFF_ID).is_directeur, undefined);
+});
+
+// ── S-04 : périmètre de la file de validation ─────────────────────────────────
+// Une dispo en attente n'a pas d'établissement (modèle E-22) : le rattachement passe
+// par les `venues` du staff qui l'envoie. Bascule `scope=all` pour tout voir.
+
+const DIR_BAR1 = { _id: MGR_USER, staff_id: MGR_STAFF, name: 'Dir Test', role: 'directeur',
+                   assigned_establishments: ['bar1'] };
+
+// Deux staff : un dans le bar du directeur, un ailleurs. Plus le directeur lui-même.
+function seedPendingAcrossBars() {
+    return seed({
+        staff: [
+            { _id: MGR_STAFF, name: 'Dir Test', venues: ['bar1'], can_submit_dispos: true },
+            { _id: STAFF_ID,  name: 'Bob',      venues: ['bar1'], can_submit_dispos: true },
+            { _id: '0123456789abcdef0123ffff', name: 'Zoé', venues: ['bar2'], can_submit_dispos: true },
+        ],
+        availabilities: [
+            { staff_id: STAFF_ID, date: '2099-01-05', status: 'pending', start_time: 18, end_time: 24 },
+            { staff_id: '0123456789abcdef0123ffff', date: '2099-01-05', status: 'pending', start_time: 18, end_time: 24 },
+        ],
+    });
+}
+
+const PENDING = '/api/dispos/pending?from=2099-01-01&to=2099-01-31';
+
+test('S-04 : le directeur ne voit que les dispos du staff de ses bars', async () => {
+    app.locals.setTestDb(seedPendingAcrossBars());
+    const body = await (await req(PENDING, DIR_BAR1)).json();
+    assert.deepEqual(body.map(d => d.staff_id), [STAFF_ID], 'Zoé (bar2) est hors périmètre');
+});
+
+test('S-04 : la bascule scope=all lui rend la file complète', async () => {
+    app.locals.setTestDb(seedPendingAcrossBars());
+    const body = await (await req(PENDING + '&scope=all', DIR_BAR1)).json();
+    assert.equal(body.length, 2, 'ce n\'est pas un cloisonnement — la bascule est ouverte');
+});
+
+test('S-04 : le patron n\'est jamais filtré', async () => {
+    app.locals.setTestDb(seedPendingAcrossBars());
+    assert.equal((await (await req(PENDING, PATRON)).json()).length, 2);
+});
+
+test('S-04 : un directeur sans bar assigné ne voit rien par défaut', async () => {
+    // Cohérent avec canAccessEstablishment, où `assigned_establishments: []` vaut
+    // « aucun accès » — et non « tous les accès ».
+    app.locals.setTestDb(seedPendingAcrossBars());
+    const nomad = { ...DIR_BAR1, assigned_establishments: [] };
+    assert.equal((await (await req(PENDING, nomad)).json()).length, 0);
+    assert.equal((await (await req(PENDING + '&scope=all', nomad)).json()).length, 2);
+});
+
+test('S-04 : la pastille compte le même périmètre que la file', async () => {
+    // Sinon elle annonce 2 en attente et la liste n'en montre qu'une.
+    app.locals.setTestDb(seedPendingAcrossBars());
+    assert.equal((await (await req('/api/dispos/count', DIR_BAR1)).json()).count, 1);
+    assert.equal((await (await req('/api/dispos/count?scope=all', DIR_BAR1)).json()).count, 2);
+    assert.equal((await (await req('/api/dispos/count', PATRON)).json()).count, 2);
 });
 
 // ── Exemption de deadline (câblage ; le POURQUOI est sur `dispoDeadlineWaived`) ─

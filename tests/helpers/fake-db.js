@@ -23,6 +23,12 @@ function isOperator(cond) {
         && Object.keys(cond).every(k => k.startsWith('$'));
 }
 
+// Mongo : quand le CHAMP est un tableau, une égalité (et `$in`) matche si le tableau
+// CONTIENT la valeur. C'est ce que font `{ venues: 'bar1' }` (S-04, `staffDispoOpen`) et
+// `{ assigned_establishments: estab.id }` (DELETE établissement). Sans ça, ces filtres
+// ne renvoient jamais rien ici et les tests passeraient à côté.
+// Volontairement limité à `$in` et à l'égalité simple : `$ne` garde la sémantique
+// scalaire, seul usage actuel (`type: { $ne: 'week_note' }`).
 function matchField(val, cond) {
     if (isOperator(cond)) {
         return Object.entries(cond).every(([op, v]) => {
@@ -32,13 +38,14 @@ function matchField(val, cond) {
                 case '$gte': return val >= v;
                 case '$lt':  return val < v;
                 case '$gt':  return val > v;
-                case '$in':  return Array.isArray(v) && v.some(x => eq(val, x));
+                case '$in':  return Array.isArray(v)
+                    && (Array.isArray(val) ? val.some(x => v.some(y => eq(x, y))) : v.some(x => eq(val, x)));
                 case '$nin': return Array.isArray(v) && !v.some(x => eq(val, x));
                 default:     throw new Error('fake-db: opérateur non supporté ' + op);
             }
         });
     }
-    return eq(val, cond);
+    return Array.isArray(val) ? val.some(x => eq(x, cond)) : eq(val, cond);
 }
 
 function matchDoc(doc, query) {

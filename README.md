@@ -219,7 +219,7 @@ PORT=3000
 | `sessions` | Sessions actives (TTL 30 jours glissant) |
 | `availabilities` | Disponibilités soumises par le staff |
 | `time_off` | Congés du staff (déclaration `info` ou demande `request` à valider) |
-| `manager_time_off` | Absences des directeurs (E-19) — keyé sur `user_id`, isolé du pipeline staff |
+| `manager_time_off` | Absences des directeurs (E-19) — keyé sur `user_id`. **Collection** distincte de `time_off`, mais **jointe** au filtre congés de `POST /api/dispos` : depuis E-22 le directeur passe par le pipeline staff standard |
 | `roles` | Rôles créés par le patron (responsable / informatif) |
 | `settings` | Paramètres polymorphes (clé `key`) : `dispo`, `performance`, `pointage`, `publish_<weekStart>`, `lock_dispos_<weekStart>` |
 | `push_subscriptions` | Endpoints VAPID par utilisateur |
@@ -287,12 +287,12 @@ PORT=3000
 | GET | `/api/dispos/mine` | Authentifié |
 | GET | `/api/dispos/previous` | Authentifié |
 | POST | `/api/dispos` | Authentifié |
-| GET | `/api/dispos/pending` | Patron — onglet « 📋 En attente » |
+| GET | `/api/dispos/pending` | Patron — onglet « En attente » |
 | GET | `/api/dispos/count` | Patron — badge header |
-| GET | `/api/dispos/non-affectees` | Patron — onglet « 🔄 À réaffecter » |
+| GET | `/api/dispos/non-affectees` | Patron — onglet « À réaffecter » |
 | GET | `/api/dispos/sans-dispo` | Patron — onglet « 🔔 Sans dispo » |
 | GET/POST | `/api/dispos/week-note` | Authentifié — note hebdo libre du staff |
-| GET | `/api/dispos/notes` | Patron — onglet « 📝 Notes » |
+| GET | `/api/dispos/notes` | Patron — onglet « Notes » |
 | PATCH | `/api/dispos/:id/confirm` | Patron |
 | PATCH | `/api/dispos/:id/reject` | Patron |
 | PATCH | `/api/dispos/:id/ignore` | Patron |

@@ -6607,15 +6607,22 @@ async function sendRappelDispos() {
     }
 }
 
+// S-04 — un directeur ne reçoit que les dispos du staff de ses bars ; cette bascule
+// demande la file complète au serveur. Le filtre est côté serveur : sans elle, les
+// autres dispos ne sont plus dans la réponse (avant, elles arrivaient toutes et le
+// front se contentait de les trier en sections).
+let disposScopeAll = false;
+
 async function loadDisposList() {
     const list = document.getElementById('dispos-list');
     list.innerHTML = '<div style="padding:16px;text-align:center;color:#ccc;font-size:13px">Chargement…</div>';
     const nextMonday = getMondayOf(addDays(new Date(), 7));
     const from = toDateStr(nextMonday);
     const to   = toDateStr(addDays(nextMonday, 6));
+    const scopeQS = disposScopeAll ? '&scope=all' : '';
     try {
         const [res, notesRes] = await Promise.all([
-            fetch('/api/dispos/pending?from=' + from + '&to=' + to, { credentials: 'include' }),
+            fetch('/api/dispos/pending?from=' + from + '&to=' + to + scopeQS, { credentials: 'include' }),
             fetch('/api/dispos/week-notes?week_start=' + from, { credentials: 'include' }),
         ]);
         const dispos = await res.json();
@@ -6624,8 +6631,45 @@ async function loadDisposList() {
         const noteByStaff = {};
         weekNotes.forEach(n => { noteByStaff[n.staff_id] = n.week_note; });
 
+        // Barre d'en-tête : bascule de périmètre (S-04) + validation en masse.
+        // La bascule décide du LOT (« mon staff » ou tout le monde) ; l'établissement
+        // cible est choisi dans la modale — une dispo ne peut aller que dans UN bar.
+        const isDirecteur = !!currentUser && currentUser.role === 'directeur';
+        const renderListHeader = (pending) => {
+            const bar = document.createElement('div');
+            bar.style.cssText = 'display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:10px 16px 0';
+
+            if (isDirecteur) {
+                const toggle = document.createElement('button');
+                toggle.style.cssText = 'padding:5px 11px;border-radius:8px;border:1.5px solid var(--color-border-secondary,#ddd);background:transparent;color:#777;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--font)';
+                toggle.textContent = disposScopeAll ? 'Voir seulement mon staff' : 'Voir tout le staff';
+                toggle.onclick = () => { disposScopeAll = !disposScopeAll; loadDisposList(); };
+                bar.appendChild(toggle);
+            }
+
+            if (pending && pending.length) {
+                const all = document.createElement('button');
+                all.style.cssText = 'padding:5px 12px;border-radius:8px;border:1.5px solid #2ecc71;background:#eafaf1;color:#27ae60;font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--font)';
+                all.textContent = '✓ Tout confirmer (' + pending.length + ')';
+                all.title = 'Confirme toutes les dispos affichées sur un même établissement';
+                all.onclick = () => confirmDisposBatch(pending, {
+                    preferStaffId: pending[0]?.staff_id,
+                    onDone: () => loadDisposList(),
+                });
+                bar.appendChild(all);
+            }
+            list.appendChild(bar);
+        };
+
         if (dispos.length === 0) {
-            list.innerHTML = '<div style="padding:24px;text-align:center;color:#ccc;font-size:13px">Aucune disponibilité en attente</div>';
+            list.innerHTML = '';
+            renderListHeader(null);
+            const empty = document.createElement('div');
+            empty.style.cssText = 'padding:24px;text-align:center;color:#ccc;font-size:13px';
+            empty.textContent = disposScopeAll
+                ? 'Aucune disponibilité en attente'
+                : 'Aucune disponibilité en attente pour ton staff';
+            list.appendChild(empty);
             return;
         }
 
@@ -6637,6 +6681,7 @@ async function loadDisposList() {
         });
 
         list.innerHTML = '';
+        renderListHeader(dispos);
 
         // Semaine : lun → dim
         const weekDays = [];
@@ -6788,17 +6833,42 @@ async function loadDisposList() {
     }
 }
 
-async function confirmAllForStaff(dispos, card) {
-    // Ouvrir la modale de confirmation avec l'établissement, puis confirmer tout
-    const modal  = document.getElementById('confirm-dispo-modal');
-    if (!modal) return;
+// Confirme un LOT de dispos sur UN établissement, via la modale existante.
+// Le lot est décidé par l'appelant : une carte staff, ou toute la file affichée.
+// Rappel du modèle (E-22) : une dispo en attente n'a pas d'établissement — confirmer,
+// c'est justement l'affecter à un bar (et créer le shift si la case est cochée). Il n'y
+// a donc pas de « confirmer pour tous les bars » : le lot varie, la cible reste unique.
+// Séquentiel volontairement : la route `confirm` vérifie l'absence de shift existant
+// avant d'en créer un ; en parallèle, deux requêtes sur le même (staff, date, bar)
+// pourraient passer la garde ensemble et créer un doublon.
+async function confirmDisposBatch(dispos, { preferStaffId, onDone, onCancel }) {
+    const modal = document.getElementById('confirm-dispo-modal');
+    if (!modal || !dispos.length) return;
     modal.style.display = 'flex';
-    buildEstablishmentSelect(dispos[0]?.staff_id);
+    buildEstablishmentSelect(preferStaffId);
 
     document.getElementById('confirm-dispo-btn').onclick = async () => {
         const establishmentId = document.getElementById('confirm-dispo-establishment').value;
         const createShift     = document.getElementById('confirm-create-shift').checked;
-        modal.style.display   = 'none';
+
+        // Garde-fou : affecter en masse à un bar où le staff ne travaille pas est
+        // possible mais rarement voulu — et si `create_shift` est coché, ça crée de
+        // vrais shifts. On le dit avant, avec le nombre exact.
+        const outsiders = new Set(dispos
+            .filter(d => d.type !== 'off')
+            .filter(d => {
+                const sm = allStaff.find(s => String(s._id) === String(d.staff_id));
+                return sm && Array.isArray(sm.venues) && !sm.venues.includes(establishmentId);
+            })
+            .map(d => d.staff_id));
+        if (outsiders.size) {
+            const estabName = (allEstablishments.find(e => e.id === establishmentId) || {}).name || 'ce bar';
+            const ok = await new Promise(resolve => showConfirm(
+                outsiders.size + ' membre(s) du lot ne sont pas rattachés à ' + estabName + '. Les affecter quand même ?',
+                () => resolve(true), () => resolve(false)));
+            if (!ok) return;
+        }
+        modal.style.display = 'none';
 
         let confirmed = 0;
         for (const dispo of dispos) {
@@ -6811,14 +6881,23 @@ async function confirmAllForStaff(dispos, card) {
                 confirmed++;
             } catch { }
         }
-        card.remove();
         loadDisposBadge();
         if (createShift) await refreshWeek();
         showToast(confirmed + ' dispo(s) confirmée(s)');
+        if (onDone) onDone();
     };
     document.getElementById('confirm-dispo-cancel').onclick = () => {
         modal.style.display = 'none';
-        showConfirm('Refuser toutes les dispos de ce membre ?', async () => {
+        if (onCancel) onCancel();
+    };
+}
+
+function confirmAllForStaff(dispos, card) {
+    confirmDisposBatch(dispos, {
+        preferStaffId: dispos[0]?.staff_id,
+        onDone: () => card.remove(),
+        // Sur une carte staff, « Annuler » propose de refuser tout le membre (existant).
+        onCancel: () => showConfirm('Refuser toutes les dispos de ce membre ?', async () => {
             let refused = 0;
             for (const dispo of dispos) {
                 try {
@@ -6829,8 +6908,8 @@ async function confirmAllForStaff(dispos, card) {
             card.remove();
             loadDisposBadge();
             showToast(refused + ' dispo(s) refusée(s)');
-        });
-    };
+        }),
+    });
 }
 
 function openConfirmDispo(dispo, pill, card, staffId) {

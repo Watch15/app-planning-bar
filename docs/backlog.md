@@ -106,6 +106,49 @@ du code **déjà poussé sur `origin/dev`** cassait un usage réel.
 corrections ci-dessus n'a tourné contre un Mongo réel. À faire **avant** de considérer E-22
 comme refermé.
 
+### Palier 2 — sécurité (2026-08-05)
+
+**S-01, S-02 et S-03 corrigés** (détail dans le tableau Sécurité ci-dessous). Nouveau
+fichier `tests/perf-settings.test.js` (11 tests d'intégration), ajouté au script `npm test`.
+**Tests : 160 → 171.** Non-vacuité vérifiée par mutation, guards testés **séparément** :
+neutraliser `perfScopeDenial` fait tomber 4 tests, retirer `denyObservateurEdit` en fait
+tomber 1, désarmer la 2e garde du harnais en fait tomber 20.
+
+**S-04 tranché et livré** (cf. tableau) — périmètre par défaut + bascule, fermé comme
+choix d'UX et non comme correctif de sécurité.
+
+**Validation en masse** (demandée avec S-04). Le « Tout confirmer » qui existait était
+**par carte staff** ; il est généralisé en `confirmDisposBatch(dispos, …)`, réutilisé par
+la carte staff **et** par un bouton global « ✓ Tout confirmer (N) » qui agit sur toute la
+file affichée. ⚠️ **Précision de modèle, à ne pas perdre** : une dispo en attente n'a pas
+d'établissement — confirmer, c'est justement l'**affecter** à un bar (et créer le shift si
+la case est cochée). Il n'existe donc pas de « valider pour tous les établissements » : le
+**lot** varie (bascule S-04 : mon staff / tout le monde), la **cible reste un seul bar**,
+choisie dans la modale. Garde-fou ajouté : si le lot contient des staff non rattachés au
+bar choisi, le nombre exact est annoncé avant d'affecter. Boucle **séquentielle** assumée —
+la route `confirm` vérifie l'absence de shift avant d'en créer un, deux requêtes parallèles
+sur le même (staff, date, bar) pourraient franchir la garde ensemble.
+**Suite possible** : une vraie route serveur de confirmation en lot (aujourd'hui N appels
+HTTP depuis le client, hérité du bouton par carte) — non fait, pas demandé.
+
+### Palier 3 — outillage & documentation (2026-08-05)
+
+**`graphify` réparé** (cf. Divers) et **DOC-01 → DOC-06 tous traités** (cf. tableau
+Documentation). Deux choses à retenir plutôt que le détail :
+
+1. **DOC-03 d'abord**, comme prévu : c'est le doc qui fait autorité sur E-22 et il se
+   contredisait. Les passages annulés sont **marqués sur place** (~~barrés~~ + « SUPERSÉDÉ »)
+   plutôt que réécrits — effacer ferait disparaître la trace qu'une décision a été prise
+   puis annulée, ce qui est justement l'information utile. Un **§9** consigne les décisions
+   du 2026-08-05 pour que la prochaine session ne les redécouvre pas dans le code.
+2. **Le constat DOC-05 était partiellement faux** et il a fallu vérifier label par label
+   contre le code : « 🔔 Sans dispo », « 👥 Mon équipe » et « 🔓 Rouvrir » existent
+   toujours — la doc avait raison sur ces trois-là. 11 libellés réellement périmés corrigés.
+
+**Leçon de méthode** : un audit de doc écrit dans une session précédente est lui aussi de
+la doc — il vieillit et il se trompe. Le revérifier contre le code coûte peu et a évité
+d'introduire 3 erreurs neuves ici.
+
 ### État actuel des tests (pour mémoire)
 
 160 tests (149 avant cette session), deux niveaux : **~137 unitaires** (helpers purs de `lib/utils.js` — aucun Express,
@@ -131,10 +174,10 @@ Mongo), donc couplés au nom des collections et des champs.
 
 | ID | Point | Fichier |
 |---|---|---|
-| S-01 | **`NODE_ENV` est le seul rempart du harnais de test.** Le middleware `x-test-user` fabrique une session (rôle compris) à partir d'un simple en-tête. Il est bien enfermé dans `if (NODE_ENV === 'test')` — **vérifié, non monté en prod**. Mais si `NODE_ENV` valait `test` en prod (var oubliée, image reconstruite), c'est un **contournement total de l'authentification**. Durcir : double garde, ou refus de démarrer dans cette combinaison. | `server.js:685-694`, `:5007-5009` |
-| S-02 | `PATCH /api/performance-settings` : le contrôle d'accès ne tourne que si `establishment_id` est fourni. Sans le champ → écriture du doc **global**, dont `charge_rate` alimente tous les établissements par fallback. Un directeur limité à un bar déplace les chiffres des autres. **Et** `requirePatron` laisse passer l'`observateur` : cette route n'a pas de `denyObservateurEdit`, donc un rôle lecture seule peut écrire. | `server.js:4591`, `:745` |
-| S-03 | `GET /api/performance-settings` : `requireAuth` seul, `establishment_id` transmis tel quel. N'importe quel staff lit objectifs et taux de charges de n'importe quel bar en devinant l'id (slug `Nom_bar`). | `server.js:4583` |
-| S-04 | **`GET /api/dispos/pending` n'est scopé par aucun établissement** — la requête ne filtre que sur date + statut, et `requirePatron` laisse passer **directeur** et **observateur**. Un directeur limité à un bar voit donc les dispos en attente de **tout le staff, tous bars confondus**. Difficilement évitable en l'état (une dispo n'a pas d'établissement avant validation — c'est le modèle rétabli par la correction E-22), mais devient une vraie question maintenant que les directeurs alimentent cette file. Décider : scoper via les `venues` du staff, ou assumer. | `server.js:2772`, `:745` |
+| ~~S-01~~ | ~~`NODE_ENV` est le seul rempart du harnais de test~~ | ✅ **Résolu (2026-08-05)** — **double garde** : le harnais exige désormais `NODE_ENV === 'test'` **ET** `ALLOW_TEST_AUTH === '1'`, condensées en une constante `TEST_HARNESS` qui commande à la fois le middleware `x-test-user` et `app.locals.setTestDb`. Une seule variable oubliée dans une config de déploiement ne suffit plus. `ALLOW_TEST_AUTH` n'est utilisée nulle part ailleurs et aucune plateforme ne la pose. Refus de démarrer si la combinaison contredit `NODE_ENV=production` ; avertissement au boot dans les deux sens (harnais actif / `NODE_ENV=test` sans la 2e garde). Les fichiers de tests l'arment eux-mêmes → `node --test` marche sans passer par npm. **Non-vacuité vérifiée** : neutraliser la 2e garde fait tomber **20 tests** d'intégration. |
+| ~~S-02~~ | ~~`PATCH /api/performance-settings` : contrôle d'accès seulement si `establishment_id` fourni + observateur non bloqué~~ | ✅ **Résolu (2026-08-05)** — helper `perfScopeDenial(user, establishmentId)` : **absence** d'`establishment_id` = doc global (dont `charge_rate` alimente tous les bars par fallback) → **patron/observateur uniquement** ; présence = `canAccessEstablishment`. Plus de chemin sans contrôle. `denyObservateurEdit` ajouté sur le PATCH. Son message a été généralisé (« Accès en lecture seule pour ce rôle », il disait « sur le planning ») et son commentaire d'invariant élargi : il ne garde plus seulement le planning. 6 tests. |
+| ~~S-03~~ | ~~`GET /api/performance-settings` en `requireAuth` seul~~ | ✅ **Résolu (2026-08-05)** — passé en `requirePatron` + `perfScopeDenial`, exactement le contrôle que la route voisine `GET /api/performance` faisait déjà. Le seul appelant front (`performance.js`, chargé par `performance.html` seule) envoie toujours `establishment_id` → aucun client cassé. 5 tests. ℹ️ **Précision issue de la mutation** : l'exclusion du **staff** vient de `requirePatron`, pas de `perfScopeDenial` — c'est `requirePatron` qui porte cette moitié-là. |
+| ~~S-04~~ | ~~`GET /api/dispos/pending` n'est scopé par aucun établissement~~ | ✅ **Tranché et livré (2026-08-05)** — helper `pendingStaffScope(user, scope)` : un directeur ne reçoit par défaut que les dispos des staff dont les `venues` croisent ses `assigned_establishments` (même critère que `staffDispoOpen` et que le tri en sections déjà présent côté front). `GET /api/dispos/count` suit le même périmètre, sinon la pastille annonce 12 et la file en montre 3. ⚠️ **À enregistrer clairement : ce n'est PAS un cloisonnement.** `scope=all` est ouvert à tout directeur (bascule « Voir tout le staff ») — décision produit assumée. C'est le **défaut d'affichage** qui change, pas le droit d'accès ; un directeur curieux voit toujours tout s'il le demande. S-04 est donc fermé comme **choix d'UX**, pas comme correctif de sécurité. 5 tests. |
 
 ### Findings de revue restants (hors sécurité)
 
@@ -161,22 +204,23 @@ Mongo), donc couplés au nom des collections et des champs.
 
 ### Documentation — contradictions relevées (audit du 2026-08-05)
 
-Vérifiées **contre le code actuel**, pas supposées. Non corrigées : à traiter plus tard.
+Vérifiées **contre le code actuel**, pas supposées. **✅ Toutes traitées le 2026-08-05**
+(palier 3) — le détail de ce qui a été fait est dans chaque ligne.
 
 | ID | Où | Ce qui est faux / contradictoire |
 |---|---|---|
-| DOC-01 | `docs/prd.md:187-190` (§3.9.ter) | **Faux sur deux points.** « Un directeur n'a pas de profil `staff` (`staff_id` null **par design**) » et « un directeur n'est **jamais planifiable ni compté** comme un employé ». E-22 Modèle A a inversé les deux : tout directeur a un profil staff (`createManagerStaffProfile`), il est planifiable, et la décision arrêtée est **paie = COMPTÉ**. Un lecteur qui commence par le PRD conclut l'inverse de ce que fait le code. |
-| DOC-02 | `docs/onboarding.md:148` | **Faux.** « keyé sur `user_id` (un directeur n'a **pas** de `staff_id`) ». Même inversion que DOC-01. Le fait que `manager_time_off` reste keyé sur `user_id` est vrai ; la justification donnée ne l'est plus. |
-| DOC-03 | `docs/design-e22-dispos-directeur.md` | **Se contredit lui-même.** §Décisions (l. 44) « v1 = saisie semaine par semaine, **auto-validée** » et §6bis Phase 1 (l. 123) « statut **`confirmed` d'office (auto-validé)** » — alors que §8 (2026-08-04) impose `pending` + **validation patron**. Les sections antérieures n'ont pas été marquées comme supersédées. ⚠️ Omission de la session du 2026-08-04 : c'est le doc qui fait autorité sur E-22, à corriger en premier. |
-| DOC-04 | `README.md:222` | **Ambigu, devenu trompeur.** « `manager_time_off` — keyé sur `user_id`, **isolé du pipeline staff** ». La collection l'est toujours ; le **directeur**, lui, ne l'est plus. Formulation à préciser. |
-| DOC-05 | `README.md:290/292/295`, `docs/prd.md:125-129, 139, 161, 165, 176, 193, 279` | **Périmé depuis le nettoyage des emojis** (2026-08-05). La doc décrit l'UI actuelle avec des libellés qui n'existent plus : « 📋 En attente », « 🔄 À réaffecter », « 📝 Notes », « 🔓 Modifier », « 🌴 Congés », « 👥 Mon équipe », « 👥 Staff », « 📊 Excel »… Cosmétique, mais nombreux. **N'inclut pas** les entrées historiques `D-xx` de ce backlog, qui décrivent l'état au moment de la livraison et n'ont pas à être réécrites. |
-| DOC-06 | `graphify-out/` | **Périmé par construction.** `GRAPH_REPORT.md` date du 2026-07-31 : antérieur à E-22 v2 **et** à sa correction. Il décrit donc des routes supprimées (`PUT /api/me/manager-dispos/week`…) comme existantes. Aggravé par le fait que `CLAUDE.md` **impose** de l'interroger en premier pour toute question d'architecture (cf. Divers). |
+| DOC-01 | `docs/prd.md:187-190` (§3.9.ter) | **Faux sur deux points.** « Un directeur n'a pas de profil `staff` (`staff_id` null **par design**) » et « un directeur n'est **jamais planifiable ni compté** comme un employé ». E-22 Modèle A a inversé les deux : tout directeur a un profil staff (`createManagerStaffProfile`), il est planifiable, et la décision arrêtée est **paie = COMPTÉ**. Un lecteur qui commence par le PRD conclut l'inverse de ce que fait le code. ✅ **Corrigé (2026-08-05)** — le paragraphe est remplacé par un rectificatif daté qui dit explicitement que les deux affirmations étaient fausses et renvoie à `design-e22-dispos-directeur.md`, qui fait autorité. La partie vraie (collection `manager_time_off` distincte) est conservée, avec sa vraie raison : historique (E-19), pas « le directeur n'a pas de staff_id ». |
+| DOC-02 | `docs/onboarding.md:148` | **Faux.** « keyé sur `user_id` (un directeur n'a **pas** de `staff_id`) ». Même inversion que DOC-01. Le fait que `manager_time_off` reste keyé sur `user_id` est vrai ; la justification donnée ne l'est plus. ✅ **Corrigé (2026-08-05)** — la justification fausse est remplacée : le keyage sur `user_id` est une raison **historique**, et la collection est désormais **jointe** au filtre congés de `POST /api/dispos` via `managerOffPeriods`. |
+| DOC-03 | `docs/design-e22-dispos-directeur.md` | **Se contredit lui-même.** §Décisions (l. 44) « v1 = saisie semaine par semaine, **auto-validée** » et §6bis Phase 1 (l. 123) « statut **`confirmed` d'office (auto-validé)** » — alors que §8 (2026-08-04) impose `pending` + **validation patron**. Les sections antérieures n'ont pas été marquées comme supersédées. ⚠️ Omission de la session du 2026-08-04 : c'est le doc qui fait autorité sur E-22, à corriger en premier. ✅ **Corrigé (2026-08-05), en premier comme prévu.** Les 3 passages annulés (§Décisions l.44, §1 Besoin, §6bis Phase 1) sont marqués ~~barrés~~ + « ⛔ SUPERSÉDÉ par §8 » **là où ils sont** — les effacer supprimerait la trace qu'une décision a été prise puis annulée. Ajout d'un encadré « comment lire ce document » (couches, la plus récente en premier) et d'un **§9** qui consigne les décisions du 2026-08-05 : exemption de deadline (9.1), resync `staff.venues` (9.2), périmètre de la file + corollaire sur la validation en masse (9.3). |
+| DOC-04 | `README.md:222` | **Ambigu, devenu trompeur.** « `manager_time_off` — keyé sur `user_id`, **isolé du pipeline staff** ». La collection l'est toujours ; le **directeur**, lui, ne l'est plus. Formulation à préciser. ✅ **Corrigé (2026-08-05)** — formulation précisée : la **collection** reste distincte, le **directeur** ne l'est plus. |
+| DOC-05 | `README.md:290/292/295`, `docs/prd.md:125-129, 139, 161, 165, 176, 193, 279` | **Périmé depuis le nettoyage des emojis** (2026-08-05). La doc décrit l'UI actuelle avec des libellés qui n'existent plus : « 📋 En attente », « 🔄 À réaffecter », « 📝 Notes », « 🔓 Modifier », « 🌴 Congés », « 👥 Mon équipe », « 👥 Staff », « 📊 Excel »… Cosmétique, mais nombreux. **N'inclut pas** les entrées historiques `D-xx` de ce backlog, qui décrivent l'état au moment de la livraison et n'ont pas à être réécrites. 🟡 **Corrigé (2026-08-05), et le constat était partiellement faux.** 11 libellés remis à jour (3 dans `README.md`, 8 dans `docs/prd.md`) : « 📋 En attente », « 🔄 À réaffecter », « 📝 Notes », « 🔓 Modifier », « 📊 Excel », « 👥 Staff », « 🌴 Congés » (l'onglet). **Mais** « 🔔 Sans dispo », « 👥 Mon équipe » et « 🔓 Rouvrir » existent **toujours** dans le code (`index.html:1198`, `planning.js:240`, `script.js:6369+`) — la doc avait raison, le constat avait tort de les lister. Vérifié label par label contre le code, pas au jugé. |
+| DOC-06 | `graphify-out/` | **Périmé par construction.** `GRAPH_REPORT.md` date du 2026-07-31 : antérieur à E-22 v2 **et** à sa correction. Il décrit donc des routes supprimées (`PUT /api/me/manager-dispos/week`…) comme existantes. Aggravé par le fait que `CLAUDE.md` **impose** de l'interroger en premier pour toute question d'architecture (cf. Divers). ✅ **Résolu (2026-08-05)** — `graphify update .` **passe de nouveau** (il refusait depuis une session précédente) : 1045 nœuds, 1699 arêtes, 72 communautés ; l'ancien graphe est sauvegardé dans `graphify-out/2026-08-05/`. **Fraîcheur vérifiée, pas supposée** : les routes supprimées par E-22 (`manager-dispos/week`) sont à **0 occurrence**, et les 5 helpers créés cette session (`dispoDeadlineWaived`, `syncManagerStaffVenues`, `perfScopeDenial`, `pendingStaffScope`, `confirmDisposBatch`) sont bien présents. |
 
 **Non audités** (hors périmètre de cette passe, aucune vérification faite) : `docs/architecture.md` (2026-06-12), `docs/methodologie-et-cicd.md`, `docs/ux-design.md`, `task.md`, `ui_kits/*.md` — tous antérieurs de 2 à 4 mois, donc **présumés dérivés**.
 
 ### Divers — outillage & process
 
-- **`graphify` est en panne, et le `CLAUDE.md` l'impose.** `graphify update .` **refuse** de s'exécuter (994 nœuds contre 997 en base → soupçon de chunks manquants d'une session précédente). Non forcé : `--force` écrase le graphe. Or les instructions projet demandent de lancer `graphify update .` après toute modification de code **et** de s'appuyer sur le graphe pour les questions d'architecture. Conséquence : **chaque session future recevra la consigne d'interroger un graphe périmé, sans le savoir.** Ce n'est pas une corvée en attente, c'est un outil cassé qui dégradera silencieusement le travail. À réparer (rebuild propre) ou à retirer temporairement du `CLAUDE.md`.
+- ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique.
 - **Commit + push automatiques.** L'environnement committe et pousse sans demande explicite : 4 commits sont partis sur `origin/dev` pendant la session du 2026-08-04/05 (`469efee`, `bb5b479`, `36b65f2`, `83028ff`). Deux conséquences : (a) **la correction E-22 est sur le remote alors qu'elle n'a jamais tourné contre une vraie base** (cf. T-05) ; (b) **les messages ne décrivent pas ce qui s'est passé** — `feat: update manager availability process for directors` livre en réalité un **revirement** d'un design déjà en place. Qui relira l'historique dans six mois ne verra pas qu'une décision a été annulée : seul `docs/design-e22-dispos-directeur.md` §8 le dit. Si `dev` est déployé automatiquement quelque part, le point (a) devient urgent.
 
 ---

@@ -145,7 +145,7 @@ Base `gestion_bar`. Détail des champs dans `architecture.md` §5 — résumé :
 | `shifts` | créneaux planifiés | `start/end_time` = **heures décimales** (`end_time ≥ 24` = shift de nuit), Jokers (`is_joker`/`joker_open`/`joker_candidates`), pointage (`real_start/end`, `*_rate_snapshot`) |
 | `availabilities` | disponibilités du staff | `status: pending/approved/...`, 1 doc par `(staff_id, date)`, `type:'week_note'` à part |
 | `time_off` | congés du **staff** déclarés/validés | `mode: info` (déclaration, auto-`approved`) ou `request` (demande à valider) ; `status: pending/approved/rejected` |
-| `manager_time_off` | absences des **directeurs** (E-19) | keyé sur `user_id` (un directeur n'a **pas** de `staff_id`), période `start/end_date`, `type:'off'`, pas de validation — isolé du pipeline staff |
+| `manager_time_off` | absences des **directeurs** (E-19) | keyé sur `user_id` — **raison historique, pas structurelle** : depuis E-22, un directeur A un `staff_id` (corrigé le 2026-08-05). Période `start/end_date`, `type:'off'`, pas de validation. La **collection** reste distincte de `time_off`, mais elle est **jointe** au filtre congés de `POST /api/dispos` (`managerOffPeriods`) — le directeur n'est plus hors pipeline |
 | `daily_revenue` | CA quotidien par établissement | dénominateur du coefficient masse salariale |
 | `settings` | **polymorphe** (clé `key`) | `dispo`, `performance`, `pointage`, `publish_<weekStart>`, `lock_dispos_<weekStart>` |
 | `notifications` | notifs in-app patron/directeur | |

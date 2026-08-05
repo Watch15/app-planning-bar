@@ -3,6 +3,7 @@
 // + session simulée par en-tête `x-test-user`. Aucun Mongo, aucune dépendance.
 
 process.env.NODE_ENV       = 'test';
+process.env.ALLOW_TEST_AUTH = '1'; // S-01 : 2e garde du harnais `x-test-user`
 process.env.MONGO_URI      = process.env.MONGO_URI      || 'mongodb://127.0.0.1:27017/templyo_test';
 process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'integration-test-secret-0123456789abcdef';
 
