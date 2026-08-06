@@ -131,7 +131,9 @@ PORT=3000
 | `npm run seed:all` | (Re)construit les bases de recette `templyo_dev` **et** `templyo_main` |
 | `npm run dev:seed` | Idem, base de `.env.dev` seulement |
 | `npm run dev:server` | Serveur local sur la base de `.env.dev` |
-| `npm run smoke` | 20 vérifications HTTP sur une instance qui tourne (`SMOKE_URL=…` pour cibler) |
+| `npm run smoke` | 25 vérifications HTTP sur l'instance locale |
+| `npm run smoke:dev` / `smoke:main` | Idem sur l'environnement déployé |
+| `npm run smoke -- <url>` | Idem sur une URL quelconque |
 
 ---
 

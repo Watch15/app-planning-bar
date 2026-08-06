@@ -457,10 +457,50 @@
       "norm_label": "seed"
     },
     {
-      "label": "create-patron",
+      "label": "dev:seed",
       "file_type": "code",
       "source_file": "package.json",
       "source_location": "L11",
+      "_origin": "ast",
+      "id": "package_scripts_dev_seed",
+      "community": 7,
+      "norm_label": "dev:seed"
+    },
+    {
+      "label": "seed:all",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "package_scripts_seed_all",
+      "community": 7,
+      "norm_label": "seed:all"
+    },
+    {
+      "label": "dev:server",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "package_scripts_dev_server",
+      "community": 7,
+      "norm_label": "dev:server"
+    },
+    {
+      "label": "smoke",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L14",
+      "_origin": "ast",
+      "id": "package_scripts_smoke",
+      "community": 7,
+      "norm_label": "smoke"
+    },
+    {
+      "label": "create-patron",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "package_scripts_create_patron",
       "community": 7,
@@ -470,7 +510,7 @@
       "label": "backfill-directors",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L12",
+      "source_location": "L16",
       "_origin": "ast",
       "id": "package_scripts_backfill_directors",
       "community": 7,
@@ -480,7 +520,7 @@
       "label": "lint",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L13",
+      "source_location": "L17",
       "_origin": "ast",
       "id": "package_scripts_lint",
       "community": 7,
@@ -490,7 +530,7 @@
       "label": "test",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L14",
+      "source_location": "L18",
       "_origin": "ast",
       "id": "package_scripts_test",
       "community": 7,
@@ -500,7 +540,7 @@
       "label": "license",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L16",
+      "source_location": "L20",
       "_origin": "ast",
       "id": "package_license",
       "community": 7,
@@ -510,7 +550,7 @@
       "label": "type",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L17",
+      "source_location": "L21",
       "_origin": "ast",
       "id": "package_type",
       "community": 7,
@@ -520,7 +560,7 @@
       "label": "dependencies",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L18",
+      "source_location": "L22",
       "_origin": "ast",
       "id": "package_dependencies",
       "community": 7,
@@ -530,7 +570,7 @@
       "label": "@sentry/node",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L19",
+      "source_location": "L23",
       "_origin": "ast",
       "id": "package_dependencies_sentry_node",
       "community": 7,
@@ -540,7 +580,7 @@
       "label": "bcryptjs",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L20",
+      "source_location": "L24",
       "_origin": "ast",
       "id": "package_dependencies_bcryptjs",
       "community": 7,
@@ -550,7 +590,7 @@
       "label": "cors",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L21",
+      "source_location": "L25",
       "_origin": "ast",
       "id": "package_dependencies_cors",
       "community": 7,
@@ -560,7 +600,7 @@
       "label": "dotenv",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L22",
+      "source_location": "L26",
       "_origin": "ast",
       "id": "package_dependencies_dotenv",
       "community": 7,
@@ -570,7 +610,7 @@
       "label": "express",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L23",
+      "source_location": "L27",
       "_origin": "ast",
       "id": "package_dependencies_express",
       "community": 7,
@@ -580,7 +620,7 @@
       "label": "express-session",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L24",
+      "source_location": "L28",
       "_origin": "ast",
       "id": "package_dependencies_express_session",
       "community": 7,
@@ -590,7 +630,7 @@
       "label": "helmet",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L25",
+      "source_location": "L29",
       "_origin": "ast",
       "id": "package_dependencies_helmet",
       "community": 7,
@@ -600,7 +640,7 @@
       "label": "mongodb",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L26",
+      "source_location": "L30",
       "_origin": "ast",
       "id": "package_dependencies_mongodb",
       "community": 7,
@@ -610,7 +650,7 @@
       "label": "morgan",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L27",
+      "source_location": "L31",
       "_origin": "ast",
       "id": "package_dependencies_morgan",
       "community": 7,
@@ -620,7 +660,7 @@
       "label": "web-push",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L28",
+      "source_location": "L32",
       "_origin": "ast",
       "id": "package_dependencies_web_push",
       "community": 7,
@@ -630,7 +670,7 @@
       "label": "devDependencies",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L30",
+      "source_location": "L34",
       "_origin": "ast",
       "id": "package_devdependencies",
       "community": 7,
@@ -640,7 +680,7 @@
       "label": "@eslint/js",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L31",
+      "source_location": "L35",
       "_origin": "ast",
       "id": "package_devdependencies_eslint_js",
       "community": 7,
@@ -650,7 +690,7 @@
       "label": "eslint",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L32",
+      "source_location": "L36",
       "_origin": "ast",
       "id": "package_devdependencies_eslint",
       "community": 7,
@@ -660,7 +700,7 @@
       "label": "globals",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L33",
+      "source_location": "L37",
       "_origin": "ast",
       "id": "package_devdependencies_globals",
       "community": 7,
@@ -3053,7 +3093,7 @@
       "source_location": "L1120",
       "_origin": "ast",
       "id": "public_script_loadpublishbutton",
-      "community": 57,
+      "community": 6,
       "norm_label": "loadpublishbutton()"
     },
     {
@@ -3063,7 +3103,7 @@
       "source_location": "L1150",
       "_origin": "ast",
       "id": "public_script_publishestabs",
-      "community": 57,
+      "community": 6,
       "norm_label": "_publishestabs()"
     },
     {
@@ -3073,7 +3113,7 @@
       "source_location": "L1156",
       "_origin": "ast",
       "id": "public_script_renderpublishcontrol",
-      "community": 57,
+      "community": 6,
       "norm_label": "renderpublishcontrol()"
     },
     {
@@ -3313,7 +3353,7 @@
       "source_location": "L2440",
       "_origin": "ast",
       "id": "public_script_cleardraghighlights",
-      "community": 4,
+      "community": 38,
       "norm_label": "cleardraghighlights()"
     },
     {
@@ -3353,7 +3393,7 @@
       "source_location": "L2557",
       "_origin": "ast",
       "id": "public_script_onsidebardragend",
-      "community": 4,
+      "community": 38,
       "norm_label": "onsidebardragend()"
     },
     {
@@ -3403,7 +3443,7 @@
       "source_location": "L2598",
       "_origin": "ast",
       "id": "public_script_stopautoscroll",
-      "community": 4,
+      "community": 38,
       "norm_label": "stopautoscroll()"
     },
     {
@@ -3583,7 +3623,7 @@
       "source_location": "L3386",
       "_origin": "ast",
       "id": "public_script_ontouchend",
-      "community": 4,
+      "community": 38,
       "norm_label": "ontouchend()"
     },
     {
@@ -3593,7 +3633,7 @@
       "source_location": "L3415",
       "_origin": "ast",
       "id": "public_script_updateshifttext",
-      "community": 4,
+      "community": 38,
       "norm_label": "updateshifttext()"
     },
     {
@@ -3953,7 +3993,7 @@
       "source_location": "L5172",
       "_origin": "ast",
       "id": "public_script_openrecapmodal",
-      "community": 8,
+      "community": 4,
       "norm_label": "openrecapmodal()"
     },
     {
@@ -3963,7 +4003,7 @@
       "source_location": "L5253",
       "_origin": "ast",
       "id": "public_script_showrecapsub",
-      "community": 8,
+      "community": 4,
       "norm_label": "showrecapsub()"
     },
     {
@@ -3973,7 +4013,7 @@
       "source_location": "L5271",
       "_origin": "ast",
       "id": "public_script_loadcongescalendar",
-      "community": 8,
+      "community": 4,
       "norm_label": "loadcongescalendar()"
     },
     {
@@ -3983,7 +4023,7 @@
       "source_location": "L5300",
       "_origin": "ast",
       "id": "public_script_rendercongescalendar",
-      "community": 8,
+      "community": 4,
       "norm_label": "rendercongescalendar()"
     },
     {
@@ -3993,7 +4033,7 @@
       "source_location": "L5366",
       "_origin": "ast",
       "id": "public_script_loadrecapdata",
-      "community": 8,
+      "community": 4,
       "norm_label": "loadrecapdata()"
     },
     {
@@ -4003,7 +4043,7 @@
       "source_location": "L5526",
       "_origin": "ast",
       "id": "public_script_exportrecapxlsx",
-      "community": 38,
+      "community": 8,
       "norm_label": "exportrecapxlsx()"
     },
     {
@@ -4023,7 +4063,7 @@
       "source_location": "L5814",
       "_origin": "ast",
       "id": "public_script_kpiprogressbar",
-      "community": 27,
+      "community": 57,
       "norm_label": "_kpiprogressbar()"
     },
     {
@@ -4043,7 +4083,7 @@
       "source_location": "L5829",
       "_origin": "ast",
       "id": "public_script_loaddisposkpi",
-      "community": 27,
+      "community": 57,
       "norm_label": "loaddisposkpi()"
     },
     {
@@ -4053,7 +4093,7 @@
       "source_location": "L5847",
       "_origin": "ast",
       "id": "public_script_kpiestabrow",
-      "community": 27,
+      "community": 57,
       "norm_label": "_kpiestabrow()"
     },
     {
@@ -4063,7 +4103,7 @@
       "source_location": "L5871",
       "_origin": "ast",
       "id": "public_script_renderdisposkpicard",
-      "community": 27,
+      "community": 57,
       "norm_label": "renderdisposkpicard()"
     },
     {
@@ -5193,7 +5233,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_pt",
-      "community": 2,
+      "community": 35,
       "norm_label": "pt()"
     },
     {
@@ -5283,7 +5323,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_support_word_breaking",
-      "community": 12,
+      "community": 3,
       "norm_label": "support_word_breaking()"
     },
     {
@@ -5473,7 +5513,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_sn",
-      "community": 2,
+      "community": 35,
       "norm_label": "sn()"
     },
     {
@@ -5483,7 +5523,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_on",
-      "community": 12,
+      "community": 2,
       "norm_label": "on()"
     },
     {
@@ -5493,7 +5533,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_qn",
-      "community": 12,
+      "community": 2,
       "norm_label": "qn()"
     },
     {
@@ -5503,7 +5543,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_cn",
-      "community": 12,
+      "community": 2,
       "norm_label": "cn()"
     },
     {
@@ -5513,7 +5553,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_an",
-      "community": 2,
+      "community": 35,
       "norm_label": "an()"
     },
     {
@@ -5523,7 +5563,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_fn",
-      "community": 2,
+      "community": 35,
       "norm_label": "fn()"
     },
     {
@@ -5823,7 +5863,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "vendor_jspdf_umd_min_g",
-      "community": 12,
+      "community": 3,
       "norm_label": "g()"
     },
     {
@@ -6087,6 +6127,56 @@
       "norm_label": "make_xlsx_lib()"
     },
     {
+      "label": "_db.js",
+      "file_type": "code",
+      "source_file": "scripts/_db.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "scripts_db",
+      "community": 18,
+      "norm_label": "_db.js"
+    },
+    {
+      "label": "{ MongoClient }",
+      "file_type": "code",
+      "source_file": "scripts/_db.js",
+      "source_location": "L11",
+      "_origin": "ast",
+      "id": "scripts_db_mongoclient",
+      "community": 18,
+      "norm_label": "{ mongoclient }"
+    },
+    {
+      "label": "loadEnv()",
+      "file_type": "code",
+      "source_file": "scripts/_db.js",
+      "source_location": "L15",
+      "_origin": "ast",
+      "id": "scripts_db_loadenv",
+      "community": 18,
+      "norm_label": "loadenv()"
+    },
+    {
+      "label": "safeUri()",
+      "file_type": "code",
+      "source_file": "scripts/_db.js",
+      "source_location": "L20",
+      "_origin": "ast",
+      "id": "scripts_db_safeuri",
+      "community": 18,
+      "norm_label": "safeuri()"
+    },
+    {
+      "label": "openDb()",
+      "file_type": "code",
+      "source_file": "scripts/_db.js",
+      "source_location": "L28",
+      "_origin": "ast",
+      "id": "scripts_db_opendb",
+      "community": 18,
+      "norm_label": "opendb()"
+    },
+    {
       "label": "backfill-director-staff.js",
       "file_type": "code",
       "source_file": "scripts/backfill-director-staff.js",
@@ -6097,16 +6187,6 @@
       "norm_label": "backfill-director-staff.js"
     },
     {
-      "label": "{ MongoClient }",
-      "file_type": "code",
-      "source_file": "scripts/backfill-director-staff.js",
-      "source_location": "L6",
-      "_origin": "ast",
-      "id": "scripts_backfill_director_staff_mongoclient",
-      "community": 65,
-      "norm_label": "{ mongoclient }"
-    },
-    {
       "label": "{ pickStaffColor }",
       "file_type": "code",
       "source_file": "scripts/backfill-director-staff.js",
@@ -6115,6 +6195,16 @@
       "id": "scripts_backfill_director_staff_pickstaffcolor",
       "community": 65,
       "norm_label": "{ pickstaffcolor }"
+    },
+    {
+      "label": "{ openDb }",
+      "file_type": "code",
+      "source_file": "scripts/backfill-director-staff.js",
+      "source_location": "L8",
+      "_origin": "ast",
+      "id": "scripts_backfill_director_staff_opendb",
+      "community": 65,
+      "norm_label": "{ opendb }"
     },
     {
       "label": "main()",
@@ -6137,20 +6227,10 @@
       "norm_label": "create-patron.js"
     },
     {
-      "label": "{ MongoClient }",
-      "file_type": "code",
-      "source_file": "scripts/create-patron.js",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "scripts_create_patron_mongoclient",
-      "community": 18,
-      "norm_label": "{ mongoclient }"
-    },
-    {
       "label": "bcrypt",
       "file_type": "code",
       "source_file": "scripts/create-patron.js",
-      "source_location": "L2",
+      "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_create_patron_bcrypt",
       "community": 18,
@@ -6160,17 +6240,27 @@
       "label": "readline",
       "file_type": "code",
       "source_file": "scripts/create-patron.js",
-      "source_location": "L3",
+      "source_location": "L2",
       "_origin": "ast",
       "id": "scripts_create_patron_readline",
       "community": 18,
       "norm_label": "readline"
     },
     {
+      "label": "{ openDb }",
+      "file_type": "code",
+      "source_file": "scripts/create-patron.js",
+      "source_location": "L3",
+      "_origin": "ast",
+      "id": "scripts_create_patron_opendb",
+      "community": 18,
+      "norm_label": "{ opendb }"
+    },
+    {
       "label": "rl",
       "file_type": "code",
       "source_file": "scripts/create-patron.js",
-      "source_location": "L6",
+      "source_location": "L5",
       "_origin": "ast",
       "id": "scripts_create_patron_rl",
       "community": 18,
@@ -6180,7 +6270,7 @@
       "label": "ask()",
       "file_type": "code",
       "source_file": "scripts/create-patron.js",
-      "source_location": "L7",
+      "source_location": "L6",
       "_origin": "ast",
       "id": "scripts_create_patron_ask",
       "community": 18,
@@ -6190,11 +6280,71 @@
       "label": "main()",
       "file_type": "code",
       "source_file": "scripts/create-patron.js",
-      "source_location": "L9",
+      "source_location": "L8",
       "_origin": "ast",
       "id": "scripts_create_patron_main",
       "community": 18,
       "norm_label": "main()"
+    },
+    {
+      "label": "dev-run.js",
+      "file_type": "code",
+      "source_file": "scripts/dev-run.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "scripts_dev_run",
+      "community": 34,
+      "norm_label": "dev-run.js"
+    },
+    {
+      "label": "{ spawn }",
+      "file_type": "code",
+      "source_file": "scripts/dev-run.js",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "scripts_dev_run_spawn",
+      "community": 34,
+      "norm_label": "{ spawn }"
+    },
+    {
+      "label": "path",
+      "file_type": "code",
+      "source_file": "scripts/dev-run.js",
+      "source_location": "L14",
+      "_origin": "ast",
+      "id": "scripts_dev_run_path",
+      "community": 34,
+      "norm_label": "path"
+    },
+    {
+      "label": "[target, ...rest]",
+      "file_type": "code",
+      "source_file": "scripts/dev-run.js",
+      "source_location": "L16",
+      "_origin": "ast",
+      "id": "scripts_dev_run_target_rest",
+      "community": 34,
+      "norm_label": "[target, ...rest]"
+    },
+    {
+      "label": "child",
+      "file_type": "code",
+      "source_file": "scripts/dev-run.js",
+      "source_location": "L22",
+      "_origin": "ast",
+      "id": "scripts_dev_run_child",
+      "community": 34,
+      "norm_label": "child"
+    },
+    {
+      "label": "stopChild()",
+      "file_type": "code",
+      "source_file": "scripts/dev-run.js",
+      "source_location": "L33",
+      "_origin": "ast",
+      "id": "scripts_dev_run_stopchild",
+      "community": 34,
+      "norm_label": "stopchild()"
     },
     {
       "label": "init-db.js",
@@ -6203,28 +6353,168 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_init_db",
-      "community": 34,
+      "community": 18,
       "norm_label": "init-db.js"
     },
     {
-      "label": "{ MongoClient }",
+      "label": "{ openDb }",
       "file_type": "code",
       "source_file": "scripts/init-db.js",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "scripts_init_db_mongoclient",
-      "community": 34,
-      "norm_label": "{ mongoclient }"
+      "id": "scripts_init_db_opendb",
+      "community": 18,
+      "norm_label": "{ opendb }"
     },
     {
       "label": "main()",
       "file_type": "code",
       "source_file": "scripts/init-db.js",
-      "source_location": "L4",
+      "source_location": "L3",
       "_origin": "ast",
       "id": "scripts_init_db_main",
-      "community": 34,
+      "community": 18,
       "norm_label": "main()"
+    },
+    {
+      "label": "seed-all.js",
+      "file_type": "code",
+      "source_file": "scripts/seed-all.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "scripts_seed_all",
+      "community": 31,
+      "norm_label": "seed-all.js"
+    },
+    {
+      "label": "{ spawn }",
+      "file_type": "code",
+      "source_file": "scripts/seed-all.js",
+      "source_location": "L7",
+      "_origin": "ast",
+      "id": "scripts_seed_all_spawn",
+      "community": 31,
+      "norm_label": "{ spawn }"
+    },
+    {
+      "label": "path",
+      "file_type": "code",
+      "source_file": "scripts/seed-all.js",
+      "source_location": "L8",
+      "_origin": "ast",
+      "id": "scripts_seed_all_path",
+      "community": 31,
+      "norm_label": "path"
+    },
+    {
+      "label": "fs",
+      "file_type": "code",
+      "source_file": "scripts/seed-all.js",
+      "source_location": "L9",
+      "_origin": "ast",
+      "id": "scripts_seed_all_fs",
+      "community": 31,
+      "norm_label": "fs"
+    },
+    {
+      "label": "TARGETS",
+      "file_type": "code",
+      "source_file": "scripts/seed-all.js",
+      "source_location": "L11",
+      "_origin": "ast",
+      "id": "scripts_seed_all_targets",
+      "community": 31,
+      "norm_label": "targets"
+    },
+    {
+      "label": "root",
+      "file_type": "code",
+      "source_file": "scripts/seed-all.js",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "scripts_seed_all_root",
+      "community": 31,
+      "norm_label": "root"
+    },
+    {
+      "label": "seed()",
+      "file_type": "code",
+      "source_file": "scripts/seed-all.js",
+      "source_location": "L14",
+      "_origin": "ast",
+      "id": "scripts_seed_all_seed",
+      "community": 31,
+      "norm_label": "seed()"
+    },
+    {
+      "label": "seed-dev.js",
+      "file_type": "code",
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "scripts_seed_dev",
+      "community": 18,
+      "norm_label": "seed-dev.js"
+    },
+    {
+      "label": "bcrypt",
+      "file_type": "code",
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L24",
+      "_origin": "ast",
+      "id": "scripts_seed_dev_bcrypt",
+      "community": 18,
+      "norm_label": "bcrypt"
+    },
+    {
+      "label": "{ openDb }",
+      "file_type": "code",
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L25",
+      "_origin": "ast",
+      "id": "scripts_seed_dev_opendb",
+      "community": 18,
+      "norm_label": "{ opendb }"
+    },
+    {
+      "label": "{ toDateStr, weekStart }",
+      "file_type": "code",
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L26",
+      "_origin": "ast",
+      "id": "scripts_seed_dev_todatestr_weekstart",
+      "community": 18,
+      "norm_label": "{ todatestr, weekstart }"
+    },
+    {
+      "label": "WIPE",
+      "file_type": "code",
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L31",
+      "_origin": "ast",
+      "id": "scripts_seed_dev_wipe",
+      "community": 18,
+      "norm_label": "wipe"
+    },
+    {
+      "label": "FEATURES",
+      "file_type": "code",
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L38",
+      "_origin": "ast",
+      "id": "scripts_seed_dev_features",
+      "community": 18,
+      "norm_label": "features"
+    },
+    {
+      "label": "run()",
+      "file_type": "code",
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L207",
+      "_origin": "ast",
+      "id": "scripts_seed_dev_run",
+      "community": 18,
+      "norm_label": "run()"
     },
     {
       "label": "seed.js",
@@ -6233,28 +6523,168 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_seed",
-      "community": 35,
+      "community": 18,
       "norm_label": "seed.js"
     },
     {
-      "label": "{ MongoClient }",
+      "label": "{ openDb }",
       "file_type": "code",
       "source_file": "scripts/seed.js",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "scripts_seed_mongoclient",
-      "community": 35,
-      "norm_label": "{ mongoclient }"
+      "id": "scripts_seed_opendb",
+      "community": 18,
+      "norm_label": "{ opendb }"
     },
     {
       "label": "run()",
       "file_type": "code",
       "source_file": "scripts/seed.js",
-      "source_location": "L4",
+      "source_location": "L3",
       "_origin": "ast",
       "id": "scripts_seed_run",
-      "community": 35,
+      "community": 18,
       "norm_label": "run()"
+    },
+    {
+      "label": "smoke.js",
+      "file_type": "code",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "scripts_smoke",
+      "community": 27,
+      "norm_label": "smoke.js"
+    },
+    {
+      "label": "BASE",
+      "file_type": "code",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L15",
+      "_origin": "ast",
+      "id": "scripts_smoke_base",
+      "community": 27,
+      "norm_label": "base"
+    },
+    {
+      "label": "{ weekStart, toDateStr }",
+      "file_type": "code",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L18",
+      "_origin": "ast",
+      "id": "scripts_smoke_weekstart_todatestr",
+      "community": 27,
+      "norm_label": "{ weekstart, todatestr }"
+    },
+    {
+      "label": "nextMon",
+      "file_type": "code",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L19",
+      "_origin": "ast",
+      "id": "scripts_smoke_nextmon",
+      "community": 27,
+      "norm_label": "nextmon"
+    },
+    {
+      "label": "D()",
+      "file_type": "code",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L20",
+      "_origin": "ast",
+      "id": "scripts_smoke_d",
+      "community": 27,
+      "norm_label": "d()"
+    },
+    {
+      "label": "FROM",
+      "file_type": "code",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L21",
+      "_origin": "ast",
+      "id": "scripts_smoke_from",
+      "community": 27,
+      "norm_label": "from"
+    },
+    {
+      "label": "TO",
+      "file_type": "code",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L21",
+      "_origin": "ast",
+      "id": "scripts_smoke_to",
+      "community": 27,
+      "norm_label": "to"
+    },
+    {
+      "label": "jar",
+      "file_type": "code",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L23",
+      "_origin": "ast",
+      "id": "scripts_smoke_jar",
+      "community": 27,
+      "norm_label": "jar"
+    },
+    {
+      "label": "req()",
+      "file_type": "code",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L24",
+      "_origin": "ast",
+      "id": "scripts_smoke_req",
+      "community": 27,
+      "norm_label": "req()"
+    },
+    {
+      "label": "login()",
+      "file_type": "code",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L39",
+      "_origin": "ast",
+      "id": "scripts_smoke_login",
+      "community": 27,
+      "norm_label": "login()"
+    },
+    {
+      "label": "results",
+      "file_type": "code",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L42",
+      "_origin": "ast",
+      "id": "scripts_smoke_results",
+      "community": 27,
+      "norm_label": "results"
+    },
+    {
+      "label": "check()",
+      "file_type": "code",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L43",
+      "_origin": "ast",
+      "id": "scripts_smoke_check",
+      "community": 35,
+      "norm_label": "check()"
+    },
+    {
+      "label": "eq()",
+      "file_type": "code",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L51",
+      "_origin": "ast",
+      "id": "scripts_smoke_eq",
+      "community": 27,
+      "norm_label": "eq()"
+    },
+    {
+      "label": "main()",
+      "file_type": "code",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L56",
+      "_origin": "ast",
+      "id": "scripts_smoke_main",
+      "community": 27,
+      "norm_label": "main()"
     },
     {
       "label": "server.js",
@@ -6270,7 +6700,7 @@
       "label": "express",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3",
+      "source_location": "L5",
       "_origin": "ast",
       "id": "server_express",
       "community": 5,
@@ -6280,7 +6710,7 @@
       "label": "{ MongoClient, ObjectId }",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4",
+      "source_location": "L6",
       "_origin": "ast",
       "id": "server_mongoclient_objectid",
       "community": 5,
@@ -6290,7 +6720,7 @@
       "label": "cors",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5",
+      "source_location": "L7",
       "_origin": "ast",
       "id": "server_cors",
       "community": 5,
@@ -6300,7 +6730,7 @@
       "label": "bcrypt",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6",
+      "source_location": "L8",
       "_origin": "ast",
       "id": "server_bcrypt",
       "community": 5,
@@ -6310,7 +6740,7 @@
       "label": "session",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7",
+      "source_location": "L9",
       "_origin": "ast",
       "id": "server_session",
       "community": 5,
@@ -6320,7 +6750,7 @@
       "label": "crypto",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L8",
+      "source_location": "L10",
       "_origin": "ast",
       "id": "server_crypto",
       "community": 5,
@@ -6330,7 +6760,7 @@
       "label": "webpush",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L9",
+      "source_location": "L11",
       "_origin": "ast",
       "id": "server_webpush",
       "community": 5,
@@ -6340,7 +6770,7 @@
       "label": "helmet",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L10",
+      "source_location": "L12",
       "_origin": "ast",
       "id": "server_helmet",
       "community": 5,
@@ -6350,7 +6780,7 @@
       "label": "morgan",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L11",
+      "source_location": "L13",
       "_origin": "ast",
       "id": "server_morgan",
       "community": 5,
@@ -6360,7 +6790,7 @@
       "label": "{\r\n    isValidObjectId, hashToken, normalizePhone,\r\n    weekStart, currentWeekStart, disposWeekStart, isAutoPublished, isDatePublished, normalizePublishDoc, chargeMultiplier,\r\n    toDateStr, datesOverlap, congeDaysInRange, splitDisposByConges, isFullRangeOnConge,\r\n    validateOffPeriod, scopeManagerOff, resolvePerfSettings, pickStaffColor, buildTemplateDispos,\r\n    datesCoveredByPeriods, dispoDeadlineWaived,\r\n}",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L12",
+      "source_location": "L14",
       "_origin": "ast",
       "id": "server_isvalidobjectid_hashtoken_normalizephone_weekstart_currentweekstart_disposweekstart_isautopublished_isdatepublished_normalizepublishdoc_chargemultiplier_todatestr_datesoverlap_congedaysinrange_splitdisposbyconges_isfullrangeonconge_validateoffperiod_scopemanageroff_resolveperfsettings_pickstaffcolor_buildtemplatedispos_datescoveredbyperiods_dispodeadlinewaived",
       "community": 5,
@@ -6370,7 +6800,7 @@
       "label": "app",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L33",
+      "source_location": "L35",
       "_origin": "ast",
       "id": "server_app",
       "community": 5,
@@ -6380,7 +6810,7 @@
       "label": "rateLimitMap",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L131",
+      "source_location": "L160",
       "_origin": "ast",
       "id": "server_ratelimitmap",
       "community": 5,
@@ -6390,7 +6820,7 @@
       "label": "rateLimit()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L132",
+      "source_location": "L161",
       "_origin": "ast",
       "id": "server_ratelimit",
       "community": 5,
@@ -6400,7 +6830,7 @@
       "label": "client",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L156",
+      "source_location": "L185",
       "_origin": "ast",
       "id": "server_client",
       "community": 5,
@@ -6410,7 +6840,7 @@
       "label": "connectDB()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L159",
+      "source_location": "L188",
       "_origin": "ast",
       "id": "server_connectdb",
       "community": 5,
@@ -6420,7 +6850,7 @@
       "label": "sendEmail()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L204",
+      "source_location": "L243",
       "_origin": "ast",
       "id": "server_sendemail",
       "community": 5,
@@ -6430,7 +6860,7 @@
       "label": "appUrl()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L228",
+      "source_location": "L274",
       "_origin": "ast",
       "id": "server_appurl",
       "community": 5,
@@ -6440,7 +6870,7 @@
       "label": "sendSMS()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L234",
+      "source_location": "L280",
       "_origin": "ast",
       "id": "server_sendsms",
       "community": 5,
@@ -6450,7 +6880,7 @@
       "label": "sendPushToStaff()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L256",
+      "source_location": "L307",
       "_origin": "ast",
       "id": "server_sendpushtostaff",
       "community": 5,
@@ -6460,7 +6890,7 @@
       "label": "notifyPatrons()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L330",
+      "source_location": "L387",
       "_origin": "ast",
       "id": "server_notifypatrons",
       "community": 5,
@@ -6470,7 +6900,7 @@
       "label": "fetchPublishedWeeks()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L366",
+      "source_location": "L423",
       "_origin": "ast",
       "id": "server_fetchpublishedweeks",
       "community": 11,
@@ -6480,7 +6910,7 @@
       "label": "dispoOpenVenues()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L382",
+      "source_location": "L439",
       "_origin": "ast",
       "id": "server_dispoopenvenues",
       "community": 5,
@@ -6490,7 +6920,7 @@
       "label": "staffDispoOpen()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L391",
+      "source_location": "L448",
       "_origin": "ast",
       "id": "server_staffdispoopen",
       "community": 5,
@@ -6500,7 +6930,7 @@
       "label": "checkDispoRappels()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L401",
+      "source_location": "L458",
       "_origin": "ast",
       "id": "server_checkdisporappels",
       "community": 5,
@@ -6510,7 +6940,7 @@
       "label": "cleanupOldJokers()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L532",
+      "source_location": "L589",
       "_origin": "ast",
       "id": "server_cleanupoldjokers",
       "community": 5,
@@ -6520,7 +6950,7 @@
       "label": "cleanupPastDispos()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L551",
+      "source_location": "L608",
       "_origin": "ast",
       "id": "server_cleanuppastdispos",
       "community": 5,
@@ -6530,7 +6960,7 @@
       "label": "scheduleDailyAt10()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L581",
+      "source_location": "L638",
       "_origin": "ast",
       "id": "server_scheduledailyat10",
       "community": 5,
@@ -6540,7 +6970,7 @@
       "label": "_shiftNotifDebounce",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L602",
+      "source_location": "L659",
       "_origin": "ast",
       "id": "server_shiftnotifdebounce",
       "community": 5,
@@ -6550,7 +6980,7 @@
       "label": "scheduleShiftNotif()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L606",
+      "source_location": "L663",
       "_origin": "ast",
       "id": "server_scheduleshiftnotif",
       "community": 5,
@@ -6560,7 +6990,7 @@
       "label": "createNotifForPatrons()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L641",
+      "source_location": "L698",
       "_origin": "ast",
       "id": "server_createnotifforpatrons",
       "community": 5,
@@ -6570,7 +7000,7 @@
       "label": "setupSession()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L676",
+      "source_location": "L733",
       "_origin": "ast",
       "id": "server_setupsession",
       "community": 5,
@@ -6580,7 +7010,7 @@
       "label": "rejectQueryOperators()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L757",
+      "source_location": "L814",
       "_origin": "ast",
       "id": "server_rejectqueryoperators",
       "community": 5,
@@ -6590,7 +7020,7 @@
       "label": "checkDB()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L769",
+      "source_location": "L826",
       "_origin": "ast",
       "id": "server_checkdb",
       "community": 5,
@@ -6600,7 +7030,7 @@
       "label": "requireAuth()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L774",
+      "source_location": "L831",
       "_origin": "ast",
       "id": "server_requireauth",
       "community": 5,
@@ -6610,7 +7040,7 @@
       "label": "requirePatron()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L783",
+      "source_location": "L840",
       "_origin": "ast",
       "id": "server_requirepatron",
       "community": 5,
@@ -6620,7 +7050,7 @@
       "label": "requireAdmin()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L794",
+      "source_location": "L851",
       "_origin": "ast",
       "id": "server_requireadmin",
       "community": 5,
@@ -6630,7 +7060,7 @@
       "label": "requirePatronOnly()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L804",
+      "source_location": "L861",
       "_origin": "ast",
       "id": "server_requirepatrononly",
       "community": 5,
@@ -6640,27 +7070,47 @@
       "label": "denyObservateurEdit()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L816",
+      "source_location": "L873",
       "_origin": "ast",
       "id": "server_denyobservateuredit",
       "community": 5,
       "norm_label": "denyobservateuredit()"
     },
     {
+      "label": "userEstablishmentIds()",
+      "file_type": "code",
+      "source_file": "server.js",
+      "source_location": "L883",
+      "_origin": "ast",
+      "id": "server_userestablishmentids",
+      "community": 5,
+      "norm_label": "userestablishmentids()"
+    },
+    {
       "label": "canAccessEstablishment()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L824",
+      "source_location": "L898",
       "_origin": "ast",
       "id": "server_canaccessestablishment",
       "community": 5,
       "norm_label": "canaccessestablishment()"
     },
     {
+      "label": "requireEstablishmentAccess()",
+      "file_type": "code",
+      "source_file": "server.js",
+      "source_location": "L912",
+      "_origin": "ast",
+      "id": "server_requireestablishmentaccess",
+      "community": 5,
+      "norm_label": "requireestablishmentaccess()"
+    },
+    {
       "label": "isResponsablePourSoiree()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L835",
+      "source_location": "L939",
       "_origin": "ast",
       "id": "server_isresponsablepoursoiree",
       "community": 5,
@@ -6670,7 +7120,7 @@
       "label": "requireEtablissement()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L875",
+      "source_location": "L979",
       "_origin": "ast",
       "id": "server_requireetablissement",
       "community": 5,
@@ -6680,7 +7130,7 @@
       "label": "createManagerStaffProfile()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1120",
+      "source_location": "L1224",
       "_origin": "ast",
       "id": "server_createmanagerstaffprofile",
       "community": 65,
@@ -6690,7 +7140,7 @@
       "label": "syncManagerStaffVenues()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1142",
+      "source_location": "L1246",
       "_origin": "ast",
       "id": "server_syncmanagerstaffvenues",
       "community": 65,
@@ -6700,7 +7150,7 @@
       "label": "icsEscape()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1931",
+      "source_location": "L2039",
       "_origin": "ast",
       "id": "server_icsescape",
       "community": 5,
@@ -6710,7 +7160,7 @@
       "label": "icsLocalDateTime()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1942",
+      "source_location": "L2050",
       "_origin": "ast",
       "id": "server_icslocaldatetime",
       "community": 5,
@@ -6720,7 +7170,7 @@
       "label": "ICS_VTIMEZONE",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1955",
+      "source_location": "L2063",
       "_origin": "ast",
       "id": "server_ics_vtimezone",
       "community": 5,
@@ -6730,7 +7180,7 @@
       "label": "buildShiftsIcs()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1969",
+      "source_location": "L2077",
       "_origin": "ast",
       "id": "server_buildshiftsics",
       "community": 5,
@@ -6740,7 +7190,7 @@
       "label": "computeEffectiveDeadline()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L2505",
+      "source_location": "L2614",
       "_origin": "ast",
       "id": "server_computeeffectivedeadline",
       "community": 5,
@@ -6750,7 +7200,7 @@
       "label": "aggStatus()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L2722",
+      "source_location": "L2831",
       "_origin": "ast",
       "id": "server_aggstatus",
       "community": 5,
@@ -6760,7 +7210,7 @@
       "label": "pendingScopeFilter()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L2881",
+      "source_location": "L2990",
       "_origin": "ast",
       "id": "server_pendingscopefilter",
       "community": 5,
@@ -6770,7 +7220,7 @@
       "label": "fullWeekCongeSet()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3062",
+      "source_location": "L3171",
       "_origin": "ast",
       "id": "server_fullweekcongeset",
       "community": 62,
@@ -6780,7 +7230,7 @@
       "label": "requireDirecteur()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3365",
+      "source_location": "L3483",
       "_origin": "ast",
       "id": "server_requiredirecteur",
       "community": 5,
@@ -6790,7 +7240,7 @@
       "label": "requireManagerStaffId()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3452",
+      "source_location": "L3570",
       "_origin": "ast",
       "id": "server_requiremanagerstaffid",
       "community": 5,
@@ -6800,7 +7250,7 @@
       "label": "MANAGER_DISPO_TYPES",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3458",
+      "source_location": "L3576",
       "_origin": "ast",
       "id": "server_manager_dispo_types",
       "community": 5,
@@ -6810,7 +7260,7 @@
       "label": "managerStaffName()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3461",
+      "source_location": "L3579",
       "_origin": "ast",
       "id": "server_managerstaffname",
       "community": 65,
@@ -6820,7 +7270,7 @@
       "label": "managerOffPeriods()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3478",
+      "source_location": "L3596",
       "_origin": "ast",
       "id": "server_manageroffperiods",
       "community": 62,
@@ -6830,7 +7280,7 @@
       "label": "materializeManagerTemplateWeek()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3500",
+      "source_location": "L3618",
       "_origin": "ast",
       "id": "server_materializemanagertemplateweek",
       "community": 62,
@@ -6840,7 +7290,7 @@
       "label": "materializeAllManagerTemplates()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3521",
+      "source_location": "L3639",
       "_origin": "ast",
       "id": "server_materializeallmanagertemplates",
       "community": 65,
@@ -6850,7 +7300,7 @@
       "label": "weekEndStr()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4037",
+      "source_location": "L4155",
       "_origin": "ast",
       "id": "server_weekendstr",
       "community": 5,
@@ -6860,7 +7310,7 @@
       "label": "loadPerfSettings()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4577",
+      "source_location": "L4706",
       "_origin": "ast",
       "id": "server_loadperfsettings",
       "community": 11,
@@ -6870,17 +7320,27 @@
       "label": "perfScopeDenial()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4700",
+      "source_location": "L4829",
       "_origin": "ast",
       "id": "server_perfscopedenial",
       "community": 5,
       "norm_label": "perfscopedenial()"
     },
     {
+      "label": "pickPointageEstab()",
+      "file_type": "code",
+      "source_file": "server.js",
+      "source_location": "L4920",
+      "_origin": "ast",
+      "id": "server_pickpointageestab",
+      "community": 5,
+      "norm_label": "pickpointageestab()"
+    },
+    {
       "label": "formatShiftTime()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5009",
+      "source_location": "L5140",
       "_origin": "ast",
       "id": "server_formatshifttime",
       "community": 5,
@@ -6890,7 +7350,7 @@
       "label": "formatDateFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5016",
+      "source_location": "L5147",
       "_origin": "ast",
       "id": "server_formatdatefr",
       "community": 5,
@@ -6900,7 +7360,7 @@
       "label": "formatDateShortFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5022",
+      "source_location": "L5153",
       "_origin": "ast",
       "id": "server_formatdateshortfr",
       "community": 5,
@@ -6910,7 +7370,7 @@
       "label": "formatWeekFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5028",
+      "source_location": "L5159",
       "_origin": "ast",
       "id": "server_formatweekfr",
       "community": 5,
@@ -6920,7 +7380,7 @@
       "label": "touchLastUpdated()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5036",
+      "source_location": "L5167",
       "_origin": "ast",
       "id": "server_touchlastupdated",
       "community": 5,
@@ -7067,6 +7527,146 @@
       "norm_label": "getjson()"
     },
     {
+      "label": "estab-access.test.js",
+      "file_type": "code",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "tests_estab_access_test",
+      "community": 12,
+      "norm_label": "estab-access.test.js"
+    },
+    {
+      "label": "{ test, before, after, beforeEach }",
+      "file_type": "code",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L11",
+      "_origin": "ast",
+      "id": "tests_estab_access_test_test_before_after_beforeeach",
+      "community": 12,
+      "norm_label": "{ test, before, after, beforeeach }"
+    },
+    {
+      "label": "assert",
+      "file_type": "code",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "tests_estab_access_test_assert",
+      "community": 12,
+      "norm_label": "assert"
+    },
+    {
+      "label": "{ makeDb }",
+      "file_type": "code",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "tests_estab_access_test_makedb",
+      "community": 12,
+      "norm_label": "{ makedb }"
+    },
+    {
+      "label": "{ app, startApp, stopApp, req }",
+      "file_type": "code",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L14",
+      "_origin": "ast",
+      "id": "tests_estab_access_test_app_startapp_stopapp_req",
+      "community": 12,
+      "norm_label": "{ app, startapp, stopapp, req }"
+    },
+    {
+      "label": "PATRON",
+      "file_type": "code",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L16",
+      "_origin": "ast",
+      "id": "tests_estab_access_test_patron",
+      "community": 12,
+      "norm_label": "patron"
+    },
+    {
+      "label": "OBS",
+      "file_type": "code",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L17",
+      "_origin": "ast",
+      "id": "tests_estab_access_test_obs",
+      "community": 12,
+      "norm_label": "obs"
+    },
+    {
+      "label": "DIR",
+      "file_type": "code",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L19",
+      "_origin": "ast",
+      "id": "tests_estab_access_test_dir",
+      "community": 12,
+      "norm_label": "dir"
+    },
+    {
+      "label": "STAFF",
+      "file_type": "code",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L20",
+      "_origin": "ast",
+      "id": "tests_estab_access_test_staff",
+      "community": 12,
+      "norm_label": "staff"
+    },
+    {
+      "label": "ETAB",
+      "file_type": "code",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L22",
+      "_origin": "ast",
+      "id": "tests_estab_access_test_etab",
+      "community": 12,
+      "norm_label": "etab"
+    },
+    {
+      "label": "code()",
+      "file_type": "code",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L44",
+      "_origin": "ast",
+      "id": "tests_estab_access_test_code",
+      "community": 12,
+      "norm_label": "code()"
+    },
+    {
+      "label": "recapRow()",
+      "file_type": "code",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L87",
+      "_origin": "ast",
+      "id": "tests_estab_access_test_recaprow",
+      "community": 12,
+      "norm_label": "recaprow()"
+    },
+    {
+      "label": "seedDispo()",
+      "file_type": "code",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L110",
+      "_origin": "ast",
+      "id": "tests_estab_access_test_seeddispo",
+      "community": 12,
+      "norm_label": "seeddispo()"
+    },
+    {
+      "label": "confirm()",
+      "file_type": "code",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L116",
+      "_origin": "ast",
+      "id": "tests_estab_access_test_confirm",
+      "community": 12,
+      "norm_label": "confirm()"
+    },
+    {
       "label": "fake-db.js",
       "file_type": "code",
       "source_file": "tests/helpers/fake-db.js",
@@ -7130,7 +7730,7 @@
       "label": "matchDoc()",
       "file_type": "code",
       "source_file": "tests/helpers/fake-db.js",
-      "source_location": "L53",
+      "source_location": "L58",
       "_origin": "ast",
       "id": "helpers_fake_db_matchdoc",
       "community": 66,
@@ -7140,7 +7740,7 @@
       "label": "plainEq()",
       "file_type": "code",
       "source_file": "tests/helpers/fake-db.js",
-      "source_location": "L58",
+      "source_location": "L68",
       "_origin": "ast",
       "id": "helpers_fake_db_plaineq",
       "community": 66,
@@ -7150,7 +7750,7 @@
       "label": "nextObjectIdHex()",
       "file_type": "code",
       "source_file": "tests/helpers/fake-db.js",
-      "source_location": "L66",
+      "source_location": "L76",
       "_origin": "ast",
       "id": "helpers_fake_db_nextobjectidhex",
       "community": 66,
@@ -7160,7 +7760,7 @@
       "label": "makeCollection()",
       "file_type": "code",
       "source_file": "tests/helpers/fake-db.js",
-      "source_location": "L70",
+      "source_location": "L80",
       "_origin": "ast",
       "id": "helpers_fake_db_makecollection",
       "community": 66,
@@ -7170,7 +7770,7 @@
       "label": "makeDb()",
       "file_type": "code",
       "source_file": "tests/helpers/fake-db.js",
-      "source_location": "L130",
+      "source_location": "L140",
       "_origin": "ast",
       "id": "helpers_fake_db_makedb",
       "community": 66,
@@ -7193,7 +7793,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "helpers_harness_app",
-      "community": 42,
+      "community": 58,
       "norm_label": "app"
     },
     {
@@ -7223,7 +7823,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "helpers_harness_req",
-      "community": 58,
+      "community": 29,
       "norm_label": "req()"
     },
     {
@@ -7353,7 +7953,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "tests_manager_dispos_test_puttemplate",
-      "community": 58,
+      "community": 29,
       "norm_label": "puttemplate()"
     },
     {
@@ -7443,7 +8043,7 @@
       "source_location": "L240",
       "_origin": "ast",
       "id": "tests_manager_dispos_test_postonedispo",
-      "community": 58,
+      "community": 29,
       "norm_label": "postonedispo()"
     },
     {
@@ -7623,7 +8223,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "tests_perf_settings_test_patch",
-      "community": 58,
+      "community": 29,
       "norm_label": "patch()"
     },
     {
@@ -7887,10 +8487,40 @@
       "norm_label": "commandes"
     },
     {
+      "label": "Environnements \u2014 comment s'y connecter",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L138",
+      "_origin": "ast",
+      "id": "readme_environnements_comment_s_y_connecter",
+      "community": 25,
+      "norm_label": "environnements \u2014 comment s'y connecter"
+    },
+    {
+      "label": "Par l'application (le plus courant)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L140",
+      "_origin": "ast",
+      "id": "readme_par_l_application_le_plus_courant",
+      "community": 25,
+      "norm_label": "par l'application (le plus courant)"
+    },
+    {
+      "label": "Directement \u00e0 la base (mongosh / Compass)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L164",
+      "_origin": "ast",
+      "id": "readme_directement_\u00e0_la_base_mongosh_compass",
+      "community": 25,
+      "norm_label": "directement a la base (mongosh / compass)"
+    },
+    {
       "label": "R\u00f4les utilisateurs",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L134",
+      "source_location": "L182",
       "_origin": "ast",
       "id": "readme_r\u00f4les_utilisateurs",
       "community": 25,
@@ -7900,7 +8530,7 @@
       "label": "Fonctionnalit\u00e9s",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L145",
+      "source_location": "L193",
       "_origin": "ast",
       "id": "readme_fonctionnalit\u00e9s",
       "community": 25,
@@ -7910,7 +8540,7 @@
       "label": "Authentification",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L147",
+      "source_location": "L195",
       "_origin": "ast",
       "id": "readme_authentification",
       "community": 25,
@@ -7920,7 +8550,7 @@
       "label": "Vue patron (`index.html`)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L155",
+      "source_location": "L203",
       "_origin": "ast",
       "id": "readme_vue_patron_index_html",
       "community": 25,
@@ -7930,7 +8560,7 @@
       "label": "Vue staff (`planning.html`)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L170",
+      "source_location": "L218",
       "_origin": "ast",
       "id": "readme_vue_staff_planning_html",
       "community": 25,
@@ -7940,7 +8570,7 @@
       "label": "Pointage (`pointage.html`)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L178",
+      "source_location": "L226",
       "_origin": "ast",
       "id": "readme_pointage_pointage_html",
       "community": 25,
@@ -7950,7 +8580,7 @@
       "label": "Performance (`performance.html`)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L189",
+      "source_location": "L237",
       "_origin": "ast",
       "id": "readme_performance_performance_html",
       "community": 25,
@@ -7960,7 +8590,7 @@
       "label": "Web Push",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L198",
+      "source_location": "L246",
       "_origin": "ast",
       "id": "readme_web_push",
       "community": 25,
@@ -7970,7 +8600,7 @@
       "label": "PWA",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L204",
+      "source_location": "L252",
       "_origin": "ast",
       "id": "readme_pwa",
       "community": 25,
@@ -7980,7 +8610,7 @@
       "label": "Collections MongoDB",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L211",
+      "source_location": "L259",
       "_origin": "ast",
       "id": "readme_collections_mongodb",
       "community": 25,
@@ -7990,7 +8620,7 @@
       "label": "Routes API principales",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L233",
+      "source_location": "L281",
       "_origin": "ast",
       "id": "readme_routes_api_principales",
       "community": 25,
@@ -8000,7 +8630,7 @@
       "label": "Auth",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L235",
+      "source_location": "L283",
       "_origin": "ast",
       "id": "readme_auth",
       "community": 25,
@@ -8010,7 +8640,7 @@
       "label": "Comptes & Staff",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L245",
+      "source_location": "L293",
       "_origin": "ast",
       "id": "readme_comptes_staff",
       "community": 25,
@@ -8020,7 +8650,7 @@
       "label": "\u00c9tablissements",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L255",
+      "source_location": "L303",
       "_origin": "ast",
       "id": "readme_\u00e9tablissements",
       "community": 25,
@@ -8030,7 +8660,7 @@
       "label": "Shifts & Pointage",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L262",
+      "source_location": "L310",
       "_origin": "ast",
       "id": "readme_shifts_pointage",
       "community": 25,
@@ -8040,7 +8670,7 @@
       "label": "Disponibilit\u00e9s",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L283",
+      "source_location": "L331",
       "_origin": "ast",
       "id": "readme_disponibilit\u00e9s",
       "community": 25,
@@ -8050,7 +8680,7 @@
       "label": "Performance / CA",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L301",
+      "source_location": "L349",
       "_origin": "ast",
       "id": "readme_performance_ca",
       "community": 25,
@@ -8060,7 +8690,7 @@
       "label": "\u00c9changes de shifts *(routes d\u00e9sactiv\u00e9es en attente validation client \u2014 code conserv\u00e9, comment\u00e9 dans server.js)*",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L309",
+      "source_location": "L357",
       "_origin": "ast",
       "id": "readme_\u00e9changes_de_shifts_routes_d\u00e9sactiv\u00e9es_en_attente_validation_client_code_conserv\u00e9_comment\u00e9_dans_server_js",
       "community": 25,
@@ -8070,7 +8700,7 @@
       "label": "Web Push & Notifications",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L319",
+      "source_location": "L367",
       "_origin": "ast",
       "id": "readme_web_push_notifications",
       "community": 25,
@@ -8080,7 +8710,7 @@
       "label": "Infra",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L327",
+      "source_location": "L375",
       "_origin": "ast",
       "id": "readme_infra",
       "community": 25,
@@ -8090,7 +8720,7 @@
       "label": "R\u00e8gles techniques \u00e0 ne jamais casser",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L334",
+      "source_location": "L382",
       "_origin": "ast",
       "id": "readme_r\u00e8gles_techniques_\u00e0_ne_jamais_casser",
       "community": 25,
@@ -8100,7 +8730,7 @@
       "label": "Timezone \u2014 jamais `toISOString()`",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L336",
+      "source_location": "L384",
       "_origin": "ast",
       "id": "readme_timezone_jamais_toisostring",
       "community": 25,
@@ -8110,7 +8740,7 @@
       "label": "`script.js` \u2014 monolithique, ne pas d\u00e9couper",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L352",
+      "source_location": "L400",
       "_origin": "ast",
       "id": "readme_script_js_monolithique_ne_pas_d\u00e9couper",
       "community": 25,
@@ -8120,7 +8750,7 @@
       "label": "Sessions MongoDB \u2014 promesses uniquement",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L355",
+      "source_location": "L403",
       "_origin": "ast",
       "id": "readme_sessions_mongodb_promesses_uniquement",
       "community": 25,
@@ -8130,7 +8760,7 @@
       "label": "Cache Service Worker \u2014 ne pas toucher `%%BUILD_TIME%%`",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L358",
+      "source_location": "L406",
       "_origin": "ast",
       "id": "readme_cache_service_worker_ne_pas_toucher_build_time",
       "community": 25,
@@ -8140,7 +8770,7 @@
       "label": "Helpers purs \u2192 `lib/utils.js`",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L361",
+      "source_location": "L409",
       "_origin": "ast",
       "id": "readme_helpers_purs_lib_utils_js",
       "community": 25,
@@ -8150,7 +8780,7 @@
       "label": "Tests",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L366",
+      "source_location": "L414",
       "_origin": "ast",
       "id": "readme_tests",
       "community": 25,
@@ -8747,10 +9377,70 @@
       "norm_label": "documentation \u2014 contradictions relevees (audit du 2026-08-05)"
     },
     {
-      "label": "Divers \u2014 outillage & process",
+      "label": "Base de recette (2026-08-05)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
       "source_location": "L267",
+      "_origin": "ast",
+      "id": "docs_backlog_base_de_recette_2026_08_05",
+      "community": 60,
+      "norm_label": "base de recette (2026-08-05)"
+    },
+    {
+      "label": "Environnements & d\u00e9ploiements (2026-08-05)",
+      "file_type": "document",
+      "source_file": "docs/backlog.md",
+      "source_location": "L301",
+      "_origin": "ast",
+      "id": "docs_backlog_environnements_d\u00e9ploiements_2026_08_05",
+      "community": 60,
+      "norm_label": "environnements & deploiements (2026-08-05)"
+    },
+    {
+      "label": "`npm run smoke` \u2014 tests de bout en bout sur une instance r\u00e9elle (2026-08-05)",
+      "file_type": "document",
+      "source_file": "docs/backlog.md",
+      "source_location": "L344",
+      "_origin": "ast",
+      "id": "docs_backlog_npm_run_smoke_tests_de_bout_en_bout_sur_une_instance_r\u00e9elle_2026_08_05",
+      "community": 60,
+      "norm_label": "`npm run smoke` \u2014 tests de bout en bout sur une instance reelle (2026-08-05)"
+    },
+    {
+      "label": "Environnement `main` \u2014 cluster d\u00e9di\u00e9 (2026-08-05)",
+      "file_type": "document",
+      "source_file": "docs/backlog.md",
+      "source_location": "L365",
+      "_origin": "ast",
+      "id": "docs_backlog_environnement_main_cluster_d\u00e9di\u00e9_2026_08_05",
+      "community": 60,
+      "norm_label": "environnement `main` \u2014 cluster dedie (2026-08-05)"
+    },
+    {
+      "label": "Processus de livraison \u2014 d\u00e9cid\u00e9 le 2026-08-05",
+      "file_type": "document",
+      "source_file": "docs/backlog.md",
+      "source_location": "L398",
+      "_origin": "ast",
+      "id": "docs_backlog_processus_de_livraison_d\u00e9cid\u00e9_le_2026_08_05",
+      "community": 60,
+      "norm_label": "processus de livraison \u2014 decide le 2026-08-05"
+    },
+    {
+      "label": "Audit Railway complet (2026-08-05) \u2014 origine, variables, secrets",
+      "file_type": "document",
+      "source_file": "docs/backlog.md",
+      "source_location": "L430",
+      "_origin": "ast",
+      "id": "docs_backlog_audit_railway_complet_2026_08_05_origine_variables_secrets",
+      "community": 60,
+      "norm_label": "audit railway complet (2026-08-05) \u2014 origine, variables, secrets"
+    },
+    {
+      "label": "Divers \u2014 outillage & process",
+      "file_type": "document",
+      "source_file": "docs/backlog.md",
+      "source_location": "L487",
       "_origin": "ast",
       "id": "docs_backlog_divers_outillage_process",
       "community": 60,
@@ -8760,7 +9450,7 @@
       "label": "D\u00e9j\u00e0 livr\u00e9 / non prioritaire",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L274",
+      "source_location": "L494",
       "_origin": "ast",
       "id": "docs_backlog_d\u00e9j\u00e0_livr\u00e9_non_prioritaire",
       "community": 60,
@@ -8770,7 +9460,7 @@
       "label": "Fait",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L284",
+      "source_location": "L504",
       "_origin": "ast",
       "id": "docs_backlog_fait",
       "community": 60,
@@ -8780,7 +9470,7 @@
       "label": "P2 \u2014 Audit ergonomie restant (mai 2026)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L390",
+      "source_location": "L610",
       "_origin": "ast",
       "id": "docs_backlog_p2_audit_ergonomie_restant_mai_2026",
       "community": 60,
@@ -8790,7 +9480,7 @@
       "label": "Reste \u00e0 faire \u2014 dette technique & refacto (incr\u00e9mental)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L408",
+      "source_location": "L628",
       "_origin": "ast",
       "id": "docs_backlog_reste_\u00e0_faire_dette_technique_refacto_incr\u00e9mental",
       "community": 60,
@@ -8800,7 +9490,7 @@
       "label": "Notes pour les agents",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L424",
+      "source_location": "L644",
       "_origin": "ast",
       "id": "docs_backlog_notes_pour_les_agents",
       "community": 60,
@@ -11136,6 +11826,28 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "scripts_seed_dev",
+      "target": "lib_utils",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "scripts_smoke",
+      "target": "lib_utils",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "server.js",
       "source_location": "L12",
       "weight": 1.0,
@@ -11351,6 +12063,28 @@
       "confidence_score": 1.0,
       "source": "lib_utils_isfullrangeonconge",
       "target": "lib_utils_todatestr"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "scripts_seed_dev",
+      "target": "lib_utils_todatestr",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "scripts_smoke",
+      "target": "lib_utils_todatestr",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -12004,6 +12738,26 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "package.json",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "package_scripts",
+      "target": "package_scripts_dev_seed",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "package_scripts",
+      "target": "package_scripts_dev_server",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
       "source_location": "L9",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -12029,6 +12783,26 @@
       "confidence_score": 1.0,
       "source": "package_scripts",
       "target": "package_scripts_seed"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "package_scripts",
+      "target": "package_scripts_seed_all",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "package_scripts",
+      "target": "package_scripts_smoke",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -12461,6 +13235,17 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "lib_week_currentweekstart",
+      "target": "lib_week_weekstart"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L215",
+      "weight": 1.0,
+      "source": "scripts_seed_dev_run",
       "target": "lib_week_weekstart"
     },
     {
@@ -15453,9 +16238,9 @@
       "source_file": "public/script.js",
       "source_location": "L183",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script",
-      "target": "public_script_askconfirm",
-      "confidence_score": 1.0
+      "target": "public_script_askconfirm"
     },
     {
       "relation": "contains",
@@ -15503,9 +16288,9 @@
       "source_file": "public/script.js",
       "source_location": "L6884",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script",
-      "target": "public_script_batchtoast",
-      "confidence_score": 1.0
+      "target": "public_script_batchtoast"
     },
     {
       "relation": "contains",
@@ -15843,9 +16628,9 @@
       "source_file": "public/script.js",
       "source_location": "L6623",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script",
-      "target": "public_script_disposscopeqs",
-      "confidence_score": 1.0
+      "target": "public_script_disposscopeqs"
     },
     {
       "relation": "contains",
@@ -16903,9 +17688,9 @@
       "source_file": "public/script.js",
       "source_location": "L6857",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script",
-      "target": "public_script_patcheachdispo",
-      "confidence_score": 1.0
+      "target": "public_script_patcheachdispo"
     },
     {
       "relation": "contains",
@@ -20651,9 +21436,9 @@
       "source_file": "public/script.js",
       "source_location": "L5799",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_loaddisposbadge",
-      "target": "public_script_disposscopeqs",
-      "confidence_score": 1.0
+      "target": "public_script_disposscopeqs"
     },
     {
       "relation": "calls",
@@ -21102,9 +21887,9 @@
       "source_file": "public/script.js",
       "source_location": "L6885",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_batchtoast",
-      "target": "public_script_showtoast",
-      "confidence_score": 1.0
+      "target": "public_script_showtoast"
     },
     {
       "relation": "calls",
@@ -22835,6 +23620,17 @@
       "context": "call",
       "confidence": "INFERRED",
       "confidence_score": 0.8,
+      "source_file": "scripts/smoke.js",
+      "source_location": "L45",
+      "weight": 1.0,
+      "source": "scripts_smoke_check",
+      "target": "vendor_html2canvas_min_fn"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
       "source_file": "public/vendor/xlsx.full.min.js",
       "source_location": "L11",
       "weight": 1.0,
@@ -23886,6 +24682,233 @@
       "target": "vendor_xlsx_full_min_make_xlsx_lib"
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/backfill-director-staff.js",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "scripts_backfill_director_staff",
+      "target": "scripts_db",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/create-patron.js",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "scripts_create_patron",
+      "target": "scripts_db",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/_db.js",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "scripts_db",
+      "target": "scripts_db_loadenv",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/_db.js",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "scripts_db",
+      "target": "scripts_db_mongoclient",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/_db.js",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "scripts_db",
+      "target": "scripts_db_opendb",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/_db.js",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "scripts_db",
+      "target": "scripts_db_safeuri",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/init-db.js",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "scripts_init_db",
+      "target": "scripts_db",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed.js",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "scripts_seed",
+      "target": "scripts_db",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "scripts_seed_dev",
+      "target": "scripts_db",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/_db.js",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "scripts_db_opendb",
+      "target": "scripts_db_loadenv",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/_db.js",
+      "source_location": "L49",
+      "weight": 1.0,
+      "source": "scripts_db_opendb",
+      "target": "scripts_db_safeuri",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/backfill-director-staff.js",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "scripts_backfill_director_staff",
+      "target": "scripts_db_opendb",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "scripts/backfill-director-staff.js",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "scripts_backfill_director_staff_main",
+      "target": "scripts_db_opendb"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/create-patron.js",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "scripts_create_patron",
+      "target": "scripts_db_opendb",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "scripts/create-patron.js",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "scripts_create_patron_main",
+      "target": "scripts_db_opendb"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/init-db.js",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "scripts_init_db",
+      "target": "scripts_db_opendb",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "scripts/init-db.js",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "scripts_init_db_main",
+      "target": "scripts_db_opendb"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed.js",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "scripts_seed",
+      "target": "scripts_db_opendb",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "scripts_seed_dev",
+      "target": "scripts_db_opendb",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L208",
+      "weight": 1.0,
+      "source": "scripts_seed_dev_run",
+      "target": "scripts_db_opendb"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "scripts/seed.js",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "scripts_seed_run",
+      "target": "scripts_db_opendb"
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "scripts/backfill-director-staff.js",
@@ -23899,11 +24922,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "scripts/backfill-director-staff.js",
-      "source_location": "L6",
+      "source_location": "L8",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "scripts_backfill_director_staff",
-      "target": "scripts_backfill_director_staff_mongoclient"
+      "target": "scripts_backfill_director_staff_opendb",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -23949,11 +24972,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "scripts/create-patron.js",
-      "source_location": "L1",
+      "source_location": "L3",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "scripts_create_patron",
-      "target": "scripts_create_patron_mongoclient"
+      "target": "scripts_create_patron_opendb",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -23989,6 +25012,56 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "scripts/dev-run.js",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "scripts_dev_run",
+      "target": "scripts_dev_run_child",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/dev-run.js",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "scripts_dev_run",
+      "target": "scripts_dev_run_path",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/dev-run.js",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "scripts_dev_run",
+      "target": "scripts_dev_run_spawn",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/dev-run.js",
+      "source_location": "L33",
+      "weight": 1.0,
+      "source": "scripts_dev_run",
+      "target": "scripts_dev_run_stopchild",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/dev-run.js",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "scripts_dev_run",
+      "target": "scripts_dev_run_target_rest",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "scripts/init-db.js",
       "source_location": "L4",
       "weight": 1.0,
@@ -24002,9 +25075,129 @@
       "source_file": "scripts/init-db.js",
       "source_location": "L1",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "scripts_init_db",
-      "target": "scripts_init_db_mongoclient"
+      "target": "scripts_init_db_opendb",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-all.js",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "scripts_seed_all",
+      "target": "scripts_seed_all_fs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-all.js",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "scripts_seed_all",
+      "target": "scripts_seed_all_path",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-all.js",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "scripts_seed_all",
+      "target": "scripts_seed_all_root",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-all.js",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "scripts_seed_all",
+      "target": "scripts_seed_all_seed",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-all.js",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "scripts_seed_all",
+      "target": "scripts_seed_all_spawn",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-all.js",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "scripts_seed_all",
+      "target": "scripts_seed_all_targets",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "scripts_seed_dev",
+      "target": "scripts_seed_dev_bcrypt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L38",
+      "weight": 1.0,
+      "source": "scripts_seed_dev",
+      "target": "scripts_seed_dev_features",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "scripts_seed_dev",
+      "target": "scripts_seed_dev_opendb",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L207",
+      "weight": 1.0,
+      "source": "scripts_seed_dev",
+      "target": "scripts_seed_dev_run",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "scripts_seed_dev",
+      "target": "scripts_seed_dev_todatestr_weekstart",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-dev.js",
+      "source_location": "L31",
+      "weight": 1.0,
+      "source": "scripts_seed_dev",
+      "target": "scripts_seed_dev_wipe",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -24012,9 +25205,9 @@
       "source_file": "scripts/seed.js",
       "source_location": "L1",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "scripts_seed",
-      "target": "scripts_seed_mongoclient"
+      "target": "scripts_seed_opendb",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -24027,15 +25220,189 @@
       "target": "scripts_seed_run"
     },
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "scripts_smoke",
+      "target": "scripts_smoke_base",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "scripts_smoke",
+      "target": "scripts_smoke_check",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "scripts_smoke",
+      "target": "scripts_smoke_d",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L51",
+      "weight": 1.0,
+      "source": "scripts_smoke",
+      "target": "scripts_smoke_eq",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "scripts_smoke",
+      "target": "scripts_smoke_from",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "scripts_smoke",
+      "target": "scripts_smoke_jar",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L39",
+      "weight": 1.0,
+      "source": "scripts_smoke",
+      "target": "scripts_smoke_login",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L56",
+      "weight": 1.0,
+      "source": "scripts_smoke",
+      "target": "scripts_smoke_main",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "scripts_smoke",
+      "target": "scripts_smoke_nextmon",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "scripts_smoke",
+      "target": "scripts_smoke_req",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "scripts_smoke",
+      "target": "scripts_smoke_results",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "scripts_smoke",
+      "target": "scripts_smoke_to",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "scripts_smoke",
+      "target": "scripts_smoke_weekstart_todatestr",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L39",
+      "weight": 1.0,
+      "source": "scripts_smoke_login",
+      "target": "scripts_smoke_req",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L59",
+      "weight": 1.0,
+      "source": "scripts_smoke_main",
+      "target": "scripts_smoke_req",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L65",
+      "weight": 1.0,
+      "source": "scripts_smoke_main",
+      "target": "scripts_smoke_login",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke.js",
+      "source_location": "L76",
+      "weight": 1.0,
+      "source": "scripts_smoke_main",
+      "target": "scripts_smoke_check",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "tests/helpers/harness.js",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_harness",
-      "target": "server",
-      "confidence_score": 1.0
+      "target": "server"
     },
     {
       "relation": "contains",
@@ -24453,9 +25820,9 @@
       "source_file": "server.js",
       "source_location": "L2881",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "server_pendingscopefilter",
-      "confidence_score": 1.0
+      "target": "server_pendingscopefilter"
     },
     {
       "relation": "contains",
@@ -24466,6 +25833,16 @@
       "confidence_score": 1.0,
       "source": "server",
       "target": "server_perfscopedenial"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server.js",
+      "source_location": "L4920",
+      "weight": 1.0,
+      "source": "server",
+      "target": "server_pickpointageestab",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -24526,6 +25903,16 @@
       "confidence_score": 1.0,
       "source": "server",
       "target": "server_requiredirecteur"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server.js",
+      "source_location": "L912",
+      "weight": 1.0,
+      "source": "server",
+      "target": "server_requireestablishmentaccess",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -24681,6 +26068,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server.js",
+      "source_location": "L883",
+      "weight": 1.0,
+      "source": "server",
+      "target": "server_userestablishmentids",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server.js",
       "source_location": "L9",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -24812,6 +26209,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server.js",
+      "source_location": "L899",
+      "weight": 1.0,
+      "source": "server_canaccessestablishment",
+      "target": "server_userestablishmentids",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server.js",
       "source_location": "L4685",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -24921,9 +26329,9 @@
       "source_file": "tests/dispos.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_test",
-      "target": "helpers_harness",
-      "confidence_score": 1.0
+      "target": "helpers_harness"
     },
     {
       "relation": "imports",
@@ -24932,9 +26340,9 @@
       "source_file": "tests/dispos.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_test",
-      "target": "helpers_harness_app",
-      "confidence_score": 1.0
+      "target": "helpers_harness_app"
     },
     {
       "relation": "imports",
@@ -24943,9 +26351,9 @@
       "source_file": "tests/dispos.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_test",
-      "target": "helpers_harness_baseurl",
-      "confidence_score": 1.0
+      "target": "helpers_harness_baseurl"
     },
     {
       "relation": "imports",
@@ -24954,9 +26362,9 @@
       "source_file": "tests/dispos.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_test",
-      "target": "helpers_harness_startapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_startapp"
     },
     {
       "relation": "imports",
@@ -24965,9 +26373,9 @@
       "source_file": "tests/dispos.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_test",
-      "target": "helpers_harness_stopapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_stopapp"
     },
     {
       "relation": "contains",
@@ -24975,9 +26383,9 @@
       "source_file": "tests/dispos.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_test",
-      "target": "tests_dispos_test_app_startapp_stopapp_baseurl",
-      "confidence_score": 1.0
+      "target": "tests_dispos_test_app_startapp_stopapp_baseurl"
     },
     {
       "relation": "contains",
@@ -25093,14 +26501,221 @@
       "target": "helpers_harness_baseurl"
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "helpers_fake_db",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "helpers_fake_db_makedb",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "helpers_harness",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "helpers_harness_app",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "helpers_harness_req",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "helpers_harness_startapp",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "helpers_harness_stopapp",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "tests_estab_access_test_app_startapp_stopapp_req",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "tests_estab_access_test_assert",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L44",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "tests_estab_access_test_code",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L116",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "tests_estab_access_test_confirm",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "tests_estab_access_test_dir",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "tests_estab_access_test_etab",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "tests_estab_access_test_makedb",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "tests_estab_access_test_obs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "tests_estab_access_test_patron",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L87",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "tests_estab_access_test_recaprow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L110",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "tests_estab_access_test_seeddispo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "tests_estab_access_test_staff",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/estab-access.test.js",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "tests_estab_access_test",
+      "target": "tests_estab_access_test_test_before_after_beforeeach",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/helpers/fake-db.js",
       "source_location": "L30",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_fake_db",
-      "target": "helpers_fake_db_contains",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db_contains"
     },
     {
       "relation": "contains",
@@ -25243,9 +26858,9 @@
       "source_file": "tests/helpers/fake-db.js",
       "source_location": "L30",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_fake_db_contains",
-      "target": "helpers_fake_db_eq",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db_eq"
     },
     {
       "relation": "calls",
@@ -25287,9 +26902,9 @@
       "source_file": "tests/helpers/fake-db.js",
       "source_location": "L50",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_fake_db_matchfield",
-      "target": "helpers_fake_db_contains",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db_contains"
     },
     {
       "relation": "calls",
@@ -25341,9 +26956,9 @@
       "source_file": "tests/helpers/harness.js",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_harness",
-      "target": "helpers_harness_app",
-      "confidence_score": 1.0
+      "target": "helpers_harness_app"
     },
     {
       "relation": "contains",
@@ -25351,9 +26966,9 @@
       "source_file": "tests/helpers/harness.js",
       "source_location": "L46",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_harness",
-      "target": "helpers_harness_baseurl",
-      "confidence_score": 1.0
+      "target": "helpers_harness_baseurl"
     },
     {
       "relation": "contains",
@@ -25361,9 +26976,9 @@
       "source_file": "tests/helpers/harness.js",
       "source_location": "L36",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_harness",
-      "target": "helpers_harness_req",
-      "confidence_score": 1.0
+      "target": "helpers_harness_req"
     },
     {
       "relation": "contains",
@@ -25371,9 +26986,9 @@
       "source_file": "tests/helpers/harness.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_harness",
-      "target": "helpers_harness_startapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_startapp"
     },
     {
       "relation": "contains",
@@ -25381,9 +26996,9 @@
       "source_file": "tests/helpers/harness.js",
       "source_location": "L33",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_harness",
-      "target": "helpers_harness_stopapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_stopapp"
     },
     {
       "relation": "imports_from",
@@ -25392,9 +27007,9 @@
       "source_file": "tests/manager-dispos.test.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_manager_dispos_test",
-      "target": "helpers_harness",
-      "confidence_score": 1.0
+      "target": "helpers_harness"
     },
     {
       "relation": "imports_from",
@@ -25403,9 +27018,9 @@
       "source_file": "tests/perf-settings.test.js",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_perf_settings_test",
-      "target": "helpers_harness",
-      "confidence_score": 1.0
+      "target": "helpers_harness"
     },
     {
       "relation": "imports_from",
@@ -25414,9 +27029,9 @@
       "source_file": "tests/routes.test.js",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_routes_test",
-      "target": "helpers_harness",
-      "confidence_score": 1.0
+      "target": "helpers_harness"
     },
     {
       "relation": "imports",
@@ -25425,9 +27040,9 @@
       "source_file": "tests/manager-dispos.test.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_manager_dispos_test",
-      "target": "helpers_harness_app",
-      "confidence_score": 1.0
+      "target": "helpers_harness_app"
     },
     {
       "relation": "imports",
@@ -25436,9 +27051,9 @@
       "source_file": "tests/perf-settings.test.js",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_perf_settings_test",
-      "target": "helpers_harness_app",
-      "confidence_score": 1.0
+      "target": "helpers_harness_app"
     },
     {
       "relation": "imports",
@@ -25447,9 +27062,9 @@
       "source_file": "tests/manager-dispos.test.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_manager_dispos_test",
-      "target": "helpers_harness_startapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_startapp"
     },
     {
       "relation": "imports",
@@ -25458,9 +27073,9 @@
       "source_file": "tests/perf-settings.test.js",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_perf_settings_test",
-      "target": "helpers_harness_startapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_startapp"
     },
     {
       "relation": "imports",
@@ -25469,9 +27084,9 @@
       "source_file": "tests/routes.test.js",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_routes_test",
-      "target": "helpers_harness_startapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_startapp"
     },
     {
       "relation": "imports",
@@ -25480,9 +27095,9 @@
       "source_file": "tests/manager-dispos.test.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_manager_dispos_test",
-      "target": "helpers_harness_stopapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_stopapp"
     },
     {
       "relation": "imports",
@@ -25491,9 +27106,9 @@
       "source_file": "tests/perf-settings.test.js",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_perf_settings_test",
-      "target": "helpers_harness_stopapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_stopapp"
     },
     {
       "relation": "imports",
@@ -25502,9 +27117,9 @@
       "source_file": "tests/routes.test.js",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_routes_test",
-      "target": "helpers_harness_stopapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_stopapp"
     },
     {
       "relation": "imports",
@@ -25513,9 +27128,9 @@
       "source_file": "tests/manager-dispos.test.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_manager_dispos_test",
-      "target": "helpers_harness_req",
-      "confidence_score": 1.0
+      "target": "helpers_harness_req"
     },
     {
       "relation": "calls",
@@ -25546,9 +27161,9 @@
       "source_file": "tests/perf-settings.test.js",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_perf_settings_test",
-      "target": "helpers_harness_req",
-      "confidence_score": 1.0
+      "target": "helpers_harness_req"
     },
     {
       "relation": "calls",
@@ -25568,9 +27183,9 @@
       "source_file": "tests/routes.test.js",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_routes_test",
-      "target": "helpers_harness_baseurl",
-      "confidence_score": 1.0
+      "target": "helpers_harness_baseurl"
     },
     {
       "relation": "contains",
@@ -25578,9 +27193,9 @@
       "source_file": "tests/manager-dispos.test.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_manager_dispos_test",
-      "target": "tests_manager_dispos_test_app_startapp_stopapp_req",
-      "confidence_score": 1.0
+      "target": "tests_manager_dispos_test_app_startapp_stopapp_req"
     },
     {
       "relation": "contains",
@@ -25859,9 +27474,9 @@
       "source_file": "tests/perf-settings.test.js",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_perf_settings_test",
-      "target": "tests_perf_settings_test_app_startapp_stopapp_req",
-      "confidence_score": 1.0
+      "target": "tests_perf_settings_test_app_startapp_stopapp_req"
     },
     {
       "relation": "contains",
@@ -25969,9 +27584,9 @@
       "source_file": "tests/routes.test.js",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_routes_test",
-      "target": "tests_routes_test_startapp_stopapp_baseurl",
-      "confidence_score": 1.0
+      "target": "tests_routes_test_startapp_stopapp_baseurl"
     },
     {
       "relation": "contains",
@@ -26127,6 +27742,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
+      "source_location": "L138",
+      "weight": 1.0,
+      "source": "readme_templyo",
+      "target": "readme_environnements_comment_s_y_connecter",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
       "source_location": "L145",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -26242,6 +27867,26 @@
       "confidence_score": 1.0,
       "source": "readme_templyo",
       "target": "readme_variables_d_environnement_env"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L164",
+      "weight": 1.0,
+      "source": "readme_environnements_comment_s_y_connecter",
+      "target": "readme_directement_\u00e0_la_base_mongosh_compass",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L140",
+      "weight": 1.0,
+      "source": "readme_environnements_comment_s_y_connecter",
+      "target": "readme_par_l_application_le_plus_courant",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -27017,6 +28662,26 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/backlog.md",
+      "source_location": "L430",
+      "weight": 1.0,
+      "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
+      "target": "docs_backlog_audit_railway_complet_2026_08_05_origine_variables_secrets",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/backlog.md",
+      "source_location": "L267",
+      "weight": 1.0,
+      "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
+      "target": "docs_backlog_base_de_recette_2026_08_05",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/backlog.md",
       "source_location": "L202",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -27032,6 +28697,26 @@
       "confidence_score": 1.0,
       "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
       "target": "docs_backlog_documentation_contradictions_relev\u00e9es_audit_du_2026_08_05"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/backlog.md",
+      "source_location": "L365",
+      "weight": 1.0,
+      "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
+      "target": "docs_backlog_environnement_main_cluster_d\u00e9di\u00e9_2026_08_05",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/backlog.md",
+      "source_location": "L301",
+      "weight": 1.0,
+      "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
+      "target": "docs_backlog_environnements_d\u00e9ploiements_2026_08_05",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -27067,6 +28752,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/backlog.md",
+      "source_location": "L344",
+      "weight": 1.0,
+      "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
+      "target": "docs_backlog_npm_run_smoke_tests_de_bout_en_bout_sur_une_instance_r\u00e9elle_2026_08_05",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/backlog.md",
       "source_location": "L109",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -27079,8 +28774,18 @@
       "source_file": "docs/backlog.md",
       "source_location": "L176",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
-      "target": "docs_backlog_palier_3_outillage_documentation_2026_08_05",
+      "target": "docs_backlog_palier_3_outillage_documentation_2026_08_05"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/backlog.md",
+      "source_location": "L398",
+      "weight": 1.0,
+      "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
+      "target": "docs_backlog_processus_de_livraison_d\u00e9cid\u00e9_le_2026_08_05",
       "confidence_score": 1.0
     },
     {
@@ -27099,9 +28804,9 @@
       "source_file": "docs/backlog.md",
       "source_location": "L134",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
-      "target": "docs_backlog_revue_simplify_du_palier_2_3_2026_08_05",
-      "confidence_score": 1.0
+      "target": "docs_backlog_revue_simplify_du_palier_2_3_2026_08_05"
     },
     {
       "relation": "contains",
@@ -27239,9 +28944,9 @@
       "source_file": "docs/design-e22-dispos-directeur.md",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_e22_dispos_directeur_e_22_dispos_des_directeurs_note_de_design",
-      "target": "docs_design_e22_dispos_directeur_9_d\u00e9cisions_compl\u00e9mentaires_2026_08_05",
-      "confidence_score": 1.0
+      "target": "docs_design_e22_dispos_directeur_9_d\u00e9cisions_compl\u00e9mentaires_2026_08_05"
     },
     {
       "relation": "contains",
@@ -28916,5 +30621,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "c7aba672f8fc5d44de2fb611bf527c42642ffed1"
+  "built_at_commit": "c72affea5e196d757f069c80798fb604e28343f7"
 }

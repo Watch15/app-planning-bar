@@ -12,7 +12,10 @@
 // base client, ces comptes n'existent pas → il s'arrête à la 1re étape sans rien écrire.
 // C'est volontaire : ce script ÉCRIT (dispos, validations), il ne doit jamais viser un client.
 
-const BASE = (process.env.SMOKE_URL || 'http://localhost:3000').replace(/\/$/, '');
+// Cible : 1er argument, sinon SMOKE_URL, sinon le local.
+// L'argument existe parce que `SMOKE_URL=… npm run smoke` est une syntaxe *sh* : elle
+// échoue en PowerShell et en cmd, où se fait le développement de ce projet.
+const BASE = (process.argv[2] || process.env.SMOKE_URL || 'http://localhost:3000').replace(/\/+$/, '');
 const PWD  = process.env.SEED_PASSWORD || 'Templyo2026!';
 
 const { weekStart, toDateStr } = require('../lib/utils');
