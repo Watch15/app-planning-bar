@@ -124,10 +124,58 @@ PORT=3000
 |---|---|
 | `npm run dev` | Serveur avec rechargement automatique (`node --watch`) |
 | `npm start` | Serveur en production (remplace `%%BUILD_TIME%%` dans sw.js au démarrage) |
-| `npm run init` | Recrée les collections et indexes MongoDB |
+| `npm run init` | ⚠️ **DESTRUCTIF** — recrée collections et index (refuse la base `gestion_bar` sans `--force`) |
 | `npm run create-patron` | Crée le compte patron en CLI |
 | `npm run seed` | Insère des shifts de démonstration |
-| `npm test` | Lance les 71 tests (`node --test`, 4 suites — dont intégration HTTP) |
+| `npm test` | Tests unitaires + intégration, sur un faux Mongo (aucune base réelle) |
+| `npm run seed:all` | (Re)construit les bases de recette `templyo_dev` **et** `templyo_main` |
+| `npm run dev:seed` | Idem, base de `.env.dev` seulement |
+| `npm run dev:server` | Serveur local sur la base de `.env.dev` |
+| `npm run smoke` | 20 vérifications HTTP sur une instance qui tourne (`SMOKE_URL=…` pour cibler) |
+
+---
+
+## Environnements — comment s'y connecter
+
+### Par l'application (le plus courant)
+
+| Environnement | URL | Base Mongo |
+|---|---|---|
+| local | `http://localhost:3000` (`npm run dev:server`) | `templyo_dev` |
+| dev | https://dev.templyo.fr | `templyo_dev` |
+| main | https://app-planning-bar-production.up.railway.app | `templyo_main` |
+
+Les trois partagent le **même jeu de comptes**, créé par `npm run seed:all`.
+Mot de passe commun : la valeur de `SEED_PASSWORD` (`Templyo2026!` par défaut).
+
+| Compte | Rôle | Particularité |
+|---|---|---|
+| `patron@templyo.test` | patron | voit tout |
+| `directeur@templyo.test` | directeur | limité à Josy — c'est lui qui montre le périmètre S-04 |
+| `observateur@templyo.test` | observateur | lecture seule |
+| `alice@templyo.test` | staff | responsable de soirée |
+| `bruno@templyo.test` | staff | rattaché à 2 bars |
+| `chloe@templyo.test` | staff | a un congé en attente |
+
+> Ces comptes n'existent **que** sur les bases de recette. Sur une base client, ils
+> n'existent pas — c'est ce qui fait que `npm run smoke` s'arrête sans rien écrire s'il
+> vise un client par erreur.
+
+### Directement à la base (mongosh / Compass)
+
+Les deux bases sont sur le **même cluster** ; seul le nom de base change. L'URI complète
+est dans `.env.dev` / `.env.main` (fichiers gitignorés) :
+
+```bash
+mongosh "$(node -e "console.log(require('dotenv').parse(require('fs').readFileSync('.env.dev')).MONGO_URI)")/templyo_dev"
+mongosh "$(node -e "console.log(require('dotenv').parse(require('fs').readFileSync('.env.main')).MONGO_URI)")/templyo_main"
+```
+
+Pour Compass, colle l'URI du fichier et choisis la base dans l'arborescence.
+Alternative sans manipuler l'URI : `railway connect --environment Dev --service Dev`.
+
+⚠️ **`gestion_bar` (même cluster) n'est PAS une base de recette** : elle porte l'ancien
+travail de dev (253 shifts). Les scripts destructifs la refusent — ne pas contourner.
 
 ---
 
