@@ -17,7 +17,9 @@
     "lint": "eslint .",
     "test": "node --test tests/utils.test.js tests/shift-hours.test.js tests/week.test.js tests/routes.test.js tests/conges.test.js tests/dispos.test.js tests/manager-off.test.js tests/manager-dispos.test.js tests/perf-settings.test.js tests/estab-access.test.js",
     "smoke:dev": "node scripts/smoke.js https://dev.templyo.fr",
-    "smoke:main": "node scripts/smoke.js https://app-planning-bar-production.up.railway.app"
+    "smoke:main": "node scripts/smoke.js https://app-planning-bar-production.up.railway.app",
+    "db:uri:dev": "node scripts/db-uri.js .env.dev",
+    "db:uri:main": "node scripts/db-uri.js .env.main"
   },
   "license": "ISC",
   "type": "commonjs",

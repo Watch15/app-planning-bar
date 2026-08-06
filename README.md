@@ -168,12 +168,13 @@ Mot de passe commun : la valeur de `SEED_PASSWORD` (`Templyo2026!` par défaut).
 Les deux bases sont sur le **même cluster** ; seul le nom de base change. L'URI complète
 est dans `.env.dev` / `.env.main` (fichiers gitignorés) :
 
-```bash
-mongosh "$(node -e "console.log(require('dotenv').parse(require('fs').readFileSync('.env.dev')).MONGO_URI)")/templyo_dev"
-mongosh "$(node -e "console.log(require('dotenv').parse(require('fs').readFileSync('.env.main')).MONGO_URI)")/templyo_main"
+```
+npm run db:uri:dev      # affiche l'URI complète, base incluse
+npm run db:uri:main
 ```
 
-Pour Compass, colle l'URI du fichier et choisis la base dans l'arborescence.
+Colle le résultat dans `mongosh` ou dans Compass — il contient déjà le nom de la base.
+⚠️ Cette commande imprime des identifiants en clair : ne la colle pas dans un ticket.
 Alternative sans manipuler l'URI : `railway connect --environment Dev --service Dev`.
 
 ⚠️ **`gestion_bar` (même cluster) n'est PAS une base de recette** : elle porte l'ancien
