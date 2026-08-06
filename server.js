@@ -1224,8 +1224,12 @@ app.get('/api/users', checkDB, requirePatron, async (req, res) => {
 async function createManagerStaffProfile({ name, email, phone, venues }) {
     const used  = new Set((await db.collection('staff').find({}, { projection: { color: 1 } }).toArray()).map(s => s.color));
     const color = pickStaffColor(used);
+    // R-05 — sans nom, tous les directeurs s'appelaient « Directeur » : N comptes, N lignes
+    // homonymes dans la barre staff et le récap, impossibles à distinguer. On retombe sur
+    // l'identifiant de connexion, qui est au moins unique.
+    const fallback = (email && email.split('@')[0]) || phone || 'Directeur';
     const { insertedId } = await db.collection('staff').insertOne({
-        name: name || 'Directeur', color,
+        name: (name && name.trim()) || fallback, color,
         email: email || '', phone: phone || '',
         venues: venues || [], roles: [], can_submit_dispos: true,
         // R-14 : `is_manager` est PUREMENT INFORMATIF — aucun code ne le lit. Il ne
@@ -1307,14 +1311,16 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
 
             const token   = crypto.randomBytes(32).toString('hex');
             const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 jours
-            const managerStaffId = userRole === 'directeur'
-                ? await createManagerStaffProfile({ name, email, phone: normalizedPhone, venues: assigned_establishments })
-                : null;
-            await db.collection('users').insertOne({
+            // R-05 / R-12 — le profil staff du directeur est créé APRÈS le compte, par
+            // `syncManagerStaffVenues` : (a) plus de profil orphelin si l'insert échoue
+            // (doublon d'email, etc.), et (b) un staff EXISTANT promu directeur GARDE son
+            // profil — avec son taux, ses rôles et son historique — au lieu d'en recevoir
+            // un second, l'ancien restant derrière avec toutes les données.
+            const { insertedId: newUserId } = await db.collection('users').insertOne({
                 phone:                   normalizedPhone,
                 password_hash:           null,
                 role:                    userRole,
-                staff_id:                userRole === 'staff' ? (staff_id || null) : managerStaffId,
+                staff_id:                (userRole === 'staff' || userRole === 'directeur') ? (staff_id || null) : null,
                 assigned_establishments: userRole === 'directeur' ? (assigned_establishments || []) : [],
                 establishment_id:        userRole === 'etablissement' ? establishment_id : null,
                 name:                    name || '',
@@ -1323,6 +1329,7 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
                 active:                  false,
                 created_at:              new Date(),
             });
+            if (userRole === 'directeur') await syncManagerStaffVenues(newUserId);
             if (staff_id && userRole === 'staff' && isValidObjectId(staff_id)) {
                 await db.collection('staff').updateOne(
                     { _id: new ObjectId(staff_id) },
@@ -1346,16 +1353,17 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
         // Compte email (avec ou sans téléphone secondaire)
         const token   = crypto.randomBytes(32).toString('hex');
         const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-        const managerStaffId = userRole === 'directeur'
-            ? await createManagerStaffProfile({ name, email, phone: normalizedPhone, venues: assigned_establishments })
-            : null;
-
-        await db.collection('users').insertOne({
+        // R-05 / R-12 — le profil staff du directeur est créé APRÈS le compte, par
+        // `syncManagerStaffVenues` : (a) plus de profil orphelin si l'insert échoue
+        // (doublon d'email, etc.), et (b) un staff EXISTANT promu directeur GARDE son
+        // profil — avec son taux, ses rôles et son historique — au lieu d'en recevoir
+        // un second, l'ancien restant derrière avec toutes les données.
+        const { insertedId: newUserId } = await db.collection('users').insertOne({
             email:                   email.toLowerCase().trim(),
             ...(normalizedPhone && { phone: normalizedPhone }),
             password_hash:           null,
             role:                    userRole,
-            staff_id:                userRole === 'staff' ? (staff_id || null) : managerStaffId,
+            staff_id:                (userRole === 'staff' || userRole === 'directeur') ? (staff_id || null) : null,
             assigned_establishments: userRole === 'directeur' ? (assigned_establishments || []) : [],
             establishment_id:        userRole === 'etablissement' ? establishment_id : null,
             name:                    name || '',
@@ -1364,6 +1372,7 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
             active:                  false,
             created_at:              new Date(),
         });
+        if (userRole === 'directeur') await syncManagerStaffVenues(newUserId);
 
         if (staff_id && userRole === 'staff' && isValidObjectId(staff_id)) {
             await db.collection('staff').updateOne(
@@ -1487,8 +1496,22 @@ app.post('/api/users/:id/invite-link', checkDB, requirePatron, async (req, res) 
 app.delete('/api/users/:id', checkDB, requirePatron, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     try {
+        // R-12 — lire le compte AVANT de le supprimer : c'est le seul lien vers son profil.
+        const doomed = await db.collection('users').findOne({ _id: new ObjectId(req.params.id) });
         const result = await db.collection('users').deleteOne({ _id: new ObjectId(req.params.id) });
         if (result.deletedCount === 0) return res.status(404).json({ error: 'Utilisateur introuvable' });
+        // Sa semaine-type ne sert plus à rien sans compte, et le cron la matérialiserait
+        // encore : c'est de la CONFIGURATION, on la supprime.
+        if (doomed && doomed.staff_id) {
+            await db.collection('manager_dispo_templates')
+                .deleteMany({ staff_id: String(doomed.staff_id) })
+                .catch(e => console.error('[delete user > templates]', e.message));
+        }
+        // ⚠️ Le profil `staff`, lui, est CONSERVÉ volontairement : les shifts passés, le
+        // pointage et la masse salariale le référencent, et le supprimer ferait perdre son
+        // nom dans tous les récaps déjà édités. Il reste donc visible dans la barre staff
+        // sans compte associé — c'est exactement ce que F-13 (comptes archivés) doit régler ;
+        // le trancher ici serait une décision produit déguisée en nettoyage.
         res.json({ message: 'Compte supprimé' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });

@@ -99,6 +99,12 @@ function makeCollection(initialDocs) {
             return { insertedCount: (arr || []).length, acknowledged: true };
         },
         async countDocuments(q)   { return docs.filter(d => matchDoc(d, q || {})).length; },
+        async deleteOne(query)    {
+            const i = docs.findIndex(d => matchDoc(d, query));
+            if (i < 0) return { deletedCount: 0 };
+            docs.splice(i, 1);
+            return { deletedCount: 1 };
+        },
         async deleteMany(query)   {
             let n = 0;
             for (let i = docs.length - 1; i >= 0; i--) if (matchDoc(docs[i], query)) { docs.splice(i, 1); n++; }

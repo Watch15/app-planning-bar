@@ -11,6 +11,10 @@
 // pour laquelle ce module les pose lui-même, en tête, avant d'importer l'app.
 process.env.NODE_ENV        = 'test';
 process.env.ALLOW_TEST_AUTH = '1'; // 2e garde du harnais (S-01)
+// Un test ne doit JAMAIS pouvoir joindre quelqu'un. Sans ça, une route d'invitation
+// testée tente un vrai appel Resend/Twilio : lent, dépendant du réseau, et un jour ça
+// partira pour de bon.
+process.env.OUTBOUND_ENABLED = 'false';
 process.env.MONGO_URI       = process.env.MONGO_URI      || 'mongodb://127.0.0.1:27017/templyo_test';
 process.env.SESSION_SECRET  = process.env.SESSION_SECRET || 'integration-test-secret-0123456789abcdef';
 

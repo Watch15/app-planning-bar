@@ -335,3 +335,53 @@ test('R-06 : rétrograder un directeur ne détruit pas son profil staff', async 
     assert.equal(staffOf(db).length, 1);
     assert.deepEqual(staffOf(db)[0].venues, ['bar1']);
 });
+
+// ── R-05 / R-12 : profil staff du directeur — réutilisé, jamais dupliqué ──────
+
+const inviteDir = (body) => req('/api/users', PATRON, { method: 'POST', body: JSON.stringify(body) });
+
+test('R-05 : promouvoir un staff EXISTANT en directeur réutilise SON profil', async () => {
+    // Le cœur du bug : le staff_id fourni était ignoré et un 2e profil créé, laissant
+    // le taux horaire, les rôles et tout l'historique sur l'ancien.
+    const db = seed({
+        staff: [{ _id: STAFF_ID, name: 'Bob', venues: ['bar1'], hourly_rate: 14,
+                  roles: ['Barman'], can_submit_dispos: true }],
+        users: [],
+    });
+    app.locals.setTestDb(db);
+    const res = await inviteDir({ email: 'bob@templyo.test', name: 'Bob', role: 'directeur',
+                                  staff_id: STAFF_ID, assigned_establishments: ['bar2'] });
+    assert.ok(res.status < 400, 'invitation acceptée (' + res.status + ')');
+
+    assert.equal(staffOf(db).length, 1, 'AUCUN second profil staff ne doit être créé');
+    const bob = staffOf(db)[0];
+    assert.equal(bob.hourly_rate, 14, 'son taux horaire survit');
+    assert.deepEqual(bob.roles, ['Barman'], 'ses rôles survivent');
+    assert.deepEqual(bob.venues, ['bar2'], 'ses venues suivent sa nouvelle affectation (R-06)');
+
+    const user = usersOf(db).find(u => u.email === 'bob@templyo.test');
+    assert.equal(String(user.staff_id), STAFF_ID, 'le compte pointe sur le profil EXISTANT');
+});
+
+test('R-05 : sans nom, le directeur n\'est pas un « Directeur » de plus', async () => {
+    const db = seed({ staff: [], users: [] });
+    app.locals.setTestDb(db);
+    await inviteDir({ email: 'chef.nord@templyo.test', role: 'directeur', assigned_establishments: ['bar1'] });
+    const created = staffOf(db).find(s => s.email === 'chef.nord@templyo.test');
+    assert.ok(created, 'un profil est bien créé');
+    assert.notEqual(created.name, 'Directeur', 'un nom générique rend les lignes indistinguables');
+    assert.equal(created.name, 'chef.nord');
+});
+
+test('R-12 : supprimer un compte directeur purge sa semaine-type, garde son profil', async () => {
+    const db = seed({
+        manager_dispo_templates: [{ staff_id: MGR_STAFF, days: { 0: { type: 'soir', start_time: 17, end_time: 24 } } }],
+    });
+    app.locals.setTestDb(db);
+    const res = await req('/api/users/' + MGR_USER, PATRON, { method: 'DELETE' });
+    assert.equal(res.status, 200);
+    assert.equal(db.collection('manager_dispo_templates')._docs.length, 0,
+        'la semaine-type est de la config : sans compte, le cron la matérialiserait encore');
+    assert.equal(staffOf(db).length, 1,
+        'le profil staff SURVIT — shifts passés, pointage et masse salariale le référencent (cf. F-13)');
+});
