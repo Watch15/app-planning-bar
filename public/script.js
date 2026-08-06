@@ -322,6 +322,14 @@ async function init() {
     loadDispoControl();
     initStaffSearch();
 
+    // R-04 — un directeur arrivant depuis un push « Rappel dispos » est redirigé ici par
+    // planning.js avec `#mes-dispos` : on ouvre directement sa modale de saisie, sinon il
+    // atterrit sur le tableau de bord sans savoir ce qu'on attend de lui.
+    if (window.location.hash === '#mes-dispos' && currentUser && currentUser.role === 'directeur') {
+        history.replaceState(null, '', window.location.pathname); // ne pas rouvrir au refresh
+        openManagerDisposModal();
+    }
+
     const btnDispos = document.getElementById('btn-dispos');
     if (btnDispos) btnDispos.addEventListener('click', openDisposPanel);
 

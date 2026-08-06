@@ -56,7 +56,16 @@ async function checkAuth() {
             const data = await res.json();
             // Patron + directeur → index.html, établissement → pointage.html
             if (data.user?.role === 'patron')       { window.location.href = '/';   return null; }
-            if (data.user?.role === 'directeur')    { window.location.href = '/';   return null; }
+            // R-04 — depuis E-22 le directeur a un profil staff, donc il REÇOIT les rappels
+            // de dispos, dont le push pointe vers `/planning.html#dispos` — une page qui le
+            // renvoie ici. On conserve l'intention au lieu de la perdre : `#mes-dispos`
+            // ouvre sa modale de saisie sur index.html. Corrigé côté redirection (et non à
+            // l'émission) pour réparer aussi les notifications déjà envoyées.
+            if (data.user?.role === 'directeur') {
+                const wantsDispos = window.location.hash === '#dispos';
+                window.location.href = wantsDispos ? '/#mes-dispos' : '/';
+                return null;
+            }
             if (data.user?.role === 'etablissement') { window.location.href = '/pointage.html'; return null; }
             return data.user;
         } catch {

@@ -106,7 +106,16 @@ async function init() {
     currentEstab = allEstabs[0].id;
     sel.value = currentEstab;
     await loadTargets(); // paramètres de l'établissement courant
-    sel.addEventListener('change', () => { currentEstab = sel.value; loadTargets(); loadData(); loadCalendarWeek(); });
+    // R-10 — `await` indispensable : `targets` est module-level et sert à colorer les
+    // pastilles (ok/bad). Sans lui, `loadData()` partait en parallèle et rendait le premier
+    // affichage du nouveau bar contre l'objectif du PRÉCÉDENT — des couleurs fausses
+    // présentées comme justes, ce qui vide E-24 de son sens.
+    sel.addEventListener('change', async () => {
+        currentEstab = sel.value;
+        await loadTargets();
+        loadData();
+        loadCalendarWeek();
+    });
 
     // Sélecteur période
     document.getElementById('period-select').addEventListener('change', loadData);

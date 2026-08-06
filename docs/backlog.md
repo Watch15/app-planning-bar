@@ -229,10 +229,10 @@ Mongo), donc couplés au nom des collections et des champs.
 |---|---|---|
 | R-06 | **`staff.venues` ↔ `assigned_establishments`** — 🟡 **Partiellement résolu (2026-08-05).** Helper `syncManagerStaffVenues(userId)` (relit le user, la base fait foi) appelé par `PATCH /api/users/:id/establishments` **et** `PATCH /api/users/:id/role` ; recale `staff.venues` et **crée le profil staff manquant** en posant `users.staff_id` → plus de 400 permanent, plus besoin de `npm run backfill-directors`. Rétrograder ne détruit jamais le profil. `DELETE /api/establishments/:id` fait désormais le `$pull` **symétrique** sur `staff.venues`. 4 tests. ⚠️ **Reste ouvert, cf. R-15** : `PATCH /api/staff/:id` écrit `staff.venues` sans recaler `users` (sens inverse), et la règle « venues = assigned_establishments » existe en 4 copies littérales. | **Moyenne** (le blocage dispos est levé ; l'invariant n'est pas verrouillé) |
 | R-15 | **L'invariant R-06 n'est pas verrouillé — il repose sur un commentaire.** Relevé par la revue `/simplify` du 2026-08-05, angle altitude. 3 des 4 sites de mutation passent par le helper, mais **`PATCH /api/staff/:id` (`server.js:~1740`) écrit `staff.venues` sans recaler `users.assigned_establishments`** : le patron coche des bars dans « Gestion staff » sur une ligne de directeur (`GET /api/staff` ne les filtre pas, `public/script.js` PATCHe `venues` pour n'importe quelle ligne) → la saisie de dispos suit, l'accès aux écrans reste sur les anciens bars. Divergence atteignable en 2 clics. **Deux paliers possibles** : (1) mutateur unique `setUserEstablishments(userId, venues)` qui écrit les deux collections, plus aucun `$set: { assigned_establishments }` en direct — couvre 4/4 pour le même coût ; (2) **vraie** source unique : supprimer `users.assigned_establishments` pour le rôle directeur et le dériver de `staff.venues` (touche la session `server.js:~895`, 6 lectures serveur et 5 côté front — bien plus lourd). Alternative honnête au palier 1 : rendre `venues` non éditable sur un profil de directeur. | Moyenne |
-| R-04 | Les push de rappel dispo pointent vers `/planning.html`, page que le directeur ne peut pas ouvrir. | Moyenne |
+| ~~R-04~~ | ✅ **Résolu (2026-08-06)** — corrigé **à la redirection** et non à l'émission, ce qui répare aussi les notifications DÉJÀ envoyées : `planning.js` renvoie le directeur vers `/#mes-dispos` (au lieu de `/` sec) quand il arrivait sur `#dispos`, et `script.js` ouvre alors sa modale de saisie. Devenu réel avec E-22 : le directeur a un profil staff, donc il reçoit ces rappels. ~~Constat :~~ les push de rappel dispo pointent vers `/planning.html`, page que le directeur ne peut pas ouvrir. | Moyenne |
 | R-05 | Invitation directeur : nom générique `'Directeur'` si aucun staff choisi (N directeurs = N lignes homonymes) ; inviter un staff **existant** comme directeur crée un **second** profil staff (taux, rôles, historique restent sur l'ancien). | Moyenne |
-| R-09 | `sw.js` : `caches.match(...) || caches.match('/login.html')` — `caches.match()` retourne une Promise, toujours truthy → branche login morte, et si `/index.html` manque du cache la chaîne résout `undefined` → erreur réseau au lieu du shell. | Moyenne |
-| R-10 | `performance.js` : `loadTargets()` non-awaité dans le handler `change` d'établissement → le premier rendu colore les pastilles contre l'objectif du bar **précédent**, ce qui vide E-24 de son sens. | Moyenne |
+| ~~R-09~~ | ✅ **Résolu (2026-08-06)** — chaque repli est désormais `await`é, et la chaîne se termine par une **réponse explicite** (page « Hors ligne », 503) pour ne jamais rendre `undefined` à `respondWith`. Même précaution sur le repli des assets statiques. ~~Constat :~~ `sw.js` : `caches.match(...) || caches.match('/login.html')` — `caches.match()` retourne une Promise, toujours truthy → branche login morte, et si `/index.html` manque du cache la chaîne résout `undefined` → erreur réseau au lieu du shell. | Moyenne |
+| ~~R-10~~ | ✅ **Résolu (2026-08-06)** — handler `change` passé en `async` + `await loadTargets()` avant `loadData()`. `targets` est module-level et colore les pastilles (ok/bad) : sans l'attente, le premier rendu d'un bar utilisait l'objectif du PRÉCÉDENT — des couleurs fausses présentées comme justes. ~~Constat :~~ `performance.js` : `loadTargets()` non-awaité dans le handler `change` d'établissement → le premier rendu colore les pastilles contre l'objectif du bar **précédent**, ce qui vide E-24 de son sens. | Moyenne |
 | R-12 | Orphelins : profil staff créé **avant** `users.insertOne` (échec = staff fantôme) ; `DELETE /api/users/:id` ne supprime pas le profil lié ni son `manager_dispo_templates`. | Basse |
 | ~~R-13~~ | ~~Requête `users.findOne` de trop sur `POST /api/dispos`~~ | ✅ **Résolu (2026-08-05)** — `managerOffPeriods(…, knownUserId)` : la session porte déjà l'`_id`, la recherche du user disparaît. **Première tentative rejetée par la revue** : court-circuiter l'appel sur `req.session.user.role === 'directeur'` économisait la requête mais introduisait un trou — le rôle en session est figé au login, un compte promu directeur aurait perdu la jointure `manager_time_off` jusqu'à sa reconnexion et aurait pu poser une dispo un jour d'absence déclarée. La version retenue ne teste aucun rôle. Les 2 lectures restantes (`time_off` + `manager_time_off`) sont passées en `Promise.all`. ⚠️ **La 2e moitié du constat était fausse** : le `users.find` de `/api/dispos/pending` est porteur (repère `is_directeur`) — conservé délibérément. |
 | ~~R-14~~ | ~~Résidus inertes~~ | ✅ **Traité (2026-08-05)**, partiellement. `is_manager` : commentaire explicite ajouté aux **2** sites d'écriture (`server.js` `createManagerStaffProfile`, `scripts/backfill-director-staff.js`) — « informatif, aucun code ne le lit, ne filtre NI la paie NI rien ». Le constat disait 3 sites : le 3e (`public/script.js:5287`) est un **autre objet** (marqueur de période de congé) et il **est lu** (`:5343`) — rien à faire. **Reste ouvert** : le champ `establishment_id` résiduel sur les docs `manager_dispo_templates` déjà en base — donnée, pas code : exige un script de migration, non fait. | Basse |
@@ -483,6 +483,24 @@ réplication, ce qui reste vrai tant que personne ne monte ce nombre.
 **Divergences mineures** : `TWILIO_FROM` vaut `PlanningBar` sur main contre `Templyo`
 ailleurs ; `SESSION_SECRET` fait 30 caractères sur dev et chez le client (le README en
 demande 32).
+
+### Lot bugs front (2026-08-06) — R-10, R-09, R-04
+
+Trois bugs sans lien entre eux, traités ensemble parce qu'ils partagent un défaut : **ils ne
+provoquent aucune erreur visible**. Détail dans le tableau des findings.
+
+⚠️ **Limite de vérification à assumer** : ces trois correctifs sont dans `performance.js`,
+`sw.js`, `planning.js` et `script.js` — donc **couverts par aucun test** (c'est T-03, zéro
+test front). Ils sont validés par lecture du code, contrôle syntaxique et `eslint` ; les 200
+tests et le smoke ne prouvent que l'absence de régression **serveur**. Un test de non-régression
+sur `sw.js` demanderait d'extraire la logique de repli hors du handler `fetch`.
+
+**Le smoke test tombait en 429 et l'annonçait mal.** 4 connexions par passage contre une
+limite de 10 / 15 min / IP : au 3e lancement rapproché, il échouait avec le message
+« Base non alimentée par seed-dev.js, ou instance CLIENT » — un diagnostic **faux** qui
+envoie chercher le problème au mauvais endroit (constaté en direct). Le script distingue
+désormais 429 et dit quoi faire (attendre, ou redémarrer le serveur — le compteur est en
+mémoire). Le rate limiter, lui, fonctionne : c'est la seule bonne nouvelle de l'épisode.
 
 ### Divers — outillage & process
 

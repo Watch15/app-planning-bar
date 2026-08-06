@@ -76,8 +76,23 @@ self.addEventListener('fetch', e => {
     // hors ligne = repli sur la coquille préchargée (STATIC), puis index.html.
     if (e.request.mode === 'navigate') {
         e.respondWith(
-            fetch(e.request).catch(() =>
-                caches.match(e.request).then(c => c || caches.match('/index.html') || caches.match('/login.html'))
+            // R-09 — chaque repli doit être ATTENDU. L'ancienne écriture
+            // `c || caches.match('/index.html') || caches.match('/login.html')` était
+            // fausse deux fois : `caches.match()` rend une Promise, toujours truthy, donc
+            // (a) le repli `/login.html` était MORT, et (b) si `/index.html` manquait du
+            // cache la chaîne résolvait `undefined` → `respondWith(undefined)` → erreur
+            // réseau au lieu de la coquille. On termine par une réponse explicite pour ne
+            // jamais rendre `undefined`.
+            fetch(e.request).catch(async () =>
+                await caches.match(e.request)
+                || await caches.match('/index.html')
+                || await caches.match('/login.html')
+                || new Response(
+                    '<!doctype html><meta charset="utf-8"><title>Hors ligne</title>'
+                    + '<body style="font-family:system-ui;padding:2rem;text-align:center">'
+                    + '<h1>Hors ligne</h1><p>Reconnecte-toi au réseau puis recharge la page.</p>',
+                    { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+                )
             )
         );
         return;
@@ -94,7 +109,11 @@ self.addEventListener('fetch', e => {
                 }
                 return res;
             });
-        }).catch(() => caches.match('/login.html'))
+        // Même précaution : un asset absent du cache ne doit pas résoudre `undefined`.
+        // (Servir `/login.html` pour un .js est douteux, mais c'est le comportement
+        // existant — on se contente de garantir une réponse.)
+        }).catch(async () => await caches.match('/login.html')
+            || new Response('', { status: 504, statusText: 'Hors ligne' }))
     );
 });
 

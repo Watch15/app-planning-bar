@@ -62,15 +62,23 @@ async function main() {
         process.exit(1);
     }
 
-    const pat = await login('pat', 'patron@templyo.test');
-    if (pat.status !== 200) {
-        console.error('❌ Connexion patron impossible (' + pat.status + ').');
-        console.error('   Base non alimentée par seed-dev.js, ou instance CLIENT — arrêt sans rien écrire.');
+    // 4 connexions par passage, contre une limite de 10 tentatives / 15 min / IP :
+    // au 3e lancement rapproché, on tombe en 429. Diagnostiquer précisément, sinon on
+    // croit à une base vide et on va chercher le problème au mauvais endroit (vécu).
+    const roles = [['pat', 'patron'], ['dir', 'directeur'], ['obs', 'observateur'], ['bru', 'bruno']];
+    for (const [who, name] of roles) {
+        const r = await login(who, name + '@templyo.test');
+        if (r.status === 200) continue;
+        if (r.status === 429) {
+            console.error('❌ Rate limit atteint (429) — ce n\'est PAS un échec du code.');
+            console.error('   10 tentatives / 15 min / IP, et ce script en consomme 4.');
+            console.error('   Attends la fin de la fenêtre, ou relance le serveur pour vider le compteur (en mémoire).');
+        } else {
+            console.error('❌ Connexion ' + name + ' impossible (' + r.status + ').');
+            console.error('   Base non alimentée par seed-dev.js, ou instance CLIENT — arrêt sans rien écrire.');
+        }
         process.exit(1);
     }
-    await login('dir', 'directeur@templyo.test');
-    await login('obs', 'observateur@templyo.test');
-    await login('bru', 'bruno@templyo.test');
 
     // ── Socle : ce qui marchait déjà ─────────────────────────────────────────
     await check('socle', 'session patron', async () =>
