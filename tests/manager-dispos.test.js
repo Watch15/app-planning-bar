@@ -385,3 +385,39 @@ test('R-12 : supprimer un compte directeur purge sa semaine-type, garde son prof
     assert.equal(staffOf(db).length, 1,
         'le profil staff SURVIT — shifts passés, pointage et masse salariale le référencent (cf. F-13)');
 });
+
+// ── R-15 : l'invariant R-06 tient dans LES DEUX SENS ─────────────────────────
+// `syncManagerStaffVenues` recale staff.venues quand on écrit users.assigned_establishments.
+// Il manquait le retour : « Gestion staff » écrit staff.venues directement.
+
+test('R-15 : éditer les venues d\'un directeur recale son assigned_establishments', async () => {
+    const db = seed({
+        staff: [{ _id: MGR_STAFF, name: 'Dir Test', venues: ['bar1'], can_submit_dispos: true }],
+        users: [{ _id: MGR_USER, role: 'directeur', staff_id: MGR_STAFF, name: 'Dir Test',
+                  assigned_establishments: ['bar1'] }],
+    });
+    app.locals.setTestDb(db);
+    const res = await req('/api/staff/' + MGR_STAFF, PATRON, {
+        method: 'PATCH', body: JSON.stringify({ venues: ['bar2', 'bar3'] }),
+    });
+    assert.equal(res.status, 200);
+    assert.deepEqual(staffOf(db)[0].venues, ['bar2', 'bar3']);
+    const user = usersOf(db).find(u => String(u._id) === MGR_USER);
+    assert.deepEqual(user.assigned_establishments, ['bar2', 'bar3'],
+        'sans ça il saisit ses dispos sur les nouveaux bars mais garde les écrans des anciens');
+});
+
+test('R-15 : un staff ordinaire ne reçoit PAS d\'assigned_establishments', async () => {
+    // Ce champ n'a de sens que pour un directeur ; le poser ailleurs brouillerait
+    // canAccessEstablishment.
+    const db = seed({
+        staff: [{ _id: STAFF_ID, name: 'Bob', venues: ['bar1'], can_submit_dispos: true }],
+        users: [{ _id: 'u-bob', role: 'staff', staff_id: STAFF_ID, name: 'Bob' }],
+    });
+    app.locals.setTestDb(db);
+    await req('/api/staff/' + STAFF_ID, PATRON, {
+        method: 'PATCH', body: JSON.stringify({ venues: ['bar2'] }),
+    });
+    const bob = usersOf(db).find(u => u._id === 'u-bob');
+    assert.equal(bob.assigned_establishments, undefined);
+});

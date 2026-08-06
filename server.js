@@ -904,6 +904,19 @@ function canAccessEstablishment(user, establishmentId) {
 // Existe parce que le contrôle était recopié à la main dans 14 routes… et oublié dans 5
 // autres (S-03, S-06). Un middleware déclaratif rend l'oubli visible à la lecture.
 // `pick(req)` extrait l'id (query, params ou body selon la route).
+//
+// ⚠️ QUAND L'UTILISER — inventaire fait le 2026-08-06, 20 sites de contrôle :
+//   • ~10 routes lisent l'établissement DIRECTEMENT dans la requête (query, params, body,
+//     ou l'id de session pour un compte `etablissement`). Celles-là doivent passer par ce
+//     middleware : le contrôle devient déclaratif, donc un oubli se voit à la lecture.
+//   • ~10 autres le lisent dans un DOCUMENT chargé par le handler — `existing.establishment_id`
+//     d'un shift, `swap.from_establishment_id`, l'établissement cible d'une dispo…
+//     Un middleware ne voit que la requête : il ne PEUT PAS les couvrir. Pour celles-là,
+//     l'appel inline à `canAccessEstablishment` juste après le chargement est la forme
+//     correcte, pas une dette.
+// Autrement dit : R-16 n'a pas vocation à faire disparaître tous les appels inline, mais à
+// supprimer ceux qui n'ont aucune raison d'en être.
+//
 // `whenAbsent` : que faire si l'id manque —
 //   'deny'       → 400 (l'id est obligatoire, cas par défaut)
 //   'patronOnly' → seuls patron/observateur passent (l'absence signifie « portée globale »)
@@ -1264,6 +1277,17 @@ async function syncManagerStaffVenues(userId) {
         name: user.name, email: user.email, phone: user.phone, venues,
     });
     await db.collection('users').updateOne({ _id: new ObjectId(userId) }, { $set: { staff_id: staffId } });
+}
+
+// R-15 — le pendant de `syncManagerStaffVenues`, dans l'autre sens.
+// Ne touche QUE les comptes `directeur` : pour un staff ordinaire,
+// `assigned_establishments` n'a pas de sens et doit rester vide.
+async function syncDirectorAssignedEstablishments(staffId, venues) {
+    if (!Array.isArray(venues)) return;
+    await db.collection('users').updateOne(
+        { staff_id: String(staffId), role: 'directeur' },
+        { $set: { assigned_establishments: venues } }
+    );
 }
 
 app.post('/api/users', checkDB, requirePatron, async (req, res) => {
@@ -1938,6 +1962,13 @@ app.patch('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
             { _id: new ObjectId(req.params.id) }, { $set: update }
         );
         if (result.matchedCount === 0) return res.status(404).json({ error: 'Staff introuvable' });
+        // R-15 — SENS INVERSE de `syncManagerStaffVenues`. Pour un directeur,
+        // `staff.venues` et `users.assigned_establishments` décrivent les mêmes bars, mais
+        // gouvernent deux choses différentes : la saisie des dispos (`staffDispoOpen`) et
+        // l'accès aux écrans (`canAccessEstablishment`). Sans ce rappel, cocher des bars sur
+        // sa ligne dans « Gestion staff » déplaçait l'une sans l'autre — exactement la
+        // divergence que R-06 corrigeait dans l'autre sens, atteignable en deux clics.
+        if (venues !== undefined) await syncDirectorAssignedEstablishments(req.params.id, update.venues);
         if (color) await db.collection('shifts').updateMany({ staff_id: req.params.id }, { $set: { color } });
         if (name) {
             // Propager la correction de nom à toutes les copies dénormalisées
@@ -4736,11 +4767,11 @@ async function loadPerfSettings(establishmentId) {
 }
 
 // GET performance (CA + masse salariale + coeff) — patron/directeur
-app.get('/api/performance', checkDB, requirePatron, async (req, res) => {
+// R-16 — exemple de migration : l'id vient de la query et rien d'autre, le contrôle est
+// donc déclaratif. Les 400/403 sont désormais rendus par le middleware.
+app.get('/api/performance', checkDB, requirePatron,
+    requireEstablishmentAccess(r => r.query.establishment_id), async (req, res) => {
     const { establishment_id, from, to } = req.query;
-    if (!establishment_id) return res.status(400).json({ error: 'establishment_id requis' });
-    if (!canAccessEstablishment(req.session.user, establishment_id))
-        return res.status(403).json({ error: 'Accès refusé' });
     try {
         const revQuery = { establishment_id };
         if (from || to) {
