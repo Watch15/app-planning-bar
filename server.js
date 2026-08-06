@@ -876,12 +876,59 @@ function denyObservateurEdit(req, res, next) {
     next();
 }
 
-// Vérifie qu'un patron a accès à un établissement donné. Patron et observateur =
-// accès global (l'observateur consulte/agit sur tous les établissements hors planning).
+// R-16 — SOURCE UNIQUE du périmètre d'un utilisateur.
+// Retourne `null` = accès GLOBAL (patron, observateur), à traduire par « aucun filtre ».
+// Sinon la liste de ses établissements, éventuellement VIDE — qui vaut « aucun accès » et
+// jamais « tous » : le défaut est fail-closed.
+function userEstablishmentIds(user) {
+    if (!user) return [];
+    if (user.role === 'patron' || user.role === 'observateur') return null;
+    // Compte établissement : le sien, et lui seul. Cette branche n'existait pas — faute de
+    // `assigned_establishments`, la fonction répondait toujours `false` pour ce rôle, ce qui
+    // a poussé 5 routes à écrire `role !== 'etablissement' && !canAccess(…)`, c'est-à-dire à
+    // sauter le contrôle. ⚠️ Ces 5 routes portaient CHACUNE leur propre garde
+    // (`role === 'etablissement' && establishment_id !== …`, ou id pris en session) : il n'y
+    // avait donc pas de trou. Traiter le rôle ici permet de supprimer le cas particulier —
+    // c'est une SIMPLIFICATION, pas un correctif de sécurité.
+    if (user.role === 'etablissement') return user.establishment_id ? [user.establishment_id] : [];
+    return user.assigned_establishments || [];
+}
+
+// Cet utilisateur a-t-il accès à cet établissement ?
 function canAccessEstablishment(user, establishmentId) {
-    if (user.role === 'patron' || user.role === 'observateur') return true;
-    const assigned = user.assigned_establishments || [];
-    return assigned.includes(establishmentId);
+    const ids = userEstablishmentIds(user);
+    return ids === null || ids.includes(establishmentId);
+}
+
+// R-16 — MIDDLEWARE de périmètre, à monter APRÈS `requireAuth`/`requirePatron`.
+// Existe parce que le contrôle était recopié à la main dans 14 routes… et oublié dans 5
+// autres (S-03, S-06). Un middleware déclaratif rend l'oubli visible à la lecture.
+// `pick(req)` extrait l'id (query, params ou body selon la route).
+// `whenAbsent` : que faire si l'id manque —
+//   'deny'       → 400 (l'id est obligatoire, cas par défaut)
+//   'patronOnly' → seuls patron/observateur passent (l'absence signifie « portée globale »)
+//   'allow'      → laisser passer : la ROUTE doit alors scoper elle-même via
+//                  `userEstablishmentIds`, sinon elle rend les données de tous les bars.
+function requireEstablishmentAccess(pick, { whenAbsent = 'deny' } = {}) {
+    return (req, res, next) => {
+        const user = req.session?.user;
+        if (!user) return res.status(401).json({ error: 'Non authentifié' });
+        const id = pick(req);
+        if (id == null || id === '') {
+            if (whenAbsent === 'allow') return next();
+            if (whenAbsent === 'patronOnly') {
+                return userEstablishmentIds(user) === null
+                    ? next()
+                    : res.status(403).json({ error: 'Portée globale réservée au patron — précise un établissement.' });
+            }
+            return res.status(400).json({ error: 'establishment_id requis' });
+        }
+        if (typeof id !== 'string' || !id.trim())
+            return res.status(400).json({ error: 'establishment_id invalide' });
+        if (!canAccessEstablishment(user, id))
+            return res.status(403).json({ error: 'Accès refusé' });
+        next();
+    };
 }
 
 // Vérifie si un staff est un responsable de pointage pour un établissement à une date donnée.
@@ -1893,7 +1940,10 @@ app.delete('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
 
 // ── Shifts — lecture ──────────────────────────────────────────────────────────
 
-app.get('/api/shifts/:establishmentId/:date', checkDB, requireAuth, async (req, res) => {
+// S-06 : `requireAuth` seul laissait n'importe quel compte lire les shifts nominatifs
+// d'un bar où il n'a jamais travaillé (l'id se devine — slug `Nom_bar`).
+app.get('/api/shifts/:establishmentId/:date', checkDB, requireAuth,
+    requireEstablishmentAccess(r => r.params.establishmentId), async (req, res) => {
     try {
         const shifts = await db.collection('shifts')
             .find({ establishment_id: req.params.establishmentId, date: req.params.date })
@@ -1902,7 +1952,8 @@ app.get('/api/shifts/:establishmentId/:date', checkDB, requireAuth, async (req, 
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-app.get('/api/week/:establishmentId', checkDB, requireAuth, async (req, res) => {
+app.get('/api/week/:establishmentId', checkDB, requireAuth,
+    requireEstablishmentAccess(r => r.params.establishmentId), async (req, res) => {
     const { from, to } = req.query;
     if (!from || !to) return res.status(400).json({ error: 'from et to requis (YYYY-MM-DD)' });
     try {
@@ -2143,7 +2194,8 @@ app.get('/api/calendar/:token([a-f0-9]+).ics', checkDB, async (req, res) => {
 });
 
 // GET tous les shifts de la semaine (remplace 7 appels /api/shifts/:id/:date)
-app.get('/api/week-full/:establishmentId', checkDB, requireAuth, async (req, res) => {
+app.get('/api/week-full/:establishmentId', checkDB, requireAuth,
+    requireEstablishmentAccess(r => r.params.establishmentId), async (req, res) => {
     const { from, to } = req.query;
     if (!from || !to) return res.status(400).json({ error: 'from et to requis (YYYY-MM-DD)' });
     try {
@@ -3273,6 +3325,15 @@ app.patch('/api/dispos/:id/confirm', checkDB, requirePatron, denyObservateurEdit
         const isOff = dispo.type === 'off';
         // Une indispo n'est qu'informative : pas d'établissement ni de shift
         if (!isOff && !establishment_id) return res.status(400).json({ error: 'establishment_id requis' });
+        // S-05 — confirmer, c'est AFFECTER la dispo à un bar et y créer un shift. Sans ce
+        // contrôle, un directeur limité à bar1 pouvait poster `establishment_id: 'bar2'` et
+        // planifier chez un confrère. C'est ici que se joue le périmètre, pas dans le GET :
+        // S-04 ne filtre que l'AFFICHAGE, et sa bascule `scope=all` fournit les `_id`.
+        // Note : on ne restreint PAS la dispo elle-même à son périmètre — affecter un staff
+        // d'un autre bar à SON bar est légitime (dépannage), et cohérent avec S-04 qui
+        // n'est pas un cloisonnement.
+        if (!isOff && !canAccessEstablishment(req.session.user, establishment_id))
+            return res.status(403).json({ error: 'Accès refusé à cet établissement' });
         const setFields = { status: 'confirmed' };
         if (!isOff) setFields.establishment_id = establishment_id;
         await db.collection('availabilities').updateOne({ _id: new ObjectId(req.params.id) }, { $set: setFields });
@@ -4320,7 +4381,11 @@ app.get('/api/shifts/:establishmentId/:date/check-responsable', checkDB, require
 
 // ── Récap mensuel ────────────────────────────────────────────────────────────
 
-app.get('/api/recap-mensuel', checkDB, requirePatron, async (req, res) => {
+// S-06 : `establishment_id` est optionnel, et son ABSENCE signifiait « tous les bars » —
+// donc les heures mensuelles de toute l'entreprise pour un directeur mono-bar. Même forme
+// que le trou S-02. `whenAbsent: 'allow'` laisse passer, la route scope ci-dessous.
+app.get('/api/recap-mensuel', checkDB, requirePatron,
+    requireEstablishmentAccess(r => r.query.establishment_id, { whenAbsent: 'allow' }), async (req, res) => {
     const { month, establishment_id } = req.query;
     if (!month || !/^\d{4}-\d{2}$/.test(month))
         return res.status(400).json({ error: 'month requis (format YYYY-MM)' });
@@ -4337,7 +4402,14 @@ app.get('/api/recap-mensuel', checkDB, requirePatron, async (req, res) => {
                 { staff_id: { $ne: '__joker__' } },
             ],
         };
-        if (establishment_id) query.establishment_id = establishment_id;
+        if (establishment_id) {
+            query.establishment_id = establishment_id;
+        } else {
+            // « Tous les bars » n'a pas le même sens selon le rôle : global pour le patron,
+            // limité à ses établissements pour un directeur. `null` ⇒ aucun filtre.
+            const scope = userEstablishmentIds(req.session.user);
+            if (scope) query.establishment_id = { $in: scope };
+        }
 
         const shifts = await db.collection('shifts').find(query).toArray();
 
@@ -4599,7 +4671,7 @@ app.post('/api/revenue', checkDB, requireAuth, async (req, res) => {
     if (!date || !establishment_id) return res.status(400).json({ error: 'date et establishment_id requis' });
     const rev = parseFloat(revenue);
     if (Number.isNaN(rev) || rev < 0) return res.status(400).json({ error: 'revenue doit être un nombre positif' });
-    if (user.role !== 'etablissement' && !canAccessEstablishment(user, establishment_id))
+    if (!canAccessEstablishment(user, establishment_id))
         return res.status(403).json({ error: 'Accès refusé' });
     try {
         await db.collection('daily_revenue').updateOne(
@@ -4620,7 +4692,7 @@ app.get('/api/revenue/:establishmentId/:date', checkDB, requireAuth, async (req,
     const { establishmentId, date } = req.params;
     if (user.role === 'etablissement' && user.establishment_id !== establishmentId)
         return res.status(403).json({ error: 'Accès refusé' });
-    if (user.role !== 'etablissement' && !canAccessEstablishment(user, establishmentId))
+    if (!canAccessEstablishment(user, establishmentId))
         return res.status(403).json({ error: 'Accès refusé' });
     try {
         const doc = await db.collection('daily_revenue').findOne({ establishment_id: establishmentId, date });
@@ -4843,13 +4915,15 @@ app.patch('/api/pointage-settings', checkDB, requireAdmin, async (req, res) => {
 });
 
 // GET shifts du jour pour l'établissement lié au compte
-app.get('/api/pointage/:date', checkDB, requireAuth, async (req, res) => {
-    const user = req.session.user;
-    // Accessible par le compte établissement ET le patron
-    const estabId = user.role === 'etablissement'
-        ? user.establishment_id
-        : req.query.establishment_id;
-    if (!estabId) return res.status(400).json({ error: 'establishment_id requis' });
+// Le compte établissement lit SON bar (id pris en session, jamais du client) ; les autres
+// passent par la query et doivent y avoir accès — S-06 : ce contrôle manquait.
+const pickPointageEstab = r => (r.session.user.role === 'etablissement'
+    ? r.session.user.establishment_id
+    : r.query.establishment_id);
+
+app.get('/api/pointage/:date', checkDB, requireAuth,
+    requireEstablishmentAccess(pickPointageEstab), async (req, res) => {
+    const estabId = pickPointageEstab(req);
     try {
         const shifts = await db.collection('shifts')
             .find({ establishment_id: estabId, date: req.params.date })
@@ -4893,7 +4967,7 @@ app.patch('/api/shifts/:id/pointage', checkDB, requireAuth, async (req, res) => 
         const user = req.session.user;
         if (user.role === 'etablissement' && user.establishment_id !== existing.establishment_id)
             return res.status(403).json({ error: 'Accès refusé' });
-        if (user.role !== 'etablissement' && !canAccessEstablishment(user, existing.establishment_id)) {
+        if (!canAccessEstablishment(user, existing.establishment_id)) {
             // Autoriser le staff responsable de soirée sur cet établissement
             const ok = await isResponsablePourSoiree(user.staff_id, existing.establishment_id, existing.date);
             if (!ok) return res.status(403).json({ error: 'Accès refusé' });
@@ -4935,7 +5009,7 @@ app.delete('/api/shifts/:id/pointage', checkDB, requireAuth, async (req, res) =>
         const user = req.session.user;
         if (user.role === 'etablissement' && user.establishment_id !== existing.establishment_id)
             return res.status(403).json({ error: 'Accès refusé' });
-        if (user.role !== 'etablissement' && !canAccessEstablishment(user, existing.establishment_id)) {
+        if (!canAccessEstablishment(user, existing.establishment_id)) {
             const ok = await isResponsablePourSoiree(user.staff_id, existing.establishment_id, existing.date);
             if (!ok) return res.status(403).json({ error: 'Accès refusé' });
         }
@@ -4957,7 +5031,7 @@ app.post('/api/shifts/extra', checkDB, requireAuth, async (req, res) => {
     // Déterminer l'établissement selon le rôle
     const estabId = user.role === 'etablissement' ? user.establishment_id : establishment_id;
     if (!estabId) return res.status(400).json({ error: 'establishment_id requis' });
-    if (user.role !== 'etablissement' && !canAccessEstablishment(user, estabId)) {
+    if (!canAccessEstablishment(user, estabId)) {
         const ok = await isResponsablePourSoiree(user.staff_id, estabId, date);
         if (!ok) return res.status(403).json({ error: 'Accès refusé' });
     }

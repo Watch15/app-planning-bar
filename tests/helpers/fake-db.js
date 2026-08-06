@@ -43,6 +43,7 @@ function matchField(val, cond) {
                 case '$gt':  return val > v;
                 case '$in':  return Array.isArray(v) && v.some(y => contains(val, y));
                 case '$nin': return Array.isArray(v) && !v.some(x => eq(val, x));
+                case '$exists': return (val !== undefined) === !!v;
                 default:     throw new Error('fake-db: opérateur non supporté ' + op);
             }
         });
@@ -50,8 +51,17 @@ function matchField(val, cond) {
     return contains(val, cond);
 }
 
+// Opérateurs LOGIQUES (`$and`/`$or`/`$nor`) : ils prennent des sous-requêtes complètes,
+// pas une valeur de champ — d'où le traitement à part. Sans eux, une requête comme celle du
+// récap mensuel (`$and: [{ $or: [...] }, ...]`) ne matchait AUCUN document, et un test
+// écrit dessus passait pour de mauvaises raisons.
 function matchDoc(doc, query) {
-    return Object.entries(query || {}).every(([k, cond]) => matchField(doc[k], cond));
+    return Object.entries(query || {}).every(([k, cond]) => {
+        if (k === '$and') return (cond || []).every(sub => matchDoc(doc, sub));
+        if (k === '$or')  return (cond || []).some(sub => matchDoc(doc, sub));
+        if (k === '$nor') return !(cond || []).some(sub => matchDoc(doc, sub));
+        return matchField(doc[k], cond);
+    });
 }
 
 // Champs d'égalité simple d'un filtre (sert à construire un doc upserté).

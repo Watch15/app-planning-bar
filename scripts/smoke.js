@@ -160,6 +160,36 @@ async function main() {
         return JSON.stringify(before) + ' → Poni → remis';
     });
 
+    // ── S-06 : périmètre sur les routes de lecture ───────────────────────────
+    await check('S-06', 'directeur : planning de SON bar', async () =>
+        eq((await req('dir', `/api/week-full/Josy_pub?from=${FROM}&to=${TO}`)).status, 200, 'status'));
+    await check('S-06', 'directeur : planning d\'un autre bar refusé', async () =>
+        eq((await req('dir', `/api/week-full/Poni_restaurant?from=${FROM}&to=${TO}`)).status, 403, 'status'));
+    await check('S-06', 'staff : ne lit plus les shifts d\'un bar', async () =>
+        eq((await req('bru', `/api/shifts/Josy_pub/${FROM}`)).status, 403, 'status'));
+    await check('S-06', 'récap sans bar : directeur scopé, patron global', async () => {
+        const [d, p] = await Promise.all([
+            req('dir', '/api/recap-mensuel?month=' + FROM.slice(0, 7)),
+            req('pat', '/api/recap-mensuel?month=' + FROM.slice(0, 7)),
+        ]);
+        if (d.status !== 200 || p.status !== 200) throw new Error(`status ${d.status}/${p.status}`);
+        const bars = r => new Set((r.data || []).flatMap(x => (x.by_establishment || []).map(e => e.establishment_id)));
+        const bd = bars(d), bp = bars(p);
+        if (bd.size && [...bd].some(b => b !== 'Josy_pub'))
+            throw new Error('le directeur voit ' + [...bd].join(','));
+        return 'dir=[' + [...bd].join(',') + '] patron=[' + [...bp].join(',') + ']';
+    });
+
+    // ── S-05 : confirmer = affecter à un bar (test NÉGATIF, n'écrit rien) ─────
+    await check('S-05', 'directeur : confirmation vers un autre bar refusée', async () => {
+        const pending = (await req('dir', `/api/dispos/pending?from=${FROM}&to=${TO}`)).data;
+        if (!pending.length) return 'aucune dispo en attente — non testé';
+        const res = await req('dir', `/api/dispos/${pending[0]._id}/confirm`, {
+            method: 'PATCH', body: { establishment_id: 'Poni_restaurant', create_shift: true },
+        });
+        return eq(res.status, 403, 'status');
+    });
+
     // ── Restitution ──────────────────────────────────────────────────────────
     let section = '';
     for (const [mark, sec, name, detail] of results) {
