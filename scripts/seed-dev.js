@@ -47,13 +47,16 @@ const FEATURES = [
     ]);
 } },
 
-{ id: 'roles', label: 'Rôles (responsable / informatif)',
-  howToTest: 'Modale Staff → badges de rôle. Alice porte « Responsable de soirée ».',
+{ id: 'roles', label: 'Rôles — le niveau FIN (métier précis)',
+  howToTest: "Modale Staff → badges de rôle. Alice porte « Responsable de soirée » : un rôle `responsable` déclenche l'alerte « ! » sur une journée qui n'en a aucun. Les autres sont informatifs.",
   async seed(ctx) {
+    // ⚠️ Ne PAS mettre « Bar » / « Cuisine » ici : c'est le niveau GROSSIER, il est porté
+    // par les GROUPES (cf. bloc `groupes`). Un rôle décrit le métier exact d'une personne.
     await ctx.db.collection('roles').insertMany([
         { name: 'Responsable de soirée', type: 'responsable' },
-        { name: 'Barman',                type: 'informatif' },
-        { name: 'Cuisine',               type: 'informatif' },
+        { name: 'Chef de rang',          type: 'informatif' },
+        { name: 'Second de cuisine',     type: 'informatif' },
+        { name: 'Plongeur',              type: 'informatif' },
     ]);
 } },
 
@@ -62,8 +65,8 @@ const FEATURES = [
   async seed(ctx) {
     const defs = [
         { name: 'Alice', color: '#3498db', venues: ['Josy_pub'],                    roles: ['Responsable de soirée'], hourly_rate: 13 },
-        { name: 'Bruno', color: '#9b59b6', venues: ['Josy_pub', 'Poni_restaurant'], roles: ['Barman'],                hourly_rate: 12 },
-        { name: 'Chloé', color: '#e67e22', venues: ['Poni_restaurant'],             roles: ['Cuisine'],               hourly_rate: 12.5 },
+        { name: 'Bruno', color: '#9b59b6', venues: ['Josy_pub', 'Poni_restaurant'], roles: ['Chef de rang'],          hourly_rate: 12 },
+        { name: 'Chloé', color: '#e67e22', venues: ['Poni_restaurant'],             roles: ['Second de cuisine'],     hourly_rate: 12.5 },
         { name: 'David', color: '#2ecc71', venues: ['FanFan_restaurant'],           roles: [],                        hourly_rate: 11.9 },
         { name: 'Elena', color: '#e74c3c', venues: [],                              roles: [],                        hourly_rate: 12 },
     ];
@@ -80,6 +83,27 @@ const FEATURES = [
         is_manager: true, hourly_rate: 16, created_at: new Date(),
     });
     ctx.staff.Diane = String(dir.insertedId); ctx.color.Diane = '#1abc9c';
+} },
+
+{ id: 'groupes', label: 'Groupes — le niveau GROSSIER (Bar / Cuisine)',
+  howToTest: "Sélecteur de groupe en haut : « Bar » ne laisse que Josy et Poni dans les onglets, et ne montre qu'Alice, Bruno et Elena dans la barre staff. « Cuisine » laisse Poni et FanFan, avec Chloé, David et Elena. Elena n'a AUCUN groupe : elle reste visible partout — c'est la règle « sans groupe = polyvalent ».",
+  async seed(ctx) {
+    // Un groupe est un tag LIBRE porté à la fois par les établissements et le staff
+    // (`GET /api/groups` en renvoie l'union distincte). Il filtre les deux à la fois.
+    // À ne pas confondre avec les RÔLES, qui décrivent le métier précis d'une personne :
+    // le groupe dit « côté bar ou côté cuisine », le rôle dit « chef de rang ».
+    // Poni porte les DEUX : un restaurant a un bar et une cuisine — c'est le cas qui
+    // montre qu'un établissement n'appartient pas à un seul groupe.
+    const byEstab = { Josy_pub: ['Bar'], Poni_restaurant: ['Bar', 'Cuisine'], FanFan_restaurant: ['Cuisine'] };
+    for (const [id, groups] of Object.entries(byEstab))
+        await ctx.db.collection('establishments').updateOne({ id }, { $set: { groups } });
+
+    // Elena reste SANS groupe : un staff sans groupe est visible dans tous les filtres.
+    const byStaff = { Alice: ['Bar'], Bruno: ['Bar'], 'Chloé': ['Cuisine'], David: ['Cuisine'] };
+    for (const [name, groups] of Object.entries(byStaff))
+        await ctx.db.collection('staff').updateOne({ name }, { $set: { groups } });
+    // La directrice suit son bar.
+    await ctx.db.collection('staff').updateOne({ name: 'Diane' }, { $set: { groups: ['Bar'] } });
 } },
 
 { id: 'comptes', label: 'Comptes — les 4 rôles',
