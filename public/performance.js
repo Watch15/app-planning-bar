@@ -350,7 +350,8 @@ async function loadData(opts) {
                     renderDetail(
                         detail.querySelector('td'),
                         data[newIdx].staff_detail,
-                        data[newIdx].wage_bill_charged
+                        data[newIdx].wage_bill_charged,
+                        data[newIdx].wage_bill_gross
                     );
                 }
             }
@@ -421,15 +422,28 @@ function renderTable(data) {
     const totalCoeffC = totalRevenue > 0 ? (totalWageCh / totalRevenue) * 100 : 0;
     const okTC = totalCoeffC < targets.target_charged;
 
+    // Le taux de charges vient des réglages de l'établissement courant (E-24).
+    const rate       = targets.charge_rate ?? 45;
+    const chargeMult = 1 + rate / 100;
+    const fmtRate    = r => String(r).replace('.', ',') + ' %';
+    const fmtMult    = m => m.toFixed(2).replace('.', ',');
+    // Exemple CHIFFRÉ sur les totaux affichés : plus parlant qu'une formule abstraite.
+    const legend = totalRevenue > 0
+        ? 'Sur la période : ' + fmtEUR(totalWageBrut) + ' brut × ' + fmtMult(chargeMult)
+            + ' (charges ' + fmtRate(rate) + ') = ' + fmtEUR(totalWageCh) + ' chargé'
+            + ', soit ' + fmtEUR(totalWageCh) + ' ÷ ' + fmtEUR(totalRevenue) + ' de CA = '
+            + fmtPct(totalCoeffC) + ' de coefficient.'
+        : '';
+
     wrap.innerHTML =
         '<table class="perf">' +
             '<thead><tr>' +
                 '<th>Date</th>' +
                 '<th class="num">CA</th>' +
                 '<th class="num">Heures</th>' +
-                '<th class="num">Masse sal. brute</th>' +
-                '<th class="num">Masse sal. chargée</th>' +
-                '<th>Coeff. chargé</th>' +
+                '<th class="num" title="Somme des salaires versés : heures réelles × taux (ou forfait), avant charges patronales.">Masse sal. brute</th>' +
+                '<th class="num" title="Masse salariale brute × ' + fmtMult(chargeMult) + ' (charges ' + fmtRate(rate) + ') — le coût réel pour le bar.">Masse sal. chargée</th>' +
+                '<th title="Masse salariale chargée ÷ CA × 100. Vert sous la cible de ' + fmtPct(targets.target_charged) + '.">Coeff. chargé</th>' +
             '</tr></thead>' +
             '<tbody>' + rows + '</tbody>' +
             '<tfoot><tr>' +
@@ -440,7 +454,8 @@ function renderTable(data) {
                 '<td class="num">' + fmtEUR(totalWageCh) + '</td>' +
                 '<td><span class="coeff-pill ' + (okTC ? 'ok' : 'bad') + '">' + fmtPct(totalCoeffC) + '</span></td>' +
             '</tr></tfoot>' +
-        '</table>';
+        '</table>' +
+        (legend ? '<div class="calc-legend">' + legend + '</div>' : '');
 
     // Lignes cliquables → toggle détail
     wrap.querySelectorAll('.perf-row').forEach(row => {
@@ -458,14 +473,15 @@ function renderTable(data) {
                 renderDetail(
                     detail.querySelector('td'),
                     currentData[idx].staff_detail,
-                    currentData[idx].wage_bill_charged
+                    currentData[idx].wage_bill_charged,
+                    currentData[idx].wage_bill_gross
                 );
             }
         });
     });
 }
 
-function renderDetail(td, staff, totalWageCharged) {
+function renderDetail(td, staff, totalWageCharged, totalWageGross) {
     if (!staff || staff.length === 0) {
         td.innerHTML = '<div class="detail-wrap" style="color:var(--text-muted)">Aucun shift pointé ce soir-là</div>';
         return;
@@ -481,23 +497,28 @@ function renderDetail(td, staff, totalWageCharged) {
         }
         const hasWage     = s.is_fixed ? s.fixed_rate != null : s.hourly_rate != null;
         const wageChLabel = hasWage ? fmtEUR(s.wage_charged) : '';
+        const wageBrLabel = hasWage ? fmtEUR(s.wage_gross) : '';
         return (
             '<tr>' +
                 '<td>' + escapeHtml(s.staff_name) + '</td>' +
                 '<td class="num">' + fmtHours(s.hours_worked) + '</td>' +
                 '<td class="num">' + rateLabel + '</td>' +
+                '<td class="num">' + wageBrLabel + '</td>' +
                 '<td class="num">' + wageChLabel + '</td>' +
             '</tr>'
         );
     }).join('');
 
-    // E-23 : seul le salaire CHARGÉ est affiché (le brut a été retiré).
+    // Brut ET chargé : le brut est ce qu'on verse, le chargé ce que ça coûte.
     td.innerHTML =
         '<div class="detail-wrap">' +
             '<table class="detail-table">' +
-                '<thead><tr><th>Staff</th><th class="num">Heures</th><th class="num">Taux</th><th class="num">Salaire chargé</th></tr></thead>' +
+                '<thead><tr><th>Staff</th><th class="num">Heures</th><th class="num">Taux</th>' +
+                    '<th class="num">Salaire brut</th><th class="num">Salaire chargé</th></tr></thead>' +
                 '<tbody>' + rows +
-                    '<tr class="total-row"><td>Total</td><td class="num">' + fmtHours(totalHoursDetail) + '</td><td></td><td class="num">' + fmtEUR(totalWageCharged) + '</td></tr>' +
+                    '<tr class="total-row"><td>Total</td><td class="num">' + fmtHours(totalHoursDetail) + '</td><td></td>' +
+                        '<td class="num">' + fmtEUR(totalWageGross) + '</td>' +
+                        '<td class="num">' + fmtEUR(totalWageCharged) + '</td></tr>' +
                 '</tbody>' +
             '</table>' +
         '</div>';
