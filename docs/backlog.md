@@ -658,6 +658,69 @@ sur les noms de champs plutôt qu'en lisant le code. Deux features entières (E-
 étaient invérifiables sans que rien ne le signale — et c'est ce qui a laissé passer la
 régression du pointage jusqu'à l'inspection de la base client.
 
+### Revue `/simplify` du 2026-08-07 — constats NON appliqués
+
+Les 4 angles ont tourné, **aucun correctif n'a été appliqué** (revue arrêtée en cours).
+Consigné ici pour ne pas reperdre le travail. Par valeur décroissante.
+
+**⚠️ A-08 — Le runbook contredit le correctif, et c'est un risque réel.**
+Plus haut dans ce fichier, la section de préparation client dit encore : « la livraison
+devra inclure `npm run backfill-directors` ». C'est **le script qui duplique les profils**,
+écarté le 2026-08-06 après l'inspection de la base Castanui. La contre-indication existe,
+mais 150 lignes plus bas. Au prochain client, c'est la première ligne qu'on relira.
+Même problème dans `docs/design-e22-dispos-directeur.md`, qui présente encore le backfill
+comme LE remède E-22. **Correction : une ligne à chaque endroit.**
+
+**A-09 — Deux scripts pour une seule décision, et un trou fonctionnel.**
+`backfill` (créer) et `link` (lier) sont les deux branches de « directeur sans profil →
+lier si un profil correspond, créer sinon ». `link` calcule déjà les 3 buckets
+(`todo`/`none`/`ambiguous`) : ajouter `--create-missing` sur le bucket `none`, supprimer
+l'ancien script. ⚠️ **Aujourd'hui le cas `none` n'a AUCUN outil sûr** — un client sans
+homonymie verrait ses directeurs bloqués (400 permanent) sans procédure valide.
+
+**A-10 — Règle métier dupliquée serveur/client, visible à l'écran.**
+`public/performance.js` recalcule `1 + rate/100` alors que `lib/utils.js` a
+`chargeMultiplier()` et que les DEUX montants viennent déjà du serveur. Seul le « × 1,45 »
+est calculé côté client : une désynchronisation ne produit pas un chiffre un peu faux, mais
+une **phrase arithmétiquement fausse** (« 3 200 € × 1,45 = 4 800 € »), vérifiable de tête.
+R-10 a déjà montré que `targets` peut venir du mauvais bar. **Correctif d'une ligne** :
+`chargeMult = totalWageBrut > 0 ? totalWageCh / totalWageBrut : null` — vrai par
+construction. Au passage, le défaut `45` est écrit à **5 endroits**.
+
+**A-11 — Mon commentaire sur `GET /api/pointage/:date` est trompeur.**
+Il dit « le contrôle est async donc pas de middleware ». C'est faux (un middleware Express
+peut être async) et ça **contredit** le commentaire de `requireEstablishmentAccess`, qui
+donne la vraie raison : la règle dépend d'un DOCUMENT, pas de la requête. Un futur lecteur
+en tirerait la mauvaise règle. Pour ce GET précis, un middleware async marcherait — le
+choix réel est l'uniformité avec les 3 routes voisines, qu'il faut assumer comme tel.
+
+**A-12 — `isResponsablePourSoiree` : 3 requêtes et toute l'équipe chargée pour une personne.**
+Elle charge les shifts de la soirée + les profils staff de tous les présents, puis ne
+regarde que l'appelant. Et la route `GET /api/pointage/:date` **refait derrière la requête
+`shifts` qu'elle vient de faire**. Bon point : l'ordre des conditions est correct — patron,
+observateur et compte établissement paient **0** requête. Mais un responsable qui pointe
+8 personnes déclenche 8 × 3 requêtes de contrôle. Alternative : 2 `findOne` ciblés
+(`shifts` sur staff_id+pointage_resp, `staff` sur roles), indépendants de la taille de
+l'équipe ; et faire remonter les shifts déjà chargés au handler.
+
+**A-13 — La cause racine des bugs du seed n'est pas traitée.**
+Les 5 écarts de champs ont été corrigés par des **commentaires**, qui ne tombent jamais.
+Le 6e s'écrira pareil. Le mode d'échec est silencieux : `amount` au lieu de `revenue` n'a
+produit aucune erreur, juste un coefficient à 0 % présenté comme un résultat — une recette
+**menteuse**, pas cassée. **Les 5 étaient tous détectables par une assertion de LECTURE**
+dans `smoke.js`. Le `howToTest` de chaque bloc du seed est déjà une assertion écrite en
+français que personne n'exécute : la faire exécuter ferme la boucle. Complément gratuit :
+un `$jsonSchema` sur `daily_revenue` (collection qui a déjà un index unique, donc déjà
+traitée comme ayant un contrat) aurait fait ÉCHOUER l'insert au lieu d'afficher 0 %.
+
+**Divers, moindre valeur** : `norm()` est la 3e copie de `normalizeStr` (`script.js`,
+`pointage.js`) ; `fmtRate` duplique `fmtPct` avec un format différent **dans la même ligne
+d'en-tête** (« charges 45 % » à côté de « cible 43,0 % ») ; `renderDetail` prend 4
+paramètres positionnels tirés du même objet (passer la ligne entière) ; le garde-fou
+`before`/`after` de `link-director-staff.js` ne peut jamais se déclencher (le script ne
+touche pas `staff`) ; `seedSoiree()` dans les tests reconstruit une base et jette celle du
+`beforeEach` ; 3 annuaires nom→id construits par la même ligne dans le seed.
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique.
