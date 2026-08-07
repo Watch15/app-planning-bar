@@ -57,21 +57,27 @@ const FEATURES = [
   async seed(ctx) {
     // ⚠️ Ne PAS mettre « Bar » / « Cuisine » ici : c'est le niveau GROSSIER, il est porté
     // par les GROUPES (cf. bloc `groupes`). Un rôle décrit le métier exact d'une personne.
-    await ctx.db.collection('roles').insertMany([
+    // ⚠️ `staff.roles` contient les **_id** des rôles, PAS leurs noms — c'est ce que
+    // pose le front (`btn.dataset.role = String(r._id)`) et ce que compare le serveur
+    // (`isResponsablePourSoiree`). Ce seed stockait les NOMS : personne n'était donc
+    // reconnu responsable, et toute la recette était aveugle au pointage de soirée (E-03).
+    const defs = [
         { name: 'Responsable de soirée', type: 'responsable' },
         { name: 'Chef de rang',          type: 'informatif' },
         { name: 'Second de cuisine',     type: 'informatif' },
         { name: 'Plongeur',              type: 'informatif' },
-    ]);
+    ];
+    const r = await ctx.db.collection('roles').insertMany(defs);
+    defs.forEach((d, i) => { ctx.roles[d.name] = String(r.insertedIds[i]); });
 } },
 
 { id: 'staff', label: 'Staff + profil staff de la directrice (E-22)',
   howToTest: 'Barre staff : 6 personnes. Diane a un profil staff comme les autres — c\'est E-22 Modèle A : une directrice est planifiable et comptée en paie.',
   async seed(ctx) {
     const defs = [
-        { name: 'Alice', color: '#3498db', venues: ['Josy_pub'],                    roles: ['Responsable de soirée'], hourly_rate: 13 },
-        { name: 'Bruno', color: '#9b59b6', venues: ['Josy_pub', 'Poni_restaurant'], roles: ['Chef de rang'],          hourly_rate: 12 },
-        { name: 'Chloé', color: '#e67e22', venues: ['Poni_restaurant'],             roles: ['Second de cuisine'],     hourly_rate: 12.5 },
+        { name: 'Alice', color: '#3498db', venues: ['Josy_pub'],                    roles: [ctx.roles['Responsable de soirée']], hourly_rate: 13 },
+        { name: 'Bruno', color: '#9b59b6', venues: ['Josy_pub', 'Poni_restaurant'], roles: [ctx.roles['Chef de rang']],          hourly_rate: 12 },
+        { name: 'Chloé', color: '#e67e22', venues: ['Poni_restaurant'],             roles: [ctx.roles['Second de cuisine']],     hourly_rate: 12.5 },
         { name: 'David', color: '#2ecc71', venues: ['FanFan_restaurant'],           roles: [],                        hourly_rate: 11.9 },
         { name: 'Elena', color: '#e74c3c', venues: [],                              roles: [],                        hourly_rate: 12 },
     ];
@@ -243,7 +249,7 @@ async function run() {
 
         const now = new Date();
         const ctx = {
-            db, staff: {}, color: {}, users: {},
+            db, staff: {}, color: {}, users: {}, roles: {},
             thisMon: weekStart(now),
             nextMon: weekStart(new Date(now.getTime() + 7 * 864e5)),
             lastMon: weekStart(new Date(now.getTime() - 7 * 864e5)),

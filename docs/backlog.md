@@ -596,6 +596,18 @@ emojis retirés, colonnes « brut » disparues de Performance (et calendrier rec
 chargé — des jours verts peuvent devenir rouges à données égales), et les directeurs qui
 entrent dans la barre staff **et la masse salariale**.
 
+**Deux défauts du jeu de recette découverts en validant sur `dev` (2026-08-07)** :
+- **Le seed stockait les NOMS de rôles dans `staff.roles`**, alors que le front y pose des
+  `_id` (`btn.dataset.role = String(r._id)`) et que le serveur compare des `_id`
+  (`isResponsablePourSoiree`). Conséquence : **personne n'était reconnu responsable de
+  soirée**, et toute la recette était aveugle à E-03 — c'est précisément pour ça que la
+  régression du pointage a pu passer. Corrigé : le bloc `roles` expose ses `_id` via
+  `ctx.roles`, le bloc `staff` les référence.
+- **Le smoke ne couvrait pas E-03.** 3 vérifications ajoutées (responsable accède à sa
+  soirée · staff non désigné refusé · responsable refusé sur un autre bar), soit 25 → 28.
+  Le correctif le plus important du lot est désormais vérifié sur l'instance réelle, pas
+  seulement en test unitaire.
+
 **Séquence restante** (plan approuvé) : pousser `dev` → `smoke:dev` → merger `main` →
 `smoke:main` → `git push castanui origin/main:main` → `link-directors --apply` → faire
 reconnecter les 2 directeurs → vérifications. Retour arrière : re-push de `29bc882` ; le

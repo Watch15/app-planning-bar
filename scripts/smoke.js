@@ -20,6 +20,9 @@ const PWD  = process.env.SEED_PASSWORD || 'Templyo2026!';
 
 const { weekStart, toDateStr } = require('../lib/utils');
 const nextMon = weekStart(new Date(Date.now() + 7 * 864e5));
+// Mercredi de la semaine COURANTE : le seed y place le shift d'Alice avec
+// `pointage_resp: true`, ce qui en fait la responsable désignée du soir sur Josy.
+const SOIREE = toDateStr(new Date(weekStart(new Date()).getTime() + 2 * 864e5));
 const D = n => toDateStr(new Date(nextMon.getTime() + n * 864e5));
 const FROM = D(0), TO = D(6);
 
@@ -68,7 +71,7 @@ async function main() {
     // 4 connexions par passage, contre une limite de 10 tentatives / 15 min / IP :
     // au 3e lancement rapproché, on tombe en 429. Diagnostiquer précisément, sinon on
     // croit à une base vide et on va chercher le problème au mauvais endroit (vécu).
-    const roles = [['pat', 'patron'], ['dir', 'directeur'], ['obs', 'observateur'], ['bru', 'bruno']];
+    const roles = [['pat', 'patron'], ['dir', 'directeur'], ['obs', 'observateur'], ['bru', 'bruno'], ['ali', 'alice']];
     for (const [who, name] of roles) {
         const r = await login(who, name + '@templyo.test');
         if (r.status === 200) continue;
@@ -200,6 +203,17 @@ async function main() {
         });
         return eq(res.status, 403, 'status');
     });
+
+    // ── E-03 : le responsable de soirée doit garder l'accès au pointage ──────
+    // Le correctif le plus important du lot : `GET /api/pointage/:date` avait été passé
+    // sous un contrôle de périmètre qui refuse un compte `staff` — le responsable n'aurait
+    // plus vu aucun shift à pointer. Vérifié ici sur l'instance réelle, pas seulement en test.
+    await check('E-03', 'responsable de soirée : accède au pointage de SA soirée', async () =>
+        eq((await req('ali', `/api/pointage/${SOIREE}?establishment_id=Josy_pub`)).status, 200, 'status'));
+    await check('E-03', 'staff non désigné : pointage refusé', async () =>
+        eq((await req('bru', `/api/pointage/${SOIREE}?establishment_id=Josy_pub`)).status, 403, 'status'));
+    await check('E-03', "responsable : pas d'accès à un bar où il n'est pas désigné", async () =>
+        eq((await req('ali', `/api/pointage/${SOIREE}?establishment_id=Poni_restaurant`)).status, 403, 'status'));
 
     // ── Restitution ──────────────────────────────────────────────────────────
     let section = '';
