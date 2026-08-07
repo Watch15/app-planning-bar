@@ -631,6 +631,33 @@ se calcule (10,8 % sur la journée pointée).
 ⚠️ **À faire** : passer en revue les autres champs du seed contre les écritures réelles du
 serveur — deux erreurs de ce type en une journée suggèrent qu'il peut en rester.
 
+### Audit complet du jeu de recette (2026-08-07)
+
+Demandé après deux erreurs de modèle trouvées coup sur coup. Chaque collection semée a été
+comparée à ce que `server.js` écrit RÉELLEMENT. **4 écarts**, dont un seul fonctionnel :
+
+| Collection | Écart | Effet |
+|---|---|---|
+| `daily_revenue` | `amount` au lieu de **`revenue`** | ❌ CA `undefined`, coefficient 0 % — E-24 intestable *(corrigé précédemment)* |
+| `staff.roles` | noms au lieu d'**`_id`** | ❌ personne responsable de soirée — E-03 intestable *(corrigé précédemment)* |
+| `time_off` | `note` au lieu de **`reason`** | motif de congé vide à l'affichage |
+| `manager_time_off` | champ **`name`** absent | nom manquant sur l'absence directeur |
+| `settings.publish_*` | `published: true` | fonctionne, mais c'est la branche **legacy** de `normalizePublishDoc` ; forme courante = `establishments: 'ALL'` |
+
+**Conformes, vérifiés** : `availabilities`, `shifts`, `establishments`, `users`,
+`manager_dispo_templates`, `roles`, `settings.dispo`, `settings.performance*`.
+
+**Règle posée : ne jamais rechercher par NOM, seulement par `_id`.** Le bloc `groupes`
+filtrait le staff par `{ name }` ; il passe par `{ _id: ObjectId(ctx.staff[name]) }`. Un nom
+n'est pas un identifiant — deux homonymes ou un renommage, et la mise à jour touche la
+mauvaise personne ou aucune, **en silence**. Les établissements gardent leur filtre `{ id }` :
+c'est leur clé métier (`establishment_id` partout dans le code), pas un nom.
+
+**Ce que cet épisode dit du jeu de recette** : il avait été écrit d'après des suppositions
+sur les noms de champs plutôt qu'en lisant le code. Deux features entières (E-03, E-24)
+étaient invérifiables sans que rien ne le signale — et c'est ce qui a laissé passer la
+régression du pointage jusqu'à l'inspection de la base client.
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique.

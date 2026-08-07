@@ -22,6 +22,7 @@
 //   ENV_FILE=.env.main node scripts/seed-dev.js
 
 const bcrypt = require('bcryptjs');
+const { ObjectId } = require('mongodb');
 const { openDb } = require('./_db');
 const { toDateStr, weekStart } = require('../lib/utils');
 
@@ -112,9 +113,15 @@ const FEATURES = [
     // Elena reste SANS groupe : un staff sans groupe est visible dans tous les filtres.
     // Elena reste absente de cette liste : sans groupe, elle est visible partout.
     // La directrice suit son bar.
+    // Filtré par _id (via ctx.staff), JAMAIS par nom : un nom n'est pas un identifiant —
+    // deux homonymes, un renommage, et la mise à jour touche la mauvaise personne ou aucune,
+    // en silence. `ctx.staff` porte les _id retournés à l'insertion.
     const byStaff = { Alice: ['Bar'], Bruno: ['Bar'], 'Chloé': ['Cuisine'], David: ['Cuisine'], Diane: ['Bar'] };
     await ctx.db.collection('staff').bulkWrite(Object.entries(byStaff).map(
-        ([name, groups]) => ({ updateOne: { filter: { name }, update: { $set: { groups } } } })));
+        ([name, groups]) => ({ updateOne: {
+            filter: { _id: new ObjectId(ctx.staff[name]) },
+            update: { $set: { groups } },
+        } })));
 } },
 
 { id: 'comptes', label: 'Comptes — les 4 rôles',
@@ -160,7 +167,9 @@ const FEATURES = [
           is_joker: true, joker_open: true, joker_candidates: [], note: 'Renfort samedi soir' },
     ]);
     await ctx.db.collection('settings').insertOne({
-        key: 'publish_' + toDateStr(ctx.thisMon), published: true, published_at: new Date(),
+        // Forme COURANTE : `establishments` ('ALL' ou liste d'ids). `published: true`
+        // marche encore mais c'est la branche LEGACY de `normalizePublishDoc`.
+        key: 'publish_' + toDateStr(ctx.thisMon), establishments: 'ALL', published_at: new Date(),
     });
 } },
 
@@ -206,13 +215,13 @@ const FEATURES = [
     await ctx.db.collection('time_off').insertMany([
         { staff_id: ctx.staff['Chloé'], staff_name: 'Chloé', mode: 'request', status: 'pending',
           start_date: ctx.day(ctx.nextMon, 8), end_date: ctx.day(ctx.nextMon, 12),
-          note: 'Vacances', created_at: new Date() },
+          reason: 'Vacances', created_at: new Date() },   // `reason`, pas `note` (server.js)
         { staff_id: ctx.staff.David, staff_name: 'David', mode: 'info', status: 'approved',
           start_date: ctx.day(ctx.thisMon, 5), end_date: ctx.day(ctx.thisMon, 6),
-          note: 'Week-end', created_at: new Date() },
+          reason: 'Week-end', created_at: new Date() },
     ]);
     await ctx.db.collection('manager_time_off').insertOne({
-        user_id: ctx.users.Diane, start_date: ctx.day(ctx.nextMon, 3),
+        user_id: ctx.users.Diane, name: 'Diane', start_date: ctx.day(ctx.nextMon, 3),
         end_date: ctx.day(ctx.nextMon, 4), type: 'off', note: 'Formation', created_at: new Date(),
     });
 } },
