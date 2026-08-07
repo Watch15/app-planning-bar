@@ -167,3 +167,56 @@ test('R-16 : le directeur ne lit pas le CA d\'un bar qui n\'est pas le sien', as
     assert.equal(await code(DIR, '/api/revenue/bar1/' + DAY), 200);
     assert.equal(await code(DIR, '/api/revenue/bar2/' + DAY), 403);
 });
+
+// ── Responsable de soirée : le pointage doit RESTER accessible ───────────────
+// Régression trouvée en préparant la propagation client : `GET /api/pointage/:date` était
+// passé sous `requireEstablishmentAccess`, or `pointage.js` sert aussi le rôle `staff`
+// (E-03). Un staff n'a pas d'`assigned_establishments` ⇒ 403 ⇒ plus aucun shift à pointer.
+// Le droit vient de son rôle SUR LA SOIRÉE, ce qui demande une requête : repli inline.
+
+const ROLE_RESP = 'aaaaaaaaaaaaaaaaaaaa1111';
+const RESP_STAFF = '0123456789abcdef0123bbbb';
+const RESP_USER = { _id: 'u-resp', role: 'staff', name: 'Alice', staff_id: RESP_STAFF };
+
+function seedSoiree() {
+    const d = makeDb({
+        establishments: [{ id: 'bar1', name: 'Bar 1' }, { id: 'bar2', name: 'Bar 2' }],
+        roles: [{ _id: ROLE_RESP, name: 'Responsable de soirée', type: 'responsable' }],
+        staff: [
+            { _id: RESP_STAFF, name: 'Alice', venues: ['bar1'], roles: [ROLE_RESP] },
+            { _id: '0123456789abcdef0123cccc', name: 'Bob', venues: ['bar1'], roles: [] },
+        ],
+        shifts: [
+            // Alice est la responsable désignée du soir sur bar1.
+            { establishment_id: 'bar1', staff_id: RESP_STAFF, staff_name: 'Alice',
+              date: DAY, start_time: 18, end_time: 26, pointage_resp: true },
+            { establishment_id: 'bar1', staff_id: '0123456789abcdef0123cccc', staff_name: 'Bob',
+              date: DAY, start_time: 20, end_time: 26 },
+        ],
+    });
+    app.locals.setTestDb(d);
+    return d;
+}
+
+test('pointage : le responsable de soirée accède au bar où il est désigné', async () => {
+    seedSoiree();
+    const res = await req('/api/pointage/' + DAY + '?establishment_id=bar1', RESP_USER);
+    assert.equal(res.status, 200, 'sans ce repli, il ne voit plus aucun shift à pointer');
+    assert.equal((await res.json()).length, 2, 'il voit toute la soirée, pas seulement son shift');
+});
+
+test('pointage : un staff SANS rôle responsable reste refusé', async () => {
+    seedSoiree();
+    const bob = { _id: 'u-bob', role: 'staff', name: 'Bob', staff_id: '0123456789abcdef0123cccc' };
+    assert.equal(await code(bob, '/api/pointage/' + DAY + '?establishment_id=bar1'), 403);
+});
+
+test('pointage : le responsable n\'accède PAS à un bar où il n\'est pas désigné', async () => {
+    seedSoiree();
+    assert.equal(await code(RESP_USER, '/api/pointage/' + DAY + '?establishment_id=bar2'), 403);
+});
+
+test('pointage : sans establishment_id → 400, pas 403', async () => {
+    seedSoiree();
+    assert.equal(await code(RESP_USER, '/api/pointage/' + DAY), 400);
+});

@@ -558,6 +558,49 @@ fait tomber 2 tests, ce qui est la bonne nouvelle : ils n'étaient pas vides.
 - **A-07** — divergence des catalogues d'index : `connectDB()` en crée 6, `init-db.js` ~25.
   À unifier dans un module partagé appelé par les deux.
 
+### Préparation de la propagation Castanui (2026-08-07)
+
+Inspection **en lecture seule** de la base client (autorisée). Elle a révélé **deux
+bloquants** — propager en l'état aurait cassé une fonctionnalité et dupliqué des données.
+
+**Bloquant 1 — régression du pointage, CORRIGÉE.** `GET /api/pointage/:date` était passé
+sous `requireEstablishmentAccess` (S-06). Or `public/pointage.js` sert aussi le rôle
+`staff` : le **responsable de soirée** (E-03), lignes 187/216/233. Un staff n'a pas
+d'`assigned_establishments` ⇒ 403 ⇒ **plus aucun shift à pointer**. ⚠️ Mon affirmation
+« aucune de ces routes n'est appelée par les vues staff/pointage » (S-06) était **fausse**
+pour ce fichier. Correctif : repli `isResponsablePourSoiree` inline, comme les routes
+d'écriture voisines l'ont toujours fait — le contrôle est asynchrone, il ne peut pas être un
+middleware. 4 tests ; la mutation « état d'avant » en fait tomber 1.
+Les 3 autres routes restreintes ont été **revérifiées sur tous les fichiers front** :
+`planning.js` et `pointage.js` n'utilisent que les sous-routes joker/pointage/extra → sûres.
+
+**Bloquant 2 — `backfill-directors` aurait DUPLIQUÉ deux profils.** Les 3 directeurs du
+client ont **déjà** un profil staff homonyme, avec des `venues` identiques à leurs
+`assigned_establishments` ; seul le lien `users.staff_id` manque (2 sur 3). Le backfill ne
+rapproche que sur `staff_id` et crée sinon → un **second** profil pour Romain MAYAT et
+Alexandre Housset : barre staff dédoublée, historique scindé, **comptés deux fois en masse
+salariale**. Nouveau `scripts/link-director-staff.js` (`npm run link-directors`) : rapproche
+par e-mail puis nom normalisé, **ne crée jamais rien**, ne pose que `users.staff_id`, refuse
+d'agir si zéro ou plusieurs correspondances, **simulation par défaut** (`--apply` pour
+écrire), et contrôle que le nombre de profils staff n'a pas bougé. Simulation client :
+**2 liaisons, 1 déjà liée, 0 création, venues identiques**.
+
+**État vérifié de la base client** : 3 patron / 3 directeur / 78 staff / 1 observateur ·
+101 profils staff · 3359 shifts · 508 dispos · 4 établissements. Tous les
+`assigned_establishments` sont des **slugs valides** → le piège « ObjectId au lieu du slug »
+n'existe pas sur cette base. Les 2 nouveaux index sont **non-uniques** → créés au boot, sans
+risque d'échec sur doublons.
+
+**Note client rédigée** : `docs/note-client-mise-a-jour.md`. Les 3 points qui surprendront :
+emojis retirés, colonnes « brut » disparues de Performance (et calendrier recoloré sur le
+chargé — des jours verts peuvent devenir rouges à données égales), et les directeurs qui
+entrent dans la barre staff **et la masse salariale**.
+
+**Séquence restante** (plan approuvé) : pousser `dev` → `smoke:dev` → merger `main` →
+`smoke:main` → `git push castanui origin/main:main` → `link-directors --apply` → faire
+reconnecter les 2 directeurs → vérifications. Retour arrière : re-push de `29bc882` ; le
+lien `staff_id` est compatible avec l'ancien code, donc rien à défaire côté données.
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique.

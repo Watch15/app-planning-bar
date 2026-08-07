@@ -4952,9 +4952,20 @@ const pickPointageEstab = r => (r.session.user.role === 'etablissement'
     ? r.session.user.establishment_id
     : r.query.establishment_id);
 
-app.get('/api/pointage/:date', checkDB, requireAuth,
-    requireEstablishmentAccess(pickPointageEstab), async (req, res) => {
+// ⚠️ PAS de `requireEstablishmentAccess` ici, et ce n'est pas un oubli.
+// Cette page sert aussi le **responsable de soirée** (E-03), un compte `staff` : il n'a pas
+// d'`assigned_establishments`, donc `canAccessEstablishment` le refuserait et il n'aurait
+// plus aucun shift à pointer. Le droit vient de son rôle SUR LA SOIRÉE, ce qui demande une
+// requête — donc un repli inline, comme les routes d'écriture voisines qui l'ont toujours
+// fait (PATCH/DELETE `/api/shifts/:id/pointage`). Un middleware ne peut pas porter ça.
+app.get('/api/pointage/:date', checkDB, requireAuth, async (req, res) => {
+    const user    = req.session.user;
     const estabId = pickPointageEstab(req);
+    if (!estabId) return res.status(400).json({ error: 'establishment_id requis' });
+    if (!canAccessEstablishment(user, estabId)) {
+        const ok = await isResponsablePourSoiree(user.staff_id, estabId, req.params.date);
+        if (!ok) return res.status(403).json({ error: 'Accès refusé' });
+    }
     try {
         const shifts = await db.collection('shifts')
             .find({ establishment_id: estabId, date: req.params.date })

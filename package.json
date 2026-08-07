@@ -19,7 +19,8 @@
     "smoke:dev": "node scripts/smoke.js https://dev.templyo.fr",
     "smoke:main": "node scripts/smoke.js https://app-planning-bar-production.up.railway.app",
     "db:uri:dev": "node scripts/db-uri.js .env.dev",
-    "db:uri:main": "node scripts/db-uri.js .env.main"
+    "db:uri:main": "node scripts/db-uri.js .env.main",
+    "link-directors": "node scripts/link-director-staff.js"
   },
   "license": "ISC",
   "type": "commonjs",
