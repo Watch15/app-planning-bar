@@ -613,6 +613,24 @@ entrent dans la barre staff **et la masse salariale**.
 reconnecter les 2 directeurs → vérifications. Retour arrière : re-push de `29bc882` ; le
 lien `staff_id` est compatible avec l'ancien code, donc rien à défaire côté données.
 
+### Colonne « Masse sal. brute » dans le tableau Performance (2026-08-07)
+
+Demandé par le client : revoir le salaire **avant charges**, **uniquement dans le tableau**.
+E-23 l'avait retiré de toute la page. Réintroduit à ce seul endroit — les KPI, le
+calendrier et les objectifs restent sur le **chargé**, qui reflète le coût réel.
+Aucun changement serveur : `wage_bill_gross` (par jour) et `wage_gross` (par personne)
+n'ont jamais cessé d'être renvoyés par `GET /api/performance`.
+
+**Un 2e défaut de modèle du seed découvert en vérifiant que la colonne se remplit** :
+`daily_revenue` était semé avec un champ **`amount`**, alors que l'app écrit et lit
+**`revenue`** (`POST /api/revenue` / `GET /api/performance`). Le CA ressortait `undefined`,
+le coefficient à **0 %** — **E-24 était intestable sur toute la base de recette**.
+C'est la même erreur que les rôles semés par nom au lieu d'`_id` : un jeu de données écrit
+d'après des suppositions plutôt que d'après le code. Corrigé et rechargé ; le coefficient
+se calcule (10,8 % sur la journée pointée).
+⚠️ **À faire** : passer en revue les autres champs du seed contre les écritures réelles du
+serveur — deux erreurs de ce type en une journée suggèrent qu'il peut en rester.
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique.

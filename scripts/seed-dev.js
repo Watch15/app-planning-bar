@@ -231,10 +231,13 @@ const FEATURES = [
 { id: 'ca', label: 'CA quotidien → coefficient masse salariale (E-24)',
   howToTest: 'Page Performance : le coefficient se calcule, les pastilles se colorent contre l\'objectif du bar sélectionné.',
   async seed(ctx) {
+    // ⚠️ Le champ est `revenue`, PAS `amount` — c'est ce qu'écrit `POST /api/revenue`
+    // (server.js) et ce que lit `GET /api/performance`. Le seed utilisait `amount` : le CA
+    // ressortait `undefined`, le coefficient à 0 %, et E-24 était intestable sur la recette.
     await ctx.db.collection('daily_revenue').insertMany([
-        { establishment_id: 'Josy_pub',        date: ctx.day(ctx.lastMon, 1), amount: 2400 },
-        { establishment_id: 'Josy_pub',        date: ctx.day(ctx.thisMon, 2), amount: 2750 },
-        { establishment_id: 'Poni_restaurant', date: ctx.day(ctx.lastMon, 3), amount: 1900 },
+        { establishment_id: 'Josy_pub',        date: ctx.day(ctx.lastMon, 1), revenue: 2400 },
+        { establishment_id: 'Josy_pub',        date: ctx.day(ctx.thisMon, 2), revenue: 2750 },
+        { establishment_id: 'Poni_restaurant', date: ctx.day(ctx.lastMon, 3), revenue: 1900 },
     ]);
 } },
 

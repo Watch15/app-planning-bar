@@ -393,10 +393,15 @@ function renderTable(data) {
         return;
     }
 
-    let totalRevenue = 0, totalWageCh = 0, totalHoursTable = 0;
+    // E-23 avait retiré le brut de toute la page. Réintroduit ICI SEULEMENT, à la demande :
+    // la masse salariale avant charges, à côté de la chargée. Les KPI, le calendrier et les
+    // objectifs restent sur le chargé — c'est lui qui reflète le coût réel.
+    // `wage_bill_gross` n'a jamais cessé d'être renvoyé par l'API : rien à changer serveur.
+    let totalRevenue = 0, totalWageCh = 0, totalWageBrut = 0, totalHoursTable = 0;
     const rows = data.map((r, idx) => {
         totalRevenue += r.revenue || 0;
         totalWageCh  += r.wage_bill_charged || 0;
+        totalWageBrut += r.wage_bill_gross || 0;
         const rowHours = r.staff_detail.reduce((a, s) => a + (s.hours_worked || 0), 0);
         totalHoursTable += rowHours;
         const okC = r.coeff_charged < targets.target_charged;
@@ -405,10 +410,11 @@ function renderTable(data) {
                 '<td class="date-cell"><span class="expand-icon">▸</span>' + dateLabel(r.date) + '</td>' +
                 '<td class="num">' + fmtEUR(r.revenue) + '</td>' +
                 '<td class="num">' + (rowHours > 0 ? fmtHours(rowHours) : '—') + '</td>' +
+                '<td class="num">' + fmtEUR(r.wage_bill_gross) + '</td>' +
                 '<td class="num">' + fmtEUR(r.wage_bill_charged) + '</td>' +
                 '<td><span class="coeff-pill ' + (okC ? 'ok' : 'bad') + '">' + fmtPct(r.coeff_charged) + '</span></td>' +
             '</tr>' +
-            '<tr class="perf-detail" data-detail-for="' + idx + '" style="display:none"><td colspan="5"></td></tr>'
+            '<tr class="perf-detail" data-detail-for="' + idx + '" style="display:none"><td colspan="6"></td></tr>'
         );
     }).join('');
 
@@ -421,6 +427,7 @@ function renderTable(data) {
                 '<th>Date</th>' +
                 '<th class="num">CA</th>' +
                 '<th class="num">Heures</th>' +
+                '<th class="num">Masse sal. brute</th>' +
                 '<th class="num">Masse sal. chargée</th>' +
                 '<th>Coeff. chargé</th>' +
             '</tr></thead>' +
@@ -429,6 +436,7 @@ function renderTable(data) {
                 '<td>Total période</td>' +
                 '<td class="num">' + fmtEUR(totalRevenue) + '</td>' +
                 '<td class="num">' + (totalHoursTable > 0 ? fmtHours(totalHoursTable) : '—') + '</td>' +
+                '<td class="num">' + fmtEUR(totalWageBrut) + '</td>' +
                 '<td class="num">' + fmtEUR(totalWageCh) + '</td>' +
                 '<td><span class="coeff-pill ' + (okTC ? 'ok' : 'bad') + '">' + fmtPct(totalCoeffC) + '</span></td>' +
             '</tr></tfoot>' +
