@@ -27,7 +27,12 @@ const { toDateStr, weekStart } = require('../lib/utils');
 
 const PASSWORD = process.env.SEED_PASSWORD || 'Templyo2026!';
 
-// Collections remises à zéro à chaque passage (les index, eux, sont recréés au boot).
+// Collections remises à zéro à chaque passage.
+// ⚠️ Les index NE sont PAS recréés — l'affirmation inverse figurait ici et était fausse :
+// `connectDB()` n'en pose que 6 au démarrage, les ~19 autres viennent de `npm run init`
+// (destructif, et il refuse la base de prod). Sur une base de recette fraîche, les requêtes
+// tournent donc sans la plupart des index : sans effet à cette volumétrie, mais à savoir
+// avant d'y mesurer quoi que ce soit.
 const WIPE = [
     'establishments', 'staff', 'users', 'sessions', 'shifts', 'availabilities',
     'time_off', 'manager_time_off', 'manager_dispo_templates', 'roles', 'settings',
@@ -95,15 +100,15 @@ const FEATURES = [
     // Poni porte les DEUX : un restaurant a un bar et une cuisine — c'est le cas qui
     // montre qu'un établissement n'appartient pas à un seul groupe.
     const byEstab = { Josy_pub: ['Bar'], Poni_restaurant: ['Bar', 'Cuisine'], FanFan_restaurant: ['Cuisine'] };
-    for (const [id, groups] of Object.entries(byEstab))
-        await ctx.db.collection('establishments').updateOne({ id }, { $set: { groups } });
+    await ctx.db.collection('establishments').bulkWrite(Object.entries(byEstab).map(
+        ([id, groups]) => ({ updateOne: { filter: { id }, update: { $set: { groups } } } })));
 
     // Elena reste SANS groupe : un staff sans groupe est visible dans tous les filtres.
-    const byStaff = { Alice: ['Bar'], Bruno: ['Bar'], 'Chloé': ['Cuisine'], David: ['Cuisine'] };
-    for (const [name, groups] of Object.entries(byStaff))
-        await ctx.db.collection('staff').updateOne({ name }, { $set: { groups } });
+    // Elena reste absente de cette liste : sans groupe, elle est visible partout.
     // La directrice suit son bar.
-    await ctx.db.collection('staff').updateOne({ name: 'Diane' }, { $set: { groups: ['Bar'] } });
+    const byStaff = { Alice: ['Bar'], Bruno: ['Bar'], 'Chloé': ['Cuisine'], David: ['Cuisine'], Diane: ['Bar'] };
+    await ctx.db.collection('staff').bulkWrite(Object.entries(byStaff).map(
+        ([name, groups]) => ({ updateOne: { filter: { name }, update: { $set: { groups } } } })));
 } },
 
 { id: 'comptes', label: 'Comptes — les 4 rôles',
@@ -121,7 +126,9 @@ const FEATURES = [
     const r = await ctx.db.collection('users').insertMany(defs.map(u => ({
         ...u, password_hash: hash, active: true, created_at: new Date(),
     })));
-    defs.forEach((u, i) => { ctx.users[u.role] = String(r.insertedIds[i]); });
+    // Keyé par NOM (comme ctx.staff) : par rôle, les 3 comptes `staff` s'écrasaient
+    // et ctx.users.staff finissait silencieusement sur le dernier.
+    defs.forEach((u, i) => { ctx.users[u.name] = String(r.insertedIds[i]); });
 } },
 
 { id: 'planning-passe', label: 'Semaine passée + heures réelles',
@@ -199,7 +206,7 @@ const FEATURES = [
           note: 'Week-end', created_at: new Date() },
     ]);
     await ctx.db.collection('manager_time_off').insertOne({
-        user_id: ctx.users.directeur, start_date: ctx.day(ctx.nextMon, 3),
+        user_id: ctx.users.Diane, start_date: ctx.day(ctx.nextMon, 3),
         end_date: ctx.day(ctx.nextMon, 4), type: 'off', note: 'Formation', created_at: new Date(),
     });
 } },
@@ -231,7 +238,8 @@ const FEATURES = [
 async function run() {
     const { client, db, dbName } = await openDb({ destructive: true });
     try {
-        for (const c of WIPE) await db.collection(c).deleteMany({});
+        // 15 purges indépendantes : en série c'était 15 allers-retours Atlas (~1,5 s).
+        await Promise.all(WIPE.map(c => db.collection(c).deleteMany({})));
 
         const now = new Date();
         const ctx = {

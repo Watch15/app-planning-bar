@@ -6630,13 +6630,18 @@ async function sendRappelDispos() {
 let disposScopeAll = false;
 const disposScopeQS = (sep = '?') => (disposScopeAll ? sep + 'scope=all' : '');
 
+// Index par id — `allStaff.find(s => String(s._id) === x)` est écrit une douzaine de fois
+// dans ce fichier, dont deux fois DANS une boucle. Une Map construite à la demande sert
+// tous les appelants sans en dupliquer la construction.
+const staffIndex = () => new Map(allStaff.map(s => [String(s._id), s]));
+
 async function loadDisposList() {
     const list = document.getElementById('dispos-list');
     list.innerHTML = '<div style="padding:16px;text-align:center;color:#ccc;font-size:13px">Chargement…</div>';
     const nextMonday = getMondayOf(addDays(new Date(), 7));
     const from = toDateStr(nextMonday);
     const to   = toDateStr(addDays(nextMonday, 6));
-    const scopeQS = disposScopeAll ? '&scope=all' : '';
+    const scopeQS = disposScopeQS('&');
     try {
         const [res, notesRes] = await Promise.all([
             fetch('/api/dispos/pending?from=' + from + '&to=' + to + scopeQS, { credentials: 'include' }),
@@ -6710,7 +6715,7 @@ async function loadDisposList() {
         // servent donc plus que dans la vue « tout le staff ».
         const dirEstabs = isDirecteur ? (currentUser.assigned_establishments || []) : [];
         const showSections = dirEstabs.length > 0 && disposScopeAll;
-        const staffById = new Map(allStaff.map(s => [String(s._id), s]));
+        const staffById = staffIndex();
         const isMyStaff = (staffId) => {
             const sm = staffById.get(String(staffId));
             return !!(sm && sm.venues && sm.venues.some(v => dirEstabs.includes(v)));
@@ -6912,7 +6917,7 @@ async function confirmDisposBatch(dispos, { preferStaffId, onDone, onCancel }) {
         // possible mais rarement voulu — et si `create_shift` est coché, ça crée de
         // vrais shifts. On le dit avant, avec le nombre exact.
         // ⚠️ Confort d'alerte, PAS un contrôle : le serveur ne l'applique pas (cf. R-16).
-        const staffById = new Map(allStaff.map(s => [String(s._id), s]));
+        const staffById = staffIndex();
         const outsiders = new Set(dispos
             .filter(d => d.type !== 'off')
             .map(d => staffById.get(String(d.staff_id)))

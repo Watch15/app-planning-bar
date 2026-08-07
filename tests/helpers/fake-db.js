@@ -59,7 +59,6 @@ function matchDoc(doc, query) {
     return Object.entries(query || {}).every(([k, cond]) => {
         if (k === '$and') return (cond || []).every(sub => matchDoc(doc, sub));
         if (k === '$or')  return (cond || []).some(sub => matchDoc(doc, sub));
-        if (k === '$nor') return !(cond || []).some(sub => matchDoc(doc, sub));
         return matchField(doc[k], cond);
     });
 }
@@ -99,6 +98,17 @@ function makeCollection(initialDocs) {
             return { insertedCount: (arr || []).length, acknowledged: true };
         },
         async countDocuments(q)   { return docs.filter(d => matchDoc(d, q || {})).length; },
+        // Valeurs distinctes d'un champ. Mongo aplatit les tableaux (un champ `groups: ['a','b']`
+        // contribue 'a' ET 'b') et ignore les documents où le champ est absent.
+        async distinct(field, q)  {
+            const out = new Set();
+            for (const d of docs.filter(x => matchDoc(x, q || {}))) {
+                const v = d[field];
+                if (v === undefined || v === null) continue;
+                (Array.isArray(v) ? v : [v]).forEach(x => out.add(x));
+            }
+            return [...out];
+        },
         async deleteOne(query)    {
             const i = docs.findIndex(d => matchDoc(d, query));
             if (i < 0) return { deletedCount: 0 };

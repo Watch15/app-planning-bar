@@ -883,13 +883,7 @@ function denyObservateurEdit(req, res, next) {
 function userEstablishmentIds(user) {
     if (!user) return [];
     if (user.role === 'patron' || user.role === 'observateur') return null;
-    // Compte établissement : le sien, et lui seul. Cette branche n'existait pas — faute de
-    // `assigned_establishments`, la fonction répondait toujours `false` pour ce rôle, ce qui
-    // a poussé 5 routes à écrire `role !== 'etablissement' && !canAccess(…)`, c'est-à-dire à
-    // sauter le contrôle. ⚠️ Ces 5 routes portaient CHACUNE leur propre garde
-    // (`role === 'etablissement' && establishment_id !== …`, ou id pris en session) : il n'y
-    // avait donc pas de trou. Traiter le rôle ici permet de supprimer le cas particulier —
-    // c'est une SIMPLIFICATION, pas un correctif de sécurité.
+    // Compte établissement : le sien, et lui seul.
     if (user.role === 'etablissement') return user.establishment_id ? [user.establishment_id] : [];
     return user.assigned_establishments || [];
 }
@@ -905,17 +899,13 @@ function canAccessEstablishment(user, establishmentId) {
 // autres (S-03, S-06). Un middleware déclaratif rend l'oubli visible à la lecture.
 // `pick(req)` extrait l'id (query, params ou body selon la route).
 //
-// ⚠️ QUAND L'UTILISER — inventaire fait le 2026-08-06, 20 sites de contrôle :
-//   • ~10 routes lisent l'établissement DIRECTEMENT dans la requête (query, params, body,
-//     ou l'id de session pour un compte `etablissement`). Celles-là doivent passer par ce
-//     middleware : le contrôle devient déclaratif, donc un oubli se voit à la lecture.
-//   • ~10 autres le lisent dans un DOCUMENT chargé par le handler — `existing.establishment_id`
-//     d'un shift, `swap.from_establishment_id`, l'établissement cible d'une dispo…
-//     Un middleware ne voit que la requête : il ne PEUT PAS les couvrir. Pour celles-là,
-//     l'appel inline à `canAccessEstablishment` juste après le chargement est la forme
-//     correcte, pas une dette.
-// Autrement dit : R-16 n'a pas vocation à faire disparaître tous les appels inline, mais à
-// supprimer ceux qui n'ont aucune raison d'en être.
+// ⚠️ QUAND L'UTILISER : uniquement si l'établissement est LISIBLE DANS LA REQUÊTE (query,
+// params, body, ou id de session pour un compte `etablissement`). Les routes qui le lisent
+// dans un document chargé par le handler — `existing.establishment_id` d'un shift,
+// `swap.from_establishment_id`, la cible d'une dispo — ne peuvent pas passer par un
+// middleware, qui ne voit que la requête : l'appel inline y est la forme CORRECTE.
+// Certaines routes requête-dérivées restent inline faute d'avoir été migrées : l'absence
+// de middleware ne prouve donc pas l'absence de contrôle, il faut lire le handler.
 //
 // `whenAbsent` : que faire si l'id manque —
 //   'deny'       → 400 (l'id est obligatoire, cas par défaut)
@@ -1235,7 +1225,8 @@ app.get('/api/users', checkDB, requirePatron, async (req, res) => {
 // marqué `is_manager` (traçabilité — pas d'exclusion paie). `venues` = ses
 // établissements assignés pour qu'il soit pertinent sur leur planning.
 async function createManagerStaffProfile({ name, email, phone, venues }) {
-    const used  = new Set((await db.collection('staff').find({}, { projection: { color: 1 } }).toArray()).map(s => s.color));
+    // `distinct` dédoublonne côté serveur : ~15 valeurs au lieu d'un document par staff.
+    const used  = new Set(await db.collection('staff').distinct('color'));
     const color = pickStaffColor(used);
     // R-05 — sans nom, tous les directeurs s'appelaient « Directeur » : N comptes, N lignes
     // homonymes dans la barre staff et le récap, impossibles à distinguer. On retombe sur
@@ -1253,14 +1244,18 @@ async function createManagerStaffProfile({ name, email, phone, venues }) {
     return String(insertedId);
 }
 
-// R-06 — `users.assigned_establishments` et `staff.venues` sont DEUX champs pour la
+// R-06 — rend le profil staff d'un directeur CONFORME à son compte : recale ses venues,
+// et le CRÉE s'il manque (en posant `users.staff_id`) — d'où le nom, la fonction ne fait pas
+// que synchroniser. C'est le point de passage de toute création/réaffectation de directeur.
+//
+// `users.assigned_establishments` et `staff.venues` sont DEUX champs pour la
 // même réalité : les bars du directeur. Le premier ouvre les écrans (canAccessEstablishment),
 // le second ouvre la saisie des dispos (staffDispoOpen). Depuis la correction E-22 le
 // directeur passe par le pipeline staff : les laisser diverger, c'est un directeur qui
 // voit son planning mais ne peut plus envoyer une seule dispo — sans message d'erreur
 // qui l'explique. Toute route qui écrit `assigned_establishments` DOIT appeler ceci.
 // À appeler APRÈS l'écriture : la base fait foi, pas ce que l'appelant croit avoir écrit.
-async function syncManagerStaffVenues(userId) {
+async function ensureDirectorStaffProfile(userId) {
     const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
     if (!user || user.role !== 'directeur') return; // rétrogradé : profil staff intact (historique)
     const venues = Array.isArray(user.assigned_establishments) ? user.assigned_establishments : [];
@@ -1279,7 +1274,7 @@ async function syncManagerStaffVenues(userId) {
     await db.collection('users').updateOne({ _id: new ObjectId(userId) }, { $set: { staff_id: staffId } });
 }
 
-// R-15 — le pendant de `syncManagerStaffVenues`, dans l'autre sens.
+// R-15 — le pendant de `ensureDirectorStaffProfile`, dans l'autre sens.
 // Ne touche QUE les comptes `directeur` : pour un staff ordinaire,
 // `assigned_establishments` n'a pas de sens et doit rester vide.
 async function syncDirectorAssignedEstablishments(staffId, venues) {
@@ -1336,7 +1331,7 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
             const token   = crypto.randomBytes(32).toString('hex');
             const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 jours
             // R-05 / R-12 — le profil staff du directeur est créé APRÈS le compte, par
-            // `syncManagerStaffVenues` : (a) plus de profil orphelin si l'insert échoue
+            // `ensureDirectorStaffProfile` : (a) plus de profil orphelin si l'insert échoue
             // (doublon d'email, etc.), et (b) un staff EXISTANT promu directeur GARDE son
             // profil — avec son taux, ses rôles et son historique — au lieu d'en recevoir
             // un second, l'ancien restant derrière avec toutes les données.
@@ -1353,7 +1348,7 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
                 active:                  false,
                 created_at:              new Date(),
             });
-            if (userRole === 'directeur') await syncManagerStaffVenues(newUserId);
+            if (userRole === 'directeur') await ensureDirectorStaffProfile(newUserId);
             if (staff_id && userRole === 'staff' && isValidObjectId(staff_id)) {
                 await db.collection('staff').updateOne(
                     { _id: new ObjectId(staff_id) },
@@ -1378,7 +1373,7 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
         const token   = crypto.randomBytes(32).toString('hex');
         const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
         // R-05 / R-12 — le profil staff du directeur est créé APRÈS le compte, par
-        // `syncManagerStaffVenues` : (a) plus de profil orphelin si l'insert échoue
+        // `ensureDirectorStaffProfile` : (a) plus de profil orphelin si l'insert échoue
         // (doublon d'email, etc.), et (b) un staff EXISTANT promu directeur GARDE son
         // profil — avec son taux, ses rôles et son historique — au lieu d'en recevoir
         // un second, l'ancien restant derrière avec toutes les données.
@@ -1396,7 +1391,7 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
             active:                  false,
             created_at:              new Date(),
         });
-        if (userRole === 'directeur') await syncManagerStaffVenues(newUserId);
+        if (userRole === 'directeur') await ensureDirectorStaffProfile(newUserId);
 
         if (staff_id && userRole === 'staff' && isValidObjectId(staff_id)) {
             await db.collection('staff').updateOne(
@@ -1461,7 +1456,7 @@ app.patch('/api/users/:id/role', checkDB, requirePatronOnly, async (req, res) =>
         if (result.matchedCount === 0) return res.status(404).json({ error: 'Utilisateur introuvable' });
         // R-06 : promotion en directeur ⇒ profil staff + venues alignés, sinon il ne
         // pourra jamais envoyer de dispo (400 « Aucun profil staff lié »).
-        await syncManagerStaffVenues(req.params.id);
+        await ensureDirectorStaffProfile(req.params.id);
         res.json({ message: 'Rôle mis à jour' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -1479,7 +1474,7 @@ app.patch('/api/users/:id/establishments', checkDB, requireAdmin, async (req, re
         if (result.matchedCount === 0) return res.status(404).json({ error: 'Utilisateur introuvable' });
         // R-06 : recaler `staff.venues` — sans ça, un directeur réaffecté garde les
         // anciens bars côté staff et perd l'accès à la saisie des dispos.
-        await syncManagerStaffVenues(req.params.id);
+        await ensureDirectorStaffProfile(req.params.id);
         res.json({ message: 'Établissements mis à jour' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -1962,7 +1957,7 @@ app.patch('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
             { _id: new ObjectId(req.params.id) }, { $set: update }
         );
         if (result.matchedCount === 0) return res.status(404).json({ error: 'Staff introuvable' });
-        // R-15 — SENS INVERSE de `syncManagerStaffVenues`. Pour un directeur,
+        // R-15 — SENS INVERSE de `ensureDirectorStaffProfile`. Pour un directeur,
         // `staff.venues` et `users.assigned_establishments` décrivent les mêmes bars, mais
         // gouvernent deux choses différentes : la saisie des dispos (`staffDispoOpen`) et
         // l'accès aux écrans (`canAccessEstablishment`). Sans ce rappel, cocher des bars sur
@@ -3042,8 +3037,11 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
 // tri-état null/[]/ids, où le `[]` (directeur sans bar ⇒ ne voit rien) est *truthy* et
 // tombe au premier `if (ids?.length)` écrit par réflexe.
 async function pendingScopeFilter(user, scope) {
-    if (user.role !== 'directeur' || scope === 'all') return {};
-    const venues = user.assigned_establishments || [];
+    // Passe par la source unique. Refaire le test de rôle à la main laisserait un futur
+    // rôle scopé tomber dans « aucun filtre » — un fail-OPEN, alors que
+    // `userEstablishmentIds` est fail-closed par construction.
+    const venues = userEstablishmentIds(user);
+    if (venues === null || scope === 'all') return {};
     // Aucun bar assigné ⇒ aucun staff, et non « tous » : cohérent avec canAccessEstablishment.
     if (!venues.length) return { staff_id: { $in: [] } };
     const staff = await db.collection('staff')
@@ -4744,8 +4742,6 @@ app.post('/api/revenue', checkDB, requireAuth, async (req, res) => {
 app.get('/api/revenue/:establishmentId/:date', checkDB, requireAuth, async (req, res) => {
     const user = req.session.user;
     const { establishmentId, date } = req.params;
-    if (user.role === 'etablissement' && user.establishment_id !== establishmentId)
-        return res.status(403).json({ error: 'Accès refusé' });
     if (!canAccessEstablishment(user, establishmentId))
         return res.status(403).json({ error: 'Accès refusé' });
     try {
@@ -4872,33 +4868,15 @@ app.get('/api/performance', checkDB, requirePatron,
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-// S-02 / S-03 — portée d'un accès aux réglages de performance.
-// Deux cas et deux règles différentes :
-//  • `establishment_id` fourni → réglage d'UN bar : accès si l'utilisateur y a droit.
-//  • absent → doc GLOBAL `performance`, dont `charge_rate` alimente TOUS les
-//    établissements par fallback (`resolvePerfSettings`). Un directeur limité à un bar
-//    qui l'écrit déplace les chiffres de bars qu'il ne voit même pas → patron seulement.
-// Retourne `null` (accès accordé) ou la réponse d'erreur { status, error } — statut
-// COMPRIS, pour que l'appelant n'ait pas à le redériver du texte du message.
-function perfScopeDenial(user, establishmentId) {
-    if (establishmentId == null || establishmentId === '') {
-        // Lecture globale : patron et observateur (le rôle « lecture seule globale »).
-        // En écriture, `denyObservateurEdit` a déjà arrêté l'observateur en amont.
-        return user.role === 'patron' || user.role === 'observateur' ? null
-            : { status: 403, error: 'Réglage global réservé au patron — précise un établissement.' };
-    }
-    if (typeof establishmentId !== 'string' || !establishmentId.trim())
-        return { status: 400, error: 'establishment_id invalide' };
-    return canAccessEstablishment(user, establishmentId) ? null : { status: 403, error: 'Accès refusé' };
-}
-
 // GET/PATCH objectifs performance (coefficient cible)
 // S-03 : `requireAuth` seul laissait n'importe quel staff lire les objectifs et le taux
-// de charges de n'importe quel bar en devinant l'id (slug `Nom_bar`). Aligné sur la route
-// voisine `GET /api/performance`, qui a toujours fait le bon contrôle.
-app.get('/api/performance-settings', checkDB, requirePatron, async (req, res) => {
-    const denial = perfScopeDenial(req.session.user, req.query.establishment_id);
-    if (denial) return res.status(denial.status).json({ error: denial.error });
+// de charges de n'importe quel bar en devinant l'id (slug `Nom_bar`).
+// `whenAbsent: 'patronOnly'` porte la règle propre à ces deux routes : sans
+// `establishment_id`, on vise le doc GLOBAL `performance`, dont `charge_rate` alimente
+// TOUS les établissements par fallback (`resolvePerfSettings`) — un directeur limité à un
+// bar y déplacerait les chiffres de bars qu'il ne voit même pas.
+app.get('/api/performance-settings', checkDB, requirePatron,
+    requireEstablishmentAccess(r => r.query.establishment_id, { whenAbsent: 'patronOnly' }), async (req, res) => {
     try {
         // establishment_id fourni → paramètres effectifs de cet établissement
         // (override + fallback global) ; absent → défaut global.
@@ -4908,10 +4886,9 @@ app.get('/api/performance-settings', checkDB, requirePatron, async (req, res) =>
 
 // S-02 : `denyObservateurEdit` manquait — `requirePatron` laisse passer l'observateur,
 // donc un rôle lecture seule pouvait écrire les objectifs et le taux de charges.
-app.patch('/api/performance-settings', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
+app.patch('/api/performance-settings', checkDB, requirePatron, denyObservateurEdit,
+    requireEstablishmentAccess(r => r.body.establishment_id, { whenAbsent: 'patronOnly' }), async (req, res) => {
     const { target_gross, target_charged, charge_rate, establishment_id } = req.body;
-    const denial = perfScopeDenial(req.session.user, establishment_id);
-    if (denial) return res.status(denial.status).json({ error: denial.error });
     const key = establishment_id ? 'performance_' + establishment_id : 'performance';
     const update = { key };
     // Bornes raisonnables : 0–100 % pour les objectifs coeff, 0–200 % pour le taux de charges
@@ -5019,8 +4996,6 @@ app.patch('/api/shifts/:id/pointage', checkDB, requireAuth, async (req, res) => 
         const existing = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
         if (!existing) return res.status(404).json({ error: 'Shift introuvable' });
         const user = req.session.user;
-        if (user.role === 'etablissement' && user.establishment_id !== existing.establishment_id)
-            return res.status(403).json({ error: 'Accès refusé' });
         if (!canAccessEstablishment(user, existing.establishment_id)) {
             // Autoriser le staff responsable de soirée sur cet établissement
             const ok = await isResponsablePourSoiree(user.staff_id, existing.establishment_id, existing.date);
@@ -5061,8 +5036,6 @@ app.delete('/api/shifts/:id/pointage', checkDB, requireAuth, async (req, res) =>
         const existing = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
         if (!existing) return res.status(404).json({ error: 'Shift introuvable' });
         const user = req.session.user;
-        if (user.role === 'etablissement' && user.establishment_id !== existing.establishment_id)
-            return res.status(403).json({ error: 'Accès refusé' });
         if (!canAccessEstablishment(user, existing.establishment_id)) {
             const ok = await isResponsablePourSoiree(user.staff_id, existing.establishment_id, existing.date);
             if (!ok) return res.status(403).json({ error: 'Accès refusé' });

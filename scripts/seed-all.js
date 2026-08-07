@@ -18,7 +18,10 @@ function seed(envFile) {
             return resolve(0);
         }
         console.log('\n━━━ ' + envFile + ' ━━━');
-        const child = spawn(process.execPath, ['scripts/seed-dev.js'], {
+        // Via dev-run.js : lui seul relaie SIGINT/SIGTERM à l'enfant. Sans ça, un Ctrl-C
+        // rend la main tout de suite et laisse `seed-dev.js` — qui commence par vider
+        // 15 collections — finir son travail en arrière-plan.
+        const child = spawn(process.execPath, ['scripts/dev-run.js', 'scripts/seed-dev.js'], {
             stdio: 'inherit', cwd: root,
             env: { ...process.env, ENV_FILE: envFile },
         });

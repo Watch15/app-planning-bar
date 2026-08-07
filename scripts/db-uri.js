@@ -11,6 +11,7 @@
 // ⚠️ Imprime des identifiants en clair : à ne pas coller dans un ticket ou un chat.
 
 const fs = require('fs');
+const { PROD_DB_NAME } = require('./_db');
 const path = require('path');
 
 const envFile = process.argv[2] || '.env.dev';
@@ -24,7 +25,7 @@ if (!cfg.MONGO_URI) {
     console.error('❌ MONGO_URI absent de ' + envFile + '.');
     process.exit(1);
 }
-const db = cfg.MONGO_DB || 'gestion_bar';
+const db = cfg.MONGO_DB || PROD_DB_NAME; // 3e copie du littéral évitée
 // Insérer le nom de base AVANT la query string : mongodb+srv://…/<base>?options
 const [head, query] = cfg.MONGO_URI.split('?');
 console.log(head.replace(/\/+$/, '') + '/' + db + (query ? '?' + query : ''));
