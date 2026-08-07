@@ -220,3 +220,30 @@ test('pointage : sans establishment_id → 400, pas 403', async () => {
     seedSoiree();
     assert.equal(await code(RESP_USER, '/api/pointage/' + DAY), 400);
 });
+
+// ── Suppression d'un profil staff : couper TOUS les rattachements ────────────
+// Vécu en prod : seuls le profil et ses shifts partaient. Le compte restait branché sur
+// l'id mort, et les dispos/congés saisis ENSUITE s'y accumulaient — invisibles. Chez le
+// client, des congés à venir n'apparaissaient nulle part pendant la construction du planning.
+
+test('supprimer un profil staff délie le compte et purge ses rattachements', async () => {
+    const SID = '0123456789abcdef0123aaaa';
+    const d = makeDb({
+        staff: [{ _id: SID, name: 'Parti', venues: ['bar1'] }],
+        users: [{ _id: 'u-parti', role: 'staff', name: 'Parti', staff_id: SID }],
+        shifts: [{ establishment_id: 'bar1', staff_id: SID, date: DAY, start_time: 18, end_time: 24 }],
+        availabilities: [{ staff_id: SID, date: DAY, type: 'soir', status: 'pending' }],
+        time_off: [{ staff_id: SID, start_date: '2099-05-01', end_date: '2099-05-10', status: 'approved' }],
+        manager_dispo_templates: [{ staff_id: SID, days: {} }],
+    });
+    app.locals.setTestDb(d);
+
+    const res = await req('/api/staff/' + SID, PATRON, { method: 'DELETE' });
+    assert.equal(res.status, 200);
+
+    const user = d.collection('users')._docs.find(u => u._id === 'u-parti');
+    assert.equal(user.staff_id, null, 'le compte est DÉLIÉ, pas laissé sur un id mort');
+    assert.ok(user, 'le compte lui-même survit — la personne garde son accès');
+    for (const col of ['staff', 'shifts', 'availabilities', 'time_off', 'manager_dispo_templates'])
+        assert.equal(d.collection(col)._docs.length, 0, col + ' doit être purgé');
+});

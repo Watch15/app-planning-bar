@@ -721,6 +721,42 @@ paramètres positionnels tirés du même objet (passer la ligne entière) ; le g
 touche pas `staff`) ; `seedSoiree()` dans les tests reconstruit une base et jette celle du
 `beforeEach` ; 3 annuaires nom→id construits par la même ligne dans le seed.
 
+### 🔴 INCIDENT PROD — compte branché sur un profil staff supprimé (2026-08-07)
+
+**Signalé par le client** : « un staff a des shifts qui ne sont pas attribués à son profil ».
+
+**Diagnostic.** Le compte `antoine.bozo@gmail.com` (créé le 24/04) pointait sur
+`staff_id: 69eb3b0b…d5`, un profil **supprimé**. Son vrai profil « Antoine BOZO »
+(`6a076208…`, créé le 15/05) portait ses 12 shifts, sans aucun compte rattaché. L'écart
+d'un caractère entre l'`_id` du compte (`…d6`) et le staff_id mort (`…d5`) montre qu'ils
+avaient été créés ensemble, puis que le profil seul a été supprimé.
+
+**Ce qui était réellement en jeu** : sur le profil mort s'étaient accumulés **15 dispos**
+et **3 congés**, dont des vacances du **23/08 au 06/09 déjà approuvées**. Ces congés
+n'apparaissaient nulle part — ni onglet Congés, ni planning, ni garde-fou d'assignation.
+Le patron construisait son planning d'août sans les voir. Un seul compte touché sur toute
+la base (3371 shifts sains).
+
+**Cause racine.** `DELETE /api/staff/:id` supprimait le profil et ses shifts, mais ne
+touchait NI `users.staff_id`, NI `availabilities`, NI `time_off`. Le compte restait branché
+sur un id mort, et tout ce que la personne saisissait ENSUITE s'y accumulait, invisible.
+C'est le symétrique de R-12, traité hier dans l'autre sens (suppression du compte).
+
+**Corrigé — données** : `scripts/fix-orphan-staff-link.js` (simulation par défaut, rapproche
+par e-mail puis nom normalisé, s'abstient si non unique, imprime le `staff_id` de retour
+arrière). Appliqué : compte rebranché, 15 dispos + 3 congés rapatriés. Vérifié après coup :
+**plus aucun document orphelin sur toute la base**.
+
+**Corrigé — code** : la route délie désormais les comptes (`staff_id: null`, le compte
+survit — la personne garde son accès et l'anomalie devient visible dans « Comptes ») et
+purge dispos, congés et semaine-type. 1 test, mutation vérifiée sur 2 branches.
+
+**4e lacune de `fake-db` trouvée par ce chemin** : `updateMany` n'existait pas — **11 usages
+dans `server.js` étaient donc intestables**, dont la propagation d'un renommage staff.
+Ajouté. (Précédentes : `deleteOne`, `distinct`, `$and`/`$or`/`$exists`.)
+
+⚠️ **Antoine Bozo doit se reconnecter** — `staff_id` est figé dans la session au login.
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique.

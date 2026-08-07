@@ -1977,12 +1977,26 @@ app.patch('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
+// ⚠️ Supprimer un profil staff doit couper TOUS ses rattachements.
+// Vécu en prod (2026-08-07) : seuls le profil et ses shifts étaient supprimés. Le COMPTE
+// restait branché sur l'identifiant mort, et tout ce que la personne saisissait ensuite —
+// 15 dispos et 3 congés, dont des vacances à venir — s'accumulait dessus, invisible pour
+// tout le monde. Le patron construisait son planning sans voir ces congés.
+// Le compte est DÉLIÉ (staff_id: null) et non supprimé : la personne garde son accès, et
+// l'absence de profil est visible dans « Comptes » au lieu d'être un lien mort silencieux.
 app.delete('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     try {
-        await db.collection('shifts').deleteMany({ staff_id: req.params.id });
         const result = await db.collection('staff').deleteOne({ _id: new ObjectId(req.params.id) });
         if (result.deletedCount === 0) return res.status(404).json({ error: 'Staff introuvable' });
+        const staffId = req.params.id;
+        await Promise.all([
+            db.collection('shifts').deleteMany({ staff_id: staffId }),
+            db.collection('availabilities').deleteMany({ staff_id: staffId }),
+            db.collection('time_off').deleteMany({ staff_id: staffId }),
+            db.collection('manager_dispo_templates').deleteMany({ staff_id: staffId }),
+            db.collection('users').updateMany({ staff_id: staffId }, { $set: { staff_id: null } }),
+        ]);
         res.json({ message: 'Staff supprimé' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });

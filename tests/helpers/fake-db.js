@@ -109,6 +109,19 @@ function makeCollection(initialDocs) {
             }
             return [...out];
         },
+        // Son absence rendait INTESTABLE toute route l'utilisant — dont la propagation
+        // d'un renommage staff et le déliement des comptes à la suppression d'un profil.
+        async updateMany(query, update) {
+            let n = 0;
+            for (const doc of docs) {
+                if (!matchDoc(doc, query)) continue;
+                if (update.$set)  Object.assign(doc, update.$set);
+                if (update.$pull) for (const [k, v] of Object.entries(update.$pull))
+                    if (Array.isArray(doc[k])) doc[k] = doc[k].filter(x => !eq(x, v));
+                n++;
+            }
+            return { matchedCount: n, modifiedCount: n };
+        },
         async deleteOne(query)    {
             const i = docs.findIndex(d => matchDoc(d, query));
             if (i < 0) return { deletedCount: 0 };
