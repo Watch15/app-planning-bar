@@ -723,6 +723,15 @@ français que personne n'exécute : la faire exécuter ferme la boucle. Complém
 un `$jsonSchema` sur `daily_revenue` (collection qui a déjà un index unique, donc déjà
 traitée comme ayant un contrat) aurait fait ÉCHOUER l'insert au lieu d'afficher 0 %.
 
+**A-14 — Le 401 en cours de session n'est traité qu'au chargement de page.**
+Chaque page redirige vers `/login.html` quand `/auth/me` échoue **au démarrage**
+(`planning.js:54`, `script.js:496`, `pointage.js:166`). Mais un 401 qui survient *pendant*
+l'utilisation fait juste échouer l'appel en silence : l'écran reste affiché avec des données
+périmées. Antérieur à R-17 — l'expiration à 30 jours produisait déjà ce cas — mais R-17 le
+rend nettement plus fréquent, puisqu'un changement de périmètre coupe désormais la session
+immédiatement. Correctif : un `fetch` centralisé qui redirige sur 401, `pointage.js` en
+premier (page ouverte toute la soirée sur la tablette du bar).
+
 **Divers, moindre valeur** : `norm()` est la 3e copie de `normalizeStr` (`script.js`,
 `pointage.js`) ; `fmtRate` duplique `fmtPct` avec un format différent **dans la même ligne
 d'en-tête** (« charges 45 % » à côté de « cible 43,0 % ») ; `renderDetail` prend 4
