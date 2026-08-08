@@ -757,6 +757,54 @@ Ajouté. (Précédentes : `deleteOne`, `distinct`, `$and`/`$or`/`$exists`.)
 
 ⚠️ **Antoine Bozo doit se reconnecter** — `staff_id` est figé dans la session au login.
 
+### Priorisation — revue de l'ensemble (2026-08-08)
+
+Demandée avant de lancer les features A (désactivation) et B (horizon de saisie). Verdict :
+**elles sont bien prioritaires, mais trois choses passent devant, et deux ne sont pas du
+travail — juste des livraisons en attente.**
+
+#### Devant les features
+
+| # | Quoi | Pourquoi devant | Coût |
+|---|---|---|---|
+| 1 | **Pousser `2d723f9`** (correctif `DELETE /api/staff/:id`) | Le trou qui a produit l'incident Antoine Bozo est **corrigé mais pas déployé**. Si le patron supprime un profil demain, des congés redeviennent invisibles et il planifie quelqu'un en vacances. Ce n'est pas du travail : c'est un push. | ~0 |
+| 2 | **A-08** — le runbook recommande encore `backfill-directors` | Au prochain client, on relit cette ligne et on **duplique ses profils staff** : historique scindé, personnes comptées deux fois en masse salariale. Une ligne à corriger. | ~0 |
+| 3 | **R-17** — périmètre figé au login | Un directeur retiré d'un bar, ou rétrogradé, **garde ses droits jusqu'à 30 jours**. Ça défait silencieusement S-02, S-03 et S-04 — les trois correctifs de sécurité de la semaine. Piste peu coûteuse : un `session_epoch` sur le user, vérifié par `requireAuth`. | moyen |
+
+#### Reclassement de la Feature A — c'est un correctif, pas un confort
+
+Aujourd'hui, **la seule façon de sortir quelqu'un est `DELETE /api/staff/:id`**, qui supprime
+ses shifts — donc son historique de paie. C'est destructif et irréversible. La désactivation
+n'est pas une commodité : c'est **l'alternative sûre à une opération dangereuse** qui est
+actuellement le seul chemin offert au patron. Sa priorité monte d'autant.
+
+#### Le risque structurel le plus lourd, qui n'est pas une feature
+
+**A-01 — le client est sur un dépôt fork.** Aucun correctif ne l'atteint automatiquement ;
+chaque livraison est un `git push castanui` manuel. À un client c'est tenable. À trois, on
+oubliera. C'est le risque numéro un pour un produit qui veut grandir, et il ne se voit pas
+tant qu'il ne coûte rien.
+
+**T-03 — zéro test front.** Trois correctifs d'interface livrés le 2026-08-06, validés par
+lecture seule. Et sur deux jours, **4 lacunes de `fake-db`** (`deleteOne`, `distinct`,
+`$and`/`$or`/`$exists`, `updateMany` — 11 usages intestables) : la couverture réelle est plus
+faible que ne le suggèrent 210 tests. Les deux vrais bugs de la semaine — régression du
+pointage, incident Antoine Bozo — ont été trouvés par une inspection manuelle et un
+signalement client, **pas par la suite de tests**.
+
+#### Les autres features, par nécessité décroissante
+
+- **F-12 (journal d'audit des dispos)** — utile le jour d'un litige patron ↔ employé, et on
+  vient de voir que des données peuvent disparaître sans trace. Vraie valeur, pas urgente.
+- **F-05 (échange de shifts)** — le code est écrit et testé, **désactivé en attente de ta
+  validation**. Coût de mise en service ≈ retirer des commentaires. Le blocage est une
+  décision, pas du travail.
+- **B2 (horizon de saisie)** — confort réel, mais personne n'est bloqué aujourd'hui.
+- **F-09 (agenda iCal)** — livré puis désactivé pour manque de fiabilité. À laisser dormir
+  tant que le reste n'est pas solide.
+- **R-04 (découper `server.js`, ~4250 lignes)** — vraie dette, mais un refactoring de cette
+  taille sans tests front est plus risqué que la dette elle-même. **Après** T-03, pas avant.
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique.
