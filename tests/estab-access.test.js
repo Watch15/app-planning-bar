@@ -247,3 +247,83 @@ test('supprimer un profil staff délie le compte et purge ses rattachements', as
     for (const col of ['staff', 'shifts', 'availabilities', 'time_off', 'manager_dispo_templates'])
         assert.equal(d.collection(col)._docs.length, 0, col + ' doit être purgé');
 });
+
+// ── R-17 : le périmètre est figé en session, il faut la fermer ───────────────
+// `role` et `assigned_establishments` sont recopiés dans la session AU LOGIN, qui vit
+// 30 jours glissants. Sans invalidation, un directeur retiré d'un bar garde ses anciens
+// droits jusqu'à un mois — ce qui défait S-02, S-03 et S-04, tous fondés sur la session.
+
+const sessionsOf = db => db.collection('sessions')._docs;
+function seedSession(uid) {
+    const d = makeDb({
+        users: [{ _id: uid, role: 'directeur', name: 'Diane', assigned_establishments: ['bar1'] }],
+        staff: [], sessions: [
+            { sid: 's1', session: { user: { _id: uid, role: 'directeur' } } },
+            { sid: 's2', session: { user: { _id: 'autre', role: 'staff' } } },
+        ],
+    });
+    app.locals.setTestDb(d);
+    return d;
+}
+const UID = '0123456789abcdef0123dead';
+
+test('R-17 : changer les établissements ferme les sessions de la personne', async () => {
+    const d = seedSession(UID);
+    const res = await req('/api/users/' + UID + '/establishments', PATRON, {
+        method: 'PATCH', body: JSON.stringify({ assigned_establishments: ['bar2'] }),
+    });
+    assert.equal(res.status, 200);
+    assert.deepEqual(sessionsOf(d).map(s => s.sid), ['s2'],
+        'sa session tombe, celle des autres est intacte');
+});
+
+test('R-17 : changer le rôle ferme les sessions', async () => {
+    const d = seedSession(UID);
+    await req('/api/users/' + UID + '/role', PATRON, {
+        method: 'PATCH', body: JSON.stringify({ role: 'staff' }),
+    });
+    assert.deepEqual(sessionsOf(d).map(s => s.sid), ['s2']);
+});
+
+test('R-17 : supprimer un compte ferme ses sessions', async () => {
+    const d = seedSession(UID);
+    await req('/api/users/' + UID, PATRON, { method: 'DELETE' });
+    assert.deepEqual(sessionsOf(d).map(s => s.sid), ['s2'],
+        'sans ça, un compte supprimé restait utilisable jusqu\'à 30 jours');
+});
+
+test('R-17 : changer les bars depuis l\'écran staff ferme aussi la session', async () => {
+    const d = makeDb({
+        users: [{ _id: UID, role: 'directeur', staff_id: '0123456789abcdef0123cafe', assigned_establishments: ['bar1'] }],
+        staff: [{ _id: '0123456789abcdef0123cafe', name: 'Diane', venues: ['bar1'] }],
+        sessions: [
+            { sid: 's1', session: { user: { _id: UID } } },
+            { sid: 's2', session: { user: { _id: 'autre' } } },
+        ],
+    });
+    app.locals.setTestDb(d);
+    const res = await req('/api/staff/0123456789abcdef0123cafe', PATRON, {
+        method: 'PATCH', body: JSON.stringify({ venues: ['bar2'] }),
+    });
+    assert.equal(res.status, 200);
+    assert.deepEqual(sessionsOf(d).map(s => s.sid), ['s2'],
+        'porte la plus empruntée : le patron édite les bars depuis l\'écran staff');
+});
+
+test('R-17 : supprimer un profil staff ferme la session du compte lié', async () => {
+    const d = makeDb({
+        staff: [{ _id: '0123456789abcdef0123beef', name: 'Parti' }],
+        users: [
+            { _id: UID, role: 'staff', staff_id: '0123456789abcdef0123beef' },
+            { _id: 'sansprofil', role: 'staff', staff_id: null },
+        ],
+        sessions: [
+            { sid: 's1', session: { user: { _id: UID } } },
+            { sid: 's2', session: { user: { _id: 'sansprofil' } } },
+        ],
+    });
+    app.locals.setTestDb(d);
+    await req('/api/staff/0123456789abcdef0123beef', PATRON, { method: 'DELETE' });
+    assert.deepEqual(sessionsOf(d).map(s => s.sid), ['s2'],
+        'les comptes SANS profil ne doivent pas être emportés au passage');
+});

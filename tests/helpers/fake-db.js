@@ -55,11 +55,15 @@ function matchField(val, cond) {
 // pas une valeur de champ — d'où le traitement à part. Sans eux, une requête comme celle du
 // récap mensuel (`$and: [{ $or: [...] }, ...]`) ne matchait AUCUN document, et un test
 // écrit dessus passait pour de mauvaises raisons.
+// Mongo accepte les chemins pointés (`'session.user._id'`) — c'est ainsi qu'on retrouve
+// les sessions d'un utilisateur dans le store. Sans ça, ces filtres ne matchent rien ici.
+const getPath = (doc, path) => path.split('.').reduce((o, k) => (o == null ? o : o[k]), doc);
+
 function matchDoc(doc, query) {
     return Object.entries(query || {}).every(([k, cond]) => {
         if (k === '$and') return (cond || []).every(sub => matchDoc(doc, sub));
         if (k === '$or')  return (cond || []).some(sub => matchDoc(doc, sub));
-        return matchField(doc[k], cond);
+        return matchField(k.includes('.') ? getPath(doc, k) : doc[k], cond);
     });
 }
 

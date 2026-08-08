@@ -1279,10 +1279,31 @@ async function ensureDirectorStaffProfile(userId) {
 // `assigned_establishments` n'a pas de sens et doit rester vide.
 async function syncDirectorAssignedEstablishments(staffId, venues) {
     if (!Array.isArray(venues)) return;
-    await db.collection('users').updateOne(
-        { staff_id: String(staffId), role: 'directeur' },
-        { $set: { assigned_establishments: venues } }
-    );
+    const filter = { staff_id: String(staffId), role: 'directeur' };
+    const user = await db.collection('users').findOne(filter);
+    if (!user) return;
+    await db.collection('users').updateOne(filter, { $set: { assigned_establishments: venues } });
+    // R-17 — c'est la porte la PLUS empruntée : le patron change les bars d'un directeur
+    // depuis l'écran staff, pas depuis l'écran des comptes. Le périmètre bouge exactement
+    // comme via PATCH /api/users/:id/establishments, donc la session doit tomber pareil.
+    await invalidateUserSessions(user._id);
+}
+
+// R-17 — Le périmètre d'un utilisateur (`role`, `assigned_establishments`) est recopié dans
+// sa session AU LOGIN, et la session vit 30 jours glissants. Sans invalidation, un directeur
+// retiré d'un bar — ou rétrogradé — garde ses anciens droits jusqu'à un mois : ça défait
+// silencieusement S-02, S-03 et S-04, qui lisent tous la session.
+//
+// On SUPPRIME ses sessions plutôt que de revérifier à chaque requête : le contrôle par
+// « epoch » coûterait une lecture Mongo sur CHAQUE appel d'API, alors qu'un changement de
+// rôle arrive quelques fois par an. Ici le coût est payé une seule fois, au moment du
+// changement. La personne est simplement invitée à se reconnecter.
+// Le store de sessions est Mongo (`{ sid, session, expires }`), donc partagé entre instances.
+async function invalidateUserSessions(userId) {
+    try {
+        const r = await db.collection('sessions').deleteMany({ 'session.user._id': String(userId) });
+        if (r.deletedCount) console.log('🔒 ' + r.deletedCount + ' session(s) invalidée(s) pour ' + userId);
+    } catch (e) { console.error('[invalidateUserSessions]', e.message); }
 }
 
 app.post('/api/users', checkDB, requirePatron, async (req, res) => {
@@ -1457,6 +1478,7 @@ app.patch('/api/users/:id/role', checkDB, requirePatronOnly, async (req, res) =>
         // R-06 : promotion en directeur ⇒ profil staff + venues alignés, sinon il ne
         // pourra jamais envoyer de dispo (400 « Aucun profil staff lié »).
         await ensureDirectorStaffProfile(req.params.id);
+        await invalidateUserSessions(req.params.id); // R-17 — le rôle est figé en session
         res.json({ message: 'Rôle mis à jour' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -1475,6 +1497,7 @@ app.patch('/api/users/:id/establishments', checkDB, requireAdmin, async (req, re
         // R-06 : recaler `staff.venues` — sans ça, un directeur réaffecté garde les
         // anciens bars côté staff et perd l'accès à la saisie des dispos.
         await ensureDirectorStaffProfile(req.params.id);
+        await invalidateUserSessions(req.params.id); // R-17 — le périmètre est figé en session
         res.json({ message: 'Établissements mis à jour' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -1491,6 +1514,8 @@ app.patch('/api/users/:id/reset-password', checkDB, requirePatron, async (req, r
             { $set: { password_hash: hash, active: true }, $unset: { reset_token: '', reset_expires: '' } }
         );
         if (result.matchedCount === 0) return res.status(404).json({ error: 'Utilisateur introuvable' });
+        // Changer le mot de passe de quelqu'un doit fermer ses sessions ouvertes.
+        await invalidateUserSessions(req.params.id);
         res.json({ message: 'Mot de passe mis à jour' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -1531,6 +1556,9 @@ app.delete('/api/users/:id', checkDB, requirePatron, async (req, res) => {
         // nom dans tous les récaps déjà édités. Il reste donc visible dans la barre staff
         // sans compte associé — c'est exactement ce que F-13 (comptes archivés) doit régler ;
         // le trancher ici serait une décision produit déguisée en nettoyage.
+        // Sans ça, un compte supprimé continuait de fonctionner jusqu'à l'expiration de
+        // sa session — soit 30 jours.
+        await invalidateUserSessions(req.params.id);
         res.json({ message: 'Compte supprimé' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -1990,6 +2018,9 @@ app.delete('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
         const result = await db.collection('staff').deleteOne({ _id: new ObjectId(req.params.id) });
         if (result.deletedCount === 0) return res.status(404).json({ error: 'Staff introuvable' });
         const staffId = req.params.id;
+        // Capturé AVANT le déliement : après, `staff_id` vaut null et le filtre
+        // ramasserait tous les comptes sans profil.
+        const linked = await db.collection('users').find({ staff_id: staffId }).toArray();
         await Promise.all([
             db.collection('shifts').deleteMany({ staff_id: staffId }),
             db.collection('availabilities').deleteMany({ staff_id: staffId }),
@@ -1997,6 +2028,10 @@ app.delete('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
             db.collection('manager_dispo_templates').deleteMany({ staff_id: staffId }),
             db.collection('users').updateMany({ staff_id: staffId }, { $set: { staff_id: null } }),
         ]);
+        // R-17 — `staff_id` est figé en session : sans ça, le compte continue d'écrire ses
+        // dispos et son pointage sur un profil qui n'existe plus. C'est le mécanisme exact
+        // de l'incident « Antoine Bozo » du 2026-08-07.
+        await Promise.all(linked.map(u => invalidateUserSessions(u._id)));
         res.json({ message: 'Staff supprimé' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
