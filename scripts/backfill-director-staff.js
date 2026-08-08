@@ -13,6 +13,28 @@ async function main() {
     const { client, db } = await openDb();
     try {
         const directors = await db.collection('users').find({ role: 'directeur' }).toArray();
+
+        // ⛔ GARDE-FOU (A-08, 2026-08-08) — ce script CRÉE un profil. Sur une base existante,
+        // un directeur travaille souvent déjà en salle et en a donc déjà un : on en créerait
+        // un SECOND (historique scindé, paie comptée deux fois). Constaté chez le premier
+        // client : 2 directeurs sur 3. Si un homonyme existe, on refuse et on renvoie vers
+        // `link-directors`, qui rapproche du profil existant sans rien créer.
+        const norm = x => String(x || '').toLowerCase().normalize('NFD')
+            .replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+        const allStaff = await db.collection('staff').find({}, { projection: { name: 1, email: 1 } }).toArray();
+        const collisions = directors.filter(u => !u.staff_id && allStaff.some(
+            st => (u.email && st.email && norm(st.email) === norm(u.email)) || norm(st.name) === norm(u.name)));
+        if (collisions.length) {
+            console.error('');
+            console.error('⛔ REFUS — ' + collisions.length + ' directeur(s) ont DEJA un profil staff homonyme :');
+            collisions.forEach(u => console.error('     ' + (u.name || u.email)));
+            console.error('');
+            console.error('   Ce script en creerait un SECOND : historique scinde, paie comptee deux fois.');
+            console.error('   Utilise `npm run link-directors` : il rapproche du profil existant, sans rien creer.');
+            console.error('');
+            process.exitCode = 1;
+            return;
+        }
         const used = new Set(
             (await db.collection('staff').find({}, { projection: { color: 1 } }).toArray()).map(s => s.color)
         );

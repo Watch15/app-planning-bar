@@ -162,7 +162,13 @@ Compte tenu de « planifiable » + « comme les autres staff », la cible est le
 
 **Phase 0 — Normalisation (fondation).**
 - `POST /api/users` : créer un directeur crée aussi un doc `staff` lié (`users.staff_id` renseigné), marqué `is_manager: true` (traçabilité, pas d'exclusion paie), `venues` = ses `assigned_establishments`.
-- Script `scripts/backfill-director-staff.js` (idempotent, lancé manuellement) : pour chaque `users` role=directeur avec `staff_id` null, créer le profil staff manquant. Les promus (staff_id déjà présent) sont ignorés.
+- ~~Script `scripts/backfill-director-staff.js` : créer le profil staff manquant.~~
+  ⛔ **SUPERSÉDÉ le 2026-08-08.** Sur une base existante, ce script **DUPLIQUE** : il ne
+  regarde que `users.staff_id` et crée un profil neuf sinon, alors que la personne en a
+  souvent déjà un (elle travaille en salle). Résultat : historique scindé et paie comptée
+  deux fois. Utiliser **`npm run link-directors`**, qui rapproche du profil existant et ne
+  crée rien. Depuis 2026-08-05, `ensureDirectorStaffProfile` couvre en plus le cas courant
+  automatiquement, à la création ou à la modification du compte.
 
 **Phase 1 — Saisie dispos directeur (index.html).**
 - Section « Mes disponibilités » sur index.html (le directeur n'a pas accès à planning.html), écrit dans `availabilities` avec son `staff_id`, ~~statut `confirmed` d'office (auto-validé)~~ → overlay planning standard.

@@ -418,10 +418,20 @@ avant le client — et c'est précisément la variable qui était mal réglée c
 contiennent E-22 (Modèle A), qui exige que **tout compte `directeur` ait un profil `staff`
 lié**. `ensureDirectorStaffProfile` ne le crée qu'à la prochaine modification du compte : les
 directeurs existants chez le client resteraient sans `staff_id` et **ne pourraient plus
-saisir de dispo** (400 permanent). La livraison client devra donc inclure
-`npm run backfill-directors` sur sa base — c'est une **migration de données**, pas un simple
-push. À vérifier d'abord : ce client a-t-il des comptes `directeur` ? (lecture seule, non
-faite — base cliente).
+saisir de dispo** (400 permanent). La livraison client devra donc inclure une **migration
+de données**, pas un simple push.
+
+⛔ **NE PAS lancer `npm run backfill-directors`** — corrigé le 2026-08-08 (A-08). Ce script
+ne rapproche que sur `users.staff_id` et **CRÉE un profil sinon**. Sur une base ancienne, un
+directeur travaille souvent déjà en salle : son profil existe. Le backfill en créerait un
+**second** — barre staff dédoublée, historique de shifts scindé, personne **comptée deux fois
+en masse salariale**. Constaté chez Castanui : 2 directeurs sur 3 étaient dans ce cas.
+
+✅ **Utiliser `npm run link-directors`** (`scripts/link-director-staff.js`) : rapproche par
+e-mail puis nom normalisé, **ne crée jamais rien**, ne pose que `users.staff_id`, s'abstient
+si le résultat n'est pas unique, **simulation par défaut** (`--apply` pour écrire).
+⚠️ Il ne couvre PAS le cas « aucun profil correspondant » — création volontairement laissée
+à une décision humaine (cf. A-09).
 
 Autres changements visibles par les utilisateurs finaux dans ce lot : suppression des emojis
 d'interface, nouveau périmètre de la file de dispos (S-04), exemption de deadline directeur
