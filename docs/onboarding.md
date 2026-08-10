@@ -85,7 +85,7 @@ app-planning-bar/
 │   └── vendor/                 ← Libs tierces auto-hébergées (jspdf, html2canvas, xlsx)
 │
 ├── scripts/                   ← Outils CLI (init-db, seed, create-patron)
-├── tests/                     ← node --test, sans framework (215 tests, 10 fichiers + helpers/)
+├── tests/                     ← node --test, sans framework (236 tests, 11 fichiers + helpers/)
 ├── docs/                      ← prd, architecture, backlog, ux-design, CE fichier
 └── .github/workflows/ci.yml   ← CI Node 20 + 22
 ```
@@ -326,8 +326,8 @@ call sites serveur inchangés. C'est le **gabarit** de toute future extraction i
 ## 12. Tests & CI
 
 - **Runner** : `node --test` intégré, **zéro framework**.
-- **215 tests, 10 fichiers** dans `tests/` (état 2026-08-10) : **102 unitaires purs**
-  (`utils` 75, `shift-hours` 12, `week` 15 — aucun Express, aucune base) et
+- **236 tests, 11 fichiers** dans `tests/` (état 2026-08-10) : **123 unitaires purs**
+  (`utils` 75, `shift-hours` 12, `week` 15, `auth-guard` 21 — aucun Express, aucune base) et
   **113 d'intégration HTTP** (`routes` 4, `dispos` 15, `conges` 12, `manager-off` 14,
   `manager-dispos` 23, `perf-settings` 11, `estab-access` 33).
 - **Lancer** : `npm test` (liste **explicite** des fichiers — ⚠️ ne jamais repasser en
@@ -343,8 +343,11 @@ call sites serveur inchangés. C'est le **gabarit** de toute future extraction i
   Un test vert ne prouve pas que la requête réelle tourne — pour ça, `npm run smoke`.
 - **Bout en bout** : `npm run smoke:dev` / `smoke:main` tapent une instance réelle avec un
   vrai Mongo (suppose la base de recette semée par `npm run dev:seed`).
-- **Rien ne couvre le front** (`script.js`, `planning.js`, `performance.js`, `pointage.js`) :
-  zéro test, aucune infra. C'est T-03 au backlog.
+- **Les 4 gros bundles front ne sont pas couverts** (`script.js`, `planning.js`,
+  `performance.js`, `pointage.js`) : zéro test, aucune infra. C'est T-03 au backlog.
+  Seuls les modules `public/lib/` sont testés — parce qu'ils sont `require()`-ables sous
+  Node (UMD). C'est le levier disponible : **sortir la logique d'un bundle vers
+  `public/lib/` la rend testable le jour même** (`week`, `shift-hours`, `auth-guard`).
 - **CI** : `.github/workflows/ci.yml`, sur `main` **et `dev`**, matrice Node 20 + 22 →
   `npm ci` → syntax check → `npm run lint` → `npm test`. Un job `deploy` (CD-01) suit sur
   push `main` du dépôt canonique seulement, gardé par `needs: test`.

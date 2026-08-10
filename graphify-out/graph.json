@@ -153,7 +153,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "lib_utils_todatestr",
-      "community": 62,
+      "community": 11,
       "norm_label": "todatestr()"
     },
     {
@@ -213,7 +213,7 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "lib_utils_datesoverlap",
-      "community": 11,
+      "community": 71,
       "norm_label": "datesoverlap()"
     },
     {
@@ -223,7 +223,7 @@
       "source_location": "L129",
       "_origin": "ast",
       "id": "lib_utils_congecoversdate",
-      "community": 11,
+      "community": 71,
       "norm_label": "congecoversdate()"
     },
     {
@@ -233,7 +233,7 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "lib_utils_congedaysinrange",
-      "community": 11,
+      "community": 71,
       "norm_label": "congedaysinrange()"
     },
     {
@@ -253,7 +253,7 @@
       "source_location": "L166",
       "_origin": "ast",
       "id": "lib_utils_isfullrangeonconge",
-      "community": 62,
+      "community": 11,
       "norm_label": "isfullrangeonconge()"
     },
     {
@@ -313,7 +313,7 @@
       "source_location": "L224",
       "_origin": "ast",
       "id": "lib_utils_datescoveredbyperiods",
-      "community": 62,
+      "community": 11,
       "norm_label": "datescoveredbyperiods()"
     },
     {
@@ -333,7 +333,7 @@
       "source_location": "L258",
       "_origin": "ast",
       "id": "lib_utils_buildtemplatedispos",
-      "community": 62,
+      "community": 11,
       "norm_label": "buildtemplatedispos()"
     },
     {
@@ -837,6 +837,46 @@
       "norm_label": "_closestaffbar()"
     },
     {
+      "label": "auth-guard.js",
+      "file_type": "code",
+      "source_file": "public/lib/auth-guard.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "lib_auth_guard",
+      "community": 69,
+      "norm_label": "auth-guard.js"
+    },
+    {
+      "label": "shouldRedirectOn401()",
+      "file_type": "code",
+      "source_file": "public/lib/auth-guard.js",
+      "source_location": "L56",
+      "_origin": "ast",
+      "id": "lib_auth_guard_shouldredirecton401",
+      "community": 69,
+      "norm_label": "shouldredirecton401()"
+    },
+    {
+      "label": "samePathname()",
+      "file_type": "code",
+      "source_file": "public/lib/auth-guard.js",
+      "source_location": "L69",
+      "_origin": "ast",
+      "id": "lib_auth_guard_samepathname",
+      "community": 69,
+      "norm_label": "samepathname()"
+    },
+    {
+      "label": "install()",
+      "file_type": "code",
+      "source_file": "public/lib/auth-guard.js",
+      "source_location": "L84",
+      "_origin": "ast",
+      "id": "lib_auth_guard_install",
+      "community": 69,
+      "norm_label": "install()"
+    },
+    {
       "label": "shift-hours.js",
       "file_type": "code",
       "source_file": "public/lib/shift-hours.js",
@@ -940,7 +980,7 @@
       "label": "switchMode()",
       "file_type": "code",
       "source_file": "public/login.js",
-      "source_location": "L11",
+      "source_location": "L19",
       "_origin": "ast",
       "id": "public_login_switchmode",
       "community": 21,
@@ -950,7 +990,7 @@
       "label": "loginEmail()",
       "file_type": "code",
       "source_file": "public/login.js",
-      "source_location": "L31",
+      "source_location": "L39",
       "_origin": "ast",
       "id": "public_login_loginemail",
       "community": 21,
@@ -960,7 +1000,7 @@
       "label": "loginPhone()",
       "file_type": "code",
       "source_file": "public/login.js",
-      "source_location": "L94",
+      "source_location": "L102",
       "_origin": "ast",
       "id": "public_login_loginphone",
       "community": 21,
@@ -970,7 +1010,7 @@
       "label": "redirectByRole()",
       "file_type": "code",
       "source_file": "public/login.js",
-      "source_location": "L149",
+      "source_location": "L157",
       "_origin": "ast",
       "id": "public_login_redirectbyrole",
       "community": 21,
@@ -980,7 +1020,7 @@
       "label": "setLoading()",
       "file_type": "code",
       "source_file": "public/login.js",
-      "source_location": "L155",
+      "source_location": "L163",
       "_origin": "ast",
       "id": "public_login_setloading",
       "community": 21,
@@ -990,7 +1030,7 @@
       "label": "showError()",
       "file_type": "code",
       "source_file": "public/login.js",
-      "source_location": "L160",
+      "source_location": "L168",
       "_origin": "ast",
       "id": "public_login_showerror",
       "community": 21,
@@ -1000,7 +1040,7 @@
       "label": "hideError()",
       "file_type": "code",
       "source_file": "public/login.js",
-      "source_location": "L165",
+      "source_location": "L173",
       "_origin": "ast",
       "id": "public_login_hideerror",
       "community": 21,
@@ -5143,7 +5183,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_ae",
-      "community": 22,
+      "community": 3,
       "norm_label": "ae()"
     },
     {
@@ -5173,7 +5213,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_re",
-      "community": 22,
+      "community": 3,
       "norm_label": "re()"
     },
     {
@@ -5933,7 +5973,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "vendor_jspdf_umd_min_m",
-      "community": 22,
+      "community": 3,
       "norm_label": "m()"
     },
     {
@@ -5973,7 +6013,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "vendor_jspdf_umd_min_l",
-      "community": 22,
+      "community": 3,
       "norm_label": "l()"
     },
     {
@@ -5983,7 +6023,7 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "vendor_jspdf_umd_min_k",
-      "community": 22,
+      "community": 3,
       "norm_label": "k()"
     },
     {
@@ -6143,7 +6183,7 @@
       "source_location": "L268",
       "_origin": "ast",
       "id": "vendor_jspdf_umd_min_qe",
-      "community": 22,
+      "community": 3,
       "norm_label": "qe()"
     },
     {
@@ -6693,7 +6733,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_seed_dev",
-      "community": 62,
+      "community": 18,
       "norm_label": "seed-dev.js"
     },
     {
@@ -6703,7 +6743,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "scripts_seed_dev_bcrypt",
-      "community": 62,
+      "community": 18,
       "norm_label": "bcrypt"
     },
     {
@@ -6713,7 +6753,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "scripts_seed_dev_objectid",
-      "community": 62,
+      "community": 18,
       "norm_label": "{ objectid }"
     },
     {
@@ -6723,7 +6763,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "scripts_seed_dev_opendb",
-      "community": 62,
+      "community": 18,
       "norm_label": "{ opendb }"
     },
     {
@@ -6733,7 +6773,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "scripts_seed_dev_todatestr_weekstart",
-      "community": 62,
+      "community": 18,
       "norm_label": "{ todatestr, weekstart }"
     },
     {
@@ -6743,7 +6783,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "scripts_seed_dev_wipe",
-      "community": 62,
+      "community": 18,
       "norm_label": "wipe"
     },
     {
@@ -6753,7 +6793,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "scripts_seed_dev_features",
-      "community": 62,
+      "community": 18,
       "norm_label": "features"
     },
     {
@@ -6763,7 +6803,7 @@
       "source_location": "L256",
       "_origin": "ast",
       "id": "scripts_seed_dev_run",
-      "community": 62,
+      "community": 18,
       "norm_label": "run()"
     },
     {
@@ -7503,7 +7543,7 @@
       "source_location": "L3272",
       "_origin": "ast",
       "id": "server_fullweekcongeset",
-      "community": 62,
+      "community": 11,
       "norm_label": "fullweekcongeset()"
     },
     {
@@ -7553,7 +7593,7 @@
       "source_location": "L3697",
       "_origin": "ast",
       "id": "server_manageroffperiods",
-      "community": 62,
+      "community": 11,
       "norm_label": "manageroffperiods()"
     },
     {
@@ -7563,7 +7603,7 @@
       "source_location": "L3719",
       "_origin": "ast",
       "id": "server_materializemanagertemplateweek",
-      "community": 62,
+      "community": 11,
       "norm_label": "materializemanagertemplateweek()"
     },
     {
@@ -7657,13 +7697,73 @@
       "norm_label": "touchlastupdated()"
     },
     {
+      "label": "auth-guard.test.js",
+      "file_type": "code",
+      "source_file": "tests/auth-guard.test.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "tests_auth_guard_test",
+      "community": 69,
+      "norm_label": "auth-guard.test.js"
+    },
+    {
+      "label": "{ test }",
+      "file_type": "code",
+      "source_file": "tests/auth-guard.test.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "tests_auth_guard_test_test",
+      "community": 69,
+      "norm_label": "{ test }"
+    },
+    {
+      "label": "assert",
+      "file_type": "code",
+      "source_file": "tests/auth-guard.test.js",
+      "source_location": "L2",
+      "_origin": "ast",
+      "id": "tests_auth_guard_test_assert",
+      "community": 69,
+      "norm_label": "assert"
+    },
+    {
+      "label": "{ shouldRedirectOn401, samePathname, install }",
+      "file_type": "code",
+      "source_file": "tests/auth-guard.test.js",
+      "source_location": "L3",
+      "_origin": "ast",
+      "id": "tests_auth_guard_test_shouldredirecton401_samepathname_install",
+      "community": 69,
+      "norm_label": "{ shouldredirecton401, samepathname, install }"
+    },
+    {
+      "label": "fakeWin()",
+      "file_type": "code",
+      "source_file": "tests/auth-guard.test.js",
+      "source_location": "L71",
+      "_origin": "ast",
+      "id": "tests_auth_guard_test_fakewin",
+      "community": 69,
+      "norm_label": "fakewin()"
+    },
+    {
+      "label": "makeWindow()",
+      "file_type": "code",
+      "source_file": "tests/auth-guard.test.js",
+      "source_location": "L103",
+      "_origin": "ast",
+      "id": "tests_auth_guard_test_makewindow",
+      "community": 69,
+      "norm_label": "makewindow()"
+    },
+    {
       "label": "conges.test.js",
       "file_type": "code",
       "source_file": "tests/conges.test.js",
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conges_test",
-      "community": 11,
+      "community": 71,
       "norm_label": "conges.test.js"
     },
     {
@@ -7673,7 +7773,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conges_test_test",
-      "community": 11,
+      "community": 71,
       "norm_label": "{ test }"
     },
     {
@@ -7683,7 +7783,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "tests_conges_test_assert",
-      "community": 11,
+      "community": 71,
       "norm_label": "assert"
     },
     {
@@ -7693,7 +7793,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "tests_conges_test_datesoverlap_congecoversdate_congedaysinrange",
-      "community": 11,
+      "community": 71,
       "norm_label": "{ datesoverlap, congecoversdate, congedaysinrange }"
     },
     {
@@ -8790,7 +8890,7 @@
       "label": "Installation",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L68",
+      "source_location": "L73",
       "_origin": "ast",
       "id": "readme_installation",
       "community": 25,
@@ -8800,7 +8900,7 @@
       "label": "Variables d'environnement (.env)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L81",
+      "source_location": "L86",
       "_origin": "ast",
       "id": "readme_variables_d_environnement_env",
       "community": 25,
@@ -8810,7 +8910,7 @@
       "label": "Commandes",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L121",
+      "source_location": "L126",
       "_origin": "ast",
       "id": "readme_commandes",
       "community": 25,
@@ -8820,7 +8920,7 @@
       "label": "Environnements \u2014 comment s'y connecter",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L140",
+      "source_location": "L145",
       "_origin": "ast",
       "id": "readme_environnements_comment_s_y_connecter",
       "community": 25,
@@ -8830,7 +8930,7 @@
       "label": "Par l'application (le plus courant)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L142",
+      "source_location": "L147",
       "_origin": "ast",
       "id": "readme_par_l_application_le_plus_courant",
       "community": 25,
@@ -8840,7 +8940,7 @@
       "label": "Directement \u00e0 la base (mongosh / Compass)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L166",
+      "source_location": "L171",
       "_origin": "ast",
       "id": "readme_directement_\u00e0_la_base_mongosh_compass",
       "community": 25,
@@ -8850,7 +8950,7 @@
       "label": "R\u00f4les utilisateurs",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L185",
+      "source_location": "L190",
       "_origin": "ast",
       "id": "readme_r\u00f4les_utilisateurs",
       "community": 25,
@@ -8860,87 +8960,87 @@
       "label": "Fonctionnalit\u00e9s",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L196",
+      "source_location": "L201",
       "_origin": "ast",
       "id": "readme_fonctionnalit\u00e9s",
-      "community": 25,
+      "community": 70,
       "norm_label": "fonctionnalites"
     },
     {
       "label": "Authentification",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L198",
+      "source_location": "L203",
       "_origin": "ast",
       "id": "readme_authentification",
-      "community": 25,
+      "community": 70,
       "norm_label": "authentification"
     },
     {
       "label": "Vue patron (`index.html`)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L206",
+      "source_location": "L211",
       "_origin": "ast",
       "id": "readme_vue_patron_index_html",
-      "community": 25,
+      "community": 70,
       "norm_label": "vue patron (`index.html`)"
     },
     {
       "label": "Vue staff (`planning.html`)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L221",
+      "source_location": "L226",
       "_origin": "ast",
       "id": "readme_vue_staff_planning_html",
-      "community": 25,
+      "community": 70,
       "norm_label": "vue staff (`planning.html`)"
     },
     {
       "label": "Pointage (`pointage.html`)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L229",
+      "source_location": "L234",
       "_origin": "ast",
       "id": "readme_pointage_pointage_html",
-      "community": 25,
+      "community": 70,
       "norm_label": "pointage (`pointage.html`)"
     },
     {
       "label": "Performance (`performance.html`)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L240",
+      "source_location": "L245",
       "_origin": "ast",
       "id": "readme_performance_performance_html",
-      "community": 25,
+      "community": 70,
       "norm_label": "performance (`performance.html`)"
     },
     {
       "label": "Web Push",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L249",
+      "source_location": "L254",
       "_origin": "ast",
       "id": "readme_web_push",
-      "community": 25,
+      "community": 70,
       "norm_label": "web push"
     },
     {
       "label": "PWA",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L255",
+      "source_location": "L260",
       "_origin": "ast",
       "id": "readme_pwa",
-      "community": 25,
+      "community": 70,
       "norm_label": "pwa"
     },
     {
       "label": "Collections MongoDB",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L262",
+      "source_location": "L267",
       "_origin": "ast",
       "id": "readme_collections_mongodb",
       "community": 25,
@@ -8950,167 +9050,167 @@
       "label": "Routes API principales",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L284",
+      "source_location": "L289",
       "_origin": "ast",
       "id": "readme_routes_api_principales",
-      "community": 25,
+      "community": 63,
       "norm_label": "routes api principales"
     },
     {
       "label": "Auth",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L286",
+      "source_location": "L291",
       "_origin": "ast",
       "id": "readme_auth",
-      "community": 25,
+      "community": 63,
       "norm_label": "auth"
     },
     {
       "label": "Comptes & Staff",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L296",
+      "source_location": "L301",
       "_origin": "ast",
       "id": "readme_comptes_staff",
-      "community": 25,
+      "community": 63,
       "norm_label": "comptes & staff"
     },
     {
       "label": "\u00c9tablissements",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L306",
+      "source_location": "L311",
       "_origin": "ast",
       "id": "readme_\u00e9tablissements",
-      "community": 25,
+      "community": 63,
       "norm_label": "etablissements"
     },
     {
       "label": "Shifts & Pointage",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L313",
+      "source_location": "L318",
       "_origin": "ast",
       "id": "readme_shifts_pointage",
-      "community": 25,
+      "community": 63,
       "norm_label": "shifts & pointage"
     },
     {
       "label": "Disponibilit\u00e9s",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L334",
+      "source_location": "L339",
       "_origin": "ast",
       "id": "readme_disponibilit\u00e9s",
-      "community": 25,
+      "community": 63,
       "norm_label": "disponibilites"
     },
     {
       "label": "Performance / CA",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L352",
+      "source_location": "L357",
       "_origin": "ast",
       "id": "readme_performance_ca",
-      "community": 25,
+      "community": 63,
       "norm_label": "performance / ca"
     },
     {
       "label": "\u00c9changes de shifts *(routes d\u00e9sactiv\u00e9es en attente validation client \u2014 code conserv\u00e9, comment\u00e9 dans server.js)*",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L360",
+      "source_location": "L365",
       "_origin": "ast",
       "id": "readme_\u00e9changes_de_shifts_routes_d\u00e9sactiv\u00e9es_en_attente_validation_client_code_conserv\u00e9_comment\u00e9_dans_server_js",
-      "community": 25,
+      "community": 63,
       "norm_label": "echanges de shifts *(routes desactivees en attente validation client \u2014 code conserve, commente dans server.js)*"
     },
     {
       "label": "Web Push & Notifications",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L370",
+      "source_location": "L375",
       "_origin": "ast",
       "id": "readme_web_push_notifications",
-      "community": 25,
+      "community": 63,
       "norm_label": "web push & notifications"
     },
     {
       "label": "Infra",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L378",
+      "source_location": "L383",
       "_origin": "ast",
       "id": "readme_infra",
-      "community": 25,
+      "community": 63,
       "norm_label": "infra"
     },
     {
       "label": "R\u00e8gles techniques \u00e0 ne jamais casser",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L385",
+      "source_location": "L390",
       "_origin": "ast",
       "id": "readme_r\u00e8gles_techniques_\u00e0_ne_jamais_casser",
-      "community": 25,
+      "community": 73,
       "norm_label": "regles techniques a ne jamais casser"
     },
     {
       "label": "Timezone \u2014 jamais `toISOString()`",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L387",
+      "source_location": "L392",
       "_origin": "ast",
       "id": "readme_timezone_jamais_toisostring",
-      "community": 25,
+      "community": 73,
       "norm_label": "timezone \u2014 jamais `toisostring()`"
     },
     {
       "label": "`script.js` \u2014 monolithique, ne pas d\u00e9couper",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L403",
+      "source_location": "L408",
       "_origin": "ast",
       "id": "readme_script_js_monolithique_ne_pas_d\u00e9couper",
-      "community": 25,
+      "community": 73,
       "norm_label": "`script.js` \u2014 monolithique, ne pas decouper"
     },
     {
       "label": "Sessions MongoDB \u2014 promesses uniquement",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L406",
+      "source_location": "L411",
       "_origin": "ast",
       "id": "readme_sessions_mongodb_promesses_uniquement",
-      "community": 25,
+      "community": 73,
       "norm_label": "sessions mongodb \u2014 promesses uniquement"
     },
     {
       "label": "Cache Service Worker \u2014 ne pas toucher `%%BUILD_TIME%%`",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L409",
+      "source_location": "L414",
       "_origin": "ast",
       "id": "readme_cache_service_worker_ne_pas_toucher_build_time",
-      "community": 25,
+      "community": 73,
       "norm_label": "cache service worker \u2014 ne pas toucher `%%build_time%%`"
     },
     {
       "label": "Helpers purs \u2192 `lib/utils.js`",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L412",
+      "source_location": "L417",
       "_origin": "ast",
       "id": "readme_helpers_purs_lib_utils_js",
-      "community": 25,
+      "community": 73,
       "norm_label": "helpers purs \u2192 `lib/utils.js`"
     },
     {
       "label": "Tests",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L417",
+      "source_location": "L422",
       "_origin": "ast",
       "id": "readme_tests",
       "community": 25,
@@ -9160,7 +9260,7 @@
       "label": "3. Contraintes critiques",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L83",
+      "source_location": "L91",
       "_origin": "ast",
       "id": "docs_architecture_3_contraintes_critiques",
       "community": 24,
@@ -9170,7 +9270,7 @@
       "label": "3.1 Fuseau horaire \u2014 NE JAMAIS utiliser `toISOString()`",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L85",
+      "source_location": "L93",
       "_origin": "ast",
       "id": "docs_architecture_3_1_fuseau_horaire_ne_jamais_utiliser_toisostring",
       "community": 24,
@@ -9180,7 +9280,7 @@
       "label": "3.2 Sessions MongoDB \u2014 promesses uniquement",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L104",
+      "source_location": "L112",
       "_origin": "ast",
       "id": "docs_architecture_3_2_sessions_mongodb_promesses_uniquement",
       "community": 24,
@@ -9190,7 +9290,7 @@
       "label": "3.3 `script.js` \u2014 monolithique, ne pas d\u00e9couper",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L118",
+      "source_location": "L126",
       "_origin": "ast",
       "id": "docs_architecture_3_3_script_js_monolithique_ne_pas_d\u00e9couper",
       "community": 24,
@@ -9200,7 +9300,7 @@
       "label": "3.4 Frontend \u2014 aucun outillage de build",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L122",
+      "source_location": "L130",
       "_origin": "ast",
       "id": "docs_architecture_3_4_frontend_aucun_outillage_de_build",
       "community": 24,
@@ -9210,7 +9310,7 @@
       "label": "3.5 API / auth contournent toujours le cache du Service Worker",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L126",
+      "source_location": "L134",
       "_origin": "ast",
       "id": "docs_architecture_3_5_api_auth_contournent_toujours_le_cache_du_service_worker",
       "community": 24,
@@ -9220,7 +9320,7 @@
       "label": "3.6 Les helpers purs vivent dans `lib/utils.js`",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L130",
+      "source_location": "L138",
       "_origin": "ast",
       "id": "docs_architecture_3_6_les_helpers_purs_vivent_dans_lib_utils_js",
       "community": 24,
@@ -9230,7 +9330,7 @@
       "label": "3.7 En production `SESSION_SECRET` est obligatoire",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L136",
+      "source_location": "L144",
       "_origin": "ast",
       "id": "docs_architecture_3_7_en_production_session_secret_est_obligatoire",
       "community": 24,
@@ -9240,7 +9340,7 @@
       "label": "3.8 Trust proxy en production",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L140",
+      "source_location": "L148",
       "_origin": "ast",
       "id": "docs_architecture_3_8_trust_proxy_en_production",
       "community": 24,
@@ -9250,7 +9350,7 @@
       "label": "3.9 Semaine \u00ab en cours \u00bb \u2014 cutoff de bascule (D-75)",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L144",
+      "source_location": "L152",
       "_origin": "ast",
       "id": "docs_architecture_3_9_semaine_en_cours_cutoff_de_bascule_d_75",
       "community": 24,
@@ -9260,7 +9360,7 @@
       "label": "4. Authentification & autorisation",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L155",
+      "source_location": "L163",
       "_origin": "ast",
       "id": "docs_architecture_4_authentification_autorisation",
       "community": 24,
@@ -9270,7 +9370,7 @@
       "label": "Session",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L157",
+      "source_location": "L165",
       "_origin": "ast",
       "id": "docs_architecture_session",
       "community": 24,
@@ -9280,7 +9380,7 @@
       "label": "Hi\u00e9rarchie des r\u00f4les",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L162",
+      "source_location": "L170",
       "_origin": "ast",
       "id": "docs_architecture_hi\u00e9rarchie_des_r\u00f4les",
       "community": 24,
@@ -9290,7 +9390,7 @@
       "label": "Limitation du d\u00e9bit",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L188",
+      "source_location": "L196",
       "_origin": "ast",
       "id": "docs_architecture_limitation_du_d\u00e9bit",
       "community": 24,
@@ -9300,7 +9400,7 @@
       "label": "5. Mod\u00e8le de donn\u00e9es (collections cl\u00e9s)",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L193",
+      "source_location": "L201",
       "_origin": "ast",
       "id": "docs_architecture_5_mod\u00e8le_de_donn\u00e9es_collections_cl\u00e9s",
       "community": 24,
@@ -9310,7 +9410,7 @@
       "label": "`shifts`",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L195",
+      "source_location": "L203",
       "_origin": "ast",
       "id": "docs_architecture_shifts",
       "community": 24,
@@ -9320,7 +9420,7 @@
       "label": "`staff` \u2014 champs de r\u00e9mun\u00e9ration",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L234",
+      "source_location": "L242",
       "_origin": "ast",
       "id": "docs_architecture_staff_champs_de_r\u00e9mun\u00e9ration",
       "community": 24,
@@ -9330,7 +9430,7 @@
       "label": "`push_subscriptions`",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L243",
+      "source_location": "L251",
       "_origin": "ast",
       "id": "docs_architecture_push_subscriptions",
       "community": 24,
@@ -9340,7 +9440,7 @@
       "label": "`notifications`",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L253",
+      "source_location": "L261",
       "_origin": "ast",
       "id": "docs_architecture_notifications",
       "community": 24,
@@ -9350,7 +9450,7 @@
       "label": "`staff_notifications`",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L267",
+      "source_location": "L275",
       "_origin": "ast",
       "id": "docs_architecture_staff_notifications",
       "community": 24,
@@ -9360,7 +9460,7 @@
       "label": "`daily_revenue`",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L279",
+      "source_location": "L287",
       "_origin": "ast",
       "id": "docs_architecture_daily_revenue",
       "community": 24,
@@ -9370,7 +9470,7 @@
       "label": "`settings` \u2014 documents cl\u00e9s",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L290",
+      "source_location": "L298",
       "_origin": "ast",
       "id": "docs_architecture_settings_documents_cl\u00e9s",
       "community": 24,
@@ -9380,7 +9480,7 @@
       "label": "`shift_swaps` *(feature F-05 \u2014 code livr\u00e9 mais d\u00e9sactiv\u00e9e en attente validation client)*",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L298",
+      "source_location": "L306",
       "_origin": "ast",
       "id": "docs_architecture_shift_swaps_feature_f_05_code_livr\u00e9_mais_d\u00e9sactiv\u00e9e_en_attente_validation_client",
       "community": 24,
@@ -9390,7 +9490,7 @@
       "label": "6. Architecture Web Push",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L319",
+      "source_location": "L327",
       "_origin": "ast",
       "id": "docs_architecture_6_architecture_web_push",
       "community": 24,
@@ -9400,7 +9500,7 @@
       "label": "Garde \u00ab pas de notification pour un shift pass\u00e9 \u00bb (B-10)",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L327",
+      "source_location": "L335",
       "_origin": "ast",
       "id": "docs_architecture_garde_pas_de_notification_pour_un_shift_pass\u00e9_b_10",
       "community": 24,
@@ -9410,7 +9510,7 @@
       "label": "7. PWA / Service Worker",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L333",
+      "source_location": "L341",
       "_origin": "ast",
       "id": "docs_architecture_7_pwa_service_worker",
       "community": 24,
@@ -9420,7 +9520,7 @@
       "label": "8. E-mail (Resend)",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L345",
+      "source_location": "L353",
       "_origin": "ast",
       "id": "docs_architecture_8_e_mail_resend",
       "community": 24,
@@ -9430,7 +9530,7 @@
       "label": "9. SMS (Twilio)",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L351",
+      "source_location": "L359",
       "_origin": "ast",
       "id": "docs_architecture_9_sms_twilio",
       "community": 24,
@@ -9440,7 +9540,7 @@
       "label": "10. D\u00e9ploiement (Railway)",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L357",
+      "source_location": "L365",
       "_origin": "ast",
       "id": "docs_architecture_10_d\u00e9ploiement_railway",
       "community": 24,
@@ -9450,7 +9550,7 @@
       "label": "Healthcheck",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L366",
+      "source_location": "L374",
       "_origin": "ast",
       "id": "docs_architecture_healthcheck",
       "community": 24,
@@ -9460,7 +9560,7 @@
       "label": "11. Headers de s\u00e9curit\u00e9 (helmet)",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L371",
+      "source_location": "L379",
       "_origin": "ast",
       "id": "docs_architecture_11_headers_de_s\u00e9curit\u00e9_helmet",
       "community": 24,
@@ -9470,7 +9570,7 @@
       "label": "12. Observabilit\u00e9",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L396",
+      "source_location": "L404",
       "_origin": "ast",
       "id": "docs_architecture_12_observabilit\u00e9",
       "community": 24,
@@ -9480,7 +9580,7 @@
       "label": "13. Tests & CI",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L404",
+      "source_location": "L412",
       "_origin": "ast",
       "id": "docs_architecture_13_tests_ci",
       "community": 24,
@@ -9490,7 +9590,7 @@
       "label": "14. Synchronisation agenda \u2014 flux iCal (D-72)",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L416",
+      "source_location": "L426",
       "_origin": "ast",
       "id": "docs_architecture_14_synchronisation_agenda_flux_ical_d_72",
       "community": 24,
@@ -9500,7 +9600,7 @@
       "label": "Principe",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L422",
+      "source_location": "L432",
       "_origin": "ast",
       "id": "docs_architecture_principe",
       "community": 24,
@@ -9510,7 +9610,7 @@
       "label": "Routes",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L426",
+      "source_location": "L436",
       "_origin": "ast",
       "id": "docs_architecture_routes",
       "community": 24,
@@ -9520,7 +9620,7 @@
       "label": "G\u00e9n\u00e9ration du `.ics`",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L430",
+      "source_location": "L440",
       "_origin": "ast",
       "id": "docs_architecture_g\u00e9n\u00e9ration_du_ics",
       "community": 24,
@@ -9530,7 +9630,7 @@
       "label": "Limites connues (document\u00e9es pour le support)",
       "file_type": "document",
       "source_file": "docs/architecture.md",
-      "source_location": "L435",
+      "source_location": "L445",
       "_origin": "ast",
       "id": "docs_architecture_limites_connues_document\u00e9es_pour_le_support",
       "community": 24,
@@ -9543,7 +9643,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_backlog",
-      "community": 60,
+      "community": 62,
       "norm_label": "backlog.md"
     },
     {
@@ -9553,7 +9653,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_backlog_backlog_templyo",
-      "community": 60,
+      "community": 62,
       "norm_label": "backlog \u2014 templyo"
     },
     {
@@ -9563,7 +9663,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "docs_backlog_p1_bugs_bloquants_\u00e0_faire_en_premier",
-      "community": 60,
+      "community": 62,
       "norm_label": "p1 \u2014 bugs bloquants (a faire en premier)"
     },
     {
@@ -9573,7 +9673,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "docs_backlog_p2_am\u00e9liorations_apr\u00e8s_les_p1",
-      "community": 60,
+      "community": 62,
       "norm_label": "p2 \u2014 ameliorations (apres les p1)"
     },
     {
@@ -9583,7 +9683,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "docs_backlog_p3_nouvelles_fonctionnalit\u00e9s_roadmap",
-      "community": 60,
+      "community": 62,
       "norm_label": "p3 \u2014 nouvelles fonctionnalites (roadmap)"
     },
     {
@@ -9660,7 +9760,7 @@
       "label": "\u00c0 \u00e9crire",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L202",
+      "source_location": "L208",
       "_origin": "ast",
       "id": "docs_backlog_\u00e0_\u00e9crire",
       "community": 60,
@@ -9670,7 +9770,7 @@
       "label": "S\u00e9curit\u00e9 \u2014 \u00e0 traiter",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L215",
+      "source_location": "L221",
       "_origin": "ast",
       "id": "docs_backlog_s\u00e9curit\u00e9_\u00e0_traiter",
       "community": 60,
@@ -9680,7 +9780,7 @@
       "label": "Findings de revue restants (hors s\u00e9curit\u00e9)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L226",
+      "source_location": "L232",
       "_origin": "ast",
       "id": "docs_backlog_findings_de_revue_restants_hors_s\u00e9curit\u00e9",
       "community": 60,
@@ -9690,7 +9790,7 @@
       "label": "Questions en attente de r\u00e9ponse",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L243",
+      "source_location": "L249",
       "_origin": "ast",
       "id": "docs_backlog_questions_en_attente_de_r\u00e9ponse",
       "community": 60,
@@ -9700,7 +9800,7 @@
       "label": "Documentation \u2014 contradictions relev\u00e9es (audit du 2026-08-05)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L251",
+      "source_location": "L257",
       "_origin": "ast",
       "id": "docs_backlog_documentation_contradictions_relev\u00e9es_audit_du_2026_08_05",
       "community": 60,
@@ -9710,7 +9810,7 @@
       "label": "Base de recette (2026-08-05)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L267",
+      "source_location": "L273",
       "_origin": "ast",
       "id": "docs_backlog_base_de_recette_2026_08_05",
       "community": 60,
@@ -9720,7 +9820,7 @@
       "label": "Environnements & d\u00e9ploiements (2026-08-05)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L301",
+      "source_location": "L307",
       "_origin": "ast",
       "id": "docs_backlog_environnements_d\u00e9ploiements_2026_08_05",
       "community": 60,
@@ -9730,7 +9830,7 @@
       "label": "`npm run smoke` \u2014 tests de bout en bout sur une instance r\u00e9elle (2026-08-05)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L344",
+      "source_location": "L350",
       "_origin": "ast",
       "id": "docs_backlog_npm_run_smoke_tests_de_bout_en_bout_sur_une_instance_r\u00e9elle_2026_08_05",
       "community": 60,
@@ -9740,7 +9840,7 @@
       "label": "Environnement `main` \u2014 cluster d\u00e9di\u00e9 (2026-08-05)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L365",
+      "source_location": "L371",
       "_origin": "ast",
       "id": "docs_backlog_environnement_main_cluster_d\u00e9di\u00e9_2026_08_05",
       "community": 60,
@@ -9750,7 +9850,7 @@
       "label": "Processus de livraison \u2014 d\u00e9cid\u00e9 le 2026-08-05",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L398",
+      "source_location": "L404",
       "_origin": "ast",
       "id": "docs_backlog_processus_de_livraison_d\u00e9cid\u00e9_le_2026_08_05",
       "community": 60,
@@ -9760,7 +9860,7 @@
       "label": "Audit Railway complet (2026-08-05) \u2014 origine, variables, secrets",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L440",
+      "source_location": "L446",
       "_origin": "ast",
       "id": "docs_backlog_audit_railway_complet_2026_08_05_origine_variables_secrets",
       "community": 60,
@@ -9770,7 +9870,7 @@
       "label": "Lot bugs front (2026-08-06) \u2014 R-10, R-09, R-04",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L497",
+      "source_location": "L503",
       "_origin": "ast",
       "id": "docs_backlog_lot_bugs_front_2026_08_06_r_10_r_09_r_04",
       "community": 60,
@@ -9780,7 +9880,7 @@
       "label": "Lot profils staff (2026-08-06) \u2014 R-05, R-12",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L515",
+      "source_location": "L521",
       "_origin": "ast",
       "id": "docs_backlog_lot_profils_staff_2026_08_06_r_05_r_12",
       "community": 60,
@@ -9790,7 +9890,7 @@
       "label": "Revue `/simplify` (2026-08-07) \u2014 et deux constats hors p\u00e9rim\u00e8tre",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L531",
+      "source_location": "L537",
       "_origin": "ast",
       "id": "docs_backlog_revue_simplify_2026_08_07_et_deux_constats_hors_p\u00e9rim\u00e8tre",
       "community": 60,
@@ -9800,7 +9900,7 @@
       "label": "Pr\u00e9paration de la propagation Castanui (2026-08-07)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L571",
+      "source_location": "L577",
       "_origin": "ast",
       "id": "docs_backlog_pr\u00e9paration_de_la_propagation_castanui_2026_08_07",
       "community": 60,
@@ -9810,7 +9910,7 @@
       "label": "Colonne \u00ab Masse sal. brute \u00bb dans le tableau Performance (2026-08-07)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L626",
+      "source_location": "L632",
       "_origin": "ast",
       "id": "docs_backlog_colonne_masse_sal_brute_dans_le_tableau_performance_2026_08_07",
       "community": 60,
@@ -9820,7 +9920,7 @@
       "label": "Audit complet du jeu de recette (2026-08-07)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L644",
+      "source_location": "L650",
       "_origin": "ast",
       "id": "docs_backlog_audit_complet_du_jeu_de_recette_2026_08_07",
       "community": 60,
@@ -9830,7 +9930,7 @@
       "label": "Revue `/simplify` du 2026-08-07 \u2014 constats NON appliqu\u00e9s",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L671",
+      "source_location": "L677",
       "_origin": "ast",
       "id": "docs_backlog_revue_simplify_du_2026_08_07_constats_non_appliqu\u00e9s",
       "community": 60,
@@ -9840,7 +9940,7 @@
       "label": "\ud83d\udd34 INCIDENT PROD \u2014 compte branch\u00e9 sur un profil staff supprim\u00e9 (2026-08-07)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L743",
+      "source_location": "L786",
       "_origin": "ast",
       "id": "docs_backlog_incident_prod_compte_branch\u00e9_sur_un_profil_staff_supprim\u00e9_2026_08_07",
       "community": 60,
@@ -9850,57 +9950,117 @@
       "label": "Priorisation \u2014 revue de l'ensemble (2026-08-08)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L779",
+      "source_location": "L822",
       "_origin": "ast",
       "id": "docs_backlog_priorisation_revue_de_l_ensemble_2026_08_08",
-      "community": 60,
+      "community": 74,
       "norm_label": "priorisation \u2014 revue de l'ensemble (2026-08-08)"
     },
     {
       "label": "Devant les features",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L785",
+      "source_location": "L828",
       "_origin": "ast",
       "id": "docs_backlog_devant_les_features",
-      "community": 60,
+      "community": 74,
       "norm_label": "devant les features"
     },
     {
       "label": "Reclassement de la Feature A \u2014 c'est un correctif, pas un confort",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L793",
+      "source_location": "L836",
       "_origin": "ast",
       "id": "docs_backlog_reclassement_de_la_feature_a_c_est_un_correctif_pas_un_confort",
-      "community": 60,
+      "community": 74,
       "norm_label": "reclassement de la feature a \u2014 c'est un correctif, pas un confort"
     },
     {
       "label": "Le risque structurel le plus lourd, qui n'est pas une feature",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L800",
+      "source_location": "L843",
       "_origin": "ast",
       "id": "docs_backlog_le_risque_structurel_le_plus_lourd_qui_n_est_pas_une_feature",
-      "community": 60,
+      "community": 74,
       "norm_label": "le risque structurel le plus lourd, qui n'est pas une feature"
     },
     {
       "label": "Les autres features, par n\u00e9cessit\u00e9 d\u00e9croissante",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L814",
+      "source_location": "L857",
       "_origin": "ast",
       "id": "docs_backlog_les_autres_features_par_n\u00e9cessit\u00e9_d\u00e9croissante",
-      "community": 60,
+      "community": 74,
       "norm_label": "les autres features, par necessite decroissante"
+    },
+    {
+      "label": "Revue d'ensemble \u2014 \u00e9tat du projet au 2026-08-10",
+      "file_type": "document",
+      "source_file": "docs/backlog.md",
+      "source_location": "L870",
+      "_origin": "ast",
+      "id": "docs_backlog_revue_d_ensemble_\u00e9tat_du_projet_au_2026_08_10",
+      "community": 72,
+      "norm_label": "revue d'ensemble \u2014 etat du projet au 2026-08-10"
+    },
+    {
+      "label": "\u00c9tat v\u00e9rifi\u00e9",
+      "file_type": "document",
+      "source_file": "docs/backlog.md",
+      "source_location": "L875",
+      "_origin": "ast",
+      "id": "docs_backlog_\u00e9tat_v\u00e9rifi\u00e9",
+      "community": 72,
+      "norm_label": "etat verifie"
+    },
+    {
+      "label": "Le seul vrai \u00ab reste \u00e0 faire \u00bb avant tout le monde : livrer les 2 commits en attente",
+      "file_type": "document",
+      "source_file": "docs/backlog.md",
+      "source_location": "L885",
+      "_origin": "ast",
+      "id": "docs_backlog_le_seul_vrai_reste_\u00e0_faire_avant_tout_le_monde_livrer_les_2_commits_en_attente",
+      "community": 72,
+      "norm_label": "le seul vrai \u00ab reste a faire \u00bb avant tout le monde : livrer les 2 commits en attente"
+    },
+    {
+      "label": "Prochaine MAJ \u2014 lot propos\u00e9",
+      "file_type": "document",
+      "source_file": "docs/backlog.md",
+      "source_location": "L901",
+      "_origin": "ast",
+      "id": "docs_backlog_prochaine_maj_lot_propos\u00e9",
+      "community": 72,
+      "norm_label": "prochaine maj \u2014 lot propose"
+    },
+    {
+      "label": "Ce qui n'a pas boug\u00e9 et p\u00e8se toujours",
+      "file_type": "document",
+      "source_file": "docs/backlog.md",
+      "source_location": "L915",
+      "_origin": "ast",
+      "id": "docs_backlog_ce_qui_n_a_pas_boug\u00e9_et_p\u00e8se_toujours",
+      "community": 72,
+      "norm_label": "ce qui n'a pas bouge et pese toujours"
+    },
+    {
+      "label": "Documentation remise \u00e0 jour dans cette passe",
+      "file_type": "document",
+      "source_file": "docs/backlog.md",
+      "source_location": "L932",
+      "_origin": "ast",
+      "id": "docs_backlog_documentation_remise_\u00e0_jour_dans_cette_passe",
+      "community": 72,
+      "norm_label": "documentation remise a jour dans cette passe"
     },
     {
       "label": "Divers \u2014 outillage & process",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L827",
+      "source_location": "L952",
       "_origin": "ast",
       "id": "docs_backlog_divers_outillage_process",
       "community": 60,
@@ -9910,50 +10070,50 @@
       "label": "D\u00e9j\u00e0 livr\u00e9 / non prioritaire",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L834",
+      "source_location": "L959",
       "_origin": "ast",
       "id": "docs_backlog_d\u00e9j\u00e0_livr\u00e9_non_prioritaire",
-      "community": 60,
+      "community": 62,
       "norm_label": "deja livre / non prioritaire"
     },
     {
       "label": "Fait",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L844",
+      "source_location": "L969",
       "_origin": "ast",
       "id": "docs_backlog_fait",
-      "community": 60,
+      "community": 62,
       "norm_label": "fait"
     },
     {
       "label": "P2 \u2014 Audit ergonomie restant (mai 2026)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L950",
+      "source_location": "L1075",
       "_origin": "ast",
       "id": "docs_backlog_p2_audit_ergonomie_restant_mai_2026",
-      "community": 60,
+      "community": 62,
       "norm_label": "p2 \u2014 audit ergonomie restant (mai 2026)"
     },
     {
       "label": "Reste \u00e0 faire \u2014 dette technique & refacto (incr\u00e9mental)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L968",
+      "source_location": "L1093",
       "_origin": "ast",
       "id": "docs_backlog_reste_\u00e0_faire_dette_technique_refacto_incr\u00e9mental",
-      "community": 60,
+      "community": 62,
       "norm_label": "reste a faire \u2014 dette technique & refacto (incremental)"
     },
     {
       "label": "Notes pour les agents",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L984",
+      "source_location": "L1109",
       "_origin": "ast",
       "id": "docs_backlog_notes_pour_les_agents",
-      "community": 60,
+      "community": 62,
       "norm_label": "notes pour les agents"
     },
     {
@@ -10420,7 +10580,7 @@
       "label": "2. Les 6 r\u00e8gles d'or (\u00e0 ne JAMAIS enfreindre)",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L47",
+      "source_location": "L48",
       "_origin": "ast",
       "id": "docs_onboarding_2_les_6_r\u00e8gles_d_or_\u00e0_ne_jamais_enfreindre",
       "community": 40,
@@ -10430,7 +10590,7 @@
       "label": "3. Carte du d\u00e9p\u00f4t",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L63",
+      "source_location": "L64",
       "_origin": "ast",
       "id": "docs_onboarding_3_carte_du_d\u00e9p\u00f4t",
       "community": 40,
@@ -10440,7 +10600,7 @@
       "label": "4. Le backend (`server.js`)",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L94",
+      "source_location": "L95",
       "_origin": "ast",
       "id": "docs_onboarding_4_le_backend_server_js",
       "community": 40,
@@ -10450,7 +10610,7 @@
       "label": "\u26a0\ufe0f Zones pi\u00e9g\u00e9es dans `server.js`",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L105",
+      "source_location": "L106",
       "_origin": "ast",
       "id": "docs_onboarding_zones_pi\u00e9g\u00e9es_dans_server_js",
       "community": 40,
@@ -10460,7 +10620,7 @@
       "label": "5. Authentification & r\u00f4les",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L111",
+      "source_location": "L112",
       "_origin": "ast",
       "id": "docs_onboarding_5_authentification_r\u00f4les",
       "community": 40,
@@ -10470,7 +10630,7 @@
       "label": "Hi\u00e9rarchie",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L113",
+      "source_location": "L114",
       "_origin": "ast",
       "id": "docs_onboarding_hi\u00e9rarchie",
       "community": 40,
@@ -10480,7 +10640,7 @@
       "label": "Middlewares (dans `server.js`)",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L122",
+      "source_location": "L123",
       "_origin": "ast",
       "id": "docs_onboarding_middlewares_dans_server_js",
       "community": 40,
@@ -10490,7 +10650,7 @@
       "label": "6. Mod\u00e8le de donn\u00e9es (collections MongoDB)",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L137",
+      "source_location": "L138",
       "_origin": "ast",
       "id": "docs_onboarding_6_mod\u00e8le_de_donn\u00e9es_collections_mongodb",
       "community": 40,
@@ -10500,7 +10660,7 @@
       "label": "7. Cartographie des routes API (`server.js`)",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L163",
+      "source_location": "L164",
       "_origin": "ast",
       "id": "docs_onboarding_7_cartographie_des_routes_api_server_js",
       "community": 40,
@@ -10510,7 +10670,7 @@
       "label": "Auth",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L167",
+      "source_location": "L168",
       "_origin": "ast",
       "id": "docs_onboarding_auth",
       "community": 40,
@@ -10520,7 +10680,7 @@
       "label": "Comptes & \u00e9tablissements (admin)",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L177",
+      "source_location": "L178",
       "_origin": "ast",
       "id": "docs_onboarding_comptes_\u00e9tablissements_admin",
       "community": 40,
@@ -10530,7 +10690,7 @@
       "label": "Staff",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L182",
+      "source_location": "L183",
       "_origin": "ast",
       "id": "docs_onboarding_staff",
       "community": 40,
@@ -10540,7 +10700,7 @@
       "label": "Shifts & planning",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L186",
+      "source_location": "L187",
       "_origin": "ast",
       "id": "docs_onboarding_shifts_planning",
       "community": 40,
@@ -10550,7 +10710,7 @@
       "label": "Disponibilit\u00e9s (gros domaine)",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L197",
+      "source_location": "L198",
       "_origin": "ast",
       "id": "docs_onboarding_disponibilit\u00e9s_gros_domaine",
       "community": 40,
@@ -10560,7 +10720,7 @@
       "label": "Cong\u00e9s (staff)",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L204",
+      "source_location": "L205",
       "_origin": "ast",
       "id": "docs_onboarding_cong\u00e9s_staff",
       "community": 40,
@@ -10570,7 +10730,7 @@
       "label": "Absences directeurs (E-19 \u2014 collection `manager_time_off`, hors pipeline staff)",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L209",
+      "source_location": "L210",
       "_origin": "ast",
       "id": "docs_onboarding_absences_directeurs_e_19_collection_manager_time_off_hors_pipeline_staff",
       "community": 40,
@@ -10580,7 +10740,7 @@
       "label": "Pointage & r\u00e9mun\u00e9ration",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L215",
+      "source_location": "L216",
       "_origin": "ast",
       "id": "docs_onboarding_pointage_r\u00e9mun\u00e9ration",
       "community": 40,
@@ -10590,7 +10750,7 @@
       "label": "Performance (pilotage \u00e9co)",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L220",
+      "source_location": "L221",
       "_origin": "ast",
       "id": "docs_onboarding_performance_pilotage_\u00e9co",
       "community": 40,
@@ -10600,7 +10760,7 @@
       "label": "Push & notifications",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L225",
+      "source_location": "L226",
       "_origin": "ast",
       "id": "docs_onboarding_push_notifications",
       "community": 40,
@@ -10610,7 +10770,7 @@
       "label": "Syst\u00e8me",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L229",
+      "source_location": "L230",
       "_origin": "ast",
       "id": "docs_onboarding_syst\u00e8me",
       "community": 40,
@@ -10620,7 +10780,7 @@
       "label": "\ud83d\udeab D\u00e9sactiv\u00e9es",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L232",
+      "source_location": "L233",
       "_origin": "ast",
       "id": "docs_onboarding_d\u00e9sactiv\u00e9es",
       "community": 40,
@@ -10630,7 +10790,7 @@
       "label": "8. Le frontend, fichier par fichier",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L237",
+      "source_location": "L238",
       "_origin": "ast",
       "id": "docs_onboarding_8_le_frontend_fichier_par_fichier",
       "community": 40,
@@ -10640,7 +10800,7 @@
       "label": "`script.js` \u2014 Console patron (8074 l., le plus gros morceau)",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L239",
+      "source_location": "L240",
       "_origin": "ast",
       "id": "docs_onboarding_script_js_console_patron_8074_l_le_plus_gros_morceau",
       "community": 40,
@@ -10650,7 +10810,7 @@
       "label": "`planning.js` \u2014 Espace staff (2440 l.)",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L260",
+      "source_location": "L261",
       "_origin": "ast",
       "id": "docs_onboarding_planning_js_espace_staff_2440_l",
       "community": 40,
@@ -10660,7 +10820,7 @@
       "label": "`pointage.js` \u2014 Pointage \u00e9tablissement (807 l.)",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L268",
+      "source_location": "L269",
       "_origin": "ast",
       "id": "docs_onboarding_pointage_js_pointage_\u00e9tablissement_807_l",
       "community": 40,
@@ -10670,7 +10830,7 @@
       "label": "`performance.js` \u2014 Pilotage \u00e9co (544 l.)",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L273",
+      "source_location": "L274",
       "_origin": "ast",
       "id": "docs_onboarding_performance_js_pilotage_\u00e9co_544_l",
       "community": 40,
@@ -10680,7 +10840,7 @@
       "label": "Glue & petits fichiers",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L278",
+      "source_location": "L279",
       "_origin": "ast",
       "id": "docs_onboarding_glue_petits_fichiers",
       "community": 40,
@@ -10690,7 +10850,7 @@
       "label": "9. Code partag\u00e9 navigateur \u2194 Node (`public/lib/`)",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L285",
+      "source_location": "L286",
       "_origin": "ast",
       "id": "docs_onboarding_9_code_partag\u00e9_navigateur_node_public_lib",
       "community": 40,
@@ -10700,7 +10860,7 @@
       "label": "10. PWA / Service Worker",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L305",
+      "source_location": "L306",
       "_origin": "ast",
       "id": "docs_onboarding_10_pwa_service_worker",
       "community": 40,
@@ -10710,7 +10870,7 @@
       "label": "11. Int\u00e9grations externes",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L313",
+      "source_location": "L314",
       "_origin": "ast",
       "id": "docs_onboarding_11_int\u00e9grations_externes",
       "community": 40,
@@ -10720,7 +10880,7 @@
       "label": "12. Tests & CI",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L325",
+      "source_location": "L326",
       "_origin": "ast",
       "id": "docs_onboarding_12_tests_ci",
       "community": 40,
@@ -10730,7 +10890,7 @@
       "label": "13. Documentation (`docs/`) & conventions",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L341",
+      "source_location": "L360",
       "_origin": "ast",
       "id": "docs_onboarding_13_documentation_docs_conventions",
       "community": 40,
@@ -10740,7 +10900,7 @@
       "label": "14. Parcours de prise en main recommand\u00e9",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L356",
+      "source_location": "L375",
       "_origin": "ast",
       "id": "docs_onboarding_14_parcours_de_prise_en_main_recommand\u00e9",
       "community": 40,
@@ -11320,7 +11480,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 25,
+      "community": 63,
       "norm_label": "server.js (serveur express monolithique)",
       "id": "readme_server_js"
     },
@@ -11697,7 +11857,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 60,
+      "community": 62,
       "norm_label": "f-05 echange de shifts (desactive)",
       "id": "backlog_f05_shift_swaps"
     },
@@ -11736,7 +11896,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 25,
+      "community": 63,
       "norm_label": "r-04 decoupage server.js en routers (reporte)",
       "id": "backlog_r04_split_server"
     },
@@ -11775,7 +11935,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 60,
+      "community": 62,
       "norm_label": "pieges blocs /* f-05 desactive */ (d-47)",
       "id": "backlog_f05_blocks_trap"
     },
@@ -13270,9 +13430,9 @@
       "source_file": "package.json",
       "source_location": "L21",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "package_scripts",
-      "target": "package_scripts_db_uri_dev",
-      "confidence_score": 1.0
+      "target": "package_scripts_db_uri_dev"
     },
     {
       "relation": "contains",
@@ -13280,9 +13440,9 @@
       "source_file": "package.json",
       "source_location": "L22",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "package_scripts",
-      "target": "package_scripts_db_uri_main",
-      "confidence_score": 1.0
+      "target": "package_scripts_db_uri_main"
     },
     {
       "relation": "contains",
@@ -13330,9 +13490,9 @@
       "source_file": "package.json",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "package_scripts",
-      "target": "package_scripts_link_directors",
-      "confidence_score": 1.0
+      "target": "package_scripts_link_directors"
     },
     {
       "relation": "contains",
@@ -13380,9 +13540,9 @@
       "source_file": "package.json",
       "source_location": "L19",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "package_scripts",
-      "target": "package_scripts_smoke_dev",
-      "confidence_score": 1.0
+      "target": "package_scripts_smoke_dev"
     },
     {
       "relation": "contains",
@@ -13390,9 +13550,9 @@
       "source_file": "package.json",
       "source_location": "L20",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "package_scripts",
-      "target": "package_scripts_smoke_main",
-      "confidence_score": 1.0
+      "target": "package_scripts_smoke_main"
     },
     {
       "relation": "contains",
@@ -13657,6 +13817,102 @@
       "confidence_score": 1.0,
       "source": "public_index_init_togglestaffbar",
       "target": "public_index_init_openstaffbar"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public/lib/auth-guard.js",
+      "source_location": "L84",
+      "weight": 1.0,
+      "source": "lib_auth_guard",
+      "target": "lib_auth_guard_install",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public/lib/auth-guard.js",
+      "source_location": "L69",
+      "weight": 1.0,
+      "source": "lib_auth_guard",
+      "target": "lib_auth_guard_samepathname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public/lib/auth-guard.js",
+      "source_location": "L56",
+      "weight": 1.0,
+      "source": "lib_auth_guard",
+      "target": "lib_auth_guard_shouldredirecton401",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/auth-guard.test.js",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "tests_auth_guard_test",
+      "target": "lib_auth_guard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/lib/auth-guard.js",
+      "source_location": "L96",
+      "weight": 1.0,
+      "source": "lib_auth_guard_install",
+      "target": "lib_auth_guard_shouldredirecton401",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/auth-guard.test.js",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "tests_auth_guard_test",
+      "target": "lib_auth_guard_shouldredirecton401",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/lib/auth-guard.js",
+      "source_location": "L96",
+      "weight": 1.0,
+      "source": "lib_auth_guard_install",
+      "target": "lib_auth_guard_samepathname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/auth-guard.test.js",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "tests_auth_guard_test",
+      "target": "lib_auth_guard_samepathname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/auth-guard.test.js",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "tests_auth_guard_test",
+      "target": "lib_auth_guard_install",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -18998,9 +19254,9 @@
       "source_file": "public/script.js",
       "source_location": "L6636",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script",
-      "target": "public_script_staffindex",
-      "confidence_score": 1.0
+      "target": "public_script_staffindex"
     },
     {
       "relation": "contains",
@@ -20353,9 +20609,9 @@
       "source_file": "public/script.js",
       "source_location": "L330",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_init",
-      "target": "public_script_openmanagerdisposmodal",
-      "confidence_score": 1.0
+      "target": "public_script_openmanagerdisposmodal"
     },
     {
       "relation": "calls",
@@ -22498,9 +22754,9 @@
       "source_file": "public/script.js",
       "source_location": "L6644",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_loaddisposlist",
-      "target": "public_script_disposscopeqs",
-      "confidence_score": 1.0
+      "target": "public_script_disposscopeqs"
     },
     {
       "relation": "calls",
@@ -22509,9 +22765,9 @@
       "source_file": "public/script.js",
       "source_location": "L6718",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_loaddisposlist",
-      "target": "public_script_staffindex",
-      "confidence_score": 1.0
+      "target": "public_script_staffindex"
     },
     {
       "relation": "calls",
@@ -25383,9 +25639,9 @@
       "source_file": "scripts/db-uri.js",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_db_uri",
-      "target": "scripts_db",
-      "confidence_score": 1.0
+      "target": "scripts_db"
     },
     {
       "relation": "imports_from",
@@ -25394,9 +25650,9 @@
       "source_file": "scripts/fix-orphan-staff-link.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_fix_orphan_staff_link",
-      "target": "scripts_db",
-      "confidence_score": 1.0
+      "target": "scripts_db"
     },
     {
       "relation": "imports_from",
@@ -25416,9 +25672,9 @@
       "source_file": "scripts/link-director-staff.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_link_director_staff",
-      "target": "scripts_db",
-      "confidence_score": 1.0
+      "target": "scripts_db"
     },
     {
       "relation": "imports_from",
@@ -25515,9 +25771,9 @@
       "source_file": "scripts/fix-orphan-staff-link.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_fix_orphan_staff_link",
-      "target": "scripts_db_opendb",
-      "confidence_score": 1.0
+      "target": "scripts_db_opendb"
     },
     {
       "relation": "calls",
@@ -25559,9 +25815,9 @@
       "source_file": "scripts/link-director-staff.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_link_director_staff",
-      "target": "scripts_db_opendb",
-      "confidence_score": 1.0
+      "target": "scripts_db_opendb"
     },
     {
       "relation": "calls",
@@ -25725,9 +25981,9 @@
       "source_file": "scripts/db-uri.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_db_uri",
-      "target": "scripts_db_uri_cfg",
-      "confidence_score": 1.0
+      "target": "scripts_db_uri_cfg"
     },
     {
       "relation": "contains",
@@ -25735,9 +25991,9 @@
       "source_file": "scripts/db-uri.js",
       "source_location": "L13",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_db_uri",
-      "target": "scripts_db_uri_fs",
-      "confidence_score": 1.0
+      "target": "scripts_db_uri_fs"
     },
     {
       "relation": "contains",
@@ -25745,9 +26001,9 @@
       "source_file": "scripts/db-uri.js",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_db_uri",
-      "target": "scripts_db_uri_full",
-      "confidence_score": 1.0
+      "target": "scripts_db_uri_full"
     },
     {
       "relation": "contains",
@@ -25755,9 +26011,9 @@
       "source_file": "scripts/db-uri.js",
       "source_location": "L30",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_db_uri",
-      "target": "scripts_db_uri_head_query",
-      "confidence_score": 1.0
+      "target": "scripts_db_uri_head_query"
     },
     {
       "relation": "contains",
@@ -25765,9 +26021,9 @@
       "source_file": "scripts/db-uri.js",
       "source_location": "L15",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_db_uri",
-      "target": "scripts_db_uri_path",
-      "confidence_score": 1.0
+      "target": "scripts_db_uri_path"
     },
     {
       "relation": "contains",
@@ -25775,9 +26031,9 @@
       "source_file": "scripts/db-uri.js",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_db_uri",
-      "target": "scripts_db_uri_prod_db_name",
-      "confidence_score": 1.0
+      "target": "scripts_db_uri_prod_db_name"
     },
     {
       "relation": "contains",
@@ -25835,9 +26091,9 @@
       "source_file": "scripts/fix-orphan-staff-link.js",
       "source_location": "L25",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_fix_orphan_staff_link",
-      "target": "scripts_fix_orphan_staff_link_apply",
-      "confidence_score": 1.0
+      "target": "scripts_fix_orphan_staff_link_apply"
     },
     {
       "relation": "contains",
@@ -25845,9 +26101,9 @@
       "source_file": "scripts/fix-orphan-staff-link.js",
       "source_location": "L31",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_fix_orphan_staff_link",
-      "target": "scripts_fix_orphan_staff_link_main",
-      "confidence_score": 1.0
+      "target": "scripts_fix_orphan_staff_link_main"
     },
     {
       "relation": "contains",
@@ -25855,9 +26111,9 @@
       "source_file": "scripts/fix-orphan-staff-link.js",
       "source_location": "L27",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_fix_orphan_staff_link",
-      "target": "scripts_fix_orphan_staff_link_norm",
-      "confidence_score": 1.0
+      "target": "scripts_fix_orphan_staff_link_norm"
     },
     {
       "relation": "contains",
@@ -25865,9 +26121,9 @@
       "source_file": "scripts/fix-orphan-staff-link.js",
       "source_location": "L22",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_fix_orphan_staff_link",
-      "target": "scripts_fix_orphan_staff_link_objectid",
-      "confidence_score": 1.0
+      "target": "scripts_fix_orphan_staff_link_objectid"
     },
     {
       "relation": "contains",
@@ -25875,9 +26131,9 @@
       "source_file": "scripts/fix-orphan-staff-link.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_fix_orphan_staff_link",
-      "target": "scripts_fix_orphan_staff_link_opendb",
-      "confidence_score": 1.0
+      "target": "scripts_fix_orphan_staff_link_opendb"
     },
     {
       "relation": "contains",
@@ -25905,9 +26161,9 @@
       "source_file": "scripts/link-director-staff.js",
       "source_location": "L25",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_link_director_staff",
-      "target": "scripts_link_director_staff_apply",
-      "confidence_score": 1.0
+      "target": "scripts_link_director_staff_apply"
     },
     {
       "relation": "contains",
@@ -25915,9 +26171,9 @@
       "source_file": "scripts/link-director-staff.js",
       "source_location": "L35",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_link_director_staff",
-      "target": "scripts_link_director_staff_main",
-      "confidence_score": 1.0
+      "target": "scripts_link_director_staff_main"
     },
     {
       "relation": "contains",
@@ -25925,9 +26181,9 @@
       "source_file": "scripts/link-director-staff.js",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_link_director_staff",
-      "target": "scripts_link_director_staff_norm",
-      "confidence_score": 1.0
+      "target": "scripts_link_director_staff_norm"
     },
     {
       "relation": "contains",
@@ -25935,9 +26191,9 @@
       "source_file": "scripts/link-director-staff.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_link_director_staff",
-      "target": "scripts_link_director_staff_opendb",
-      "confidence_score": 1.0
+      "target": "scripts_link_director_staff_opendb"
     },
     {
       "relation": "contains",
@@ -26025,9 +26281,9 @@
       "source_file": "scripts/seed-dev.js",
       "source_location": "L25",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_seed_dev",
-      "target": "scripts_seed_dev_objectid",
-      "confidence_score": 1.0
+      "target": "scripts_seed_dev_objectid"
     },
     {
       "relation": "contains",
@@ -26205,9 +26461,9 @@
       "source_file": "scripts/smoke.js",
       "source_location": "L25",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke",
-      "target": "scripts_smoke_soiree",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_soiree"
     },
     {
       "relation": "contains",
@@ -26480,9 +26736,9 @@
       "source_file": "server.js",
       "source_location": "L1258",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "server_ensuredirectorstaffprofile",
-      "confidence_score": 1.0
+      "target": "server_ensuredirectorstaffprofile"
     },
     {
       "relation": "contains",
@@ -26600,9 +26856,9 @@
       "source_file": "server.js",
       "source_location": "L1302",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "server_invalidateusersessions",
-      "confidence_score": 1.0
+      "target": "server_invalidateusersessions"
     },
     {
       "relation": "contains",
@@ -26940,9 +27196,9 @@
       "source_file": "server.js",
       "source_location": "L1280",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "server_syncdirectorassignedestablishments",
-      "confidence_score": 1.0
+      "target": "server_syncdirectorassignedestablishments"
     },
     {
       "relation": "contains",
@@ -27112,9 +27368,9 @@
       "source_file": "server.js",
       "source_location": "L3092",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server_pendingscopefilter",
-      "target": "server_userestablishmentids",
-      "confidence_score": 1.0
+      "target": "server_userestablishmentids"
     },
     {
       "relation": "calls",
@@ -27123,9 +27379,9 @@
       "source_file": "server.js",
       "source_location": "L1271",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server_ensuredirectorstaffprofile",
-      "target": "server_createmanagerstaffprofile",
-      "confidence_score": 1.0
+      "target": "server_createmanagerstaffprofile"
     },
     {
       "relation": "calls",
@@ -27134,9 +27390,9 @@
       "source_file": "server.js",
       "source_location": "L1289",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server_syncdirectorassignedestablishments",
-      "target": "server_invalidateusersessions",
-      "confidence_score": 1.0
+      "target": "server_invalidateusersessions"
     },
     {
       "relation": "calls",
@@ -27170,6 +27426,56 @@
       "confidence_score": 1.0,
       "source": "server_materializeallmanagertemplates",
       "target": "server_materializemanagertemplateweek"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/auth-guard.test.js",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "tests_auth_guard_test",
+      "target": "tests_auth_guard_test_assert",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/auth-guard.test.js",
+      "source_location": "L71",
+      "weight": 1.0,
+      "source": "tests_auth_guard_test",
+      "target": "tests_auth_guard_test_fakewin",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/auth-guard.test.js",
+      "source_location": "L103",
+      "weight": 1.0,
+      "source": "tests_auth_guard_test",
+      "target": "tests_auth_guard_test_makewindow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/auth-guard.test.js",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "tests_auth_guard_test",
+      "target": "tests_auth_guard_test_shouldredirecton401_samepathname_install",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/auth-guard.test.js",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "tests_auth_guard_test",
+      "target": "tests_auth_guard_test_test",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -27584,9 +27890,9 @@
       "source_file": "tests/estab-access.test.js",
       "source_location": "L179",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_estab_access_test",
-      "target": "tests_estab_access_test_resp_user",
-      "confidence_score": 1.0
+      "target": "tests_estab_access_test_resp_user"
     },
     {
       "relation": "contains",
@@ -27604,9 +27910,9 @@
       "source_file": "tests/estab-access.test.js",
       "source_location": "L257",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_estab_access_test",
-      "target": "tests_estab_access_test_seedsession",
-      "confidence_score": 1.0
+      "target": "tests_estab_access_test_seedsession"
     },
     {
       "relation": "contains",
@@ -27614,9 +27920,9 @@
       "source_file": "tests/estab-access.test.js",
       "source_location": "L181",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_estab_access_test",
-      "target": "tests_estab_access_test_seedsoiree",
-      "confidence_score": 1.0
+      "target": "tests_estab_access_test_seedsoiree"
     },
     {
       "relation": "contains",
@@ -27624,9 +27930,9 @@
       "source_file": "tests/estab-access.test.js",
       "source_location": "L256",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_estab_access_test",
-      "target": "tests_estab_access_test_sessionsof",
-      "confidence_score": 1.0
+      "target": "tests_estab_access_test_sessionsof"
     },
     {
       "relation": "contains",
@@ -27696,9 +28002,9 @@
       "source_file": "tests/helpers/fake-db.js",
       "source_location": "L60",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_fake_db",
-      "target": "helpers_fake_db_getpath",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db_getpath"
     },
     {
       "relation": "contains",
@@ -28236,9 +28542,9 @@
       "source_file": "tests/manager-dispos.test.js",
       "source_location": "L341",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_manager_dispos_test",
-      "target": "tests_manager_dispos_test_invitedir",
-      "confidence_score": 1.0
+      "target": "tests_manager_dispos_test_invitedir"
     },
     {
       "relation": "contains",
@@ -29647,9 +29953,9 @@
       "source_file": "docs/backlog.md",
       "source_location": "L644",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
-      "target": "docs_backlog_audit_complet_du_jeu_de_recette_2026_08_07",
-      "confidence_score": 1.0
+      "target": "docs_backlog_audit_complet_du_jeu_de_recette_2026_08_07"
     },
     {
       "relation": "contains",
@@ -29677,9 +29983,9 @@
       "source_file": "docs/backlog.md",
       "source_location": "L626",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
-      "target": "docs_backlog_colonne_masse_sal_brute_dans_le_tableau_performance_2026_08_07",
-      "confidence_score": 1.0
+      "target": "docs_backlog_colonne_masse_sal_brute_dans_le_tableau_performance_2026_08_07"
     },
     {
       "relation": "contains",
@@ -29737,9 +30043,9 @@
       "source_file": "docs/backlog.md",
       "source_location": "L743",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
-      "target": "docs_backlog_incident_prod_compte_branch\u00e9_sur_un_profil_staff_supprim\u00e9_2026_08_07",
-      "confidence_score": 1.0
+      "target": "docs_backlog_incident_prod_compte_branch\u00e9_sur_un_profil_staff_supprim\u00e9_2026_08_07"
     },
     {
       "relation": "contains",
@@ -29767,9 +30073,9 @@
       "source_file": "docs/backlog.md",
       "source_location": "L497",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
-      "target": "docs_backlog_lot_bugs_front_2026_08_06_r_10_r_09_r_04",
-      "confidence_score": 1.0
+      "target": "docs_backlog_lot_bugs_front_2026_08_06_r_10_r_09_r_04"
     },
     {
       "relation": "contains",
@@ -29777,9 +30083,9 @@
       "source_file": "docs/backlog.md",
       "source_location": "L515",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
-      "target": "docs_backlog_lot_profils_staff_2026_08_06_r_05_r_12",
-      "confidence_score": 1.0
+      "target": "docs_backlog_lot_profils_staff_2026_08_06_r_05_r_12"
     },
     {
       "relation": "contains",
@@ -29817,9 +30123,9 @@
       "source_file": "docs/backlog.md",
       "source_location": "L779",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
-      "target": "docs_backlog_priorisation_revue_de_l_ensemble_2026_08_08",
-      "confidence_score": 1.0
+      "target": "docs_backlog_priorisation_revue_de_l_ensemble_2026_08_08"
     },
     {
       "relation": "contains",
@@ -29837,9 +30143,9 @@
       "source_file": "docs/backlog.md",
       "source_location": "L571",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
-      "target": "docs_backlog_pr\u00e9paration_de_la_propagation_castanui_2026_08_07",
-      "confidence_score": 1.0
+      "target": "docs_backlog_pr\u00e9paration_de_la_propagation_castanui_2026_08_07"
     },
     {
       "relation": "contains",
@@ -29855,11 +30161,21 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/backlog.md",
-      "source_location": "L531",
+      "source_location": "L870",
       "weight": 1.0,
       "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
-      "target": "docs_backlog_revue_simplify_2026_08_07_et_deux_constats_hors_p\u00e9rim\u00e8tre",
+      "target": "docs_backlog_revue_d_ensemble_\u00e9tat_du_projet_au_2026_08_10",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/backlog.md",
+      "source_location": "L531",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
+      "target": "docs_backlog_revue_simplify_2026_08_07_et_deux_constats_hors_p\u00e9rim\u00e8tre"
     },
     {
       "relation": "contains",
@@ -29867,9 +30183,9 @@
       "source_file": "docs/backlog.md",
       "source_location": "L671",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
-      "target": "docs_backlog_revue_simplify_du_2026_08_07_constats_non_appliqu\u00e9s",
-      "confidence_score": 1.0
+      "target": "docs_backlog_revue_simplify_du_2026_08_07_constats_non_appliqu\u00e9s"
     },
     {
       "relation": "contains",
@@ -29917,9 +30233,9 @@
       "source_file": "docs/backlog.md",
       "source_location": "L785",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_backlog_priorisation_revue_de_l_ensemble_2026_08_08",
-      "target": "docs_backlog_devant_les_features",
-      "confidence_score": 1.0
+      "target": "docs_backlog_devant_les_features"
     },
     {
       "relation": "contains",
@@ -29927,9 +30243,9 @@
       "source_file": "docs/backlog.md",
       "source_location": "L800",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_backlog_priorisation_revue_de_l_ensemble_2026_08_08",
-      "target": "docs_backlog_le_risque_structurel_le_plus_lourd_qui_n_est_pas_une_feature",
-      "confidence_score": 1.0
+      "target": "docs_backlog_le_risque_structurel_le_plus_lourd_qui_n_est_pas_une_feature"
     },
     {
       "relation": "contains",
@@ -29937,9 +30253,9 @@
       "source_file": "docs/backlog.md",
       "source_location": "L814",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_backlog_priorisation_revue_de_l_ensemble_2026_08_08",
-      "target": "docs_backlog_les_autres_features_par_n\u00e9cessit\u00e9_d\u00e9croissante",
-      "confidence_score": 1.0
+      "target": "docs_backlog_les_autres_features_par_n\u00e9cessit\u00e9_d\u00e9croissante"
     },
     {
       "relation": "contains",
@@ -29947,8 +30263,58 @@
       "source_file": "docs/backlog.md",
       "source_location": "L793",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_backlog_priorisation_revue_de_l_ensemble_2026_08_08",
-      "target": "docs_backlog_reclassement_de_la_feature_a_c_est_un_correctif_pas_un_confort",
+      "target": "docs_backlog_reclassement_de_la_feature_a_c_est_un_correctif_pas_un_confort"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/backlog.md",
+      "source_location": "L915",
+      "weight": 1.0,
+      "source": "docs_backlog_revue_d_ensemble_\u00e9tat_du_projet_au_2026_08_10",
+      "target": "docs_backlog_ce_qui_n_a_pas_boug\u00e9_et_p\u00e8se_toujours",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/backlog.md",
+      "source_location": "L932",
+      "weight": 1.0,
+      "source": "docs_backlog_revue_d_ensemble_\u00e9tat_du_projet_au_2026_08_10",
+      "target": "docs_backlog_documentation_remise_\u00e0_jour_dans_cette_passe",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/backlog.md",
+      "source_location": "L885",
+      "weight": 1.0,
+      "source": "docs_backlog_revue_d_ensemble_\u00e9tat_du_projet_au_2026_08_10",
+      "target": "docs_backlog_le_seul_vrai_reste_\u00e0_faire_avant_tout_le_monde_livrer_les_2_commits_en_attente",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/backlog.md",
+      "source_location": "L901",
+      "weight": 1.0,
+      "source": "docs_backlog_revue_d_ensemble_\u00e9tat_du_projet_au_2026_08_10",
+      "target": "docs_backlog_prochaine_maj_lot_propos\u00e9",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/backlog.md",
+      "source_location": "L875",
+      "weight": 1.0,
+      "source": "docs_backlog_revue_d_ensemble_\u00e9tat_du_projet_au_2026_08_10",
+      "target": "docs_backlog_\u00e9tat_v\u00e9rifi\u00e9",
       "confidence_score": 1.0
     },
     {
@@ -30277,9 +30643,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour",
-      "target": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour"
     },
     {
       "relation": "contains",
@@ -30287,9 +30653,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L13",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "target": "docs_note_client_mise_a_jour_1_l_application_change_un_peu_d_allure",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_1_l_application_change_un_peu_d_allure"
     },
     {
       "relation": "contains",
@@ -30297,9 +30663,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "target": "docs_note_client_mise_a_jour_2_la_page_performance_ne_montre_plus_que_le_charg\u00e9",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_2_la_page_performance_ne_montre_plus_que_le_charg\u00e9"
     },
     {
       "relation": "contains",
@@ -30307,9 +30673,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L32",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "target": "docs_note_client_mise_a_jour_3_vos_directeurs_deviennent_des_membres_de_l_\u00e9quipe_\u00e0_part_enti\u00e8re",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_3_vos_directeurs_deviennent_des_membres_de_l_\u00e9quipe_\u00e0_part_enti\u00e8re"
     },
     {
       "relation": "contains",
@@ -30317,9 +30683,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L54",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "target": "docs_note_client_mise_a_jour_4_la_file_d_attente_des_disponibilit\u00e9s_est_filtr\u00e9e_pour_les_directeurs",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_4_la_file_d_attente_des_disponibilit\u00e9s_est_filtr\u00e9e_pour_les_directeurs"
     },
     {
       "relation": "contains",
@@ -30327,9 +30693,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L63",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "target": "docs_note_client_mise_a_jour_5_un_point_d_attention_sur_les_droits",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_5_un_point_d_attention_sur_les_droits"
     },
     {
       "relation": "contains",
@@ -30337,9 +30703,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L74",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "target": "docs_note_client_mise_a_jour_ce_qui_ne_change_pas",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_ce_qui_ne_change_pas"
     },
     {
       "relation": "contains",
@@ -31804,5 +32170,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "1e5d06b12e1163a3d7d59b0fb79ccef0cdc00e66"
+  "built_at_commit": "71ab4afa9cb4a8beef7242d6a116f951f747f451"
 }

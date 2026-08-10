@@ -32,11 +32,12 @@ app-templyo/
 ├── .env                           ← Variables d'environnement (à créer, ne jamais commiter)
 ├── lib/
 │   └── utils.js                   ← Helpers purs testables (isValidObjectId, hashToken, normalizePhone, computeActiveDate, toDateStr)
-├── tests/                         ← 215 tests, 10 fichiers (node --test, zéro framework)
+├── tests/                         ← 236 tests, 11 fichiers (node --test, zéro framework)
 │   ├── helpers/                   ← harness.js (env + x-test-user) + fake-db.js (faux Mongo)
 │   ├── utils.test.js              ← 75 — helpers purs
 │   ├── shift-hours.test.js        ← 12 — heures effectives d'un shift
 │   ├── week.test.js               ← 15 — lundi de semaine (weekStart + currentWeekStart 6h)
+│   ├── auth-guard.test.js         ← 21 — rattrapage des 401 en cours de session (A-14)
 │   ├── routes.test.js             ← 4 — intégration HTTP (boot app, middlewares auth/DB)
 │   ├── dispos / conges / manager-off / manager-dispos  ← 64 — intégration métier
 │   └── perf-settings / estab-access                    ← 44 — périmètre (S-02…S-06, R-15, R-17)
@@ -422,13 +423,14 @@ Tout ce qui est testable sans Express/Mongo/réseau doit aller dans `lib/utils.j
 
 ```bash
 npm test
-# 215 tests, 10 fichiers (liste explicite dans package.json — le mode répertoire
+# 236 tests, 11 fichiers (liste explicite dans package.json — le mode répertoire
 # `node --test tests/` n'est pas fiable selon la version de Node).
 #
-# Unitaires purs (102) : utils (75 — timezone, padding dates, téléphones, tokens,
+# Unitaires purs (123) : utils (75 — timezone, padding dates, téléphones, tokens,
 #   ObjectId, publication, dispoDeadlineWaived, congés), shift-hours (12 — heures
 #   effectives réel/planifié, pointage partiel, shift de nuit), week (15 — weekStart
-#   bascule mois/année, currentWeekStart cutoff 6h).
+#   bascule mois/année, currentWeekStart cutoff 6h), auth-guard (21 — rattrapage
+#   des 401 en cours de session, A-14).
 # Intégration HTTP (113, harnais `tests/helpers/harness.js` + `fake-db`) : routes (4),
 #   dispos (15), conges (12), manager-off (14), manager-dispos (23),
 #   perf-settings (11), estab-access (33).

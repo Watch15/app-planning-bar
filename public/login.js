@@ -1,5 +1,13 @@
 document.getElementById('copyright-year').textContent = new Date().getFullYear();
 
+    // A-14 — arrivée depuis un 401 survenu EN COURS de session (`/lib/auth-guard.js`).
+    // Sans ce message, l'utilisateur est éjecté de son écran sans explication : depuis
+    // R-17, changer son périmètre coupe sa session immédiatement, ce qui n'a rien
+    // d'une panne. On le dit avant même de vérifier la session.
+    if (new URLSearchParams(window.location.search).has('expired')) {
+        showError('Ta session a expiré ou tes accès ont changé. Reconnecte-toi.');
+    }
+
     // Vérifier si déjà connecté
     fetch('/auth/me', { credentials: 'include' })
         .then(r => r.ok ? r.json() : null)

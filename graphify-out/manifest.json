@@ -5,8 +5,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1786092581.2219875,
-    "ast_hash": "d0c4b74dfd3a0df320b00e1e3f0cf1ab",
+    "mtime": 1786348719.376943,
+    "ast_hash": "6c5825174daa0447438e251432b45f76",
     "semantic_hash": ""
   },
   "public/lib/shift-hours.js": {
@@ -40,8 +40,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1786092581.2279882,
-    "ast_hash": "2975dee2993c71c7bc3194d02dce40e3",
+    "mtime": 1786348663.7011466,
+    "ast_hash": "f6d956c73750e32675f9fc196d744d38",
     "semantic_hash": ""
   },
   "public/vendor/html2canvas.min.js": {
@@ -105,18 +105,18 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1786019453.4626465,
-    "ast_hash": "fa28e601171252fa06c93aabd98cbf48",
+    "mtime": 1786348876.6729915,
+    "ast_hash": "85e2fcbaf4fe3c47f9cbd028c0e71fa1",
     "semantic_hash": ""
   },
   "docs/architecture.md": {
-    "mtime": 1781250745.9199288,
-    "ast_hash": "180271da6d0b3d5b5b1bc7b83e2a6e7d",
+    "mtime": 1786348894.1348915,
+    "ast_hash": "aa867f794d35ffb0f7aa0f83c8ba1776",
     "semantic_hash": ""
   },
   "docs/backlog.md": {
-    "mtime": 1786187907.5283048,
-    "ast_hash": "699097f5c08f6167fc169e7246902ee2",
+    "mtime": 1786349052.6157453,
+    "ast_hash": "6a36fb18466ea49eb9b7fad341a47e91",
     "semantic_hash": ""
   },
   "docs/prd.md": {
@@ -130,8 +130,8 @@
     "semantic_hash": "b08e527857ae0b58a84a24cdd1f2fd8a"
   },
   "public/index.html": {
-    "mtime": 1785964097.545514,
-    "ast_hash": "f0f8f406c77438c05ee1e27395ff7af4",
+    "mtime": 1786348659.3483527,
+    "ast_hash": "b67758b477a38cc00889e3894bbdd3b4",
     "semantic_hash": ""
   },
   "public/login.html": {
@@ -140,18 +140,18 @@
     "semantic_hash": ""
   },
   "public/performance.html": {
-    "mtime": 1786101156.746128,
-    "ast_hash": "c309acfc6ca1d30a4f0ea447c05338b4",
+    "mtime": 1786348660.5183742,
+    "ast_hash": "d80addee1716165f6378bc462ca13dd4",
     "semantic_hash": ""
   },
   "public/planning.html": {
-    "mtime": 1785964097.5495176,
-    "ast_hash": "c87ce26745a961c1a12e65cb511f31b8",
+    "mtime": 1786348655.535175,
+    "ast_hash": "b48cdd72f9fbb01d6e044026c64c0bb5",
     "semantic_hash": ""
   },
   "public/pointage.html": {
-    "mtime": 1784976954.1328163,
-    "ast_hash": "5a600b0a8b0bd03375a7e386d4632e54",
+    "mtime": 1786348653.868932,
+    "ast_hash": "bc79855900cba3b63fac5a3c847c8a77",
     "semantic_hash": ""
   },
   "public/politique-confidentialite.html": {
@@ -195,13 +195,13 @@
     "semantic_hash": ""
   },
   "public/login.js": {
-    "mtime": 1782733583.1200144,
-    "ast_hash": "17b56e60175d23bb83e7af026b0f94bf",
+    "mtime": 1786348671.5702069,
+    "ast_hash": "863b47738e67266aedda242b56519211",
     "semantic_hash": ""
   },
   "docs/onboarding.md": {
-    "mtime": 1785964097.5245154,
-    "ast_hash": "b5a4c0aac26de956d7756dbd8922eef5",
+    "mtime": 1786348909.803483,
+    "ast_hash": "a5b3acc627b737969a9a84b18c4205df",
     "semantic_hash": ""
   },
   "eslint.config.js": {
@@ -302,6 +302,16 @@
   "docs/note-client-mise-a-jour.md": {
     "mtime": 1786092581.2194676,
     "ast_hash": "049be7eb814f5723a01e3ced23858db1",
+    "semantic_hash": ""
+  },
+  "public/lib/auth-guard.js": {
+    "mtime": 1786349040.701887,
+    "ast_hash": "78716ff3dd7ed2f684e5c0f8ab95024f",
+    "semantic_hash": ""
+  },
+  "tests/auth-guard.test.js": {
+    "mtime": 1786349033.3770676,
+    "ast_hash": "e179ccf15aff11caf82ae346c85ee905",
     "semantic_hash": ""
   }
 }

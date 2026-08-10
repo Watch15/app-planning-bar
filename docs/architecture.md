@@ -33,11 +33,12 @@ app-planning-bar/
 │       └── ci.yml              ← CI : npm ci + syntax check + tests (Node 20/22)
 ├── lib/
 │   └── utils.js                ← Helpers purs (sans Express/Mongo) — testables isolément
-├── tests/                      ← 215 tests, 10 fichiers (cf. §13)
+├── tests/                      ← 236 tests, 11 fichiers (cf. §13)
 │   ├── helpers/                ← harness.js (env + x-test-user) + fake-db.js (faux Mongo)
 │   ├── utils.test.js           ← Helpers purs lib/utils.js (75)
 │   ├── shift-hours.test.js     ← Heures effectives d'un shift (12, D-73)
 │   ├── week.test.js            ← Lundi de semaine — weekStart + currentWeekStart (15, D-74/D-75)
+│   ├── auth-guard.test.js      ← 401 en cours de session — redirection (21, A-14)
 │   ├── routes.test.js          ← Intégration HTTP — boot app + middlewares auth/DB (4, D-82)
 │   ├── dispos.test.js          ← Dispos : deadline, exemption directeur, congés (15)
 │   ├── conges.test.js          ← Congés / time_off (12)
@@ -411,7 +412,7 @@ POST HTTP direct vers l'API REST Twilio. Pas de SDK. Normalisation des numéros 
 ## 13. Tests & CI
 
 - **Runner** — `node --test` (intégré). Aucune dépendance de framework.
-- **Portée** — **215 tests, 10 fichiers** (état 2026-08-10). *Unitaires purs (102)* : `tests/utils.test.js` (75 — cutoff 0/pile/bascule mois-année, padding de dates, téléphones, tokens, ObjectId, `isAutoPublished`/`isDatePublished` dont non-match d'une semaine adjacente, `dispoDeadlineWaived`, helpers congés), `tests/shift-hours.test.js` (12 — heures effectives réel/planifié, pointage partiel sans mélange, `real_start=0`, shift de nuit ; cf. D-71/D-73) et `tests/week.test.js` (15 — `weekStart` : lundi/dimanche/mercredi, bascule mois & année, idempotence, copie défensive ; `currentWeekStart` : cutoff hebdo 6h, lundi avant/après cutoff ; cf. D-74/D-75). *Intégration HTTP (113)* : `routes` (4), `dispos` (15), `conges` (12), `manager-off` (14), `manager-dispos` (23), `perf-settings` (11), `estab-access` (33).
+- **Portée** — **236 tests, 11 fichiers** (état 2026-08-10). *Unitaires purs (123)* : `tests/utils.test.js` (75 — cutoff 0/pile/bascule mois-année, padding de dates, téléphones, tokens, ObjectId, `isAutoPublished`/`isDatePublished` dont non-match d'une semaine adjacente, `dispoDeadlineWaived`, helpers congés), `tests/shift-hours.test.js` (12 — heures effectives réel/planifié, pointage partiel sans mélange, `real_start=0`, shift de nuit ; cf. D-71/D-73), `tests/week.test.js` (15 — `weekStart` : lundi/dimanche/mercredi, bascule mois & année, idempotence, copie défensive ; `currentWeekStart` : cutoff hebdo 6h, lundi avant/après cutoff ; cf. D-74/D-75) et `tests/auth-guard.test.js` (21 — rattrapage des 401 en cours de session, A-14 : prédicat de redirection, exclusions, enveloppe de `fetch`). *Intégration HTTP (113)* : `routes` (4), `dispos` (15), `conges` (12), `manager-off` (14), `manager-dispos` (23), `perf-settings` (11), `estab-access` (33).
 - **App importable (D-82)** — `server.js` exporte `app` et n'appelle `app.listen()` / `connectDB()` que sous `if (require.main === module)`. Le test force `NODE_ENV=test` + un `MONGO_URI`/`SESSION_SECRET` factices **avant** le `require` (jamais de connexion à la vraie base ; `dotenv` ne réécrit pas les vars déjà définies). Le `setInterval` du rate-limiter est `.unref()` pour ne pas bloquer la sortie du process.
 - **Faux Mongo + session simulée** — les tests d'intégration démarrent la vraie app Express et ne remplacent que la base, par `tests/helpers/fake-db.js` (injecté via `app.locals.setTestDb`). La session vient de l'en-tête `x-test-user`. Les deux ne sont armés que si `NODE_ENV=test` **ET** `ALLOW_TEST_AUTH=1` **ET** `require.main !== module` (garde structurelle : le harnais n'existe pas quand `server.js` est *lancé*, cf. S-01). Toute la config d'env vit dans `tests/helpers/harness.js`, un seul endroit. ⚠️ `fake-db` est un sous-ensemble de l'API Mongo — 4 lacunes ont déjà été trouvées à l'usage (`deleteOne`, `distinct`, `$and`/`$or`/`$exists`, `updateMany`) : un test qui passe ne prouve pas que la vraie requête tourne.
 - **Commande** — `npm test` liste explicitement les 10 fichiers. ⚠️ **Ne pas** repasser au mode répertoire `node --test tests/` : non fiable selon la version Node (il tente de charger `tests` comme un module → `MODULE_NOT_FOUND`).

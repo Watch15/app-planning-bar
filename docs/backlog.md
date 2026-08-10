@@ -194,9 +194,10 @@ d'introduire 3 erreurs neuves ici.
 ### État actuel des tests (pour mémoire)
 
 > ⚠️ Ce paragraphe décrivait l'état au 2026-08-05 (160 tests). **Chiffres à jour au
-> 2026-08-10 : 215 tests, 10 fichiers**, `npm test` vert, `eslint` 0 erreur / 13 warnings.
+> 2026-08-10 : 236 tests, 11 fichiers**, `npm test` vert, `eslint` 0 erreur / 13 warnings.
 
-Deux niveaux : **102 unitaires purs** (`utils` 75, `shift-hours` 12, `week` 15 — helpers de
+Deux niveaux : **123 unitaires purs** (`utils` 75, `shift-hours` 12, `week` 15,
+`auth-guard` 21 — helpers de
 `lib/utils.js` et des modules UMD, aucun Express, aucun `db`) et **113 d'intégration HTTP**
 (`routes` 4, `dispos` 15, `conges` 12, `manager-off` 14, `manager-dispos` 23,
 `perf-settings` 11, `estab-access` 33) qui démarrent la vraie app Express sur un port
@@ -728,7 +729,40 @@ français que personne n'exécute : la faire exécuter ferme la boucle. Complém
 un `$jsonSchema` sur `daily_revenue` (collection qui a déjà un index unique, donc déjà
 traitée comme ayant un contrat) aurait fait ÉCHOUER l'insert au lieu d'afficher 0 %.
 
-**A-14 — Le 401 en cours de session n'est traité qu'au chargement de page.**
+**~~A-14~~ — Le 401 en cours de session n'est traité qu'au chargement de page.**
+✅ **Résolu le 2026-08-10.** Nouveau module `public/lib/auth-guard.js` : il enveloppe
+`window.fetch` **une fois**, et redirige vers `/login.html?expired=1` quand un 401 tombe en
+cours de session. Chargé par les 4 pages applicatives **avant** leur propre script, ajouté au
+précache SW. Aucun des centaines d'appels `fetch` des bundles n'a été touché.
+**Quatre exclusions, chacune testée** — c'est là qu'est le vrai travail, pas dans la
+redirection : (1) **403 ≠ 401** — un périmètre refusé (S-02…S-06, qui rendent 403 en
+fonctionnement normal) ne doit surtout pas déconnecter un utilisateur authentifié ;
+(2) `/auth/login` et les routes d'entrée — un **mauvais mot de passe** rend 401, rediriger
+effacerait le message d'erreur et ferait clignoter la page à chaque faute de frappe ;
+(3) `login.html` / `set-password.html` — `login.js` appelle `/auth/me` au chargement et le
+401 y est le cas **normal** : rediriger ferait une **boucle** ; (4) cross-origin — le 401
+d'un tiers ne dit rien de notre session. Une seule redirection même si 10 appels échouent
+ensemble. Le repli hors-ligne du SW rend **503**, pas 401 : une coupure réseau ne déconnecte
+personne. `login.js` affiche « Ta session a expiré ou tes accès ont changé » — sans ça,
+depuis R-17, on est éjecté de son écran sans la moindre explication.
+**21 tests** (`tests/auth-guard.test.js`) — le prédicat de décision est une fonction pure
+exportée par le module UMD, donc testable sous Node : c'est **le premier code front du
+projet à être couvert**. Un test a d'ailleurs attrapé un vrai défaut à l'écriture :
+`String(undefined)` que `new URL` résolvait en `/undefined`, un pathname inventé du même
+origin au lieu d'un `null` honnête.
+**Non-vacuité vérifiée par mutation, 5 sur 5** : traiter le 403 comme un 401 → 1 test tombe ;
+retirer l'exclusion des pages publiques → 2 ; retirer celle des routes de login → 1 ;
+retirer la restriction `/api/`+`/auth/` → 1 ; retirer le verrou de redirection unique → 1.
+⚠️ **Ce dernier ne tombait PAS au premier essai** : le faux `location` stockait la valeur
+brute, donc après la 1re redirection `href` valait « /login.html?expired=1 » — une base
+relative que `new URL` refuse, si bien que les 9 appels suivants tombaient dans le `catch`
+et que le test passait **sans** le verrou qu'il prétendait vérifier. Corrigé en fidélisant
+le faux (le navigateur résout toute affectation de `href` en URL absolue). Sans la passe de
+mutation, ce test serait parti vert et vide.
+⚠️ **Non couvert** : la redirection réelle du navigateur n'est vérifiée que contre un faux
+`window`. À confirmer au smoke.
+
+~~Constat initial :~~
 Chaque page redirige vers `/login.html` quand `/auth/me` échoue **au démarrage**
 (`planning.js:54`, `script.js:496`, `pointage.js:166`). Mais un 401 qui survient *pendant*
 l'utilisation fait juste échouer l'appel en silence : l'écran reste affiché avec des données
@@ -842,7 +876,7 @@ suit est mesuré, pas supposé.**
 
 | Contrôle | Résultat |
 |---|---|
-| `npm test` | **215/215 vert** (102 unitaires purs + 113 d'intégration HTTP, 10 fichiers) |
+| `npm test` | **236/236 vert** (123 unitaires purs + 113 d'intégration HTTP, 11 fichiers) — 215 au moment de la revue, +21 avec A-14 livré ensuite |
 | `npx eslint .` | **0 erreur**, 13 warnings (escapes inutiles, variables inutilisées — cosmétique) |
 | Arbre de travail | **propre**, rien en attente de commit |
 | `graphify` | **rafraîchi ce jour** — 1180 nœuds, 1897 arêtes, 68 communautés (il datait de `c72affe`, soit 7 commits de retard) |
@@ -868,7 +902,7 @@ plus un item de la liste `/simplify`, c'est le **corollaire obligatoire de R-17*
 
 | Ordre | Quoi | Pourquoi ici | Coût |
 |---|---|---|---|
-| 1 | **A-14** — `fetch` centralisé qui redirige sur 401 | Corollaire de R-17 (ci-dessus). Commencer par `pointage.js` : page ouverte toute la soirée sur la tablette du bar, donc la plus exposée à un 401 en cours de session. | petit |
+| 1 | ~~**A-14** — `fetch` centralisé qui redirige sur 401~~ ✅ | **Fait le 2026-08-10** (`public/lib/auth-guard.js`, 21 tests). Corollaire de R-17. Couvre les 4 pages d'un coup plutôt que `pointage.js` seul : le garde est un module unique, le livrer partout ne coûtait pas plus cher que de le livrer une fois. | fait |
 | 2 | **Livrer le lot** : push `dev` → `smoke:dev` → merge `main` → `smoke:main` | Les corrections R-17 + A-14 n'ont **jamais tourné contre un vrai Mongo**. Le smoke est la seule chose qui l'établit. | ~0, mais bloquant |
 | 3 | **Feature A — désactivation d'un staff (F-13)** | Reclassée correctif le 2026-08-08 : aujourd'hui la seule sortie offerte au patron est `DELETE /api/staff/:id`, qui **supprime les shifts, donc l'historique de paie**. ⚠️ La question 5 (« en gardant leur erreur » = leur historique ?) est **toujours sans réponse** — à confirmer avant de coder. | moyen |
 | 4 | **A-09** — fusionner `backfill-directors` dans `link-directors --create-missing` | Le script interdit par le runbook est **toujours dans `package.json`** (`npm run backfill-directors`). Une interdiction qui vit dans un doc et un script exécutable d'une commande, c'est l'accident qui attend. Et le cas « directeur sans profil correspondant » n'a **aucun outil sûr** aujourd'hui. | petit |
@@ -883,8 +917,13 @@ A-12, A-13, T-01. **R-04 (découper `server.js`) reste après T-03**, et T-03 n'
 - **A-01 — le client est sur un dépôt fork.** Toujours vrai, toujours le risque structurel
   n°1. `castanui/main` est à `aed2d17`, à jour à ce jour **parce qu'on y a pensé**, pas parce
   qu'un mécanisme l'assure.
-- **T-03 — zéro test front.** Inchangé. Les items 1, 3 et 5 du lot ci-dessus sont **tous**
-  du code front, donc tous validés par lecture seule. C'est le prix qu'on continue de payer.
+- **T-03 — zéro test front.** 🟡 **Première brèche le 2026-08-10** : A-14 a été livré avec
+  21 tests, parce que sa logique a été mise dans un module `public/lib/` (UMD,
+  `require()`-able) au lieu d'un bundle. **La leçon générale** : ce n'est pas « le front est
+  intestable », c'est « les 4 gros bundles ne sont pas chargeables sous Node ». Tout ce qu'on
+  en sort vers `public/lib/` devient testable le jour même, sans infra ni dépendance. C'est
+  le chemin praticable vers T-03 — et accessoirement le même geste que R-04 demande côté
+  serveur. Restent non couverts : `script.js`, `planning.js`, `pointage.js`, `performance.js`.
 - **`fake-db` — 5e lacune trouvée** (les chemins pointés `session.user._id`, dans le commit
   R-17) après `deleteOne`, `distinct`, `$and`/`$or`/`$exists`, `updateMany`. Le rythme ne
   ralentit pas : une lacune par session de code environ. Les 215 tests couvrent moins que
@@ -1077,7 +1116,8 @@ Items 🟠 Importants / 🟡 Cosmétiques relevés par l'audit D-49 mais non cor
 - **Réouverture dispo** : `settings.dispo.force_open_staff[]` autorise un staff précis à soumettre malgré la deadline (E-15 / D-58), purgé à la soumission. Onglets « Sans dispo » (rouvrir simple) et « Modifier » (supprime les dispos existantes puis rouvre).
 - **Dispos `type:'off'` (indispo, D-63)** : une indispo est purement informative — `start_time`/`end_time` = `null`. **Toujours l'exclure** des vues qui supposent un créneau horaire : `/api/dispos/confirmed` (overlay planning) et `/api/dispos/non-affectees` la filtrent déjà (`$nin: ['week_note','off']`, cf. C-03/D-76) ; ne jamais créer de shift à partir d'un off. Côté affichage, tester `dispo.type === 'off'` avant de formater des heures (sinon `NaN`).
 - **Publication « semaine publiée ? » (D-78)** : utiliser `isDatePublished(dateStr, publishedWeeks, now)` (`lib/utils.js`, pur, testé) + `fetchPublishedWeeks()` (`server.js`, Set des lundis publiés). NE PAS réintroduire l'ancienne heuristique `|date - lundi| < 8 j` (boguée sur les semaines adjacentes). Le front passe par `/api/publish/:weekStart` (`{published, auto}`).
-- **Tests** : `npm test` (zéro dépendance, `node --test`) — **215 tests, 10 fichiers** au 2026-08-10 (cf. « État actuel des tests »). Les tests d'intégration requièrent `server.js` (qui exporte `app` et ne démarre/se connecte que si `require.main === module`), démarrent l'app sur un port éphémère et injectent un faux Mongo via `tests/helpers/fake-db.js` + `app.locals.setTestDb` ; la session vient de l'en-tête `x-test-user`. **Toute la config d'env est dans `tests/helpers/harness.js`** — ne jamais la redupliquer dans un fichier de test. ⚠️ **`fake-db` est un sous-ensemble de l'API Mongo** : 4 lacunes ont déjà été trouvées à l'usage (`deleteOne`, `distinct`, `$and`/`$or`/`$exists`, `updateMany` — 11 usages serveur intestables). Un test vert ne prouve pas que la vraie requête tourne ; le seul niveau qui exerce Mongo est `npm run smoke`. ⚠️ le mode répertoire `node --test tests/` **n'est pas fiable** (échoue selon la version Node) : lister les fichiers explicitement dans `package.json`. Ajouter un test quand on extrait un helper pur, change une règle de date/heure, ou fixe un bug qui pourrait régresser.
+- **Tests** : `npm test` (zéro dépendance, `node --test`) — **236 tests, 11 fichiers** au 2026-08-10 (cf. « État actuel des tests »). Les tests d'intégration requièrent `server.js` (qui exporte `app` et ne démarre/se connecte que si `require.main === module`), démarrent l'app sur un port éphémère et injectent un faux Mongo via `tests/helpers/fake-db.js` + `app.locals.setTestDb` ; la session vient de l'en-tête `x-test-user`. **Toute la config d'env est dans `tests/helpers/harness.js`** — ne jamais la redupliquer dans un fichier de test. ⚠️ **`fake-db` est un sous-ensemble de l'API Mongo** : 4 lacunes ont déjà été trouvées à l'usage (`deleteOne`, `distinct`, `$and`/`$or`/`$exists`, `updateMany` — 11 usages serveur intestables). Un test vert ne prouve pas que la vraie requête tourne ; le seul niveau qui exerce Mongo est `npm run smoke`. ⚠️ le mode répertoire `node --test tests/` **n'est pas fiable** (échoue selon la version Node) : lister les fichiers explicitement dans `package.json`. Ajouter un test quand on extrait un helper pur, change une règle de date/heure, ou fixe un bug qui pourrait régresser.
+- **`window.fetch` est enveloppé (A-14)** : `public/lib/auth-guard.js`, chargé **avant** le script de chaque page applicative, remplace `window.fetch` pour rediriger vers `/login.html?expired=1` sur un **401** de `/api/*` ou `/auth/*`. À savoir avant de débugger un appel réseau côté front : le `fetch` que tu appelles n'est pas le natif. ⚠️ **Ne jamais élargir au 403** — un périmètre refusé (S-02…S-06) est une réponse normale pour un utilisateur bien authentifié, le déconnecter serait un bug. Les exclusions (routes de login, pages publiques, cross-origin) vivent dans le prédicat pur `shouldRedirectOn401`, testé — les modifier sans passer par lui, c'est les perdre. Le garde est **auto-installé** au chargement du script : rien à appeler depuis les pages.
 - **Logique partagée navigateur/Node (D-73)** : pour qu'un helper soit à la fois consommé par le front (`<script src>`) ET testable sous Node, le mettre dans un **module UMD** sous `public/lib/` (ex. `shift-hours.js` → `window.ShiftHours` ; `week.js` → `window.Week`, + `require()` Node). Côté HTML, déléguer depuis une fonction de même nom pour préserver le hoisting et ne pas toucher les call sites ; charger le `<script src="/lib/…">` avant le script qui l'utilise. Quand un helper existait déjà côté Node (ex. `weekStart` dans `lib/utils.js`), faire **ré-exporter** `lib/utils.js` depuis le module UMD pour garder une source unique sans toucher les call sites serveur (R-01/D-74). Gabarit des prochaines extractions (R-02…).
 - **`weekStart` vs `currentWeekStart` (D-75)** : `weekStart(date)` = lundi de la semaine d'une **date calendaire** (publication, mapping shift→semaine) — ne JAMAIS y mettre de cutoff. `currentWeekStart(now, cutoff=6)` = lundi de la **semaine opérationnelle à l'instant présent** (avant 6h le lundi → semaine précédente, car les fermetures ~2h appartiennent à la veille). Utiliser `currentWeekStart(new Date())` pour « quelle semaine est-on maintenant », `weekStart(X)` pour « semaine de la date X ». Seuil `WEEK_CUTOFF_HOUR=6` dans `public/lib/week.js` (≠ `cutoff_hour` pointage 9h).
 - **Heures effectives d'un shift** : toujours passer par `shiftEffectiveHours(s)` (réel SI début ET fin pointés, sinon planifié). **Ne jamais** tester `real_start`/`real_end` séparément (mélange réel+planifié → durée fausse, bug D-71). Tester `!= null`, pas un falsy (`real_start = 0` = minuit, valeur valide).

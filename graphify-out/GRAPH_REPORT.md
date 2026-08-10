@@ -1,16 +1,16 @@
 # Graph Report - app-planning-bar  (2026-08-10)
 
 ## Corpus Check
-- 51 files · ~192,049 words
+- 53 files · ~196,444 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1180 nodes · 1897 edges · 68 communities (58 shown, 10 thin omitted)
+- 1196 nodes · 1917 edges · 75 communities (65 shown, 10 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 84 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1e5d06b1`
+- Built from commit: `71ab4afa`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -77,18 +77,25 @@
 - [[_COMMUNITY_Community 60|Community 60]]
 - [[_COMMUNITY_Community 61|Community 61]]
 - [[_COMMUNITY_Community 62|Community 62]]
+- [[_COMMUNITY_Community 63|Community 63]]
 - [[_COMMUNITY_Community 64|Community 64]]
 - [[_COMMUNITY_Community 65|Community 65]]
 - [[_COMMUNITY_Community 66|Community 66]]
 - [[_COMMUNITY_Community 67|Community 67]]
 - [[_COMMUNITY_Community 68|Community 68]]
+- [[_COMMUNITY_Community 69|Community 69]]
+- [[_COMMUNITY_Community 70|Community 70]]
+- [[_COMMUNITY_Community 71|Community 71]]
+- [[_COMMUNITY_Community 72|Community 72]]
+- [[_COMMUNITY_Community 73|Community 73]]
+- [[_COMMUNITY_Community 74|Community 74]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `_()` - 36 edges
 2. `m()` - 31 edges
 3. `toDateStr()` - 30 edges
-4. `addDays()` - 28 edges
-5. `Tests & sécurité — ouvert (revue du 2026-08-04/05)` - 28 edges
+4. `Tests & sécurité — ouvert (revue du 2026-08-04/05)` - 29 edges
+5. `addDays()` - 28 edges
 6. `showToast()` - 25 edges
 7. `init()` - 21 edges
 8. `3. Fonctionnalités principales` - 21 edges
@@ -115,7 +122,7 @@
 - **Sûreté timezone via toDateStr** — architecture_timezone_rule, architecture_todatestr, architecture_push_past_shift_guard [EXTRACTED 0.85]
 - **Cycle de vie feature iCal (livrée puis désactivée)** — backlog_f09_ical, architecture_ical_feed, architecture_calendar_enabled_flag [EXTRACTED 0.90]
 
-## Communities (68 total, 10 thin omitted)
+## Communities (75 total, 10 thin omitted)
 
 ### Community 0 - "Planning Board UI"
 Cohesion: 0.05
@@ -130,8 +137,8 @@ Cohesion: 0.04
 Nodes (18): Be(), cn(), Cs(), dA(), E(), FA(), gs(), hA() (+10 more)
 
 ### Community 3 - "html2canvas Parser"
-Cohesion: 0.14
-Nodes (30): mr(), QB(), se(), SUPPORT_WORD_BREAKING(), w(), _(), a(), b() (+22 more)
+Cohesion: 0.13
+Nodes (36): Ae(), mr(), QB(), re(), se(), SUPPORT_WORD_BREAKING(), w(), _() (+28 more)
 
 ### Community 4 - "Main Planning Script (State)"
 Cohesion: 0.03
@@ -162,8 +169,8 @@ Cohesion: 0.22
 Nodes (9): buildRoleFilters(), loadStaffNotesList(), matchesWordPrefix(), normalizeStr(), openStaffModal(), populateStaffManageFilters(), renderSidebar(), renderStaffManageList() (+1 more)
 
 ### Community 11 - "Shared Utils & Validation"
-Cohesion: 0.11
-Nodes (25): chargeMultiplier(), computeActiveDate(), congeCoversDate(), congeDaysInRange(), crypto, datesOverlap(), dispoDeadlineWaived(), hashToken() (+17 more)
+Cohesion: 0.12
+Nodes (26): buildTemplateDispos(), chargeMultiplier(), computeActiveDate(), crypto, datesCoveredByPeriods(), dispoDeadlineWaived(), hashToken(), isAutoPublished() (+18 more)
 
 ### Community 12 - "Community 12"
 Cohesion: 0.10
@@ -190,8 +197,8 @@ Cohesion: 0.38
 Nodes (7): openAccountsModal(), populateBarsCheckboxes(), populateStaffSelect(), renderAccountsList(), renderPendingInvites(), switchAccountsTab(), _updatePendingBadge()
 
 ### Community 18 - "Patron Creation Script"
-Cohesion: 0.07
-Nodes (31): pickStaffColor(), main(), { openDb }, { pickStaffColor }, ask(), bcrypt, main(), { openDb } (+23 more)
+Cohesion: 0.06
+Nodes (38): pickStaffColor(), main(), { openDb }, { pickStaffColor }, ask(), bcrypt, main(), { openDb } (+30 more)
 
 ### Community 19 - "Establishment Management"
 Cohesion: 0.11
@@ -206,8 +213,8 @@ Cohesion: 0.57
 Nodes (7): hideError(), loginEmail(), loginPhone(), redirectByRole(), setLoading(), showError(), switchMode()
 
 ### Community 22 - "html2canvas Color"
-Cohesion: 0.16
-Nodes (17): Ae(), ee(), fe(), He(), ie(), KB(), ne(), oe() (+9 more)
+Cohesion: 0.18
+Nodes (11): ee(), fe(), He(), ie(), KB(), ne(), oe(), te() (+3 more)
 
 ### Community 23 - "Session Management"
 Cohesion: 0.50
@@ -218,8 +225,8 @@ Cohesion: 0.05
 Nodes (41): 10. Déploiement (Railway), 11. Headers de sécurité (helmet), 12. Observabilité, 13. Tests & CI, 14. Synchronisation agenda — flux iCal (D-72), 1. Stack, 2. Structure du projet, 3.1 Fuseau horaire — NE JAMAIS utiliser `toISOString()` (+33 more)
 
 ### Community 25 - "Timeline Rendering"
-Cohesion: 0.05
-Nodes (41): Hiérarchie des rôles & middlewares auth, R-04 Découpage server.js en routers (reporté), Auth, Authentification, Cache Service Worker — ne pas toucher `%%BUILD_TIME%%`, Collections MongoDB, Commandes, Comptes & Staff (+33 more)
+Cohesion: 0.12
+Nodes (15): Hiérarchie des rôles & middlewares auth, Collections MongoDB, Commandes, Directement à la base (mongosh / Compass), Environnements — comment s'y connecter, Installation, Par l'application (le plus courant), Rôles utilisateurs (patron/directeur/staff/etablissement) (+7 more)
 
 ### Community 26 - "Shift Drag Interaction"
 Cohesion: 0.06
@@ -314,16 +321,20 @@ Cohesion: 0.40
 Nodes (6): public/lib/shift-hours.js (heures effectives), Module UMD partagé navigateur/Node, public/lib/week.js (weekStart/currentWeekStart), Refacto incrémentale (modèle D-73), planning.html (interface staff), Onglet Mon équipe (responsable)
 
 ### Community 60 - "Community 60"
-Cohesion: 0.05
-Nodes (43): Pièges blocs /* F-05 DÉSACTIVÉ */ (D-47), F-05 Échange de shifts (désactivé), Audit complet du jeu de recette (2026-08-07), Audit Railway complet (2026-08-05) — origine, variables, secrets, Backlog — Templyo, Base de recette (2026-08-05), Colonne « Masse sal. brute » dans le tableau Performance (2026-08-07), Devant les features (+35 more)
+Cohesion: 0.07
+Nodes (27): Audit complet du jeu de recette (2026-08-07), Audit Railway complet (2026-08-05) — origine, variables, secrets, Base de recette (2026-08-05), Colonne « Masse sal. brute » dans le tableau Performance (2026-08-07), Divers — outillage & process, Documentation — contradictions relevées (audit du 2026-08-05), Environnement `main` — cluster dédié (2026-08-05), Environnements & déploiements (2026-08-05) (+19 more)
 
 ### Community 61 - "Community 61"
 Cohesion: 0.67
 Nodes (4): applyCardNameContrast(), shiftTextColor(), textColorFor(), updateStaffColor()
 
 ### Community 62 - "Community 62"
-Cohesion: 0.14
-Nodes (14): buildTemplateDispos(), datesCoveredByPeriods(), isFullRangeOnConge(), toDateStr(), bcrypt, FEATURES, { ObjectId }, { openDb } (+6 more)
+Cohesion: 0.17
+Nodes (11): Pièges blocs /* F-05 DÉSACTIVÉ */ (D-47), F-05 Échange de shifts (désactivé), Backlog — Templyo, Déjà livré / non prioritaire, Fait, Notes pour les agents, P1 — Bugs bloquants (à faire en premier), P2 — Améliorations (après les P1) (+3 more)
+
+### Community 63 - "Community 63"
+Cohesion: 0.17
+Nodes (12): R-04 Découpage server.js en routers (reporté), Auth, Comptes & Staff, Disponibilités, Infra, Performance / CA, Routes API principales, server.js (serveur Express monolithique) (+4 more)
 
 ### Community 64 - "Community 64"
 Cohesion: 0.13
@@ -345,8 +356,32 @@ Nodes (4): Flag CALENDAR_ENABLED (iCal désactivé D-83), Synchronisation agenda
 Cohesion: 0.33
 Nodes (6): addEstablishment(), loadGroups(), openEstablishmentsModal(), renderEstablishmentsList(), renderGroupFilter(), renderTabs()
 
+### Community 69 - "Community 69"
+Cohesion: 0.31
+Nodes (6): install(), samePathname(), shouldRedirectOn401(), assert, { shouldRedirectOn401, samePathname, install }, { test }
+
+### Community 70 - "Community 70"
+Cohesion: 0.25
+Nodes (8): Authentification, Fonctionnalités, Performance (`performance.html`), Pointage (`pointage.html`), PWA, Vue patron (`index.html`), Vue staff (`planning.html`), Web Push
+
+### Community 71 - "Community 71"
+Cohesion: 0.29
+Nodes (6): congeCoversDate(), congeDaysInRange(), datesOverlap(), assert, { datesOverlap, congeCoversDate, congeDaysInRange }, { test }
+
+### Community 72 - "Community 72"
+Cohesion: 0.33
+Nodes (6): Ce qui n'a pas bougé et pèse toujours, Documentation remise à jour dans cette passe, Le seul vrai « reste à faire » avant tout le monde : livrer les 2 commits en attente, Prochaine MAJ — lot proposé, Revue d'ensemble — état du projet au 2026-08-10, État vérifié
+
+### Community 73 - "Community 73"
+Cohesion: 0.33
+Nodes (6): Cache Service Worker — ne pas toucher `%%BUILD_TIME%%`, Helpers purs → `lib/utils.js`, Règles techniques à ne jamais casser, `script.js` — monolithique, ne pas découper, Sessions MongoDB — promesses uniquement, Timezone — jamais `toISOString()`
+
+### Community 74 - "Community 74"
+Cohesion: 0.40
+Nodes (5): Devant les features, Le risque structurel le plus lourd, qui n'est pas une feature, Les autres features, par nécessité décroissante, Priorisation — revue de l'ensemble (2026-08-08), Reclassement de la Feature A — c'est un correctif, pas un confort
+
 ## Knowledge Gaps
-- **444 isolated node(s):** `js`, `globals`, `sharedRules`, `crypto`, `{ weekStart, currentWeekStart, WEEK_CUTOFF_HOUR }` (+439 more)
+- **452 isolated node(s):** `js`, `globals`, `sharedRules`, `crypto`, `{ weekStart, currentWeekStart, WEEK_CUTOFF_HOUR }` (+447 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **10 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -354,15 +389,15 @@ Nodes (6): addEstablishment(), loadGroups(), openEstablishmentsModal(), renderEs
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `check()` connect `DB Seed Script` to `Route Tests`?**
-  _High betweenness centrality (0.051) - this node is a cross-community bridge._
+  _High betweenness centrality (0.048) - this node is a cross-community bridge._
 - **Why does `fn()` connect `DB Seed Script` to `html2canvas Render Engine`?**
-  _High betweenness centrality (0.051) - this node is a cross-community bridge._
-- **Why does `toDateStr()` connect `Community 62` to `Route Tests`, `html2canvas Internals B`, `Shared Utils & Validation`, `Express Server & API`?**
-  _High betweenness centrality (0.022) - this node is a cross-community bridge._
+  _High betweenness centrality (0.048) - this node is a cross-community bridge._
+- **Why does `toDateStr()` connect `Shared Utils & Validation` to `html2canvas Internals B`, `Patron Creation Script`, `Route Tests`, `Express Server & API`?**
+  _High betweenness centrality (0.019) - this node is a cross-community bridge._
 - **Are the 19 inferred relationships involving `m()` (e.g. with `Ee()` and `Ae()`) actually correct?**
   _`m()` has 19 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `js`, `globals`, `sharedRules` to the rest of the system?**
-  _449 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _457 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Planning Board UI` be split into smaller, more focused modules?**
   _Cohesion score 0.0532724505327245 - nodes in this community are weakly interconnected._
 - **Should `html2canvas Render Engine` be split into smaller, more focused modules?**
