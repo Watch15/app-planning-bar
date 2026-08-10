@@ -1044,6 +1044,10 @@ en **prévisionnel**, sans qu'aucun document existe en base. Cliquer « Enregist
 envoie tout de suite : action explicite, comme un staff qui envoie avant l'heure. La règle ne
 porte que sur l'envoi **automatique**.
 
+✅ **Validé sur `dev` le 2026-08-10** — déployé (`01210d6`), smoke passé par le user, et
+comportement confirmé de son côté. Étage 1 franchi. Reste l'étage 2 (`main` + `smoke:main`),
+puis le client, qui exige un accord explicite.
+
 **Couverture** : 6 unitaires sur dates gelées + 6 d'intégration (T-01 refermé au passage).
 Mutations : retirer la garde de deadline / ne plus poser le marqueur / rematérialiser dans
 le `PUT` fait tomber un test chacun.
