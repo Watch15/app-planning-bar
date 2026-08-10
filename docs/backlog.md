@@ -1063,6 +1063,63 @@ parce qu'une mutation censée casser un test ne l'a pas cassé. Corrigé en acce
 deux cas la cause est la même : **un faux infidèle**, pas une assertion fausse. La passe de
 mutation n'est pas une formalité sur ce projet.
 
+### 🔴 CI rouge depuis 3 jours, `main` non déployé — les logs HTTP cassaient le runner (2026-08-10)
+
+**Découvert en enquêtant sur un 429 au `smoke:main`.** Le 429 a masqué bien pire : le smoke
+visait une instance qui tournait encore sur `aed2d179` **du 8 août** (`uptime` 46 h,
+`/lib/auth-guard.js` en 404). Le merge était sur GitHub, le déploiement n'avait jamais eu lieu.
+
+**Chaîne complète, chaque maillon vérifié :**
+
+1. Railway : `skippedReason: "CI check suite failed"` — il refuse de déployer sur CI rouge.
+2. CI rouge à l'étape `Run tests`, sur Node 20 **et** 22, **depuis le 2026-08-07**.
+3. Le log CI (obtenu par le user, les droits admin étant requis) : **aucune assertion
+   n'échoue**. `tests/estab-access.test.js` tombe en
+   `uncaughtException: Unable to deserialize cloned data due to invalid or unsupported
+   version`, dans `#processRawBuffer` / `FileTest.parseMessage` du runner Node.
+
+**Cause racine.** `node --test` lance **un process par fichier** et **parse leur stdout**
+pour en recevoir les résultats (trames v8 sérialisées). `morgan` y écrivait **une ligne par
+requête HTTP**. Sur le fichier le plus bavard (`estab-access`, 33 requêtes), une frontière de
+chunk finit par tomber au milieu d'une trame : le runner abandonne le fichier entier.
+**Aucun test ne tombe — le fichier disparaît du décompte.**
+
+**Ce qui rendait le diagnostic difficile**, et mérite d'être retenu :
+- **Le mode d'échec ne ressemble pas à sa cause.** « Un test échoue » aurait envoyé chercher
+  une régression métier. Il n'y en avait aucune.
+- **C'est probabiliste** : dépend du découpage des chunks, donc de l'OS, du nombre de cœurs,
+  de la charge. Le **même commit `0933a8a5` a réussi sur `dev` et échoué sur `main`**.
+  Non reproductible ici : Node 24 ✅, Node 22 ✅, `TZ=UTC` ✅, `--test-concurrency` 1 et 2 ✅ —
+  une vingtaine de passages verts sous Windows.
+- **J'avais vu le symptôme et je l'ai sous-estimé.** Un `234 tests / 1 échec` observé une fois
+  le 2026-08-10, noté comme « réserve non reproduite ». Les **2 tests manquants** étaient
+  précisément la signature : un fichier avorté ne compte pas ses tests restants. Un décompte
+  de tests qui varie d'un passage à l'autre n'est pas un détail — c'est un fichier qui meurt.
+
+**Corrigé** : `morgan` **muet sous `NODE_ENV=test`**, et les 3 `console.log` d'exploitation
+qui partent en boucle passent par un helper `logInfo`, no-op en test. Les `console.error`
+restent : rares, et on veut les voir. **Mesuré : 109 → 5 lignes** de sortie applicative sur
+le flux du runner (−95 %).
+
+⚠️ **La preuve dépend d'un passage de CI** — le défaut n'étant pas reproductible ici, on ne
+peut pas montrer localement qu'il a disparu ; on montre que sa cause a été retirée à 95 %.
+À confirmer sur les prochains passages, et à rouvrir si un `Unable to deserialize` revient.
+
+**Conséquences de process, plus importantes que le correctif :**
+- **Le pipeline était cassé en silence pendant 3 jours.** Personne n'a été prévenu : la CI
+  rouge ne notifie pas, et Railway skippe sans alerte. Un déploiement qui n'a pas lieu est
+  invisible — c'est l'inverse d'une panne, ça ne se manifeste par rien.
+- **Le 08/08, `main` a été déployé MALGRÉ une CI rouge** (SKIPPED à 10:59:06, SUCCESS à
+  10:59:07). Le garde-fou est donc incohérent : il bloque parfois, pas toujours. À
+  comprendre avant de s'y fier.
+- **Rien ne vérifie que l'instance déployée porte bien le commit attendu.** `npm run smoke`
+  aurait tourné en vert sur un build vieux de 2 jours sans que rien ne le signale — cf. la
+  piste ci-dessous.
+
+**Pistes non faites** : exposer le commit déployé sur `/health` et le faire vérifier par
+`smoke.js` (une instance périmée deviendrait impossible à confondre avec une instance à
+jour) ; publier les échecs de tests en annotations GitHub, lisibles sans droits admin.
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique. 🔄 **Rafraîchi le 2026-08-10** (1180 nœuds, 1897 arêtes, 68 communautés) — il datait de `c72affe`, 7 commits de retard : la consigne « après chaque session » n'a **pas** été tenue sur les sessions des 06→08/08. Ancien graphe dans `graphify-out/2026-08-10/`.

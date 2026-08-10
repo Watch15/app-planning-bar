@@ -67,7 +67,25 @@ app.use(helmet({
 
 // Logs HTTP structurés (morgan). 'combined' en prod (format standard Apache),
 // 'dev' en local (colorisé, concis).
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+//
+// ⚠️ MUET EN TEST, et ce n'est pas du confort. `node --test` lance un process par
+// fichier et **parse leur stdout** pour en recevoir les résultats (trames v8 sérialisées).
+// Morgan y écrit une ligne par requête ; sur un gros fichier bavard (`estab-access`,
+// 33 requêtes) une frontière de chunk finit par tomber au milieu d'une trame et le
+// runner abandonne le fichier sur `uncaughtException` : « Unable to deserialize cloned
+// data due to invalid or unsupported version ». Aucune assertion n'échoue — le fichier
+// entier disparaît du décompte. C'est ce qui rendait la CI rouge par intermittence
+// depuis le 2026-08-07, et ce qui a bloqué le déploiement de `main` (Railway refuse de
+// déployer sur `CI check suite failed`). Ne pas réactiver morgan sous `NODE_ENV=test`.
+if (process.env.NODE_ENV !== 'test') {
+    app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+}
+
+// Même raison que morgan : tout ce qui s'écrit sur stdout pendant un test traverse le
+// flux que le runner parse. `logInfo` remplace `console.log` pour les messages
+// d'exploitation qui partent EN BOUCLE (un par requête, un par entité traitée).
+// Les `console.error` restent tels quels : rares, et on veut les voir même en test.
+const logInfo = process.env.NODE_ENV === 'test' ? () => {} : (...a) => console.log(...a);
 
 app.use(express.json());
 
@@ -245,7 +263,7 @@ async function sendEmail(to, subject, html) {
     // sont dans un try/catch qui bascule sur le repli « lien manuel » — donc en dev le lien
     // d'activation s'affiche à l'écran, ce qui est plus pratique qu'un mail non parti.
     if (!OUTBOUND_ENABLED) {
-        console.log('🔇 E-mail bloqué (OUTBOUND_ENABLED=false) → ' + to + ' · ' + subject);
+        logInfo('🔇 E-mail bloqué (OUTBOUND_ENABLED=false) → ' + to + ' · ' + subject);
         throw new Error('Envois sortants désactivés sur cet environnement (OUTBOUND_ENABLED=false)');
     }
     const res = await fetch('https://api.resend.com/emails', {
@@ -1311,7 +1329,7 @@ async function syncDirectorAssignedEstablishments(staffId, venues) {
 async function invalidateUserSessions(userId) {
     try {
         const r = await db.collection('sessions').deleteMany({ 'session.user._id': String(userId) });
-        if (r.deletedCount) console.log('🔒 ' + r.deletedCount + ' session(s) invalidée(s) pour ' + userId);
+        if (r.deletedCount) logInfo('🔒 ' + r.deletedCount + ' session(s) invalidée(s) pour ' + userId);
     } catch (e) { console.error('[invalidateUserSessions]', e.message); }
 }
 
@@ -3771,7 +3789,7 @@ async function materializeAllManagerTemplates() {
                 { staff_id: t.staff_id },
                 { $set: { last_materialized_week: nextMonday } }
             );
-            console.log('📋 Semaine-type matérialisée (' + name + ', ' + nextMonday + ') : ' + n + ' dispo(s)');
+            logInfo('📋 Semaine-type matérialisée (' + name + ', ' + nextMonday + ') : ' + n + ' dispo(s)');
         }
     } catch (e) { console.error('❌ materializeAllManagerTemplates error:', e.message); }
 }
