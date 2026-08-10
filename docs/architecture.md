@@ -33,11 +33,18 @@ app-planning-bar/
 │       └── ci.yml              ← CI : npm ci + syntax check + tests (Node 20/22)
 ├── lib/
 │   └── utils.js                ← Helpers purs (sans Express/Mongo) — testables isolément
-├── tests/
-│   ├── utils.test.js           ← Helpers purs lib/utils.js (43 tests)
-│   ├── shift-hours.test.js     ← Heures effectives d'un shift (6 tests, D-73)
-│   ├── week.test.js            ← Lundi de semaine — weekStart + currentWeekStart (15 tests, D-74/D-75)
-│   └── routes.test.js          ← Intégration HTTP — boot app + middlewares auth/DB sans Mongo (2 tests, D-82)
+├── tests/                      ← 215 tests, 10 fichiers (cf. §13)
+│   ├── helpers/                ← harness.js (env + x-test-user) + fake-db.js (faux Mongo)
+│   ├── utils.test.js           ← Helpers purs lib/utils.js (75)
+│   ├── shift-hours.test.js     ← Heures effectives d'un shift (12, D-73)
+│   ├── week.test.js            ← Lundi de semaine — weekStart + currentWeekStart (15, D-74/D-75)
+│   ├── routes.test.js          ← Intégration HTTP — boot app + middlewares auth/DB (4, D-82)
+│   ├── dispos.test.js          ← Dispos : deadline, exemption directeur, congés (15)
+│   ├── conges.test.js          ← Congés / time_off (12)
+│   ├── manager-off.test.js     ← Absences directeur — manager_time_off (14)
+│   ├── manager-dispos.test.js  ← Dispos directeur E-22 + semaine-type (23)
+│   ├── perf-settings.test.js   ← Périmètre performance-settings — S-02/S-03 (11)
+│   └── estab-access.test.js    ← Périmètre par établissement — S-05/S-06/R-15/R-17 (33)
 ├── public/
 │   ├── index.html              ← Interface patron/directeur
 │   ├── planning.html           ← Interface staff
@@ -117,7 +124,7 @@ db.collection('sessions').findOne({ sid }, (err, doc) => { ... })
 
 ### 3.3 `script.js` — monolithique, ne pas découper
 
-`script.js` est la logique frontend côté patron (~7300 lignes). Il est volontairement gardé en un seul fichier pour la stabilité actuelle. Ne pas refactoriser en modules ni découper en plusieurs fichiers sans décision architecturale explicite. Ajouter toute nouvelle logique côté patron à l'intérieur de ce fichier.
+`script.js` est la logique frontend côté patron (~9120 lignes, état 2026-08-10). Il est volontairement gardé en un seul fichier pour la stabilité actuelle. Ne pas refactoriser en modules ni découper en plusieurs fichiers sans décision architecturale explicite. Ajouter toute nouvelle logique côté patron à l'intérieur de ce fichier.
 
 ### 3.4 Frontend — aucun outillage de build
 
@@ -404,10 +411,12 @@ POST HTTP direct vers l'API REST Twilio. Pas de SDK. Normalisation des numéros 
 ## 13. Tests & CI
 
 - **Runner** — `node --test` (intégré). Aucune dépendance de framework.
-- **Portée** — **71 tests, 4 suites**. *Unitaires* : `tests/utils.test.js` (48 — cutoff 0/pile/bascule mois-année, padding de dates, téléphones, tokens, ObjectId, `isAutoPublished`/`isDatePublished` dont non-match d'une semaine adjacente), `tests/shift-hours.test.js` (6 — heures effectives réel/planifié, pointage partiel sans mélange, `real_start=0`, shift de nuit ; cf. D-71/D-73) et `tests/week.test.js` (15 — `weekStart` : lundi/dimanche/mercredi, bascule mois & année, idempotence, copie défensive ; `currentWeekStart` : cutoff hebdo 6h, lundi avant/après cutoff ; cf. D-74/D-75). *Intégration* : `tests/routes.test.js` (2 — D-82) démarre l'app sur un port éphémère et tape des routes **sans Mongo** (`GET /auth/me` → 401 sans session ; `GET /api/establishments` → 503 via `checkDB`).
-- **App importable (D-82)** — `server.js` exporte `app` et n'appelle `app.listen()` / `connectDB()` que sous `if (require.main === module)`. Le test force `NODE_ENV=test` + un `MONGO_URI`/`SESSION_SECRET` factices **avant** le `require` (jamais de connexion à la vraie base ; `dotenv` ne réécrit pas les vars déjà définies). Le `setInterval` du rate-limiter est `.unref()` pour ne pas bloquer la sortie du process. Pour tester une route **avec données**, il faudra un faux `db` injectable (pas encore en place) — prérequis à étendre avant R-04.
-- **Commande** — `npm test` liste explicitement les fichiers (`node --test tests/utils.test.js tests/shift-hours.test.js tests/week.test.js tests/routes.test.js`). ⚠️ **Ne pas** repasser au mode répertoire `node --test tests/` : non fiable selon la version Node (il tente de charger `tests` comme un module → `MODULE_NOT_FOUND`).
-- **CI** — `.github/workflows/ci.yml` sur `push`/`PR` vers `main`. Matrice Node 20.x + 22.x. Étapes : `npm ci` → syntax check (`node -c` sur server.js, script.js, init-db.js) → `npm test`.
+- **Portée** — **215 tests, 10 fichiers** (état 2026-08-10). *Unitaires purs (102)* : `tests/utils.test.js` (75 — cutoff 0/pile/bascule mois-année, padding de dates, téléphones, tokens, ObjectId, `isAutoPublished`/`isDatePublished` dont non-match d'une semaine adjacente, `dispoDeadlineWaived`, helpers congés), `tests/shift-hours.test.js` (12 — heures effectives réel/planifié, pointage partiel sans mélange, `real_start=0`, shift de nuit ; cf. D-71/D-73) et `tests/week.test.js` (15 — `weekStart` : lundi/dimanche/mercredi, bascule mois & année, idempotence, copie défensive ; `currentWeekStart` : cutoff hebdo 6h, lundi avant/après cutoff ; cf. D-74/D-75). *Intégration HTTP (113)* : `routes` (4), `dispos` (15), `conges` (12), `manager-off` (14), `manager-dispos` (23), `perf-settings` (11), `estab-access` (33).
+- **App importable (D-82)** — `server.js` exporte `app` et n'appelle `app.listen()` / `connectDB()` que sous `if (require.main === module)`. Le test force `NODE_ENV=test` + un `MONGO_URI`/`SESSION_SECRET` factices **avant** le `require` (jamais de connexion à la vraie base ; `dotenv` ne réécrit pas les vars déjà définies). Le `setInterval` du rate-limiter est `.unref()` pour ne pas bloquer la sortie du process.
+- **Faux Mongo + session simulée** — les tests d'intégration démarrent la vraie app Express et ne remplacent que la base, par `tests/helpers/fake-db.js` (injecté via `app.locals.setTestDb`). La session vient de l'en-tête `x-test-user`. Les deux ne sont armés que si `NODE_ENV=test` **ET** `ALLOW_TEST_AUTH=1` **ET** `require.main !== module` (garde structurelle : le harnais n'existe pas quand `server.js` est *lancé*, cf. S-01). Toute la config d'env vit dans `tests/helpers/harness.js`, un seul endroit. ⚠️ `fake-db` est un sous-ensemble de l'API Mongo — 4 lacunes ont déjà été trouvées à l'usage (`deleteOne`, `distinct`, `$and`/`$or`/`$exists`, `updateMany`) : un test qui passe ne prouve pas que la vraie requête tourne.
+- **Commande** — `npm test` liste explicitement les 10 fichiers. ⚠️ **Ne pas** repasser au mode répertoire `node --test tests/` : non fiable selon la version Node (il tente de charger `tests` comme un module → `MODULE_NOT_FOUND`).
+- **Bout en bout** — `npm run smoke` (`scripts/smoke.js`) tape une **instance réelle** avec un vrai Mongo : `npm run smoke:dev` (dev.templyo.fr) et `npm run smoke:main`. C'est le seul niveau qui exerce Mongo pour de vrai ; il suppose la base de recette semée (`npm run dev:seed`).
+- **CI** — `.github/workflows/ci.yml` sur `push`/`PR` vers `main` **et `dev`**. Matrice Node 20.x + 22.x. Étapes : `npm ci` → syntax check (`node -c` sur server.js, script.js, init-db.js) → `npm run lint` → `npm test`. Un job `deploy` (CD-01) suit sur push `main` du dépôt canonique uniquement, gardé par `needs: test` et neutralisé tant que la variable `RAILWAY_SERVICE` n'est pas définie ; le fork client teste mais ne déploie jamais.
 
 **Ajouter un test quand** : on extrait un helper pur vers `lib/`, on change une règle de date/heure, ou on corrige un bug qui pourrait régresser.
 

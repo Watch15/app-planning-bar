@@ -27,19 +27,23 @@ Application web SaaS de gestion de plannings pour bars et restaurants multi-éta
 
 ```
 app-templyo/
-├── server.js                      ← Serveur Express — toutes les routes API et auth (~3500 lignes)
+├── server.js                      ← Serveur Express — toutes les routes API et auth (5379 l., 115 routes)
 ├── package.json
 ├── .env                           ← Variables d'environnement (à créer, ne jamais commiter)
 ├── lib/
 │   └── utils.js                   ← Helpers purs testables (isValidObjectId, hashToken, normalizePhone, computeActiveDate, toDateStr)
-├── tests/
-│   ├── utils.test.js              ← 43 tests node --test (helpers purs)
-│   ├── shift-hours.test.js        ← 6 tests — heures effectives d'un shift
-│   ├── week.test.js               ← 15 tests — lundi de semaine (weekStart + currentWeekStart 6h)
-│   └── routes.test.js             ← 2 tests d'intégration HTTP (boot app, middlewares auth/DB)
+├── tests/                         ← 215 tests, 10 fichiers (node --test, zéro framework)
+│   ├── helpers/                   ← harness.js (env + x-test-user) + fake-db.js (faux Mongo)
+│   ├── utils.test.js              ← 75 — helpers purs
+│   ├── shift-hours.test.js        ← 12 — heures effectives d'un shift
+│   ├── week.test.js               ← 15 — lundi de semaine (weekStart + currentWeekStart 6h)
+│   ├── routes.test.js             ← 4 — intégration HTTP (boot app, middlewares auth/DB)
+│   ├── dispos / conges / manager-off / manager-dispos  ← 64 — intégration métier
+│   └── perf-settings / estab-access                    ← 44 — périmètre (S-02…S-06, R-15, R-17)
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                 ← CI : npm ci → syntax check → npm test (Node 20/22)
+│       └── ci.yml                 ← CI : npm ci → syntax check → lint → npm test (Node 20/22)
+│                                    + job deploy CD-01 (push main, dépôt canonique seul)
 ├── public/
 │   ├── index.html                 ← Interface patron / directeur
 │   ├── planning.html              ← Interface staff — planning + dispos + pointage responsable
@@ -418,11 +422,21 @@ Tout ce qui est testable sans Express/Mongo/réseau doit aller dans `lib/utils.j
 
 ```bash
 npm test
-# Lance : node --test tests/utils.test.js tests/shift-hours.test.js tests/week.test.js tests/routes.test.js
-# 71 tests (4 suites) — timezone, padding dates, téléphones, tokens, ObjectId,
-# heures effectives d'un shift (réel/planifié, pointage partiel, shift de nuit),
-# lundi de semaine (weekStart : bascule mois/année ; currentWeekStart : cutoff 6h),
-# intégration HTTP (boot app + middlewares auth/DB sans Mongo)
+# 215 tests, 10 fichiers (liste explicite dans package.json — le mode répertoire
+# `node --test tests/` n'est pas fiable selon la version de Node).
+#
+# Unitaires purs (102) : utils (75 — timezone, padding dates, téléphones, tokens,
+#   ObjectId, publication, dispoDeadlineWaived, congés), shift-hours (12 — heures
+#   effectives réel/planifié, pointage partiel, shift de nuit), week (15 — weekStart
+#   bascule mois/année, currentWeekStart cutoff 6h).
+# Intégration HTTP (113, harnais `tests/helpers/harness.js` + `fake-db`) : routes (4),
+#   dispos (15), conges (12), manager-off (14), manager-dispos (23),
+#   perf-settings (11), estab-access (33).
 ```
+
+L'intégration démarre la **vraie app Express** sur un port éphémère et ne remplace que Mongo
+(`tests/helpers/fake-db.js`) ; la session est simulée par l'en-tête `x-test-user`, armé par
+`tests/helpers/harness.js` (double garde `NODE_ENV=test` + `ALLOW_TEST_AUTH=1`, cf. S-01).
+**Rien ne couvre le front ni un vrai Mongo** — pour ça, `npm run smoke` (cf. backlog).
 
 La CI GitHub Actions tourne automatiquement sur chaque push/PR vers `main` (Node 20 + 22).

@@ -193,11 +193,16 @@ d'introduire 3 erreurs neuves ici.
 
 ### État actuel des tests (pour mémoire)
 
-160 tests (149 avant cette session), deux niveaux : **~137 unitaires** (helpers purs de `lib/utils.js` — aucun Express,
-aucun `db`) et **~23 d'intégration HTTP** (`routes`, `manager-dispos`, moitié de `dispos`) qui
-démarrent la vraie app Express sur un port éphémère et ne remplacent que Mongo, par
-`tests/helpers/fake-db.js`. Session simulée par l'en-tête `x-test-user`.
-**Rien ne couvre le front ni un vrai Mongo.**
+> ⚠️ Ce paragraphe décrivait l'état au 2026-08-05 (160 tests). **Chiffres à jour au
+> 2026-08-10 : 215 tests, 10 fichiers**, `npm test` vert, `eslint` 0 erreur / 13 warnings.
+
+Deux niveaux : **102 unitaires purs** (`utils` 75, `shift-hours` 12, `week` 15 — helpers de
+`lib/utils.js` et des modules UMD, aucun Express, aucun `db`) et **113 d'intégration HTTP**
+(`routes` 4, `dispos` 15, `conges` 12, `manager-off` 14, `manager-dispos` 23,
+`perf-settings` 11, `estab-access` 33) qui démarrent la vraie app Express sur un port
+éphémère et ne remplacent que Mongo, par `tests/helpers/fake-db.js`. Session simulée par
+l'en-tête `x-test-user`, env centralisée dans `tests/helpers/harness.js`.
+**Rien ne couvre le front ni un vrai Mongo** (pour le vrai Mongo : `npm run smoke`, 28 checks).
 
 ### À écrire
 
@@ -731,6 +736,10 @@ périmées. Antérieur à R-17 — l'expiration à 30 jours produisait déjà ce
 rend nettement plus fréquent, puisqu'un changement de périmètre coupe désormais la session
 immédiatement. Correctif : un `fetch` centralisé qui redirige sur 401, `pointage.js` en
 premier (page ouverte toute la soirée sur la tablette du bar).
+🔺 **Requalifié le 2026-08-10 : A-14 doit être livré AVEC R-17, pas après.** R-17 n'est pas
+encore déployé ; l'envoyer seul remplacerait un trou de sécurité par un écran mort (écran
+ouvert, données périmées, appels qui échouent en silence). Cf. « Revue d'ensemble du
+2026-08-10 ».
 
 **Divers, moindre valeur** : `norm()` est la 3e copie de `normalizeStr` (`script.js`,
 `pointage.js`) ; `fmtRate` duplique `fmtPct` avec un format différent **dans la même ligne
@@ -786,8 +795,8 @@ travail — juste des livraisons en attente.**
 
 | # | Quoi | Pourquoi devant | Coût |
 |---|---|---|---|
-| 1 | **Pousser `2d723f9`** (correctif `DELETE /api/staff/:id`) | Le trou qui a produit l'incident Antoine Bozo est **corrigé mais pas déployé**. Si le patron supprime un profil demain, des congés redeviennent invisibles et il planifie quelqu'un en vacances. Ce n'est pas du travail : c'est un push. | ~0 |
-| 2 | **A-08** — le runbook recommande encore `backfill-directors` | Au prochain client, on relit cette ligne et on **duplique ses profils staff** : historique scindé, personnes comptées deux fois en masse salariale. Une ligne à corriger. | ~0 |
+| 1 | ~~**Pousser `2d723f9`** (correctif `DELETE /api/staff/:id`)~~ ✅ | **Fait.** Le correctif est sur `main` **et** chez le client (`castanui/main` = `aed2d17`, vérifié le 2026-08-10). Le trou de l'incident Antoine Bozo est refermé en prod. | fait |
+| 2 | ~~**A-08** — le runbook recommande encore `backfill-directors`~~ ✅ | **Fait (`aed2d17`).** ⚠️ Mais le script reste exécutable en une commande (`npm run backfill-directors` est toujours dans `package.json`) : l'interdiction vit dans un doc, pas dans le code → cf. **A-09**. | fait |
 | 3 | ~~**R-17** — périmètre figé au login~~ ✅ | **Fait le 2026-08-08.** Invalidation des sessions aux 5 points de changement de périmètre. Coût nul sur le chemin chaud. | fait |
 
 #### Reclassement de la Feature A — c'est un correctif, pas un confort
@@ -807,7 +816,7 @@ tant qu'il ne coûte rien.
 **T-03 — zéro test front.** Trois correctifs d'interface livrés le 2026-08-06, validés par
 lecture seule. Et sur deux jours, **4 lacunes de `fake-db`** (`deleteOne`, `distinct`,
 `$and`/`$or`/`$exists`, `updateMany` — 11 usages intestables) : la couverture réelle est plus
-faible que ne le suggèrent 210 tests. Les deux vrais bugs de la semaine — régression du
+faible que ne le suggèrent 215 tests. Les deux vrais bugs de la semaine — régression du
 pointage, incident Antoine Bozo — ont été trouvés par une inspection manuelle et un
 signalement client, **pas par la suite de tests**.
 
@@ -821,12 +830,89 @@ signalement client, **pas par la suite de tests**.
 - **B2 (horizon de saisie)** — confort réel, mais personne n'est bloqué aujourd'hui.
 - **F-09 (agenda iCal)** — livré puis désactivé pour manque de fiabilité. À laisser dormir
   tant que le reste n'est pas solide.
-- **R-04 (découper `server.js`, ~4250 lignes)** — vraie dette, mais un refactoring de cette
+- **R-04 (découper `server.js`, ~5380 lignes)** — ⚠️ **collision d'ID** : ce « R-04 » est celui de la section dette technique. Le « R-04 » de la table *Findings de revue* est un autre sujet (redirection des push de rappel dispo, résolu le 2026-08-06). — vraie dette, mais un refactoring de cette
   taille sans tests front est plus risqué que la dette elle-même. **Après** T-03, pas avant.
+
+### Revue d'ensemble — état du projet au 2026-08-10
+
+Passe de vérification demandée avant de préparer les prochaines mises à jour. **Tout ce qui
+suit est mesuré, pas supposé.**
+
+#### État vérifié
+
+| Contrôle | Résultat |
+|---|---|
+| `npm test` | **215/215 vert** (102 unitaires purs + 113 d'intégration HTTP, 10 fichiers) |
+| `npx eslint .` | **0 erreur**, 13 warnings (escapes inutiles, variables inutilisées — cosmétique) |
+| Arbre de travail | **propre**, rien en attente de commit |
+| `graphify` | **rafraîchi ce jour** — 1180 nœuds, 1897 arêtes, 68 communautés (il datait de `c72affe`, soit 7 commits de retard) |
+| `smoke` | **non rejoué** — exige une instance déployée ; c'est la porte de sortie du lot ci-dessous, pas un acquis |
+
+#### Le seul vrai « reste à faire » avant tout le monde : livrer les 2 commits en attente
+
+`dev` est **en avance de 2 commits** sur `origin/dev` (et donc sur `main` et sur le client) :
+`e579636` (fix R-17) et `1e5d06b` (doc A-14). Rien n'est parti. Les étages 1 et 2 du
+processus de livraison n'ont **pas** été franchis pour ce lot.
+
+⚠️ **Constat de cette revue — R-17 et A-14 doivent partir ENSEMBLE, pas l'un après l'autre.**
+R-17 coupe la session à la seconde où le patron change le périmètre d'un utilisateur. Or
+A-14 dit qu'un 401 *en cours de session* n'est rattrapé **nulle part** : chaque page ne teste
+`/auth/me` qu'au chargement. Conséquence concrète du seul R-17 en prod : le patron déplace un
+directeur d'un bar → l'écran du directeur reste ouvert, affiche des données périmées, et
+**tous ses appels échouent en silence** sans jamais le renvoyer vers la connexion. On
+remplace un trou de sécurité par un écran mort. A-14 était une dette antérieure tolérable
+(expiration à 30 jours) ; R-17 la rend **quotidienne**. Elle change donc de statut : ce n'est
+plus un item de la liste `/simplify`, c'est le **corollaire obligatoire de R-17**.
+
+#### Prochaine MAJ — lot proposé
+
+| Ordre | Quoi | Pourquoi ici | Coût |
+|---|---|---|---|
+| 1 | **A-14** — `fetch` centralisé qui redirige sur 401 | Corollaire de R-17 (ci-dessus). Commencer par `pointage.js` : page ouverte toute la soirée sur la tablette du bar, donc la plus exposée à un 401 en cours de session. | petit |
+| 2 | **Livrer le lot** : push `dev` → `smoke:dev` → merge `main` → `smoke:main` | Les corrections R-17 + A-14 n'ont **jamais tourné contre un vrai Mongo**. Le smoke est la seule chose qui l'établit. | ~0, mais bloquant |
+| 3 | **Feature A — désactivation d'un staff (F-13)** | Reclassée correctif le 2026-08-08 : aujourd'hui la seule sortie offerte au patron est `DELETE /api/staff/:id`, qui **supprime les shifts, donc l'historique de paie**. ⚠️ La question 5 (« en gardant leur erreur » = leur historique ?) est **toujours sans réponse** — à confirmer avant de coder. | moyen |
+| 4 | **A-09** — fusionner `backfill-directors` dans `link-directors --create-missing` | Le script interdit par le runbook est **toujours dans `package.json`** (`npm run backfill-directors`). Une interdiction qui vit dans un doc et un script exécutable d'une commande, c'est l'accident qui attend. Et le cas « directeur sans profil correspondant » n'a **aucun outil sûr** aujourd'hui. | petit |
+| 5 | **A-10** — `1 + rate/100` recalculé côté client dans `performance.js` | Produit une **phrase arithmétiquement fausse** à l'écran (« 3 200 € × 1,45 = 4 800 € »), vérifiable de tête par le client. Correctif d'une ligne, les deux montants viennent déjà du serveur. | 1 ligne |
+
+**Ensuite seulement**, par nécessité décroissante : B2 (horizon de saisie), F-12 (journal
+d'audit des dispos), F-05 (échange de shifts — décision client, pas du travail), A-06/A-07,
+A-12, A-13, T-01. **R-04 (découper `server.js`) reste après T-03**, et T-03 n'a pas bougé.
+
+#### Ce qui n'a pas bougé et pèse toujours
+
+- **A-01 — le client est sur un dépôt fork.** Toujours vrai, toujours le risque structurel
+  n°1. `castanui/main` est à `aed2d17`, à jour à ce jour **parce qu'on y a pensé**, pas parce
+  qu'un mécanisme l'assure.
+- **T-03 — zéro test front.** Inchangé. Les items 1, 3 et 5 du lot ci-dessus sont **tous**
+  du code front, donc tous validés par lecture seule. C'est le prix qu'on continue de payer.
+- **`fake-db` — 5e lacune trouvée** (les chemins pointés `session.user._id`, dans le commit
+  R-17) après `deleteOne`, `distinct`, `$and`/`$or`/`$exists`, `updateMany`. Le rythme ne
+  ralentit pas : une lacune par session de code environ. Les 215 tests couvrent moins que
+  leur nombre ne le suggère.
+
+#### Documentation remise à jour dans cette passe
+
+Écarts **mesurés contre le code**, pas relevés au jugé :
+
+| Ce qui était écrit | Réalité | Où c'était |
+|---|---|---|
+| « 71 tests, 4 suites » | **215 tests, 10 fichiers** | `README.md`, `docs/architecture.md` §13, `docs/onboarding.md` §12, Notes agents de ce fichier |
+| « Pour tester une route avec données, il faudra un faux `db` injectable (**pas encore en place**) » | En place depuis le 2026-08-05 (`tests/helpers/fake-db.js` + `harness.js`) | `docs/architecture.md` |
+| `server.js` ~3500 / ~4250 l, 101 routes | **5379 l, 115 routes** | `README.md`, backlog ×3 |
+| `script.js` ~7300 / ~8000 / 8074 l | **9124 l** | `docs/architecture.md`, `docs/onboarding.md` ×2, backlog |
+| CSP : « `'unsafe-inline'` toléré sur `script-src` » | **Faux depuis D-85** — retiré de `script-src`, aucun `<script>` inline ne s'exécute. `onboarding.md` avait raison, la note aux agents non. | Notes agents de ce fichier |
+| CI : « push/PR vers `main` », sans lint ni déploiement | Tourne aussi sur **`dev`**, inclut **`npm run lint`**, et un job **deploy CD-01** | `docs/architecture.md`, `docs/onboarding.md` |
+| `ALLOW_TEST_AUTH` absente du tableau des variables | Ajoutée, avec l'avertissement « jamais sur un environnement déployé » | `docs/onboarding.md` |
+| Collision d'ID **R-04** (redirection push ✅ / découpe `server.js` ⏸️) | Signalée sur place — deux sujets sans rapport sous le même identifiant | ce fichier |
+
+**Non audités**, inchangé depuis le 2026-08-05 : `docs/methodologie-et-cicd.md`,
+`docs/ux-design.md`, `task.md`, `ui_kits/*.md`. `docs/prd.md` et
+`docs/design-e22-dispos-directeur.md` l'ont été le 2026-08-05 (DOC-01→06) et le 2026-08-08
+(A-08) ; pas revérifiés ligne à ligne ici.
 
 ### Divers — outillage & process
 
-- ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique.
+- ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique. 🔄 **Rafraîchi le 2026-08-10** (1180 nœuds, 1897 arêtes, 68 communautés) — il datait de `c72affe`, 7 commits de retard : la consigne « après chaque session » n'a **pas** été tenue sur les sessions des 06→08/08. Ancien graphe dans `graphify-out/2026-08-10/`.
 - **Commit + push automatiques.** L'environnement committe et pousse sans demande explicite : 4 commits sont partis sur `origin/dev` pendant la session du 2026-08-04/05 (`469efee`, `bb5b479`, `36b65f2`, `83028ff`). Deux conséquences : (a) **la correction E-22 est sur le remote alors qu'elle n'a jamais tourné contre une vraie base** (cf. T-05) ; (b) **les messages ne décrivent pas ce qui s'est passé** — `feat: update manager availability process for directors` livre en réalité un **revirement** d'un design déjà en place. Qui relira l'historique dans six mois ne verra pas qu'une décision a été annulée : seul `docs/design-e22-dispos-directeur.md` §8 le dit. Si `dev` est déployé automatiquement quelque part, le point (a) devient urgent.
 
 ---
@@ -974,7 +1060,7 @@ Items 🟠 Importants / 🟡 Cosmétiques relevés par l'audit D-49 mais non cor
 | ~~R-01~~ | ~~Unifier le calcul du lundi de semaine : `getMondayOf()` (front) ré-implémente `weekStart()`~~ | ✅ Done (D-74) — module UMD `public/lib/week.js`, 4 implémentations → 1, `tests/week.test.js` |
 | ~~R-02~~ | ~~Extraire la logique de publication (`isAutoPublished` + flags `publish_<week>`) en source unique~~ | ✅ Done (D-78) — helper pur `isDatePublished` + `fetchPublishedWeeks`, 4 sites dédupliqués, heuristique 8j boguée corrigée |
 | ~~R-03~~ | ~~Externaliser les `<script>` inline des HTML (`planning.html`, `pointage.html`) vers des `.js`~~ | ✅ Done (D-80) — `public/planning.js` + `public/pointage.js`, ordre de chargement préservé, ajoutés au précache SW |
-| R-04 | Découper `server.js` (~4250 l, 101 routes) en routers par domaine (auth, shifts, dispos, pointage, calendrier, établissements). | ⏸️ **Reporté** (juin 2026) — zéro bénéfice utilisateur, **risque élevé** (101 routes, ~0 test de route, non testable en réel ici), et la dette qui coûtait est déjà traitée (R-01/02/03). **Déclencheurs** : (1) tests d'intégration de routes — **harnais en place (D-82)**, étendre la couverture du domaine **avant** de le découper, (2) onboarding d'un autre dev, (3) opportuniste — extraire un domaine quand on le retravaille déjà. Couplage à dénouer : `db` (variable module assignée après connexion → getter), 6 middlewares + ~10 helpers partagés, ordre des routes, 2 blocs `/* F-05 DÉSACTIVÉ */` |
+| R-04 | Découper `server.js` (**~5380 l, 115 routes** au 2026-08-10 ; ~4250 l / 101 routes à la décision de juin) en routers par domaine (auth, shifts, dispos, pointage, calendrier, établissements). | ⏸️ **Reporté** (juin 2026, confirmé le 2026-08-10) — zéro bénéfice utilisateur, **risque élevé** (115 routes, ~0 test front, non testable en réel ici), et la dette qui coûtait est déjà traitée (R-01/02/03). **Déclencheurs** : (1) tests d'intégration de routes — **harnais en place (D-82)**, étendre la couverture du domaine **avant** de le découper, (2) onboarding d'un autre dev, (3) opportuniste — extraire un domaine quand on le retravaille déjà. Couplage à dénouer : `db` (variable module assignée après connexion → getter), 6 middlewares + ~10 helpers partagés, ordre des routes, 2 blocs `/* F-05 DÉSACTIVÉ */` |
 | ~~C-01~~ | ~~Agenda : la carte « Ajouter à mon agenda » renvoie une erreur pour un directeur sans `staff_id`~~ | ✅ Done (D-76) — carte masquée si `!currentUser.staff_id` dans `initCalSync` |
 | ~~C-02~~ | ~~Agenda : `PUBLIC_BASE_URL` pour figer le domaine des URLs `.ics`~~ | ✅ Done (D-79) — précédence `PUBLIC_BASE_URL > APP_URL > req-host`, `APP_URL` suffit |
 | ~~C-03~~ | ~~`/api/dispos/non-affectees` à recréer en excluant `type:'off'`~~ | ✅ Done (D-76) — l'endpoint excluait **déjà** `off` (`$nin: ['week_note','off']`, server.js) ; note « à recréer » périmée |
@@ -985,13 +1071,13 @@ Items 🟠 Importants / 🟡 Cosmétiques relevés par l'audit D-49 mais non cor
 
 - **Nom staff dénormalisé (D-77)** : `staff.name` est la **source de vérité**. Copies dénormalisées : `shifts.staff_name`, `availabilities.staff_name`, `users.name`. `PATCH /api/staff/:id` les propage toutes quand le nom change, et `GET /api/users` réenrichit le nom depuis staff. Si tu ajoutes une nouvelle copie dénormalisée du nom, branche-la sur cette propagation.
 - **Timezone** : ne jamais utiliser `toISOString()` — toujours `getFullYear()/getMonth()/getDate()`. Voir `docs/architecture.md` §3.1. Helper pur : `toDateStr()` dans `lib/utils.js`.
-- **Logique front** : `script.js` (patron, ~7300 l), `planning.js` (staff, ~2130 l, externalisé de planning.html en D-80) et `pointage.js` (~811 l, ex-pointage.html). Monolithiques — modifications additives et ciblées uniquement, pas de refactoring sans décision explicite. ⚠️ Charger les `<script src="/lib/…">` (dépendances `Week`, `ShiftHours`) **avant** le script qui les consomme.
-- **server.js** : monolithique (~4250 lignes). Helpers purs dans `lib/utils.js` (testés). Split en routers = chantier futur (#10 backlog, voir R-04). ⚠️ **Deux blocs `/* F-05 DÉSACTIVÉ */`** : ne JAMAIS y ajouter de nouvelles routes — elles seraient invisibles à Express (cf. D-47). Les n° de ligne ont bougé depuis (server.js a grossi) — repérer les blocs par le marqueur de commentaire, pas par le n° de ligne.
+- **Logique front** (tailles au 2026-08-10) : `script.js` (patron, **~9120 l**), `planning.js` (staff, **~2460 l**, externalisé de planning.html en D-80), `pointage.js` (**~820 l**, ex-pointage.html) et `performance.js` (**~580 l**). Monolithiques — modifications additives et ciblées uniquement, pas de refactoring sans décision explicite. ⚠️ Charger les `<script src="/lib/…">` (dépendances `Week`, `ShiftHours`) **avant** le script qui les consomme.
+- **server.js** : monolithique (**~5380 lignes, 115 routes** au 2026-08-10 — il a pris ~1100 lignes et 14 routes depuis juin). Helpers purs dans `lib/utils.js` (testés). Split en routers = chantier futur (#10 backlog, voir R-04). ⚠️ **Deux blocs `/* F-05 DÉSACTIVÉ */`** : ne JAMAIS y ajouter de nouvelles routes — elles seraient invisibles à Express (cf. D-47). Les n° de ligne ont bougé depuis (server.js a grossi) — repérer les blocs par le marqueur de commentaire, pas par le n° de ligne.
 - **Push & shift passé** : aucun push lié à un shift si `shift.date < toDateStr(new Date())` (B-10 / D-57). Ne touche pas les rappels dispos ni les notifs in-app patron.
 - **Réouverture dispo** : `settings.dispo.force_open_staff[]` autorise un staff précis à soumettre malgré la deadline (E-15 / D-58), purgé à la soumission. Onglets « Sans dispo » (rouvrir simple) et « Modifier » (supprime les dispos existantes puis rouvre).
 - **Dispos `type:'off'` (indispo, D-63)** : une indispo est purement informative — `start_time`/`end_time` = `null`. **Toujours l'exclure** des vues qui supposent un créneau horaire : `/api/dispos/confirmed` (overlay planning) et `/api/dispos/non-affectees` la filtrent déjà (`$nin: ['week_note','off']`, cf. C-03/D-76) ; ne jamais créer de shift à partir d'un off. Côté affichage, tester `dispo.type === 'off'` avant de formater des heures (sinon `NaN`).
 - **Publication « semaine publiée ? » (D-78)** : utiliser `isDatePublished(dateStr, publishedWeeks, now)` (`lib/utils.js`, pur, testé) + `fetchPublishedWeeks()` (`server.js`, Set des lundis publiés). NE PAS réintroduire l'ancienne heuristique `|date - lundi| < 8 j` (boguée sur les semaines adjacentes). Le front passe par `/api/publish/:weekStart` (`{published, auto}`).
-- **Tests** : `npm test` (zéro dépendance, `node --test`) — **71 tests, 4 suites** (`utils` + `shift-hours` + `week` + `routes`). Les tests d'intégration (`tests/routes.test.js`) requièrent `server.js` (qui exporte `app` et ne démarre/se connecte que si `require.main === module`), démarrent l'app sur un port éphémère et tapent des routes **sans base** (401 sans session, 503 via `checkDB`). Pour tester une route avec données, il faudra un faux `db` injectable (pas encore en place). ⚠️ le mode répertoire `node --test tests/` **n'est pas fiable** (échoue selon la version Node) : lister les fichiers explicitement dans `package.json`. Ajouter un test quand on extrait un helper pur, change une règle de date/heure, ou fixe un bug qui pourrait régresser.
+- **Tests** : `npm test` (zéro dépendance, `node --test`) — **215 tests, 10 fichiers** au 2026-08-10 (cf. « État actuel des tests »). Les tests d'intégration requièrent `server.js` (qui exporte `app` et ne démarre/se connecte que si `require.main === module`), démarrent l'app sur un port éphémère et injectent un faux Mongo via `tests/helpers/fake-db.js` + `app.locals.setTestDb` ; la session vient de l'en-tête `x-test-user`. **Toute la config d'env est dans `tests/helpers/harness.js`** — ne jamais la redupliquer dans un fichier de test. ⚠️ **`fake-db` est un sous-ensemble de l'API Mongo** : 4 lacunes ont déjà été trouvées à l'usage (`deleteOne`, `distinct`, `$and`/`$or`/`$exists`, `updateMany` — 11 usages serveur intestables). Un test vert ne prouve pas que la vraie requête tourne ; le seul niveau qui exerce Mongo est `npm run smoke`. ⚠️ le mode répertoire `node --test tests/` **n'est pas fiable** (échoue selon la version Node) : lister les fichiers explicitement dans `package.json`. Ajouter un test quand on extrait un helper pur, change une règle de date/heure, ou fixe un bug qui pourrait régresser.
 - **Logique partagée navigateur/Node (D-73)** : pour qu'un helper soit à la fois consommé par le front (`<script src>`) ET testable sous Node, le mettre dans un **module UMD** sous `public/lib/` (ex. `shift-hours.js` → `window.ShiftHours` ; `week.js` → `window.Week`, + `require()` Node). Côté HTML, déléguer depuis une fonction de même nom pour préserver le hoisting et ne pas toucher les call sites ; charger le `<script src="/lib/…">` avant le script qui l'utilise. Quand un helper existait déjà côté Node (ex. `weekStart` dans `lib/utils.js`), faire **ré-exporter** `lib/utils.js` depuis le module UMD pour garder une source unique sans toucher les call sites serveur (R-01/D-74). Gabarit des prochaines extractions (R-02…).
 - **`weekStart` vs `currentWeekStart` (D-75)** : `weekStart(date)` = lundi de la semaine d'une **date calendaire** (publication, mapping shift→semaine) — ne JAMAIS y mettre de cutoff. `currentWeekStart(now, cutoff=6)` = lundi de la **semaine opérationnelle à l'instant présent** (avant 6h le lundi → semaine précédente, car les fermetures ~2h appartiennent à la veille). Utiliser `currentWeekStart(new Date())` pour « quelle semaine est-on maintenant », `weekStart(X)` pour « semaine de la date X ». Seuil `WEEK_CUTOFF_HOUR=6` dans `public/lib/week.js` (≠ `cutoff_hour` pointage 9h).
 - **Heures effectives d'un shift** : toujours passer par `shiftEffectiveHours(s)` (réel SI début ET fin pointés, sinon planifié). **Ne jamais** tester `real_start`/`real_end` séparément (mélange réel+planifié → durée fausse, bug D-71). Tester `!= null`, pas un falsy (`real_start = 0` = minuit, valeur valide).
@@ -1003,5 +1089,5 @@ Items 🟠 Importants / 🟡 Cosmétiques relevés par l'audit D-49 mais non cor
 - **Timeline** : tester drag, resize et snap sur desktop ET mobile 390px portrait après chaque modification.
 - **OPEN_TIME / CLOSE_TIME** : bornes métier décimales (ex. 9.5 = 09:30). `START_HOUR`/`END_HOUR` sont des entiers pour l'affichage uniquement.
 - **Heures ≥ 24h** : convention interne pour les shifts de nuit (25.5 = 01h30 du lendemain). Toujours wrap avec `((h % 24) + 24) % 24` avant affichage.
-- **CSP (helmet)** : `'unsafe-inline'` toléré sur `script-src`/`style-src` tant que les HTML contiennent des `<script>`/`<style>` inline. À retirer si on extrait tout.
+- **CSP (helmet)** : ⚠️ note corrigée le 2026-08-10 — `script-src` n'autorise **plus** `'unsafe-inline'` (retiré en D-85, vérifié dans `server.js`). Conséquence : **aucun `<script>` inline dans un `.html`**, tout JS va dans un `.js` servi en statique, sinon il est silencieusement bloqué. Restent tolérés : `script-src-attr 'unsafe-inline'` (handlers `onclick=` du HTML généré — chantier distinct) et `style-src 'unsafe-inline'` (styles inline).
 - **Sentry** : désactivé par défaut, s'active seulement si `SENTRY_DSN` présent côté Railway.

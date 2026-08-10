@@ -39,6 +39,7 @@ Variables d'environnement minimales dans un `.env` (non commité) :
 | `SENTRY_DSN` | Observabilité — Sentry activé **seulement si défini** | optionnel |
 | `APP_URL` / `PUBLIC_BASE_URL` | Domaine pour liens email/SMS + flux iCal | optionnel |
 | `CALENDAR_ENABLED` | Active la synchro iCal (défaut `false`, **désactivée**) | optionnel |
+| `ALLOW_TEST_AUTH` | ⚠️ **Tests uniquement.** Arme le harnais (`x-test-user`, `setTestDb`) — n'a d'effet qu'avec `NODE_ENV=test` **et** `server.js` requis, jamais lancé. Posée par `tests/helpers/harness.js`. **Ne jamais la définir sur un environnement déployé** : le serveur refuse de démarrer si elle contredit `NODE_ENV=production`. | jamais |
 
 Puis : `http://localhost:3000` → page de login.
 
@@ -49,7 +50,7 @@ Puis : `http://localhost:3000` → page de login.
 Détaillées dans `architecture.md` §3. Résumé impératif :
 
 1. **Jamais `toISOString()`** sur une date → bug de fuseau (UTC+2 : minuit local = 22h UTC, décalage d'un jour). Toujours `toDateStr()` (construction locale `YYYY-MM-DD`). Vaut front **et** back.
-2. **`script.js` reste monolithique** (~8000 lignes). On n'le découpe pas en modules. Toute nouvelle logique patron s'ajoute **dedans**.
+2. **`script.js` reste monolithique** (~9120 lignes). On n'le découpe pas en modules. Toute nouvelle logique patron s'ajoute **dedans**.
 3. **Aucun outillage de build front** (pas de Webpack/Vite/React/TS). ES2020+ pur servi en statique.
 4. **Jamais de `<script>` inline dans un `.html`** → bloqué par la CSP (`unsafe-inline` retiré de `script-src`, D-85). Tout JS va dans un `.js` servi en statique.
 5. **Sessions MongoDB = promesses uniquement** (le driver 6+ a supprimé les callbacks). `CustomMongoStore` utilise `.then().catch()`.
@@ -64,15 +65,15 @@ planning ou valide une dispo **doit** porter le middleware `denyObservateurEdit`
 
 ```
 app-planning-bar/
-├── server.js                  ← Backend Express monolithique (TOUT le back, 4647 l.)
-├── lib/utils.js               ← Helpers purs testables (171 l.)
+├── server.js                  ← Backend Express monolithique (TOUT le back, 5379 l., 115 routes)
+├── lib/utils.js               ← Helpers purs testables (339 l.)
 ├── package.json               ← Scripts npm + dépendances (10, toutes back)
 │
 ├── public/                    ← Frontend statique (zéro build)
-│   ├── index.html  + script.js (8074 l.) + index-init.js   → Console PATRON
-│   ├── planning.html + planning.js (2440 l.)               → Espace STAFF
-│   ├── pointage.html + pointage.js (807 l.)                → POINTAGE (rôle établissement)
-│   ├── performance.html + performance.js (544 l.)          → PILOTAGE ÉCO
+│   ├── index.html  + script.js (9124 l.) + index-init.js   → Console PATRON
+│   ├── planning.html + planning.js (2457 l.)               → Espace STAFF
+│   ├── pointage.html + pointage.js (820 l.)                → POINTAGE (rôle établissement)
+│   ├── performance.html + performance.js (579 l.)          → PILOTAGE ÉCO
 │   ├── login.html + login.js                               → Connexion
 │   ├── set-password.html + set-password.js                 → Activation / reset MDP
 │   ├── politique-confidentialite.html                      → Légal RGPD
@@ -84,7 +85,7 @@ app-planning-bar/
 │   └── vendor/                 ← Libs tierces auto-hébergées (jspdf, html2canvas, xlsx)
 │
 ├── scripts/                   ← Outils CLI (init-db, seed, create-patron)
-├── tests/                     ← node --test (5 suites, sans framework)
+├── tests/                     ← node --test, sans framework (215 tests, 10 fichiers + helpers/)
 ├── docs/                      ← prd, architecture, backlog, ux-design, CE fichier
 └── .github/workflows/ci.yml   ← CI Node 20 + 22
 ```
@@ -325,13 +326,28 @@ call sites serveur inchangés. C'est le **gabarit** de toute future extraction i
 ## 12. Tests & CI
 
 - **Runner** : `node --test` intégré, **zéro framework**.
-- **5 suites** dans `tests/` : `utils` (helpers purs), `shift-hours`, `week`, `routes`
-  (intégration HTTP **sans Mongo** — l'app boote sur port éphémère), `conges`.
+- **215 tests, 10 fichiers** dans `tests/` (état 2026-08-10) : **102 unitaires purs**
+  (`utils` 75, `shift-hours` 12, `week` 15 — aucun Express, aucune base) et
+  **113 d'intégration HTTP** (`routes` 4, `dispos` 15, `conges` 12, `manager-off` 14,
+  `manager-dispos` 23, `perf-settings` 11, `estab-access` 33).
 - **Lancer** : `npm test` (liste **explicite** des fichiers — ⚠️ ne jamais repasser en
   mode répertoire `node --test tests/`, instable selon la version Node).
 - **App testable** : `server.js` n'appelle `listen()`/`connectDB()` que sous
   `require.main === module` ; le test force `NODE_ENV=test` + vars factices avant le `require`.
-- **CI** : `.github/workflows/ci.yml`, matrice Node 20 + 22 → `npm ci` → syntax check → `npm test`.
+- **Harnais** (`tests/helpers/`) : l'intégration démarre la **vraie app** et ne remplace que
+  Mongo (`fake-db.js`, injecté par `app.locals.setTestDb`) ; la session vient de l'en-tête
+  `x-test-user`. Les deux sont armés uniquement si `NODE_ENV=test` **et** `ALLOW_TEST_AUTH=1`
+  **et** `require.main !== module` — toute la config d'env vit dans `harness.js`, un seul
+  endroit. ⚠️ `fake-db` est un **sous-ensemble** de l'API Mongo : 4 lacunes ont déjà été
+  découvertes à l'usage (`deleteOne`, `distinct`, `$and`/`$or`/`$exists`, `updateMany`).
+  Un test vert ne prouve pas que la requête réelle tourne — pour ça, `npm run smoke`.
+- **Bout en bout** : `npm run smoke:dev` / `smoke:main` tapent une instance réelle avec un
+  vrai Mongo (suppose la base de recette semée par `npm run dev:seed`).
+- **Rien ne couvre le front** (`script.js`, `planning.js`, `performance.js`, `pointage.js`) :
+  zéro test, aucune infra. C'est T-03 au backlog.
+- **CI** : `.github/workflows/ci.yml`, sur `main` **et `dev`**, matrice Node 20 + 22 →
+  `npm ci` → syntax check → `npm run lint` → `npm test`. Un job `deploy` (CD-01) suit sur
+  push `main` du dépôt canonique seulement, gardé par `needs: test`.
 
 **Ajouter un test quand** : on extrait un helper pur, on change une règle de date/heure,
 ou on corrige un bug régressable.
