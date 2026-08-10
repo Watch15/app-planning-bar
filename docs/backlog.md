@@ -949,6 +949,59 @@ A-12, A-13, T-01. **R-04 (découper `server.js`) reste après T-03**, et T-03 n'
 `docs/design-e22-dispos-directeur.md` l'ont été le 2026-08-05 (DOC-01→06) et le 2026-08-08
 (A-08) ; pas revérifiés ligne à ligne ici.
 
+### 5 échecs au smoke `dev` — aucun n'était un bug du produit (2026-08-10)
+
+Premier `smoke:dev` après la mise en ligne de R-17 + A-14. **5 échecs**, tous dans le
+harnais, aucun dans l'application. Le signalement était juste : « quand je teste de mon
+côté, ça fonctionne ». C'était vrai.
+
+**Cause 1 — le smoke se tirait une balle dans le pied avec R-17 (3 échecs).**
+`✗ directeur : planning de SON bar · attendu 200, obtenu 401` et deux voisines.
+Le script ouvre 5 sessions au démarrage et les garde dans un `jar` pour toute la durée.
+Or la vérification **R-06**, placée au milieu, réaffecte le directeur via
+`PATCH /api/users/:id/establishments` — route qui, **depuis R-17**, supprime ses sessions.
+Tout ce qui suivait et parlait en `dir` partait donc en 401. R-17 fonctionnait exactement
+comme prévu ; c'est l'ordre des vérifications qui datait d'avant.
+**Corrigé** : le bloc R-06 passe **en dernier**, après tout ce qui utilise `dir`. Zéro
+reconnexion ajoutée — ce qui compte, le limiteur autorisant 10 tentatives / 15 min / IP
+pour 5 déjà consommées. Et le dégât collatéral devient un **test** : nouvelle vérification
+`R-17 · changer le périmètre coupe la session du directeur` (401 attendu). R-17 n'avait
+aucune couverture bout en bout ; il en a une, gratuitement, en assumant ce qu'il provoque.
+
+**Cause 2 — le jeu de recette avait une semaine de retard (2 échecs).**
+`✗ responsable de soirée · attendu 200, obtenu 403` et `✗ directeur limité à son périmètre ·
+pas de filtrage`. Vérifié en lecture seule sur `templyo_dev` : les shifts « responsable »
+d'Alice sont aux **2026-07-28 / 08-05 / 08-10**, quand le smoke interroge le **2026-08-12**.
+`seed-dev.js` place TOUT relativement au jour où il tourne (`thisMon`/`nextMon`/`lastMon`)
+et `smoke.js` recalcule les mêmes expressions à SA date : semé une semaine, lancé la
+suivante, **plus rien ne coïncide**.
+⚠️ **Le mode d'échec est le vrai problème, pas le décalage.** Un jeu de données périmé se
+manifestait par un **403** et un « pas de filtrage » — soit exactement la signature d'une
+régression de contrôle d'accès. On cherche le bug dans `isResponsablePourSoiree` et dans
+`pendingScopeFilter`, où il n'y a rien. C'est la même famille que A-13 : *une recette
+menteuse, pas cassée.*
+**Corrigé** : un **préflight** vérifie les deux ancres du seed (le shift « responsable » du
+mercredi courant, des dispos en attente hors directrice dans la fenêtre) et, en cas de
+décalage, **saute** les 7 vérifications concernées avec la mention `⊘ non testé — seed d'une
+autre semaine` + le remède (`npm run dev:seed`). Sauter, pas échouer : un ✗ enverrait
+chercher le bug au mauvais endroit, ce qui vient précisément d'arriver.
+
+**Résultat après correctifs** : `22 OK · 0 échec · 7 sautés`.
+
+**Effet de bord à connaître** : la vérification §9.1 **crée** une dispo directeur à chaque
+passage. Elles s'accumulent dans la fenêtre interrogée (5 dispos « Diane » constatées) —
+c'est ce qui a fini de vider S-04 de son sens, la file ne contenant plus qu'elle. Un smoke
+qui écrit doit nettoyer derrière lui, ou viser une fenêtre qu'il ne pollue pas. **Non fait.**
+
+**Deux constats non corrigés, notés ici :**
+- **La vérification S-05 passait en trompe-l'œil.** Session `dir` morte → la file rend un
+  objet d'erreur → `pending.length` vaut `undefined` → la garde `if (!pending.length)` renvoie
+  « aucune dispo en attente — non testé » et **compte un ✓**. Elle est verte parce qu'elle
+  n'a rien testé. Même famille que le test de mutation vide trouvé sur A-14 le même jour.
+- **Le smoke laisse la base dans un état modifié s'il meurt au mauvais moment** : R-06
+  réaffecte le directeur puis le remet ; une interruption entre les deux le laisse sur
+  `Poni_restaurant`.
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique. 🔄 **Rafraîchi le 2026-08-10** (1180 nœuds, 1897 arêtes, 68 communautés) — il datait de `c72affe`, 7 commits de retard : la consigne « après chaque session » n'a **pas** été tenue sur les sessions des 06→08/08. Ancien graphe dans `graphify-out/2026-08-10/`.

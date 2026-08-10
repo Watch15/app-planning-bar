@@ -44,9 +44,18 @@ async function req(who, path, { method = 'GET', body } = {}) {
 }
 const login = (who, email) => req(who, '/auth/login', { method: 'POST', body: { email, password: PWD } });
 
-let pass = 0, fail = 0;
+let pass = 0, fail = 0, skip = 0;
 const results = [];
-async function check(section, name, fn) {
+
+// Motifs de désalignement du jeu de recette, remplis par le préflight (cf. `preflight`).
+// Une vérification qui en dépend est SAUTÉE, pas comptée en échec : le code n'y est
+// pour rien, et un ✗ ferait chercher le bug au mauvais endroit — c'est exactement ce
+// qui est arrivé le 2026-08-10.
+const stale = { dispos: null, soiree: null };
+
+async function check(section, name, fn, needs) {
+    const reason = needs && stale[needs];
+    if (reason) { skip++; results.push(['⊘', section, name, 'non testé — ' + reason]); return; }
     try {
         const detail = await fn();
         pass++; results.push(['✓', section, name, detail || '']);
@@ -57,6 +66,31 @@ async function check(section, name, fn) {
 function eq(actual, expected, label) {
     if (actual !== expected) throw new Error(`${label} : attendu ${expected}, obtenu ${actual}`);
     return `${label}=${actual}`;
+}
+
+// Vérifie que les ancres du seed tombent bien sur les dates que CE script calcule.
+// Ne teste rien du produit : il décide seulement quelles vérifications ont encore un sens.
+async function preflight() {
+    // Ancre E-03 : le shift d'Alice « responsable » du mercredi de la semaine courante.
+    const shifts = (await req('pat', `/api/shifts/Josy_pub/${SOIREE}`)).data;
+    if (!Array.isArray(shifts) || !shifts.some(s => s.pointage_resp)) {
+        stale.soiree = `aucun shift « responsable » le ${SOIREE} (seed d'une autre semaine)`;
+    }
+    // Ancre S-04 : il faut des dispos en attente d'AUTRES staff que la directrice,
+    // sinon le périmètre du directeur ne peut rien filtrer et le test ne dit rien.
+    const pending = (await req('pat', `/api/dispos/pending?from=${FROM}&to=${TO}`)).data;
+    const others = Array.isArray(pending) ? new Set(pending.map(d => d.staff_name)) : new Set();
+    others.delete('Diane');
+    if (!others.size) {
+        stale.dispos = `aucune dispo en attente hors directrice sur ${FROM}→${TO} (seed d'une autre semaine)`;
+    }
+    if (stale.soiree || stale.dispos) {
+        console.log('⚠️  JEU DE RECETTE DÉSALIGNÉ — les données ne sont pas sur la bonne semaine.');
+        if (stale.soiree) console.log('    · ' + stale.soiree);
+        if (stale.dispos) console.log('    · ' + stale.dispos);
+        console.log('    Remède : `npm run dev:seed`, puis relancer ce script.');
+        console.log('    Les vérifications concernées seront SAUTÉES (⊘), pas comptées en échec.\n');
+    }
 }
 
 async function main() {
@@ -86,6 +120,17 @@ async function main() {
         process.exit(1);
     }
 
+    // ── Préflight : le jeu de recette est-il ALIGNÉ sur les dates d'aujourd'hui ? ──
+    //
+    // `seed-dev.js` place TOUT relativement au jour où il tourne (`thisMon`, `nextMon`,
+    // `lastMon`) et ce script recalcule les mêmes expressions à SA date. Semé une
+    // semaine, lancé la suivante, plus rien ne coïncide : le shift « responsable de
+    // soirée » d'Alice n'est pas sur le mercredi interrogé, les dispos semées sont hors
+    // de la fenêtre. Les vérifications tombaient alors en accusant le CODE — E-03 en 403,
+    // S-04 en « pas de filtrage » — pour un problème de DONNÉES. Une heure de recherche
+    // au mauvais endroit, le 2026-08-10. On le détecte donc explicitement.
+    await preflight();
+
     // ── Socle : ce qui marchait déjà ─────────────────────────────────────────
     await check('socle', 'session patron', async () =>
         eq((await req('pat', '/auth/me')).data.user.role, 'patron', 'role'));
@@ -112,20 +157,20 @@ async function main() {
         nPat = (await req('pat', `/api/dispos/pending?from=${FROM}&to=${TO}`)).data.length;
         if (nPat === 0) throw new Error('file vide — base non alimentée ?');
         return nPat + ' dispos';
-    });
+    }, 'dispos');
     await check('S-04', 'directeur limité à son périmètre', async () => {
         nDir = (await req('dir', `/api/dispos/pending?from=${FROM}&to=${TO}`)).data.length;
         if (nDir >= nPat) throw new Error(`pas de filtrage (dir=${nDir}, patron=${nPat})`);
         return nDir + ' < ' + nPat;
-    });
+    }, 'dispos');
     await check('S-04', 'bascule scope=all rend tout', async () =>
-        eq((await req('dir', `/api/dispos/pending?from=${FROM}&to=${TO}&scope=all`)).data.length, nPat, 'dispos'));
+        eq((await req('dir', `/api/dispos/pending?from=${FROM}&to=${TO}&scope=all`)).data.length, nPat, 'dispos'), 'dispos');
     await check('S-04', 'pastille alignée sur la file', async () => {
         const d = (await req('dir', '/api/dispos/count')).data.count;
         const a = (await req('dir', '/api/dispos/count?scope=all')).data.count;
         if (d >= a) throw new Error(`pastille non scopée (${d} vs ${a})`);
         return d + ' / ' + a;
-    });
+    }, 'dispos');
 
     // ── S-02 / S-03 : réglages de performance ────────────────────────────────
     await check('S-03', 'directeur lit SON bar', async () =>
@@ -157,21 +202,6 @@ async function main() {
         const r = await req('pat', `/api/conges?from=${FROM}&to=${D(30)}`);
         if (r.status !== 200) throw new Error('status ' + r.status);
         return (Array.isArray(r.data) ? r.data.length : '?') + ' congés';
-    });
-
-    // ── R-06 : resync venues (écrit puis remet en place) ─────────────────────
-    await check('R-06', 'réaffecter le directeur propage sur staff.venues', async () => {
-        const users = (await req('pat', '/api/users')).data;
-        const dir = users.find(u => u.role === 'directeur');
-        if (!dir) throw new Error('compte directeur introuvable');
-        const venues = async () => ((await req('pat', '/api/staff')).data.find(s => /Diane/.test(s.name)) || {}).venues;
-        const before = await venues();
-        await req('pat', `/api/users/${dir._id}/establishments`, { method: 'PATCH', body: { assigned_establishments: ['Poni_restaurant'] } });
-        const after = await venues();
-        await req('pat', `/api/users/${dir._id}/establishments`, { method: 'PATCH', body: { assigned_establishments: before } });
-        if (JSON.stringify(after) !== JSON.stringify(['Poni_restaurant']))
-            throw new Error('venues non resynchronisées : ' + JSON.stringify(after));
-        return JSON.stringify(before) + ' → Poni → remis';
     });
 
     // ── S-06 : périmètre sur les routes de lecture ───────────────────────────
@@ -209,11 +239,42 @@ async function main() {
     // sous un contrôle de périmètre qui refuse un compte `staff` — le responsable n'aurait
     // plus vu aucun shift à pointer. Vérifié ici sur l'instance réelle, pas seulement en test.
     await check('E-03', 'responsable de soirée : accède au pointage de SA soirée', async () =>
-        eq((await req('ali', `/api/pointage/${SOIREE}?establishment_id=Josy_pub`)).status, 200, 'status'));
+        eq((await req('ali', `/api/pointage/${SOIREE}?establishment_id=Josy_pub`)).status, 200, 'status'), 'soiree');
     await check('E-03', 'staff non désigné : pointage refusé', async () =>
-        eq((await req('bru', `/api/pointage/${SOIREE}?establishment_id=Josy_pub`)).status, 403, 'status'));
+        eq((await req('bru', `/api/pointage/${SOIREE}?establishment_id=Josy_pub`)).status, 403, 'status'), 'soiree');
     await check('E-03', "responsable : pas d'accès à un bar où il n'est pas désigné", async () =>
-        eq((await req('ali', `/api/pointage/${SOIREE}?establishment_id=Poni_restaurant`)).status, 403, 'status'));
+        eq((await req('ali', `/api/pointage/${SOIREE}?establishment_id=Poni_restaurant`)).status, 403, 'status'), 'soiree');
+
+    // ── R-06 + R-17 : réaffectation du directeur — EN DERNIER, et ce n'est pas ──
+    //    un détail de mise en page.
+    //
+    // Depuis R-17, `PATCH /api/users/:id/establishments` SUPPRIME les sessions de
+    // l'utilisateur touché. Ce bloc réaffecte le directeur : il tue donc la session
+    // `dir` que ce script a ouverte au démarrage. Tant qu'il tournait au milieu, tout
+    // ce qui suivait et utilisait `dir` partait en 401 — trois vérifications S-06 en
+    // échec le 2026-08-10, pour un correctif qui marchait parfaitement.
+    //
+    // Le remettre en fin de script coûte zéro reconnexion — ce qui compte, car le
+    // limiteur autorise 10 tentatives / 15 min / IP et ce script en consomme déjà 5 :
+    // une 6e interdirait deux lancements rapprochés.
+    await check('R-06', 'réaffecter le directeur propage sur staff.venues', async () => {
+        const users = (await req('pat', '/api/users')).data;
+        const dir = users.find(u => u.role === 'directeur');
+        if (!dir) throw new Error('compte directeur introuvable');
+        const venues = async () => ((await req('pat', '/api/staff')).data.find(s => /Diane/.test(s.name)) || {}).venues;
+        const before = await venues();
+        await req('pat', `/api/users/${dir._id}/establishments`, { method: 'PATCH', body: { assigned_establishments: ['Poni_restaurant'] } });
+        const after = await venues();
+        await req('pat', `/api/users/${dir._id}/establishments`, { method: 'PATCH', body: { assigned_establishments: before } });
+        if (JSON.stringify(after) !== JSON.stringify(['Poni_restaurant']))
+            throw new Error('venues non resynchronisées : ' + JSON.stringify(after));
+        return JSON.stringify(before) + ' → Poni → remis';
+    });
+
+    // Le dégât collatéral ci-dessus EST le comportement attendu de R-17 : on le vérifie
+    // au lieu de le subir. Rien ne suit qui utilise `dir`, donc pas de reconnexion.
+    await check('R-17', 'changer le périmètre coupe la session du directeur', async () =>
+        eq((await req('dir', '/auth/me')).status, 401, 'status'));
 
     // ── Restitution ──────────────────────────────────────────────────────────
     let section = '';
@@ -221,7 +282,8 @@ async function main() {
         if (sec !== section) { console.log('  ' + sec); section = sec; }
         console.log('    ' + mark + ' ' + name.padEnd(46) + (detail ? '· ' + detail : ''));
     }
-    console.log('\n  ' + pass + ' OK · ' + fail + ' échec(s)\n');
+    console.log('\n  ' + pass + ' OK · ' + fail + ' échec(s)'
+        + (skip ? ' · ' + skip + ' sauté(s) — jeu de recette désaligné, cf. `npm run dev:seed`' : '') + '\n');
     process.exit(fail ? 1 : 0);
 }
 
