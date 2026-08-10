@@ -986,7 +986,15 @@ décalage, **saute** les 7 vérifications concernées avec la mention `⊘ non t
 autre semaine` + le remède (`npm run dev:seed`). Sauter, pas échouer : un ✗ enverrait
 chercher le bug au mauvais endroit, ce qui vient précisément d'arriver.
 
-**Résultat après correctifs** : `22 OK · 0 échec · 7 sautés`.
+**Résultat après correctifs** : `22 OK · 0 échec · 7 sautés`, puis **`29 OK · 0 échec · 0 sauté`**
+après `npm run dev:seed` (base réalignée). ✅ **L'étage 1 du processus de livraison est donc
+franchi pour ce lot** (R-17 + A-14 + correctifs de doc) : `dev` déployé et smoke vert sur
+l'instance réelle. E-03 — « le correctif le plus important du lot » — est vérifié contre un
+vrai Mongo, et R-17 aussi. Reste l'étage 2 (`main` + `smoke:main`), puis le client, qui exige
+un accord explicite.
+ℹ️ Au passage, la vérification S-05 a **réellement testé** cette fois (file `dir` non vide,
+donc vrai `PATCH` → 403 attendu) — son trompe-l'œil ne se déclenche que quand la file est
+vide ou la session morte. Le défaut reste à corriger : il est silencieux.
 
 **Effet de bord à connaître** : la vérification §9.1 **crée** une dispo directeur à chaque
 passage. Elles s'accumulent dans la fenêtre interrogée (5 dispos « Diane » constatées) —
