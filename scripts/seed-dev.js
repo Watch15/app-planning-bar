@@ -199,7 +199,7 @@ const FEATURES = [
 } },
 
 { id: 'semaine-type', label: 'Semaine-type de la directrice (E-22 v2)',
-  howToTest: 'Modale « Ma semaine-type » côté directrice. Elle PRÉ-REMPLIT les jours vides en `pending` — elle n\'écrase jamais une saisie existante.',
+  howToTest: 'Modale « Ma semaine-type » côté directrice. Enregistrer n\'envoie RIEN (règle du 2026-08-10) : les jours apparaissent « 🕓 prévu » sur la semaine suivante et ne partent qu\'au déclenchement de la deadline, sur les seuls jours restés vides — une saisie manuelle n\'est jamais écrasée.',
   async seed(ctx) {
     await ctx.db.collection('manager_dispo_templates').insertOne({
         staff_id: ctx.staff.Diane,

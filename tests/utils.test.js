@@ -15,6 +15,7 @@ const {
     resolvePerfSettings,
     datesCoveredByPeriods,
     dispoDeadlineWaived,
+    shouldMaterializeTemplate,
     buildTemplateDispos,
 } = require('../lib/utils');
 
@@ -474,4 +475,43 @@ test('dispoDeadlineWaived : l\'exemption ne déborde sur aucun autre rôle', () 
     // Liste = les rôles de session valides (cf. PATCH /api/users/:id/role), + absent.
     for (const role of ['staff', 'patron', 'observateur', 'etablissement', undefined])
         assert.equal(dispoDeadlineWaived({ force_open: false }, role, false), false, 'rôle ' + role);
+});
+
+// ── shouldMaterializeTemplate (semaine-type envoyée À la deadline — 2026-08-10) ──
+// Le modèle : la semaine-type est « ce qui part à ma place si je n'ai rien envoyé ».
+// Avant, le cron de 10h la matérialisait tous les jours → jusqu'à 4 jours d'avance.
+
+const VEN13 = new Date(2026, 7, 14, 13, 0);   // vendredi 14 août 2026, 13h00 — la deadline
+const W     = '2026-08-17';                   // lundi suivant = semaine cible
+
+test('shouldMaterializeTemplate : rien ne part avant la deadline', () => {
+    // Lundi 10h : c'est exactement le moment où l'ancien cron envoyait.
+    assert.equal(shouldMaterializeTemplate(new Date(2026, 7, 10, 10, 0), VEN13, null, W), false);
+    // Une minute avant : toujours rien.
+    assert.equal(shouldMaterializeTemplate(new Date(2026, 7, 14, 12, 59), VEN13, null, W), false);
+});
+
+test('shouldMaterializeTemplate : part À la deadline, à la seconde près', () => {
+    assert.equal(shouldMaterializeTemplate(VEN13, VEN13, null, W), true);
+    assert.equal(shouldMaterializeTemplate(new Date(2026, 7, 14, 13, 1), VEN13, null, W), true);
+});
+
+test('shouldMaterializeTemplate : une seule fois par semaine cible', () => {
+    // Le vérificateur repasse tous les quarts d'heure jusqu'à dimanche soir : sans le
+    // marqueur, il re-créerait à chaque tour — et ressusciterait un jour retiré depuis.
+    assert.equal(shouldMaterializeTemplate(new Date(2026, 7, 14, 13, 15), VEN13, W, W), false);
+    assert.equal(shouldMaterializeTemplate(new Date(2026, 7, 16, 22, 0), VEN13, W, W), false);
+});
+
+test('shouldMaterializeTemplate : le marqueur de la semaine PRÉCÉDENTE ne bloque pas', () => {
+    // Piège : un marqueur périmé ne doit pas geler le directeur pour toujours.
+    assert.equal(shouldMaterializeTemplate(VEN13, VEN13, '2026-08-10', W), true);
+});
+
+test('shouldMaterializeTemplate : entrées non-Date refusées plutôt que comparées', () => {
+    // `undefined < date` est false en JS, donc une deadline manquante aurait laissé
+    // passer la matérialisation — c'est-à-dire l'envoi anticipé qu'on veut interdire.
+    assert.equal(shouldMaterializeTemplate(VEN13, undefined, null, W), false);
+    assert.equal(shouldMaterializeTemplate(undefined, VEN13, null, W), false);
+    assert.equal(shouldMaterializeTemplate('2026-08-14', VEN13, null, W), false);
 });

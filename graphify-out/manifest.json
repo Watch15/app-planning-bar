@@ -1,7 +1,7 @@
 {
   "lib/utils.js": {
-    "mtime": 1785964097.5415154,
-    "ast_hash": "4db2660e39a50c63a01ff6f4b287bb59",
+    "mtime": 1786351963.2957313,
+    "ast_hash": "a9989d518f09fe73518920662187e88c",
     "semantic_hash": ""
   },
   "package.json": {
@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "public/script.js": {
-    "mtime": 1786092581.2259848,
-    "ast_hash": "cbc253b9ae1e9d43dd732e3bbe433098",
+    "mtime": 1786351919.8695686,
+    "ast_hash": "5cdbc9a7576ee70bd633cbce2cb78361",
     "semantic_hash": ""
   },
   "public/sw.js": {
@@ -75,8 +75,8 @@
     "semantic_hash": ""
   },
   "server.js": {
-    "mtime": 1786187826.5971704,
-    "ast_hash": "2afb10d866666524d6ee72d35ca50190",
+    "mtime": 1786352217.0817206,
+    "ast_hash": "e1ce88fe730d3297175b299484dc432c",
     "semantic_hash": ""
   },
   "tests/routes.test.js": {
@@ -90,8 +90,8 @@
     "semantic_hash": ""
   },
   "tests/utils.test.js": {
-    "mtime": 1785964097.5745144,
-    "ast_hash": "b6377867eea3da62a4bb0fa7a18422d0",
+    "mtime": 1786351950.1329677,
+    "ast_hash": "1f2b5ab34cbfec331c81c80cab10d9b7",
     "semantic_hash": ""
   },
   "tests/week.test.js": {
@@ -105,18 +105,18 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1786348876.6729915,
-    "ast_hash": "85e2fcbaf4fe3c47f9cbd028c0e71fa1",
+    "mtime": 1786352374.8104281,
+    "ast_hash": "ad39b3fd2ba2d3cd0fffe72e59e2f0cf",
     "semantic_hash": ""
   },
   "docs/architecture.md": {
-    "mtime": 1786348894.1348915,
-    "ast_hash": "aa867f794d35ffb0f7aa0f83c8ba1776",
+    "mtime": 1786352361.0042121,
+    "ast_hash": "1e18723602b5333874cada9915433bd4",
     "semantic_hash": ""
   },
   "docs/backlog.md": {
-    "mtime": 1786350164.4690747,
-    "ast_hash": "fb0cd97ada83e37bfdf4a435b490cee9",
+    "mtime": 1786352374.745603,
+    "ast_hash": "f2df624083535798b05f9626786fdbba",
     "semantic_hash": ""
   },
   "docs/prd.md": {
@@ -130,8 +130,8 @@
     "semantic_hash": "b08e527857ae0b58a84a24cdd1f2fd8a"
   },
   "public/index.html": {
-    "mtime": 1786348659.3483527,
-    "ast_hash": "b67758b477a38cc00889e3894bbdd3b4",
+    "mtime": 1786351915.6356678,
+    "ast_hash": "d5b9b6095bdc4615863e19d63c9ae0bc",
     "semantic_hash": ""
   },
   "public/login.html": {
@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "docs/onboarding.md": {
-    "mtime": 1786348909.803483,
-    "ast_hash": "a5b3acc627b737969a9a84b18c4205df",
+    "mtime": 1786352361.0615368,
+    "ast_hash": "14aa41252339838c83fdc63d5f98b569",
     "semantic_hash": ""
   },
   "eslint.config.js": {
@@ -220,8 +220,8 @@
     "semantic_hash": ""
   },
   "tests/helpers/fake-db.js": {
-    "mtime": 1786187435.6372144,
-    "ast_hash": "29e90d5cf75b4b7cd2beef9ab3e5539e",
+    "mtime": 1786352167.3388648,
+    "ast_hash": "4d0dd68390bb4ecf8ab8c8e4c8ecc41a",
     "semantic_hash": ""
   },
   "tests/manager-off.test.js": {
@@ -235,13 +235,13 @@
     "semantic_hash": ""
   },
   "docs/design-e22-dispos-directeur.md": {
-    "mtime": 1786186742.7156827,
-    "ast_hash": "cb4ce08a5bd4f1c41ad26b13d968c977",
+    "mtime": 1786352294.23725,
+    "ast_hash": "9a5c6fea5d8a3bfdc3e0d3f727f0cde7",
     "semantic_hash": ""
   },
   "tests/manager-dispos.test.js": {
-    "mtime": 1786092581.246026,
-    "ast_hash": "172eaae20c1ed3aa067b8e4db41f975b",
+    "mtime": 1786352081.1393633,
+    "ast_hash": "0d98aa0f2c6fd9fd1e785221180ceecc",
     "semantic_hash": ""
   },
   "tests/perf-settings.test.js": {
@@ -270,8 +270,8 @@
     "semantic_hash": ""
   },
   "scripts/seed-dev.js": {
-    "mtime": 1786186742.7196805,
-    "ast_hash": "a5c01f1e54fe73b30075a77dac19e504",
+    "mtime": 1786352232.7068577,
+    "ast_hash": "329f769150b96a99a6c898e770f4ac2e",
     "semantic_hash": ""
   },
   "scripts/smoke.js": {
@@ -300,8 +300,8 @@
     "semantic_hash": ""
   },
   "docs/note-client-mise-a-jour.md": {
-    "mtime": 1786092581.2194676,
-    "ast_hash": "049be7eb814f5723a01e3ced23858db1",
+    "mtime": 1786352251.5204358,
+    "ast_hash": "b9275ab9f33db35adea9b27685f59cc9",
     "semantic_hash": ""
   },
   "public/lib/auth-guard.js": {

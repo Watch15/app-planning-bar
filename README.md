@@ -32,14 +32,14 @@ app-templyo/
 ├── .env                           ← Variables d'environnement (à créer, ne jamais commiter)
 ├── lib/
 │   └── utils.js                   ← Helpers purs testables (isValidObjectId, hashToken, normalizePhone, computeActiveDate, toDateStr)
-├── tests/                         ← 236 tests, 11 fichiers (node --test, zéro framework)
+├── tests/                         ← 243 tests, 11 fichiers (node --test, zéro framework)
 │   ├── helpers/                   ← harness.js (env + x-test-user) + fake-db.js (faux Mongo)
-│   ├── utils.test.js              ← 75 — helpers purs
+│   ├── utils.test.js              ← 80 — helpers purs
 │   ├── shift-hours.test.js        ← 12 — heures effectives d'un shift
 │   ├── week.test.js               ← 15 — lundi de semaine (weekStart + currentWeekStart 6h)
 │   ├── auth-guard.test.js         ← 21 — rattrapage des 401 en cours de session (A-14)
 │   ├── routes.test.js             ← 4 — intégration HTTP (boot app, middlewares auth/DB)
-│   ├── dispos / conges / manager-off / manager-dispos  ← 64 — intégration métier
+│   ├── dispos / conges / manager-off / manager-dispos  ← 66 — intégration métier
 │   └── perf-settings / estab-access                    ← 44 — périmètre (S-02…S-06, R-15, R-17)
 ├── .github/
 │   └── workflows/
@@ -53,7 +53,7 @@ app-templyo/
 │   ├── politique-confidentialite.html  ← Page légale RGPD
 │   ├── login.html                 ← Page de connexion (email ou téléphone)
 │   ├── set-password.html          ← Activation / réinitialisation mot de passe
-│   ├── script.js                  ← Logique patron — planning, drag & drop, modales (~6800 lignes)
+│   ├── script.js                  ← Logique patron — planning, drag & drop, modales (9124 l.)
 │   ├── planning.js                ← Logique staff (externalisée de planning.html)
 │   ├── pointage.js                ← Logique pointage (externalisée de pointage.html)
 │   ├── style.css                  ← Styles globaux
@@ -136,7 +136,7 @@ PORT=3000
 | `npm run seed:all` | (Re)construit les bases de recette `templyo_dev` **et** `templyo_main` |
 | `npm run dev:seed` | Idem, base de `.env.dev` seulement |
 | `npm run dev:server` | Serveur local sur la base de `.env.dev` |
-| `npm run smoke` | 25 vérifications HTTP sur l'instance locale |
+| `npm run smoke` | 29 vérifications HTTP sur l'instance locale (⊘ sautées si le seed date d'une autre semaine) |
 | `npm run smoke:dev` / `smoke:main` | Idem sur l'environnement déployé |
 | `npm run smoke -- <url>` | Idem sur une URL quelconque |
 
@@ -423,10 +423,10 @@ Tout ce qui est testable sans Express/Mongo/réseau doit aller dans `lib/utils.j
 
 ```bash
 npm test
-# 236 tests, 11 fichiers (liste explicite dans package.json — le mode répertoire
+# 243 tests, 11 fichiers (liste explicite dans package.json — le mode répertoire
 # `node --test tests/` n'est pas fiable selon la version de Node).
 #
-# Unitaires purs (123) : utils (75 — timezone, padding dates, téléphones, tokens,
+# Unitaires purs (128) : utils (80 — timezone, padding dates, téléphones, tokens,
 #   ObjectId, publication, dispoDeadlineWaived, congés), shift-hours (12 — heures
 #   effectives réel/planifié, pointage partiel, shift de nuit), week (15 — weekStart
 #   bascule mois/année, currentWeekStart cutoff 6h), auth-guard (21 — rattrapage

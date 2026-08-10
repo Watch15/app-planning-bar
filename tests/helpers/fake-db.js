@@ -83,7 +83,14 @@ function nextObjectIdHex() {
 function makeCollection(initialDocs) {
     const docs = (initialDocs || []).map(d => ({ ...d }));
     return {
-        _docs: docs,
+        // Accesseur, et non `_docs: docs`. Toutes les méthodes ci-dessous capturent le
+        // tableau `docs` par fermeture : une affectation `col._docs = [...]` remplaçait
+        // silencieusement la PROPRIÉTÉ sans toucher au tableau réellement lu, si bien
+        // qu'un test qui préparait un état par ce chemin testait… l'état d'avant. Piège
+        // rencontré le 2026-08-10 (une mutation censée casser un test ne l'a pas cassé).
+        // Le setter écrit donc EN PLACE. La lecture est inchangée.
+        get _docs() { return docs; },
+        set _docs(next) { docs.length = 0; docs.push(...(next || [])); },
         async findOne(query)      { return docs.find(d => matchDoc(d, query)) || null; },
         find(query)               {
             const res = docs.filter(d => matchDoc(d, query));

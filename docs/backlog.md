@@ -194,12 +194,12 @@ d'introduire 3 erreurs neuves ici.
 ### État actuel des tests (pour mémoire)
 
 > ⚠️ Ce paragraphe décrivait l'état au 2026-08-05 (160 tests). **Chiffres à jour au
-> 2026-08-10 : 236 tests, 11 fichiers**, `npm test` vert, `eslint` 0 erreur / 13 warnings.
+> 2026-08-10 : 243 tests, 11 fichiers**, `npm test` vert, `eslint` 0 erreur / 13 warnings.
 
-Deux niveaux : **123 unitaires purs** (`utils` 75, `shift-hours` 12, `week` 15,
+Deux niveaux : **128 unitaires purs** (`utils` 80, `shift-hours` 12, `week` 15,
 `auth-guard` 21 — helpers de
-`lib/utils.js` et des modules UMD, aucun Express, aucun `db`) et **113 d'intégration HTTP**
-(`routes` 4, `dispos` 15, `conges` 12, `manager-off` 14, `manager-dispos` 23,
+`lib/utils.js` et des modules UMD, aucun Express, aucun `db`) et **115 d'intégration HTTP**
+(`routes` 4, `dispos` 15, `conges` 12, `manager-off` 14, `manager-dispos` 25,
 `perf-settings` 11, `estab-access` 33) qui démarrent la vraie app Express sur un port
 éphémère et ne remplacent que Mongo, par `tests/helpers/fake-db.js`. Session simulée par
 l'en-tête `x-test-user`, env centralisée dans `tests/helpers/harness.js`.
@@ -209,7 +209,7 @@ l'en-tête `x-test-user`, env centralisée dans `tests/helpers/harness.js`.
 
 | ID | Ce qui n'est pas couvert | Faisable avec l'infra actuelle ? |
 |---|---|---|
-| T-01 | Boucle du cron `materializeAllManagerTemplates` (lecture des templates, résolution du nom). Seule la fonction par semaine est testée, via la route. | **Oui** — même harnais que `manager-dispos.test.js` |
+| ~~T-01~~ | ~~Boucle du cron `materializeAllManagerTemplates`~~ | ✅ **Fait le 2026-08-10**, en conséquence du changement de déclencheur : la matérialisation n'étant plus atteignable par une route, la tester est devenu **obligatoire** et non optionnel. Poignée `app.locals.runManagerTemplateCron` (même double garde que `setTestDb`), 6 tests d'intégration qui pilotent la boucle réelle — lecture des modèles, résolution du nom, jointure absences, marqueur. ⚠️ **Une branche reste non couverte** : « la deadline n'est pas encore franchie ». Elle est intestable ici (la deadline effective tombe toujours dans la semaine courante, donc aucun réglage ne la garantit future quel que soit le jour d'exécution) — couverte à l'unité sur dates gelées. |
 | T-02 | Branche **ObjectId** de `managerOffPeriods` (`server.js`) : le filtre tolère `user_id` en chaîne **ou** en ObjectId, mais `fake-db` n'utilise que des chaînes → la branche ObjectId n'est **jamais exercée**. Si `manager_time_off.user_id` est stocké en ObjectId en prod, rien ne le prouve. | Non — exige un vrai Mongo |
 | T-03 | **Tout le front** : `script.js`, `planning.js`, `performance.js`. Zéro test. Concerne notamment la modale dispos directeur, les statuts, le badge « Directeur ». | Non — aucune infra front |
 | T-04 | Aucun test E2E navigateur. | Non |
@@ -876,7 +876,7 @@ suit est mesuré, pas supposé.**
 
 | Contrôle | Résultat |
 |---|---|
-| `npm test` | **236/236 vert** (123 unitaires purs + 113 d'intégration HTTP, 11 fichiers) — 215 au moment de la revue, +21 avec A-14 livré ensuite |
+| `npm test` | **243/243 vert** (128 unitaires purs + 115 d'intégration HTTP, 11 fichiers) — 215 au moment de la revue, puis +21 (A-14) et +7 (semaine-type) |
 | `npx eslint .` | **0 erreur**, 13 warnings (escapes inutiles, variables inutilisées — cosmétique) |
 | Arbre de travail | **propre**, rien en attente de commit |
 | `graphify` | **rafraîchi ce jour** — 1180 nœuds, 1897 arêtes, 68 communautés (il datait de `c72affe`, soit 7 commits de retard) |
@@ -1009,6 +1009,55 @@ qui écrit doit nettoyer derrière lui, ou viser une fenêtre qu'il ne pollue pa
 - **Le smoke laisse la base dans un état modifié s'il meurt au mauvais moment** : R-06
   réaffecte le directeur puis le remet ; une interruption entre les deux le laisse sur
   `Poni_restaurant`.
+
+### Semaine-type : envoyée AU déclenchement de la deadline, jamais avant (2026-08-10)
+
+**Demandé** : « la semaine-type doit être envoyée juste au déclenchement de la deadline de
+la semaine, pas avant ». Détail complet dans `docs/design-e22-dispos-directeur.md` §10.
+
+**Ce qui se passait** : `materializeAllManagerTemplates` tournait dans le **cron quotidien
+de 10h**, et `PUT /api/me/manager-dispo-template` matérialisait **en plus** immédiatement.
+Avec une deadline vendredi 13h, les dispos de la directrice tombaient dans la file du patron
+dès le **lundi 10h** — 4 jours d'avance — et instantanément si elle enregistrait son modèle.
+
+**Le vrai changement est un changement de modèle**, pas d'horaire. La semaine-type cesse
+d'être un *pré-remplissage* pour devenir **« ce qui est envoyé à ma place si je n'ai rien
+envoyé moi-même »**. La règle **création seule** de `buildTemplateDispos` portait déjà
+exactement cette sémantique — une saisie de la semaine gagne, le modèle comble les trous.
+Seul le **moment** était faux.
+
+| | Avant | Après |
+|---|---|---|
+| `PUT` semaine-type | enregistre **et** matérialise | enregistre **seulement** |
+| Déclencheur | cron quotidien 10h | vérificateur **/15 min**, agit au franchissement |
+| Portée | tous les jours, en avance | **une fois** par semaine cible (`last_materialized_week`) |
+| Vue directrice | jours déjà en `pending` | jours **« 🕓 prévu »**, non partis |
+
+**Pourquoi pas le cron de 10h.** Une passe quotidienne aurait déclenché une deadline
+vendredi 13h le **samedi 10h** : 21 h trop tard, après construction du planning. Le
+vérificateur ne fait rien 99 % du temps (`shouldMaterializeTemplate` sort avant toute
+écriture, le marqueur l'empêche de repasser).
+
+**La contrepartie demandée** — « il voit quand même ses jours prêts enregistrés comme pour
+les staff classiques » : `public/script.js` pré-remplit la semaine suivante depuis le modèle,
+en **prévisionnel**, sans qu'aucun document existe en base. Cliquer « Enregistrer » les
+envoie tout de suite : action explicite, comme un staff qui envoie avant l'heure. La règle ne
+porte que sur l'envoi **automatique**.
+
+**Couverture** : 6 unitaires sur dates gelées + 6 d'intégration (T-01 refermé au passage).
+Mutations : retirer la garde de deadline / ne plus poser le marqueur / rematérialiser dans
+le `PUT` fait tomber un test chacun.
+
+**⚠️ 6e lacune de `fake-db`, et c'est un piège, pas un manque.** `_docs` était lié par
+référence à la création (`_docs: docs`) alors que toutes les méthodes capturent le tableau
+par fermeture : un test qui préparait un état par `col._docs = [...]` remplaçait la
+**propriété** sans toucher au tableau réellement lu — donc testait l'état d'avant. Trouvé
+parce qu'une mutation censée casser un test ne l'a pas cassé. Corrigé en accesseur
+(`get`/`set` écrivant **en place**). Précédentes : `deleteOne`, `distinct`,
+`$and`/`$or`/`$exists`, `updateMany`, chemins pointés.
+⚠️ **Deuxième test vide attrapé par mutation en une journée** (après celui d'A-14). Dans les
+deux cas la cause est la même : **un faux infidèle**, pas une assertion fausse. La passe de
+mutation n'est pas une formalité sur ce projet.
 
 ### Divers — outillage & process
 
@@ -1177,7 +1226,7 @@ Items 🟠 Importants / 🟡 Cosmétiques relevés par l'audit D-49 mais non cor
 - **Réouverture dispo** : `settings.dispo.force_open_staff[]` autorise un staff précis à soumettre malgré la deadline (E-15 / D-58), purgé à la soumission. Onglets « Sans dispo » (rouvrir simple) et « Modifier » (supprime les dispos existantes puis rouvre).
 - **Dispos `type:'off'` (indispo, D-63)** : une indispo est purement informative — `start_time`/`end_time` = `null`. **Toujours l'exclure** des vues qui supposent un créneau horaire : `/api/dispos/confirmed` (overlay planning) et `/api/dispos/non-affectees` la filtrent déjà (`$nin: ['week_note','off']`, cf. C-03/D-76) ; ne jamais créer de shift à partir d'un off. Côté affichage, tester `dispo.type === 'off'` avant de formater des heures (sinon `NaN`).
 - **Publication « semaine publiée ? » (D-78)** : utiliser `isDatePublished(dateStr, publishedWeeks, now)` (`lib/utils.js`, pur, testé) + `fetchPublishedWeeks()` (`server.js`, Set des lundis publiés). NE PAS réintroduire l'ancienne heuristique `|date - lundi| < 8 j` (boguée sur les semaines adjacentes). Le front passe par `/api/publish/:weekStart` (`{published, auto}`).
-- **Tests** : `npm test` (zéro dépendance, `node --test`) — **236 tests, 11 fichiers** au 2026-08-10 (cf. « État actuel des tests »). Les tests d'intégration requièrent `server.js` (qui exporte `app` et ne démarre/se connecte que si `require.main === module`), démarrent l'app sur un port éphémère et injectent un faux Mongo via `tests/helpers/fake-db.js` + `app.locals.setTestDb` ; la session vient de l'en-tête `x-test-user`. **Toute la config d'env est dans `tests/helpers/harness.js`** — ne jamais la redupliquer dans un fichier de test. ⚠️ **`fake-db` est un sous-ensemble de l'API Mongo** : 4 lacunes ont déjà été trouvées à l'usage (`deleteOne`, `distinct`, `$and`/`$or`/`$exists`, `updateMany` — 11 usages serveur intestables). Un test vert ne prouve pas que la vraie requête tourne ; le seul niveau qui exerce Mongo est `npm run smoke`. ⚠️ le mode répertoire `node --test tests/` **n'est pas fiable** (échoue selon la version Node) : lister les fichiers explicitement dans `package.json`. Ajouter un test quand on extrait un helper pur, change une règle de date/heure, ou fixe un bug qui pourrait régresser.
+- **Tests** : `npm test` (zéro dépendance, `node --test`) — **243 tests, 11 fichiers** au 2026-08-10 (cf. « État actuel des tests »). Les tests d'intégration requièrent `server.js` (qui exporte `app` et ne démarre/se connecte que si `require.main === module`), démarrent l'app sur un port éphémère et injectent un faux Mongo via `tests/helpers/fake-db.js` + `app.locals.setTestDb` ; la session vient de l'en-tête `x-test-user`. **Toute la config d'env est dans `tests/helpers/harness.js`** — ne jamais la redupliquer dans un fichier de test. ⚠️ **`fake-db` est un sous-ensemble de l'API Mongo** : 4 lacunes ont déjà été trouvées à l'usage (`deleteOne`, `distinct`, `$and`/`$or`/`$exists`, `updateMany` — 11 usages serveur intestables). Un test vert ne prouve pas que la vraie requête tourne ; le seul niveau qui exerce Mongo est `npm run smoke`. ⚠️ le mode répertoire `node --test tests/` **n'est pas fiable** (échoue selon la version Node) : lister les fichiers explicitement dans `package.json`. Ajouter un test quand on extrait un helper pur, change une règle de date/heure, ou fixe un bug qui pourrait régresser.
 - **`window.fetch` est enveloppé (A-14)** : `public/lib/auth-guard.js`, chargé **avant** le script de chaque page applicative, remplace `window.fetch` pour rediriger vers `/login.html?expired=1` sur un **401** de `/api/*` ou `/auth/*`. À savoir avant de débugger un appel réseau côté front : le `fetch` que tu appelles n'est pas le natif. ⚠️ **Ne jamais élargir au 403** — un périmètre refusé (S-02…S-06) est une réponse normale pour un utilisateur bien authentifié, le déconnecter serait un bug. Les exclusions (routes de login, pages publiques, cross-origin) vivent dans le prédicat pur `shouldRedirectOn401`, testé — les modifier sans passer par lui, c'est les perdre. Le garde est **auto-installé** au chargement du script : rien à appeler depuis les pages.
 - **Logique partagée navigateur/Node (D-73)** : pour qu'un helper soit à la fois consommé par le front (`<script src>`) ET testable sous Node, le mettre dans un **module UMD** sous `public/lib/` (ex. `shift-hours.js` → `window.ShiftHours` ; `week.js` → `window.Week`, + `require()` Node). Côté HTML, déléguer depuis une fonction de même nom pour préserver le hoisting et ne pas toucher les call sites ; charger le `<script src="/lib/…">` avant le script qui l'utilise. Quand un helper existait déjà côté Node (ex. `weekStart` dans `lib/utils.js`), faire **ré-exporter** `lib/utils.js` depuis le module UMD pour garder une source unique sans toucher les call sites serveur (R-01/D-74). Gabarit des prochaines extractions (R-02…).
 - **`weekStart` vs `currentWeekStart` (D-75)** : `weekStart(date)` = lundi de la semaine d'une **date calendaire** (publication, mapping shift→semaine) — ne JAMAIS y mettre de cutoff. `currentWeekStart(now, cutoff=6)` = lundi de la **semaine opérationnelle à l'instant présent** (avant 6h le lundi → semaine précédente, car les fermetures ~2h appartiennent à la veille). Utiliser `currentWeekStart(new Date())` pour « quelle semaine est-on maintenant », `weekStart(X)` pour « semaine de la date X ». Seuil `WEEK_CUTOFF_HOUR=6` dans `public/lib/week.js` (≠ `cutoff_hour` pointage 9h).

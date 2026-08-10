@@ -39,10 +39,23 @@ after(stopApp);
 const putTemplate = (days = TEMPLATE_DAYS) =>
     req('/api/me/manager-dispo-template', DIRECTEUR, { method: 'PUT', body: JSON.stringify({ days }) });
 
+// Depuis le 2026-08-10, la semaine-type n'est plus matérialisée par le PUT ni par le
+// cron de 10h : elle part au DÉCLENCHEMENT DE LA DEADLINE. Les tests la déclenchent donc
+// à la main, via la poignée exposée sous la double garde du harnais.
+const runCron = () => app.locals.runManagerTemplateCron();
+
+// `custom_deadline` est un PATRON récurrent (jour de semaine + heure), jamais une date
+// absolue : viser un LUNDI 00:00 rend la deadline « déjà franchie » quel que soit le jour
+// où la suite tourne. Sans ça le résultat dépendrait du jour de la semaine — vert le
+// samedi, rouge le mardi. Le cas « avant la deadline » est couvert à l'unité, sur dates
+// gelées (`shouldMaterializeTemplate` dans utils.test.js) : aucune deadline effective ne
+// peut être garantie dans le futur ici, elle tombe toujours dans la semaine courante.
+const DEADLINE_FRANCHIE = '2026-01-05T00:00';   // 5 janvier 2026 = un lundi
+
 // Base minimale : le directeur, son profil staff, la saisie ouverte.
 function seed(extra = {}) {
     return makeDb({
-        settings:       [{ key: 'dispo', open: true, force_open: true }],
+        settings:       [{ key: 'dispo', open: true, force_open: true, custom_deadline: DEADLINE_FRANCHIE }],
         users:          [{ _id: MGR_USER, role: 'directeur', staff_id: MGR_STAFF, name: 'Dir Test' }],
         staff:          [{ _id: MGR_STAFF, name: 'Dir Test', venues: [], can_submit_dispos: true }],
         availabilities: [],
@@ -57,11 +70,24 @@ const usersOf  = db => db.collection('users')._docs;
 
 // ── Semaine-type : pré-remplissage en CRÉATION SEULE ──────────────────────────
 
-test('semaine-type : matérialise les jours du modèle en dispos `pending`', async () => {
+// LA règle du 2026-08-10 : enregistrer son modèle n'envoie RIEN. Auparavant, un
+// directeur qui sauvegardait sa semaine-type un lundi expédiait aussitôt 7 dispos dans
+// la file du patron — quatre jours avant la deadline.
+test('semaine-type : l\'enregistrer n\'envoie AUCUNE dispo', async () => {
     const db = seed();
     app.locals.setTestDb(db);
     const res = await putTemplate();
     assert.equal(res.status, 200);
+    assert.equal(disposOf(db).length, 0, 'rien ne part avant la deadline');
+    // Le modèle, lui, est bien mémorisé — c'est tout ce que fait la route.
+    assert.deepEqual(db.collection('manager_dispo_templates')._docs[0].days, TEMPLATE_DAYS);
+});
+
+test('semaine-type : matérialisée au déclenchement de la deadline, en `pending`', async () => {
+    const db = seed();
+    app.locals.setTestDb(db);
+    await putTemplate();
+    await runCron();
 
     const saved = disposOf(db);
     assert.deepEqual(saved.map(d => d.date).sort(), [dayOf(0), dayOf(2)]);
@@ -73,13 +99,16 @@ test('semaine-type : matérialise les jours du modèle en dispos `pending`', asy
 
 test('semaine-type : un jour ayant DÉJÀ une dispo n\'est jamais écrasé', async () => {
     // Le lundi porte une dispo déjà validée par le patron, avec d'autres horaires.
+    // C'est la moitié du nouveau modèle : la semaine-type est ce qui part À MA PLACE
+    // si je n'ai rien envoyé — une saisie de la semaine gagne toujours.
     const existing = {
         staff_id: MGR_STAFF, date: dayOf(0), type: 'custom',
         start_time: 20, end_time: 25, status: 'confirmed',
     };
     const db = seed({ availabilities: [existing] });
     app.locals.setTestDb(db);
-    assert.equal((await putTemplate()).status, 200);
+    await putTemplate();
+    await runCron();
 
     const saved = disposOf(db);
     assert.equal(saved.length, 2, 'le lundi n\'est pas dupliqué');
@@ -90,11 +119,27 @@ test('semaine-type : un jour ayant DÉJÀ une dispo n\'est jamais écrasé', asy
 });
 
 test('semaine-type : idempotente — deux passages ne créent rien de plus', async () => {
+    // Le vérificateur repasse tous les quarts d'heure du vendredi 13h au dimanche soir.
     const db = seed();
     app.locals.setTestDb(db);
     await putTemplate();
-    await putTemplate();
+    await runCron();
+    await runCron();
     assert.equal(disposOf(db).length, 2);
+});
+
+test('semaine-type : le marqueur borne à UN passage par semaine cible', async () => {
+    const db = seed();
+    app.locals.setTestDb(db);
+    await putTemplate();
+    await runCron();
+    assert.equal(db.collection('manager_dispo_templates')._docs[0].last_materialized_week, NEXT_MONDAY);
+
+    // Le directeur retire un jour après coup : le passage suivant ne doit pas le
+    // ressusciter. Sans le marqueur, la « création seule » le recréerait aussitôt.
+    db.collection('availabilities')._docs = disposOf(db).filter(d => d.date !== dayOf(2));
+    await runCron();
+    assert.deepEqual(disposOf(db).map(d => d.date), [dayOf(0)], 'le jour retiré reste retiré');
 });
 
 test('semaine-type : saute un jour couvert par une absence déclarée (E-19)', async () => {
@@ -102,7 +147,8 @@ test('semaine-type : saute un jour couvert par une absence déclarée (E-19)', a
         manager_time_off: [{ user_id: MGR_USER, start_date: dayOf(2), end_date: dayOf(2) }],
     });
     app.locals.setTestDb(db);
-    assert.equal((await putTemplate()).status, 200);
+    await putTemplate();
+    await runCron();
     assert.deepEqual(disposOf(db).map(d => d.date), [dayOf(0)]);
 });
 

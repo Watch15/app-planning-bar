@@ -5,13 +5,67 @@
 >
 > ⚠️ **Correction de trajectoire (2026-08-04)** — cf. §8.
 > ⚠️ **Décisions complémentaires (2026-08-05)** — cf. §9.
+> ⏱️ **La semaine-type part À la deadline (2026-08-10)** — cf. §10.
 >
 > 🧭 **Comment lire ce document.** Il est écrit par couches successives, la plus récente
-> en premier. **§8 et §9 font autorité** ; tout ce qui suit date du 2026-07-30 et décrit
+> en premier. **§8, §9 et §10 font autorité** ; tout ce qui suit date du 2026-07-30 et décrit
 > l'intention initiale, pas le code actuel. Les passages annulés sont marqués
 > ~~barrés~~ + « SUPERSÉDÉ » **à l'endroit où ils sont**, volontairement : les effacer
 > ferait disparaître la trace qu'une décision a été prise puis annulée — c'est justement
 > ce qu'on veut pouvoir relire dans six mois.
+
+
+## 10. La semaine-type part À la deadline, jamais avant (2026-08-10)
+
+**Demande** : « la semaine-type doit être envoyée juste au déclenchement de la deadline de
+la semaine, pas avant ».
+
+**Ce qui se passait.** `materializeAllManagerTemplates` tournait dans le cron **quotidien de
+10h**, et `PUT /api/me/manager-dispo-template` matérialisait en plus **immédiatement**. Avec
+une deadline vendredi 13h, les dispos de la directrice tombaient donc dans la file de
+validation dès le **lundi 10h** — quatre jours d'avance — et instantanément si elle
+enregistrait son modèle. Elles occupaient la file du patron avant que le staff ait fini
+d'envoyer les siennes.
+
+**Ce que ça change au modèle, et c'est le vrai sujet.** La semaine-type cesse d'être un
+*pré-remplissage* pour devenir **« ce qui est envoyé à ma place si je n'ai rien envoyé
+moi-même »** — un filet, pas un brouillon. La règle **création seule** de
+`buildTemplateDispos` portait déjà exactement cette sémantique : une saisie manuelle faite
+dans la semaine gagne, le modèle ne comble que les jours restés vides. Seul le **moment**
+était faux.
+
+**Décidé.**
+
+| | Avant | Après |
+|---|---|---|
+| `PUT` semaine-type | enregistre **et** matérialise | enregistre **seulement** |
+| Déclencheur | cron quotidien 10h | vérificateur **/15 min**, agit au franchissement de la deadline |
+| Portée | tous les jours, en avance | **une fois** par semaine cible (`last_materialized_week`) |
+| Vue directrice | jours déjà en `pending` | jours **« 🕓 prévu »**, non partis |
+
+**Pourquoi 15 minutes et pas le cron de 10h.** Une passe quotidienne aurait déclenché une
+deadline vendredi 13h le **samedi 10h** — 21 heures trop tard, après que le patron a
+construit son planning. Le vérificateur ne fait rien 99 % du temps :
+`shouldMaterializeTemplate` sort immédiatement tant que la deadline n'est pas franchie, et
+le marqueur l'empêche de repasser ensuite.
+
+**La contrepartie, explicitement demandée** : la directrice doit continuer de **voir ses
+jours prêts**, « comme pour les staff classiques ». `public/script.js` pré-remplit donc sa
+semaine suivante depuis le modèle, en **prévisionnel** (`🕓 prévu — envoi à la deadline`),
+sans qu'aucun document n'existe en base. Cliquer « Enregistrer » les envoie tout de suite :
+c'est une action explicite, exactement comme un staff qui envoie avant l'heure. La règle ne
+porte que sur l'envoi **automatique**.
+
+**Couverture.** 6 tests unitaires sur dates gelées (`shouldMaterializeTemplate`) + 6
+d'intégration qui pilotent le cron via `app.locals.runManagerTemplateCron` (poignée exposée
+sous la double garde du harnais — sans elle, tester la matérialisation demanderait
+d'attendre un vendredi 13h). Mutations vérifiées : retirer la garde de deadline, ne plus
+poser le marqueur, ou rematérialiser dans le `PUT` fait tomber un test chacun.
+
+⚠️ **Limite connue** : le cas « avant la deadline » n'est PAS retestable au niveau
+intégration — la deadline effective tombe toujours dans la semaine courante, donc aucune
+valeur ne la garantit dans le futur quel que soit le jour d'exécution. Il est couvert à
+l'unité, sur dates gelées.
 
 ## 9. Décisions complémentaires (2026-08-05)
 
@@ -70,7 +124,8 @@ choisit l'établissement et crée le shift). Conséquences :
 - plus aucun marqueur `source:'manager_dispo'` / `from_template` ni chemin parallèle ;
 - la semaine-type devient une **commodité de saisie** : elle pré-remplit en `pending` les
   jours **encore vides** de la semaine suivante (création seule), sans jamais écraser une
-  saisie manuelle ni une dispo déjà validée ;
+  saisie manuelle ni une dispo déjà validée. ⏱️ **Précisé le 2026-08-10 (cf. §10)** : ce
+  pré-remplissage a lieu **au déclenchement de la deadline**, plus jamais avant ;
 - l'**établissement** n'est plus choisi par le directeur : c'est le patron qui le pose en
   validant, comme pour un staff ;
 - **E-19 inchangé** (`manager_time_off` conservé, cf. §5.5) — les absences sont simplement
@@ -176,3 +231,4 @@ Compte tenu de « planifiable » + « comme les autres staff », la cible est le
   l'établissement et crée le shift.
 
 **Phase 2 (v2) — Semaine-type récurrente** (helper `buildTemplateDispos`, collection `manager_dispo_templates`). Livrée, puis recadrée en pré-remplissage — cf. §8.
+

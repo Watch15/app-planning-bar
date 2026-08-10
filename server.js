@@ -16,7 +16,7 @@ const {
     weekStart, currentWeekStart, disposWeekStart, isAutoPublished, isDatePublished, normalizePublishDoc, chargeMultiplier,
     toDateStr, datesOverlap, congeDaysInRange, splitDisposByConges, isFullRangeOnConge,
     validateOffPeriod, scopeManagerOff, resolvePerfSettings, pickStaffColor, buildTemplateDispos,
-    datesCoveredByPeriods, dispoDeadlineWaived,
+    datesCoveredByPeriods, dispoDeadlineWaived, shouldMaterializeTemplate,
 } = require('./lib/utils');
 
 // Sentry — initialisation conditionnelle (ne se charge que si SENTRY_DSN fourni).
@@ -645,13 +645,22 @@ function scheduleDailyAt10() {
         checkDispoRappels();
         cleanupOldJokers();
         cleanupPastDispos();
-        materializeAllManagerTemplates();
         setInterval(checkDispoRappels, 24 * 60 * 60 * 1000);
         setInterval(cleanupOldJokers, 24 * 60 * 60 * 1000);
         setInterval(cleanupPastDispos, 24 * 60 * 60 * 1000);
-        setInterval(materializeAllManagerTemplates, 24 * 60 * 60 * 1000);
     }, msUntil10);
     console.log('⏰ Rappels auto dispos programmés — prochain check 10h00');
+
+    // La semaine-type ne suit PAS le rythme quotidien : elle doit partir à l'instant où
+    // la deadline tombe (2026-08-10). Une passe à 10h manquerait une deadline vendredi
+    // 13h de 21 heures. D'où un vérificateur court, qui ne fait rien 99 % du temps —
+    // `shouldMaterializeTemplate` sort immédiatement tant que la deadline n'est pas
+    // franchie, et le marqueur `last_materialized_week` l'empêche de repasser ensuite.
+    // Coût : une lecture `settings` + une lecture `manager_dispo_templates` par quart
+    // d'heure, sur une collection qui contient un document par directeur.
+    materializeAllManagerTemplates();
+    setInterval(materializeAllManagerTemplates, 15 * 60 * 1000);
+    console.log('⏰ Semaine-type directeur : envoi au déclenchement de la deadline (vérif. /15 min)');
 }
 
 // ── Debounce notifications shift (évite le spam lors du drag/resize) ─────────
@@ -3736,16 +3745,33 @@ async function materializeManagerTemplateWeek(staffId, staffName, template, week
     return docs.length;
 }
 
-// Cron : matérialise chaque semaine-type directeur sur la semaine suivante.
+// Matérialise chaque semaine-type directeur sur la semaine suivante — mais SEULEMENT
+// une fois la deadline du cycle franchie (règle du 2026-08-10, cf.
+// `shouldMaterializeTemplate`). Appelé par un vérificateur toutes les 15 min, pas par le
+// cron de 10h : avec une deadline vendredi 13h, la passe quotidienne aurait déclenché
+// samedi 10h — 21 h trop tard, après que le patron a construit son planning.
+//
+// Un marqueur `last_materialized_week` sur le doc du modèle borne l'effet à UN passage
+// par semaine cible. Il est posé même quand 0 dispo est créée (tous les jours déjà pris) :
+// ce qui compte est que le rendez-vous de cette semaine a eu lieu.
 async function materializeAllManagerTemplates() {
     if (!db) return;
     try {
-        const nextMonday = toDateStr(weekStart(new Date(Date.now() + 7 * 864e5)));
+        const now        = new Date();
+        const settings   = await db.collection('settings').findOne({ key: 'dispo' }) || {};
+        const deadline   = computeEffectiveDeadline(settings.custom_deadline || null, now);
+        const nextMonday = toDateStr(weekStart(new Date(now.getTime() + 7 * 864e5)));
         const templates  = await db.collection('manager_dispo_templates').find({}).toArray();
         for (const t of templates) {
             if (!isValidObjectId(t.staff_id)) continue;
+            if (!shouldMaterializeTemplate(now, deadline, t.last_materialized_week, nextMonday)) continue;
             const name = await managerStaffName(t.staff_id, t.staff_name);
-            await materializeManagerTemplateWeek(t.staff_id, name, t, nextMonday);
+            const n = await materializeManagerTemplateWeek(t.staff_id, name, t, nextMonday);
+            await db.collection('manager_dispo_templates').updateOne(
+                { staff_id: t.staff_id },
+                { $set: { last_materialized_week: nextMonday } }
+            );
+            console.log('📋 Semaine-type matérialisée (' + name + ', ' + nextMonday + ') : ' + n + ' dispo(s)');
         }
     } catch (e) { console.error('❌ materializeAllManagerTemplates error:', e.message); }
 }
@@ -3759,7 +3785,12 @@ app.get('/api/me/manager-dispo-template', checkDB, requireDirecteur, async (req,
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-// PUT — enregistre la semaine-type + pré-remplit les jours vides de la semaine suivante.
+// PUT — enregistre la semaine-type. **N'écrit AUCUNE dispo** (changé le 2026-08-10) :
+// enregistrer son modèle un lundi envoyait jusqu'ici 7 dispos dans la file du patron
+// séance tenante, ce qui est exactement le « avant la deadline » qu'on veut supprimer.
+// Le modèle est désormais matérialisé au seul déclenchement de la deadline
+// (`materializeAllManagerTemplates`). La directrice continue de VOIR ses jours prêts :
+// `public/script.js` pré-remplit sa semaine suivante depuis ce modèle, en prévisionnel.
 // Pas d'établissement ici : comme pour un staff, c'est le patron qui le choisit en
 // validant la dispo (`PATCH /api/dispos/:id/confirm`).
 app.put('/api/me/manager-dispo-template', checkDB, requireDirecteur, async (req, res) => {
@@ -3781,10 +3812,7 @@ app.put('/api/me/manager-dispo-template', checkDB, requireDirecteur, async (req,
             { $set: { days, staff_name: req.session.user.name || '', updated_at: new Date() } },
             { upsert: true }
         );
-        const name       = await managerStaffName(staffId, req.session.user.name);
-        const nextMonday = toDateStr(weekStart(new Date(Date.now() + 7 * 864e5)));
-        const n = await materializeManagerTemplateWeek(staffId, name, { days }, nextMonday);
-        res.json({ message: 'Semaine-type enregistrée' + (n ? ' · ' + n + ' dispo(s) pré-remplie(s)' : '') });
+        res.json({ message: 'Semaine-type enregistrée · envoi automatique à la deadline' });
         touchLastUpdated();
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -5374,6 +5402,11 @@ if (require.main === module) {
 // routes avec données, sans Mongo. Inerte hors test (S-01 : même double garde).
 if (TEST_HARNESS) {
     app.locals.setTestDb = (testDb) => { db = testDb; };
+    // La matérialisation de la semaine-type n'est plus déclenchée par une route (elle
+    // part au moment de la deadline, cf. `shouldMaterializeTemplate`) : sans cette
+    // poignée, la seule façon de la tester serait d'attendre un vendredi 13h. Exposée
+    // sous la même double garde que `setTestDb` — inerte hors test.
+    app.locals.runManagerTemplateCron = materializeAllManagerTemplates;
 }
 
 module.exports = app;

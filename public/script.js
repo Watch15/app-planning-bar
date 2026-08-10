@@ -657,7 +657,14 @@ const _mgrInferType = (s, e) => {
     return 'custom';
 };
 // Libellé du statut d'une dispo côté directeur (le patron valide, cf. E-22).
-const _MGR_STATUS_LABEL = { pending: '⏳ en attente', confirmed: '✅ validée', rejected: '❌ refusée' };
+// `planned` n'est PAS un statut serveur : c'est un jour encore vide en base, affiché
+// depuis la semaine-type. Rien n'est parti — l'envoi a lieu à la deadline (2026-08-10).
+const _MGR_STATUS_LABEL = {
+    planned:   '🕓 prévu — envoi à la deadline',
+    pending:   '⏳ en attente',
+    confirmed: '✅ validée',
+    rejected:  '❌ refusée',
+};
 
 // Carte générique (jour daté OU jour de semaine) : boutons Soir/Midi/Long/Perso +
 // horaires libres (Perso). getSel/setSel branchent la carte sur son store ; re-clic
@@ -713,8 +720,10 @@ function openManagerDisposModal() {
     const dd = document.getElementById('user-menu-dropdown');
     if (dd) dd.classList.remove('open');
     modal.style.display = 'flex';
-    loadManagerTemplate();
-    loadManagerDispos();
+    // Séquentiel, pas parallèle : `loadManagerDispos` pré-remplit les jours vides depuis
+    // `_mgrTplSel`, que `loadManagerTemplate` est seul à peupler. Lancés ensemble, la
+    // course faisait apparaître une semaine vide une fois sur deux.
+    loadManagerTemplate().then(loadManagerDispos);
 }
 
 // ── Semaine-type (modèle récurrent) ──
@@ -770,7 +779,7 @@ async function saveManagerTemplate() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Erreur');
         if (fb) { fb.style.color = '#27ae60'; fb.textContent = '✅ ' + (data.message || 'Enregistré'); setTimeout(() => { if (fb) fb.textContent = ''; }, 2500); }
-        loadManagerDispos(); // le modèle a pu pré-remplir les jours vides de la semaine suivante
+        loadManagerDispos(); // rafraîchit l'aperçu « 🕓 prévu » de la semaine suivante
     } catch (e) {
         if (fb) { fb.style.color = '#c0392b'; fb.textContent = e.message || 'Erreur'; }
     } finally { btn.disabled = false; btn.textContent = prev; }
@@ -802,6 +811,20 @@ async function loadManagerDispos() {
             _mgrDispoSel[d.date] = { type: d.type || _mgrInferType(d.start_time, d.end_time), start_time: d.start_time, end_time: d.end_time };
             _mgrDispoStatus[d.date] = d.status || 'pending';
         });
+        // Jours encore vides en base : les montrer depuis la semaine-type, en PRÉVISIONNEL.
+        // Depuis le 2026-08-10 le modèle n'est matérialisé qu'au déclenchement de la
+        // deadline — sans ce pré-remplissage d'affichage, la directrice ouvrirait une
+        // semaine vide toute la semaine et croirait n'avoir rien d'enregistré.
+        // Même règle que le serveur (`buildTemplateDispos`) : CRÉATION SEULE, une saisie
+        // réelle n'est jamais recouverte. `_mgrTplSel` est keyé lundi=0 … dimanche=6.
+        for (let i = 0; i < 7; i++) {
+            const date = toDateStr(addDays(nextMonday, i));
+            if (_mgrDispoSel[date]) continue;
+            const cell = _mgrTplSel[i];
+            if (!cell || cell.start_time == null || cell.end_time == null) continue;
+            _mgrDispoSel[date]    = { type: cell.type || 'custom', start_time: cell.start_time, end_time: cell.end_time };
+            _mgrDispoStatus[date] = 'planned';
+        }
         renderManagerDisposDays();
     } catch (e) {
         wrap.innerHTML = '<div style="text-align:center;color:#e74c3c;font-size:13px;padding:12px 0">' + escapeHtml(e.message || 'Erreur de chargement') + '</div>';

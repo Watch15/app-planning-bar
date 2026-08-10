@@ -46,8 +46,12 @@ En contrepartie, chaque directeur peut maintenant :
 - **saisir ses propres disponibilités** (menu utilisateur → « Mes disponibilités ») ; vous
   les validez comme celles du reste de l'équipe, et **c'est vous qui choisissez
   l'établissement** au moment de valider ;
-- enregistrer une **semaine-type** qui pré-remplit automatiquement ses semaines à venir,
-  sans jamais écraser une saisie faite à la main ;
+- enregistrer une **semaine-type** — ses disponibilités habituelles. Elle n'est **pas
+  envoyée tout de suite** : elle part automatiquement **au moment de la deadline**, et
+  seulement sur les jours qu'elle n'a pas remplis elle-même d'ici là. Vous ne verrez donc
+  pas ses dispos arriver en début de semaine ; elles tombent dans votre file de validation
+  en même temps que celles de l'équipe. De son côté, elle voit ses jours marqués
+  « 🕓 prévu » pour savoir ce qui partira ;
 - déclarer ses absences, ce qui retire ses disponibilités sur la période (jamais les
   créneaux que vous avez déjà planifiés).
 

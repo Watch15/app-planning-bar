@@ -85,7 +85,7 @@ app-planning-bar/
 │   └── vendor/                 ← Libs tierces auto-hébergées (jspdf, html2canvas, xlsx)
 │
 ├── scripts/                   ← Outils CLI (init-db, seed, create-patron)
-├── tests/                     ← node --test, sans framework (236 tests, 11 fichiers + helpers/)
+├── tests/                     ← node --test, sans framework (243 tests, 11 fichiers + helpers/)
 ├── docs/                      ← prd, architecture, backlog, ux-design, CE fichier
 └── .github/workflows/ci.yml   ← CI Node 20 + 22
 ```
@@ -326,10 +326,10 @@ call sites serveur inchangés. C'est le **gabarit** de toute future extraction i
 ## 12. Tests & CI
 
 - **Runner** : `node --test` intégré, **zéro framework**.
-- **236 tests, 11 fichiers** dans `tests/` (état 2026-08-10) : **123 unitaires purs**
-  (`utils` 75, `shift-hours` 12, `week` 15, `auth-guard` 21 — aucun Express, aucune base) et
-  **113 d'intégration HTTP** (`routes` 4, `dispos` 15, `conges` 12, `manager-off` 14,
-  `manager-dispos` 23, `perf-settings` 11, `estab-access` 33).
+- **243 tests, 11 fichiers** dans `tests/` (état 2026-08-10) : **128 unitaires purs**
+  (`utils` 80, `shift-hours` 12, `week` 15, `auth-guard` 21 — aucun Express, aucune base) et
+  **115 d'intégration HTTP** (`routes` 4, `dispos` 15, `conges` 12, `manager-off` 14,
+  `manager-dispos` 25, `perf-settings` 11, `estab-access` 33).
 - **Lancer** : `npm test` (liste **explicite** des fichiers — ⚠️ ne jamais repasser en
   mode répertoire `node --test tests/`, instable selon la version Node).
 - **App testable** : `server.js` n'appelle `listen()`/`connectDB()` que sous
