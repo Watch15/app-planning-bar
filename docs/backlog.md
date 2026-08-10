@@ -1120,6 +1120,16 @@ peut pas montrer localement qu'il a disparu ; on montre que sa cause a été ret
 `smoke.js` (une instance périmée deviendrait impossible à confondre avec une instance à
 jour) ; publier les échecs de tests en annotations GitHub, lisibles sans droits admin.
 
+✅ **Dénouement le 2026-08-10.** CI verte sur `dev` puis `main` en `48bd333` — **premier vert
+depuis le 7 août**, et la seule preuve possible, le défaut n'étant pas reproductible en local.
+Railway a déployé dans la foulée (`SUCCESS 48bd3335`), instance vérifiée : `uptime` 9 s,
+`/lib/auth-guard.js` en 200, textes de la semaine-type et `?expired` présents.
+`smoke:main` : **22 OK · 0 échec · 7 sautés** — les 7 sont le préflight qui signale que la
+base `templyo_main` a été semée une autre semaine (seul `templyo_dev` avait été réaligné).
+**Étage 2 franchi.** Le lot complet — R-17, A-14, correctifs du harnais smoke, semaine-type
+à la deadline, et ce correctif CI — est en production. Reste l'étage 3 (client), qui exige
+un accord explicite.
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique. 🔄 **Rafraîchi le 2026-08-10** (1180 nœuds, 1897 arêtes, 68 communautés) — il datait de `c72affe`, 7 commits de retard : la consigne « après chaque session » n'a **pas** été tenue sur les sessions des 06→08/08. Ancien graphe dans `graphify-out/2026-08-10/`.
