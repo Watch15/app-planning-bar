@@ -203,6 +203,18 @@ app.use(express.static('public', {
 const client = new MongoClient(process.env.MONGO_URI);
 let db;
 
+// F-13 — « fait partie de l'équipe AUJOURD'HUI ». Un staff archivé sort de la vie
+// courante (barre du planning, rappels, dispos, KPI, nouveaux shifts) sans que rien
+// de son passé ne bouge : ses shifts, son pointage, son récap et sa masse salariale
+// restent tels quels. C'est la différence avec `DELETE /api/staff/:id`, qui détruit
+// l'historique de paie — et qui était jusqu'ici la SEULE sortie offerte au patron.
+//
+// Un seul objet, étalé dans chacune des requêtes concernées, plutôt que six copies
+// littérales de `archived: { $ne: true }` : R-06 traîne déjà quatre copies d'une
+// même règle, et c'est toujours la cinquième qu'on oublie de mettre à jour.
+// `$ne: true` et non `false` : les profils créés avant F-13 n'ont pas le champ.
+const NOT_ARCHIVED = Object.freeze({ archived: { $ne: true } });
+
 async function connectDB() {
     try {
         await client.connect();
@@ -556,7 +568,7 @@ async function checkDispoRappels() {
                 await db.collection('settings').updateOne({ key: 'dispo' }, { $set: { notif_sent_open_week: weekStart } });
                 console.log('⏭️  Notif ouverture skip : dispos déjà existantes pour', weekStart, '(', existingDispos, 'enregistrées)');
             } else {
-                const allStaff = await db.collection('staff').find({ can_submit_dispos: true }).toArray();
+                const allStaff = await db.collection('staff').find({ can_submit_dispos: true, ...NOT_ARCHIVED }).toArray();
                 const ids = allStaff.map(s => String(s._id));
                 await sendPushToStaff(ids, {
                     title:   'Templyo — Dispos ouvertes',
@@ -572,7 +584,7 @@ async function checkDispoRappels() {
 
         // ── Trigger 2 : J-2 ─────────────────────────────────────────────────
         if (todayStr === j2Str && !alreadySentToday('notif_sent_j2')) {
-            const allStaff = await db.collection('staff').find({ can_submit_dispos: true }).toArray();
+            const allStaff = await db.collection('staff').find({ can_submit_dispos: true, ...NOT_ARCHIVED }).toArray();
             const targets  = await getTargetsWithoutDispo(allStaff);
             const msg      = '⚠️ Plus que 2 jours pour envoyer tes disponibilités !';
             if (targets.length > 0) {
@@ -587,7 +599,7 @@ async function checkDispoRappels() {
 
         // ── Trigger 3 : J-1 ─────────────────────────────────────────────────
         if (todayStr === j1Str && !alreadySentToday('notif_sent_j1')) {
-            const allStaff = await db.collection('staff').find({ can_submit_dispos: true }).toArray();
+            const allStaff = await db.collection('staff').find({ can_submit_dispos: true, ...NOT_ARCHIVED }).toArray();
             const targets  = await getTargetsWithoutDispo(allStaff);
             const msg      = '🔴 Dernier jour ! Envoie tes disponibilités avant ' + deadlineTime;
             if (targets.length > 0) {
@@ -1050,6 +1062,25 @@ app.post('/auth/login', checkDB, async (req, res) => {
 
         const match = await bcrypt.compare(password, authUser.password_hash);
         if (!match) return res.status(401).json({ error: errMsg });
+
+        // F-13 — un profil archivé ferme l'accès. Contrôlé APRÈS le mot de passe pour ne
+        // pas révéler à un inconnu quels comptes existent.
+        //
+        // La source de vérité est le profil `staff`, pas un second booléen sur `users` :
+        // `users.active` ressemble à un drapeau de désactivation mais signifie « invitation
+        // en attente » (posé à false à la création, passé à true quand la personne choisit
+        // son mot de passe). Le détourner aurait remis les comptes archivés dans le
+        // parcours d'invitation. Aucun autre drapeau ne barrait la connexion jusqu'ici :
+        // avant F-13, couper un accès imposait de supprimer le compte.
+        // `authUser` d'abord : sur un couple de comptes jumeaux (téléphone + e-mail liés au
+        // même profil), c'est lui qui porte le mot de passe, donc l'identité authentifiée.
+        const loginStaffId = String(authUser.staff_id || user.staff_id || '');
+        if (loginStaffId && isValidObjectId(loginStaffId)) {
+            const prof = await db.collection('staff').findOne(
+                { _id: new ObjectId(loginStaffId) }, { projection: { archived: 1 } });
+            if (prof && prof.archived === true)
+                return res.status(403).json({ error: 'Ce compte a été désactivé. Contacte ton responsable.' });
+        }
 
         // Session : données du compte trouvé par l'identifiant soumis,
         // complétées par le compte jumeau si certains champs manquent
@@ -1901,6 +1932,11 @@ app.get('/api/staff', checkDB, requireAuth, async (req, res) => {
         // Staff / établissement : ne JAMAIS exposer la rémunération ni les
         // coordonnées personnelles des collègues. On ne renvoie que ce qui est
         // nécessaire à l'affichage du planning (nom, couleur, surnom, etc.).
+        //
+        // F-13 — les archivés sont TOUJOURS renvoyés, avec leur drapeau. Les filtrer ici
+        // ferait disparaître leur nom des plannings passés, du pointage et des récaps
+        // déjà édités — exactement l'historique que l'archivage est censé préserver.
+        // C'est à l'affichage de les écarter de la barre du personnel, pas à l'API.
         res.json(staff.map(s => ({
             _id:      s._id,
             name:     s.name,
@@ -1911,6 +1947,7 @@ app.get('/api/staff', checkDB, requireAuth, async (req, res) => {
             roles:    s.roles  || [],
             groups:   s.groups || [],
             rest_days: s.rest_days || [],
+            archived: s.archived === true,
         })));
     }
     catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
@@ -2029,6 +2066,50 @@ app.patch('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
         }
         res.json({ message: 'Staff mis à jour', updated: update });
         touchLastUpdated();
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+// F-13 — Archiver : la sortie NON destructive. Demandée le 2026-08-05, sens confirmé le
+// 2026-08-11 (« en gardant leurs heures »). Jusqu'ici la seule façon de sortir quelqu'un
+// était le DELETE ci-dessous, qui efface ses shifts — donc son historique de paie. Un
+// patron qui veut simplement dire « elle ne travaille plus ici » n'avait pas d'outil.
+//
+// Ce que ça change : la personne quitte la barre du planning, les rappels, la file de
+// dispos, les KPI, et ne peut plus se connecter. Ce que ça ne change PAS : ses shifts
+// passés, son pointage, les récaps mensuels déjà édités et la masse salariale historique.
+// Réversible : réactiver rend tout, le profil n'ayant jamais été touché.
+//
+// Ses shifts FUTURS déjà placés sont laissés en place (décision du 2026-08-11) : archiver
+// quelqu'un ne doit jamais trouer un planning déjà annoncé à l'équipe. Le compteur renvoyé
+// (`upcoming_shifts`) est là pour que le patron sache ce qu'il lui reste à retirer.
+app.patch('/api/staff/:id/archive', checkDB, requirePatron, async (req, res) => {
+    if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
+    if (typeof req.body.archived !== 'boolean')
+        return res.status(400).json({ error: 'archived (booléen) requis' });
+    const archived = req.body.archived;
+    const staffId  = req.params.id;
+    try {
+        const update = archived
+            ? { $set: { archived: true, archived_at: new Date() } }
+            : { $unset: { archived: '', archived_at: '' } };
+        const r = await db.collection('staff').updateOne({ _id: new ObjectId(staffId) }, update);
+        if (r.matchedCount === 0) return res.status(404).json({ error: 'Staff introuvable' });
+
+        // La coupure d'accès passe par les sessions ET par le login (cf. /auth/login, qui
+        // relit le profil). Sans la suppression des sessions, la personne archivée garderait
+        // son accès jusqu'à 30 jours — c'est exactement le trou que R-17 a rebouché.
+        // Réactiver ne recrée pas de session : elle se reconnecte, c'est le comportement sain.
+        const linked = await db.collection('users').find({ staff_id: staffId }).toArray();
+        await Promise.all(linked.map(u => invalidateUserSessions(u._id)));
+
+        const upcoming = archived
+            ? await db.collection('shifts').countDocuments({ staff_id: staffId, date: { $gte: toDateStr(new Date()) } })
+            : 0;
+        res.json({
+            message:  archived ? 'Staff archivé' : 'Staff réactivé',
+            archived,
+            upcoming_shifts: upcoming,
+        });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
@@ -2351,6 +2432,16 @@ app.post('/api/shifts', checkDB, requirePatron, denyObservateurEdit, async (req,
         return res.status(403).json({ error: 'Accès refusé à cet établissement' });
     try {
         const warnings = [];
+        // F-13 — on refuse de planifier quelqu'un d'archivé. Le front ne le propose plus,
+        // mais la barre du personnel peut dater d'avant l'archivage dans un onglet resté
+        // ouvert : sans ce contrôle, le patron reconstruirait sans le voir un planning
+        // autour d'une personne partie. Le passé, lui, n'est jamais touché.
+        if (!is_joker && staff_id !== '__joker__' && isValidObjectId(staff_id)) {
+            const prof = await db.collection('staff').findOne(
+                { _id: new ObjectId(staff_id) }, { projection: { archived: 1, name: 1 } });
+            if (prof && prof.archived === true)
+                return res.status(409).json({ error: (prof.name || 'Cette personne') + ' est archivée — réactive-la pour la planifier.' });
+        }
         // Pas de détection de conflit pour les Jokers (staff non désigné)
         if (!is_joker && staff_id !== '__joker__') {
             const conflicts = await db.collection('shifts').find({
@@ -3228,6 +3319,7 @@ app.get('/api/dispos/sans-dispo', checkDB, requirePatron, async (req, res) => {
         const staffQuery = {
             _id: { $in: validActiveIds.map(id => new ObjectId(id)) },
             can_submit_dispos: true,
+            ...NOT_ARCHIVED,
         };
         if (establishment_id) staffQuery.venues = establishment_id;
 
@@ -3363,7 +3455,7 @@ app.get('/api/dispos/kpi', checkDB, requireAuth, async (req, res) => {
         const activeIds = [...new Set(activeUsers.map(u => u.staff_id).filter(id => id && isValidObjectId(id)))];
         const eligible = activeIds.length
             ? await db.collection('staff').find(
-                { _id: { $in: activeIds.map(id => new ObjectId(id)) }, can_submit_dispos: { $ne: false } },
+                { _id: { $in: activeIds.map(id => new ObjectId(id)) }, can_submit_dispos: { $ne: false }, ...NOT_ARCHIVED },
                 { projection: { venues: 1, name: 1, color: 1 } }
             ).toArray()
             : [];
@@ -4437,7 +4529,7 @@ app.post('/api/dispos/rappel', checkDB, requirePatron, denyObservateurEdit, asyn
         const deadlineStr = deadline.getDate() + '/' + (deadline.getMonth() + 1) + '/' + deadline.getFullYear();
         const msgText = (message && message.trim()) || ('⏰ N\'oublie pas d\'envoyer tes disponibilités avant le ' + deadlineStr);
 
-        const allStaffDocs = await db.collection('staff').find({ can_submit_dispos: true }).toArray();
+        const allStaffDocs = await db.collection('staff').find({ can_submit_dispos: true, ...NOT_ARCHIVED }).toArray();
         const allStaffIds  = allStaffDocs.map(s => String(s._id));
 
         const existing = await db.collection('availabilities').find({

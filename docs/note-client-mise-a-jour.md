@@ -80,6 +80,27 @@ enregistré est conservé.
 Une reconnexion reste nécessaire **une fois après cette mise à jour** pour vos directeurs —
 nous vous le rappellerons le jour J.
 
+## 6. Retirer quelqu'un de l'équipe sans perdre ses heures
+
+Nouveau bouton **« Archiver »** sur chaque membre du personnel, à côté de la suppression.
+
+Archiver une personne, c'est dire « elle ne travaille plus ici » :
+
+- elle **disparaît de la barre du personnel**, des rappels de disponibilités et de la file
+  de validation — vous ne la voyez plus quand vous construisez vos plannings ;
+- elle **ne peut plus se connecter** ;
+- **ses heures, son pointage, ses récapitulatifs et sa masse salariale des mois passés
+  restent intacts.** Vos anciens plannings et vos comptes ne bougent pas d'un centime.
+
+C'est **réversible** : un clic sur « Réactiver » et la personne revient comme avant.
+
+⚠️ **Ses créneaux déjà placés dans les semaines à venir ne sont PAS retirés** — archiver
+quelqu'un ne doit jamais trouer un planning que votre équipe a déjà reçu. L'application
+vous dit combien il en reste ; à vous de les réattribuer.
+
+👉 **Préférez « Archiver » à la suppression.** Supprimer efface les shifts de la personne,
+donc son historique de paie. C'était jusqu'ici la seule sortie possible.
+
 ---
 
 ## Ce qui ne change pas

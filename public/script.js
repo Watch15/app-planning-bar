@@ -1373,8 +1373,12 @@ function renderSidebar() {
     // Construire les filtres rôles si pas encore fait
     buildRoleFilters();
 
+    // F-13 — les archivés quittent la barre du personnel : c'est là que se construisent
+    // les NOUVEAUX plannings, et quelqu'un qui ne travaille plus ici n'a rien à y faire.
+    // Ils restent partout où l'on regarde le passé (récap, pointage, plannings publiés),
+    // parce que `allStaff` les contient toujours — l'API ne les filtre volontairement pas.
     // Trier : staff affecté à l'établissement courant en premier, puis alphabétique
-    let sorted = [...allStaff].sort((a, b) => {
+    let sorted = allStaff.filter(s => !s.archived).sort((a, b) => {
         const aHas = a.venues && a.venues.includes(currentVenueId) ? 0 : 1;
         const bHas = b.venues && b.venues.includes(currentVenueId) ? 0 : 1;
         if (aHas !== bHas) return aHas - bHas;
@@ -7695,6 +7699,8 @@ function populateStaffManageFilters() {
     }
 }
 
+let _showArchivedStaff = false; // F-13 — préférence d'affichage, volontairement non persistée
+
 function renderStaffManageList() {
     const list = document.getElementById('staff-manage-list');
     list.innerHTML = '';
@@ -7729,12 +7735,31 @@ function renderStaffManageList() {
         return true;
     });
 
-    if (filtered.length === 0) {
-        list.innerHTML = '<p style="text-align:center;color:#ccc;font-size:13px;padding:16px 0">Aucun membre ne correspond à la recherche</p>';
+    // F-13 — les archivés sont masqués par défaut : le but de l'archivage est justement
+    // de désencombrer. Mais ils restent atteignables d'un clic, sinon on ne pourrait plus
+    // réactiver quelqu'un, et l'archivage deviendrait le sens unique que la suppression
+    // était déjà. Le compteur les rend visibles sans les afficher.
+    const archivedCount = filtered.filter(s => s.archived).length;
+    const shown = _showArchivedStaff ? filtered : filtered.filter(s => !s.archived);
+
+    if (archivedCount > 0) {
+        const bar = document.createElement('label');
+        bar.style.cssText = 'display:flex;align-items:center;gap:6px;font-size:11px;color:#888;padding:6px 2px;cursor:pointer';
+        bar.innerHTML = '<input type="checkbox" class="staff-show-archived"' + (_showArchivedStaff ? ' checked' : '') + '>' +
+            'Afficher les ' + archivedCount + ' membre' + (archivedCount > 1 ? 's' : '') + ' archivé' + (archivedCount > 1 ? 's' : '');
+        bar.querySelector('.staff-show-archived').addEventListener('change', e => {
+            _showArchivedStaff = e.target.checked;
+            renderStaffManageList();
+        });
+        list.appendChild(bar);
+    }
+
+    if (shown.length === 0) {
+        list.insertAdjacentHTML('beforeend', '<p style="text-align:center;color:#ccc;font-size:13px;padding:16px 0">Aucun membre ne correspond à la recherche</p>');
         return;
     }
 
-    filtered.forEach(staff => {
+    shown.forEach(staff => {
         const row = document.createElement('div');
         row.className = 'staff-manage-row';
 
@@ -7838,7 +7863,17 @@ function renderStaffManageList() {
                 '</div>' +
             '</div>' +
             '<button class="staff-manage-save">Enregistrer</button>' +
+            '<button class="staff-manage-archive" title="' +
+                (staff.archived ? 'Réactiver — la personne revient dans les plannings' : 'Archiver — la personne sort des plannings, son historique reste') +
+                '" style="background:none;border:1px solid #e0e0e0;border-radius:4px;padding:2px 8px;font-size:11px;color:#888;cursor:pointer">' +
+                (staff.archived ? 'Réactiver' : 'Archiver') + '</button>' +
             '<button class="staff-manage-delete" title="Supprimer">×</button>';
+
+        // F-13 — l'archivé reste lisible mais visiblement hors service.
+        if (staff.archived) {
+            row.style.opacity = '0.55';
+            row.style.background = '#fafafa';
+        }
 
         // Reset name_color
         const resetNameColor = row.querySelector('.staff-name-color-reset');
@@ -7967,9 +8002,46 @@ function renderStaffManageList() {
             } catch (e) { showToast(e.message || 'Erreur', true); }
         });
 
+        // Archiver / réactiver (F-13)
+        row.querySelector('.staff-manage-archive').addEventListener('click', () => {
+            const next = !staff.archived;
+            const question = next
+                ? 'Archiver <strong>' + escapeHtml(staff.name) + '</strong> ?<br><br>'
+                    + 'Elle sort des plannings à venir, des rappels et de la file des dispos, et ne pourra plus se connecter.<br>'
+                    + '<strong>Ses heures, son pointage et ses récaps passés sont conservés.</strong> C\'est réversible.'
+                : 'Réactiver <strong>' + escapeHtml(staff.name) + '</strong> ? Elle réapparaît dans les plannings et pourra se reconnecter.';
+            showConfirm(question, async () => {
+                try {
+                    const res = await fetch('/api/staff/' + staff._id + '/archive', {
+                        method:      'PATCH',
+                        headers:     { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body:        JSON.stringify({ archived: next }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error);
+                    staff.archived = next;
+                    const inAll = allStaff.find(s => s._id === staff._id);
+                    if (inAll) inAll.archived = next;
+
+                    renderSidebar();
+                    renderStaffManageList();
+                    // Ses créneaux à venir restent en place (décision du 2026-08-11) — mais on
+                    // le DIT, sinon le patron les retrouve plus tard et croit à un bug.
+                    if (next && data.upcoming_shifts > 0) {
+                        showToast(staff.name + ' archivé · ' + data.upcoming_shifts + ' créneau'
+                            + (data.upcoming_shifts > 1 ? 'x' : '') + ' à venir laissé en place');
+                    } else {
+                        showToast(staff.name + (next ? ' archivé' : ' réactivé'));
+                    }
+                } catch (e) { showToast(e.message || 'Erreur', true); }
+            });
+        });
+
         // Supprimer
         row.querySelector('.staff-manage-delete').addEventListener('click', () => {
-            showConfirm('Supprimer <strong>' + staff.name + '</strong> ? Tous ses shifts seront supprimés.', async () => {
+            showConfirm('Supprimer <strong>' + staff.name + '</strong> ? Tous ses shifts seront supprimés.'
+                + '<br><br>Pour retirer une personne de l\'équipe <strong>en gardant ses heures</strong>, utilise plutôt « Archiver ».', async () => {
                 try {
                     const res = await fetch('/api/staff/' + staff._id, { method: 'DELETE', credentials: 'include' });
                     if (!res.ok) throw new Error((await res.json()).error);

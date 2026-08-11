@@ -44,6 +44,11 @@ function matchField(val, cond) {
                 case '$in':  return Array.isArray(v) && v.some(y => contains(val, y));
                 case '$nin': return Array.isArray(v) && !v.some(x => eq(val, x));
                 case '$exists': return (val !== undefined) === !!v;
+                // `fetchPublishedWeeks` interroge les settings par préfixe (`^publish_`).
+                // Sans cet opérateur, toute route qui vérifie « cette semaine est-elle
+                // publiée ? » lançait ici — l'erreur était avalée par le `catch` de la
+                // notification asynchrone, donc invisible sauf à lire la sortie du runner.
+                case '$regex': return typeof val === 'string' && new RegExp(v).test(val);
                 default:     throw new Error('fake-db: opérateur non supporté ' + op);
             }
         });
@@ -148,6 +153,10 @@ function makeCollection(initialDocs) {
             const idx = docs.findIndex(d => matchDoc(d, query));
             if (idx >= 0) {
                 if (update.$set)  Object.assign(docs[idx], update.$set);
+                // `$unset` RETIRE le champ ; le passer à `false` ou `undefined` ne serait pas
+                // la même chose : `{ archived: { $ne: true } }` matche un champ absent, et un
+                // test de désarchivage (F-13) passerait alors que le drapeau serait resté.
+                if (update.$unset) for (const k of Object.keys(update.$unset)) delete docs[idx][k];
                 if (update.$pull) for (const [k, v] of Object.entries(update.$pull))
                     if (Array.isArray(docs[idx][k])) docs[idx][k] = docs[idx][k].filter(x => !eq(x, v));
                 return { matchedCount: 1, modifiedCount: 1, upsertedCount: 0 };
