@@ -18,6 +18,12 @@
 const BASE = (process.argv[2] || process.env.SMOKE_URL || 'http://localhost:3000').replace(/\/+$/, '');
 const PWD  = process.env.SEED_PASSWORD || 'Templyo2026!';
 
+// Référence git que l'instance visée est CENSÉE porter (`--expect origin/main`).
+// Sans elle, un smoke vert ne dit pas sur quel code il est vert — c'est ainsi que la
+// production a tourné deux jours sur un build périmé en passant tous les contrôles.
+const expectIdx = process.argv.indexOf('--expect');
+const EXPECT_REF = expectIdx > -1 ? process.argv[expectIdx + 1] : (process.env.SMOKE_EXPECT || null);
+
 const { weekStart, toDateStr } = require('../lib/utils');
 const nextMon = weekStart(new Date(Date.now() + 7 * 864e5));
 // Mercredi de la semaine COURANTE : le seed y place le shift d'Alice avec
@@ -93,6 +99,54 @@ async function preflight() {
     }
 }
 
+// Le smoke tourne AVANT tout le reste et peut tout arrêter : si l'instance ne porte pas
+// le code attendu, les 29 vérifications qui suivent répondent sur autre chose que ce
+// qu'on croit tester. Un ✗ franc vaut mieux que 29 ✓ trompeurs.
+//
+// Il ARRÊTE seulement quand la comparaison est possible et négative. Pas de `--expect`,
+// pas de git sous la main, référence inconnue : on informe et on continue — refuser de
+// tourner faute d'outillage rendrait le script inutilisable là où il sert le plus.
+function verifyDeployedCommit(health) {
+    const deployed = health && health.commit;
+    if (!deployed) {
+        console.log('ℹ️  L\'instance n\'annonce pas son commit (build antérieur au 2026-08-11).\n');
+        return true;
+    }
+    const shortDep = deployed.slice(0, 8);
+    if (!EXPECT_REF) {
+        console.log('ℹ️  commit déployé : ' + shortDep + ' (aucune référence attendue — passe `--expect origin/main`)\n');
+        return true;
+    }
+    let expected;
+    try {
+        expected = require('child_process')
+            .execSync('git rev-parse ' + EXPECT_REF, { cwd: __dirname + '/..', stdio: ['ignore', 'pipe', 'ignore'] })
+            .toString().trim();
+    } catch {
+        console.log('ℹ️  commit déployé : ' + shortDep + ' — référence « ' + EXPECT_REF + ' » introuvable en local, comparaison sautée.\n');
+        return true;
+    }
+    if (expected === deployed) {
+        console.log('✓ commit déployé : ' + shortDep + ' = ' + EXPECT_REF + '\n');
+        return true;
+    }
+    console.error('❌ L\'INSTANCE NE PORTE PAS LE CODE ATTENDU — arrêt avant toute vérification.');
+    console.error('   déployé : ' + shortDep + subjectOf(deployed));
+    console.error('   attendu : ' + expected.slice(0, 8) + subjectOf(expected) + '  (' + EXPECT_REF + ')');
+    console.error('   Un smoke vert sur un ancien build ne prouve rien. Vérifie la CI et le déploiement.\n');
+    return false;
+}
+
+// Sujet du commit s'il est connu du dépôt local — sinon rien, ce n'est qu'un confort.
+function subjectOf(sha) {
+    try {
+        const s = require('child_process')
+            .execSync('git log -1 --format=%s ' + sha, { cwd: __dirname + '/..', stdio: ['ignore', 'pipe', 'ignore'] })
+            .toString().trim();
+        return s ? '  « ' + s + ' »' : '';
+    } catch { return '  (inconnu de ce dépôt)'; }
+}
+
 async function main() {
     console.log('\n🎯 cible : ' + BASE + '\n');
 
@@ -101,6 +155,7 @@ async function main() {
         console.error('❌ /health ne répond pas (' + health.status + ') — le serveur tourne ?');
         process.exit(1);
     }
+    if (!verifyDeployedCommit(health.data)) process.exit(1);
 
     // 4 connexions par passage, contre une limite de 10 tentatives / 15 min / IP :
     // au 3e lancement rapproché, on tombe en 429. Diagnostiquer précisément, sinon on

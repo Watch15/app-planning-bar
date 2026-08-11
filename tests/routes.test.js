@@ -46,3 +46,25 @@ test('query param scalaire normal → traverse le middleware anti-injection', as
     const res = await fetch(baseUrl() + '/api/establishments?from=2020-01-01');
     assert.equal(res.status, 503);
 });
+
+// ── /health annonce le commit déployé ────────────────────────────────────────
+//
+// Ajouté le 2026-08-11. Du 07 au 10 août, la production a tourné sur un build vieux de
+// deux jours : la CI était rouge, Railway refusait de déployer, et le smoke passait au
+// vert — sur l'ancien code. Personne n'a rien vu parce que rien ne reliait l'instance
+// qui répond au commit qu'elle est censée porter. `smoke.js --expect <ref>` s'arrête
+// désormais là-dessus, ce qui n'a de sens que si le champ existe vraiment.
+test('GET /health expose le commit déployé', async () => {
+    const res  = await fetch(baseUrl() + '/health');
+    const body = await res.json();
+    // Sans Mongo le healthcheck rend 503 : c'est le CORPS qui nous intéresse ici.
+    assert.ok('commit' in body, 'le champ doit exister, même vide — smoke.js le lit');
+    // Sous test, il est résolu depuis .git ; sur Railway, depuis RAILWAY_GIT_COMMIT_SHA.
+    if (body.commit !== null) assert.match(body.commit, /^[0-9a-f]{40}$/);
+});
+
+test('GET /health ne divulgue rien d\'autre', async () => {
+    const body = await (await fetch(baseUrl() + '/health')).json();
+    assert.deepEqual(Object.keys(body).sort(), ['commit', 'db', 'ok', 'uptime'],
+        'un healthcheck public ne doit pas devenir une fenêtre sur la configuration');
+});

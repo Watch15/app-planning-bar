@@ -5467,9 +5467,34 @@ app.get('/', (req, res) => {
     res.redirect('/index.html');
 });
 
+// Commit réellement embarqué par CETTE instance, résolu une seule fois au démarrage.
+//
+// Il existe parce que du 2026-08-07 au 2026-08-10 la production a tourné sur un build
+// vieux de deux jours sans que rien ne le signale : la CI était rouge, Railway refusait
+// de déployer, et le smoke passait au vert — sur l'ancien code. Un smoke vert ne prouve
+// rien tant qu'on ignore CE QU'IL a testé.
+//
+// `RAILWAY_GIT_COMMIT_SHA` est posé par la plateforme. En local il n'existe pas, d'où la
+// lecture de `.git` : c'est du confort de développement, pas la source de vérité.
+const DEPLOYED_COMMIT = (() => {
+    const fromEnv = process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT || process.env.SOURCE_COMMIT;
+    if (fromEnv) return String(fromEnv).slice(0, 40);
+    try {
+        const fs = require('fs'), path = require('path');
+        const head = fs.readFileSync(path.join(__dirname, '.git', 'HEAD'), 'utf8').trim();
+        if (head.startsWith('ref: ')) {
+            const ref = head.slice(5).trim();
+            return fs.readFileSync(path.join(__dirname, '.git', ref), 'utf8').trim();
+        }
+        return head; // HEAD détaché
+    } catch { return null; }
+})();
+
 // ── Healthcheck ──────────────────────────────────────────────────────────────
 // Public — utilisé par Railway (liveness) et monitoring externe.
-// Ne révèle aucune info sensible : état base + uptime.
+// Ne révèle aucune info sensible : état base + uptime + commit déployé.
+// Le hash de commit n'est pas un secret : le dépôt est privé, et connaître le hash ne
+// donne accès à rien. Ce qu'il donne, c'est la capacité de vérifier ce qui tourne.
 app.get('/health', async (req, res) => {
     let dbOk = false;
     try {
@@ -5479,6 +5504,7 @@ app.get('/health', async (req, res) => {
         ok:     dbOk,
         db:     dbOk,
         uptime: Math.round(process.uptime()),
+        commit: DEPLOYED_COMMIT,
     });
 });
 

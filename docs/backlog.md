@@ -1125,9 +1125,24 @@ peut pas montrer localement qu'il a disparu ; on montre que sa cause a été ret
   aurait tourné en vert sur un build vieux de 2 jours sans que rien ne le signale — cf. la
   piste ci-dessous.
 
-**Pistes non faites** : exposer le commit déployé sur `/health` et le faire vérifier par
-`smoke.js` (une instance périmée deviendrait impossible à confondre avec une instance à
-jour) ; publier les échecs de tests en annotations GitHub, lisibles sans droits admin.
+✅ **Fait le 2026-08-11 — côté code.** `/health` renvoie `commit`, et `smoke.js --expect <ref>`
+compare au `git rev-parse` local : si l'instance ne porte pas le code attendu, il **s'arrête
+avant la première vérification** plutôt que de rendre 29 ✓ portant sur autre chose.
+`smoke:dev` et `smoke:main` passent la référence correspondante. Trois branches éprouvées
+contre un faux `/health` : commit inattendu → arrêt (code 1) ; commit attendu → poursuite ;
+instance antérieure au 2026-08-11 (pas de champ) → poursuite avec un message.
+
+🔴 **MAIS la moitié production n'est pas branchée.** Vérifié le 2026-08-11 : le service
+Railway **n'expose aucune variable git** — les `RAILWAY_*` sont bien là (`RAILWAY_SERVICE_ID`,
+`RAILWAY_ENVIRONMENT`…), mais ni `RAILWAY_GIT_COMMIT_SHA` ni équivalent. En production le
+champ vaudra donc `null` et le contrôle se contentera d'informer. En local il est résolu
+depuis `.git`, ce qui ne prouve rien de l'environnement qui compte.
+**À faire** : constater sur `dev` après déploiement ce que vaut réellement `commit`, puis
+selon le cas activer la variable côté Railway ou l'inscrire au build. Tant que ce point
+n'est pas tranché, **le trou du 07→10 août reste ouvert en production**.
+
+**Piste non faite** : publier les échecs de tests en annotations GitHub, lisibles sans
+droits admin.
 
 ✅ **Dénouement le 2026-08-10.** CI verte sur `dev` puis `main` en `48bd333` — **premier vert
 depuis le 7 août**, et la seule preuve possible, le défaut n'étant pas reproductible en local.
