@@ -422,15 +422,21 @@ function renderTable(data) {
     const totalCoeffC = totalRevenue > 0 ? (totalWageCh / totalRevenue) * 100 : 0;
     const okTC = totalCoeffC < targets.target_charged;
 
-    // Le taux de charges vient des réglages de l'établissement courant (E-24).
-    const rate       = targets.charge_rate ?? 45;
-    const chargeMult = 1 + rate / 100;
-    const fmtRate    = r => String(r).replace('.', ',') + ' %';
+    // A-10 — le multiplicateur est DÉDUIT des deux montants affichés, jamais recalculé
+    // depuis `targets.charge_rate`. Le serveur applique un taux unique par établissement
+    // (`wage_bill_charged = wage_bill_gross * chargeMult`, server.js) : le rapport des
+    // totaux EST ce taux. Le recalculer ici depuis `targets` — qui arrive par un autre
+    // appel, et que R-10 a déjà vu venir du mauvais bar — produisait une phrase
+    // arithmétiquement FAUSSE à l'écran (« 3 200 € × 1,45 = 4 800 € »), du genre que le
+    // patron vérifie de tête. Déduite, elle est vraie par construction quelle que soit
+    // la provenance de `targets`.
+    const chargeMult = totalWageBrut > 0 ? totalWageCh / totalWageBrut : null;
+    const fmtRate    = m => String(Math.round((m - 1) * 1000) / 10).replace('.', ',') + ' %';
     const fmtMult    = m => m.toFixed(2).replace('.', ',');
     // Exemple CHIFFRÉ sur les totaux affichés : plus parlant qu'une formule abstraite.
-    const legend = totalRevenue > 0
+    const legend = totalRevenue > 0 && chargeMult !== null
         ? 'Sur la période : ' + fmtEUR(totalWageBrut) + ' brut × ' + fmtMult(chargeMult)
-            + ' (charges ' + fmtRate(rate) + ') = ' + fmtEUR(totalWageCh) + ' chargé'
+            + ' (charges ' + fmtRate(chargeMult) + ') = ' + fmtEUR(totalWageCh) + ' chargé'
             + ', soit ' + fmtEUR(totalWageCh) + ' ÷ ' + fmtEUR(totalRevenue) + ' de CA = '
             + fmtPct(totalCoeffC) + ' de coefficient.'
         : '';
@@ -442,7 +448,9 @@ function renderTable(data) {
                 '<th class="num">CA</th>' +
                 '<th class="num">Heures</th>' +
                 '<th class="num" title="Somme des salaires versés : heures réelles × taux (ou forfait), avant charges patronales.">Masse sal. brute</th>' +
-                '<th class="num" title="Masse salariale brute × ' + fmtMult(chargeMult) + ' (charges ' + fmtRate(rate) + ') — le coût réel pour le bar.">Masse sal. chargée</th>' +
+                '<th class="num" title="' + (chargeMult !== null
+                    ? 'Masse salariale brute × ' + fmtMult(chargeMult) + ' (charges ' + fmtRate(chargeMult) + ') — le coût réel pour le bar.'
+                    : 'Masse salariale brute plus les charges patronales — le coût réel pour le bar.') + '">Masse sal. chargée</th>' +
                 '<th title="Masse salariale chargée ÷ CA × 100. Vert sous la cible de ' + fmtPct(targets.target_charged) + '.">Coeff. chargé</th>' +
             '</tr></thead>' +
             '<tbody>' + rows + '</tbody>' +
