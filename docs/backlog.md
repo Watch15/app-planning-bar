@@ -1132,14 +1132,20 @@ avant la première vérification** plutôt que de rendre 29 ✓ portant sur autr
 contre un faux `/health` : commit inattendu → arrêt (code 1) ; commit attendu → poursuite ;
 instance antérieure au 2026-08-11 (pas de champ) → poursuite avec un message.
 
-🔴 **MAIS la moitié production n'est pas branchée.** Vérifié le 2026-08-11 : le service
-Railway **n'expose aucune variable git** — les `RAILWAY_*` sont bien là (`RAILWAY_SERVICE_ID`,
-`RAILWAY_ENVIRONMENT`…), mais ni `RAILWAY_GIT_COMMIT_SHA` ni équivalent. En production le
-champ vaudra donc `null` et le contrôle se contentera d'informer. En local il est résolu
-depuis `.git`, ce qui ne prouve rien de l'environnement qui compte.
-**À faire** : constater sur `dev` après déploiement ce que vaut réellement `commit`, puis
-selon le cas activer la variable côté Railway ou l'inscrire au build. Tant que ce point
-n'est pas tranché, **le trou du 07→10 août reste ouvert en production**.
+✅ **La moitié production est confirmée branchée, le 2026-08-11 après déploiement.**
+`dev` répond `{"commit":"6d29a05fc4a8…"}`, identique à `origin/dev` au caractère près.
+
+⚠️ **Leçon de méthode, pas seulement de résultat.** Deux outils avaient dit le contraire :
+`railway variables` (23 clés, aucune git) puis `railway run` (11 `RAILWAY_*`, aucune git).
+Les deux avaient raison **et ne répondaient pas à la question** : les variables git sont
+attachées à un DÉPLOIEMENT — un commit, une branche, un auteur — et n'existent donc ni
+dans la config du service, ni dans une exécution locale. Le seul juge est le conteneur
+déployé. Conclure « ce n'est pas branché » à partir de ces deux commandes aurait mené à
+écrire un plan B (estampiller au build) parfaitement inutile.
+
+Éprouvé contre l'instance réelle, sans consommer de tentative de connexion — le contrôle
+tourne avant les logins : `smoke.js https://dev.templyo.fr --expect origin/main` s'arrête
+en code 1 et affiche les deux sujets de commit, déployé et attendu.
 
 **Piste non faite** : publier les échecs de tests en annotations GitHub, lisibles sans
 droits admin.
