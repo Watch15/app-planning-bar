@@ -17,6 +17,7 @@ const {
     dispoDeadlineWaived,
     shouldMaterializeTemplate,
     buildTemplateDispos,
+    classifyDirectorLinks,
 } = require('../lib/utils');
 
 // ── isValidObjectId ──────────────────────────────────────────────────────────
@@ -514,4 +515,96 @@ test('shouldMaterializeTemplate : entrées non-Date refusées plutôt que compar
     assert.equal(shouldMaterializeTemplate(VEN13, undefined, null, W), false);
     assert.equal(shouldMaterializeTemplate(undefined, VEN13, null, W), false);
     assert.equal(shouldMaterializeTemplate('2026-08-14', VEN13, null, W), false);
+});
+
+// ── classifyDirectorLinks (A-09 — le tri qui rend le doublon impossible) ─────
+//
+// Ce tri est la SEULE chose qui empêche `link-directors --create-missing` de
+// refabriquer l'incident du premier client : un directeur qui travaillait déjà en
+// salle recevait un SECOND profil staff, son historique de shifts était scindé et
+// sa paie comptée deux fois (2 directeurs sur 3). La règle tient en une phrase :
+// on ne crée QUE sur le panier `none`, et `none` doit être vide dès qu'un homonyme
+// existe, quelle que soit la forme du nom.
+
+const DIR  = (name, extra) => ({ _id: 'u_' + name, name, ...extra });
+const PROF = (name, extra) => ({ _id: 's_' + name, name, ...extra });
+
+test('classifyDirectorLinks : un directeur déjà lié n\'est jamais retouché', () => {
+    const r = classifyDirectorLinks([DIR('Diane', { staff_id: 'abc' })], []);
+    assert.equal(r.already.length, 1);
+    assert.equal(r.todo.length + r.none.length + r.ambiguous.length, 0);
+});
+
+test('classifyDirectorLinks : un homonyme unique → liaison, pas création', () => {
+    const r = classifyDirectorLinks([DIR('Alexandre Housset')], [PROF('Alexandre Housset')]);
+    assert.equal(r.todo.length, 1);
+    assert.equal(r.todo[0].s.name, 'Alexandre Housset');
+    assert.equal(r.none.length, 0, 'un profil existe : créer ici serait le doublon');
+});
+
+// Le cœur du garde-fou. Si la normalisation faiblit, l'homonyme n'est plus vu,
+// le directeur tombe dans `none`, et --create-missing lui fabrique un doublon.
+test('classifyDirectorLinks : casse, accents, espaces et ponctuation ne créent pas de doublon', () => {
+    for (const variante of ['alexandre housset', 'ALEXANDRE  HOUSSET', 'Alexàndre-Housset', ' Alexandre   Housset ']) {
+        const r = classifyDirectorLinks([DIR(variante)], [PROF('Alexandre Housset')]);
+        assert.equal(r.none.length, 0, 'variante « ' + variante +' » : homonyme manqué → doublon');
+        assert.equal(r.todo.length, 1, 'variante « ' + variante + ' » devrait se rapprocher');
+    }
+});
+
+test('classifyDirectorLinks : l\'e-mail prime sur le nom', () => {
+    // Deux profils portent le même nom, mais un seul porte l'e-mail du compte :
+    // l'identifiant fort tranche là où le nom seul aurait dit « ambigu ».
+    const r = classifyDirectorLinks(
+        [DIR('Martin Dupont', { email: 'martin@bar.fr' })],
+        [PROF('Martin Dupont', { email: 'martin@bar.fr' }), PROF('Martin Dupont', { email: 'autre@bar.fr' })],
+    );
+    assert.equal(r.todo.length, 1);
+    assert.equal(r.todo[0].s.email, 'martin@bar.fr');
+    assert.equal(r.ambiguous.length, 0);
+});
+
+test('classifyDirectorLinks : deux homonymes indiscernables → ambigu, JAMAIS créé', () => {
+    const r = classifyDirectorLinks([DIR('Martin Dupont')], [PROF('Martin Dupont'), PROF('martin  dupont')]);
+    assert.equal(r.ambiguous.length, 1);
+    assert.equal(r.ambiguous[0].hits.length, 2);
+    // Le point qui compte : `none` est vide, donc --create-missing ne le touchera pas.
+    assert.equal(r.none.length, 0, 'un ambigu ne doit jamais devenir une création');
+    assert.equal(r.todo.length, 0, 'ni une liaison arbitraire');
+});
+
+test('classifyDirectorLinks : aucun profil correspondant → seul cas créable', () => {
+    const r = classifyDirectorLinks([DIR('Nouvelle Directrice')], [PROF('Alexandre Housset')]);
+    assert.equal(r.none.length, 1);
+    assert.equal(r.todo.length + r.ambiguous.length, 0);
+});
+
+test('classifyDirectorLinks : un e-mail qui ne matche pas retombe sur le nom', () => {
+    // Sinon un directeur dont l'e-mail a changé serait vu comme « aucun profil »
+    // alors que le sien existe — et --create-missing le dédoublerait.
+    const r = classifyDirectorLinks(
+        [DIR('Alexandre Housset', { email: 'nouveau@bar.fr' })],
+        [PROF('Alexandre Housset', { email: 'ancien@bar.fr' })],
+    );
+    assert.equal(r.todo.length, 1);
+    assert.equal(r.none.length, 0);
+});
+
+test('classifyDirectorLinks : chaque directeur tombe dans exactement un panier', () => {
+    const dirs = [
+        DIR('Diane', { staff_id: 'abc' }),
+        DIR('Alexandre Housset'),
+        DIR('Martin Dupont'),
+        DIR('Nouvelle Directrice'),
+    ];
+    const staff = [PROF('Alexandre Housset'), PROF('Martin Dupont'), PROF('martin dupont')];
+    const r = classifyDirectorLinks(dirs, staff);
+    assert.equal(r.already.length + r.todo.length + r.none.length + r.ambiguous.length, dirs.length);
+    assert.deepEqual(r.none.map(u => u.name), ['Nouvelle Directrice']);
+});
+
+test('classifyDirectorLinks : entrées vides ou absentes ne cassent rien', () => {
+    assert.deepEqual(classifyDirectorLinks(undefined, undefined),
+        { todo: [], already: [], none: [], ambiguous: [] });
+    assert.equal(classifyDirectorLinks([DIR('Seule')], undefined).none.length, 1);
 });

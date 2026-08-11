@@ -241,7 +241,7 @@ Mongo), donc couplés au nom des collections et des champs.
 | ~~R-10~~ | ✅ **Résolu (2026-08-06)** — handler `change` passé en `async` + `await loadTargets()` avant `loadData()`. `targets` est module-level et colore les pastilles (ok/bad) : sans l'attente, le premier rendu d'un bar utilisait l'objectif du PRÉCÉDENT — des couleurs fausses présentées comme justes. ~~Constat :~~ `performance.js` : `loadTargets()` non-awaité dans le handler `change` d'établissement → le premier rendu colore les pastilles contre l'objectif du bar **précédent**, ce qui vide E-24 de son sens. | Moyenne |
 | ~~R-12~~ | ✅ **Résolu (2026-08-06)** — le profil staff du directeur est créé **APRÈS** `users.insertOne`, via `ensureDirectorStaffProfile` (même helper que R-06) : plus d'orphelin si l'insert échoue. `DELETE /api/users/:id` purge désormais `manager_dispo_templates` (config pure — sinon le cron matérialiserait la semaine-type d'un compte supprimé). ⚠️ **Le profil `staff` est CONSERVÉ volontairement** : shifts passés, pointage et masse salariale le référencent, le supprimer ferait perdre son nom dans les récaps déjà édités. Il reste donc sans compte associé — c'est **F-13** qui doit trancher, pas un nettoyage. ~~Constat :~~ orphelins : profil staff créé **avant** `users.insertOne` (échec = staff fantôme) ; `DELETE /api/users/:id` ne supprime pas le profil lié ni son `manager_dispo_templates`. | Basse |
 | ~~R-13~~ | ~~Requête `users.findOne` de trop sur `POST /api/dispos`~~ | ✅ **Résolu (2026-08-05)** — `managerOffPeriods(…, knownUserId)` : la session porte déjà l'`_id`, la recherche du user disparaît. **Première tentative rejetée par la revue** : court-circuiter l'appel sur `req.session.user.role === 'directeur'` économisait la requête mais introduisait un trou — le rôle en session est figé au login, un compte promu directeur aurait perdu la jointure `manager_time_off` jusqu'à sa reconnexion et aurait pu poser une dispo un jour d'absence déclarée. La version retenue ne teste aucun rôle. Les 2 lectures restantes (`time_off` + `manager_time_off`) sont passées en `Promise.all`. ⚠️ **La 2e moitié du constat était fausse** : le `users.find` de `/api/dispos/pending` est porteur (repère `is_directeur`) — conservé délibérément. |
-| ~~R-14~~ | ~~Résidus inertes~~ | ✅ **Traité (2026-08-05)**, partiellement. `is_manager` : commentaire explicite ajouté aux **2** sites d'écriture (`server.js` `createManagerStaffProfile`, `scripts/backfill-director-staff.js`) — « informatif, aucun code ne le lit, ne filtre NI la paie NI rien ». Le constat disait 3 sites : le 3e (`public/script.js:5287`) est un **autre objet** (marqueur de période de congé) et il **est lu** (`:5343`) — rien à faire. **Reste ouvert** : le champ `establishment_id` résiduel sur les docs `manager_dispo_templates` déjà en base — donnée, pas code : exige un script de migration, non fait. | Basse |
+| ~~R-14~~ | ~~Résidus inertes~~ | ✅ **Traité (2026-08-05)**, partiellement. `is_manager` : commentaire explicite ajouté aux **2** sites d'écriture (`server.js` `createManagerStaffProfile`, `scripts/link-director-staff.js` — le 2e était `backfill-director-staff.js`, supprimé par A-09, le commentaire a suivi) — « informatif, aucun code ne le lit, ne filtre NI la paie NI rien ». Le constat disait 3 sites : le 3e (`public/script.js:5287`) est un **autre objet** (marqueur de période de congé) et il **est lu** (`:5343`) — rien à faire. **Reste ouvert** : le champ `establishment_id` résiduel sur les docs `manager_dispo_templates` déjà en base — donnée, pas code : exige un script de migration, non fait. | Basse |
 | R-16 | 🟡 **Partiellement résolu (2026-08-06)** — le middleware `requireEstablishmentAccess(pick, { whenAbsent })` existe (3 modes : `deny` / `patronOnly` / `allow`) et couvre **6 routes**. `userEstablishmentIds(user)` devient la **source unique** du périmètre, et `canAccessEstablishment` en dérive. Le cas particulier `role !== 'etablissement' && …` est supprimé des 5 sites qui le portaient. ⚠️ **Rectification** : j'ai d'abord annoncé que ça fermait un trou — **c'est faux**, ces 5 routes avaient chacune leur propre garde ; c'est une simplification, pas un correctif. **Inventaire fait le 2026-08-06 — et il change la conclusion** : sur 20 sites de contrôle, **~10 seulement sont migrables**. Les autres lisent l'établissement dans un DOCUMENT chargé par le handler (`existing.establishment_id` d'un shift, `swap.from_establishment_id`, la cible d'une dispo…) : un middleware ne voit que la requête, il ne PEUT PAS les couvrir. Pour ceux-là, l'appel inline juste après le chargement **est la forme correcte, pas une dette**. La distinction est documentée sur le middleware. `GET /api/performance` migré en exemple. **Reste** : ~9 routes migrables, valeur = cohérence, pas sécurité (elles sont déjà correctes). ~~Constat :~~ **il manque un middleware `requireEstablishmentAccess`.** Relevé par la revue `/simplify` du 2026-08-05 : `server.js` contient **14 copies inline** de `if (!canAccessEstablishment(...)) return res.status(403)`, et **5 routes qui l'oublient** (cf. S-06). `perfScopeDenial` en a ajouté une 15e forme. 14 contrôles manuels contre 5 oublis, c'est la définition d'un middleware manquant. **Piste** : `requireEstablishmentAccess(pick, { whenAbsent })` avec 3 modes (`patronOnly`, `deny`, `scopeAll`) monté déclarativement, ce qui rend les oublis greppables. La partie vraiment spécifique à la perf (le doc global dont `charge_rate` retombe partout) reste près de la route. | Moyenne |
 | ~~R-17~~ ✅ | **Le périmètre d'un utilisateur est figé au login.** **Corrigé le 2026-08-08 — par invalidation des sessions, PAS par `session_epoch`.** L'epoch aurait coûté une lecture Mongo sur *chaque* appel authentifié, pour un événement qui survient quelques fois par an ; on paie plutôt une fois, au moment du changement. Helper `invalidateUserSessions(userId)` → `sessions.deleteMany({ 'session.user._id': … })`. Le store étant Mongo, l'effet est immédiat sur toutes les instances. **Cinq portes fermées** : `PATCH /users/:id/role`, `/establishments`, `DELETE /users/:id` (un compte supprimé restait utilisable 30 j), reset de mot de passe, et surtout **`PATCH /staff/:id` via `syncDirectorAssignedEstablishments`** — la porte la plus empruntée, puisque le patron change les bars depuis l'écran staff. `DELETE /staff/:id` invalide aussi : sinon la session garde un `staff_id` mort (mécanisme de l'incident « Antoine Bozo »). Forme du document de session vérifiée sur la base client réelle. | ✅ |
 | ~~R-11~~ | ~~`PUT /api/me/manager-dispos/week` sans borne temporelle~~ | ✅ Résolu — route supprimée par la correction E-22 |
@@ -427,17 +427,26 @@ directeurs existants chez le client resteraient sans `staff_id` et **ne pourraie
 saisir de dispo** (400 permanent). La livraison client devra donc inclure une **migration
 de données**, pas un simple push.
 
-⛔ **NE PAS lancer `npm run backfill-directors`** — corrigé le 2026-08-08 (A-08). Ce script
-ne rapproche que sur `users.staff_id` et **CRÉE un profil sinon**. Sur une base ancienne, un
-directeur travaille souvent déjà en salle : son profil existe. Le backfill en créerait un
-**second** — barre staff dédoublée, historique de shifts scindé, personne **comptée deux fois
-en masse salariale**. Constaté chez Castanui : 2 directeurs sur 3 étaient dans ce cas.
+✅ **Un seul outil : `npm run link-directors`** (`scripts/link-director-staff.js`).
+Rapproche par e-mail puis nom normalisé, ne pose que `users.staff_id`, s'abstient si le
+résultat n'est pas unique, **simulation par défaut** (`--apply` pour écrire).
+Ajoute `--create-missing` pour créer le profil des directeurs qui n'en ont **aucun**.
 
-✅ **Utiliser `npm run link-directors`** (`scripts/link-director-staff.js`) : rapproche par
-e-mail puis nom normalisé, **ne crée jamais rien**, ne pose que `users.staff_id`, s'abstient
-si le résultat n'est pas unique, **simulation par défaut** (`--apply` pour écrire).
-⚠️ Il ne couvre PAS le cas « aucun profil correspondant » — création volontairement laissée
-à une décision humaine (cf. A-09).
+⚠️ **L'ordre des opérations est la sécurité.** `--create-missing` n'agit que sur le bucket
+« aucun homonyme, ni par e-mail ni par nom » : le tri précède l'écriture, donc le doublon
+n'est pas *interdit*, il est **inexprimable**. L'ancien `backfill-directors` faisait
+l'inverse — créer puis vérifier — et fabriquait un **second** profil à un directeur qui
+travaillait déjà en salle : barre staff dédoublée, historique de shifts scindé, personne
+**comptée deux fois en masse salariale**. Constaté chez Castanui : 2 directeurs sur 3.
+Il a été **supprimé** le 2026-08-11 (A-09), avec son entrée `package.json` : une
+interdiction qui ne vit que dans un doc finit par être contournée par quelqu'un de pressé.
+
+Le cas « plusieurs homonymes » (`ambiguous`) reste **non automatisé, même avec
+`--create-missing`** : se tromper attribuerait à quelqu'un l'historique de paie d'un autre.
+
+Le script supprime aussi les sessions des directeurs qu'il touche : il écrit directement
+dans Mongo, donc **R-17 ne se déclenche pas** — sans ça, un directeur connecté garderait une
+session sans `staff_id` et resterait bloqué sur le 400 sans comprendre pourquoi.
 
 Autres changements visibles par les utilisateurs finaux dans ce lot : suppression des emojis
 d'interface, nouveau périmètre de la file de dispos (S-04), exemption de deadline directeur
@@ -687,14 +696,14 @@ mais 150 lignes plus bas. Au prochain client, c'est la première ligne qu'on rel
 Même problème dans `docs/design-e22-dispos-directeur.md`, qui présente encore le backfill
 comme LE remède E-22. **Correction : une ligne à chaque endroit.**
 
-**A-09 — Deux scripts pour une seule décision, et un trou fonctionnel.**
+**A-09 — Deux scripts pour une seule décision, et un trou fonctionnel.** ✅ **Fait le 2026-08-11.**
 `backfill` (créer) et `link` (lier) sont les deux branches de « directeur sans profil →
 lier si un profil correspond, créer sinon ». `link` calcule déjà les 3 buckets
 (`todo`/`none`/`ambiguous`) : ajouter `--create-missing` sur le bucket `none`, supprimer
 l'ancien script. ⚠️ **Aujourd'hui le cas `none` n'a AUCUN outil sûr** — un client sans
 homonymie verrait ses directeurs bloqués (400 permanent) sans procédure valide.
 
-**A-10 — Règle métier dupliquée serveur/client, visible à l'écran.**
+**A-10 — Règle métier dupliquée serveur/client, visible à l'écran.** ✅ **Fait le 2026-08-11.**
 `public/performance.js` recalcule `1 + rate/100` alors que `lib/utils.js` a
 `chargeMultiplier()` et que les DEUX montants viennent déjà du serveur. Seul le « × 1,45 »
 est calculé côté client : une désynchronisation ne produit pas un chiffre un peu faux, mais
@@ -830,7 +839,7 @@ travail — juste des livraisons en attente.**
 | # | Quoi | Pourquoi devant | Coût |
 |---|---|---|---|
 | 1 | ~~**Pousser `2d723f9`** (correctif `DELETE /api/staff/:id`)~~ ✅ | **Fait.** Le correctif est sur `main` **et** chez le client (`castanui/main` = `aed2d17`, vérifié le 2026-08-10). Le trou de l'incident Antoine Bozo est refermé en prod. | fait |
-| 2 | ~~**A-08** — le runbook recommande encore `backfill-directors`~~ ✅ | **Fait (`aed2d17`).** ⚠️ Mais le script reste exécutable en une commande (`npm run backfill-directors` est toujours dans `package.json`) : l'interdiction vit dans un doc, pas dans le code → cf. **A-09**. | fait |
+| 2 | ~~**A-08** — le runbook recommande encore `backfill-directors`~~ ✅ | **Fait (`aed2d17`).** ~~⚠️ Mais le script reste exécutable en une commande : l'interdiction vit dans un doc, pas dans le code.~~ **Refermé pour de bon le 2026-08-11 par A-09** : le script n'existe plus, il n'y a donc plus d'interdiction à faire respecter. | fait |
 | 3 | ~~**R-17** — périmètre figé au login~~ ✅ | **Fait le 2026-08-08.** Invalidation des sessions aux 5 points de changement de périmètre. Coût nul sur le chemin chaud. | fait |
 
 #### Reclassement de la Feature A — c'est un correctif, pas un confort
@@ -905,8 +914,8 @@ plus un item de la liste `/simplify`, c'est le **corollaire obligatoire de R-17*
 | 1 | ~~**A-14** — `fetch` centralisé qui redirige sur 401~~ ✅ | **Fait le 2026-08-10** (`public/lib/auth-guard.js`, 21 tests). Corollaire de R-17. Couvre les 4 pages d'un coup plutôt que `pointage.js` seul : le garde est un module unique, le livrer partout ne coûtait pas plus cher que de le livrer une fois. | fait |
 | 2 | **Livrer le lot** : push `dev` → `smoke:dev` → merge `main` → `smoke:main` | Les corrections R-17 + A-14 n'ont **jamais tourné contre un vrai Mongo**. Le smoke est la seule chose qui l'établit. | ~0, mais bloquant |
 | 3 | **Feature A — désactivation d'un staff (F-13)** | Reclassée correctif le 2026-08-08 : aujourd'hui la seule sortie offerte au patron est `DELETE /api/staff/:id`, qui **supprime les shifts, donc l'historique de paie**. ⚠️ La question 5 (« en gardant leur erreur » = leur historique ?) est **toujours sans réponse** — à confirmer avant de coder. | moyen |
-| 4 | **A-09** — fusionner `backfill-directors` dans `link-directors --create-missing` | Le script interdit par le runbook est **toujours dans `package.json`** (`npm run backfill-directors`). Une interdiction qui vit dans un doc et un script exécutable d'une commande, c'est l'accident qui attend. Et le cas « directeur sans profil correspondant » n'a **aucun outil sûr** aujourd'hui. | petit |
-| 5 | **A-10** — `1 + rate/100` recalculé côté client dans `performance.js` | Produit une **phrase arithmétiquement fausse** à l'écran (« 3 200 € × 1,45 = 4 800 € »), vérifiable de tête par le client. Correctif d'une ligne, les deux montants viennent déjà du serveur. | 1 ligne |
+| 4 | ~~**A-09** — fusionner `backfill-directors` dans `link-directors --create-missing`~~ ✅ | **Fait (2026-08-11).** `--create-missing` ajouté ; `scripts/backfill-director-staff.js` et son entrée `package.json` **supprimés**. Ce que la fusion a apporté en plus du ménage : le bucket `none` de `link` signifie déjà « aucun homonyme, ni e-mail ni nom » — c'est-à-dire **exactement** la condition que le garde-fou A-08 vérifiait après coup. Le tri précédant l'écriture, le doublon devient inexprimable au lieu d'être interdit. Le script supprime aussi les sessions qu'il touche (R-17 ne se déclenche pas sur une écriture Mongo directe). | fait |
+| 5 | ~~**A-10** — `1 + rate/100` recalculé côté client dans `performance.js`~~ ✅ | **Fait (2026-08-11).** `chargeMult` est désormais **déduit** des deux montants (`totalWageCh / totalWageBrut`) : le serveur applique un multiplicateur unique par établissement (`server.js:4947`), donc le rapport des totaux **est** ce multiplicateur, et la phrase est vraie par construction quelle que soit la provenance de `targets`. Le taux affiché entre parenthèses en découle aussi — sinon on réintroduisait l'incohérence dans la même phrase. Supprime au passage un des 5 `?? 45` en dur. | fait |
 
 **Ensuite seulement**, par nécessité décroissante : B2 (horizon de saisie), F-12 (journal
 d'audit des dispos), F-05 (échange de shifts — décision client, pas du travail), A-06/A-07,

@@ -1,60 +1,56 @@
 'use strict';
 // ╔══════════════════════════════════════════════════════════════════════════╗
-// ║  LIE un compte `directeur` à son profil `staff` EXISTANT.                 ║
-// ║  Ne crée rien. Ne supprime rien. N'écrit qu'un seul champ : users.staff_id ║
+// ║  Rattache chaque compte `directeur` à un profil `staff`.                   ║
+// ║  Par défaut : LIE aux profils existants, ne crée rien.                     ║
+// ║  Avec --create-missing : crée un profil pour ceux qui n'en ont AUCUN.      ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
 //
-// POURQUOI CE SCRIPT PLUTÔT QUE `backfill-director-staff.js` :
-// le backfill ne rapproche que sur `users.staff_id` et CRÉE un profil neuf sinon. Or sur
-// une base ancienne, un directeur travaille souvent déjà en salle : son profil staff
-// existe, avec son taux, ses rôles et tout son historique de shifts. Le backfill en
-// créerait un SECOND — doublon dans la barre staff, historique scindé, et la personne
-// comptée DEUX FOIS dans la masse salariale. Constaté sur la base du premier client :
-// 2 directeurs sur 3 étaient dans ce cas.
+// A-09 (2026-08-11) — ce script a absorbé `backfill-director-staff.js`, supprimé.
 //
-// Ici on ne fait que poser le lien manquant, et uniquement quand il est certain.
+// POURQUOI LES DEUX NE FONT PLUS QU'UN. « Directeur sans profil staff » a deux issues :
+// le rapprocher d'un profil existant, ou lui en créer un. Le tri entre les deux est le
+// MÊME calcul — chercher un homonyme. Deux scripts, c'était deux fois ce calcul, et
+// l'ancien `backfill` créait d'abord et vérifiait ensuite : sur la base du premier client,
+// 2 directeurs sur 3 travaillaient déjà en salle. Il leur fabriquait un SECOND profil —
+// doublon dans la barre staff, historique de shifts scindé, paie comptée deux fois.
+// Un garde-fou (A-08) a fini par l'en empêcher, mais il vivait à côté du danger.
 //
-//   node scripts/link-director-staff.js                  → simulation (n'écrit RIEN)
-//   node scripts/link-director-staff.js --apply          → applique
+// Ici le tri PRÉCÈDE l'écriture : `--create-missing` n'agit que sur le bucket `none`,
+// qui est par construction « aucun profil ne correspond, ni par e-mail ni par nom ».
+// Le doublon n'est plus interdit par un contrôle, il est devenu impossible à exprimer.
+// Le bucket `ambiguous` (plusieurs homonymes) n'est JAMAIS créé ni lié automatiquement :
+// choisir entre deux personnes reste une décision humaine.
+//
+//   node scripts/link-director-staff.js                            → simulation
+//   node scripts/link-director-staff.js --apply                    → lie seulement
+//   node scripts/link-director-staff.js --create-missing           → simulation, création incluse
+//   node scripts/link-director-staff.js --create-missing --apply   → lie ET crée
 //   ENV_FILE=.env.client node scripts/link-director-staff.js
 //
 // ⚠️ `openDb()` affiche la base ciblée avant toute chose : LIRE cette ligne avant --apply.
 
+// Le TRI vit dans `lib/utils.js` (`classifyDirectorLinks`) et non ici : c'est lui qui
+// rend le doublon impossible, il doit donc être couvert par des tests — cf. tests/utils.test.js.
 const { openDb } = require('./_db');
+const { pickStaffColor, classifyDirectorLinks } = require('../lib/utils');
 
-const APPLY = process.argv.includes('--apply');
-
-// Comparaison tolérante : casse, accents, ponctuation et espaces multiples ignorés.
-// « Alexandre  Housset » et « alexandre housset » doivent se rapprocher.
-const norm = s => String(s || '')
-    .toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
+const APPLY  = process.argv.includes('--apply');
+const CREATE = process.argv.includes('--create-missing');
 
 async function main() {
     const { client, db, dbName } = await openDb();
     try {
         const dirs = await db.collection('users')
-            .find({ role: 'directeur' }, { projection: { name: 1, email: 1, staff_id: 1, assigned_establishments: 1 } })
+            .find({ role: 'directeur' }, { projection: { name: 1, email: 1, phone: 1, staff_id: 1, assigned_establishments: 1 } })
             .toArray();
         const staff = await db.collection('staff')
-            .find({}, { projection: { name: 1, email: 1, venues: 1 } }).toArray();
+            .find({}, { projection: { name: 1, email: 1, venues: 1, color: 1 } }).toArray();
 
         console.log('\n' + (APPLY ? '⚙️  MODE APPLICATION — écriture réelle' : '🔍 SIMULATION — aucune écriture')
-            + '   ·   ' + dirs.length + ' compte(s) directeur, ' + staff.length + ' profil(s) staff\n');
+            + (CREATE ? '   ·   création des manquants ACTIVÉE' : '')
+            + '\n   ' + dirs.length + ' compte(s) directeur, ' + staff.length + ' profil(s) staff\n');
 
-        const todo = [], already = [], none = [], ambiguous = [];
-
-        for (const u of dirs) {
-            if (u.staff_id) { already.push(u); continue; }
-            // E-mail d'abord (identifiant fort), nom normalisé ensuite.
-            let hits = u.email ? staff.filter(s => s.email && norm(s.email) === norm(u.email)) : [];
-            if (!hits.length) hits = staff.filter(s => norm(s.name) === norm(u.name));
-            if (hits.length === 1)      todo.push({ u, s: hits[0] });
-            else if (hits.length === 0) none.push(u);
-            else                        ambiguous.push({ u, hits });
-        }
+        const { todo, already, none, ambiguous } = classifyDirectorLinks(dirs, staff);
 
         const label = u => (u.name || u.email || String(u._id));
 
@@ -62,33 +58,85 @@ async function main() {
             const venues   = s.venues || [];
             const assigned = u.assigned_establishments || [];
             const same = JSON.stringify([...venues].sort()) === JSON.stringify([...assigned].sort());
-            console.log('  ✅ ' + label(u).padEnd(24) + ' → profil « ' + s.name + ' »');
+            console.log('  ✅ ' + label(u).padEnd(24) + ' → profil « ' + s.name +' »');
             console.log('      venues=' + JSON.stringify(venues) + '  assigned=' + JSON.stringify(assigned)
                 + (same ? '  (identiques)' : '  ⚠️ DIVERGENTS — la synchro les alignera à la 1re édition'));
         }
         already.forEach(u => console.log('  ⏭️  ' + label(u).padEnd(24) + ' déjà lié'));
-        none.forEach(u => console.log('  ❔ ' + label(u).padEnd(24) + ' AUCUN profil staff correspondant'
-            + ' — création volontairement NON faite, décision humaine'));
+        none.forEach(u => console.log('  ' + (CREATE ? '🆕' : '❔') + ' ' + label(u).padEnd(24)
+            + (CREATE
+                ? ' aucun profil → UN SERA CRÉÉ (bars : ' + JSON.stringify(u.assigned_establishments || []) + ')'
+                : ' AUCUN profil staff correspondant — relance avec --create-missing pour en créer un')));
+        // Jamais automatisé, ni en liaison ni en création : si deux « Martin Dupont »
+        // existent, la machine n'a aucun moyen de savoir lequel est le directeur, et se
+        // tromper attribue à quelqu'un l'historique de paie d'un autre.
         ambiguous.forEach(({ u, hits }) => console.log('  ⚠️  ' + label(u).padEnd(24)
-            + ' AMBIGU (' + hits.length + ' profils : ' + hits.map(h => h.name).join(', ') + ') — non touché'));
+            + ' AMBIGU (' + hits.length + ' profils : ' + hits.map(h => h.name).join(', ')
+            + ') — non touché, même avec --create-missing'));
+
+        const willCreate = CREATE ? none.length : 0;
 
         if (!APPLY) {
-            console.log('\n  ' + todo.length + ' liaison(s) à faire. Relance avec --apply pour les écrire.\n');
+            console.log('\n  ' + todo.length + ' liaison(s) et ' + willCreate + ' création(s) à faire.'
+                + '\n  Relance avec --apply pour les écrire.\n');
             return;
         }
-        if (!todo.length) { console.log('\n  Rien à écrire.\n'); return; }
+        if (!todo.length && !willCreate) { console.log('\n  Rien à écrire.\n'); return; }
 
-        const before = await db.collection('staff').countDocuments();
+        const before  = await db.collection('staff').countDocuments();
+        const touched = [];
+
         for (const { u, s } of todo) {
             await db.collection('users').updateOne({ _id: u._id }, { $set: { staff_id: String(s._id) } });
+            touched.push(u._id);
         }
-        const after = await db.collection('staff').countDocuments();
 
-        console.log('\n  ✅ ' + todo.length + ' compte(s) lié(s) dans « ' + dbName + ' »');
+        // Couleurs déjà prises, pour ne pas donner deux fois la même dans la barre staff.
+        const used = new Set(staff.map(s => s.color).filter(Boolean));
+        let created = 0;
+        if (CREATE) {
+            for (const u of none) {
+                const color = pickStaffColor(used);
+                used.add(color);
+                const { insertedId } = await db.collection('staff').insertOne({
+                    name:   u.name || 'Directeur',
+                    color,
+                    email:  u.email || '',
+                    phone:  u.phone || '',
+                    venues: u.assigned_establishments || [],
+                    roles:  [],
+                    can_submit_dispos: true,
+                    is_manager: true, // informatif — cf. createManagerStaffProfile (server.js)
+                    created_at: new Date(),
+                });
+                await db.collection('users').updateOne({ _id: u._id }, { $set: { staff_id: String(insertedId) } });
+                touched.push(u._id);
+                created++;
+                console.log('  + profil staff créé pour ' + label(u) + ' → ' + insertedId);
+            }
+        }
+
+        const after    = await db.collection('staff').countDocuments();
+        const expected = before + created;
+
+        console.log('\n  ✅ ' + todo.length + ' compte(s) lié(s), ' + created + ' profil(s) créé(s) dans « ' + dbName + ' »');
         console.log('  Profils staff : ' + before + ' → ' + after
-            + (before === after ? '  (inchangé — c\'est bien le but)' : '  ⚠️ A CHANGÉ, ce script ne devait rien créer !'));
-        console.log('\n  ⚠️ Les directeurs liés doivent SE RECONNECTER : `staff_id` est figé');
-        console.log('     dans la session au login, sinon ils gardent le 400 « Aucun profil staff lié ».\n');
+            + (after === expected
+                ? '  (' + (created ? '+' + created + ', attendu' : 'inchangé — c\'est bien le but') + ')'
+                : '  ⚠️ ATTENDU ' + expected + ' — un profil a été créé hors de ce script !'));
+
+        // R-17 fait ça tout seul quand le changement passe par l'API. Ici on écrit
+        // directement dans Mongo, donc rien ne l'a déclenché : sans ce nettoyage, un
+        // directeur connecté garderait une session sans `staff_id` et resterait bloqué
+        // sur le 400 « Aucun profil staff lié » sans comprendre pourquoi.
+        if (touched.length) {
+            const r = await db.collection('sessions')
+                .deleteMany({ 'session.user._id': { $in: touched.map(String) } });
+            console.log('  🔒 ' + r.deletedCount + ' session(s) supprimée(s) — les directeurs concernés');
+            console.log('     devront se reconnecter, et retrouveront leur profil au login.\n');
+        } else {
+            console.log('');
+        }
     } catch (e) {
         console.error('❌', e.message);
         process.exitCode = 1;
