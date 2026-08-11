@@ -64,14 +64,21 @@ besoin. Vous, en tant que patron, continuez de tout voir.
 Nouveauté pratique : un bouton **« Tout confirmer »** valide d'un coup toutes les
 disponibilités affichées, sur un établissement que vous choisissez.
 
-## 5. Un point d'attention sur les droits
+## 5. Les changements de droits s'appliquent tout de suite
 
-Quand vous **changez le rôle d'une personne ou les établissements d'un directeur**, la
-personne concernée doit **se déconnecter puis se reconnecter** pour que ses nouveaux droits
-s'appliquent. Sans cela, elle garde temporairement ses anciens accès.
+Quand vous **changez le rôle d'une personne ou les établissements d'un directeur**, sa
+session en cours est désormais **coupée automatiquement**. À sa prochaine action, elle est
+renvoyée à l'écran de connexion, et retrouve ses nouveaux droits en se reconnectant.
 
-C'est également nécessaire **une fois après cette mise à jour** pour vos directeurs — nous
-vous le rappellerons le jour J.
+Jusqu'ici elle conservait ses anciens accès tant qu'elle ne se déconnectait pas d'elle-même :
+un directeur retiré d'un établissement continuait d'y voir le planning. Ce n'est plus le cas.
+
+💡 **En pratique** : prévenez la personne quand vous modifiez son périmètre, sinon elle
+subira une déconnexion qu'elle n'a pas demandée. Elle ne perd rien — ce qu'elle avait
+enregistré est conservé.
+
+Une reconnexion reste nécessaire **une fois après cette mise à jour** pour vos directeurs —
+nous vous le rappellerons le jour J.
 
 ---
 
