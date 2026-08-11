@@ -300,6 +300,58 @@ async function main() {
     await check('E-03', "responsable : pas d'accès à un bar où il n'est pas désigné", async () =>
         eq((await req('ali', `/api/pointage/${SOIREE}?establishment_id=Poni_restaurant`)).status, 403, 'status'), 'soiree');
 
+    // ── F-13 : archiver sort de la vie courante SANS toucher au passé ────────
+    //
+    // Placé après tout ce qui utilise `bru` : archiver Bruno tue sa session (même
+    // mécanisme que R-17). Chaque étape est un `check` indépendant, et la remise en
+    // état en est un aussi — si une vérification casse, le désarchivage a quand même
+    // lieu et la base de recette ne reste pas avec un staff archivé.
+    let brunoId = null;
+    await check('F-13', 'archiver un staff', async () => {
+        const staff = (await req('pat', '/api/staff')).data;
+        const b = Array.isArray(staff) && staff.find(s => /Bruno/i.test(s.name || ''));
+        if (!b) throw new Error('Bruno introuvable dans le jeu de recette');
+        brunoId = b._id;
+        return eq((await req('pat', `/api/staff/${brunoId}/archive`, { method: 'PATCH', body: { archived: true } })).status, 200, 'status');
+    });
+
+    // La moitié qu'on oublie facilement : archiver n'est pas supprimer. Si le nom
+    // disparaissait de /api/staff, les récaps et plannings passés perdraient leur
+    // libellé — c'est exactement ce que l'archivage promet d'éviter.
+    await check('F-13', 'l\'archivé reste dans /api/staff, avec son drapeau', async () => {
+        if (!brunoId) throw new Error('étape précédente échouée');
+        const doc = (await req('pat', '/api/staff')).data.find(s => s._id === brunoId);
+        if (!doc) throw new Error('l\'archivé a DISPARU de /api/staff — son historique perdrait son nom');
+        return eq(doc.archived, true, 'archived');
+    });
+
+    await check('F-13', 'l\'archivé sort de la liste « sans dispo »', async () => {
+        if (!brunoId) throw new Error('étape précédente échouée');
+        const list = (await req('pat', `/api/dispos/sans-dispo?from=${FROM}&to=${TO}`)).data;
+        const encore = Array.isArray(list) && list.some(s => String(s._id) === String(brunoId));
+        if (encore) throw new Error('encore relancé alors qu\'il est archivé');
+        return 'absent de la relance';
+    });
+
+    await check('F-13', 'on ne peut plus le planifier', async () => {
+        if (!brunoId) throw new Error('étape précédente échouée');
+        const r = await req('pat', '/api/shifts', { method: 'POST', body: {
+            staff_id: brunoId, staff_name: 'Bruno', establishment_id: 'Josy_pub',
+            date: D(3), start_time: 18, end_time: 23,
+        } });
+        // Si le garde-fou a sauté, ne pas laisser le créneau derrière soi.
+        if (r.status === 201 && r.data && r.data._id) await req('pat', `/api/shifts/${r.data._id}`, { method: 'DELETE' });
+        return eq(r.status, 409, 'status');
+    });
+
+    await check('F-13', 'réactiver rend tout (remise en état)', async () => {
+        if (!brunoId) throw new Error('étape précédente échouée');
+        const r = await req('pat', `/api/staff/${brunoId}/archive`, { method: 'PATCH', body: { archived: false } });
+        const doc = (await req('pat', '/api/staff')).data.find(s => s._id === brunoId);
+        if (doc && doc.archived) throw new Error('drapeau toujours posé après réactivation');
+        return eq(r.status, 200, 'status');
+    });
+
     // ── R-06 + R-17 : réaffectation du directeur — EN DERNIER, et ce n'est pas ──
     //    un détail de mise en page.
     //
