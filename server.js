@@ -823,7 +823,12 @@ function scheduleShiftNotif(shiftId, originalState, pushPayload, notifPatronFn) 
         } catch (e) {
             console.error('❌ scheduleShiftNotif error:', e.message);
         }
-    }, 60 * 1000);
+    // .unref() : même raison que le timer de nettoyage du rate-limit plus haut — une notif
+    // en attente ne doit pas, à elle seule, maintenir le process en vie. En prod le socket
+    // d'écoute s'en charge (aucun changement) ; en test, un `PATCH /api/shifts/:id` faisait
+    // traîner le fichier 60 s après son dernier assert, jusqu'à le faire tomber sous un
+    // runner qui coupe les process inactifs.
+    }, 60 * 1000).unref();
     _shiftNotifDebounce.set(shiftId, { timer, originalState: storedOriginal });
 }
 
