@@ -2,7 +2,8 @@
 // Mini base Mongo en mémoire pour les tests d'intégration de routes (CD-05).
 // Implémente UNIQUEMENT ce que les routes testées utilisent : findOne, find().toArray(),
 // insertOne, insertMany, deleteMany, updateOne (avec upsert/$set/$pull), bulkWrite
-// (updateOne+upsert), countDocuments — et les opérateurs $ne/$lte/$gte/$lt/$gt/$in.
+// (updateOne+upsert), countDocuments — et les opérateurs $ne/$lte/$gte/$lt/$gt/$in
+// /$nin/$exists/$regex (+$options).
 // Le 2e argument de find() (projection) est ignoré. Pas un clone fidèle de
 // Mongo : juste assez pour piloter la logique métier sans serveur réel.
 
@@ -48,7 +49,13 @@ function matchField(val, cond) {
                 // Sans cet opérateur, toute route qui vérifie « cette semaine est-elle
                 // publiée ? » lançait ici — l'erreur était avalée par le `catch` de la
                 // notification asynchrone, donc invisible sauf à lire la sortie du runner.
-                case '$regex': return typeof val === 'string' && new RegExp(v).test(val);
+                case '$regex': return typeof val === 'string' && new RegExp(v, cond.$options || '').test(val);
+                // 6e lacune trouvée (F-14) : `$options` n'est pas un opérateur, c'est le
+                // modificateur de `$regex` — mais il arrive comme une clé frère dans le même
+                // objet. Sans ce cas, toute recherche insensible à la casse lançait ici, et
+                // `POST /api/shifts/extra` (résolution PAR NOM) restait intestable : la route
+                // rendait un 500 opaque au lieu de son vrai résultat.
+                case '$options': return true; // consommé par `$regex` ci-dessus
                 default:     throw new Error('fake-db: opérateur non supporté ' + op);
             }
         });

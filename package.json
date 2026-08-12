@@ -14,7 +14,7 @@
     "smoke": "node scripts/smoke.js",
     "create-patron": "node scripts/create-patron.js",
     "lint": "eslint .",
-    "test": "node --test tests/utils.test.js tests/shift-hours.test.js tests/week.test.js tests/auth-guard.test.js tests/routes.test.js tests/conges.test.js tests/dispos.test.js tests/manager-off.test.js tests/manager-dispos.test.js tests/perf-settings.test.js tests/estab-access.test.js tests/staff-archive.test.js",
+    "test": "node --test tests/utils.test.js tests/shift-hours.test.js tests/week.test.js tests/auth-guard.test.js tests/routes.test.js tests/conges.test.js tests/dispos.test.js tests/manager-off.test.js tests/manager-dispos.test.js tests/perf-settings.test.js tests/estab-access.test.js tests/staff-archive.test.js tests/staff-archive-portes.test.js",
     "smoke:dev": "node scripts/smoke.js https://dev.templyo.fr --expect origin/dev",
     "smoke:main": "node scripts/smoke.js https://app-planning-bar-production.up.railway.app --expect origin/main",
     "db:uri:dev": "node scripts/db-uri.js .env.dev",

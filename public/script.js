@@ -41,7 +41,8 @@ const MONTH_NAMES     = ['janvier','février','mars','avril','mai','juin','juill
 // ── État global ──────────────────────────────────────────────────────────────
 
 let currentUser    = null;  // utilisateur connecté
-let allStaff       = [];
+let allStaff       = [];    // TOUT le staff, archivés compris — pour LIRE le passé
+let activeStaff    = [];    // F-14 — l'équipe d'aujourd'hui : pour CHOISIR quelqu'un
 let staffDisplayNames = new Map(); // _id → prénom court (avec initiale si doublon)
 
 function buildStaffDisplayNames() {
@@ -1320,6 +1321,14 @@ async function loadAllStaff() {
             { _id: 'sophie', name: 'Sophie', color: '#e67e22' },
         ];
     }
+    // F-14 — deux questions différentes, longtemps posées à la même liste :
+    //   `allStaff`    « quel nom porte ce shift ? »  → tout le monde, archivés compris,
+    //                 sinon un planning passé perd les noms de ceux qui sont partis.
+    //   `activeStaff` « qui puis-je choisir ? »      → l'équipe d'aujourd'hui.
+    // ~15 sites itéraient `allStaff` et 2 seulement filtraient : le remplacement de staff,
+    // l'invitation de compte, les jours de repos et l'import des taux proposaient encore
+    // les archivés. Le filtre est fait ICI une fois, plutôt que d'être re-oublié ailleurs.
+    activeStaff = allStaff.filter(s => !s.archived);
     buildStaffDisplayNames();
     renderSidebar();
 }
@@ -2236,7 +2245,10 @@ function openTransferShiftModal(shift) {
 // ── Modale remplacement d'un staff sur un shift ───────────────────────────────
 
 function openReplaceStaffModal(shift) {
-    const staffOptions = allStaff
+    // F-14 — `activeStaff` : remplacer quelqu'un par une personne archivée était le chemin
+    // le plus court pour la faire réapparaître dans une semaine déjà publiée. Le serveur
+    // refuse désormais (409), mais proposer un nom qui sera rejeté n'est pas une UI honnête.
+    const staffOptions = activeStaff
         .filter(s => String(s._id) !== String(shift.staff_id))
         .map(s => `<option value="${escapeHtml(String(s._id))}" data-color="${escapeHtml(s.color || '#888')}" data-name="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`)
         .join('');
@@ -4843,7 +4855,9 @@ function populateStaffSelect() {
     const select = document.getElementById('new-account-staff');
     if (!select) return;
     select.innerHTML = '<option value="">— Lier à un membre du staff —</option>';
-    allStaff.forEach(s => {
+    // F-14 — on n'invite pas quelqu'un qui est parti : créer un compte pour un profil
+    // archivé produit un accès que la connexion refusera (403 « compte désactivé »).
+    activeStaff.forEach(s => {
         const opt       = document.createElement('option');
         opt.value       = String(s._id);
         opt.textContent = s.name;
@@ -7527,7 +7541,9 @@ function renderRestDaysTab() {
     container.appendChild(header);
 
     // Une ligne par staff avec checkboxes
-    allStaff.forEach(staff => {
+    // F-14 — les jours de repos règlent la semaine À VENIR : une personne archivée n'en a
+    // plus, et sa ligne ne faisait qu'allonger un tableau déjà long.
+    activeStaff.forEach(staff => {
         const restDays = staff.rest_days || [];
         const row = document.createElement('div');
         row.style.cssText = 'display:grid;grid-template-columns:' + COL + ';gap:0 2px;align-items:center;padding:' + pad + ';border-bottom:1px solid #f5f5f5;';
@@ -8368,8 +8384,11 @@ function openBulkStaffRatesModal() {
         if (!lines.length) { showToast('Saisis au moins une ligne', true); return; }
 
         // Index des staff par nom normalisé
+        // F-14 — `activeStaff` : l'import de taux sert à préparer la paie courante. Faire
+        // correspondre une ligne du fichier avec une personne partie écraserait le taux
+        // figé sur son profil, donc les montants de ses récaps déjà édités.
         const byNormName = {};
-        allStaff.forEach(s => { byNormName[normalizeStr(s.name).trim()] = s; });
+        activeStaff.forEach(s => { byNormName[normalizeStr(s.name).trim()] = s; });
 
         const updates = [];   // { staff, rate, mode: 'hourly'|'fixed', name }
         const skipped = [];   // { line, reason }

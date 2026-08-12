@@ -89,7 +89,8 @@ async function logout() {
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 let currentUser  = null;
-let allStaff     = [];
+let allStaff     = [];  // TOUT le staff, archivés compris — pour LIRE un shift déjà posé
+let activeStaff  = [];  // F-14 — l'équipe d'aujourd'hui : pour CHOISIR dans l'autocomplete
 let cutoffHour     = 9; // fin de fenêtre de saisie (ex: 9h)
 let cutoffOpenHour = 0; // début de fenêtre de saisie (ex: 22h, 0 = minuit)
 let currentEstabId = null; // établissement actif (pointage)
@@ -207,6 +208,10 @@ async function init() {
         fetch('/api/establishments', { credentials: 'include' }).catch(() => null),
     ]);
     if (staffRes && staffRes.ok) allStaff = await staffRes.json();
+    // F-14 — l'autocomplete du pointage crée de VRAIS shifts (`POST /api/shifts/extra`,
+    // qui résout même par nom) : taper les 3 premières lettres d'une personne partie lui
+    // recréait des heures. Le nom reste lisible sur les shifts déjà posés via `allStaff`.
+    activeStaff = allStaff.filter(s => !s.archived);
 
     // ── Établissement actif selon le rôle ───────────────────────────────────
     const estabParam = new URLSearchParams(location.search).get('estab');
@@ -674,7 +679,7 @@ function initExtraForm() {
 
         suggestions.innerHTML = '';
 
-        if (allStaff.length === 0) {
+        if (activeStaff.length === 0) {
             // Aucun staff chargé — proposer saisie libre directement
             freeName.style.display = '';
             suggestions.style.display = 'none';
@@ -682,14 +687,14 @@ function initExtraForm() {
         }
 
         // Sans saisie : afficher en priorité le staff de l'établissement courant
-        let pool = allStaff;
+        let pool = activeStaff;
         if (!val && currentEstabId) {
-            const estabStaff = allStaff.filter(s => s.venues && s.venues.includes(currentEstabId));
+            const estabStaff = activeStaff.filter(s => s.venues && s.venues.includes(currentEstabId));
             if (estabStaff.length > 0) pool = estabStaff;
         }
 
         const matches = val
-            ? allStaff.filter(s => matchesWordPrefix(s.name, val)).slice(0, 8)
+            ? activeStaff.filter(s => matchesWordPrefix(s.name, val)).slice(0, 8)
             : pool.slice(0, 8);
 
         if (matches.length === 0) {
@@ -767,7 +772,12 @@ function initExtraForm() {
 
         if (!staffName)       { showToast('Nom du staff requis', true);          return; }
         // Avertir si le nom a été tapé sans être sélectionné dans la liste
-        if (!staffId && freeName.style.display === 'none' && allStaff.some(s => normalizeStr(s.name) === normalizeStr(staffName))) {
+        // F-14 — `activeStaff` et pas `allStaff`, sinon le message envoie dans le mur :
+        // taper le nom d'une personne archivée déclencherait « sélectionne-le dans la liste
+        // déroulante » alors qu'elle n'y figure plus. La personne partie retombe donc en
+        // saisie libre, et c'est le serveur qui tranche avec le vrai motif (409 « archivée »)
+        // au lieu d'une consigne impossible à suivre.
+        if (!staffId && freeName.style.display === 'none' && activeStaff.some(s => normalizeStr(s.name) === normalizeStr(staffName))) {
             showToast('Sélectionne "' + staffName + '" dans la liste déroulante', true);
             renderSuggestions(normalizeStr(staffName));
             return;

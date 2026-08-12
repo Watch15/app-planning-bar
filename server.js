@@ -230,6 +230,59 @@ async function archivedStaff(staffId) {
     return prof && prof.archived === true ? prof : null;
 }
 
+// F-14 — LA porte de la planification. F-13 n'avait posé le refus que dans
+// `POST /api/shifts` : cinq autres chemins écrivaient un `staff_id` dans `shifts` sans
+// aucun contrôle, dont la copie de semaine — le geste hebdomadaire le plus courant.
+// Toute route qui écrit un `staff_id` passe désormais par ici, sinon le trou revient.
+//
+// Rend l'un des trois :
+//   { joker: true }              — un Joker n'est personne : rien à contrôler
+//   { denied: { status, error } } — archivé : la route renvoie ça tel quel
+//   { staff: doc | null }        — planifiable. `null` = identifiant non résolu ; c'est
+//                                  le comportement d'avant F-14 et il est CONSERVÉ
+//                                  volontairement — refuser un id inconnu ici serait une
+//                                  validation neuve déguisée en correctif, et casserait
+//                                  les shifts dont le profil a été supprimé de longue date.
+//
+// Résout aussi PAR NOM (`POST /api/shifts/extra` n'a que ça), et rend le profil pour que
+// les appelants qui avaient déjà leur propre `findOne` (couleur, nom) s'en servent au lieu
+// d'en refaire un second.
+async function resolveStaffForPlanning({ staff_id, staff_name, is_joker } = {}) {
+    if (is_joker === true || staff_id === '__joker__') return { joker: true };
+
+    const projection = { projection: { name: 1, color: 1, archived: 1 } };
+    let prof = null;
+    if (staff_id && isValidObjectId(staff_id)) {
+        prof = await db.collection('staff').findOne({ _id: new ObjectId(staff_id) }, projection);
+    } else if (staff_name) {
+        prof = await db.collection('staff').findOne({
+            name: { $regex: '^' + String(staff_name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', $options: 'i' },
+        }, projection);
+    }
+
+    if (prof && prof.archived === true) {
+        return { denied: { status: 409,
+            error: (prof.name || 'Cette personne') + ' est archivée — réactive-la pour la planifier.' } };
+    }
+    return { staff: prof };
+}
+
+// F-14 — le pendant en masse, pour les routes qui traitent une semaine entière. Un
+// `findOne` par shift ferait 40 allers-retours sur une copie de semaine ; une requête
+// suffit. Rend l'ensemble des `staff_id` archivés parmi ceux passés — les appelants
+// en font ce que leur geste demande (la copie convertit en Joker, le push écarte).
+async function archivedIdsAmong(staffIds) {
+    const ids = [...new Set((staffIds || [])
+        .map(id => id == null ? '' : String(id))
+        .filter(id => id && id !== '__joker__' && isValidObjectId(id)))];
+    if (!ids.length) return new Set();
+    const docs = await db.collection('staff').find(
+        { _id: { $in: ids.map(id => new ObjectId(id)) }, archived: true },
+        { projection: { _id: 1 } }
+    ).toArray();
+    return new Set(docs.map(d => String(d._id)));
+}
+
 async function connectDB() {
     try {
         await client.connect();
@@ -350,6 +403,21 @@ async function sendSMS(to, body) {
 
 // Envoie une notification push à une liste de staff_ids (ou à tous si staffIds est null)
 async function sendPushToStaff(staffIds, payload) {
+    // F-14 — le filtre est ICI et pas chez les appelants, parce que c'est la porte unique :
+    // tout push destiné au staff passe par cette fonction, et les deux fuites relevées
+    // (sollicitation Joker, publication de planning) n'étaient que deux appelants sur huit.
+    // Une personne archivée ne peut plus se connecter : sans ce filtre elle reçoit des
+    // sollicitations sur son téléphone SANS AUCUN MOYEN DE S'EN DÉFAIRE.
+    // La notif in-app tombe avec le push, volontairement : elle ne serait jamais lue, et
+    // elle s'accumulerait indéfiniment dans une boîte que personne ne peut plus ouvrir.
+    if (db && Array.isArray(staffIds) && staffIds.length > 0) {
+        try {
+            const archived = await archivedIdsAmong(staffIds);
+            if (archived.size) staffIds = staffIds.filter(id => !archived.has(String(id)));
+            if (staffIds.length === 0) return;
+        } catch (e) { console.error('❌ filtre archivés (push):', e.message); }
+    }
+
     // Stocker la notif in-app indépendamment du push (fonctionne sans VAPID)
     if (db && Array.isArray(staffIds) && staffIds.length > 0 && payload.title && payload.body) {
         try {
@@ -1635,12 +1703,24 @@ app.delete('/api/users/:id', checkDB, requirePatron, async (req, res) => {
             await db.collection('manager_dispo_templates')
                 .deleteMany({ staff_id: String(doomed.staff_id) })
                 .catch(e => console.error('[delete user > templates]', e.message));
+
+            // ⚠️ Le profil `staff` est toujours CONSERVÉ : les shifts passés, le pointage et
+            // la masse salariale le référencent, et le supprimer ferait perdre son nom dans
+            // tous les récaps déjà édités.
+            // F-14 — mais il est désormais ARCHIVÉ. Jusqu'ici il restait `actif` : la
+            // personne n'avait plus de compte et continuait pourtant d'apparaître dans la
+            // barre du personnel, planifiable, notifiable. Le commentaire d'origine renvoyait
+            // la décision à F-13 ; F-13 est livré, et l'archivage est exactement l'état
+            // « plus dans la vie courante, tout le passé conservé » que ce cas demande.
+            // `archived_at` seulement s'il ne l'était pas déjà — réarchiver ne doit pas
+            // réécrire la date d'un départ plus ancien.
+            if (isValidObjectId(doomed.staff_id)) {
+                await db.collection('staff').updateOne(
+                    { _id: new ObjectId(String(doomed.staff_id)), archived: { $ne: true } },
+                    { $set: { archived: true, archived_at: new Date() } }
+                ).catch(e => console.error('[delete user > archive staff]', e.message));
+            }
         }
-        // ⚠️ Le profil `staff`, lui, est CONSERVÉ volontairement : les shifts passés, le
-        // pointage et la masse salariale le référencent, et le supprimer ferait perdre son
-        // nom dans tous les récaps déjà édités. Il reste donc visible dans la barre staff
-        // sans compte associé — c'est exactement ce que F-13 (comptes archivés) doit régler ;
-        // le trancher ici serait une décision produit déguisée en nettoyage.
         // Sans ça, un compte supprimé continuait de fonctionner jusqu'à l'expiration de
         // sa session — soit 30 jours.
         await invalidateUserSessions(req.params.id);
@@ -2469,14 +2549,14 @@ app.post('/api/shifts', checkDB, requirePatron, denyObservateurEdit, async (req,
         // Les deux lectures sont indépendantes. En série, elles ajoutaient un aller-retour
         // Mongo entier à CHAQUE créneau déposé — geste répété 30 à 60 fois quand le patron
         // monte une semaine, et le seul endroit du diff où la latence se ressent.
-        const [archive, conflicts] = await Promise.all([
-            isJoker ? null : archivedStaff(staff_id),
+        const [resolved, conflicts] = await Promise.all([
+            resolveStaffForPlanning({ staff_id, is_joker }),
             isJoker ? []   : db.collection('shifts').find({
                 staff_id, date, establishment_id: { $ne: establishment_id },
             }).toArray(),
         ]);
-        if (archive)
-            return res.status(409).json({ error: (archive.name || 'Cette personne') + ' est archivée — réactive-la pour la planifier.' });
+        if (resolved.denied)
+            return res.status(resolved.denied.status).json({ error: resolved.denied.error });
         for (const s of conflicts) {
             // Double shift : chevauchement horaire avec un autre établissement → blocage strict
             if (start_time < s.end_time && end_time > s.start_time) {
@@ -2580,7 +2660,10 @@ app.patch('/api/shifts/:id/joker-open', checkDB, requirePatron, denyObservateurE
                 { $set: { joker_open: true } }
             );
             // B-10 : pas de push si le shift Joker est dans le passé
-            const estabStaff = await db.collection('staff').find({ venues: shift.establishment_id }).toArray();
+            // F-14 — `sendPushToStaff` écarte déjà les archivés, mais le prédicat « qui
+            // solliciter pour ce créneau » se lit ici : le laisser faux obligerait à
+            // relire une autre fonction pour savoir qui la liste contient vraiment.
+            const estabStaff = await db.collection('staff').find({ venues: shift.establishment_id, ...NOT_ARCHIVED }).toArray();
             const staffIds   = estabStaff.map(s => String(s._id));
             if (staffIds.length && shift.date >= toDateStr(new Date())) {
                 const body = 'Un créneau est ouvert ' + formatDateFR(shift.date) + ' ' +
@@ -2626,6 +2709,14 @@ app.patch('/api/shifts/:id', checkDB, requirePatron, denyObservateurEdit, async 
 
         // Affectation d'un vrai staff sur un Joker
         if (assigningStaff) {
+            // F-14 — même refus que `POST /api/shifts`. C'est par ici que passe le
+            // « remplacer par », et le front proposait encore les archivés dans sa liste :
+            // remplacer quelqu'un par une personne partie était le chemin le plus court
+            // pour la faire réapparaître dans une semaine déjà publiée.
+            const resolved = await resolveStaffForPlanning({ staff_id, is_joker });
+            if (resolved.denied)
+                return res.status(resolved.denied.status).json({ error: resolved.denied.error });
+
             updateFields.staff_id   = staff_id;
             updateFields.staff_name = staff_name || '';
             if (color) updateFields.color = color;
@@ -2767,13 +2858,22 @@ app.post('/api/copy-day', checkDB, requirePatron, denyObservateurEdit, async (re
     if (!canAccessEstablishment(req.session.user, establishment_id))
         return res.status(403).json({ error: 'Accès refusé à cet établissement' });
     try {
-        let created = 0;
+        // F-14 — cf. `POST /api/copy-week` : un archivé ne repart pas dans une journée
+        // copiée, mais son créneau ne disparaît pas pour autant — il devient un Joker.
+        const archivedIds = await archivedIdsAmong(shifts.map(s => s.staff_id));
+        let created = 0, jokerised = 0;
         for (const date of to_dates) {
             await db.collection('shifts').deleteMany({ establishment_id, date });
-            const newShifts = shifts.map(({ _id, ...rest }) => ({ ...rest, establishment_id, date }));
+            const newShifts = shifts.map(({ _id, ...rest }) => {
+                const base = { ...rest, establishment_id, date };
+                if (!archivedIds.has(String(rest.staff_id))) return base;
+                jokerised++;
+                return { ...base, staff_id: '__joker__', staff_name: '', is_joker: true, color: '#95a5a6' };
+            });
             if (newShifts.length > 0) { await db.collection('shifts').insertMany(newShifts); created += newShifts.length; }
         }
-        res.json({ message: created + ' shifts copiés sur ' + to_dates.length + ' jour(s)' });
+        res.json({ message: created + ' shifts copiés sur ' + to_dates.length + ' jour(s)'
+            + (jokerised ? ' · ' + jokerised + ' créneau(x) passé(s) en Joker (personne archivée)' : '') });
         touchLastUpdated();
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -2804,7 +2904,14 @@ app.post('/api/copy-week', checkDB, requirePatron, denyObservateurEdit, async (r
         const offsetDays = (toMonday) =>
             Math.round((new Date(toMonday + 'T12:00:00') - new Date(from_week_start + 'T12:00:00')) / 86400000);
 
-        let created = 0, weeks = 0;
+        // F-14 — c'était le trou le plus visible : copier la semaine faisait revenir EN MASSE
+        // une personne archivée dans un planning à venir, publication et push compris, sans
+        // que rien ne l'annonce. On ne supprime pas son créneau pour autant — le poste était
+        // tenu, il reste à pourvoir. Il devient donc un Joker, c'est-à-dire exactement le
+        // `mode: 'jokers'` que la route sait déjà faire, appliqué aux seuls partis.
+        const archivedIds = await archivedIdsAmong(sourceShifts.map(s => s.staff_id));
+
+        let created = 0, weeks = 0, jokerised = 0;
         for (const toMonday of to_week_starts) {
             if (toMonday === from_week_start) continue; // ne pas s'écraser soi-même
             const offset = offsetDays(toMonday);
@@ -2823,8 +2930,13 @@ app.post('/api/copy-week', checkDB, requirePatron, denyObservateurEdit, async (r
                     // Créneau vide : Joker non attribué, à re-remplir
                     return { ...base, staff_id: '__joker__', staff_name: '', is_joker: true, color: '#95a5a6' };
                 }
-                // Garder l'affectation (un Joker source reste Joker)
+                // Garder l'affectation (un Joker source reste Joker) — sauf si la personne
+                // a été archivée entre-temps : le créneau survit, son titulaire non.
                 const isJoker = s.is_joker || s.staff_id === '__joker__';
+                if (archivedIds.has(String(s.staff_id))) {
+                    jokerised++;
+                    return { ...base, staff_id: '__joker__', staff_name: '', is_joker: true, color: '#95a5a6' };
+                }
                 return {
                     ...base,
                     staff_id:   s.staff_id,
@@ -2836,7 +2948,9 @@ app.post('/api/copy-week', checkDB, requirePatron, denyObservateurEdit, async (r
             if (newShifts.length) { await db.collection('shifts').insertMany(newShifts); created += newShifts.length; }
             weeks++;
         }
-        res.json({ message: created + ' shift(s) copiés sur ' + weeks + ' semaine(s)' + (copyMode === 'jokers' ? ' (en Jokers)' : '') });
+        res.json({ message: created + ' shift(s) copiés sur ' + weeks + ' semaine(s)'
+            + (copyMode === 'jokers' ? ' (en Jokers)' : '')
+            + (jokerised ? ' · ' + jokerised + ' créneau(x) passé(s) en Joker (personne archivée)' : '') });
         touchLastUpdated();
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -3583,6 +3697,18 @@ app.patch('/api/dispos/:id/confirm', checkDB, requirePatron, denyObservateurEdit
         // n'est pas un cloisonnement.
         if (!isOff && !canAccessEstablishment(req.session.user, establishment_id))
             return res.status(403).json({ error: 'Accès refusé à cet établissement' });
+        // F-14 — refuser AVANT d'écrire le statut : confirmer avec `create_shift` planifie
+        // pour de bon, et le contrôle ne vivait que dans `POST /api/shifts` — ce chemin-ci
+        // recréait donc un shift pour une personne archivée sans rien dire.
+        // Portée volontairement étroite : on ne bloque QUE la création de shift. Confirmer
+        // sans cocher la case n'écrit aucun `staff_id` dans `shifts` et laisse au patron le
+        // moyen de vider une dispo restée en file depuis avant l'archivage.
+        const resolvedDispo = create_shift && !isOff
+            ? await resolveStaffForPlanning({ staff_id: dispo.staff_id })
+            : { staff: null };
+        if (resolvedDispo.denied)
+            return res.status(resolvedDispo.denied.status).json({ error: resolvedDispo.denied.error });
+
         const setFields = { status: 'confirmed' };
         if (!isOff) setFields.establishment_id = establishment_id;
         await db.collection('availabilities').updateOne({ _id: new ObjectId(req.params.id) }, { $set: setFields });
@@ -3596,12 +3722,14 @@ app.patch('/api/dispos/:id/confirm', checkDB, requirePatron, denyObservateurEdit
                 { projection: { _id: 1 } }
             );
             if (!existingShift) {
-                const staffMember = await db.collection('staff').findOne({ _id: new ObjectId(dispo.staff_id) });
+                // Le profil vient de `resolveStaffForPlanning` ci-dessus : c'est la même
+                // lecture, elle servait déjà à trancher l'archivage. En refaire une seconde
+                // pour la seule couleur était un aller-retour Mongo pour rien.
                 await db.collection('shifts').insertOne({
                     staff_id: dispo.staff_id, staff_name: dispo.staff_name,
                     establishment_id, date: dispo.date,
                     start_time: dispo.start_time, end_time: dispo.end_time,
-                    color: staffMember?.color || '#3498db',
+                    color: resolvedDispo.staff?.color || '#3498db',
                 });
                 shiftCreated = true;
             }
@@ -3904,6 +4032,16 @@ async function materializeAllManagerTemplates() {
         for (const t of templates) {
             if (!isValidObjectId(t.staff_id)) continue;
             if (!shouldMaterializeTemplate(now, deadline, t.last_materialized_week, nextMonday)) continue;
+            // F-14 — sans ça, un directeur archivé se matérialise des dispos `pending`
+            // chaque semaine, indéfiniment : personne ne les a saisies, personne ne peut
+            // les retirer, et elles s'empilent dans la file du patron. On SAUTE le modèle
+            // sans le supprimer — l'archivage est réversible (`PATCH /api/staff/:id/archive`),
+            // et détruire la semaine-type ferait perdre une config à la réactivation.
+            // C'est la différence avec `DELETE /api/users/:id`, qui la purge parce que le
+            // compte, lui, ne revient pas.
+            // Placé APRÈS le test pur : cette boucle tourne toutes les 15 min, inutile
+            // d'aller lire un profil pour un modèle qu'on n'allait de toute façon pas écrire.
+            if (await archivedStaff(t.staff_id)) continue;
             const name = await managerStaffName(t.staff_id, t.staff_name);
             const n = await materializeManagerTemplateWeek(t.staff_id, name, t, nextMonday);
             await db.collection('manager_dispo_templates').updateOne(
@@ -5290,24 +5428,18 @@ app.post('/api/shifts/extra', checkDB, requireAuth, async (req, res) => {
         if (!ok) return res.status(403).json({ error: 'Accès refusé' });
     }
     try {
-        // Chercher le profil staff : par staff_id si fourni, sinon par nom exact
-        let color = '#95a5a6';
-        let resolvedName = staff_name || 'Inconnu';
-        let resolvedStaffId = staff_id || null;
-        if (staff_id && isValidObjectId(staff_id)) {
-            const staffDoc = await db.collection('staff').findOne({ _id: new ObjectId(staff_id) });
-            if (staffDoc) { color = staffDoc.color || color; resolvedName = staffDoc.name; }
-        } else if (staff_name) {
-            // Pas de staff_id — chercher par nom exact (insensible à la casse)
-            const staffDoc = await db.collection('staff').findOne({
-                name: { $regex: '^' + staff_name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', $options: 'i' }
-            });
-            if (staffDoc) {
-                color           = staffDoc.color || color;
-                resolvedName    = staffDoc.name;
-                resolvedStaffId = String(staffDoc._id);
-            }
-        }
+        // F-14 — cette route est la seule à résoudre PAR NOM, et l'autocomplete du pointage
+        // proposait encore les archivés : taper les 3 premières lettres d'une personne
+        // partie lui recréait un shift, avec ses heures réelles. La résolution (par id ou
+        // par nom) et le refus vivent maintenant au même endroit que pour les autres portes.
+        const resolved = await resolveStaffForPlanning({ staff_id, staff_name });
+        if (resolved.denied)
+            return res.status(resolved.denied.status).json({ error: resolved.denied.error });
+
+        const staffDoc        = resolved.staff;
+        const color           = staffDoc?.color || '#95a5a6';
+        const resolvedName    = staffDoc?.name  || staff_name || 'Inconnu';
+        const resolvedStaffId = staffDoc ? String(staffDoc._id) : (staff_id || null);
         const shift = {
             staff_id:         resolvedStaffId,
             staff_name:       resolvedName,
