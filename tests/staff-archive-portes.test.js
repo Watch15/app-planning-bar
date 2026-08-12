@@ -335,7 +335,54 @@ test('le modèle est SAUTÉ, pas supprimé — l\'archivage est réversible', as
         'ne pas marquer la semaine : à la réactivation, la matérialisation doit reprendre');
 });
 
-// ── Porte 7 : la suppression de compte ───────────────────────────────────────
+// ── Porte 7 : l'invitation de compte ─────────────────────────────────────────
+//
+// Relevée par la revue d'altitude qui a suivi le premier jet de F-14 : le filtre n'avait
+// été posé que dans le FRONT (`populateStaffSelect`), ce qui est précisément le
+// raisonnement que F-14 corrige partout ailleurs. Inviter un archivé envoie un vrai SMS
+// ou un vrai e-mail, la personne choisit son mot de passe, et se prend un 403 au login.
+
+test('inviter un archivé est refusé', async () => {
+    const res = await req('/api/users', PATRON, {
+        method: 'POST',
+        body: JSON.stringify({ email: 'partie@templyo.test', staff_id: PARTIE, role: 'staff' }),
+    });
+
+    assert.equal(res.status, 409);
+    assert.match((await res.json()).error, /archiv/i);
+    assert.equal(db.collection('users')._docs.length, 2, 'aucun compte créé');
+});
+
+test('inviter quelqu\'un d\'actif marche toujours', async () => {
+    const res = await req('/api/users', PATRON, {
+        method: 'POST',
+        body: JSON.stringify({ email: 'restante@templyo.test', staff_id: RESTANTE, role: 'staff' }),
+    });
+
+    assert.ok(res.status < 400, 'le garde-fou ne doit pas bloquer les invitations normales, obtenu ' + res.status);
+});
+
+test('l\'import en masse saute l\'archivé, avec la raison, et traite les autres', async () => {
+    // L'import résout PAR NOM : c'est le chemin qui envoie une invitation à quelqu'un
+    // qu'on n'a jamais sélectionné dans une liste.
+    const res = await req('/api/users/bulk', PATRON, {
+        method: 'POST',
+        body: JSON.stringify({ entries: [
+            { name: 'Partie',   email: 'partie2@templyo.test' },
+            { name: 'Restante', email: 'restante2@templyo.test' },
+        ] }),
+    });
+    assert.equal(res.status, 201);
+
+    const body = await res.json();
+    assert.equal(body.skipped.length, 1, 'la ligne archivée doit être sautée');
+    assert.match(body.skipped[0].reason, /archiv/i, 'le patron doit savoir POURQUOI');
+    assert.equal(body.skipped[0].name, 'Partie');
+    // L'autre ligne passe : sauter n'est pas interrompre.
+    assert.ok(body.created.length + body.updated.length >= 1, 'Restante doit être traitée');
+});
+
+// ── Porte 8 : la suppression de compte ───────────────────────────────────────
 
 test('supprimer un compte archive son profil staff au lieu de le laisser actif', async () => {
     staffDoc(RESTANTE).archived = undefined;

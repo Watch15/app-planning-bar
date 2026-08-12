@@ -42,7 +42,18 @@ const MONTH_NAMES     = ['janvier','février','mars','avril','mai','juin','juill
 
 let currentUser    = null;  // utilisateur connecté
 let allStaff       = [];    // TOUT le staff, archivés compris — pour LIRE le passé
-let activeStaff    = [];    // F-14 — l'équipe d'aujourd'hui : pour CHOISIR quelqu'un
+
+// F-14 — deux questions différentes, longtemps posées à la même liste :
+//   `allStaff`     « quel nom porte ce shift ? »  → tout le monde, archivés compris,
+//                  sinon un planning passé perd les noms de ceux qui sont partis.
+//   `activeStaff()` « qui puis-je choisir ? »     → l'équipe d'aujourd'hui.
+//
+// ⚠️ Une FONCTION, pas un tableau figé au chargement. Un instantané se périme : quatre
+// endroits mutent `allStaff` sans repasser par `loadAllStaff()` (bascule archiver/réactiver,
+// suppression, ajout, import en masse). Archiver quelqu'un puis ouvrir « Remplacer par »
+// sans recharger la page le proposait encore — exactement la fuite que F-14 ferme côté
+// serveur, réintroduite côté client. Dérivé à la lecture, le problème n'existe pas.
+const activeStaff = () => allStaff.filter(s => !s.archived);
 let staffDisplayNames = new Map(); // _id → prénom court (avec initiale si doublon)
 
 function buildStaffDisplayNames() {
@@ -1321,14 +1332,6 @@ async function loadAllStaff() {
             { _id: 'sophie', name: 'Sophie', color: '#e67e22' },
         ];
     }
-    // F-14 — deux questions différentes, longtemps posées à la même liste :
-    //   `allStaff`    « quel nom porte ce shift ? »  → tout le monde, archivés compris,
-    //                 sinon un planning passé perd les noms de ceux qui sont partis.
-    //   `activeStaff` « qui puis-je choisir ? »      → l'équipe d'aujourd'hui.
-    // ~15 sites itéraient `allStaff` et 2 seulement filtraient : le remplacement de staff,
-    // l'invitation de compte, les jours de repos et l'import des taux proposaient encore
-    // les archivés. Le filtre est fait ICI une fois, plutôt que d'être re-oublié ailleurs.
-    activeStaff = allStaff.filter(s => !s.archived);
     buildStaffDisplayNames();
     renderSidebar();
 }
@@ -1387,7 +1390,7 @@ function renderSidebar() {
     // Ils restent partout où l'on regarde le passé (récap, pointage, plannings publiés),
     // parce que `allStaff` les contient toujours — l'API ne les filtre volontairement pas.
     // Trier : staff affecté à l'établissement courant en premier, puis alphabétique
-    let sorted = allStaff.filter(s => !s.archived).sort((a, b) => {
+    let sorted = activeStaff().sort((a, b) => {
         const aHas = a.venues && a.venues.includes(currentVenueId) ? 0 : 1;
         const bHas = b.venues && b.venues.includes(currentVenueId) ? 0 : 1;
         if (aHas !== bHas) return aHas - bHas;
@@ -2248,7 +2251,7 @@ function openReplaceStaffModal(shift) {
     // F-14 — `activeStaff` : remplacer quelqu'un par une personne archivée était le chemin
     // le plus court pour la faire réapparaître dans une semaine déjà publiée. Le serveur
     // refuse désormais (409), mais proposer un nom qui sera rejeté n'est pas une UI honnête.
-    const staffOptions = activeStaff
+    const staffOptions = activeStaff()
         .filter(s => String(s._id) !== String(shift.staff_id))
         .map(s => `<option value="${escapeHtml(String(s._id))}" data-color="${escapeHtml(s.color || '#888')}" data-name="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`)
         .join('');
@@ -4857,7 +4860,7 @@ function populateStaffSelect() {
     select.innerHTML = '<option value="">— Lier à un membre du staff —</option>';
     // F-14 — on n'invite pas quelqu'un qui est parti : créer un compte pour un profil
     // archivé produit un accès que la connexion refusera (403 « compte désactivé »).
-    activeStaff.forEach(s => {
+    activeStaff().forEach(s => {
         const opt       = document.createElement('option');
         opt.value       = String(s._id);
         opt.textContent = s.name;
@@ -7543,7 +7546,11 @@ function renderRestDaysTab() {
     // Une ligne par staff avec checkboxes
     // F-14 — les jours de repos règlent la semaine À VENIR : une personne archivée n'en a
     // plus, et sa ligne ne faisait qu'allonger un tableau déjà long.
-    activeStaff.forEach(staff => {
+    // ⚠️ La liste est fixée UNE fois ici : le bouton « Enregistrer » plus bas apparie les
+    // lignes du DOM par INDEX. Rendre depuis une liste et enregistrer depuis une autre
+    // écrirait les jours cochés sur la mauvaise personne.
+    const restDaysStaff = activeStaff();
+    restDaysStaff.forEach(staff => {
         const restDays = staff.rest_days || [];
         const row = document.createElement('div');
         row.style.cssText = 'display:grid;grid-template-columns:' + COL + ';gap:0 2px;align-items:center;padding:' + pad + ';border-bottom:1px solid #f5f5f5;';
@@ -7580,7 +7587,7 @@ function renderRestDaysTab() {
     saveAll.addEventListener('click', async () => {
         let ok = 0, fail = 0;
         const rowEls = Array.from(container.children).slice(1, -1); // skip header and footer
-        const promises = allStaff.map((s, i) => {
+        const promises = restDaysStaff.map((s, i) => {
             const rowEl = rowEls[i];
             if (!rowEl) return Promise.resolve();
             const newRestDays = Array.from(rowEl.querySelectorAll('.rest-day-tab-cb'))
@@ -8388,7 +8395,7 @@ function openBulkStaffRatesModal() {
         // correspondre une ligne du fichier avec une personne partie écraserait le taux
         // figé sur son profil, donc les montants de ses récaps déjà édités.
         const byNormName = {};
-        activeStaff.forEach(s => { byNormName[normalizeStr(s.name).trim()] = s; });
+        activeStaff().forEach(s => { byNormName[normalizeStr(s.name).trim()] = s; });
 
         const updates = [];   // { staff, rate, mode: 'hourly'|'fixed', name }
         const skipped = [];   // { line, reason }

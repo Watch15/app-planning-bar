@@ -195,8 +195,8 @@ d'introduire 3 erreurs neuves ici.
 ### État actuel des tests (pour mémoire)
 
 > ⚠️ Ce paragraphe décrivait l'état au 2026-08-05 (160 tests). **Chiffres à jour au
-> 2026-08-12 : 283 tests, 13 fichiers**, `npm test` vert, `eslint` 0 erreur / 13 warnings.
-> (243 au 2026-08-10, puis +25 F-13 et divers, +15 F-14.)
+> 2026-08-12 : 286 tests, 13 fichiers**, `npm test` vert, `eslint` 0 erreur / 13 warnings.
+> (243 au 2026-08-10, puis +25 F-13 et divers, +15 F-14, +3 revue `/simplify` de F-14.)
 
 Deux niveaux : **128 unitaires purs** (`utils` 80, `shift-hours` 12, `week` 15,
 `auth-guard` 21 — helpers de
@@ -1201,6 +1201,58 @@ détail**, parce que ce sont elles qui se reperdront :
    tenir. Deux gardes redondantes en tiennent zéro tant qu'on ne les casse pas séparément.
    C'est le même geste que « non-vacuité vérifiée par mutation » des sessions précédentes,
    sauf qu'ici il a **corrigé les tests**, pas seulement rassuré sur eux.
+
+### Revue `/simplify` de F-14 (2026-08-12) — deux régressions que j'avais introduites
+
+Passée juste après le commit F-14. **Les deux trouvailles qui comptent sont des dégâts du
+lot lui-même**, pas de la dette ancienne :
+
+1. **🔴 `activeStaff` était un INSTANTANÉ, donc périmé.** Je l'avais écrit
+   `activeStaff = allStaff.filter(…)` dans `loadAllStaff()`. Or **quatre** endroits mutent
+   `allStaff` sans repasser par là (bascule archiver/réactiver — qui mute `staff.archived`
+   *en place*, suppression, ajout, import en masse). Conséquence : archiver quelqu'un puis
+   ouvrir « Remplacer par » **sans recharger la page** le proposait encore. C'est exactement
+   la fuite que F-14 ferme côté serveur, réintroduite côté client. Corrigé en **dérivation** :
+   `const activeStaff = () => allStaff.filter(s => !s.archived)`. La leçon est générale :
+   un état dérivé recopié dans une variable a besoin d'un contrat de rafraîchissement que
+   personne ne tient ; une fonction n'en a pas besoin.
+2. **🔴 Appariement par index cassé dans l'onglet « jours de repos ».** J'avais changé le
+   *rendu* pour `activeStaff` en laissant l'*enregistrement* sur `allStaff.map((s, i) => …)`.
+   Dès qu'un archivé précède un actif, les jours cochés partaient **sur la mauvaise
+   personne**, et les derniers actifs étaient ignorés en silence. Corrigé : la liste est
+   fixée une fois (`restDaysStaff`) et sert aux deux moitiés. ⚠️ Deux tableaux parallèles
+   appariés par index produisent mécaniquement ce défaut — c'est le vrai enseignement,
+   au-delà de ce site.
+
+**Trouvaille d'altitude, réelle et corrigée** : le filtre archivé n'existait que dans le
+**front** pour l'invitation de compte. `POST /api/users` et surtout `POST /api/users/bulk`
+(qui résout **par nom**) envoyaient une vraie invitation SMS/e-mail à une personne partie,
+qui choisissait son mot de passe et se prenait un 403 au login. C'est le raisonnement que
+F-14 rejette partout ailleurs, laissé en place ici. 3 tests, 2 mutations. L'import passe par
+son canal `skipped` existant (le patron voit la ligne **et** la raison) plutôt que
+d'interrompre tout le fichier.
+
+**Aussi appliqué** : `Promise.all` rétabli dans `PATCH /api/shifts/:id` (la route sœur
+`POST /api/shifts` l'avait, celle-ci l'avait perdu — 1 aller-retour par affectation, 2 par
+échange de shifts) ; constante `JOKER_SHIFT` pour le littéral « créneau sans titulaire »
+écrit **3 fois** (1 préexistant + 2 ajoutés par F-14) ; `resolveStaffForPlanning` ramené de
+**trois** formes de retour à **deux** — le `{ joker: true }` n'était lu par aucun appelant ;
+double garde et test `if (archived.size)` inutiles retirés de `sendPushToStaff`.
+
+**Écarté, avec la raison** :
+- *« le compteur `jokerised` est multiplié par le nombre de cibles »* — **faux positif**.
+  `created` compte déjà le total tous jours/semaines confondus ; copier 1 shift archivé vers
+  3 semaines crée bien 3 créneaux Joker. Les deux nombres sont dans la même unité.
+- *« le cron devrait utiliser `archivedIdsAmong` groupé »* — les deux revues se
+  contredisaient ; celle qui refuse a raison. La boucle tourne **96 fois par jour** et
+  n'a presque jamais de modèle éligible : une requête groupée en tête paierait 96 allers-
+  retours pour en économiser ~1 par semaine. Le `findOne` placé **après** les tests purs
+  est le bon choix.
+- *`escapeRegex` à extraire dans `lib/utils.js`* (2 copies inline) et *`realStaffIds`*
+  (3 copies de `id && id !== '__joker__' && isValidObjectId(id)`) — vrais constats, mais
+  les copies vivent hors du diff. **À faire au prochain passage dans ces fonctions.**
+- *`createNotifForPatrons` échappe au filtre* — cible `users` par rôle, pas `staff`. Effet
+  réel mais nul en pratique (le compte ne peut plus se connecter, TTL fait le reste).
 
 ### Divers — outillage & process
 

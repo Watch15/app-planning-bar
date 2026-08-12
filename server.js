@@ -220,6 +220,14 @@ const NOT_ARCHIVED = Object.freeze({ archived: { $ne: true } });
 // à quatre endroits, ce que la constante ci-dessus prétendait justement éviter.
 const DISPO_TARGET = Object.freeze({ can_submit_dispos: true, ...NOT_ARCHIVED });
 
+// « Ce créneau n'a pas de titulaire » — la forme d'un shift Joker, en un seul endroit.
+// Elle était écrite en toutes lettres dans la branche « créneau vide » de `copy-week` ;
+// F-14 en a ajouté deux copies (la conversion d'un archivé, dans les deux routes de copie).
+// Trois littéraux de quatre champs, c'est exactement ce que le commentaire de
+// `NOT_ARCHIVED` ci-dessus dit vouloir éviter : c'est toujours le troisième qu'on oublie
+// le jour où le Joker gagne un champ.
+const JOKER_SHIFT = Object.freeze({ staff_id: '__joker__', staff_name: '', is_joker: true, color: '#95a5a6' });
+
 // F-13 — le profil s'il est archivé, `null` sinon. Deux portes s'en servent (la connexion
 // et la création de shift) ; lui donner un nom offre un point d'ancrage greppable à celles
 // qui suivront, au lieu d'un `findOne` recopié à chaque fois qu'on y repense.
@@ -235,20 +243,25 @@ async function archivedStaff(staffId) {
 // aucun contrôle, dont la copie de semaine — le geste hebdomadaire le plus courant.
 // Toute route qui écrit un `staff_id` passe désormais par ici, sinon le trou revient.
 //
-// Rend l'un des trois :
-//   { joker: true }              — un Joker n'est personne : rien à contrôler
-//   { denied: { status, error } } — archivé : la route renvoie ça tel quel
-//   { staff: doc | null }        — planifiable. `null` = identifiant non résolu ; c'est
-//                                  le comportement d'avant F-14 et il est CONSERVÉ
-//                                  volontairement — refuser un id inconnu ici serait une
-//                                  validation neuve déguisée en correctif, et casserait
-//                                  les shifts dont le profil a été supprimé de longue date.
+// Rend l'un des deux :
+//   { denied: { status, error } } — archivé : la route renvoie ça tel quel. Forme
+//                                   `{status, error}` et non une chaîne, comme
+//                                   `perfScopeDenial` : sinon chaque appelant redérive le
+//                                   code HTTP par comparaison de littéral.
+//   { staff: doc | null }         — planifiable. `null` = Joker, ou identifiant non résolu.
+//                                   Les deux se traitent pareil (rien à contrôler, aucun
+//                                   profil à réutiliser), d'où une seule forme. Laisser
+//                                   passer un id inconnu est le comportement d'avant F-14
+//                                   et il est CONSERVÉ volontairement — le refuser serait
+//                                   une validation neuve déguisée en correctif, et
+//                                   casserait les shifts dont le profil a été supprimé.
 //
 // Résout aussi PAR NOM (`POST /api/shifts/extra` n'a que ça), et rend le profil pour que
 // les appelants qui avaient déjà leur propre `findOne` (couleur, nom) s'en servent au lieu
 // d'en refaire un second.
 async function resolveStaffForPlanning({ staff_id, staff_name, is_joker } = {}) {
-    if (is_joker === true || staff_id === '__joker__') return { joker: true };
+    // Un Joker n'est personne : ni archivable, ni porteur d'un profil à lire.
+    if (is_joker === true || staff_id === '__joker__') return { staff: null };
 
     const projection = { projection: { name: 1, color: 1, archived: 1 } };
     let prof = null;
@@ -413,26 +426,26 @@ async function sendPushToStaff(staffIds, payload) {
     if (db && Array.isArray(staffIds) && staffIds.length > 0) {
         try {
             const archived = await archivedIdsAmong(staffIds);
-            if (archived.size) staffIds = staffIds.filter(id => !archived.has(String(id)));
+            staffIds = staffIds.filter(id => !archived.has(String(id)));
             if (staffIds.length === 0) return;
         } catch (e) { console.error('❌ filtre archivés (push):', e.message); }
-    }
 
-    // Stocker la notif in-app indépendamment du push (fonctionne sans VAPID)
-    if (db && Array.isArray(staffIds) && staffIds.length > 0 && payload.title && payload.body) {
-        try {
-            await db.collection('staff_notifications').insertMany(
-                staffIds.map(id => ({
-                    staff_id:   id,
-                    type:       payload.tag || 'templyo-notif',
-                    title:      payload.title,
-                    body:       payload.body,
-                    url:        payload.url || '/planning.html',
-                    read:       false,
-                    created_at: new Date(),
-                }))
-            );
-        } catch (e) { console.error('❌ staff_notifications insert error:', e.message); }
+        // Stocker la notif in-app indépendamment du push (fonctionne sans VAPID)
+        if (payload.title && payload.body) {
+            try {
+                await db.collection('staff_notifications').insertMany(
+                    staffIds.map(id => ({
+                        staff_id:   id,
+                        type:       payload.tag || 'templyo-notif',
+                        title:      payload.title,
+                        body:       payload.body,
+                        url:        payload.url || '/planning.html',
+                        read:       false,
+                        created_at: new Date(),
+                    }))
+                );
+            } catch (e) { console.error('❌ staff_notifications insert error:', e.message); }
+        }
     }
 
     // La notif in-app ci-dessus est conservée (elle ne quitte pas l'app) ; c'est le push,
@@ -1475,6 +1488,16 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
     if (userRole === 'etablissement' && !establishment_id)
         return res.status(400).json({ error: 'establishment_id requis pour un compte établissement' });
     try {
+        // F-14 — inviter quelqu'un d'archivé produit un compte que la connexion refusera
+        // aussitôt (403 « compte désactivé »), après un vrai SMS ou un vrai e-mail parti
+        // chez une personne qui ne travaille plus ici. Le front ne propose plus les
+        // archivés dans sa liste, mais s'arrêter là serait exactement le raisonnement que
+        // F-14 corrige partout ailleurs : la garde du client n'est pas une garde.
+        const archivedInvite = staff_id ? await archivedStaff(staff_id) : null;
+        if (archivedInvite)
+            return res.status(409).json({
+                error: (archivedInvite.name || 'Cette personne') + ' est archivée — réactive-la avant de lui créer un compte.' });
+
         // Vérifier doublon email
         if (email) {
             const existingEmail = await db.collection('users').findOne({ email: email.toLowerCase().trim() });
@@ -1764,6 +1787,15 @@ app.post('/api/users/bulk', checkDB, requireAdmin, async (req, res) => {
                     const uByStaff = await db.collection('users').findOne({ staff_id: String(existingStaff._id) });
                     if (uByStaff) existingUser = uByStaff;
                 }
+            }
+
+            // F-14 — même refus qu'en invitation unitaire, mais par la voie que cette route
+            // possède déjà : l'import résout PAR NOM (l. ci-dessus), donc une ligne du
+            // fichier portant le nom d'une personne partie lui enverrait une vraie
+            // invitation. `skipped` existe pour ça — le patron voit la ligne et la raison.
+            if (existingStaff && existingStaff.archived === true) {
+                results.skipped.push({ name, reason: 'Profil archivé — réactive-le avant de créer son compte' });
+                continue;
             }
 
             // Vérifier conflits : le nouveau email/phone appartient à quelqu'un d'autre ?
@@ -2707,16 +2739,27 @@ app.patch('/api/shifts/:id', checkDB, requirePatron, denyObservateurEdit, async 
         // Note sur un Joker
         if (updatingNote) updateFields.note = String(note).slice(0, 280);
 
-        // Affectation d'un vrai staff sur un Joker
-        if (assigningStaff) {
+        // Les deux lectures sont indépendantes — même raison qu'en `POST /api/shifts`, dont
+        // cette route est la sœur : en série, chaque affectation payait un aller-retour
+        // Mongo de plus, et un échange de deux shifts en paie deux.
+        const effectiveStaffId = staff_id || existing.staff_id;
+        const [resolved, conflicts] = await Promise.all([
             // F-14 — même refus que `POST /api/shifts`. C'est par ici que passe le
             // « remplacer par », et le front proposait encore les archivés dans sa liste :
             // remplacer quelqu'un par une personne partie était le chemin le plus court
             // pour la faire réapparaître dans une semaine déjà publiée.
-            const resolved = await resolveStaffForPlanning({ staff_id, is_joker });
-            if (resolved.denied)
-                return res.status(resolved.denied.status).json({ error: resolved.denied.error });
+            assigningStaff ? resolveStaffForPlanning({ staff_id, is_joker }) : { staff: null },
+            effectiveStaffId !== '__joker__' ? db.collection('shifts').find({
+                staff_id: effectiveStaffId, date: existing.date,
+                establishment_id: { $ne: existing.establishment_id },
+                _id: { $ne: new ObjectId(req.params.id) },
+            }).toArray() : [],
+        ]);
+        if (resolved.denied)
+            return res.status(resolved.denied.status).json({ error: resolved.denied.error });
 
+        // Affectation d'un vrai staff sur un Joker
+        if (assigningStaff) {
             updateFields.staff_id   = staff_id;
             updateFields.staff_name = staff_name || '';
             if (color) updateFields.color = color;
@@ -2732,24 +2775,16 @@ app.patch('/api/shifts/:id', checkDB, requirePatron, denyObservateurEdit, async 
         }
 
         // Détection de conflits (uniquement pour les vrais staffs)
-        const effectiveStaffId = staff_id || existing.staff_id;
         const warnings = [];
-        if (effectiveStaffId !== '__joker__') {
-            const conflicts = await db.collection('shifts').find({
-                staff_id: effectiveStaffId, date: existing.date,
-                establishment_id: { $ne: existing.establishment_id },
-                _id: { $ne: new ObjectId(req.params.id) }
-            }).toArray();
-            for (const s of conflicts) {
-                // Double shift : chevauchement horaire avec un autre établissement → blocage strict
-                if (newStart < s.end_time && newEnd > s.start_time) {
-                    const estab = await db.collection('establishments').findOne({ id: s.establishment_id });
-                    return res.status(409).json({ error: 'Double shift : ' + (staff_name || existing.staff_name || 'ce staff') + ' a déjà un shift sur ce créneau (' + (estab?.name || s.establishment_id) + '). Modification bloquée.' });
-                }
-                const gap = Math.min(Math.abs(newStart - s.end_time), Math.abs(s.start_time - newEnd));
-                if (gap < 1)
-                    warnings.push({ type: 'gap', message: Math.round(gap * 60) + ' min de coupure avec ' + s.establishment_id });
+        for (const s of conflicts) {
+            // Double shift : chevauchement horaire avec un autre établissement → blocage strict
+            if (newStart < s.end_time && newEnd > s.start_time) {
+                const estab = await db.collection('establishments').findOne({ id: s.establishment_id });
+                return res.status(409).json({ error: 'Double shift : ' + (staff_name || existing.staff_name || 'ce staff') + ' a déjà un shift sur ce créneau (' + (estab?.name || s.establishment_id) + '). Modification bloquée.' });
             }
+            const gap = Math.min(Math.abs(newStart - s.end_time), Math.abs(s.start_time - newEnd));
+            if (gap < 1)
+                warnings.push({ type: 'gap', message: Math.round(gap * 60) + ' min de coupure avec ' + s.establishment_id });
         }
 
         await db.collection('shifts').updateOne(
@@ -2868,7 +2903,7 @@ app.post('/api/copy-day', checkDB, requirePatron, denyObservateurEdit, async (re
                 const base = { ...rest, establishment_id, date };
                 if (!archivedIds.has(String(rest.staff_id))) return base;
                 jokerised++;
-                return { ...base, staff_id: '__joker__', staff_name: '', is_joker: true, color: '#95a5a6' };
+                return { ...base, ...JOKER_SHIFT };
             });
             if (newShifts.length > 0) { await db.collection('shifts').insertMany(newShifts); created += newShifts.length; }
         }
@@ -2928,14 +2963,14 @@ app.post('/api/copy-week', checkDB, requirePatron, denyObservateurEdit, async (r
                 };
                 if (copyMode === 'jokers') {
                     // Créneau vide : Joker non attribué, à re-remplir
-                    return { ...base, staff_id: '__joker__', staff_name: '', is_joker: true, color: '#95a5a6' };
+                    return { ...base, ...JOKER_SHIFT };
                 }
                 // Garder l'affectation (un Joker source reste Joker) — sauf si la personne
                 // a été archivée entre-temps : le créneau survit, son titulaire non.
                 const isJoker = s.is_joker || s.staff_id === '__joker__';
                 if (archivedIds.has(String(s.staff_id))) {
                     jokerised++;
-                    return { ...base, staff_id: '__joker__', staff_name: '', is_joker: true, color: '#95a5a6' };
+                    return { ...base, ...JOKER_SHIFT };
                 }
                 return {
                     ...base,

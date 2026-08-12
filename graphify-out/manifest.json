@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "public/script.js": {
-    "mtime": 1786520540.3136613,
-    "ast_hash": "829a457682105307ce353271d0fb50d7",
+    "mtime": 1786524231.8357995,
+    "ast_hash": "74127bb18d13f049bb03df1b6b28b4c6",
     "semantic_hash": ""
   },
   "public/sw.js": {
@@ -75,8 +75,8 @@
     "semantic_hash": ""
   },
   "server.js": {
-    "mtime": 1786522056.9198792,
-    "ast_hash": "ba8c2f952748642c896b4e0de2398f6f",
+    "mtime": 1786524231.8012455,
+    "ast_hash": "6b50c0250c3c915d9fe713e52405e96f",
     "semantic_hash": ""
   },
   "tests/routes.test.js": {
@@ -315,8 +315,8 @@
     "semantic_hash": ""
   },
   "tests/staff-archive-portes.test.js": {
-    "mtime": 1786521730.0455115,
-    "ast_hash": "5333bcec3e19ad5e34fe7152abdb544c",
+    "mtime": 1786523909.437583,
+    "ast_hash": "d3d8a1fee481a62d82933ec461e418d2",
     "semantic_hash": ""
   }
 }
