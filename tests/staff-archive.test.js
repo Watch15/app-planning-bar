@@ -10,7 +10,7 @@
 //
 // Harnais CD-05 : faux `db` en mémoire + session simulée par l'en-tête `x-test-user`.
 
-const { test, before, after } = require('node:test');
+const { test, before, after, beforeEach } = require('node:test');
 const assert  = require('node:assert/strict');
 const bcrypt  = require('bcryptjs');
 const { makeDb } = require('./helpers/fake-db');
@@ -25,10 +25,19 @@ const EQUIPIER = { role: 'staff', _id: USER_P, staff_id: PARTIE };
 before(startApp);
 after(stopApp);
 
+// Un seul amorçage, comme dans estab-access.test.js et perf-settings.test.js. Répété
+// dans chaque test, il faudrait le retoucher 13 fois le jour où il prend une étape
+// de plus — et la 13e est celle qu'on oublie.
+let db;
+beforeEach(() => {
+    db = seed();
+    app.locals.setTestDb(db);
+});
+
 const HIER    = '2026-08-01';
 const DEMAIN  = '2099-01-01'; // volontairement lointain : « à venir » quel que soit le jour
 
-function seed(extra = {}) {
+function seed() {
     return makeDb({
         settings: [{ key: 'dispo', open: true }],
         establishments: [{ id: 'bar1', name: 'Le Bar' }],
@@ -52,7 +61,6 @@ function seed(extra = {}) {
             { sid: 'sess-partie', session: { user: { _id: USER_P } } },
             { sid: 'sess-autre',  session: { user: { _id: 'un-autre-compte' } } },
         ],
-        ...extra,
     });
 }
 
@@ -64,8 +72,6 @@ const staffDoc = (db, id) => db.collection('staff')._docs.find(s => String(s._id
 // ── Ce que l'archivage écrit ─────────────────────────────────────────────────
 
 test('archiver pose le drapeau et la date, sans rien supprimer', async () => {
-    const db = seed();
-    app.locals.setTestDb(db);
     const res = await archive(PARTIE, true);
     assert.equal(res.status, 200);
 
@@ -78,8 +84,6 @@ test('archiver pose le drapeau et la date, sans rien supprimer', async () => {
 });
 
 test('réactiver efface le drapeau — l\'archivage n\'est pas un aller simple', async () => {
-    const db = seed();
-    app.locals.setTestDb(db);
     await archive(PARTIE, true);
     const res = await archive(PARTIE, false);
     assert.equal(res.status, 200);
@@ -90,8 +94,6 @@ test('réactiver efface le drapeau — l\'archivage n\'est pas un aller simple',
 });
 
 test('archiver coupe les sessions du compte lié, et seulement les siennes', async () => {
-    const db = seed();
-    app.locals.setTestDb(db);
     await archive(PARTIE, true);
 
     const sids = db.collection('sessions')._docs.map(s => s.sid);
@@ -100,8 +102,6 @@ test('archiver coupe les sessions du compte lié, et seulement les siennes', asy
 });
 
 test('archiver signale les créneaux à venir laissés en place', async () => {
-    const db = seed();
-    app.locals.setTestDb(db);
     const res  = await archive(PARTIE, true);
     const body = await res.json();
     // Décision du 2026-08-11 : on ne troue pas un planning déjà annoncé. Mais le patron
@@ -113,8 +113,6 @@ test('archiver signale les créneaux à venir laissés en place', async () => {
 // ── Ce qui doit RESTER : l'historique ────────────────────────────────────────
 
 test('l\'historique survit intégralement à l\'archivage', async () => {
-    const db = seed();
-    app.locals.setTestDb(db);
     await archive(PARTIE, true);
 
     const passe = db.collection('shifts')._docs.find(s => s.date === HIER);
@@ -124,8 +122,6 @@ test('l\'historique survit intégralement à l\'archivage', async () => {
 });
 
 test('un staff archivé reste renvoyé par /api/staff, avec son drapeau', async () => {
-    const db = seed();
-    app.locals.setTestDb(db);
     await archive(PARTIE, true);
 
     // Le filtrer ici effacerait son nom des récaps et des plannings déjà édités.
@@ -140,9 +136,6 @@ test('un staff archivé reste renvoyé par /api/staff, avec son drapeau', async 
 // ── Ce qui doit DISPARAÎTRE : la vie courante ────────────────────────────────
 
 test('un archivé sort de la liste « sans dispo »', async () => {
-    const db = seed();
-    app.locals.setTestDb(db);
-
     const avant = await (await req('/api/dispos/sans-dispo?from=2026-08-10&to=2026-08-16', PATRON)).json();
     assert.deepEqual(avant.map(s => s.name).sort(), ['Partie', 'Restante']);
 
@@ -152,9 +145,26 @@ test('un archivé sort de la liste « sans dispo »', async () => {
         'relancer les gens partis est le symptôme le plus visible d\'un archivage raté');
 });
 
+// Le prédicat « qui reçoit les rappels » (`DISPO_TARGET`) sert à quatre endroits : les
+// trois déclencheurs du cron (ouverture, J-2, J-1) et cette route. Seule celle-ci est
+// atteignable par HTTP, et elle enregistre QUI a été notifié — c'est donc par elle que
+// la règle se prouve. Sans ce test, retirer l'archivage du prédicat ne cassait rien :
+// une personne partie aurait continué de recevoir des rappels sur son téléphone, sans
+// pouvoir s'en défaire puisqu'elle ne peut plus se connecter.
+test('un archivé ne reçoit plus les rappels de dispo', async () => {
+    const rappel = () => req('/api/dispos/rappel', PATRON,
+        { method: 'POST', body: JSON.stringify({ week_start: '2026-08-10' }) });
+    const destinataires = () => db.collection('notifications')._docs.at(-1).sent_to.slice().sort();
+
+    assert.equal((await rappel()).status, 200);
+    assert.deepEqual(destinataires(), [PARTIE, RESTANTE].sort(), 'les deux au départ');
+
+    await archive(PARTIE, true);
+    assert.equal((await rappel()).status, 200);
+    assert.deepEqual(destinataires(), [RESTANTE], 'l\'archivé ne doit plus être relancé');
+});
+
 test('on ne peut plus planifier un archivé', async () => {
-    const db = seed();
-    app.locals.setTestDb(db);
     await archive(PARTIE, true);
 
     const res = await req('/api/shifts', PATRON, {
@@ -168,8 +178,6 @@ test('on ne peut plus planifier un archivé', async () => {
 });
 
 test('planifier quelqu\'un d\'actif marche toujours', async () => {
-    const db = seed();
-    app.locals.setTestDb(db);
     await archive(PARTIE, true);
 
     const res = await req('/api/shifts', PATRON, {
@@ -192,8 +200,6 @@ const login = (body) => fetch(baseUrl() + '/auth/login', {
 });
 
 test('un profil archivé ferme la connexion', async () => {
-    const db = seed();
-    app.locals.setTestDb(db);
     await archive(PARTIE, true);
 
     const res = await login({ email: 'partie@templyo.test', password: 'motdepasse' });
@@ -202,8 +208,6 @@ test('un profil archivé ferme la connexion', async () => {
 });
 
 test('le même compte non archivé se connecte normalement', async () => {
-    const db = seed();
-    app.locals.setTestDb(db);
 
     const res = await login({ email: 'partie@templyo.test', password: 'motdepasse' });
     assert.equal(res.status, 200, 'sinon le garde-fou casse la connexion de tout le monde');
@@ -212,8 +216,6 @@ test('le même compte non archivé se connecte normalement', async () => {
 // ── Validation ───────────────────────────────────────────────────────────────
 
 test('la route refuse un corps sans booléen, un id invalide, un inconnu', async () => {
-    const db = seed();
-    app.locals.setTestDb(db);
 
     assert.equal((await req('/api/staff/' + PARTIE + '/archive', PATRON,
         { method: 'PATCH', body: JSON.stringify({ archived: 'oui' }) })).status, 400);
@@ -222,8 +224,6 @@ test('la route refuse un corps sans booléen, un id invalide, un inconnu', async
 });
 
 test('un équipier ne peut pas archiver ses collègues', async () => {
-    const db = seed();
-    app.locals.setTestDb(db);
     const res = await archive(RESTANTE, true, EQUIPIER);
     assert.ok(res.status === 403 || res.status === 401, 'obtenu ' + res.status);
     assert.ok(!staffDoc(db, RESTANTE).archived);

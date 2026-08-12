@@ -7739,14 +7739,16 @@ function renderStaffManageList() {
     // de désencombrer. Mais ils restent atteignables d'un clic, sinon on ne pourrait plus
     // réactiver quelqu'un, et l'archivage deviendrait le sens unique que la suppression
     // était déjà. Le compteur les rend visibles sans les afficher.
-    const archivedCount = filtered.filter(s => s.archived).length;
-    const shown = _showArchivedStaff ? filtered : filtered.filter(s => !s.archived);
+    const actifs = filtered.filter(s => !s.archived);
+    const archivedCount = filtered.length - actifs.length;
+    const shown = _showArchivedStaff ? filtered : actifs;
 
     if (archivedCount > 0) {
+        const s = archivedCount > 1 ? 's' : '';
         const bar = document.createElement('label');
         bar.style.cssText = 'display:flex;align-items:center;gap:6px;font-size:11px;color:#888;padding:6px 2px;cursor:pointer';
         bar.innerHTML = '<input type="checkbox" class="staff-show-archived"' + (_showArchivedStaff ? ' checked' : '') + '>' +
-            'Afficher les ' + archivedCount + ' membre' + (archivedCount > 1 ? 's' : '') + ' archivé' + (archivedCount > 1 ? 's' : '');
+            'Afficher les ' + archivedCount + ' membre' + s + ' archivé' + s;
         bar.querySelector('.staff-show-archived').addEventListener('change', e => {
             _showArchivedStaff = e.target.checked;
             renderStaffManageList();
@@ -7865,15 +7867,10 @@ function renderStaffManageList() {
             '<button class="staff-manage-save">Enregistrer</button>' +
             '<button class="staff-manage-archive" title="' +
                 (staff.archived ? 'Réactiver — la personne revient dans les plannings' : 'Archiver — la personne sort des plannings, son historique reste') +
-                '" style="background:none;border:1px solid #e0e0e0;border-radius:4px;padding:2px 8px;font-size:11px;color:#888;cursor:pointer">' +
-                (staff.archived ? 'Réactiver' : 'Archiver') + '</button>' +
+                '">' + (staff.archived ? 'Réactiver' : 'Archiver') + '</button>' +
             '<button class="staff-manage-delete" title="Supprimer">×</button>';
 
-        // F-13 — l'archivé reste lisible mais visiblement hors service.
-        if (staff.archived) {
-            row.style.opacity = '0.55';
-            row.style.background = '#fafafa';
-        }
+        if (staff.archived) row.classList.add('is-archived');
 
         // Reset name_color
         const resetNameColor = row.querySelector('.staff-name-color-reset');
@@ -8020,20 +8017,19 @@ function renderStaffManageList() {
                     });
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.error);
+                    // `staff` EST l'objet d'`allStaff` : `filter()` conserve les références.
+                    // Le rechercher pour le remuter écrirait deux fois la même chose — et
+                    // laisserait croire que cette ligne travaille sur des copies.
                     staff.archived = next;
-                    const inAll = allStaff.find(s => s._id === staff._id);
-                    if (inAll) inAll.archived = next;
 
                     renderSidebar();
                     renderStaffManageList();
                     // Ses créneaux à venir restent en place (décision du 2026-08-11) — mais on
                     // le DIT, sinon le patron les retrouve plus tard et croit à un bug.
-                    if (next && data.upcoming_shifts > 0) {
-                        showToast(staff.name + ' archivé · ' + data.upcoming_shifts + ' créneau'
-                            + (data.upcoming_shifts > 1 ? 'x' : '') + ' à venir laissé en place');
-                    } else {
-                        showToast(staff.name + (next ? ' archivé' : ' réactivé'));
-                    }
+                    const reste = next && data.upcoming_shifts > 0
+                        ? ' · ' + data.upcoming_shifts + ' créneau' + (data.upcoming_shifts > 1 ? 'x' : '') + ' à venir laissé en place'
+                        : '';
+                    showToast(staff.name + (next ? ' archivé' : ' réactivé') + reste);
                 } catch (e) { showToast(e.message || 'Erreur', true); }
             });
         });

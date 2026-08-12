@@ -430,13 +430,20 @@ function renderTable(data) {
     // arithmétiquement FAUSSE à l'écran (« 3 200 € × 1,45 = 4 800 € »), du genre que le
     // patron vérifie de tête. Déduite, elle est vraie par construction quelle que soit
     // la provenance de `targets`.
-    const chargeMult = totalWageBrut > 0 ? totalWageCh / totalWageBrut : null;
-    const fmtRate    = m => String(Math.round((m - 1) * 1000) / 10).replace('.', ',') + ' %';
-    const fmtMult    = m => m.toFixed(2).replace('.', ',');
+    // Formaté UNE fois : les deux seuls affichages en ont besoin ensemble, dans le même
+    // ordre. Séparés, c'étaient deux appels appariés sur deux sites — quatre endroits où
+    // le « × » et le « % » devaient rester d'accord, soit précisément la désynchronisation
+    // que A-10 vient de corriger. `fmtPct` est le formateur de pourcentage du fichier,
+    // déjà employé dans cette phrase pour le coefficient : deux règles décimales dans une
+    // même légende se liraient comme un bug d'affichage.
+    const multTxt = totalWageBrut > 0
+        ? (totalWageCh / totalWageBrut).toFixed(2).replace('.', ',')
+            + ' (charges ' + fmtPct((totalWageCh / totalWageBrut - 1) * 100) + ')'
+        : null;
     // Exemple CHIFFRÉ sur les totaux affichés : plus parlant qu'une formule abstraite.
-    const legend = totalRevenue > 0 && chargeMult !== null
-        ? 'Sur la période : ' + fmtEUR(totalWageBrut) + ' brut × ' + fmtMult(chargeMult)
-            + ' (charges ' + fmtRate(chargeMult) + ') = ' + fmtEUR(totalWageCh) + ' chargé'
+    const legend = totalRevenue > 0 && multTxt
+        ? 'Sur la période : ' + fmtEUR(totalWageBrut) + ' brut × ' + multTxt
+            + ' = ' + fmtEUR(totalWageCh) + ' chargé'
             + ', soit ' + fmtEUR(totalWageCh) + ' ÷ ' + fmtEUR(totalRevenue) + ' de CA = '
             + fmtPct(totalCoeffC) + ' de coefficient.'
         : '';
@@ -448,8 +455,8 @@ function renderTable(data) {
                 '<th class="num">CA</th>' +
                 '<th class="num">Heures</th>' +
                 '<th class="num" title="Somme des salaires versés : heures réelles × taux (ou forfait), avant charges patronales.">Masse sal. brute</th>' +
-                '<th class="num" title="' + (chargeMult !== null
-                    ? 'Masse salariale brute × ' + fmtMult(chargeMult) + ' (charges ' + fmtRate(chargeMult) + ') — le coût réel pour le bar.'
+                '<th class="num" title="' + (multTxt
+                    ? 'Masse salariale brute × ' + multTxt + ' — le coût réel pour le bar.'
                     : 'Masse salariale brute plus les charges patronales — le coût réel pour le bar.') + '">Masse sal. chargée</th>' +
                 '<th title="Masse salariale chargée ÷ CA × 100. Vert sous la cible de ' + fmtPct(targets.target_charged) + '.">Coeff. chargé</th>' +
             '</tr></thead>' +

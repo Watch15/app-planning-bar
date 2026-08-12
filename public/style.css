@@ -667,6 +667,18 @@ label[for], select, .tab-btn, .staff-card, .shift-card {
   transition: all var(--transition); flex-shrink: 0; line-height: 1; font-family: var(--font); align-self: center;
 }
 .staff-manage-delete:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-bg); }
+/* F-13 — voisin immédiat des deux boutons ci-dessus : mêmes tokens, même `align-self`,
+   même `:hover`. En styles inline il ne suivait ni le thème ni la règle responsive
+   `.staff-manage-row { flex-wrap: wrap }`, pensée pour un nombre de boutons connu. */
+.staff-manage-archive {
+  padding: 5px 10px; border-radius: var(--radius-sm); border: 1px solid var(--light-border);
+  background: var(--light-card); color: var(--text-muted);
+  font-size: 11px; cursor: pointer; white-space: nowrap;
+  transition: all var(--transition); font-family: var(--font); flex-shrink: 0; align-self: center;
+}
+.staff-manage-archive:hover { border-color: var(--accent); color: var(--accent); }
+/* La ligne reste lisible, mais visiblement hors service. */
+.staff-manage-row.is-archived { opacity: 0.55; background: var(--light-bg, #fafafa); }
 
 /* Formulaire ajout */
 .staff-add-form { border-top: 1px solid var(--light-border); padding-top: 16px; }

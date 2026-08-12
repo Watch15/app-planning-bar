@@ -215,6 +215,21 @@ let db;
 // `$ne: true` et non `false` : les profils créés avant F-13 n'ont pas le champ.
 const NOT_ARCHIVED = Object.freeze({ archived: { $ne: true } });
 
+// « Qui doit recevoir les rappels de dispo » — le prédicat métier complet, pas seulement
+// sa moitié F-13. Sans lui, `{ can_submit_dispos: true, ...NOT_ARCHIVED }` restait recopié
+// à quatre endroits, ce que la constante ci-dessus prétendait justement éviter.
+const DISPO_TARGET = Object.freeze({ can_submit_dispos: true, ...NOT_ARCHIVED });
+
+// F-13 — le profil s'il est archivé, `null` sinon. Deux portes s'en servent (la connexion
+// et la création de shift) ; lui donner un nom offre un point d'ancrage greppable à celles
+// qui suivront, au lieu d'un `findOne` recopié à chaque fois qu'on y repense.
+async function archivedStaff(staffId) {
+    if (!isValidObjectId(staffId)) return null;
+    const prof = await db.collection('staff').findOne(
+        { _id: new ObjectId(staffId) }, { projection: { archived: 1, name: 1 } });
+    return prof && prof.archived === true ? prof : null;
+}
+
 async function connectDB() {
     try {
         await client.connect();
@@ -568,7 +583,7 @@ async function checkDispoRappels() {
                 await db.collection('settings').updateOne({ key: 'dispo' }, { $set: { notif_sent_open_week: weekStart } });
                 console.log('⏭️  Notif ouverture skip : dispos déjà existantes pour', weekStart, '(', existingDispos, 'enregistrées)');
             } else {
-                const allStaff = await db.collection('staff').find({ can_submit_dispos: true, ...NOT_ARCHIVED }).toArray();
+                const allStaff = await db.collection('staff').find(DISPO_TARGET).toArray();
                 const ids = allStaff.map(s => String(s._id));
                 await sendPushToStaff(ids, {
                     title:   'Templyo — Dispos ouvertes',
@@ -584,7 +599,7 @@ async function checkDispoRappels() {
 
         // ── Trigger 2 : J-2 ─────────────────────────────────────────────────
         if (todayStr === j2Str && !alreadySentToday('notif_sent_j2')) {
-            const allStaff = await db.collection('staff').find({ can_submit_dispos: true, ...NOT_ARCHIVED }).toArray();
+            const allStaff = await db.collection('staff').find(DISPO_TARGET).toArray();
             const targets  = await getTargetsWithoutDispo(allStaff);
             const msg      = '⚠️ Plus que 2 jours pour envoyer tes disponibilités !';
             if (targets.length > 0) {
@@ -599,7 +614,7 @@ async function checkDispoRappels() {
 
         // ── Trigger 3 : J-1 ─────────────────────────────────────────────────
         if (todayStr === j1Str && !alreadySentToday('notif_sent_j1')) {
-            const allStaff = await db.collection('staff').find({ can_submit_dispos: true, ...NOT_ARCHIVED }).toArray();
+            const allStaff = await db.collection('staff').find(DISPO_TARGET).toArray();
             const targets  = await getTargetsWithoutDispo(allStaff);
             const msg      = '🔴 Dernier jour ! Envoie tes disponibilités avant ' + deadlineTime;
             if (targets.length > 0) {
@@ -1072,15 +1087,12 @@ app.post('/auth/login', checkDB, async (req, res) => {
         // son mot de passe). Le détourner aurait remis les comptes archivés dans le
         // parcours d'invitation. Aucun autre drapeau ne barrait la connexion jusqu'ici :
         // avant F-13, couper un accès imposait de supprimer le compte.
-        // `authUser` d'abord : sur un couple de comptes jumeaux (téléphone + e-mail liés au
-        // même profil), c'est lui qui porte le mot de passe, donc l'identité authentifiée.
-        const loginStaffId = String(authUser.staff_id || user.staff_id || '');
-        if (loginStaffId && isValidObjectId(loginStaffId)) {
-            const prof = await db.collection('staff').findOne(
-                { _id: new ObjectId(loginStaffId) }, { projection: { archived: 1 } });
-            if (prof && prof.archived === true)
-                return res.status(403).json({ error: 'Ce compte a été désactivé. Contacte ton responsable.' });
-        }
+        // `authUser` suffit : ou bien c'est `user`, ou bien c'est le jumeau retrouvé PAR
+        // `staff_id: String(user.staff_id)` ci-dessus — dans les deux cas il porte le même
+        // profil. Un repli `|| user.staff_id` laisserait croire à un cas où les deux
+        // comptes en désignent des différents ; ce cas n'existe pas.
+        if (await archivedStaff(authUser.staff_id))
+            return res.status(403).json({ error: 'Ce compte a été désactivé. Contacte ton responsable.' });
 
         // Session : données du compte trouvé par l'identifiant soumis,
         // complétées par le compte jumeau si certains champs manquent
@@ -1362,6 +1374,21 @@ async function invalidateUserSessions(userId) {
         const r = await db.collection('sessions').deleteMany({ 'session.user._id': String(userId) });
         if (r.deletedCount) logInfo('🔒 ' + r.deletedCount + ' session(s) invalidée(s) pour ' + userId);
     } catch (e) { console.error('[invalidateUserSessions]', e.message); }
+}
+
+// Le pendant côté PROFIL. Un profil staff peut porter DEUX comptes (téléphone + e-mail,
+// cf. les jumeaux de /auth/login) : couper l'accès de quelqu'un, c'est couper les sessions
+// de tous ses comptes, pas du premier trouvé.
+//
+// ⚠️ À appeler AVANT tout déliement (`staff_id: null`) : après, le filtre ne retrouve plus
+// personne. C'est la contrainte d'ordre que le DELETE ci-dessous documentait déjà, et la
+// raison de nommer ce geste — deux variantes proches d'une même règle de coupure d'accès,
+// c'est exactement ce qui a produit R-06 puis R-17.
+async function invalidateStaffSessions(staffId) {
+    const linked = await db.collection('users')
+        .find({ staff_id: String(staffId) }, { projection: { _id: 1 } }).toArray();
+    await Promise.all(linked.map(u => invalidateUserSessions(u._id)));
+    return linked.length;
 }
 
 app.post('/api/users', checkDB, requirePatron, async (req, res) => {
@@ -2099,12 +2126,14 @@ app.patch('/api/staff/:id/archive', checkDB, requirePatron, async (req, res) => 
         // relit le profil). Sans la suppression des sessions, la personne archivée garderait
         // son accès jusqu'à 30 jours — c'est exactement le trou que R-17 a rebouché.
         // Réactiver ne recrée pas de session : elle se reconnecte, c'est le comportement sain.
-        const linked = await db.collection('users').find({ staff_id: staffId }).toArray();
-        await Promise.all(linked.map(u => invalidateUserSessions(u._id)));
-
-        const upcoming = archived
-            ? await db.collection('shifts').countDocuments({ staff_id: staffId, date: { $gte: toDateStr(new Date()) } })
-            : 0;
+        //
+        // Le comptage des créneaux à venir ne dépend de rien de tout ça : lancé en parallèle.
+        const [, upcoming] = await Promise.all([
+            invalidateStaffSessions(staffId),
+            archived
+                ? db.collection('shifts').countDocuments({ staff_id: staffId, date: { $gte: toDateStr(new Date()) } })
+                : 0,
+        ]);
         res.json({
             message:  archived ? 'Staff archivé' : 'Staff réactivé',
             archived,
@@ -2126,9 +2155,11 @@ app.delete('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
         const result = await db.collection('staff').deleteOne({ _id: new ObjectId(req.params.id) });
         if (result.deletedCount === 0) return res.status(404).json({ error: 'Staff introuvable' });
         const staffId = req.params.id;
-        // Capturé AVANT le déliement : après, `staff_id` vaut null et le filtre
-        // ramasserait tous les comptes sans profil.
-        const linked = await db.collection('users').find({ staff_id: staffId }).toArray();
+        // R-17 — `staff_id` est figé en session : sans ça, le compte continue d'écrire ses
+        // dispos et son pointage sur un profil qui n'existe plus. C'est le mécanisme exact
+        // de l'incident « Antoine Bozo » du 2026-08-07.
+        // AVANT le déliement : après, `staff_id` vaut null et le filtre ne retrouve personne.
+        await invalidateStaffSessions(staffId);
         await Promise.all([
             db.collection('shifts').deleteMany({ staff_id: staffId }),
             db.collection('availabilities').deleteMany({ staff_id: staffId }),
@@ -2136,10 +2167,6 @@ app.delete('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
             db.collection('manager_dispo_templates').deleteMany({ staff_id: staffId }),
             db.collection('users').updateMany({ staff_id: staffId }, { $set: { staff_id: null } }),
         ]);
-        // R-17 — `staff_id` est figé en session : sans ça, le compte continue d'écrire ses
-        // dispos et son pointage sur un profil qui n'existe plus. C'est le mécanisme exact
-        // de l'incident « Antoine Bozo » du 2026-08-07.
-        await Promise.all(linked.map(u => invalidateUserSessions(u._id)));
         res.json({ message: 'Staff supprimé' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -2436,40 +2463,42 @@ app.post('/api/shifts', checkDB, requirePatron, denyObservateurEdit, async (req,
         // mais la barre du personnel peut dater d'avant l'archivage dans un onglet resté
         // ouvert : sans ce contrôle, le patron reconstruirait sans le voir un planning
         // autour d'une personne partie. Le passé, lui, n'est jamais touché.
-        if (!is_joker && staff_id !== '__joker__' && isValidObjectId(staff_id)) {
-            const prof = await db.collection('staff').findOne(
-                { _id: new ObjectId(staff_id) }, { projection: { archived: 1, name: 1 } });
-            if (prof && prof.archived === true)
-                return res.status(409).json({ error: (prof.name || 'Cette personne') + ' est archivée — réactive-la pour la planifier.' });
-        }
-        // Pas de détection de conflit pour les Jokers (staff non désigné)
-        if (!is_joker && staff_id !== '__joker__') {
-            const conflicts = await db.collection('shifts').find({
-                staff_id, date, establishment_id: { $ne: establishment_id }
-            }).toArray();
-            for (const s of conflicts) {
-                // Double shift : chevauchement horaire avec un autre établissement → blocage strict
-                if (start_time < s.end_time && end_time > s.start_time) {
-                    const estab = await db.collection('establishments').findOne({ id: s.establishment_id });
-                    return res.status(409).json({ error: 'Double shift : ' + (staff_name || 'ce staff') + ' a déjà un shift sur ce créneau (' + (estab?.name || s.establishment_id) + '). Enregistrement bloqué.' });
-                }
-                const gap = Math.min(Math.abs(start_time - s.end_time), Math.abs(s.start_time - end_time));
-                if (gap < 1)
-                    warnings.push({ type: 'gap', message: 'Seulement ' + Math.round(gap * 60) + ' min de coupure avec ' + s.establishment_id });
+        // Un Joker n'est personne : ni archivable, ni en conflit avec lui-même. La règle
+        // était écrite quatre fois dans cette seule route — une de plus à chaque ajout.
+        const isJoker = is_joker || staff_id === '__joker__';
+        // Les deux lectures sont indépendantes. En série, elles ajoutaient un aller-retour
+        // Mongo entier à CHAQUE créneau déposé — geste répété 30 à 60 fois quand le patron
+        // monte une semaine, et le seul endroit du diff où la latence se ressent.
+        const [archive, conflicts] = await Promise.all([
+            isJoker ? null : archivedStaff(staff_id),
+            isJoker ? []   : db.collection('shifts').find({
+                staff_id, date, establishment_id: { $ne: establishment_id },
+            }).toArray(),
+        ]);
+        if (archive)
+            return res.status(409).json({ error: (archive.name || 'Cette personne') + ' est archivée — réactive-la pour la planifier.' });
+        for (const s of conflicts) {
+            // Double shift : chevauchement horaire avec un autre établissement → blocage strict
+            if (start_time < s.end_time && end_time > s.start_time) {
+                const estab = await db.collection('establishments').findOne({ id: s.establishment_id });
+                return res.status(409).json({ error: 'Double shift : ' + (staff_name || 'ce staff') + ' a déjà un shift sur ce créneau (' + (estab?.name || s.establishment_id) + '). Enregistrement bloqué.' });
             }
+            const gap = Math.min(Math.abs(start_time - s.end_time), Math.abs(s.start_time - end_time));
+            if (gap < 1)
+                warnings.push({ type: 'gap', message: 'Seulement ' + Math.round(gap * 60) + ' min de coupure avec ' + s.establishment_id });
         }
         const shift = {
             staff_id, staff_name: staff_name || '',
             establishment_id, date,
             start_time: parseFloat(start_time), end_time: parseFloat(end_time),
             color: color || '#95a5a6',
-            ...(is_joker || staff_id === '__joker__' ? { is_joker: true } : {}),
+            ...(isJoker ? { is_joker: true } : {}),
             ...(note ? { note: String(note).slice(0, 280) } : {}),
         };
         const result = await db.collection('shifts').insertOne(shift);
 
         // Notifier les patrons/directeurs si la semaine est déjà publiée
-        if (!is_joker && staff_id !== '__joker__') {
+        if (!isJoker) {
             (async () => {
                 try {
                     const isPublished = isDatePublished(date, await fetchPublishedWeeks(), establishment_id);
@@ -4529,7 +4558,7 @@ app.post('/api/dispos/rappel', checkDB, requirePatron, denyObservateurEdit, asyn
         const deadlineStr = deadline.getDate() + '/' + (deadline.getMonth() + 1) + '/' + deadline.getFullYear();
         const msgText = (message && message.trim()) || ('⏰ N\'oublie pas d\'envoyer tes disponibilités avant le ' + deadlineStr);
 
-        const allStaffDocs = await db.collection('staff').find({ can_submit_dispos: true, ...NOT_ARCHIVED }).toArray();
+        const allStaffDocs = await db.collection('staff').find(DISPO_TARGET).toArray();
         const allStaffIds  = allStaffDocs.map(s => String(s._id));
 
         const existing = await db.collection('availabilities').find({

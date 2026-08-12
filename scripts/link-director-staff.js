@@ -74,56 +74,56 @@ async function main() {
             + ' AMBIGU (' + hits.length + ' profils : ' + hits.map(h => h.name).join(', ')
             + ') — non touché, même avec --create-missing'));
 
-        const willCreate = CREATE ? none.length : 0;
+        // Un seul porteur du fait « ce que ce passage va créer », au lieu d'un booléen, d'un
+        // compteur et d'un total attendu à tenir d'accord. Ce script est celui qu'on relit
+        // sous tension, juste avant de le lancer sur une base client : trois variables pour
+        // un même fait, c'est trois occasions de se demander laquelle fait foi.
+        // `--create-missing` n'agit QUE sur `none` — hors de ce mode, rien n'est à créer.
+        const toCreate = CREATE ? none : [];
 
         if (!APPLY) {
-            console.log('\n  ' + todo.length + ' liaison(s) et ' + willCreate + ' création(s) à faire.'
+            console.log('\n  ' + todo.length + ' liaison(s) et ' + toCreate.length + ' création(s) à faire.'
                 + '\n  Relance avec --apply pour les écrire.\n');
             return;
         }
-        if (!todo.length && !willCreate) { console.log('\n  Rien à écrire.\n'); return; }
+        if (!todo.length && !toCreate.length) { console.log('\n  Rien à écrire.\n'); return; }
 
         const before  = await db.collection('staff').countDocuments();
-        const touched = [];
+        const touched = [...todo.map(t => t.u._id), ...toCreate.map(u => u._id)];
 
         for (const { u, s } of todo) {
             await db.collection('users').updateOne({ _id: u._id }, { $set: { staff_id: String(s._id) } });
-            touched.push(u._id);
         }
 
         // Couleurs déjà prises, pour ne pas donner deux fois la même dans la barre staff.
         const used = new Set(staff.map(s => s.color).filter(Boolean));
-        let created = 0;
-        if (CREATE) {
-            for (const u of none) {
-                const color = pickStaffColor(used);
-                used.add(color);
-                const { insertedId } = await db.collection('staff').insertOne({
-                    name:   u.name || 'Directeur',
-                    color,
-                    email:  u.email || '',
-                    phone:  u.phone || '',
-                    venues: u.assigned_establishments || [],
-                    roles:  [],
-                    can_submit_dispos: true,
-                    is_manager: true, // informatif — cf. createManagerStaffProfile (server.js)
-                    created_at: new Date(),
-                });
-                await db.collection('users').updateOne({ _id: u._id }, { $set: { staff_id: String(insertedId) } });
-                touched.push(u._id);
-                created++;
-                console.log('  + profil staff créé pour ' + label(u) + ' → ' + insertedId);
-            }
+        for (const u of toCreate) {
+            const color = pickStaffColor(used);
+            used.add(color);
+            const { insertedId } = await db.collection('staff').insertOne({
+                name:   u.name || 'Directeur',
+                color,
+                email:  u.email || '',
+                phone:  u.phone || '',
+                venues: u.assigned_establishments || [],
+                roles:  [],
+                can_submit_dispos: true,
+                is_manager: true, // informatif — cf. createManagerStaffProfile (server.js)
+                created_at: new Date(),
+            });
+            await db.collection('users').updateOne({ _id: u._id }, { $set: { staff_id: String(insertedId) } });
+            console.log('  + profil staff créé pour ' + label(u) + ' → ' + insertedId);
         }
 
         const after    = await db.collection('staff').countDocuments();
-        const expected = before + created;
+        const expected = before + toCreate.length;
+        const verdict  = after !== expected
+            ? '  ⚠️ ATTENDU ' + expected + ' — un profil a été créé hors de ce script !'
+            : toCreate.length ? '  (+' + toCreate.length + ', attendu)'
+                              : '  (inchangé — c\'est bien le but)';
 
-        console.log('\n  ✅ ' + todo.length + ' compte(s) lié(s), ' + created + ' profil(s) créé(s) dans « ' + dbName + ' »');
-        console.log('  Profils staff : ' + before + ' → ' + after
-            + (after === expected
-                ? '  (' + (created ? '+' + created + ', attendu' : 'inchangé — c\'est bien le but') + ')'
-                : '  ⚠️ ATTENDU ' + expected + ' — un profil a été créé hors de ce script !'));
+        console.log('\n  ✅ ' + todo.length + ' compte(s) lié(s), ' + toCreate.length + ' profil(s) créé(s) dans « ' + dbName + ' »');
+        console.log('  Profils staff : ' + before + ' → ' + after + verdict);
 
         // R-17 fait ça tout seul quand le changement passe par l'API. Ici on écrit
         // directement dans Mongo, donc rien ne l'a déclenché : sans ce nettoyage, un

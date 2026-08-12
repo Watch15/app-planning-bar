@@ -57,7 +57,7 @@ const results = [];
 // Une vérification qui en dépend est SAUTÉE, pas comptée en échec : le code n'y est
 // pour rien, et un ✗ ferait chercher le bug au mauvais endroit — c'est exactement ce
 // qui est arrivé le 2026-08-10.
-const stale = { dispos: null, soiree: null };
+const stale = { dispos: null, soiree: null, bruno: null };
 
 async function check(section, name, fn, needs) {
     const reason = needs && stale[needs];
@@ -117,12 +117,8 @@ function verifyDeployedCommit(health) {
         console.log('ℹ️  commit déployé : ' + shortDep + ' (aucune référence attendue — passe `--expect origin/main`)\n');
         return true;
     }
-    let expected;
-    try {
-        expected = require('child_process')
-            .execSync('git rev-parse ' + EXPECT_REF, { cwd: __dirname + '/..', stdio: ['ignore', 'pipe', 'ignore'] })
-            .toString().trim();
-    } catch {
+    const expected = git('rev-parse ' + EXPECT_REF);
+    if (!expected) {
         console.log('ℹ️  commit déployé : ' + shortDep + ' — référence « ' + EXPECT_REF + ' » introuvable en local, comparaison sautée.\n');
         return true;
     }
@@ -137,14 +133,22 @@ function verifyDeployedCommit(health) {
     return false;
 }
 
+// Un git absent, un clone superficiel ou une référence inconnue ne sont pas des erreurs
+// ici : la comparaison est un confort de diagnostic, pas une condition de fonctionnement.
+// Un seul point où vivent `cwd` et `stdio` — dupliqués, ils auraient fini par diverger,
+// et c'est justement `cwd` qui porte l'hypothèse fragile (tourner depuis un clone complet).
+function git(args) {
+    try {
+        return require('child_process')
+            .execSync('git ' + args, { cwd: __dirname + '/..', stdio: ['ignore', 'pipe', 'ignore'] })
+            .toString().trim();
+    } catch { return null; }
+}
+
 // Sujet du commit s'il est connu du dépôt local — sinon rien, ce n'est qu'un confort.
 function subjectOf(sha) {
-    try {
-        const s = require('child_process')
-            .execSync('git log -1 --format=%s ' + sha, { cwd: __dirname + '/..', stdio: ['ignore', 'pipe', 'ignore'] })
-            .toString().trim();
-        return s ? '  « ' + s + ' »' : '';
-    } catch { return '  (inconnu de ce dépôt)'; }
+    const s = git('log -1 --format=%s ' + sha);
+    return s === null ? '  (inconnu de ce dépôt)' : (s ? '  « ' + s + ' »' : '');
 }
 
 async function main() {
@@ -306,11 +310,15 @@ async function main() {
     // mécanisme que R-17). Chaque étape est un `check` indépendant, et la remise en
     // état en est un aussi — si une vérification casse, le désarchivage a quand même
     // lieu et la base de recette ne reste pas avec un staff archivé.
+    // Les étapes suivantes dépendent de celle-ci. Le fichier a déjà le dispositif pour
+    // ça (`stale`/`needs`) : sans lui, un seed sans Bruno produisait quatre ✗ en cascade
+    // et on serait allé chercher un bug de F-13 là où il n'y a qu'une base désalignée —
+    // exactement ce que le commentaire de `stale` dit vouloir éviter.
     let brunoId = null;
     await check('F-13', 'archiver un staff', async () => {
         const staff = (await req('pat', '/api/staff')).data;
         const b = Array.isArray(staff) && staff.find(s => /Bruno/i.test(s.name || ''));
-        if (!b) throw new Error('Bruno introuvable dans le jeu de recette');
+        if (!b) { stale.bruno = 'Bruno introuvable dans le jeu de recette'; throw new Error(stale.bruno); }
         brunoId = b._id;
         return eq((await req('pat', `/api/staff/${brunoId}/archive`, { method: 'PATCH', body: { archived: true } })).status, 200, 'status');
     });
@@ -319,22 +327,19 @@ async function main() {
     // disparaissait de /api/staff, les récaps et plannings passés perdraient leur
     // libellé — c'est exactement ce que l'archivage promet d'éviter.
     await check('F-13', 'l\'archivé reste dans /api/staff, avec son drapeau', async () => {
-        if (!brunoId) throw new Error('étape précédente échouée');
         const doc = (await req('pat', '/api/staff')).data.find(s => s._id === brunoId);
         if (!doc) throw new Error('l\'archivé a DISPARU de /api/staff — son historique perdrait son nom');
         return eq(doc.archived, true, 'archived');
-    });
+    }, 'bruno');
 
     await check('F-13', 'l\'archivé sort de la liste « sans dispo »', async () => {
-        if (!brunoId) throw new Error('étape précédente échouée');
         const list = (await req('pat', `/api/dispos/sans-dispo?from=${FROM}&to=${TO}`)).data;
         const encore = Array.isArray(list) && list.some(s => String(s._id) === String(brunoId));
         if (encore) throw new Error('encore relancé alors qu\'il est archivé');
         return 'absent de la relance';
-    });
+    }, 'bruno');
 
     await check('F-13', 'on ne peut plus le planifier', async () => {
-        if (!brunoId) throw new Error('étape précédente échouée');
         const r = await req('pat', '/api/shifts', { method: 'POST', body: {
             staff_id: brunoId, staff_name: 'Bruno', establishment_id: 'Josy_pub',
             date: D(3), start_time: 18, end_time: 23,
@@ -342,15 +347,14 @@ async function main() {
         // Si le garde-fou a sauté, ne pas laisser le créneau derrière soi.
         if (r.status === 201 && r.data && r.data._id) await req('pat', `/api/shifts/${r.data._id}`, { method: 'DELETE' });
         return eq(r.status, 409, 'status');
-    });
+    }, 'bruno');
 
     await check('F-13', 'réactiver rend tout (remise en état)', async () => {
-        if (!brunoId) throw new Error('étape précédente échouée');
         const r = await req('pat', `/api/staff/${brunoId}/archive`, { method: 'PATCH', body: { archived: false } });
         const doc = (await req('pat', '/api/staff')).data.find(s => s._id === brunoId);
         if (doc && doc.archived) throw new Error('drapeau toujours posé après réactivation');
         return eq(r.status, 200, 'status');
-    });
+    }, 'bruno');
 
     // ── R-06 + R-17 : réaffectation du directeur — EN DERNIER, et ce n'est pas ──
     //    un détail de mise en page.

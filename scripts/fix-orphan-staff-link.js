@@ -24,9 +24,13 @@ const { openDb } = require('./_db');
 
 const APPLY = process.argv.includes('--apply');
 
-const norm = s => String(s || '').toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, ' ').trim();
+// A-09 a canonisé cette normalisation dans `lib/utils.js` (`normName`) ; ce script en
+// gardait la 3e copie, identique à l'octet près. Ce n'est pas cosmétique : il écrit
+// (`updateMany` sur availabilities, time_off, shifts), donc plus destructivement que
+// celui qui a motivé A-09. Durcir la règle d'un côté sans l'autre — apostrophes
+// typographiques, particules — ferait diverger deux scripts qui décident sur quel
+// profil rebrancher l'historique de paie de quelqu'un.
+const { normName: norm } = require('../lib/utils');
 
 async function main() {
     const { client, db, dbName } = await openDb();
