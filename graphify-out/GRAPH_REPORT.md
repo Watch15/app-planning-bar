@@ -1,16 +1,16 @@
 # Graph Report - app-planning-bar  (2026-08-13)
 
 ## Corpus Check
-- 56 files · ~228,046 words
+- 56 files · ~228,522 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1307 nodes · 2096 edges · 77 communities (67 shown, 10 thin omitted)
+- 1307 nodes · 2096 edges · 76 communities (66 shown, 10 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 86 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f320fccd`
+- Built from commit: `6ac5e01a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -89,7 +89,6 @@
 - [[_COMMUNITY_Community 72|Community 72]]
 - [[_COMMUNITY_Community 73|Community 73]]
 - [[_COMMUNITY_Community 74|Community 74]]
-- [[_COMMUNITY_Community 75|Community 75]]
 - [[_COMMUNITY_Community 76|Community 76]]
 
 ## God Nodes (most connected - your core abstractions)
@@ -113,8 +112,8 @@
   server.js → public/lib/week.js
 - `horizonWeekDates()` --calls--> `disposHorizonMondays()`  [INFERRED]
   tests/helpers/harness.js → public/lib/week.js
-- `index.html (interface patron/directeur)` --references--> `Service Worker / PWA (Cache First, BUILD_TIME)`  [INFERRED]
-  public/index.html → docs/architecture.md
+- `Disponibilités staff & patron` --implements--> `planning.html (interface staff)`  [INFERRED]
+  docs/prd.md → public/planning.html
 
 ## Import Cycles
 - None detected.
@@ -124,15 +123,15 @@
 - **Sûreté timezone via toDateStr** — architecture_timezone_rule, architecture_todatestr, architecture_push_past_shift_guard [EXTRACTED 0.85]
 - **Cycle de vie feature iCal (livrée puis désactivée)** — backlog_f09_ical, architecture_ical_feed, architecture_calendar_enabled_flag [EXTRACTED 0.90]
 
-## Communities (77 total, 10 thin omitted)
+## Communities (76 total, 10 thin omitted)
 
 ### Community 0 - "Planning Board UI"
 Cohesion: 0.05
 Nodes (67): addDays(), allEstablishments, allStaff, applyCongeModes(), applyStatsPeriod(), buildHistStatsHtml(), buildTeamDisplayNames(), cancelConge() (+59 more)
 
 ### Community 1 - "Architecture & Design Rationale"
-Cohesion: 0.25
-Nodes (8): hourly_rate_snapshot / fixed_rate_snapshot, Modèle de données shifts, Modes de rémunération staff (Mutual exclusion Option A), F-06 Joker ouvert au staff (candidatures), Nom staff dénormalisé (source de vérité D-77), Disponibilités staff & patron, Shifts Joker (créneau ouvert), Transfert de shift cross-établissement
+Cohesion: 0.18
+Nodes (14): hourly_rate_snapshot / fixed_rate_snapshot, Modèle de données shifts, Modes de rémunération staff (Mutual exclusion Option A), F-06 Joker ouvert au staff (candidatures), Nom staff dénormalisé (source de vérité D-77), performance.html (pilotage économique), pointage.html (compte établissement), Disponibilités staff & patron (+6 more)
 
 ### Community 2 - "html2canvas Render Engine"
 Cohesion: 0.04
@@ -211,7 +210,7 @@ Nodes (18): 1. Notre méthode de travail : c'est de l'agile *léger*, pas du Scr
 
 ### Community 20 - "Community 20"
 Cohesion: 0.20
-Nodes (10): Garde B-10 — pas de push pour shift passé, Service Worker / PWA (Cache First, BUILD_TIME), Règle timezone — jamais toISOString(), toDateStr() helper, Architecture Web Push (VAPID), GitHub Actions CI Workflow, Node 20/22 Test Matrix, CI Syntax Check (node -c) (+2 more)
+Nodes (11): Garde B-10 — pas de push pour shift passé, Service Worker / PWA (Cache First, BUILD_TIME), Règle timezone — jamais toISOString(), toDateStr() helper, Architecture Web Push (VAPID), GitHub Actions CI Workflow, Node 20/22 Test Matrix, CI Syntax Check (node -c) (+3 more)
 
 ### Community 21 - "html2canvas Helpers"
 Cohesion: 0.57
@@ -384,10 +383,6 @@ Nodes (8): 2.1 login.html, 2.2 set-password.html, 2.3 index.html (Patron / Direc
 ### Community 74 - "Community 74"
 Cohesion: 0.22
 Nodes (11): activeStaff(), buildRoleFilters(), openAccountsModal(), populateBarsCheckboxes(), populateStaffSelect(), renderAccountsList(), renderPendingInvites(), renderRestDaysTab() (+3 more)
-
-### Community 75 - "Community 75"
-Cohesion: 0.33
-Nodes (7): index.html (interface patron/directeur), performance.html (pilotage économique), pointage.html (compte établissement), Performance — pilotage économique, Pointage avancé (heures réelles), PRD — Templyo, Audit ergonomie tactile mobile (D-49)
 
 ### Community 76 - "Community 76"
 Cohesion: 1.00

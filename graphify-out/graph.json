@@ -4600,7 +4600,7 @@
       "label": "staffIndex()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6680",
+      "source_location": "L6685",
       "_origin": "ast",
       "id": "public_script_staffindex",
       "community": 6,
@@ -4610,7 +4610,7 @@
       "label": "loadDisposList()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6682",
+      "source_location": "L6687",
       "_origin": "ast",
       "id": "public_script_loaddisposlist",
       "community": 6,
@@ -4620,7 +4620,7 @@
       "label": "patchEachDispo()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6964",
+      "source_location": "L7008",
       "_origin": "ast",
       "id": "public_script_patcheachdispo",
       "community": 4,
@@ -4630,7 +4630,7 @@
       "label": "batchToast()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6991",
+      "source_location": "L7035",
       "_origin": "ast",
       "id": "public_script_batchtoast",
       "community": 38,
@@ -4640,7 +4640,7 @@
       "label": "confirmDisposBatch()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6994",
+      "source_location": "L7038",
       "_origin": "ast",
       "id": "public_script_confirmdisposbatch",
       "community": 4,
@@ -4650,7 +4650,7 @@
       "label": "confirmAllForStaff()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7042",
+      "source_location": "L7086",
       "_origin": "ast",
       "id": "public_script_confirmallforstaff",
       "community": 4,
@@ -4660,7 +4660,7 @@
       "label": "openConfirmDispo()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7056",
+      "source_location": "L7100",
       "_origin": "ast",
       "id": "public_script_openconfirmdispo",
       "community": 4,
@@ -4670,7 +4670,7 @@
       "label": "acknowledgeOffDispo()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7111",
+      "source_location": "L7155",
       "_origin": "ast",
       "id": "public_script_acknowledgeoffdispo",
       "community": 9,
@@ -4680,7 +4680,7 @@
       "label": "renderStaffNotesWeekLabel()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7133",
+      "source_location": "L7177",
       "_origin": "ast",
       "id": "public_script_renderstaffnotesweeklabel",
       "community": 6,
@@ -4690,7 +4690,7 @@
       "label": "_staffNotesData",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7141",
+      "source_location": "L7185",
       "_origin": "ast",
       "id": "public_script_staffnotesdata",
       "community": 4,
@@ -4700,7 +4700,7 @@
       "label": "loadStaffNotesList()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7143",
+      "source_location": "L7187",
       "_origin": "ast",
       "id": "public_script_loadstaffnoteslist",
       "community": 17,
@@ -4710,7 +4710,7 @@
       "label": "renderStaffNotesList()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7159",
+      "source_location": "L7203",
       "_origin": "ast",
       "id": "public_script_renderstaffnoteslist",
       "community": 17,
@@ -4720,7 +4720,7 @@
       "label": "buildEstablishmentSelect()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7235",
+      "source_location": "L7279",
       "_origin": "ast",
       "id": "public_script_buildestablishmentselect",
       "community": 4,
@@ -4730,7 +4730,7 @@
       "label": "loadDispoControl()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7273",
+      "source_location": "L7317",
       "_origin": "ast",
       "id": "public_script_loaddispocontrol",
       "community": 9,
@@ -4740,7 +4740,7 @@
       "label": "renderRolesList()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7513",
+      "source_location": "L7557",
       "_origin": "ast",
       "id": "public_script_renderroleslist",
       "community": 4,
@@ -4750,7 +4750,7 @@
       "label": "openStaffModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7573",
+      "source_location": "L7617",
       "_origin": "ast",
       "id": "public_script_openstaffmodal",
       "community": 17,
@@ -4760,7 +4760,7 @@
       "label": "renderRestDaysTab()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7605",
+      "source_location": "L7649",
       "_origin": "ast",
       "id": "public_script_renderrestdaystab",
       "community": 74,
@@ -4770,7 +4770,7 @@
       "label": "renderRolesHeader()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7695",
+      "source_location": "L7739",
       "_origin": "ast",
       "id": "public_script_renderrolesheader",
       "community": 4,
@@ -4780,7 +4780,7 @@
       "label": "populateStaffManageFilters()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7784",
+      "source_location": "L7828",
       "_origin": "ast",
       "id": "public_script_populatestaffmanagefilters",
       "community": 17,
@@ -4790,7 +4790,7 @@
       "label": "renderStaffManageList()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7810",
+      "source_location": "L7854",
       "_origin": "ast",
       "id": "public_script_renderstaffmanagelist",
       "community": 17,
@@ -4800,7 +4800,7 @@
       "label": "textColorFor()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8206",
+      "source_location": "L8250",
       "_origin": "ast",
       "id": "public_script_textcolorfor",
       "community": 14,
@@ -4810,7 +4810,7 @@
       "label": "applyCardNameContrast()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8215",
+      "source_location": "L8259",
       "_origin": "ast",
       "id": "public_script_applycardnamecontrast",
       "community": 14,
@@ -4820,7 +4820,7 @@
       "label": "shiftTextColor()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8229",
+      "source_location": "L8273",
       "_origin": "ast",
       "id": "public_script_shifttextcolor",
       "community": 14,
@@ -4830,7 +4830,7 @@
       "label": "AUTO_COLORS",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8237",
+      "source_location": "L8281",
       "_origin": "ast",
       "id": "public_script_auto_colors",
       "community": 4,
@@ -4840,7 +4840,7 @@
       "label": "generateColor()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8243",
+      "source_location": "L8287",
       "_origin": "ast",
       "id": "public_script_generatecolor",
       "community": 4,
@@ -4850,7 +4850,7 @@
       "label": "updateStaffColor()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8249",
+      "source_location": "L8293",
       "_origin": "ast",
       "id": "public_script_updatestaffcolor",
       "community": 14,
@@ -4860,7 +4860,7 @@
       "label": "renderStats()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8282",
+      "source_location": "L8326",
       "_origin": "ast",
       "id": "public_script_renderstats",
       "community": 38,
@@ -4870,7 +4870,7 @@
       "label": "showToast()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8321",
+      "source_location": "L8365",
       "_origin": "ast",
       "id": "public_script_showtoast",
       "community": 38,
@@ -4880,7 +4880,7 @@
       "label": "showConflictAlert()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8329",
+      "source_location": "L8373",
       "_origin": "ast",
       "id": "public_script_showconflictalert",
       "community": 38,
@@ -4890,7 +4890,7 @@
       "label": "logout()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8339",
+      "source_location": "L8383",
       "_origin": "ast",
       "id": "public_script_logout",
       "community": 4,
@@ -4900,7 +4900,7 @@
       "label": "openBulkStaffNamesModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8358",
+      "source_location": "L8402",
       "_origin": "ast",
       "id": "public_script_openbulkstaffnamesmodal",
       "community": 4,
@@ -4910,7 +4910,7 @@
       "label": "openBulkStaffRatesModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8442",
+      "source_location": "L8486",
       "_origin": "ast",
       "id": "public_script_openbulkstaffratesmodal",
       "community": 4,
@@ -4920,7 +4920,7 @@
       "label": "openCsvImportModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8589",
+      "source_location": "L8633",
       "_origin": "ast",
       "id": "public_script_opencsvimportmodal",
       "community": 4,
@@ -4930,7 +4930,7 @@
       "label": "startAutoRefresh()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8824",
+      "source_location": "L8868",
       "_origin": "ast",
       "id": "public_script_startautorefresh",
       "community": 9,
@@ -4940,7 +4940,7 @@
       "label": "refreshIfStale()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8839",
+      "source_location": "L8883",
       "_origin": "ast",
       "id": "public_script_refreshifstale",
       "community": 9,
@@ -4950,7 +4950,7 @@
       "label": "silentRefresh()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8851",
+      "source_location": "L8895",
       "_origin": "ast",
       "id": "public_script_silentrefresh",
       "community": 9,
@@ -4960,7 +4960,7 @@
       "label": "loadNotifBadge()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8864",
+      "source_location": "L8908",
       "_origin": "ast",
       "id": "public_script_loadnotifbadge",
       "community": 9,
@@ -4970,7 +4970,7 @@
       "label": "openNotifPanel()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8877",
+      "source_location": "L8921",
       "_origin": "ast",
       "id": "public_script_opennotifpanel",
       "community": 14,
@@ -4980,7 +4980,7 @@
       "label": "formatTimeAgo()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8924",
+      "source_location": "L8968",
       "_origin": "ast",
       "id": "public_script_formattimeago",
       "community": 4,
@@ -4990,7 +4990,7 @@
       "label": "escapeHtml()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8936",
+      "source_location": "L8980",
       "_origin": "ast",
       "id": "public_script_escapehtml",
       "community": 14,
@@ -5000,7 +5000,7 @@
       "label": "initNotifListeners()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8948",
+      "source_location": "L8992",
       "_origin": "ast",
       "id": "public_script_initnotiflisteners",
       "community": 9,
@@ -5010,7 +5010,7 @@
       "label": "exportWeekCSV()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8974",
+      "source_location": "L9018",
       "_origin": "ast",
       "id": "public_script_exportweekcsv",
       "community": 6,
@@ -5020,7 +5020,7 @@
       "label": "saveDashboardPdf()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L9049",
+      "source_location": "L9093",
       "_origin": "ast",
       "id": "public_script_savedashboardpdf",
       "community": 6,
@@ -5030,7 +5030,7 @@
       "label": "generatePrintGantt()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L9220",
+      "source_location": "L9264",
       "_origin": "ast",
       "id": "public_script_generateprintgantt",
       "community": 6,
@@ -13058,7 +13058,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 75,
+      "community": 1,
       "norm_label": "prd \u2014 templyo",
       "id": "prd_prd"
     },
@@ -13097,7 +13097,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 75,
+      "community": 1,
       "norm_label": "performance \u2014 pilotage economique",
       "id": "prd_performance"
     },
@@ -13110,7 +13110,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 75,
+      "community": 1,
       "norm_label": "pointage avance (heures reelles)",
       "id": "prd_pointage"
     },
@@ -13175,7 +13175,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 75,
+      "community": 1,
       "norm_label": "audit ergonomie tactile mobile (d-49)",
       "id": "ux_design_touch_audit"
     },
@@ -13188,7 +13188,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 75,
+      "community": 20,
       "norm_label": "index.html (interface patron/directeur)",
       "id": "index_index_html"
     },
@@ -13214,7 +13214,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 75,
+      "community": 1,
       "norm_label": "performance.html (pilotage economique)",
       "id": "performance_performance_html"
     },
@@ -13240,7 +13240,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 75,
+      "community": 1,
       "norm_label": "pointage.html (compte etablissement)",
       "id": "pointage_pointage_html"
     },
@@ -13605,9 +13605,9 @@
       "source_file": "lib/utils.js",
       "source_location": "L380",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_utils",
-      "target": "lib_utils_staffreopenedfor",
-      "confidence_score": 1.0
+      "target": "lib_utils_staffreopenedfor"
     },
     {
       "relation": "contains",
@@ -14538,9 +14538,9 @@
       "source_file": "server.js",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "lib_utils_staffreopenedfor",
-      "confidence_score": 1.0
+      "target": "lib_utils_staffreopenedfor"
     },
     {
       "relation": "imports",
@@ -14549,9 +14549,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "lib_utils_staffreopenedfor",
-      "confidence_score": 1.0
+      "target": "lib_utils_staffreopenedfor"
     },
     {
       "relation": "imports",
@@ -28558,9 +28558,9 @@
       "source_file": "server.js",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "server_isvalidobjectid_hashtoken_normalizephone_weekstart_currentweekstart_disposweekstart_isautopublished_isdatepublished_normalizepublishdoc_chargemultiplier_todatestr_datesoverlap_congedaysinrange_splitdisposbyconges_isfullrangeonconge_validateoffperiod_scopemanageroff_resolveperfsettings_pickstaffcolor_buildtemplatedispos_datescoveredbyperiods_dispodeadlinewaived_shouldmaterializetemplate_disposhorizonrange_disposhorizonmondays_clamphorizonweeks_dispo_horizon_max_dispomateriallydiffers_staffreopenedfor",
-      "confidence_score": 1.0
+      "target": "server_isvalidobjectid_hashtoken_normalizephone_weekstart_currentweekstart_disposweekstart_isautopublished_isdatepublished_normalizepublishdoc_chargemultiplier_todatestr_datesoverlap_congedaysinrange_splitdisposbyconges_isfullrangeonconge_validateoffperiod_scopemanageroff_resolveperfsettings_pickstaffcolor_buildtemplatedispos_datescoveredbyperiods_dispodeadlinewaived_shouldmaterializetemplate_disposhorizonrange_disposhorizonmondays_clamphorizonweeks_dispo_horizon_max_dispomateriallydiffers_staffreopenedfor"
     },
     {
       "relation": "contains",
@@ -29079,9 +29079,9 @@
       "source_file": "server.js",
       "source_location": "L3390",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server_releaseshiftsondispochange",
-      "target": "server_fetchpublishedweeks",
-      "confidence_score": 1.0
+      "target": "server_fetchpublishedweeks"
     },
     {
       "relation": "calls",
@@ -29408,9 +29408,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_disposhorizonrange_disposhorizonmondays_clamphorizonweeks_dispo_horizon_max_dispomateriallydiffers_staffreopenedfor",
-      "confidence_score": 1.0
+      "target": "tests_dispos_horizon_test_disposhorizonrange_disposhorizonmondays_clamphorizonweeks_dispo_horizon_max_dispomateriallydiffers_staffreopenedfor"
     },
     {
       "relation": "contains",
@@ -29428,9 +29428,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L369",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_forceopenof",
-      "confidence_score": 1.0
+      "target": "tests_dispos_horizon_test_forceopenof"
     },
     {
       "relation": "contains",
@@ -30081,9 +30081,9 @@
       "source_file": "tests/helpers/fake-db.js",
       "source_location": "L36",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_fake_db",
-      "target": "helpers_fake_db_addtoset",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db_addtoset"
     },
     {
       "relation": "contains",
@@ -30201,9 +30201,9 @@
       "source_file": "tests/helpers/fake-db.js",
       "source_location": "L48",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_fake_db",
-      "target": "helpers_fake_db_pullhits",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db_pullhits"
     },
     {
       "relation": "contains",
@@ -30211,9 +30211,9 @@
       "source_file": "tests/helpers/fake-db.js",
       "source_location": "L26",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_fake_db",
-      "target": "helpers_fake_db_samevalue",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db_samevalue"
     },
     {
       "relation": "imports_from",
@@ -30288,9 +30288,9 @@
       "source_file": "tests/helpers/fake-db.js",
       "source_location": "L50",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_fake_db_pullhits",
-      "target": "helpers_fake_db_isobjid",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db_isobjid"
     },
     {
       "relation": "calls",
@@ -30321,9 +30321,9 @@
       "source_file": "tests/helpers/fake-db.js",
       "source_location": "L51",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_fake_db_pullhits",
-      "target": "helpers_fake_db_eq",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db_eq"
     },
     {
       "relation": "calls",
@@ -30332,9 +30332,9 @@
       "source_file": "tests/helpers/fake-db.js",
       "source_location": "L27",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_fake_db_samevalue",
-      "target": "helpers_fake_db_eq",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db_eq"
     },
     {
       "relation": "calls",
@@ -30343,9 +30343,9 @@
       "source_file": "tests/helpers/fake-db.js",
       "source_location": "L51",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_fake_db_pullhits",
-      "target": "helpers_fake_db_matchdoc",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db_matchdoc"
     },
     {
       "relation": "calls",
@@ -33114,9 +33114,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L265",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_b2_horizon_de_saisie_note_de_design",
-      "target": "docs_design_b2_horizon_saisie_9_suites_du_2026_08_13_m\u00eame_session",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_9_suites_du_2026_08_13_m\u00eame_session"
     },
     {
       "relation": "contains",
@@ -33234,9 +33234,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L267",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_9_suites_du_2026_08_13_m\u00eame_session",
-      "target": "docs_design_b2_horizon_saisie_9_1_une_action_du_staff_n_alt\u00e8re_plus_un_planning_publi\u00e9",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_9_1_une_action_du_staff_n_alt\u00e8re_plus_un_planning_publi\u00e9"
     },
     {
       "relation": "contains",
@@ -33244,9 +33244,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L296",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_9_suites_du_2026_08_13_m\u00eame_session",
-      "target": "docs_design_b2_horizon_saisie_9_2_la_r\u00e9ouverture_nominative_porte_sa_semaine",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_9_2_la_r\u00e9ouverture_nominative_porte_sa_semaine"
     },
     {
       "relation": "contains",
@@ -33254,9 +33254,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L311",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_9_suites_du_2026_08_13_m\u00eame_session",
-      "target": "docs_design_b2_horizon_saisie_9_3_la_8e_lacune_de_fake_db_et_pourquoi_elle_explique_le_d\u00e9faut",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_9_3_la_8e_lacune_de_fake_db_et_pourquoi_elle_explique_le_d\u00e9faut"
     },
     {
       "relation": "contains",
@@ -33264,9 +33264,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L323",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_9_suites_du_2026_08_13_m\u00eame_session",
-      "target": "docs_design_b2_horizon_saisie_9_4_smoke_8_v\u00e9rifications_b2_et_un_contr\u00f4le_vacant_d\u00e9masqu\u00e9",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_9_4_smoke_8_v\u00e9rifications_b2_et_un_contr\u00f4le_vacant_d\u00e9masqu\u00e9"
     },
     {
       "relation": "contains",
@@ -35141,5 +35141,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "f320fccdeef1bcea1403ee5f510e0e8c5229491d"
+  "built_at_commit": "6ac5e01a564d8150d3704aeec190c72c42f31f26"
 }

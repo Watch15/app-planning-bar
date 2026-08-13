@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "public/script.js": {
-    "mtime": 1786618793.8587148,
-    "ast_hash": "bc375f87e44ffb93bd379ca1971b0536",
+    "mtime": 1786621565.1255927,
+    "ast_hash": "190a915d431b8e734ac4f43dcd37f228",
     "semantic_hash": ""
   },
   "public/sw.js": {
@@ -115,8 +115,8 @@
     "semantic_hash": ""
   },
   "docs/backlog.md": {
-    "mtime": 1786620733.5862415,
-    "ast_hash": "2cdb09aac77da44c41d623aa12fe5da9",
+    "mtime": 1786622010.3337493,
+    "ast_hash": "bd0605c560c31035d95bfe333d82eed0",
     "semantic_hash": ""
   },
   "docs/prd.md": {
