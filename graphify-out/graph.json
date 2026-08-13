@@ -367,10 +367,20 @@
       "norm_label": "scopemanageroff()"
     },
     {
+      "label": "staffReopenedFor()",
+      "file_type": "code",
+      "source_file": "lib/utils.js",
+      "source_location": "L380",
+      "_origin": "ast",
+      "id": "lib_utils_staffreopenedfor",
+      "community": 10,
+      "norm_label": "staffreopenedfor()"
+    },
+    {
       "label": "dispoMateriallyDiffers()",
       "file_type": "code",
       "source_file": "lib/utils.js",
-      "source_location": "L371",
+      "source_location": "L392",
       "_origin": "ast",
       "id": "lib_utils_dispomateriallydiffers",
       "community": 10,
@@ -2593,7 +2603,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "public_script_activestaff",
-      "community": 14,
+      "community": 74,
       "norm_label": "activestaff()"
     },
     {
@@ -2863,7 +2873,7 @@
       "source_location": "L272",
       "_origin": "ast",
       "id": "public_script_parsedate",
-      "community": 57,
+      "community": 71,
       "norm_label": "parsedate()"
     },
     {
@@ -2903,7 +2913,7 @@
       "source_location": "L294",
       "_origin": "ast",
       "id": "public_script_formatdatelong",
-      "community": 57,
+      "community": 71,
       "norm_label": "formatdatelong()"
     },
     {
@@ -3223,7 +3233,7 @@
       "source_location": "L957",
       "_origin": "ast",
       "id": "public_script_applyviewmode",
-      "community": 57,
+      "community": 71,
       "norm_label": "applyviewmode()"
     },
     {
@@ -3283,7 +3293,7 @@
       "source_location": "L1117",
       "_origin": "ast",
       "id": "public_script_loaddaydetail",
-      "community": 57,
+      "community": 71,
       "norm_label": "loaddaydetail()"
     },
     {
@@ -3293,7 +3303,7 @@
       "source_location": "L1163",
       "_origin": "ast",
       "id": "public_script_loadpublishbutton",
-      "community": 57,
+      "community": 71,
       "norm_label": "loadpublishbutton()"
     },
     {
@@ -3303,7 +3313,7 @@
       "source_location": "L1193",
       "_origin": "ast",
       "id": "public_script_publishestabs",
-      "community": 57,
+      "community": 71,
       "norm_label": "_publishestabs()"
     },
     {
@@ -3313,7 +3323,7 @@
       "source_location": "L1199",
       "_origin": "ast",
       "id": "public_script_renderpublishcontrol",
-      "community": 57,
+      "community": 71,
       "norm_label": "renderpublishcontrol()"
     },
     {
@@ -3363,7 +3373,7 @@
       "source_location": "L1342",
       "_origin": "ast",
       "id": "public_script_buildrolefilters",
-      "community": 17,
+      "community": 74,
       "norm_label": "buildrolefilters()"
     },
     {
@@ -3383,7 +3393,7 @@
       "source_location": "L1380",
       "_origin": "ast",
       "id": "public_script_rendersidebar",
-      "community": 17,
+      "community": 74,
       "norm_label": "rendersidebar()"
     },
     {
@@ -3403,7 +3413,7 @@
       "source_location": "L1571",
       "_origin": "ast",
       "id": "public_script_loadgroups",
-      "community": 75,
+      "community": 57,
       "norm_label": "loadgroups()"
     },
     {
@@ -3413,7 +3423,7 @@
       "source_location": "L1579",
       "_origin": "ast",
       "id": "public_script_rendergroupfilter",
-      "community": 75,
+      "community": 57,
       "norm_label": "rendergroupfilter()"
     },
     {
@@ -3433,7 +3443,7 @@
       "source_location": "L1701",
       "_origin": "ast",
       "id": "public_script_rendertabs",
-      "community": 75,
+      "community": 57,
       "norm_label": "rendertabs()"
     },
     {
@@ -3443,7 +3453,7 @@
       "source_location": "L1724",
       "_origin": "ast",
       "id": "public_script_extenddisplayforrealhours",
-      "community": 57,
+      "community": 71,
       "norm_label": "extenddisplayforrealhours()"
     },
     {
@@ -3453,7 +3463,7 @@
       "source_location": "L1742",
       "_origin": "ast",
       "id": "public_script_staffmatchescurrentgroup",
-      "community": 57,
+      "community": 6,
       "norm_label": "staffmatchescurrentgroup()"
     },
     {
@@ -3463,7 +3473,7 @@
       "source_location": "L1751",
       "_origin": "ast",
       "id": "public_script_builddisplayedstaff",
-      "community": 57,
+      "community": 71,
       "norm_label": "builddisplayedstaff()"
     },
     {
@@ -3953,7 +3963,7 @@
       "source_location": "L3770",
       "_origin": "ast",
       "id": "public_script_renderweekfull",
-      "community": 57,
+      "community": 6,
       "norm_label": "renderweekfull()"
     },
     {
@@ -3963,7 +3973,7 @@
       "source_location": "L3782",
       "_origin": "ast",
       "id": "public_script_renderteamdashboard",
-      "community": 57,
+      "community": 6,
       "norm_label": "renderteamdashboard()"
     },
     {
@@ -3973,7 +3983,7 @@
       "source_location": "L3906",
       "_origin": "ast",
       "id": "public_script_renderdashboard",
-      "community": 57,
+      "community": 6,
       "norm_label": "renderdashboard()"
     },
     {
@@ -3993,7 +4003,7 @@
       "source_location": "L4157",
       "_origin": "ast",
       "id": "public_script_renderweekgantt",
-      "community": 57,
+      "community": 6,
       "norm_label": "renderweekgantt()"
     },
     {
@@ -4003,7 +4013,7 @@
       "source_location": "L4334",
       "_origin": "ast",
       "id": "public_script_switchtodayview",
-      "community": 57,
+      "community": 71,
       "norm_label": "switchtodayview()"
     },
     {
@@ -4013,7 +4023,7 @@
       "source_location": "L4347",
       "_origin": "ast",
       "id": "public_script_openestablishmentsmodal",
-      "community": 75,
+      "community": 57,
       "norm_label": "openestablishmentsmodal()"
     },
     {
@@ -4033,7 +4043,7 @@
       "source_location": "L4450",
       "_origin": "ast",
       "id": "public_script_renderestablishmentslist",
-      "community": 75,
+      "community": 57,
       "norm_label": "renderestablishmentslist()"
     },
     {
@@ -4043,7 +4053,7 @@
       "source_location": "L4577",
       "_origin": "ast",
       "id": "public_script_addestablishment",
-      "community": 75,
+      "community": 57,
       "norm_label": "addestablishment()"
     },
     {
@@ -4753,7 +4763,7 @@
       "source_location": "L7605",
       "_origin": "ast",
       "id": "public_script_renderrestdaystab",
-      "community": 14,
+      "community": 74,
       "norm_label": "renderrestdaystab()"
     },
     {
@@ -5013,7 +5023,7 @@
       "source_location": "L9049",
       "_origin": "ast",
       "id": "public_script_savedashboardpdf",
-      "community": 14,
+      "community": 6,
       "norm_label": "savedashboardpdf()"
     },
     {
@@ -7227,20 +7237,20 @@
       "norm_label": "morgan"
     },
     {
-      "label": "{\r\n    isValidObjectId, hashToken, normalizePhone,\r\n    weekStart, currentWeekStart, disposWeekStart, isAutoPublished, isDatePublished, normalizePublishDoc, chargeMultiplier,\r\n    toDateStr, datesOverlap, congeDaysInRange, splitDisposByConges, isFullRangeOnConge,\r\n    validateOffPeriod, scopeManagerOff, resolvePerfSettings, pickStaffColor, buildTemplateDispos,\r\n    datesCoveredByPeriods, dispoDeadlineWaived, shouldMaterializeTemplate,\r\n    disposHorizonRange, clampHorizonWeeks, DISPO_HORIZON_MAX, dispoMateriallyDiffers,\r\n}",
+      "label": "{\r\n    isValidObjectId, hashToken, normalizePhone,\r\n    weekStart, currentWeekStart, disposWeekStart, isAutoPublished, isDatePublished, normalizePublishDoc, chargeMultiplier,\r\n    toDateStr, datesOverlap, congeDaysInRange, splitDisposByConges, isFullRangeOnConge,\r\n    validateOffPeriod, scopeManagerOff, resolvePerfSettings, pickStaffColor, buildTemplateDispos,\r\n    datesCoveredByPeriods, dispoDeadlineWaived, shouldMaterializeTemplate,\r\n    disposHorizonRange, disposHorizonMondays, clampHorizonWeeks, DISPO_HORIZON_MAX,\r\n    dispoMateriallyDiffers, staffReopenedFor,\r\n}",
       "file_type": "code",
       "source_file": "server.js",
       "source_location": "L14",
       "_origin": "ast",
-      "id": "server_isvalidobjectid_hashtoken_normalizephone_weekstart_currentweekstart_disposweekstart_isautopublished_isdatepublished_normalizepublishdoc_chargemultiplier_todatestr_datesoverlap_congedaysinrange_splitdisposbyconges_isfullrangeonconge_validateoffperiod_scopemanageroff_resolveperfsettings_pickstaffcolor_buildtemplatedispos_datescoveredbyperiods_dispodeadlinewaived_shouldmaterializetemplate_disposhorizonrange_clamphorizonweeks_dispo_horizon_max_dispomateriallydiffers",
+      "id": "server_isvalidobjectid_hashtoken_normalizephone_weekstart_currentweekstart_disposweekstart_isautopublished_isdatepublished_normalizepublishdoc_chargemultiplier_todatestr_datesoverlap_congedaysinrange_splitdisposbyconges_isfullrangeonconge_validateoffperiod_scopemanageroff_resolveperfsettings_pickstaffcolor_buildtemplatedispos_datescoveredbyperiods_dispodeadlinewaived_shouldmaterializetemplate_disposhorizonrange_disposhorizonmondays_clamphorizonweeks_dispo_horizon_max_dispomateriallydiffers_staffreopenedfor",
       "community": 5,
-      "norm_label": "{\r\n    isvalidobjectid, hashtoken, normalizephone,\r\n    weekstart, currentweekstart, disposweekstart, isautopublished, isdatepublished, normalizepublishdoc, chargemultiplier,\r\n    todatestr, datesoverlap, congedaysinrange, splitdisposbyconges, isfullrangeonconge,\r\n    validateoffperiod, scopemanageroff, resolveperfsettings, pickstaffcolor, buildtemplatedispos,\r\n    datescoveredbyperiods, dispodeadlinewaived, shouldmaterializetemplate,\r\n    disposhorizonrange, clamphorizonweeks, dispo_horizon_max, dispomateriallydiffers,\r\n}"
+      "norm_label": "{\r\n    isvalidobjectid, hashtoken, normalizephone,\r\n    weekstart, currentweekstart, disposweekstart, isautopublished, isdatepublished, normalizepublishdoc, chargemultiplier,\r\n    todatestr, datesoverlap, congedaysinrange, splitdisposbyconges, isfullrangeonconge,\r\n    validateoffperiod, scopemanageroff, resolveperfsettings, pickstaffcolor, buildtemplatedispos,\r\n    datescoveredbyperiods, dispodeadlinewaived, shouldmaterializetemplate,\r\n    disposhorizonrange, disposhorizonmondays, clamphorizonweeks, dispo_horizon_max,\r\n    dispomateriallydiffers, staffreopenedfor,\r\n}"
     },
     {
       "label": "app",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L36",
+      "source_location": "L37",
       "_origin": "ast",
       "id": "server_app",
       "community": 5,
@@ -7250,7 +7260,7 @@
       "label": "rateLimitMap",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L179",
+      "source_location": "L180",
       "_origin": "ast",
       "id": "server_ratelimitmap",
       "community": 5,
@@ -7260,7 +7270,7 @@
       "label": "rateLimit()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L180",
+      "source_location": "L181",
       "_origin": "ast",
       "id": "server_ratelimit",
       "community": 5,
@@ -7270,7 +7280,7 @@
       "label": "client",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L204",
+      "source_location": "L205",
       "_origin": "ast",
       "id": "server_client",
       "community": 5,
@@ -7280,7 +7290,7 @@
       "label": "NOT_ARCHIVED",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L217",
+      "source_location": "L218",
       "_origin": "ast",
       "id": "server_not_archived",
       "community": 5,
@@ -7290,7 +7300,7 @@
       "label": "DISPO_TARGET",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L222",
+      "source_location": "L223",
       "_origin": "ast",
       "id": "server_dispo_target",
       "community": 5,
@@ -7300,7 +7310,7 @@
       "label": "JOKER_SHIFT",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L230",
+      "source_location": "L231",
       "_origin": "ast",
       "id": "server_joker_shift",
       "community": 5,
@@ -7310,7 +7320,7 @@
       "label": "archivedStaff()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L235",
+      "source_location": "L236",
       "_origin": "ast",
       "id": "server_archivedstaff",
       "community": 65,
@@ -7320,7 +7330,7 @@
       "label": "resolveStaffForPlanning()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L263",
+      "source_location": "L264",
       "_origin": "ast",
       "id": "server_resolvestaffforplanning",
       "community": 65,
@@ -7330,7 +7340,7 @@
       "label": "archivedIdsAmong()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L288",
+      "source_location": "L289",
       "_origin": "ast",
       "id": "server_archivedidsamong",
       "community": 65,
@@ -7340,7 +7350,7 @@
       "label": "connectDB()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L300",
+      "source_location": "L301",
       "_origin": "ast",
       "id": "server_connectdb",
       "community": 65,
@@ -7350,7 +7360,7 @@
       "label": "sendEmail()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L361",
+      "source_location": "L362",
       "_origin": "ast",
       "id": "server_sendemail",
       "community": 5,
@@ -7360,7 +7370,7 @@
       "label": "appUrl()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L392",
+      "source_location": "L393",
       "_origin": "ast",
       "id": "server_appurl",
       "community": 5,
@@ -7370,7 +7380,7 @@
       "label": "sendSMS()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L398",
+      "source_location": "L399",
       "_origin": "ast",
       "id": "server_sendsms",
       "community": 5,
@@ -7380,7 +7390,7 @@
       "label": "sendPushToStaff()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L425",
+      "source_location": "L426",
       "_origin": "ast",
       "id": "server_sendpushtostaff",
       "community": 65,
@@ -7390,7 +7400,7 @@
       "label": "notifyPatrons()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L520",
+      "source_location": "L521",
       "_origin": "ast",
       "id": "server_notifypatrons",
       "community": 5,
@@ -7400,17 +7410,17 @@
       "label": "fetchPublishedWeeks()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L556",
+      "source_location": "L557",
       "_origin": "ast",
       "id": "server_fetchpublishedweeks",
-      "community": 11,
+      "community": 67,
       "norm_label": "fetchpublishedweeks()"
     },
     {
       "label": "dispoOpenVenues()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L572",
+      "source_location": "L573",
       "_origin": "ast",
       "id": "server_dispoopenvenues",
       "community": 5,
@@ -7420,7 +7430,7 @@
       "label": "staffDispoOpen()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L581",
+      "source_location": "L582",
       "_origin": "ast",
       "id": "server_staffdispoopen",
       "community": 5,
@@ -7430,7 +7440,7 @@
       "label": "checkDispoRappels()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L591",
+      "source_location": "L592",
       "_origin": "ast",
       "id": "server_checkdisporappels",
       "community": 65,
@@ -7440,7 +7450,7 @@
       "label": "cleanupOldJokers()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L722",
+      "source_location": "L723",
       "_origin": "ast",
       "id": "server_cleanupoldjokers",
       "community": 65,
@@ -7450,7 +7460,7 @@
       "label": "cleanupPastDispos()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L741",
+      "source_location": "L742",
       "_origin": "ast",
       "id": "server_cleanuppastdispos",
       "community": 5,
@@ -7460,7 +7470,7 @@
       "label": "scheduleDailyAt10()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L771",
+      "source_location": "L772",
       "_origin": "ast",
       "id": "server_scheduledailyat10",
       "community": 65,
@@ -7470,7 +7480,7 @@
       "label": "_shiftNotifDebounce",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L801",
+      "source_location": "L802",
       "_origin": "ast",
       "id": "server_shiftnotifdebounce",
       "community": 5,
@@ -7480,7 +7490,7 @@
       "label": "scheduleShiftNotif()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L805",
+      "source_location": "L806",
       "_origin": "ast",
       "id": "server_scheduleshiftnotif",
       "community": 5,
@@ -7490,7 +7500,7 @@
       "label": "createNotifForPatrons()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L845",
+      "source_location": "L846",
       "_origin": "ast",
       "id": "server_createnotifforpatrons",
       "community": 5,
@@ -7500,7 +7510,7 @@
       "label": "setupSession()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L880",
+      "source_location": "L881",
       "_origin": "ast",
       "id": "server_setupsession",
       "community": 5,
@@ -7510,7 +7520,7 @@
       "label": "rejectQueryOperators()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L961",
+      "source_location": "L962",
       "_origin": "ast",
       "id": "server_rejectqueryoperators",
       "community": 5,
@@ -7520,7 +7530,7 @@
       "label": "checkDB()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L973",
+      "source_location": "L974",
       "_origin": "ast",
       "id": "server_checkdb",
       "community": 5,
@@ -7530,7 +7540,7 @@
       "label": "requireAuth()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L978",
+      "source_location": "L979",
       "_origin": "ast",
       "id": "server_requireauth",
       "community": 5,
@@ -7540,7 +7550,7 @@
       "label": "requirePatron()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L987",
+      "source_location": "L988",
       "_origin": "ast",
       "id": "server_requirepatron",
       "community": 5,
@@ -7550,7 +7560,7 @@
       "label": "requireAdmin()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L998",
+      "source_location": "L999",
       "_origin": "ast",
       "id": "server_requireadmin",
       "community": 5,
@@ -7560,7 +7570,7 @@
       "label": "requirePatronOnly()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1008",
+      "source_location": "L1009",
       "_origin": "ast",
       "id": "server_requirepatrononly",
       "community": 5,
@@ -7570,7 +7580,7 @@
       "label": "denyObservateurEdit()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1020",
+      "source_location": "L1021",
       "_origin": "ast",
       "id": "server_denyobservateuredit",
       "community": 5,
@@ -7580,7 +7590,7 @@
       "label": "userEstablishmentIds()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1030",
+      "source_location": "L1031",
       "_origin": "ast",
       "id": "server_userestablishmentids",
       "community": 5,
@@ -7590,7 +7600,7 @@
       "label": "canAccessEstablishment()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1039",
+      "source_location": "L1040",
       "_origin": "ast",
       "id": "server_canaccessestablishment",
       "community": 5,
@@ -7600,7 +7610,7 @@
       "label": "requireEstablishmentAccess()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1062",
+      "source_location": "L1063",
       "_origin": "ast",
       "id": "server_requireestablishmentaccess",
       "community": 5,
@@ -7610,7 +7620,7 @@
       "label": "isResponsablePourSoiree()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1089",
+      "source_location": "L1090",
       "_origin": "ast",
       "id": "server_isresponsablepoursoiree",
       "community": 5,
@@ -7620,7 +7630,7 @@
       "label": "requireEtablissement()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1129",
+      "source_location": "L1130",
       "_origin": "ast",
       "id": "server_requireetablissement",
       "community": 5,
@@ -7630,7 +7640,7 @@
       "label": "createManagerStaffProfile()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1390",
+      "source_location": "L1391",
       "_origin": "ast",
       "id": "server_createmanagerstaffprofile",
       "community": 61,
@@ -7640,7 +7650,7 @@
       "label": "ensureDirectorStaffProfile()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1421",
+      "source_location": "L1422",
       "_origin": "ast",
       "id": "server_ensuredirectorstaffprofile",
       "community": 61,
@@ -7650,7 +7660,7 @@
       "label": "syncDirectorAssignedEstablishments()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1443",
+      "source_location": "L1444",
       "_origin": "ast",
       "id": "server_syncdirectorassignedestablishments",
       "community": 5,
@@ -7660,7 +7670,7 @@
       "label": "invalidateUserSessions()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1465",
+      "source_location": "L1466",
       "_origin": "ast",
       "id": "server_invalidateusersessions",
       "community": 5,
@@ -7670,7 +7680,7 @@
       "label": "invalidateStaffSessions()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1480",
+      "source_location": "L1481",
       "_origin": "ast",
       "id": "server_invalidatestaffsessions",
       "community": 5,
@@ -7680,7 +7690,7 @@
       "label": "icsEscape()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L2396",
+      "source_location": "L2397",
       "_origin": "ast",
       "id": "server_icsescape",
       "community": 5,
@@ -7690,7 +7700,7 @@
       "label": "icsLocalDateTime()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L2407",
+      "source_location": "L2408",
       "_origin": "ast",
       "id": "server_icslocaldatetime",
       "community": 5,
@@ -7700,7 +7710,7 @@
       "label": "ICS_VTIMEZONE",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L2420",
+      "source_location": "L2421",
       "_origin": "ast",
       "id": "server_ics_vtimezone",
       "community": 5,
@@ -7710,7 +7720,7 @@
       "label": "buildShiftsIcs()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L2434",
+      "source_location": "L2435",
       "_origin": "ast",
       "id": "server_buildshiftsics",
       "community": 5,
@@ -7720,7 +7730,7 @@
       "label": "computeEffectiveDeadline()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3020",
+      "source_location": "L3021",
       "_origin": "ast",
       "id": "server_computeeffectivedeadline",
       "community": 65,
@@ -7730,7 +7740,7 @@
       "label": "dispoHorizons()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3059",
+      "source_location": "L3060",
       "_origin": "ast",
       "id": "server_dispohorizons",
       "community": 67,
@@ -7740,7 +7750,7 @@
       "label": "aggStatus()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3285",
+      "source_location": "L3306",
       "_origin": "ast",
       "id": "server_aggstatus",
       "community": 5,
@@ -7750,17 +7760,17 @@
       "label": "releaseShiftsOnDispoChange()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3355",
+      "source_location": "L3381",
       "_origin": "ast",
       "id": "server_releaseshiftsondispochange",
-      "community": 5,
+      "community": 67,
       "norm_label": "releaseshiftsondispochange()"
     },
     {
       "label": "pendingScopeFilter()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3566",
+      "source_location": "L3623",
       "_origin": "ast",
       "id": "server_pendingscopefilter",
       "community": 5,
@@ -7770,7 +7780,7 @@
       "label": "fullWeekCongeSet()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3762",
+      "source_location": "L3821",
       "_origin": "ast",
       "id": "server_fullweekcongeset",
       "community": 5,
@@ -7780,7 +7790,7 @@
       "label": "requireDirecteur()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4088",
+      "source_location": "L4151",
       "_origin": "ast",
       "id": "server_requiredirecteur",
       "community": 5,
@@ -7790,7 +7800,7 @@
       "label": "requireManagerStaffId()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4175",
+      "source_location": "L4238",
       "_origin": "ast",
       "id": "server_requiremanagerstaffid",
       "community": 5,
@@ -7800,7 +7810,7 @@
       "label": "MANAGER_DISPO_TYPES",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4181",
+      "source_location": "L4244",
       "_origin": "ast",
       "id": "server_manager_dispo_types",
       "community": 5,
@@ -7810,7 +7820,7 @@
       "label": "managerStaffName()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4184",
+      "source_location": "L4247",
       "_origin": "ast",
       "id": "server_managerstaffname",
       "community": 65,
@@ -7820,7 +7830,7 @@
       "label": "managerOffPeriods()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4201",
+      "source_location": "L4264",
       "_origin": "ast",
       "id": "server_manageroffperiods",
       "community": 11,
@@ -7830,7 +7840,7 @@
       "label": "materializeManagerTemplateWeek()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4223",
+      "source_location": "L4286",
       "_origin": "ast",
       "id": "server_materializemanagertemplateweek",
       "community": 11,
@@ -7840,7 +7850,7 @@
       "label": "materializeAllManagerTemplates()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4252",
+      "source_location": "L4315",
       "_origin": "ast",
       "id": "server_materializeallmanagertemplates",
       "community": 65,
@@ -7850,7 +7860,7 @@
       "label": "weekEndStr()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4789",
+      "source_location": "L4852",
       "_origin": "ast",
       "id": "server_weekendstr",
       "community": 5,
@@ -7860,7 +7870,7 @@
       "label": "loadPerfSettings()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5338",
+      "source_location": "L5401",
       "_origin": "ast",
       "id": "server_loadperfsettings",
       "community": 11,
@@ -7870,7 +7880,7 @@
       "label": "pickPointageEstab()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5533",
+      "source_location": "L5596",
       "_origin": "ast",
       "id": "server_pickpointageestab",
       "community": 5,
@@ -7880,7 +7890,7 @@
       "label": "formatShiftTime()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5754",
+      "source_location": "L5817",
       "_origin": "ast",
       "id": "server_formatshifttime",
       "community": 5,
@@ -7890,7 +7900,7 @@
       "label": "formatDateFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5761",
+      "source_location": "L5824",
       "_origin": "ast",
       "id": "server_formatdatefr",
       "community": 5,
@@ -7900,7 +7910,7 @@
       "label": "formatDateShortFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5767",
+      "source_location": "L5830",
       "_origin": "ast",
       "id": "server_formatdateshortfr",
       "community": 5,
@@ -7910,7 +7920,7 @@
       "label": "formatWeekFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5773",
+      "source_location": "L5836",
       "_origin": "ast",
       "id": "server_formatweekfr",
       "community": 5,
@@ -7920,7 +7930,7 @@
       "label": "touchLastUpdated()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5781",
+      "source_location": "L5844",
       "_origin": "ast",
       "id": "server_touchlastupdated",
       "community": 5,
@@ -7930,7 +7940,7 @@
       "label": "DEPLOYED_COMMIT",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5868",
+      "source_location": "L5931",
       "_origin": "ast",
       "id": "server_deployed_commit",
       "community": 5,
@@ -8067,14 +8077,14 @@
       "norm_label": "assert"
     },
     {
-      "label": "{\n    disposHorizonRange, disposHorizonMondays, clampHorizonWeeks,\n    DISPO_HORIZON_MAX, dispoMateriallyDiffers,\n}",
+      "label": "{\n    disposHorizonRange, disposHorizonMondays, clampHorizonWeeks,\n    DISPO_HORIZON_MAX, dispoMateriallyDiffers, staffReopenedFor,\n}",
       "file_type": "code",
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L18",
       "_origin": "ast",
-      "id": "tests_dispos_horizon_test_disposhorizonrange_disposhorizonmondays_clamphorizonweeks_dispo_horizon_max_dispomateriallydiffers",
+      "id": "tests_dispos_horizon_test_disposhorizonrange_disposhorizonmondays_clamphorizonweeks_dispo_horizon_max_dispomateriallydiffers_staffreopenedfor",
       "community": 10,
-      "norm_label": "{\n    disposhorizonrange, disposhorizonmondays, clamphorizonweeks,\n    dispo_horizon_max, dispomateriallydiffers,\n}"
+      "norm_label": "{\n    disposhorizonrange, disposhorizonmondays, clamphorizonweeks,\n    dispo_horizon_max, dispomateriallydiffers, staffreopenedfor,\n}"
     },
     {
       "label": "{ makeDb }",
@@ -8193,7 +8203,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "tests_dispos_horizon_test_seed",
-      "community": 12,
+      "community": 10,
       "norm_label": "seed()"
     },
     {
@@ -8203,7 +8213,7 @@
       "source_location": "L181",
       "_origin": "ast",
       "id": "tests_dispos_horizon_test_seedpending",
-      "community": 12,
+      "community": 10,
       "norm_label": "seedpending()"
     },
     {
@@ -8213,8 +8223,18 @@
       "source_location": "L250",
       "_origin": "ast",
       "id": "tests_dispos_horizon_test_seedconfirmed",
-      "community": 12,
+      "community": 10,
       "norm_label": "seedconfirmed()"
+    },
+    {
+      "label": "forceOpenOf()",
+      "file_type": "code",
+      "source_file": "tests/dispos-horizon.test.js",
+      "source_location": "L369",
+      "_origin": "ast",
+      "id": "tests_dispos_horizon_test_forceopenof",
+      "community": 10,
+      "norm_label": "forceopenof()"
     },
     {
       "label": "dispos.test.js",
@@ -8313,7 +8333,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "tests_dispos_test_seedkpidb",
-      "community": 42,
+      "community": 10,
       "norm_label": "seedkpidb()"
     },
     {
@@ -8483,7 +8503,7 @@
       "source_location": "L181",
       "_origin": "ast",
       "id": "tests_estab_access_test_seedsoiree",
-      "community": 12,
+      "community": 10,
       "norm_label": "seedsoiree()"
     },
     {
@@ -8503,7 +8523,7 @@
       "source_location": "L257",
       "_origin": "ast",
       "id": "tests_estab_access_test_seedsession",
-      "community": 12,
+      "community": 10,
       "norm_label": "seedsession()"
     },
     {
@@ -8537,10 +8557,40 @@
       "norm_label": "eq()"
     },
     {
+      "label": "sameValue()",
+      "file_type": "code",
+      "source_file": "tests/helpers/fake-db.js",
+      "source_location": "L26",
+      "_origin": "ast",
+      "id": "helpers_fake_db_samevalue",
+      "community": 66,
+      "norm_label": "samevalue()"
+    },
+    {
+      "label": "addToSet()",
+      "file_type": "code",
+      "source_file": "tests/helpers/fake-db.js",
+      "source_location": "L36",
+      "_origin": "ast",
+      "id": "helpers_fake_db_addtoset",
+      "community": 66,
+      "norm_label": "addtoset()"
+    },
+    {
+      "label": "pullHits()",
+      "file_type": "code",
+      "source_file": "tests/helpers/fake-db.js",
+      "source_location": "L48",
+      "_origin": "ast",
+      "id": "helpers_fake_db_pullhits",
+      "community": 66,
+      "norm_label": "pullhits()"
+    },
+    {
       "label": "isOperator()",
       "file_type": "code",
       "source_file": "tests/helpers/fake-db.js",
-      "source_location": "L21",
+      "source_location": "L54",
       "_origin": "ast",
       "id": "helpers_fake_db_isoperator",
       "community": 66,
@@ -8550,7 +8600,7 @@
       "label": "contains()",
       "file_type": "code",
       "source_file": "tests/helpers/fake-db.js",
-      "source_location": "L31",
+      "source_location": "L64",
       "_origin": "ast",
       "id": "helpers_fake_db_contains",
       "community": 66,
@@ -8560,7 +8610,7 @@
       "label": "matchField()",
       "file_type": "code",
       "source_file": "tests/helpers/fake-db.js",
-      "source_location": "L36",
+      "source_location": "L69",
       "_origin": "ast",
       "id": "helpers_fake_db_matchfield",
       "community": 66,
@@ -8570,7 +8620,7 @@
       "label": "getPath()",
       "file_type": "code",
       "source_file": "tests/helpers/fake-db.js",
-      "source_location": "L72",
+      "source_location": "L105",
       "_origin": "ast",
       "id": "helpers_fake_db_getpath",
       "community": 66,
@@ -8580,7 +8630,7 @@
       "label": "matchDoc()",
       "file_type": "code",
       "source_file": "tests/helpers/fake-db.js",
-      "source_location": "L74",
+      "source_location": "L107",
       "_origin": "ast",
       "id": "helpers_fake_db_matchdoc",
       "community": 66,
@@ -8590,7 +8640,7 @@
       "label": "plainEq()",
       "file_type": "code",
       "source_file": "tests/helpers/fake-db.js",
-      "source_location": "L83",
+      "source_location": "L116",
       "_origin": "ast",
       "id": "helpers_fake_db_plaineq",
       "community": 66,
@@ -8600,7 +8650,7 @@
       "label": "nextObjectIdHex()",
       "file_type": "code",
       "source_file": "tests/helpers/fake-db.js",
-      "source_location": "L91",
+      "source_location": "L124",
       "_origin": "ast",
       "id": "helpers_fake_db_nextobjectidhex",
       "community": 66,
@@ -8610,20 +8660,20 @@
       "label": "makeCollection()",
       "file_type": "code",
       "source_file": "tests/helpers/fake-db.js",
-      "source_location": "L95",
+      "source_location": "L128",
       "_origin": "ast",
       "id": "helpers_fake_db_makecollection",
-      "community": 12,
+      "community": 10,
       "norm_label": "makecollection()"
     },
     {
       "label": "makeDb()",
       "file_type": "code",
       "source_file": "tests/helpers/fake-db.js",
-      "source_location": "L207",
+      "source_location": "L249",
       "_origin": "ast",
       "id": "helpers_fake_db_makedb",
-      "community": 12,
+      "community": 10,
       "norm_label": "makedb()"
     },
     {
@@ -8633,7 +8683,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "helpers_harness",
-      "community": 10,
+      "community": 63,
       "norm_label": "harness.js"
     },
     {
@@ -8643,7 +8693,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "helpers_harness_app",
-      "community": 10,
+      "community": 63,
       "norm_label": "app"
     },
     {
@@ -8653,7 +8703,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "helpers_harness_startapp",
-      "community": 10,
+      "community": 63,
       "norm_label": "startapp()"
     },
     {
@@ -8663,7 +8713,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "helpers_harness_stopapp",
-      "community": 10,
+      "community": 63,
       "norm_label": "stopapp()"
     },
     {
@@ -8693,7 +8743,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "helpers_harness_disposhorizonmondays",
-      "community": 10,
+      "community": 63,
       "norm_label": "{ disposhorizonmondays }"
     },
     {
@@ -8703,7 +8753,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "helpers_harness_horizonweekdates",
-      "community": 10,
+      "community": 42,
       "norm_label": "horizonweekdates()"
     },
     {
@@ -9143,7 +9193,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_routes_test",
-      "community": 10,
+      "community": 63,
       "norm_label": "routes.test.js"
     },
     {
@@ -9153,7 +9203,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "tests_routes_test_test_before_after",
-      "community": 10,
+      "community": 63,
       "norm_label": "{ test, before, after }"
     },
     {
@@ -9163,7 +9213,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "tests_routes_test_assert",
-      "community": 10,
+      "community": 63,
       "norm_label": "assert"
     },
     {
@@ -9173,7 +9223,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "tests_routes_test_startapp_stopapp_baseurl",
-      "community": 10,
+      "community": 63,
       "norm_label": "{ startapp, stopapp, baseurl }"
     },
     {
@@ -9993,7 +10043,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "docs_architecture_3_contraintes_critiques",
-      "community": 71,
+      "community": 24,
       "norm_label": "3. contraintes critiques"
     },
     {
@@ -10003,7 +10053,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "docs_architecture_3_1_fuseau_horaire_ne_jamais_utiliser_toisostring",
-      "community": 71,
+      "community": 24,
       "norm_label": "3.1 fuseau horaire \u2014 ne jamais utiliser `toisostring()`"
     },
     {
@@ -10013,7 +10063,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "docs_architecture_3_2_sessions_mongodb_promesses_uniquement",
-      "community": 71,
+      "community": 24,
       "norm_label": "3.2 sessions mongodb \u2014 promesses uniquement"
     },
     {
@@ -10023,7 +10073,7 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "docs_architecture_3_3_script_js_monolithique_ne_pas_d\u00e9couper",
-      "community": 71,
+      "community": 24,
       "norm_label": "3.3 `script.js` \u2014 monolithique, ne pas decouper"
     },
     {
@@ -10033,7 +10083,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "docs_architecture_3_4_frontend_aucun_outillage_de_build",
-      "community": 71,
+      "community": 24,
       "norm_label": "3.4 frontend \u2014 aucun outillage de build"
     },
     {
@@ -10043,7 +10093,7 @@
       "source_location": "L134",
       "_origin": "ast",
       "id": "docs_architecture_3_5_api_auth_contournent_toujours_le_cache_du_service_worker",
-      "community": 71,
+      "community": 24,
       "norm_label": "3.5 api / auth contournent toujours le cache du service worker"
     },
     {
@@ -10053,7 +10103,7 @@
       "source_location": "L138",
       "_origin": "ast",
       "id": "docs_architecture_3_6_les_helpers_purs_vivent_dans_lib_utils_js",
-      "community": 71,
+      "community": 24,
       "norm_label": "3.6 les helpers purs vivent dans `lib/utils.js`"
     },
     {
@@ -10063,7 +10113,7 @@
       "source_location": "L144",
       "_origin": "ast",
       "id": "docs_architecture_3_7_en_production_session_secret_est_obligatoire",
-      "community": 71,
+      "community": 24,
       "norm_label": "3.7 en production `session_secret` est obligatoire"
     },
     {
@@ -10073,7 +10123,7 @@
       "source_location": "L148",
       "_origin": "ast",
       "id": "docs_architecture_3_8_trust_proxy_en_production",
-      "community": 71,
+      "community": 24,
       "norm_label": "3.8 trust proxy en production"
     },
     {
@@ -10083,7 +10133,7 @@
       "source_location": "L152",
       "_origin": "ast",
       "id": "docs_architecture_3_9_semaine_en_cours_cutoff_de_bascule_d_75",
-      "community": 71,
+      "community": 24,
       "norm_label": "3.9 semaine \u00ab en cours \u00bb \u2014 cutoff de bascule (d-75)"
     },
     {
@@ -10093,7 +10143,7 @@
       "source_location": "L163",
       "_origin": "ast",
       "id": "docs_architecture_4_authentification_autorisation",
-      "community": 77,
+      "community": 24,
       "norm_label": "4. authentification & autorisation"
     },
     {
@@ -10103,7 +10153,7 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "docs_architecture_session",
-      "community": 77,
+      "community": 24,
       "norm_label": "session"
     },
     {
@@ -10113,7 +10163,7 @@
       "source_location": "L170",
       "_origin": "ast",
       "id": "docs_architecture_hi\u00e9rarchie_des_r\u00f4les",
-      "community": 77,
+      "community": 24,
       "norm_label": "hierarchie des roles"
     },
     {
@@ -10123,7 +10173,7 @@
       "source_location": "L196",
       "_origin": "ast",
       "id": "docs_architecture_limitation_du_d\u00e9bit",
-      "community": 77,
+      "community": 24,
       "norm_label": "limitation du debit"
     },
     {
@@ -10133,7 +10183,7 @@
       "source_location": "L201",
       "_origin": "ast",
       "id": "docs_architecture_5_mod\u00e8le_de_donn\u00e9es_collections_cl\u00e9s",
-      "community": 73,
+      "community": 24,
       "norm_label": "5. modele de donnees (collections cles)"
     },
     {
@@ -10143,7 +10193,7 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "docs_architecture_shifts",
-      "community": 73,
+      "community": 24,
       "norm_label": "`shifts`"
     },
     {
@@ -10153,7 +10203,7 @@
       "source_location": "L242",
       "_origin": "ast",
       "id": "docs_architecture_staff_champs_de_r\u00e9mun\u00e9ration",
-      "community": 73,
+      "community": 24,
       "norm_label": "`staff` \u2014 champs de remuneration"
     },
     {
@@ -10163,7 +10213,7 @@
       "source_location": "L251",
       "_origin": "ast",
       "id": "docs_architecture_push_subscriptions",
-      "community": 73,
+      "community": 24,
       "norm_label": "`push_subscriptions`"
     },
     {
@@ -10173,7 +10223,7 @@
       "source_location": "L261",
       "_origin": "ast",
       "id": "docs_architecture_notifications",
-      "community": 73,
+      "community": 24,
       "norm_label": "`notifications`"
     },
     {
@@ -10183,7 +10233,7 @@
       "source_location": "L275",
       "_origin": "ast",
       "id": "docs_architecture_staff_notifications",
-      "community": 73,
+      "community": 24,
       "norm_label": "`staff_notifications`"
     },
     {
@@ -10193,7 +10243,7 @@
       "source_location": "L287",
       "_origin": "ast",
       "id": "docs_architecture_daily_revenue",
-      "community": 73,
+      "community": 24,
       "norm_label": "`daily_revenue`"
     },
     {
@@ -10203,7 +10253,7 @@
       "source_location": "L298",
       "_origin": "ast",
       "id": "docs_architecture_settings_documents_cl\u00e9s",
-      "community": 73,
+      "community": 24,
       "norm_label": "`settings` \u2014 documents cles"
     },
     {
@@ -10213,7 +10263,7 @@
       "source_location": "L306",
       "_origin": "ast",
       "id": "docs_architecture_shift_swaps_feature_f_05_code_livr\u00e9_mais_d\u00e9sactiv\u00e9e_en_attente_validation_client",
-      "community": 73,
+      "community": 24,
       "norm_label": "`shift_swaps` *(feature f-05 \u2014 code livre mais desactivee en attente validation client)*"
     },
     {
@@ -10323,7 +10373,7 @@
       "source_location": "L426",
       "_origin": "ast",
       "id": "docs_architecture_14_synchronisation_agenda_flux_ical_d_72",
-      "community": 76,
+      "community": 24,
       "norm_label": "14. synchronisation agenda \u2014 flux ical (d-72)"
     },
     {
@@ -10333,7 +10383,7 @@
       "source_location": "L432",
       "_origin": "ast",
       "id": "docs_architecture_principe",
-      "community": 76,
+      "community": 24,
       "norm_label": "principe"
     },
     {
@@ -10343,7 +10393,7 @@
       "source_location": "L436",
       "_origin": "ast",
       "id": "docs_architecture_routes",
-      "community": 76,
+      "community": 24,
       "norm_label": "routes"
     },
     {
@@ -10353,7 +10403,7 @@
       "source_location": "L440",
       "_origin": "ast",
       "id": "docs_architecture_g\u00e9n\u00e9ration_du_ics",
-      "community": 76,
+      "community": 24,
       "norm_label": "generation du `.ics`"
     },
     {
@@ -10363,7 +10413,7 @@
       "source_location": "L445",
       "_origin": "ast",
       "id": "docs_architecture_limites_connues_document\u00e9es_pour_le_support",
-      "community": 76,
+      "community": 24,
       "norm_label": "limites connues (documentees pour le support)"
     },
     {
@@ -10420,7 +10470,7 @@
       "label": "Tests & s\u00e9curit\u00e9 \u2014 ouvert (revue du 2026-08-04/05)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L48",
+      "source_location": "L50",
       "_origin": "ast",
       "id": "docs_backlog_tests_s\u00e9curit\u00e9_ouvert_revue_du_2026_08_04_05",
       "community": 60,
@@ -10430,7 +10480,7 @@
       "label": "Livr\u00e9 pendant la session du 2026-08-04/05",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L53",
+      "source_location": "L55",
       "_origin": "ast",
       "id": "docs_backlog_livr\u00e9_pendant_la_session_du_2026_08_04_05",
       "community": 60,
@@ -10440,7 +10490,7 @@
       "label": "Livr\u00e9 pendant la session du 2026-08-05 (palier 1 \u2014 refermer E-22)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L80",
+      "source_location": "L82",
       "_origin": "ast",
       "id": "docs_backlog_livr\u00e9_pendant_la_session_du_2026_08_05_palier_1_refermer_e_22",
       "community": 60,
@@ -10450,7 +10500,7 @@
       "label": "Palier 2 \u2014 s\u00e9curit\u00e9 (2026-08-05)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L113",
+      "source_location": "L115",
       "_origin": "ast",
       "id": "docs_backlog_palier_2_s\u00e9curit\u00e9_2026_08_05",
       "community": 60,
@@ -10460,7 +10510,7 @@
       "label": "Revue `/simplify` du palier 2/3 (2026-08-05)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L138",
+      "source_location": "L140",
       "_origin": "ast",
       "id": "docs_backlog_revue_simplify_du_palier_2_3_2026_08_05",
       "community": 60,
@@ -10470,7 +10520,7 @@
       "label": "Palier 3 \u2014 outillage & documentation (2026-08-05)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L180",
+      "source_location": "L182",
       "_origin": "ast",
       "id": "docs_backlog_palier_3_outillage_documentation_2026_08_05",
       "community": 60,
@@ -10480,7 +10530,7 @@
       "label": "\u00c9tat actuel des tests (pour m\u00e9moire)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L198",
+      "source_location": "L200",
       "_origin": "ast",
       "id": "docs_backlog_\u00e9tat_actuel_des_tests_pour_m\u00e9moire",
       "community": 60,
@@ -10490,7 +10540,7 @@
       "label": "\u00c0 \u00e9crire",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L219",
+      "source_location": "L228",
       "_origin": "ast",
       "id": "docs_backlog_\u00e0_\u00e9crire",
       "community": 60,
@@ -10500,7 +10550,7 @@
       "label": "S\u00e9curit\u00e9 \u2014 \u00e0 traiter",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L232",
+      "source_location": "L241",
       "_origin": "ast",
       "id": "docs_backlog_s\u00e9curit\u00e9_\u00e0_traiter",
       "community": 60,
@@ -10510,7 +10560,7 @@
       "label": "Findings de revue restants (hors s\u00e9curit\u00e9)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L243",
+      "source_location": "L252",
       "_origin": "ast",
       "id": "docs_backlog_findings_de_revue_restants_hors_s\u00e9curit\u00e9",
       "community": 60,
@@ -10520,7 +10570,7 @@
       "label": "Questions en attente de r\u00e9ponse",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L260",
+      "source_location": "L269",
       "_origin": "ast",
       "id": "docs_backlog_questions_en_attente_de_r\u00e9ponse",
       "community": 60,
@@ -10530,7 +10580,7 @@
       "label": "Documentation \u2014 contradictions relev\u00e9es (audit du 2026-08-05)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L268",
+      "source_location": "L277",
       "_origin": "ast",
       "id": "docs_backlog_documentation_contradictions_relev\u00e9es_audit_du_2026_08_05",
       "community": 60,
@@ -10540,7 +10590,7 @@
       "label": "Base de recette (2026-08-05)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L284",
+      "source_location": "L293",
       "_origin": "ast",
       "id": "docs_backlog_base_de_recette_2026_08_05",
       "community": 60,
@@ -10550,7 +10600,7 @@
       "label": "Environnements & d\u00e9ploiements (2026-08-05)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L318",
+      "source_location": "L327",
       "_origin": "ast",
       "id": "docs_backlog_environnements_d\u00e9ploiements_2026_08_05",
       "community": 60,
@@ -10560,7 +10610,7 @@
       "label": "`npm run smoke` \u2014 tests de bout en bout sur une instance r\u00e9elle (2026-08-05)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L361",
+      "source_location": "L370",
       "_origin": "ast",
       "id": "docs_backlog_npm_run_smoke_tests_de_bout_en_bout_sur_une_instance_r\u00e9elle_2026_08_05",
       "community": 60,
@@ -10570,7 +10620,7 @@
       "label": "Environnement `main` \u2014 cluster d\u00e9di\u00e9 (2026-08-05)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L382",
+      "source_location": "L391",
       "_origin": "ast",
       "id": "docs_backlog_environnement_main_cluster_d\u00e9di\u00e9_2026_08_05",
       "community": 60,
@@ -10580,7 +10630,7 @@
       "label": "Processus de livraison \u2014 d\u00e9cid\u00e9 le 2026-08-05",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L415",
+      "source_location": "L424",
       "_origin": "ast",
       "id": "docs_backlog_processus_de_livraison_d\u00e9cid\u00e9_le_2026_08_05",
       "community": 60,
@@ -10590,7 +10640,7 @@
       "label": "Audit Railway complet (2026-08-05) \u2014 origine, variables, secrets",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L466",
+      "source_location": "L475",
       "_origin": "ast",
       "id": "docs_backlog_audit_railway_complet_2026_08_05_origine_variables_secrets",
       "community": 60,
@@ -10600,7 +10650,7 @@
       "label": "Lot bugs front (2026-08-06) \u2014 R-10, R-09, R-04",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L523",
+      "source_location": "L532",
       "_origin": "ast",
       "id": "docs_backlog_lot_bugs_front_2026_08_06_r_10_r_09_r_04",
       "community": 60,
@@ -10610,7 +10660,7 @@
       "label": "Lot profils staff (2026-08-06) \u2014 R-05, R-12",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L541",
+      "source_location": "L550",
       "_origin": "ast",
       "id": "docs_backlog_lot_profils_staff_2026_08_06_r_05_r_12",
       "community": 60,
@@ -10620,7 +10670,7 @@
       "label": "Revue `/simplify` (2026-08-07) \u2014 et deux constats hors p\u00e9rim\u00e8tre",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L557",
+      "source_location": "L566",
       "_origin": "ast",
       "id": "docs_backlog_revue_simplify_2026_08_07_et_deux_constats_hors_p\u00e9rim\u00e8tre",
       "community": 60,
@@ -10630,7 +10680,7 @@
       "label": "Pr\u00e9paration de la propagation Castanui (2026-08-07)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L597",
+      "source_location": "L606",
       "_origin": "ast",
       "id": "docs_backlog_pr\u00e9paration_de_la_propagation_castanui_2026_08_07",
       "community": 60,
@@ -10640,7 +10690,7 @@
       "label": "Colonne \u00ab Masse sal. brute \u00bb dans le tableau Performance (2026-08-07)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L652",
+      "source_location": "L661",
       "_origin": "ast",
       "id": "docs_backlog_colonne_masse_sal_brute_dans_le_tableau_performance_2026_08_07",
       "community": 60,
@@ -10650,7 +10700,7 @@
       "label": "Audit complet du jeu de recette (2026-08-07)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L670",
+      "source_location": "L679",
       "_origin": "ast",
       "id": "docs_backlog_audit_complet_du_jeu_de_recette_2026_08_07",
       "community": 60,
@@ -10660,7 +10710,7 @@
       "label": "Revue `/simplify` du 2026-08-07 \u2014 constats NON appliqu\u00e9s",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L697",
+      "source_location": "L706",
       "_origin": "ast",
       "id": "docs_backlog_revue_simplify_du_2026_08_07_constats_non_appliqu\u00e9s",
       "community": 60,
@@ -10670,7 +10720,7 @@
       "label": "\ud83d\udd34 INCIDENT PROD \u2014 compte branch\u00e9 sur un profil staff supprim\u00e9 (2026-08-07)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L806",
+      "source_location": "L815",
       "_origin": "ast",
       "id": "docs_backlog_incident_prod_compte_branch\u00e9_sur_un_profil_staff_supprim\u00e9_2026_08_07",
       "community": 60,
@@ -10680,7 +10730,7 @@
       "label": "Priorisation \u2014 revue de l'ensemble (2026-08-08)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L842",
+      "source_location": "L851",
       "_origin": "ast",
       "id": "docs_backlog_priorisation_revue_de_l_ensemble_2026_08_08",
       "community": 72,
@@ -10690,7 +10740,7 @@
       "label": "Devant les features",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L848",
+      "source_location": "L857",
       "_origin": "ast",
       "id": "docs_backlog_devant_les_features",
       "community": 72,
@@ -10700,7 +10750,7 @@
       "label": "Reclassement de la Feature A \u2014 c'est un correctif, pas un confort",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L856",
+      "source_location": "L865",
       "_origin": "ast",
       "id": "docs_backlog_reclassement_de_la_feature_a_c_est_un_correctif_pas_un_confort",
       "community": 72,
@@ -10710,7 +10760,7 @@
       "label": "Le risque structurel le plus lourd, qui n'est pas une feature",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L863",
+      "source_location": "L872",
       "_origin": "ast",
       "id": "docs_backlog_le_risque_structurel_le_plus_lourd_qui_n_est_pas_une_feature",
       "community": 72,
@@ -10720,7 +10770,7 @@
       "label": "Les autres features, par n\u00e9cessit\u00e9 d\u00e9croissante",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L877",
+      "source_location": "L886",
       "_origin": "ast",
       "id": "docs_backlog_les_autres_features_par_n\u00e9cessit\u00e9_d\u00e9croissante",
       "community": 72,
@@ -10730,7 +10780,7 @@
       "label": "Revue d'ensemble \u2014 \u00e9tat du projet au 2026-08-10",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L890",
+      "source_location": "L899",
       "_origin": "ast",
       "id": "docs_backlog_revue_d_ensemble_\u00e9tat_du_projet_au_2026_08_10",
       "community": 68,
@@ -10740,7 +10790,7 @@
       "label": "\u00c9tat v\u00e9rifi\u00e9",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L895",
+      "source_location": "L904",
       "_origin": "ast",
       "id": "docs_backlog_\u00e9tat_v\u00e9rifi\u00e9",
       "community": 68,
@@ -10750,7 +10800,7 @@
       "label": "Le seul vrai \u00ab reste \u00e0 faire \u00bb avant tout le monde : livrer les 2 commits en attente",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L905",
+      "source_location": "L914",
       "_origin": "ast",
       "id": "docs_backlog_le_seul_vrai_reste_\u00e0_faire_avant_tout_le_monde_livrer_les_2_commits_en_attente",
       "community": 68,
@@ -10760,7 +10810,7 @@
       "label": "Prochaine MAJ \u2014 lot propos\u00e9",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L921",
+      "source_location": "L930",
       "_origin": "ast",
       "id": "docs_backlog_prochaine_maj_lot_propos\u00e9",
       "community": 68,
@@ -10770,7 +10820,7 @@
       "label": "Ce qui n'a pas boug\u00e9 et p\u00e8se toujours",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L935",
+      "source_location": "L944",
       "_origin": "ast",
       "id": "docs_backlog_ce_qui_n_a_pas_boug\u00e9_et_p\u00e8se_toujours",
       "community": 68,
@@ -10780,7 +10830,7 @@
       "label": "Documentation remise \u00e0 jour dans cette passe",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L958",
+      "source_location": "L967",
       "_origin": "ast",
       "id": "docs_backlog_documentation_remise_\u00e0_jour_dans_cette_passe",
       "community": 68,
@@ -10790,7 +10840,7 @@
       "label": "5 \u00e9checs au smoke `dev` \u2014 aucun n'\u00e9tait un bug du produit (2026-08-10)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L978",
+      "source_location": "L987",
       "_origin": "ast",
       "id": "docs_backlog_5_\u00e9checs_au_smoke_dev_aucun_n_\u00e9tait_un_bug_du_produit_2026_08_10",
       "community": 60,
@@ -10800,7 +10850,7 @@
       "label": "Semaine-type : envoy\u00e9e AU d\u00e9clenchement de la deadline, jamais avant (2026-08-10)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L1039",
+      "source_location": "L1048",
       "_origin": "ast",
       "id": "docs_backlog_semaine_type_envoy\u00e9e_au_d\u00e9clenchement_de_la_deadline_jamais_avant_2026_08_10",
       "community": 60,
@@ -10810,7 +10860,7 @@
       "label": "\ud83d\udd34 CI rouge depuis 3 jours, `main` non d\u00e9ploy\u00e9 \u2014 les logs HTTP cassaient le runner (2026-08-10)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L1092",
+      "source_location": "L1101",
       "_origin": "ast",
       "id": "docs_backlog_ci_rouge_depuis_3_jours_main_non_d\u00e9ploy\u00e9_les_logs_http_cassaient_le_runner_2026_08_10",
       "community": 60,
@@ -10820,7 +10870,7 @@
       "label": "F-14 \u2014 refermer les cinq portes que F-13 avait laiss\u00e9es (2026-08-12)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L1180",
+      "source_location": "L1189",
       "_origin": "ast",
       "id": "docs_backlog_f_14_refermer_les_cinq_portes_que_f_13_avait_laiss\u00e9es_2026_08_12",
       "community": 60,
@@ -10830,7 +10880,7 @@
       "label": "Revue `/simplify` de F-14 (2026-08-12) \u2014 deux r\u00e9gressions que j'avais introduites",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L1214",
+      "source_location": "L1223",
       "_origin": "ast",
       "id": "docs_backlog_revue_simplify_de_f_14_2026_08_12_deux_r\u00e9gressions_que_j_avais_introduites",
       "community": 60,
@@ -10840,7 +10890,7 @@
       "label": "Divers \u2014 outillage & process",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L1266",
+      "source_location": "L1275",
       "_origin": "ast",
       "id": "docs_backlog_divers_outillage_process",
       "community": 60,
@@ -10850,7 +10900,7 @@
       "label": "D\u00e9j\u00e0 livr\u00e9 / non prioritaire",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L1273",
+      "source_location": "L1282",
       "_origin": "ast",
       "id": "docs_backlog_d\u00e9j\u00e0_livr\u00e9_non_prioritaire",
       "community": 62,
@@ -10860,7 +10910,7 @@
       "label": "Fait",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L1283",
+      "source_location": "L1292",
       "_origin": "ast",
       "id": "docs_backlog_fait",
       "community": 62,
@@ -10870,7 +10920,7 @@
       "label": "P2 \u2014 Audit ergonomie restant (mai 2026)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L1389",
+      "source_location": "L1398",
       "_origin": "ast",
       "id": "docs_backlog_p2_audit_ergonomie_restant_mai_2026",
       "community": 62,
@@ -10880,7 +10930,7 @@
       "label": "Reste \u00e0 faire \u2014 dette technique & refacto (incr\u00e9mental)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L1407",
+      "source_location": "L1416",
       "_origin": "ast",
       "id": "docs_backlog_reste_\u00e0_faire_dette_technique_refacto_incr\u00e9mental",
       "community": 62,
@@ -10890,7 +10940,7 @@
       "label": "Notes pour les agents",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L1423",
+      "source_location": "L1432",
       "_origin": "ast",
       "id": "docs_backlog_notes_pour_les_agents",
       "community": 62,
@@ -11105,6 +11155,56 @@
       "id": "docs_design_b2_horizon_saisie_8_6_la_lacune_de_fake_db_de_cette_session_la_7e",
       "community": 15,
       "norm_label": "8.6 la lacune de `fake-db` de cette session \u2014 la 7e"
+    },
+    {
+      "label": "9. Suites du 2026-08-13 (m\u00eame session)",
+      "file_type": "document",
+      "source_file": "docs/design-b2-horizon-saisie.md",
+      "source_location": "L265",
+      "_origin": "ast",
+      "id": "docs_design_b2_horizon_saisie_9_suites_du_2026_08_13_m\u00eame_session",
+      "community": 15,
+      "norm_label": "9. suites du 2026-08-13 (meme session)"
+    },
+    {
+      "label": "9.1 Une action du staff n'alt\u00e8re plus un planning publi\u00e9",
+      "file_type": "document",
+      "source_file": "docs/design-b2-horizon-saisie.md",
+      "source_location": "L267",
+      "_origin": "ast",
+      "id": "docs_design_b2_horizon_saisie_9_1_une_action_du_staff_n_alt\u00e8re_plus_un_planning_publi\u00e9",
+      "community": 15,
+      "norm_label": "9.1 une action du staff n'altere plus un planning publie"
+    },
+    {
+      "label": "9.2 La r\u00e9ouverture nominative porte sa semaine",
+      "file_type": "document",
+      "source_file": "docs/design-b2-horizon-saisie.md",
+      "source_location": "L296",
+      "_origin": "ast",
+      "id": "docs_design_b2_horizon_saisie_9_2_la_r\u00e9ouverture_nominative_porte_sa_semaine",
+      "community": 15,
+      "norm_label": "9.2 la reouverture nominative porte sa semaine"
+    },
+    {
+      "label": "9.3 La 8e lacune de `fake-db` \u2014 et pourquoi elle explique le d\u00e9faut",
+      "file_type": "document",
+      "source_file": "docs/design-b2-horizon-saisie.md",
+      "source_location": "L311",
+      "_origin": "ast",
+      "id": "docs_design_b2_horizon_saisie_9_3_la_8e_lacune_de_fake_db_et_pourquoi_elle_explique_le_d\u00e9faut",
+      "community": 15,
+      "norm_label": "9.3 la 8e lacune de `fake-db` \u2014 et pourquoi elle explique le defaut"
+    },
+    {
+      "label": "9.4 Smoke : 8 v\u00e9rifications B2, et un contr\u00f4le vacant d\u00e9masqu\u00e9",
+      "file_type": "document",
+      "source_file": "docs/design-b2-horizon-saisie.md",
+      "source_location": "L323",
+      "_origin": "ast",
+      "id": "docs_design_b2_horizon_saisie_9_4_smoke_8_v\u00e9rifications_b2_et_un_contr\u00f4le_vacant_d\u00e9masqu\u00e9",
+      "community": 15,
+      "norm_label": "9.4 smoke : 8 verifications b2, et un controle vacant demasque"
     },
     {
       "label": "design-e22-dispos-directeur.md",
@@ -12313,7 +12413,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "docs_ux_design_2_audit_page_par_page",
-      "community": 39,
+      "community": 73,
       "norm_label": "2. audit page par page"
     },
     {
@@ -12323,7 +12423,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "docs_ux_design_2_1_login_html",
-      "community": 39,
+      "community": 73,
       "norm_label": "2.1 login.html"
     },
     {
@@ -12333,7 +12433,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "docs_ux_design_2_2_set_password_html",
-      "community": 39,
+      "community": 73,
       "norm_label": "2.2 set-password.html"
     },
     {
@@ -12343,7 +12443,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "docs_ux_design_2_3_index_html_patron_directeur",
-      "community": 39,
+      "community": 73,
       "norm_label": "2.3 index.html (patron / directeur)"
     },
     {
@@ -12353,7 +12453,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "docs_ux_design_2_4_planning_html_staff",
-      "community": 39,
+      "community": 73,
       "norm_label": "2.4 planning.html (staff)"
     },
     {
@@ -12363,7 +12463,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "docs_ux_design_2_5_pointage_html",
-      "community": 39,
+      "community": 73,
       "norm_label": "2.5 pointage.html"
     },
     {
@@ -12373,7 +12473,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "docs_ux_design_2_6_performance_html_patron_directeur_pilotage_\u00e9conomique",
-      "community": 39,
+      "community": 73,
       "norm_label": "2.6 performance.html (patron / directeur \u2014 pilotage economique)"
     },
     {
@@ -12383,7 +12483,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "docs_ux_design_2_7_politique_confidentialite_html",
-      "community": 39,
+      "community": 73,
       "norm_label": "2.7 politique-confidentialite.html"
     },
     {
@@ -12815,7 +12915,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 76,
       "norm_label": "synchronisation agenda \u2014 flux ical (d-72)",
       "id": "architecture_ical_feed"
     },
@@ -12828,7 +12928,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 76,
       "norm_label": "flag calendar_enabled (ical desactive d-83)",
       "id": "architecture_calendar_enabled_flag"
     },
@@ -12867,7 +12967,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 62,
+      "community": 25,
       "norm_label": "f-05 echange de shifts (desactive)",
       "id": "backlog_f05_shift_swaps"
     },
@@ -12880,7 +12980,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 76,
       "norm_label": "f-09 abonnement agenda ical",
       "id": "backlog_f09_ical"
     },
@@ -12945,7 +13045,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 62,
+      "community": 25,
       "norm_label": "pieges blocs /* f-05 desactive */ (d-47)",
       "id": "backlog_f05_blocks_trap"
     },
@@ -12958,7 +13058,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 75,
       "norm_label": "prd \u2014 templyo",
       "id": "prd_prd"
     },
@@ -12997,7 +13097,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 75,
       "norm_label": "performance \u2014 pilotage economique",
       "id": "prd_performance"
     },
@@ -13010,7 +13110,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 75,
       "norm_label": "pointage avance (heures reelles)",
       "id": "prd_pointage"
     },
@@ -13075,7 +13175,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 75,
       "norm_label": "audit ergonomie tactile mobile (d-49)",
       "id": "ux_design_touch_audit"
     },
@@ -13088,7 +13188,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 20,
+      "community": 75,
       "norm_label": "index.html (interface patron/directeur)",
       "id": "index_index_html"
     },
@@ -13114,7 +13214,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 75,
       "norm_label": "performance.html (pilotage economique)",
       "id": "performance_performance_html"
     },
@@ -13140,7 +13240,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 75,
       "norm_label": "pointage.html (compte etablissement)",
       "id": "pointage_pointage_html"
     },
@@ -13235,9 +13335,9 @@
       "source_file": "tests/helpers/harness.js",
       "source_location": "L60",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_harness",
-      "target": "lib_utils",
-      "confidence_score": 1.0
+      "target": "lib_utils"
     },
     {
       "relation": "contains",
@@ -13345,9 +13445,9 @@
       "source_file": "lib/utils.js",
       "source_location": "L371",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_utils",
-      "target": "lib_utils_dispomateriallydiffers",
-      "confidence_score": 1.0
+      "target": "lib_utils_dispomateriallydiffers"
     },
     {
       "relation": "contains",
@@ -13503,6 +13603,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/utils.js",
+      "source_location": "L380",
+      "weight": 1.0,
+      "source": "lib_utils",
+      "target": "lib_utils_staffreopenedfor",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/utils.js",
       "source_location": "L194",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -13515,9 +13625,9 @@
       "source_file": "lib/utils.js",
       "source_location": "L67",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_utils",
-      "target": "lib_utils_weekstart_currentweekstart_week_cutoff_hour_todatestr_disposweekstart_disposhorizonrange_disposhorizonmondays_clamphorizonweeks_dispo_horizon_max",
-      "confidence_score": 1.0
+      "target": "lib_utils_weekstart_currentweekstart_week_cutoff_hour_todatestr_disposweekstart_disposhorizonrange_disposhorizonmondays_clamphorizonweeks_dispo_horizon_max"
     },
     {
       "relation": "imports_from",
@@ -13537,9 +13647,9 @@
       "source_file": "lib/utils.js",
       "source_location": "L67",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_utils",
-      "target": "lib_week_clamphorizonweeks",
-      "confidence_score": 1.0
+      "target": "lib_week_clamphorizonweeks"
     },
     {
       "relation": "imports",
@@ -13559,9 +13669,9 @@
       "source_file": "lib/utils.js",
       "source_location": "L67",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_utils",
-      "target": "lib_week_disposhorizonmondays",
-      "confidence_score": 1.0
+      "target": "lib_week_disposhorizonmondays"
     },
     {
       "relation": "imports",
@@ -13570,9 +13680,9 @@
       "source_file": "lib/utils.js",
       "source_location": "L67",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_utils",
-      "target": "lib_week_disposhorizonrange",
-      "confidence_score": 1.0
+      "target": "lib_week_disposhorizonrange"
     },
     {
       "relation": "imports",
@@ -13581,9 +13691,9 @@
       "source_file": "lib/utils.js",
       "source_location": "L67",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_utils",
-      "target": "lib_week_disposweekstart",
-      "confidence_score": 1.0
+      "target": "lib_week_disposweekstart"
     },
     {
       "relation": "imports",
@@ -13592,9 +13702,9 @@
       "source_file": "lib/utils.js",
       "source_location": "L67",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_utils",
-      "target": "lib_week_todatestr",
-      "confidence_score": 1.0
+      "target": "lib_week_todatestr"
     },
     {
       "relation": "imports",
@@ -13680,9 +13790,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "lib_utils",
-      "confidence_score": 1.0
+      "target": "lib_utils"
     },
     {
       "relation": "imports_from",
@@ -13957,6 +14067,17 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "server",
+      "target": "lib_utils_isdatepublished"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "server.js",
+      "source_location": "L3403",
+      "weight": 1.0,
+      "source": "server_releaseshiftsondispochange",
       "target": "lib_utils_isdatepublished"
     },
     {
@@ -14418,7 +14539,7 @@
       "source_location": "L14",
       "weight": 1.0,
       "source": "server",
-      "target": "lib_utils_dispomateriallydiffers",
+      "target": "lib_utils_staffreopenedfor",
       "confidence_score": 1.0
     },
     {
@@ -14429,8 +14550,30 @@
       "source_location": "L18",
       "weight": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "lib_utils_dispomateriallydiffers",
+      "target": "lib_utils_staffreopenedfor",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server.js",
+      "source_location": "L14",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "server",
+      "target": "lib_utils_dispomateriallydiffers"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/dispos-horizon.test.js",
+      "source_location": "L18",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "tests_dispos_horizon_test",
+      "target": "lib_utils_dispomateriallydiffers"
     },
     {
       "relation": "contains",
@@ -15155,9 +15298,9 @@
       "source_file": "public/lib/week.js",
       "source_location": "L68",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_week",
-      "target": "lib_week_clamphorizonweeks",
-      "confidence_score": 1.0
+      "target": "lib_week_clamphorizonweeks"
     },
     {
       "relation": "contains",
@@ -15175,9 +15318,9 @@
       "source_file": "public/lib/week.js",
       "source_location": "L94",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_week",
-      "target": "lib_week_disposhorizonmondays",
-      "confidence_score": 1.0
+      "target": "lib_week_disposhorizonmondays"
     },
     {
       "relation": "contains",
@@ -15185,9 +15328,9 @@
       "source_file": "public/lib/week.js",
       "source_location": "L84",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_week",
-      "target": "lib_week_disposhorizonrange",
-      "confidence_score": 1.0
+      "target": "lib_week_disposhorizonrange"
     },
     {
       "relation": "contains",
@@ -15195,9 +15338,9 @@
       "source_file": "public/lib/week.js",
       "source_location": "L57",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_week",
-      "target": "lib_week_disposweekstart",
-      "confidence_score": 1.0
+      "target": "lib_week_disposweekstart"
     },
     {
       "relation": "contains",
@@ -15205,9 +15348,9 @@
       "source_file": "public/lib/week.js",
       "source_location": "L48",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_week",
-      "target": "lib_week_todatestr",
-      "confidence_score": 1.0
+      "target": "lib_week_todatestr"
     },
     {
       "relation": "contains",
@@ -15248,9 +15391,9 @@
       "source_file": "public/lib/week.js",
       "source_location": "L60",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_week_disposweekstart",
-      "target": "lib_week_weekstart",
-      "confidence_score": 1.0
+      "target": "lib_week_weekstart"
     },
     {
       "relation": "calls",
@@ -15303,9 +15446,9 @@
       "source_file": "public/lib/week.js",
       "source_location": "L101",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_week_disposhorizonmondays",
-      "target": "lib_week_todatestr",
-      "confidence_score": 1.0
+      "target": "lib_week_todatestr"
     },
     {
       "relation": "calls",
@@ -15314,9 +15457,9 @@
       "source_file": "public/lib/week.js",
       "source_location": "L89",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_week_disposhorizonrange",
-      "target": "lib_week_todatestr",
-      "confidence_score": 1.0
+      "target": "lib_week_todatestr"
     },
     {
       "relation": "calls",
@@ -15325,9 +15468,9 @@
       "source_file": "public/lib/week.js",
       "source_location": "L96",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_week_disposhorizonmondays",
-      "target": "lib_week_disposweekstart",
-      "confidence_score": 1.0
+      "target": "lib_week_disposweekstart"
     },
     {
       "relation": "calls",
@@ -15336,9 +15479,9 @@
       "source_file": "public/lib/week.js",
       "source_location": "L86",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_week_disposhorizonrange",
-      "target": "lib_week_disposweekstart",
-      "confidence_score": 1.0
+      "target": "lib_week_disposweekstart"
     },
     {
       "relation": "calls",
@@ -15347,9 +15490,9 @@
       "source_file": "public/lib/week.js",
       "source_location": "L95",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_week_disposhorizonmondays",
-      "target": "lib_week_clamphorizonweeks",
-      "confidence_score": 1.0
+      "target": "lib_week_clamphorizonweeks"
     },
     {
       "relation": "calls",
@@ -15358,9 +15501,9 @@
       "source_file": "public/lib/week.js",
       "source_location": "L85",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_week_disposhorizonrange",
-      "target": "lib_week_clamphorizonweeks",
-      "confidence_score": 1.0
+      "target": "lib_week_clamphorizonweeks"
     },
     {
       "relation": "calls",
@@ -16379,9 +16522,9 @@
       "source_file": "public/planning.js",
       "source_location": "L1489",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_currentdispomonday",
-      "confidence_score": 1.0
+      "target": "public_planning_currentdispomonday"
     },
     {
       "relation": "contains",
@@ -16389,9 +16532,9 @@
       "source_file": "public/planning.js",
       "source_location": "L1498",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_currentdispoweeklocked",
-      "confidence_score": 1.0
+      "target": "public_planning_currentdispoweeklocked"
     },
     {
       "relation": "contains",
@@ -16439,9 +16582,9 @@
       "source_file": "public/planning.js",
       "source_location": "L1485",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_dispomondays",
-      "confidence_score": 1.0
+      "target": "public_planning_dispomondays"
     },
     {
       "relation": "contains",
@@ -17099,9 +17242,9 @@
       "source_file": "public/planning.js",
       "source_location": "L1491",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_currentdispomonday",
-      "target": "public_planning_getmondayof",
-      "confidence_score": 1.0
+      "target": "public_planning_getmondayof"
     },
     {
       "relation": "calls",
@@ -17154,9 +17297,9 @@
       "source_file": "public/planning.js",
       "source_location": "L1491",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_currentdispomonday",
-      "target": "public_planning_adddays",
-      "confidence_score": 1.0
+      "target": "public_planning_adddays"
     },
     {
       "relation": "calls",
@@ -17583,9 +17726,9 @@
       "source_file": "public/planning.js",
       "source_location": "L1542",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_loaddispostab",
-      "target": "public_planning_currentdispomonday",
-      "confidence_score": 1.0
+      "target": "public_planning_currentdispomonday"
     },
     {
       "relation": "calls",
@@ -17594,9 +17737,9 @@
       "source_file": "public/planning.js",
       "source_location": "L1849",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_submitdispos",
-      "target": "public_planning_currentdispomonday",
-      "confidence_score": 1.0
+      "target": "public_planning_currentdispomonday"
     },
     {
       "relation": "calls",
@@ -17605,9 +17748,9 @@
       "source_file": "public/planning.js",
       "source_location": "L1635",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_loaddispostab",
-      "target": "public_planning_currentdispoweeklocked",
-      "confidence_score": 1.0
+      "target": "public_planning_currentdispoweeklocked"
     },
     {
       "relation": "calls",
@@ -28245,9 +28388,9 @@
       "source_file": "server.js",
       "source_location": "L3059",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "server_dispohorizons",
-      "confidence_score": 1.0
+      "target": "server_dispohorizons"
     },
     {
       "relation": "contains",
@@ -28416,7 +28559,7 @@
       "source_location": "L14",
       "weight": 1.0,
       "source": "server",
-      "target": "server_isvalidobjectid_hashtoken_normalizephone_weekstart_currentweekstart_disposweekstart_isautopublished_isdatepublished_normalizepublishdoc_chargemultiplier_todatestr_datesoverlap_congedaysinrange_splitdisposbyconges_isfullrangeonconge_validateoffperiod_scopemanageroff_resolveperfsettings_pickstaffcolor_buildtemplatedispos_datescoveredbyperiods_dispodeadlinewaived_shouldmaterializetemplate_disposhorizonrange_clamphorizonweeks_dispo_horizon_max_dispomateriallydiffers",
+      "target": "server_isvalidobjectid_hashtoken_normalizephone_weekstart_currentweekstart_disposweekstart_isautopublished_isdatepublished_normalizepublishdoc_chargemultiplier_todatestr_datesoverlap_congedaysinrange_splitdisposbyconges_isfullrangeonconge_validateoffperiod_scopemanageroff_resolveperfsettings_pickstaffcolor_buildtemplatedispos_datescoveredbyperiods_dispodeadlinewaived_shouldmaterializetemplate_disposhorizonrange_disposhorizonmondays_clamphorizonweeks_dispo_horizon_max_dispomateriallydiffers_staffreopenedfor",
       "confidence_score": 1.0
     },
     {
@@ -28585,9 +28728,9 @@
       "source_file": "server.js",
       "source_location": "L3355",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "server_releaseshiftsondispochange",
-      "confidence_score": 1.0
+      "target": "server_releaseshiftsondispochange"
     },
     {
       "relation": "contains",
@@ -28934,6 +29077,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server.js",
+      "source_location": "L3390",
+      "weight": 1.0,
+      "source": "server_releaseshiftsondispochange",
+      "target": "server_fetchpublishedweeks",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server.js",
       "source_location": "L323",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -29137,9 +29291,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L22",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "helpers_fake_db",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db"
     },
     {
       "relation": "imports",
@@ -29148,9 +29302,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L22",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "helpers_fake_db_makedb",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db_makedb"
     },
     {
       "relation": "imports_from",
@@ -29159,9 +29313,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "helpers_harness",
-      "confidence_score": 1.0
+      "target": "helpers_harness"
     },
     {
       "relation": "imports",
@@ -29170,9 +29324,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "helpers_harness_app",
-      "confidence_score": 1.0
+      "target": "helpers_harness_app"
     },
     {
       "relation": "imports",
@@ -29181,9 +29335,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "helpers_harness_horizonweekdates",
-      "confidence_score": 1.0
+      "target": "helpers_harness_horizonweekdates"
     },
     {
       "relation": "imports",
@@ -29192,9 +29346,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "helpers_harness_req",
-      "confidence_score": 1.0
+      "target": "helpers_harness_req"
     },
     {
       "relation": "imports",
@@ -29203,9 +29357,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "helpers_harness_startapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_startapp"
     },
     {
       "relation": "imports",
@@ -29214,9 +29368,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "helpers_harness_stopapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_stopapp"
     },
     {
       "relation": "contains",
@@ -29224,9 +29378,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_app_startapp_stopapp_req_horizonweekdates",
-      "confidence_score": 1.0
+      "target": "tests_dispos_horizon_test_app_startapp_stopapp_req_horizonweekdates"
     },
     {
       "relation": "contains",
@@ -29234,9 +29388,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_assert",
-      "confidence_score": 1.0
+      "target": "tests_dispos_horizon_test_assert"
     },
     {
       "relation": "contains",
@@ -29244,9 +29398,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L39",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_day",
-      "confidence_score": 1.0
+      "target": "tests_dispos_horizon_test_day"
     },
     {
       "relation": "contains",
@@ -29255,7 +29409,7 @@
       "source_location": "L18",
       "weight": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_disposhorizonrange_disposhorizonmondays_clamphorizonweeks_dispo_horizon_max_dispomateriallydiffers",
+      "target": "tests_dispos_horizon_test_disposhorizonrange_disposhorizonmondays_clamphorizonweeks_dispo_horizon_max_dispomateriallydiffers_staffreopenedfor",
       "confidence_score": 1.0
     },
     {
@@ -29264,8 +29418,18 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L40",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_disposof",
+      "target": "tests_dispos_horizon_test_disposof"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/dispos-horizon.test.js",
+      "source_location": "L369",
+      "weight": 1.0,
+      "source": "tests_dispos_horizon_test",
+      "target": "tests_dispos_horizon_test_forceopenof",
       "confidence_score": 1.0
     },
     {
@@ -29274,9 +29438,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L22",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_makedb",
-      "confidence_score": 1.0
+      "target": "tests_dispos_horizon_test_makedb"
     },
     {
       "relation": "contains",
@@ -29284,9 +29448,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L27",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_patron",
-      "confidence_score": 1.0
+      "target": "tests_dispos_horizon_test_patron"
     },
     {
       "relation": "contains",
@@ -29294,9 +29458,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L36",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_postdispos",
-      "confidence_score": 1.0
+      "target": "tests_dispos_horizon_test_postdispos"
     },
     {
       "relation": "contains",
@@ -29304,9 +29468,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L48",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_seed",
-      "confidence_score": 1.0
+      "target": "tests_dispos_horizon_test_seed"
     },
     {
       "relation": "contains",
@@ -29314,9 +29478,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L250",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_seedconfirmed",
-      "confidence_score": 1.0
+      "target": "tests_dispos_horizon_test_seedconfirmed"
     },
     {
       "relation": "contains",
@@ -29324,9 +29488,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L181",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_seedpending",
-      "confidence_score": 1.0
+      "target": "tests_dispos_horizon_test_seedpending"
     },
     {
       "relation": "contains",
@@ -29334,9 +29498,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L41",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_shiftsof",
-      "confidence_score": 1.0
+      "target": "tests_dispos_horizon_test_shiftsof"
     },
     {
       "relation": "contains",
@@ -29344,9 +29508,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L26",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_staff",
-      "confidence_score": 1.0
+      "target": "tests_dispos_horizon_test_staff"
     },
     {
       "relation": "contains",
@@ -29354,9 +29518,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_test_before_after",
-      "confidence_score": 1.0
+      "target": "tests_dispos_horizon_test_test_before_after"
     },
     {
       "relation": "contains",
@@ -29364,9 +29528,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_w1",
-      "confidence_score": 1.0
+      "target": "tests_dispos_horizon_test_w1"
     },
     {
       "relation": "contains",
@@ -29374,9 +29538,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L30",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_w2",
-      "confidence_score": 1.0
+      "target": "tests_dispos_horizon_test_w2"
     },
     {
       "relation": "contains",
@@ -29384,9 +29548,9 @@
       "source_file": "tests/dispos-horizon.test.js",
       "source_location": "L31",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_horizon_test",
-      "target": "tests_dispos_horizon_test_w5",
-      "confidence_score": 1.0
+      "target": "tests_dispos_horizon_test_w5"
     },
     {
       "relation": "calls",
@@ -29483,9 +29647,9 @@
       "source_file": "tests/dispos.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_test",
-      "target": "helpers_harness_horizonweekdates",
-      "confidence_score": 1.0
+      "target": "helpers_harness_horizonweekdates"
     },
     {
       "relation": "imports",
@@ -29515,9 +29679,9 @@
       "source_file": "tests/dispos.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_test",
-      "target": "tests_dispos_test_app_startapp_stopapp_baseurl_horizonweekdates",
-      "confidence_score": 1.0
+      "target": "tests_dispos_test_app_startapp_stopapp_baseurl_horizonweekdates"
     },
     {
       "relation": "contains",
@@ -29605,9 +29769,9 @@
       "source_file": "tests/dispos.test.js",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispos_test",
-      "target": "tests_dispos_test_w",
-      "confidence_score": 1.0
+      "target": "tests_dispos_test_w"
     },
     {
       "relation": "calls",
@@ -29915,6 +30079,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/helpers/fake-db.js",
+      "source_location": "L36",
+      "weight": 1.0,
+      "source": "helpers_fake_db",
+      "target": "helpers_fake_db_addtoset",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/helpers/fake-db.js",
       "source_location": "L30",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -30022,6 +30196,26 @@
       "target": "helpers_fake_db_plaineq"
     },
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/helpers/fake-db.js",
+      "source_location": "L48",
+      "weight": 1.0,
+      "source": "helpers_fake_db",
+      "target": "helpers_fake_db_pullhits",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/helpers/fake-db.js",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "helpers_fake_db",
+      "target": "helpers_fake_db_samevalue",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -30092,6 +30286,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/helpers/fake-db.js",
+      "source_location": "L50",
+      "weight": 1.0,
+      "source": "helpers_fake_db_pullhits",
+      "target": "helpers_fake_db_isobjid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/helpers/fake-db.js",
       "source_location": "L30",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -30108,6 +30313,39 @@
       "confidence_score": 1.0,
       "source": "helpers_fake_db_matchfield",
       "target": "helpers_fake_db_eq"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/helpers/fake-db.js",
+      "source_location": "L51",
+      "weight": 1.0,
+      "source": "helpers_fake_db_pullhits",
+      "target": "helpers_fake_db_eq",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/helpers/fake-db.js",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "helpers_fake_db_samevalue",
+      "target": "helpers_fake_db_eq",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/helpers/fake-db.js",
+      "source_location": "L51",
+      "weight": 1.0,
+      "source": "helpers_fake_db_pullhits",
+      "target": "helpers_fake_db_matchdoc",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -30245,9 +30483,9 @@
       "source_file": "tests/helpers/harness.js",
       "source_location": "L60",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_harness",
-      "target": "helpers_harness_disposhorizonmondays",
-      "confidence_score": 1.0
+      "target": "helpers_harness_disposhorizonmondays"
     },
     {
       "relation": "contains",
@@ -30255,9 +30493,9 @@
       "source_file": "tests/helpers/harness.js",
       "source_location": "L65",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "helpers_harness",
-      "target": "helpers_harness_horizonweekdates",
-      "confidence_score": 1.0
+      "target": "helpers_harness_horizonweekdates"
     },
     {
       "relation": "contains",
@@ -30615,9 +30853,9 @@
       "source_file": "tests/manager-dispos.test.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_manager_dispos_test",
-      "target": "helpers_harness_horizonweekdates",
-      "confidence_score": 1.0
+      "target": "helpers_harness_horizonweekdates"
     },
     {
       "relation": "contains",
@@ -30625,9 +30863,9 @@
       "source_file": "tests/manager-dispos.test.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_manager_dispos_test",
-      "target": "tests_manager_dispos_test_app_startapp_stopapp_req_horizonweekdates",
-      "confidence_score": 1.0
+      "target": "tests_manager_dispos_test_app_startapp_stopapp_req_horizonweekdates"
     },
     {
       "relation": "contains",
@@ -30835,9 +31073,9 @@
       "source_file": "tests/manager-dispos.test.js",
       "source_location": "L22",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_manager_dispos_test",
-      "target": "tests_manager_dispos_test_w",
-      "confidence_score": 1.0
+      "target": "tests_manager_dispos_test_w"
     },
     {
       "relation": "contains",
@@ -32786,9 +33024,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie",
-      "target": "docs_design_b2_horizon_saisie_b2_horizon_de_saisie_note_de_design",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_b2_horizon_de_saisie_note_de_design"
     },
     {
       "relation": "contains",
@@ -32796,9 +33034,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_b2_horizon_de_saisie_note_de_design",
-      "target": "docs_design_b2_horizon_saisie_1_besoin_et_arbitrage",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_1_besoin_et_arbitrage"
     },
     {
       "relation": "contains",
@@ -32806,9 +33044,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_b2_horizon_de_saisie_note_de_design",
-      "target": "docs_design_b2_horizon_saisie_2_ce_que_le_mod\u00e8le_dit_d\u00e9j\u00e0_cinq_constats_v\u00e9rifi\u00e9s",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_2_ce_que_le_mod\u00e8le_dit_d\u00e9j\u00e0_cinq_constats_v\u00e9rifi\u00e9s"
     },
     {
       "relation": "contains",
@@ -32816,9 +33054,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L79",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_b2_horizon_de_saisie_note_de_design",
-      "target": "docs_design_b2_horizon_saisie_3_la_seule_vraie_d\u00e9cision_de_mod\u00e8le_que_garde_la_deadline",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_3_la_seule_vraie_d\u00e9cision_de_mod\u00e8le_que_garde_la_deadline"
     },
     {
       "relation": "contains",
@@ -32826,9 +33064,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L102",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_b2_horizon_de_saisie_note_de_design",
-      "target": "docs_design_b2_horizon_saisie_4_ce_qui_casserait_en_silence_si_on_\u00e9largit_sans_y_toucher",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_4_ce_qui_casserait_en_silence_si_on_\u00e9largit_sans_y_toucher"
     },
     {
       "relation": "contains",
@@ -32836,9 +33074,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L118",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_b2_horizon_de_saisie_note_de_design",
-      "target": "docs_design_b2_horizon_saisie_5_d\u00e9coupage_propos\u00e9",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_5_d\u00e9coupage_propos\u00e9"
     },
     {
       "relation": "contains",
@@ -32846,9 +33084,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L137",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_b2_horizon_de_saisie_note_de_design",
-      "target": "docs_design_b2_horizon_saisie_6_questions_\u00e0_trancher_avant_d_\u00e9crire_du_code",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_6_questions_\u00e0_trancher_avant_d_\u00e9crire_du_code"
     },
     {
       "relation": "contains",
@@ -32856,9 +33094,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L157",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_b2_horizon_de_saisie_note_de_design",
-      "target": "docs_design_b2_horizon_saisie_7_rappels_de_m\u00e9thode_pour_l_impl\u00e9mentation",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_7_rappels_de_m\u00e9thode_pour_l_impl\u00e9mentation"
     },
     {
       "relation": "contains",
@@ -32866,8 +33104,18 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L171",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_b2_horizon_de_saisie_note_de_design",
-      "target": "docs_design_b2_horizon_saisie_8_d\u00e9cisions_et_livraison_de_b2_a_2026_08_13",
+      "target": "docs_design_b2_horizon_saisie_8_d\u00e9cisions_et_livraison_de_b2_a_2026_08_13"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/design-b2-horizon-saisie.md",
+      "source_location": "L265",
+      "weight": 1.0,
+      "source": "docs_design_b2_horizon_saisie_b2_horizon_de_saisie_note_de_design",
+      "target": "docs_design_b2_horizon_saisie_9_suites_du_2026_08_13_m\u00eame_session",
       "confidence_score": 1.0
     },
     {
@@ -32876,9 +33124,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L31",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_2_ce_que_le_mod\u00e8le_dit_d\u00e9j\u00e0_cinq_constats_v\u00e9rifi\u00e9s",
-      "target": "docs_design_b2_horizon_saisie_2_1_l_horizon_d_une_semaine_n_existe_pas_dans_le_mod\u00e8le_c_est_une_convention_du_navigateur",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_2_1_l_horizon_d_une_semaine_n_existe_pas_dans_le_mod\u00e8le_c_est_une_convention_du_navigateur"
     },
     {
       "relation": "contains",
@@ -32886,9 +33134,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L45",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_2_ce_que_le_mod\u00e8le_dit_d\u00e9j\u00e0_cinq_constats_v\u00e9rifi\u00e9s",
-      "target": "docs_design_b2_horizon_saisie_2_2_le_vrai_obstacle_est_la_deadline_et_elle_est_\u00e0_valeur_unique",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_2_2_le_vrai_obstacle_est_la_deadline_et_elle_est_\u00e0_valeur_unique"
     },
     {
       "relation": "contains",
@@ -32896,9 +33144,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L56",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_2_ce_que_le_mod\u00e8le_dit_d\u00e9j\u00e0_cinq_constats_v\u00e9rifi\u00e9s",
-      "target": "docs_design_b2_horizon_saisie_2_3_la_purge_ne_g\u00eane_pas",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_2_3_la_purge_ne_g\u00eane_pas"
     },
     {
       "relation": "contains",
@@ -32906,9 +33154,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L61",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_2_ce_que_le_mod\u00e8le_dit_d\u00e9j\u00e0_cinq_constats_v\u00e9rifi\u00e9s",
-      "target": "docs_design_b2_horizon_saisie_2_4_le_patron_peut_d\u00e9j\u00e0_planifier_loin_le_moteur_existe",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_2_4_le_patron_peut_d\u00e9j\u00e0_planifier_loin_le_moteur_existe"
     },
     {
       "relation": "contains",
@@ -32916,9 +33164,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L69",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_2_ce_que_le_mod\u00e8le_dit_d\u00e9j\u00e0_cinq_constats_v\u00e9rifi\u00e9s",
-      "target": "docs_design_b2_horizon_saisie_2_5_le_long_terme_existe_d\u00e9j\u00e0_mais_seulement_en_n\u00e9gatif",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_2_5_le_long_terme_existe_d\u00e9j\u00e0_mais_seulement_en_n\u00e9gatif"
     },
     {
       "relation": "contains",
@@ -32926,9 +33174,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L175",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_8_d\u00e9cisions_et_livraison_de_b2_a_2026_08_13",
-      "target": "docs_design_b2_horizon_saisie_8_1_r\u00e9ponses_aux_questions_du_6",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_8_1_r\u00e9ponses_aux_questions_du_6"
     },
     {
       "relation": "contains",
@@ -32936,9 +33184,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L184",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_8_d\u00e9cisions_et_livraison_de_b2_a_2026_08_13",
-      "target": "docs_design_b2_horizon_saisie_8_2_rectification_du_6_question_2_b2_ne_touche_pas_au_mod\u00e8le",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_8_2_rectification_du_6_question_2_b2_ne_touche_pas_au_mod\u00e8le"
     },
     {
       "relation": "contains",
@@ -32946,9 +33194,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L194",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_8_d\u00e9cisions_et_livraison_de_b2_a_2026_08_13",
-      "target": "docs_design_b2_horizon_saisie_8_3_ce_qu_un_shift_devient_quand_sa_dispo_valid\u00e9e_change",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_8_3_ce_qu_un_shift_devient_quand_sa_dispo_valid\u00e9e_change"
     },
     {
       "relation": "contains",
@@ -32956,9 +33204,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L218",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_8_d\u00e9cisions_et_livraison_de_b2_a_2026_08_13",
-      "target": "docs_design_b2_horizon_saisie_8_4_deadline_r\u00e8gle_a_retenue",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_8_4_deadline_r\u00e8gle_a_retenue"
     },
     {
       "relation": "contains",
@@ -32966,9 +33214,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L231",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_8_d\u00e9cisions_et_livraison_de_b2_a_2026_08_13",
-      "target": "docs_design_b2_horizon_saisie_8_5_ce_qui_a_\u00e9t\u00e9_livr\u00e9",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_8_5_ce_qui_a_\u00e9t\u00e9_livr\u00e9"
     },
     {
       "relation": "contains",
@@ -32976,8 +33224,48 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L247",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_8_d\u00e9cisions_et_livraison_de_b2_a_2026_08_13",
-      "target": "docs_design_b2_horizon_saisie_8_6_la_lacune_de_fake_db_de_cette_session_la_7e",
+      "target": "docs_design_b2_horizon_saisie_8_6_la_lacune_de_fake_db_de_cette_session_la_7e"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/design-b2-horizon-saisie.md",
+      "source_location": "L267",
+      "weight": 1.0,
+      "source": "docs_design_b2_horizon_saisie_9_suites_du_2026_08_13_m\u00eame_session",
+      "target": "docs_design_b2_horizon_saisie_9_1_une_action_du_staff_n_alt\u00e8re_plus_un_planning_publi\u00e9",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/design-b2-horizon-saisie.md",
+      "source_location": "L296",
+      "weight": 1.0,
+      "source": "docs_design_b2_horizon_saisie_9_suites_du_2026_08_13_m\u00eame_session",
+      "target": "docs_design_b2_horizon_saisie_9_2_la_r\u00e9ouverture_nominative_porte_sa_semaine",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/design-b2-horizon-saisie.md",
+      "source_location": "L311",
+      "weight": 1.0,
+      "source": "docs_design_b2_horizon_saisie_9_suites_du_2026_08_13_m\u00eame_session",
+      "target": "docs_design_b2_horizon_saisie_9_3_la_8e_lacune_de_fake_db_et_pourquoi_elle_explique_le_d\u00e9faut",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/design-b2-horizon-saisie.md",
+      "source_location": "L323",
+      "weight": 1.0,
+      "source": "docs_design_b2_horizon_saisie_9_suites_du_2026_08_13_m\u00eame_session",
+      "target": "docs_design_b2_horizon_saisie_9_4_smoke_8_v\u00e9rifications_b2_et_un_contr\u00f4le_vacant_d\u00e9masqu\u00e9",
       "confidence_score": 1.0
     },
     {
@@ -34853,5 +35141,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "4c7bd8af374ce0d5c230229d75d2bd614964979b"
+  "built_at_commit": "f320fccdeef1bcea1403ee5f510e0e8c5229491d"
 }

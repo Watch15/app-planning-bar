@@ -17,7 +17,8 @@ const {
     toDateStr, datesOverlap, congeDaysInRange, splitDisposByConges, isFullRangeOnConge,
     validateOffPeriod, scopeManagerOff, resolvePerfSettings, pickStaffColor, buildTemplateDispos,
     datesCoveredByPeriods, dispoDeadlineWaived, shouldMaterializeTemplate,
-    disposHorizonRange, clampHorizonWeeks, DISPO_HORIZON_MAX, dispoMateriallyDiffers,
+    disposHorizonRange, disposHorizonMondays, clampHorizonWeeks, DISPO_HORIZON_MAX,
+    dispoMateriallyDiffers, staffReopenedFor,
 } = require('./lib/utils');
 
 // Sentry — initialisation conditionnelle (ne se charge que si SENTRY_DSN fourni).
@@ -3092,7 +3093,10 @@ app.get('/api/dispo-settings', checkDB, requireAuth, async (req, res) => {
             _pad(effectiveDeadline.getSeconds());
 
         const forceOpenStaff = Array.isArray(settings.force_open_staff) ? settings.force_open_staff : [];
-        const staffForceOpen = staffId ? forceOpenStaff.includes(staffId) : false;
+        // B2 — la réouverture nominative vise une semaine, et c'est forcément celle en
+        // cours de collecte : la règle A ne laisse la deadline verrouiller qu'elle.
+        const collectionWeekStart = disposHorizonRange(now, 1).from;
+        const staffForceOpen = staffId ? staffReopenedFor(settings, staffId, collectionWeekStart) : false;
         // B2 — horizon de saisie (X) et de validation (Y). Le client construit sa plage
         // avec la MÊME fonction que le serveur (`disposHorizonRange`) : c'est ce qui
         // garantit que le formulaire n'affiche jamais une semaine que `POST /api/dispos`
@@ -3144,15 +3148,32 @@ app.patch('/api/dispo-settings/force-open-staff', checkDB, requirePatron, denyOb
     if (!staff_id || !['add', 'remove'].includes(action))
         return res.status(400).json({ error: 'staff_id et action (add|remove) requis' });
     try {
-        const op = action === 'add'
-            ? { $addToSet: { force_open_staff: staff_id } }
-            : { $pull:     { force_open_staff: staff_id } };
-        await db.collection('settings').updateOne(
-            { key: 'dispo' },
-            op,
-            { upsert: true }
-        );
-        res.json({ message: 'OK' });
+        const settings = await db.collection('settings').findOne({ key: 'dispo' }) || {};
+        const now = new Date();
+        // B2 — la réouverture porte désormais SA semaine. Par défaut celle en cours de
+        // collecte : c'est la seule que la deadline verrouille, donc la seule qu'il y ait
+        // un sens à rouvrir. Le paramètre reste accepté pour un appelant qui sait viser.
+        const weekStart = req.body.week_start || disposHorizonRange(now, 1).from;
+        if (action === 'add') {
+            if (!disposHorizonMondays(now, dispoHorizons(settings).x).includes(weekStart))
+                return res.status(400).json({ error: 'week_start hors horizon de saisie' });
+            await db.collection('settings').updateOne(
+                { key: 'dispo' },
+                { $addToSet: { force_open_staff: { staff_id, week_start: weekStart } } },
+                { upsert: true }
+            );
+        } else {
+            // Annuler retire TOUTES les réouvertures de ce staff, quelles que soient leur
+            // semaine et leur forme : le patron qui clique « annuler » veut fermer, pas
+            // arbitrer entre plusieurs entrées qu'il ne voit pas. Deux `$pull` parce que
+            // les entrées d'avant B2 sont des chaînes nues, que le critère objet ne
+            // matche pas (comportement Mongo, et celui qu'on veut).
+            await db.collection('settings').updateOne(
+                { key: 'dispo' }, { $pull: { force_open_staff: { staff_id } } });
+            await db.collection('settings').updateOne(
+                { key: 'dispo' }, { $pull: { force_open_staff: staff_id } });
+        }
+        res.json({ message: 'OK', week_start: weekStart });
     } catch (e) { console.error('[PATCH /api/dispo-settings/force-open-staff]', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
@@ -3341,7 +3362,12 @@ app.post('/api/dispos/week-note', checkDB, requireAuth, async (req, res) => {
 // Joker. Le poste était tenu, il reste à pourvoir — le supprimer ferait disparaître un
 // besoin en silence d'un planning déjà publié, et le patron ne verrait rien.
 //
-// Deux garde-fous :
+// Trois garde-fous :
+//   • un shift sur une semaine PUBLIÉE n'est jamais touché — règle du 2026-08-13 : une
+//     action du STAFF ne peut pas altérer un planning déjà annoncé aux équipes. Le
+//     patron est prévenu et tranche. (La règle est volontairement asymétrique : lui
+//     garde la main, sinon la semaine en cours — auto-publiée — serait gelée pour tout
+//     le monde et un remplacement de dernière minute deviendrait impossible.)
 //   • un shift POINTÉ (real_start/real_end) n'est jamais touché — ce sont des heures
 //     réellement travaillées, donc de la paie ; la dispo n'a plus voix au chapitre.
 //   • un Joker l'est déjà : ne rien faire plutôt que réécrire.
@@ -3353,24 +3379,32 @@ app.post('/api/dispos/week-note', checkDB, requireAuth, async (req, res) => {
 // lui aussi. Poser un `dispo_id` sur les shifts lèverait l'ambiguïté, mais ne vaudrait
 // que pour les shifts créés APRÈS la migration : la déduction resterait nécessaire.
 async function releaseShiftsOnDispoChange(staffId, changes) {
-    if (!changes.length) return { released: [], keptPointed: 0 };
+    if (!changes.length) return { released: [], keptPointed: 0, keptPublished: [] };
     const wanted = new Set(changes.map(c => c.date + '|' + c.establishment_id));
-    const shifts = await db.collection('shifts').find({
-        staff_id: staffId,
-        date:             { $in: [...new Set(changes.map(c => c.date))] },
-        establishment_id: { $in: [...new Set(changes.map(c => c.establishment_id))] },
-    }).toArray();
+    const [shifts, publishedWeeks] = await Promise.all([
+        db.collection('shifts').find({
+            staff_id: staffId,
+            date:             { $in: [...new Set(changes.map(c => c.date))] },
+            establishment_id: { $in: [...new Set(changes.map(c => c.establishment_id))] },
+        }).toArray(),
+        fetchPublishedWeeks(),
+    ]);
     const released = [];
+    const keptPublished = [];
     let keptPointed = 0;
     for (const s of shifts) {
         // Le produit cartésien des deux `$in` ramène des paires qu'on n'a pas demandées.
         if (!wanted.has(s.date + '|' + s.establishment_id)) continue;
         if (s.is_joker || s.staff_id === '__joker__') continue;
         if (s.real_start != null || s.real_end != null) { keptPointed++; continue; }
+        // `isDatePublished` couvre l'auto-publication (semaine en cours et passées) EN
+        // PLUS du flag `publish_<lundi>` : c'est bien « ce créneau est-il annoncé ? »,
+        // pas « le patron a-t-il cliqué Publier ? ».
+        if (isDatePublished(s.date, publishedWeeks, s.establishment_id)) { keptPublished.push(s); continue; }
         await db.collection('shifts').updateOne({ _id: s._id }, { $set: { ...JOKER_SHIFT } });
         released.push(s);
     }
-    return { released, keptPointed };
+    return { released, keptPointed, keptPublished };
 }
 
 app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
@@ -3386,8 +3420,10 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
     if (!staffDispoOpen(settings, staffDoc ? staffDoc.venues : []))
         return res.status(403).json({ error: 'La saisie des disponibilités est fermée pour tes établissements.' });
     const effectiveDeadline = computeEffectiveDeadline(settings.custom_deadline || null, now);
-    const forceOpenStaff = Array.isArray(settings.force_open_staff) ? settings.force_open_staff : [];
-    const staffForceOpen = forceOpenStaff.includes(staffId);
+    // La semaine en cours de collecte : la seule que la deadline verrouille (règle A),
+    // donc la seule que la réouverture nominative puisse viser.
+    const collectionWeek = disposHorizonRange(now, 1);
+    const staffForceOpen = staffReopenedFor(settings, staffId, collectionWeek.from);
     const { dispos } = req.body;
     if (!Array.isArray(dispos) || dispos.length === 0) return res.status(400).json({ error: 'Aucune disponibilité fournie' });
 
@@ -3408,7 +3444,6 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
     // celle que le patron est en train de monter. Les semaines au-delà restent libres,
     // sinon un staff qui déclare sa dispo de N+4 un samedi se prendrait « deadline
     // passée » — absurde. `dispoDeadlineWaived` reste AU-DESSUS de cette règle.
-    const collectionWeek = disposHorizonRange(now, 1);
     const isCollectionWeek = d => d.date >= collectionWeek.from && d.date <= collectionWeek.to;
     let dispos1 = dispos;
     let lockedDates = [];
@@ -3520,33 +3555,55 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
                 acc.push({ date: d.date, establishment_id: prev.establishment_id });
             return acc;
         }, []);
-        const { released, keptPointed } = await releaseShiftsOnDispoChange(staffId, changed);
+        const { released, keptPointed, keptPublished } = await releaseShiftsOnDispoChange(staffId, changed);
 
         let message = n > 0 ? n + ' disponibilité(s) enregistrée(s)' : 'Disponibilités à jour';
         message += skipSuffix;
-        if (released.length) message += ' · ' + released.length + ' créneau(x) déjà planifié(s) repassé(s) en Joker';
-        if (keptPointed)     message += ' · ' + keptPointed + ' créneau(x) déjà pointé(s) inchangé(s)';
+        if (released.length)      message += ' · ' + released.length + ' créneau(x) déjà planifié(s) repassé(s) en Joker';
+        if (keptPublished.length) message += ' · ' + keptPublished.length + ' créneau(x) sur un planning déjà publié : inchangé(s), le responsable est prévenu';
+        if (keptPointed)          message += ' · ' + keptPointed + ' créneau(x) déjà pointé(s) inchangé(s)';
         res.status(201).json({ message });
         touchLastUpdated();
 
-        // Le patron doit l'apprendre : un créneau qu'il avait validé n'a plus de titulaire
-        // sur une semaine peut-être déjà publiée. Sans ça la modification est silencieuse
-        // — c'est précisément ce qui a fait écarter la suppression pure.
+        // Le patron doit l'apprendre dans les DEUX cas — c'est ce qui a fait écarter la
+        // suppression pure. Deux messages distincts parce que l'action attendue diffère :
+        // un Joker est un trou à combler, un créneau publié est une décision à prendre
+        // (garder la personne, ou la remplacer et republier).
+        const staffName = req.session.user.name || 'Un membre du staff';
+        const listDates = list => [...new Set(list.map(s => s.date))].sort().join(', ');
         if (released.length) {
-            const staffName = req.session.user.name || 'Un membre du staff';
             notifyPatrons({
                 title: 'Créneau à repourvoir',
                 body: staffName + ' a modifié sa disponibilité — '
-                    + released.length + ' créneau(x) validé(s) repassé(s) en Joker ('
-                    + [...new Set(released.map(s => s.date))].sort().join(', ') + ')',
+                    + released.length + ' créneau(x) validé(s) repassé(s) en Joker (' + listDates(released) + ')',
                 url: '/#planning',
             });
         }
-        if (staffForceOpen) {
-            db.collection('settings').updateOne(
-                { key: 'dispo' },
-                { $pull: { force_open_staff: staffId } }
-            ).catch(e => console.error('[force_open_staff cleanup]', e));
+        if (keptPublished.length) {
+            notifyPatrons({
+                title: 'Dispo modifiée sur un planning publié',
+                body: staffName + ' n\'est plus disponible comme prévu sur '
+                    + keptPublished.length + ' créneau(x) DÉJÀ PUBLIÉ(S) (' + listDates(keptPublished)
+                    + '). Le planning n\'a pas été touché — à toi de trancher.',
+                url: '/#planning',
+            });
+        }
+        // B2 — la réouverture n'est consommée QUE si la semaine qu'elle visait a
+        // effectivement été soumise. Avant, TOUT envoi la brûlait : rouvert pour la
+        // semaine prochaine, un staff qui enregistrait d'abord une semaine lointaine
+        // perdait sa réouverture sans avoir touché à celle qui était figée — et se
+        // retrouvait bloqué sans que rien ne le lui dise. Invisible tant que l'horizon
+        // valait 1 (il n'y avait pas d'autre semaine à enregistrer).
+        if (staffForceOpen && dispos2.some(isCollectionWeek)) {
+            // Deux `$pull` : la forme actuelle, et la forme legacy (chaîne nue) que le
+            // critère objet ne matche pas. Idempotents, donc inconditionnels.
+            const settingsCol = db.collection('settings');
+            Promise.all([
+                settingsCol.updateOne({ key: 'dispo' },
+                    { $pull: { force_open_staff: { staff_id: staffId, week_start: collectionWeek.from } } }),
+                settingsCol.updateOne({ key: 'dispo' },
+                    { $pull: { force_open_staff: staffId } }),
+            ]).catch(e => console.error('[force_open_staff cleanup]', e));
         }
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -3740,8 +3797,10 @@ app.get('/api/dispos/with-dispo', checkDB, requirePatron, async (req, res) => {
         }).toArray();
 
         const settings = await db.collection('settings').findOne({ key: 'dispo' }) || {};
-        const forceOpenStaff = Array.isArray(settings.force_open_staff) ? settings.force_open_staff : [];
-        const reopenedSet = new Set(forceOpenStaff);
+        // B2 — « rouvert » se lit désormais POUR LA SEMAINE affichée : cette route a déjà
+        // `from`, elle n'a pas à supposer laquelle. Sans ça, la pastille « 🔒 Rouvert »
+        // resterait allumée sur toutes les semaines dès qu'une seule était rouverte.
+        const listWeekStart = toDateStr(weekStart(new Date(from + 'T12:00:00')));
 
         const result = allStaff
             .map(s => ({
@@ -3750,7 +3809,7 @@ app.get('/api/dispos/with-dispo', checkDB, requirePatron, async (req, res) => {
                 color: s.color || '#888',
                 phone: s.phone || '',
                 count: countByStaff.get(String(s._id)) || 0,
-                reopened: reopenedSet.has(String(s._id)),
+                reopened: staffReopenedFor(settings, String(s._id), listWeekStart),
             }))
             .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
         res.json(result);
@@ -3897,12 +3956,16 @@ app.post('/api/dispos/reopen-for-correction', checkDB, requirePatron, denyObserv
             date: { $gte: from, $lte: to },
             type: { $ne: 'week_note' },
         });
+        // B2 — cette route CONNAISSAIT déjà la semaine à rouvrir (`from`) et la jetait :
+        // la réouverture qu'elle posait ne disait pas pour quoi elle avait été posée.
+        // Elle la porte maintenant.
+        const targetWeek = toDateStr(weekStart(new Date(from + 'T12:00:00')));
         await db.collection('settings').updateOne(
             { key: 'dispo' },
-            { $addToSet: { force_open_staff: staff_id } },
+            { $addToSet: { force_open_staff: { staff_id, week_start: targetWeek } } },
             { upsert: true }
         );
-        res.json({ message: 'OK', deleted: del.deletedCount });
+        res.json({ message: 'OK', deleted: del.deletedCount, week_start: targetWeek });
         touchLastUpdated();
     } catch (e) { console.error('[POST /api/dispos/reopen-for-correction]', e); res.status(500).json({ error: 'Erreur interne' }); }
 });

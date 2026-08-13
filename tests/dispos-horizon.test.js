@@ -17,7 +17,7 @@ const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const {
     disposHorizonRange, disposHorizonMondays, clampHorizonWeeks,
-    DISPO_HORIZON_MAX, dispoMateriallyDiffers,
+    DISPO_HORIZON_MAX, dispoMateriallyDiffers, staffReopenedFor,
 } = require('../lib/utils');
 const { makeDb } = require('./helpers/fake-db');
 const { app, startApp, stopApp, req, horizonWeekDates } = require('./helpers/harness');
@@ -308,6 +308,44 @@ test('dispo jamais validée (pending) → aucun créneau libéré', async () => 
     assert.equal(shiftsOf(db)[0].staff_id, STAFF_ID);
 });
 
+// ── Règle du 2026-08-13 : le staff n'altère pas un planning publié ───────────
+
+test('semaine PUBLIÉE : le créneau reste au titulaire, le patron est prévenu', async () => {
+    // Une action du staff ne peut pas modifier un planning déjà annoncé aux équipes.
+    // La règle est volontairement asymétrique — le patron, lui, garde la main.
+    const db = seedConfirmed();
+    db.collection('settings')._docs.push({ key: 'publish_' + W1[0], establishments: 'ALL' });
+    app.locals.setTestDb(db);
+    const res = await postDispos([day(W1[0], 20, 26)]);
+    assert.equal(res.status, 201);
+
+    const shift = shiftsOf(db)[0];
+    assert.equal(shift.staff_id, STAFF_ID, 'le planning publié n\'a pas bougé');
+    assert.ok(!shift.is_joker);
+    assert.match((await res.json()).message, /déjà publié/);
+});
+
+test('semaine publiée : la dispo elle-même est bien enregistrée', async () => {
+    // Le verrou porte sur le PLANNING, pas sur la disponibilité — sinon le staff n'aurait
+    // aucun moyen de signaler qu'il ne peut plus venir.
+    const db = seedConfirmed();
+    db.collection('settings')._docs.push({ key: 'publish_' + W1[0], establishments: 'ALL' });
+    app.locals.setTestDb(db);
+    await postDispos([day(W1[0], 20, 26)]);
+    const dispo = disposOf(db).find(d => d.date === W1[0]);
+    assert.equal(dispo.start_time, 20, 'la nouvelle dispo est prise en compte');
+    assert.equal(dispo.status, 'pending', 'et repart en validation');
+});
+
+test('publication d\'un AUTRE bar : le créneau du bar concerné reste libérable', async () => {
+    // `isDatePublished` est scopé par établissement : publier bar2 ne protège pas bar1.
+    const db = seedConfirmed();
+    db.collection('settings')._docs.push({ key: 'publish_' + W1[0], establishments: ['bar2'] });
+    app.locals.setTestDb(db);
+    await postDispos([day(W1[0], 20, 26)]);
+    assert.equal(shiftsOf(db)[0].is_joker, true);
+});
+
 test('un créneau d\'un AUTRE bar que celui de la dispo n\'est pas touché', async () => {
     const db = seedConfirmed();
     db.collection('shifts')._docs.push({
@@ -319,4 +357,145 @@ test('un créneau d\'un AUTRE bar que celui de la dispo n\'est pas touché', asy
     const byBar = Object.fromEntries(shiftsOf(db).map(s => [s.establishment_id, s]));
     assert.equal(byBar[BAR].is_joker, true, 'le bar de la dispo est libéré');
     assert.equal(byBar.bar2.staff_id, STAFF_ID, 'l\'autre bar est hors sujet');
+});
+
+// ── Réouverture nominative de la deadline, par semaine ───────────────────────
+//
+// ⚠️ Ces routes étaient INTESTABLES jusqu'au 2026-08-13 : `fake-db` n'implémentait pas
+// `$addToSet`, dont elles dépendent toutes les deux. C'est exactement pour ça que
+// personne n'avait vu que la réouverture ne portait pas de semaine — et surtout qu'elle
+// se faisait consommer par n'importe quel envoi.
+
+const forceOpenOf = db => (db.collection('settings')._docs.find(s => s.key === 'dispo') || {}).force_open_staff || [];
+
+test('staffReopenedFor : une entrée ne vaut que pour SA semaine', () => {
+    const settings = { force_open_staff: [{ staff_id: 'kevin', week_start: '2026-08-17' }] };
+    assert.equal(staffReopenedFor(settings, 'kevin', '2026-08-17'), true);
+    assert.equal(staffReopenedFor(settings, 'kevin', '2026-08-24'), false, 'pas une autre semaine');
+    assert.equal(staffReopenedFor(settings, 'zoe',   '2026-08-17'), false, 'pas quelqu\'un d\'autre');
+});
+
+test('staffReopenedFor : une entrée LEGACY (chaîne nue) reste honorée', () => {
+    // Sinon une réouverture posée avant B2 cesserait de marcher au déploiement, sans
+    // que personne ne comprenne pourquoi le staff reste bloqué.
+    assert.equal(staffReopenedFor({ force_open_staff: ['kevin'] }, 'kevin', '2026-08-17'), true);
+});
+
+test('staffReopenedFor : liste absente ou vide → false, sans lever', () => {
+    assert.equal(staffReopenedFor({}, 'kevin', '2026-08-17'), false);
+    assert.equal(staffReopenedFor(null, 'kevin', '2026-08-17'), false);
+});
+
+test('rouvrir : l\'entrée posée porte la semaine en cours de collecte', async () => {
+    const db = seed();
+    app.locals.setTestDb(db);
+    const res = await req('/api/dispo-settings/force-open-staff', PATRON, {
+        method: 'PATCH', body: JSON.stringify({ staff_id: STAFF_ID, action: 'add' }),
+    });
+    assert.equal(res.status, 200);
+    assert.deepEqual(forceOpenOf(db), [{ staff_id: STAFF_ID, week_start: W1[0] }]);
+});
+
+test('rouvrir : une semaine hors horizon est refusée', async () => {
+    const db = seed();
+    app.locals.setTestDb(db);
+    const res = await req('/api/dispo-settings/force-open-staff', PATRON, {
+        method: 'PATCH', body: JSON.stringify({ staff_id: STAFF_ID, action: 'add', week_start: W5[0] }),
+    });
+    assert.equal(res.status, 400);
+    assert.deepEqual(forceOpenOf(db), []);
+});
+
+test('annuler : retire les deux formes, ancienne et nouvelle', async () => {
+    const db = seed();
+    db.collection('settings')._docs[0].force_open_staff = [
+        STAFF_ID,                                              // legacy
+        { staff_id: STAFF_ID, week_start: W1[0] },
+        { staff_id: 'quelqu-un-dautre', week_start: W1[0] },
+    ];
+    app.locals.setTestDb(db);
+    await req('/api/dispo-settings/force-open-staff', PATRON, {
+        method: 'PATCH', body: JSON.stringify({ staff_id: STAFF_ID, action: 'remove' }),
+    });
+    assert.deepEqual(forceOpenOf(db), [{ staff_id: 'quelqu-un-dautre', week_start: W1[0] }]);
+});
+
+test('réouverture : le staff repasse sur la semaine figée', async () => {
+    const db = seed({
+        force_open: false, custom_deadline: DEADLINE_FRANCHIE,
+        force_open_staff: [{ staff_id: STAFF_ID, week_start: W1[0] }],
+    });
+    app.locals.setTestDb(db);
+    const res = await postDispos([day(W1[0])]);
+    assert.equal(res.status, 201);
+    assert.deepEqual(disposOf(db).map(d => d.date), [W1[0]]);
+});
+
+test('LE cas : envoyer une semaine LOINTAINE ne consomme pas la réouverture', async () => {
+    // Le défaut que « par semaine » corrige. Kevin est rouvert pour la semaine figée,
+    // il enregistre d'abord sa dispo de N+2 (qui n'a jamais eu besoin de réouverture) :
+    // avant, sa réouverture était brûlée là, et il se retrouvait bloqué sur la semaine
+    // qu'il devait justement corriger — sans aucun message.
+    const db = seed({
+        force_open: false, custom_deadline: DEADLINE_FRANCHIE, horizon_weeks: 4,
+        force_open_staff: [{ staff_id: STAFF_ID, week_start: W1[0] }],
+    });
+    app.locals.setTestDb(db);
+    const res = await postDispos([day(W2[0])]);
+    assert.equal(res.status, 201);
+    assert.deepEqual(forceOpenOf(db), [{ staff_id: STAFF_ID, week_start: W1[0] }],
+        'la réouverture survit — elle ne visait pas cette semaine');
+});
+
+test('réouverture consommée quand la semaine visée est bien envoyée', async () => {
+    const db = seed({
+        force_open: false, custom_deadline: DEADLINE_FRANCHIE, horizon_weeks: 4,
+        force_open_staff: [{ staff_id: STAFF_ID, week_start: W1[0] }],
+    });
+    app.locals.setTestDb(db);
+    await postDispos([day(W1[0]), day(W2[0])]);
+    assert.deepEqual(forceOpenOf(db), [], 'consommée une fois la semaine figée corrigée');
+});
+
+test('réouverture legacy : consommée elle aussi, malgré sa forme', async () => {
+    const db = seed({
+        force_open: false, custom_deadline: DEADLINE_FRANCHIE,
+        force_open_staff: [STAFF_ID],
+    });
+    app.locals.setTestDb(db);
+    const res = await postDispos([day(W1[0])]);
+    assert.equal(res.status, 201);
+    assert.deepEqual(forceOpenOf(db), []);
+});
+
+test('reopen-for-correction : la réouverture porte la semaine corrigée', async () => {
+    // Cette route CONNAISSAIT déjà la semaine (`from`) et la jetait.
+    const db = seed({ horizon_weeks: 4 });
+    app.locals.setTestDb(db);
+    const res = await req('/api/dispos/reopen-for-correction', PATRON, {
+        method: 'POST', body: JSON.stringify({ staff_id: STAFF_ID, from: W2[0], to: W2[6] }),
+    });
+    assert.equal(res.status, 200);
+    assert.deepEqual(forceOpenOf(db), [{ staff_id: STAFF_ID, week_start: W2[0] }]);
+});
+
+test('with-dispo : « rouvert » se lit pour la SEMAINE affichée, pas globalement', async () => {
+    // Sans ça, la pastille « 🔒 Rouvert » resterait allumée sur toutes les semaines dès
+    // qu'une seule était rouverte, et le patron croirait avoir déjà fait le geste.
+    const db = seed({
+        horizon_weeks: 4,
+        force_open_staff: [{ staff_id: STAFF_ID, week_start: W2[0] }],
+    }, {
+        users: [{ role: 'staff', active: true, staff_id: STAFF_ID }],
+        staff: [{ _id: STAFF_ID, name: 'Bob', color: '#111', venues: ['bar1'], can_submit_dispos: true }],
+        availabilities: [
+            { staff_id: STAFF_ID, date: W1[0], status: 'pending', type: 'custom' },
+            { staff_id: STAFF_ID, date: W2[0], status: 'pending', type: 'custom' },
+        ],
+    });
+    app.locals.setTestDb(db);
+    const week = async w => (await (await req(
+        '/api/dispos/with-dispo?from=' + w[0] + '&to=' + w[6], PATRON)).json())[0];
+    assert.equal((await week(W2)).reopened, true,  'rouvert sur la semaine visée');
+    assert.equal((await week(W1)).reopened, false, 'pas sur les autres');
 });

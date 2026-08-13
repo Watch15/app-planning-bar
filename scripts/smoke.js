@@ -249,12 +249,120 @@ async function main() {
     });
 
     // ── §9.1 : exemption de deadline du directeur ────────────────────────────
+    //
+    // ⚠️ Ces deux vérifications ne valaient QUE si la deadline était réellement franchie
+    // à l'heure du lancement — condition que rien ne garantissait. Constaté le
+    // 2026-08-13 : un jeudi, avec une deadline de recette au samedi, la 1re passait
+    // SANS RIEN PROUVER (le directeur n'était pas exempté, il n'était bloqué par rien)
+    // et la 2e tombait en accusant le code. Vacuité d'un côté, faux négatif de l'autre.
+    // On impose donc la deadline le temps du bloc, et on la restaure.
+    //
+    // Un LUNDI 00:00 est franchi quel que soit le jour d'exécution :
+    // `computeEffectiveDeadline` ramène toujours la deadline dans la semaine courante,
+    // donc c'est soit aujourd'hui à 0h, soit un jour révolu. Même ancre que les tests
+    // unitaires (`DEADLINE_FRANCHIE`).
+    const setDeadline = v => req('pat', '/api/dispo-settings',
+        { method: 'PATCH', body: { custom_deadline: v } });
+    const DEADLINE_INITIALE = (await req('pat', '/api/dispo-settings')).data.custom_deadline || null;
+    const DEADLINE_FRANCHIE = '2026-01-05T00:00';   // 5 janvier 2026 = un lundi
+
+    await setDeadline(DEADLINE_FRANCHIE);
     await check('§9.1', 'directeur accepté après deadline', async () =>
         eq((await req('dir', '/api/dispos', { method: 'POST', body: {
             dispos: [{ date: D(0), type: 'soir', start_time: 17, end_time: 24 }] } })).status, 201, 'status'));
     await check('§9.1', 'staff refusé après deadline', async () =>
         eq((await req('bru', '/api/dispos', { method: 'POST', body: {
             dispos: [{ date: D(1), type: 'soir', start_time: 18, end_time: 26 }] } })).status, 403, 'status'));
+    await setDeadline(DEADLINE_INITIALE);
+
+    // ── B2 : horizon de saisie (2026-08-13) ──────────────────────────────────
+    //
+    // Ce bloc ÉCRIT les deux horizons dans `settings` et restaure en sortant la valeur
+    // trouvée en arrivant : sans ça, le lancement suivant prendrait l'état laissé ici
+    // pour la normale et ne prouverait plus rien.
+    //
+    // Il vaut la peine d'exister contre un VRAI Mongo, et pas seulement en `fake-db` :
+    // les deux horizons sont lus depuis un document `settings` réel, l'index composé
+    // ajouté par B2 n'existe que là, et la règle A dépend de `computeEffectiveDeadline`
+    // évaluée à l'heure du serveur — trois choses qu'un faux Mongo ne peut pas montrer.
+    {
+        const readSettings = async () => (await req('pat', '/api/dispo-settings')).data;
+        const setHorizon   = (x, y) => req('pat', '/api/dispo-settings', {
+            method: 'PATCH', body: { horizon_weeks: x, validation_horizon_weeks: y } });
+        const initial      = await readSettings();
+        const postFor      = date => req('bru', '/api/dispos', { method: 'POST',
+            body: { dispos: [{ date, type: 'soir', start_time: 18, end_time: 24 }] } });
+        const bruno = ((await req('pat', '/api/staff')).data || []).find(s => /Bruno/i.test(s.name || ''));
+
+        await check('B2', 'horizon 1 : une dispo pour N+2 est refusée', async () => {
+            // Le trou §2.1 : AVANT B2 cette requête passait — la route ne regardait
+            // aucune date, la limite ne vivait que dans le navigateur.
+            await setHorizon(1, 1);
+            return eq((await postFor(D(7))).status, 403, 'status');
+        });
+
+        await check('B2', 'règle A : deadline franchie → N+1 refusée, N+2 acceptée', async () => {
+            // LA règle A, prouvée sur une vraie base et SANS vacuité possible : les deux
+            // moitiés sont mesurées dans la même fenêtre, avec la même deadline forcée.
+            // Vérifier seulement que N+2 passe ne prouverait rien si la deadline n'était
+            // pas franchie — c'est le piège qui vient d'être corrigé sur §9.1.
+            await setHorizon(3, 3);
+            await setDeadline(DEADLINE_FRANCHIE);
+            try {
+                const proche = await postFor(D(1));
+                const loin   = await postFor(D(7));
+                eq(proche.status, 403, 'N+1');
+                return eq(loin.status, 201, 'N+2');
+            } finally {
+                await setDeadline(DEADLINE_INITIALE);
+            }
+        });
+
+        await check('B2', 'au-delà de l\'horizon, toujours refusé', async () =>
+            eq((await postFor(D(28))).status, 403, 'status'));
+
+        await check('B2', 'Y est écrêté sur X à l\'écriture', async () => {
+            await setHorizon(2, 9);
+            return eq((await readSettings()).validation_horizon_weeks, 2, 'Y');
+        });
+
+        await check('B2', 'pastille et file : même plage, même nombre', async () => {
+            // L'asymétrie de S-04 sur l'axe du temps. Les deux bornes sortent du même
+            // helper : si elles divergent, c'est que quelqu'un a recalculé la plage.
+            const c    = (await req('pat', '/api/dispos/count')).data;
+            const file = (await req('pat', `/api/dispos/pending?from=${c.from}&to=${c.to}`)).data;
+            return eq(file.length, c.count, 'file=pastille') + ' sur ' + c.from + '→' + c.to;
+        });
+
+        await check('B2', 'la pastille suit Y', async () => {
+            await setHorizon(3, 1);
+            const court = (await req('pat', '/api/dispos/count')).data;
+            await setHorizon(3, 3);
+            const large = (await req('pat', '/api/dispos/count')).data;
+            if (!(large.to > court.to))       throw new Error('la fenêtre ne s\'est pas élargie');
+            if (large.count < court.count)    throw new Error('élargir la fenêtre a RÉDUIT le compte');
+            return court.count + ' (Y=1) → ' + large.count + ' (Y=3)';
+        });
+
+        await check('B2', 'réouverture nominative : elle porte sa semaine', async () => {
+            if (!bruno) throw new Error('Bruno introuvable dans le jeu de recette');
+            const add = await req('pat', '/api/dispo-settings/force-open-staff', {
+                method: 'PATCH', body: { staff_id: String(bruno._id), action: 'add' } });
+            // Remise en état immédiate : une réouverture oubliée fausserait le §9.1
+            // du lancement suivant (le staff ne serait plus refusé après deadline).
+            await req('pat', '/api/dispo-settings/force-open-staff', {
+                method: 'PATCH', body: { staff_id: String(bruno._id), action: 'remove' } });
+            return eq(add.data && add.data.week_start, FROM, 'week_start');
+        });
+
+        await check('B2', 'réouverture : une semaine hors horizon est refusée', async () => {
+            if (!bruno) throw new Error('Bruno introuvable dans le jeu de recette');
+            return eq((await req('pat', '/api/dispo-settings/force-open-staff', { method: 'PATCH',
+                body: { staff_id: String(bruno._id), action: 'add', week_start: D(70) } })).status, 400, 'status');
+        });
+
+        await setHorizon(initial.horizon_weeks || 1, initial.validation_horizon_weeks || 1);
+    }
 
     // ── Congés (F-10) ────────────────────────────────────────────────────────
     await check('F-10', 'congés en attente visibles du patron', async () => {

@@ -259,3 +259,84 @@ champs comparés — dépendre de l'identité d'objet était fragile quel que so
 
 **À noter pour les prochaines sessions** : cette lacune-là ment dans le sens *bénin*
 (test rouge sur code juste). Les six précédentes mentaient dans le sens inverse.
+
+---
+
+## 9. Suites du 2026-08-13 (même session)
+
+### 9.1 Une action du staff n'altère plus un planning publié
+
+Demandé en cours de session : « quand un planning est publié on ne peut plus modifier les
+semaines publiées ». **Vérifié avant d'implémenter, et la formulation littérale ne tenait
+pas** : `isDatePublished` couvre l'**auto-publication** (`lib/utils.js:83` — la semaine en
+cours et toutes les passées sont publiées sans aucun flag), et dépublier n'existe que pour
+les semaines **futures**. Un verrou global aurait donc gelé la semaine en cours et tout
+l'historique **sans porte de sortie** : plus de remplacement de dernière minute, plus de
+correction de pointage.
+
+**Périmètre retenu (arbitrage du user) : le staff seulement, le patron garde la main.**
+C'est le seul périmètre qui n'exige pas de mécanisme de déverrouillage.
+
+**Audit des portes staff vers `shifts`** — une seule était concernée :
+
+| Route | Écrit dans `shifts` ? | Verdict |
+|---|---|---|
+| `POST /api/shifts/:id/joker-candidature` | non — empile une *candidature*, le patron tranche | déjà conforme |
+| `POST /api/shifts/extra` | oui, mais réservé responsable/patron (`isResponsablePourSoiree`) et écrit des heures RÉELLES | hors sujet (pointage) |
+| `PATCH`/`DELETE /api/shifts/:id/pointage` | heures réelles | hors sujet |
+| `POST /api/shift-swaps` | F-05, désactivé | — |
+| **`POST /api/dispos`** | **oui — la conversion Joker du §8.3** | **corrigé** |
+
+Sur une semaine publiée, le créneau **reste au titulaire** et `notifyPatrons` envoie un
+message distinct de celui du Joker : un Joker est un trou à combler, un créneau publié est
+une décision à prendre. La **dispo**, elle, est bien enregistrée — le verrou porte sur le
+planning, pas sur la disponibilité, sinon le staff n'aurait aucun moyen de signaler qu'il
+ne peut plus venir.
+
+### 9.2 La réouverture nominative porte sa semaine
+
+Le point laissé ouvert au §8.4. En creusant, l'ambiguïté avait une **conséquence
+concrète** : `POST /api/dispos` purgeait `force_open_staff` après **tout** envoi réussi.
+Rouvert pour la semaine figée, un staff qui enregistrait d'abord une semaine lointaine
+brûlait sa réouverture **sans avoir touché à la semaine qu'il devait corriger** — puis se
+retrouvait bloqué sans qu'aucun message ne l'explique. Chemin inexistant tant que
+l'horizon valait 1.
+
+Forme stockée : `{ staff_id, week_start }`. Les entrées **legacy** (chaînes nues) restent
+honorées pour la semaine en cours de collecte et disparaissent à la première utilisation.
+La purge n'a lieu que si la semaine visée a effectivement été soumise. `reopen-for-correction`
+**connaissait déjà** la semaine (`from`) et la jetait : elle la porte maintenant. La
+pastille « 🔒 Rouvert » de `with-dispo` se lit désormais par semaine affichée.
+
+### 9.3 La 8e lacune de `fake-db` — et pourquoi elle explique le défaut
+
+`$addToSet` n'était **pas implémenté du tout**, alors que les deux routes de réouverture en
+dépendent. Elles étaient donc **intestables**, et c'est exactement pour ça que personne
+n'avait vu que la réouverture ne portait pas de semaine. Ajouté, avec le `$pull` par
+**critère** (comparaison partielle sur les éléments) que la forme objet réclame, et le cas
+`$addToSet` en **upsert** — sans lui, la toute première réouverture, quand le document
+`settings` n'existe pas encore, se perdait en silence.
+
+**Leçon** : une lacune de l'outil de test ne fait pas que gêner les tests — elle **cache
+des défauts**. Les six premières lacunes coûtaient du temps ; celle-ci coûtait un bug.
+
+### 9.4 Smoke : 8 vérifications B2, et un contrôle vacant démasqué
+
+8 contrôles B2 ajoutés (`scripts/smoke.js`), verts contre un vrai Mongo : borne d'horizon,
+règle A, écrêtage Y ≤ X, alignement pastille/file, la pastille qui suit Y, réouverture
+portant sa semaine, refus hors horizon. Ils méritent d'exister **au-delà** de `npm test` :
+les horizons viennent d'un vrai document `settings`, l'index composé n'existe que là, et la
+règle A dépend de `computeEffectiveDeadline` évaluée à l'heure du serveur.
+
+**Trouvaille en route** : `§9.1 directeur accepté après deadline` passait **sans rien
+prouver**. Ces deux contrôles supposaient la deadline franchie à l'heure du lancement —
+condition que rien ne garantissait. Un jeudi, avec la deadline de recette au samedi, le
+directeur passait parce que **personne** n'était bloqué (vacuité) et le staff passait
+aussi (faux négatif accusant le code). Le bloc impose maintenant une deadline franchie
+(lundi 00:00, même ancre que les tests unitaires) et la restaure. Même traitement pour la
+vérification de la règle A, qui mesure ses **deux moitiés** dans la même fenêtre : prouver
+que N+2 passe ne vaut rien si l'on n'a pas prouvé au même instant que N+1 est refusée.
+
+**42 vérifications, 0 échec, sur deux lancements consécutifs depuis un état propre.** La
+base client `gestion_bar` n'a jamais été touchée : elle ne porte aucun compte `@templyo.test`,
+et le garde-fou du script s'arrête avant d'écrire.

@@ -18,6 +18,39 @@ function eq(a, b) {
     return a === b;
 }
 
+// 8e lacune (2026-08-13) : `$addToSet` n'était pas implémenté DU TOUT, alors que deux
+// routes de production s'en servent (`PATCH /api/dispo-settings/force-open-staff` et
+// `POST /api/dispos/reopen-for-correction`). Elles étaient donc intestables — et c'est
+// justement pour ça que personne n'avait vu que la réouverture ne portait pas de semaine.
+// Mongo compare les éléments par égalité de document ENTIER, pas par référence.
+function sameValue(a, b) {
+    if (eq(a, b)) return true;
+    if (a && b && typeof a === 'object' && typeof b === 'object'
+        && !(a instanceof Date) && !(b instanceof Date)) {
+        const ka = Object.keys(a), kb = Object.keys(b);
+        return ka.length === kb.length && ka.every(k => sameValue(a[k], b[k]));
+    }
+    return false;
+}
+
+function addToSet(doc, k, v) {
+    if (!Array.isArray(doc[k])) doc[k] = [];
+    if (!doc[k].some(x => sameValue(x, v))) doc[k].push(v);
+}
+
+// `$pull` a deux formes en Mongo : une VALEUR (retire les éléments égaux) ou un CRITÈRE
+// (retire les éléments qui le satisfont, par comparaison PARTIELLE). La seconde devient
+// nécessaire dès que `force_open_staff` porte des objets : retirer « la réouverture de
+// Kevin pour CETTE semaine-là » sans emporter les autres.
+// Un élément scalaire (entrée legacy) ne satisfait jamais un critère objet — c'est aussi
+// le comportement de Mongo, et c'est celui qu'on veut : les entrées d'avant ne sont
+// retirées que par un `$pull` scalaire.
+function pullHits(x, v) {
+    const isCriteria = v && typeof v === 'object' && !Array.isArray(v)
+        && !(v instanceof Date) && !isObjId(v);
+    return isCriteria ? matchDoc(x, v) : eq(x, v);
+}
+
 function isOperator(cond) {
     return cond !== null && typeof cond === 'object' && !Array.isArray(cond)
         && !(cond instanceof Date) && !isObjId(cond)
@@ -150,8 +183,10 @@ function makeCollection(initialDocs) {
             for (const doc of docs) {
                 if (!matchDoc(doc, query)) continue;
                 if (update.$set)  Object.assign(doc, update.$set);
+                if (update.$addToSet) for (const [k, v] of Object.entries(update.$addToSet))
+                    addToSet(doc, k, v);
                 if (update.$pull) for (const [k, v] of Object.entries(update.$pull))
-                    if (Array.isArray(doc[k])) doc[k] = doc[k].filter(x => !eq(x, v));
+                    if (Array.isArray(doc[k])) doc[k] = doc[k].filter(x => !pullHits(x, v));
                 n++;
             }
             return { matchedCount: n, modifiedCount: n };
@@ -175,12 +210,19 @@ function makeCollection(initialDocs) {
                 // la même chose : `{ archived: { $ne: true } }` matche un champ absent, et un
                 // test de désarchivage (F-13) passerait alors que le drapeau serait resté.
                 if (update.$unset) for (const k of Object.keys(update.$unset)) delete docs[idx][k];
+                if (update.$addToSet) for (const [k, v] of Object.entries(update.$addToSet))
+                    addToSet(docs[idx], k, v);
                 if (update.$pull) for (const [k, v] of Object.entries(update.$pull))
-                    if (Array.isArray(docs[idx][k])) docs[idx][k] = docs[idx][k].filter(x => !eq(x, v));
+                    if (Array.isArray(docs[idx][k])) docs[idx][k] = docs[idx][k].filter(x => !pullHits(x, v));
                 return { matchedCount: 1, modifiedCount: 1, upsertedCount: 0 };
             }
             if (opts && opts.upsert) {
-                docs.push({ ...plainEq(query), ...(update.$setOnInsert || {}), ...(update.$set || {}) });
+                const created = { ...plainEq(query), ...(update.$setOnInsert || {}), ...(update.$set || {}) };
+                // `$addToSet` en upsert crée bien le tableau côté Mongo. Sans ce cas, la
+                // toute première réouverture (doc `settings` absent) se perdait en silence.
+                if (update.$addToSet) for (const [k, v] of Object.entries(update.$addToSet))
+                    addToSet(created, k, v);
+                docs.push(created);
                 return { matchedCount: 0, modifiedCount: 0, upsertedCount: 1 };
             }
             return { matchedCount: 0, modifiedCount: 0, upsertedCount: 0 };
