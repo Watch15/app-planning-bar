@@ -1,16 +1,16 @@
-# Graph Report - app-planning-bar  (2026-08-12)
+# Graph Report - app-planning-bar  (2026-08-13)
 
 ## Corpus Check
-- 54 files · ~214,311 words
+- 56 files · ~223,744 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1245 nodes · 2004 edges · 74 communities (64 shown, 10 thin omitted)
-- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 84 edges (avg confidence: 0.81)
+- 1297 nodes · 2078 edges · 78 communities (68 shown, 10 thin omitted)
+- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 86 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d77285a9`
+- Built from commit: `4c7bd8af`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -88,6 +88,10 @@
 - [[_COMMUNITY_Community 71|Community 71]]
 - [[_COMMUNITY_Community 72|Community 72]]
 - [[_COMMUNITY_Community 73|Community 73]]
+- [[_COMMUNITY_Community 74|Community 74]]
+- [[_COMMUNITY_Community 75|Community 75]]
+- [[_COMMUNITY_Community 76|Community 76]]
+- [[_COMMUNITY_Community 77|Community 77]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `_()` - 36 edges
@@ -106,12 +110,12 @@
   scripts/seed-dev.js → public/lib/week.js
 - `materializeAllManagerTemplates()` --calls--> `weekStart()`  [INFERRED]
   server.js → public/lib/week.js
-- `Disponibilités staff & patron` --implements--> `planning.html (interface staff)`  [INFERRED]
-  docs/prd.md → public/planning.html
-- `Onglet Mon équipe (responsable)` --implements--> `planning.html (interface staff)`  [INFERRED]
-  docs/prd.md → public/planning.html
-- `ensureDirectorStaffProfile()` --calls--> `isValidObjectId()`  [EXTRACTED]
-  server.js → lib/utils.js
+- `dispoHorizons()` --calls--> `clampHorizonWeeks()`  [INFERRED]
+  server.js → public/lib/week.js
+- `horizonWeekDates()` --calls--> `disposHorizonMondays()`  [INFERRED]
+  tests/helpers/harness.js → public/lib/week.js
+- `Pièges blocs /* F-05 DÉSACTIVÉ */ (D-47)` --references--> `server.js (serveur Express monolithique)`  [EXTRACTED]
+  docs/backlog.md → README.md
 
 ## Import Cycles
 - None detected.
@@ -121,11 +125,11 @@
 - **Sûreté timezone via toDateStr** — architecture_timezone_rule, architecture_todatestr, architecture_push_past_shift_guard [EXTRACTED 0.85]
 - **Cycle de vie feature iCal (livrée puis désactivée)** — backlog_f09_ical, architecture_ical_feed, architecture_calendar_enabled_flag [EXTRACTED 0.90]
 
-## Communities (74 total, 10 thin omitted)
+## Communities (78 total, 10 thin omitted)
 
 ### Community 0 - "Planning Board UI"
 Cohesion: 0.05
-Nodes (64): addDays(), allEstablishments, allStaff, applyCongeModes(), applyStatsPeriod(), buildHistStatsHtml(), buildTeamDisplayNames(), cancelConge() (+56 more)
+Nodes (67): addDays(), allEstablishments, allStaff, applyCongeModes(), applyStatsPeriod(), buildHistStatsHtml(), buildTeamDisplayNames(), cancelConge() (+59 more)
 
 ### Community 1 - "Architecture & Design Rationale"
 Cohesion: 0.18
@@ -141,15 +145,15 @@ Nodes (36): Ae(), mr(), QB(), re(), se(), SUPPORT_WORD_BREAKING(), w(), _() (+28
 
 ### Community 4 - "Main Planning Script (State)"
 Cohesion: 0.03
-Nodes (65): addManagerOff(), allEstablishments, allGroups, allRoles, allStaff, AUTO_COLORS, _autoScroll, _btnCopyWeek (+57 more)
+Nodes (62): allEstablishments, allGroups, allRoles, allStaff, AUTO_COLORS, _autoScroll, _btnCopyWeek, buildEstablishmentSelect() (+54 more)
 
 ### Community 5 - "Express Server & API"
-Cohesion: 0.04
-Nodes (28): app, bcrypt, canAccessEstablishment(), client, cors, crypto, DEPLOYED_COMMIT, DISPO_TARGET (+20 more)
+Cohesion: 0.03
+Nodes (30): isFullRangeOnConge(), app, bcrypt, canAccessEstablishment(), client, cors, crypto, DEPLOYED_COMMIT (+22 more)
 
 ### Community 6 - "Week Data Loading"
-Cohesion: 0.12
-Nodes (34): addDays(), exportWeekCSV(), formatDateShort(), generatePrintGantt(), getMondayOf(), isToday(), loadDisposList(), loadModifyTab() (+26 more)
+Cohesion: 0.14
+Nodes (30): addDays(), exportWeekCSV(), formatDateShort(), generatePrintGantt(), getMondayOf(), isToday(), loadDisposList(), loadModifyTab() (+22 more)
 
 ### Community 7 - "NPM Dependencies"
 Cohesion: 0.05
@@ -160,40 +164,40 @@ Cohesion: 0.13
 Nodes (23): activeStaff, allStaff, buildShiftCard(), checkAuth(), fmtH(), getActiveDate(), init(), initExtraForm() (+15 more)
 
 ### Community 9 - "Dispo Control Init"
-Cohesion: 0.09
-Nodes (26): acknowledgeOffDispo(), buildStaffDisplayNames(), checkAuth(), decideConge(), disposScopeQS(), init(), initDropZone(), initNotifListeners() (+18 more)
+Cohesion: 0.10
+Nodes (23): acknowledgeOffDispo(), buildStaffDisplayNames(), checkAuth(), decideConge(), disposScopeQS(), init(), initDropZone(), initNotifListeners() (+15 more)
 
 ### Community 10 - "Shift CRUD & Rendering"
-Cohesion: 0.67
-Nodes (4): applyCardNameContrast(), shiftTextColor(), textColorFor(), updateStaffColor()
+Cohesion: 0.10
+Nodes (19): app, { disposHorizonMondays }, horizonWeekDates(), startApp(), stopApp(), dispoMateriallyDiffers(), { app, startApp, stopApp, req, horizonWeekDates }, assert (+11 more)
 
 ### Community 11 - "Shared Utils & Validation"
-Cohesion: 0.10
-Nodes (26): chargeMultiplier(), computeActiveDate(), crypto, dispoDeadlineWaived(), disposWeekStart(), hashToken(), isAutoPublished(), isDatePublished() (+18 more)
+Cohesion: 0.11
+Nodes (23): buildTemplateDispos(), chargeMultiplier(), computeActiveDate(), crypto, datesCoveredByPeriods(), dispoDeadlineWaived(), hashToken(), normalizePhone() (+15 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.10
-Nodes (15): makeDb(), seedKpiDb(), { app, startApp, stopApp, req }, assert, DIR, ETAB, { makeDb }, OBS (+7 more)
+Cohesion: 0.09
+Nodes (17): makeCollection(), makeDb(), seed(), seedConfirmed(), seedPending(), { app, startApp, stopApp, req }, assert, DIR (+9 more)
 
 ### Community 13 - "PWA Manifest"
 Cohesion: 0.18
 Nodes (10): background_color, description, display, icons, name, orientation, short_name, shortcuts (+2 more)
 
 ### Community 14 - "Staff Card Styling"
-Cohesion: 0.15
-Nodes (18): _buildCongeRow(), createShiftEl(), createStaffRow(), displayName(), escapeHtml(), _fmtCongeDateFr(), loadManagerDispos(), loadManagerTemplate() (+10 more)
+Cohesion: 0.10
+Nodes (25): activeStaff(), applyCardNameContrast(), _buildCongeRow(), createShiftEl(), createStaffRow(), displayName(), escapeHtml(), _fmtCongeDateFr() (+17 more)
 
 ### Community 15 - "Week Calculation Module"
-Cohesion: 0.29
-Nodes (7): applyViewMode(), renderDashboard(), renderTeamDashboard(), renderWeekFull(), renderWeekGantt(), staffMatchesCurrentGroup(), switchToDayView()
+Cohesion: 0.10
+Nodes (20): 1. Besoin et arbitrage, 2.1 L'horizon d'une semaine n'existe pas dans le modèle. C'est une convention du navigateur., 2.2 Le vrai obstacle est la deadline, et elle est à valeur unique., 2.3 La purge ne gêne pas., 2.4 Le patron peut déjà planifier loin — le moteur existe., 2.5 Le long terme existe déjà — mais seulement en négatif., 2. Ce que le modèle dit déjà — cinq constats vérifiés, 3. La seule vraie décision de modèle : que garde la deadline ? (+12 more)
 
 ### Community 16 - "Shift Hours Module"
 Cohesion: 0.33
 Nodes (8): fmtClock(), fmtDurationH(), fmtHourOfDay(), shiftDurationHours(), shiftEffectiveHours(), assert, { shiftEffectiveHours, shiftDurationHours, fmtHourOfDay, fmtClock, fmtDurationH }, { test }
 
 ### Community 17 - "Account Management UI"
-Cohesion: 0.12
-Nodes (18): activeStaff(), buildRoleFilters(), loadStaffNotesList(), matchesWordPrefix(), normalizeStr(), openAccountsModal(), openStaffModal(), populateBarsCheckboxes() (+10 more)
+Cohesion: 0.18
+Nodes (11): buildRoleFilters(), loadCongesList(), loadStaffNotesList(), matchesWordPrefix(), normalizeStr(), openStaffModal(), populateStaffManageFilters(), renderCongesListPatron() (+3 more)
 
 ### Community 18 - "Patron Creation Script"
 Cohesion: 0.07
@@ -220,12 +224,12 @@ Cohesion: 0.50
 Nodes (4): CustomMongoStore (sessions promesses), SESSION_SECRET obligatoire en production, Session TTL 30 jours glissant (rolling/touch), Trust proxy en production (Railway)
 
 ### Community 24 - "Tap Selection"
-Cohesion: 0.05
-Nodes (41): 10. Déploiement (Railway), 11. Headers de sécurité (helmet), 12. Observabilité, 13. Tests & CI, 14. Synchronisation agenda — flux iCal (D-72), 1. Stack, 2. Structure du projet, 3.1 Fuseau horaire — NE JAMAIS utiliser `toISOString()` (+33 more)
+Cohesion: 0.14
+Nodes (13): 10. Déploiement (Railway), 11. Headers de sécurité (helmet), 12. Observabilité, 13. Tests & CI, 1. Stack, 2. Structure du projet, 6. Architecture Web Push, 7. PWA / Service Worker (+5 more)
 
 ### Community 25 - "Timeline Rendering"
 Cohesion: 0.05
-Nodes (43): Hiérarchie des rôles & middlewares auth, Pièges blocs /* F-05 DÉSACTIVÉ */ (D-47), F-05 Échange de shifts (désactivé), R-04 Découpage server.js en routers (reporté), Auth, Authentification, Cache Service Worker — ne pas toucher `%%BUILD_TIME%%`, Collections MongoDB (+35 more)
+Nodes (41): Hiérarchie des rôles & middlewares auth, R-04 Découpage server.js en routers (reporté), Auth, Authentification, Cache Service Worker — ne pas toucher `%%BUILD_TIME%%`, Collections MongoDB, Commandes, Comptes & Staff (+33 more)
 
 ### Community 26 - "Shift Drag Interaction"
 Cohesion: 0.06
@@ -241,7 +245,7 @@ Nodes (7): scopeManagerOff(), validateOffPeriod(), assert, metaById, offs, { tes
 
 ### Community 29 - "html2canvas Internals B"
 Cohesion: 0.10
-Nodes (14): { app, startApp, stopApp, req }, assert, closedSettings, DIR_BAR1, DIRECTEUR, { makeDb }, NEXT_MONDAY, PATRON (+6 more)
+Nodes (15): { app, startApp, stopApp, req, horizonWeekDates }, assert, closedSettings, DIR_BAR1, DIRECTEUR, { makeDb }, NEXT_MONDAY, PATRON (+7 more)
 
 ### Community 30 - "html2canvas SVG Draw"
 Cohesion: 0.50
@@ -268,20 +272,20 @@ Cohesion: 0.40
 Nodes (5): check(), an(), fn(), Pt(), sn()
 
 ### Community 36 - "Push Reminder Scheduler"
-Cohesion: 0.20
-Nodes (15): _autoScrollTick(), clearDragHighlights(), onMove(), onSidebarDragEnd(), onSidebarDragStart(), onTouchEnd(), onTouchMove(), onUp() (+7 more)
+Cohesion: 0.36
+Nodes (9): _autoScrollTick(), onMove(), onSidebarDragStart(), onTouchMove(), _setSwapTarget(), _shiftElAtPoint(), startAutoScroll(), updateAutoScrollPos() (+1 more)
 
 ### Community 37 - "Daily Cron Jobs"
 Cohesion: 0.50
 Nodes (3): globals, js, sharedRules
 
 ### Community 38 - "Community 38"
-Cohesion: 0.20
-Nodes (21): applyShiftAssignment(), assignStaffToJoker(), batchToast(), buildDisplayedStaff(), createShift(), deleteShift(), extendDisplayForRealHours(), formatDateLong() (+13 more)
+Cohesion: 0.15
+Nodes (26): addManagerOff(), applyShiftAssignment(), assignStaffToJoker(), batchToast(), createShift(), deleteShift(), _ignoreNonAffectee(), loadManagerOff() (+18 more)
 
 ### Community 39 - "Community 39"
-Cohesion: 0.20
-Nodes (9): 1. Design System existant, 3. Priorités recommandées, 4. Palette — tokens à ajouter (non prioritaire), 5. Flux utilisateur — frictions identifiées, Tokens couleurs (style.css), Typographie, UX Design — Templyo, login.html (page de connexion) (+1 more)
+Cohesion: 0.11
+Nodes (17): 1. Design System existant, 2.1 login.html, 2.2 set-password.html, 2.3 index.html (Patron / Directeur), 2.4 planning.html (Staff), 2.5 pointage.html, 2.6 performance.html (Patron / Directeur — pilotage économique), 2.7 politique-confidentialite.html (+9 more)
 
 ### Community 40 - "Community 40"
 Cohesion: 0.05
@@ -292,12 +296,12 @@ Cohesion: 0.39
 Nodes (7): closeMobileDrawer(), _closeStaffBar(), openDispoSettingsMobile(), openMobileDrawer(), _openStaffBar(), syncDrawerDispoToggle(), toggleStaffBar()
 
 ### Community 42 - "Community 42"
-Cohesion: 0.15
-Nodes (17): app, baseUrl(), startApp(), stopApp(), splitDisposByConges(), { app, startApp, stopApp, baseUrl }, assert, getJson() (+9 more)
+Cohesion: 0.16
+Nodes (13): baseUrl(), splitDisposByConges(), { app, startApp, stopApp, baseUrl, horizonWeekDates }, assert, getJson(), { makeDb }, postDispos(), seedKpiDb() (+5 more)
 
 ### Community 43 - "Community 43"
-Cohesion: 0.20
-Nodes (7): { app, startApp, stopApp, req, baseUrl }, assert, bcrypt, EQUIPIER, { makeDb }, PATRON, { test, before, after, beforeEach }
+Cohesion: 0.18
+Nodes (8): { app, startApp, stopApp, req, baseUrl }, assert, bcrypt, EQUIPIER, { makeDb }, PATRON, seed(), { test, before, after, beforeEach }
 
 ### Community 46 - "html2canvas Internals F"
 Cohesion: 0.18
@@ -308,16 +312,16 @@ Cohesion: 0.22
 Nodes (8): 1. L'application change un peu d'allure, 2. La page Performance ne montre plus que le « chargé », 3. Vos directeurs deviennent des membres de l'équipe à part entière, 4. La file d'attente des disponibilités est filtrée pour les directeurs, 5. Les changements de droits s'appliquent tout de suite, 6. Retirer quelqu'un de l'équipe sans perdre ses heures, Ce qui ne change pas, Templyo — ce qui change à la prochaine mise à jour
 
 ### Community 57 - "Community 57"
-Cohesion: 0.14
-Nodes (16): addEstablishment(), applyVenueHours(), _kpiEstabRow(), _kpiProgressBar(), loadDisposKpi(), loadEstablishments(), loadGroups(), loadWeekFullData() (+8 more)
+Cohesion: 0.10
+Nodes (25): applyVenueHours(), applyViewMode(), buildDisplayedStaff(), extendDisplayForRealHours(), formatDateLong(), _kpiEstabRow(), _kpiProgressBar(), loadDayDetail() (+17 more)
 
 ### Community 58 - "Community 58"
 Cohesion: 0.15
 Nodes (12): req(), postOneDispo(), putTemplate(), { app, startApp, stopApp, req }, assert, DIRECTEUR, { makeDb }, OBSERVATEUR (+4 more)
 
 ### Community 59 - "Community 59"
-Cohesion: 0.33
-Nodes (7): public/lib/shift-hours.js (heures effectives), Module UMD partagé navigateur/Node, WEEK_CUTOFF_HOUR = 6 (cutoff semaine en cours), public/lib/week.js (weekStart/currentWeekStart), Refacto incrémentale (modèle D-73), planning.html (interface staff), Onglet Mon équipe (responsable)
+Cohesion: 0.24
+Nodes (10): Flag CALENDAR_ENABLED (iCal désactivé D-83), Synchronisation agenda — flux iCal (D-72), public/lib/shift-hours.js (heures effectives), Module UMD partagé navigateur/Node, WEEK_CUTOFF_HOUR = 6 (cutoff semaine en cours), public/lib/week.js (weekStart/currentWeekStart), F-09 Abonnement agenda iCal, Refacto incrémentale (modèle D-73) (+2 more)
 
 ### Community 60 - "Community 60"
 Cohesion: 0.06
@@ -328,8 +332,8 @@ Cohesion: 0.22
 Nodes (10): classifyDirectorLinks(), normName(), pickStaffColor(), APPLY, CREATE, main(), { openDb }, { pickStaffColor, classifyDirectorLinks } (+2 more)
 
 ### Community 62 - "Community 62"
-Cohesion: 0.20
-Nodes (9): Backlog — Templyo, Déjà livré / non prioritaire, Fait, Notes pour les agents, P1 — Bugs bloquants (à faire en premier), P2 — Améliorations (après les P1), P2 — Audit ergonomie restant (mai 2026), P3 — Nouvelles fonctionnalités (roadmap) (+1 more)
+Cohesion: 0.17
+Nodes (11): Pièges blocs /* F-05 DÉSACTIVÉ */ (D-47), F-05 Échange de shifts (désactivé), Backlog — Templyo, Déjà livré / non prioritaire, Fait, Notes pour les agents, P1 — Bugs bloquants (à faire en premier), P2 — Améliorations (après les P1) (+3 more)
 
 ### Community 63 - "Community 63"
 Cohesion: 0.18
@@ -340,16 +344,16 @@ Cohesion: 0.12
 Nodes (15): 10. La semaine-type part À la deadline, jamais avant (2026-08-10), 1. Besoin exprimé, 2. La contrainte qui bloque (fait vérifié dans le code), 3. Deux modèles possibles, 4. Points durs transverses, 5. Décisions à prendre, 6. Recommandation, 6bis. Plan d'implémentation (Modèle A, retenu) (+7 more)
 
 ### Community 65 - "Community 65"
-Cohesion: 0.18
-Nodes (13): isValidObjectId(), shouldMaterializeTemplate(), archivedIdsAmong(), archivedStaff(), checkDispoRappels(), cleanupOldJokers(), computeEffectiveDeadline(), connectDB() (+5 more)
+Cohesion: 0.20
+Nodes (12): isValidObjectId(), archivedIdsAmong(), archivedStaff(), checkDispoRappels(), cleanupOldJokers(), computeEffectiveDeadline(), connectDB(), managerStaffName() (+4 more)
 
 ### Community 66 - "Community 66"
-Cohesion: 0.31
-Nodes (7): contains(), eq(), isObjId(), isOperator(), makeCollection(), matchField(), plainEq()
+Cohesion: 0.36
+Nodes (6): contains(), eq(), isObjId(), isOperator(), matchField(), plainEq()
 
 ### Community 67 - "Community 67"
-Cohesion: 0.33
-Nodes (7): buildTemplateDispos(), datesCoveredByPeriods(), isFullRangeOnConge(), toDateStr(), fullWeekCongeSet(), managerOffPeriods(), materializeManagerTemplateWeek()
+Cohesion: 0.22
+Nodes (13): isAutoPublished(), isDatePublished(), clampHorizonWeeks(), currentWeekStart(), disposHorizonMondays(), disposHorizonRange(), disposWeekStart(), toDateStr() (+5 more)
 
 ### Community 68 - "Community 68"
 Cohesion: 0.33
@@ -364,19 +368,38 @@ Cohesion: 0.29
 Nodes (6): congeCoversDate(), congeDaysInRange(), datesOverlap(), assert, { datesOverlap, congeCoversDate, congeDaysInRange }, { test }
 
 ### Community 71 - "Community 71"
-Cohesion: 0.25
-Nodes (8): 2.1 login.html, 2.2 set-password.html, 2.3 index.html (Patron / Directeur), 2.4 planning.html (Staff), 2.5 pointage.html, 2.6 performance.html (Patron / Directeur — pilotage économique), 2.7 politique-confidentialite.html, 2. Audit page par page
+Cohesion: 0.20
+Nodes (10): 3.1 Fuseau horaire — NE JAMAIS utiliser `toISOString()`, 3.2 Sessions MongoDB — promesses uniquement, 3.3 `script.js` — monolithique, ne pas découper, 3.4 Frontend — aucun outillage de build, 3.5 API / auth contournent toujours le cache du Service Worker, 3.6 Les helpers purs vivent dans `lib/utils.js`, 3.7 En production `SESSION_SECRET` est obligatoire, 3.8 Trust proxy en production (+2 more)
 
 ### Community 72 - "Community 72"
 Cohesion: 0.40
 Nodes (5): Devant les features, Le risque structurel le plus lourd, qui n'est pas une feature, Les autres features, par nécessité décroissante, Priorisation — revue de l'ensemble (2026-08-08), Reclassement de la Feature A — c'est un correctif, pas un confort
 
 ### Community 73 - "Community 73"
-Cohesion: 1.00
-Nodes (3): Flag CALENDAR_ENABLED (iCal désactivé D-83), Synchronisation agenda — flux iCal (D-72), F-09 Abonnement agenda iCal
+Cohesion: 0.22
+Nodes (9): 5. Modèle de données (collections clés), `daily_revenue`, `notifications`, `push_subscriptions`, `settings` — documents clés, `shift_swaps` *(feature F-05 — code livré mais désactivée en attente validation client)*, `shifts`, `staff` — champs de rémunération (+1 more)
+
+### Community 74 - "Community 74"
+Cohesion: 0.38
+Nodes (7): openAccountsModal(), populateBarsCheckboxes(), populateStaffSelect(), renderAccountsList(), renderPendingInvites(), switchAccountsTab(), _updatePendingBadge()
+
+### Community 75 - "Community 75"
+Cohesion: 0.33
+Nodes (6): addEstablishment(), loadGroups(), openEstablishmentsModal(), renderEstablishmentsList(), renderGroupFilter(), renderTabs()
+
+### Community 76 - "Community 76"
+Cohesion: 0.40
+Nodes (5): 14. Synchronisation agenda — flux iCal (D-72), Génération du `.ics`, Limites connues (documentées pour le support), Principe, Routes
+
+### Community 77 - "Community 77"
+Cohesion: 0.50
+Nodes (4): 4. Authentification & autorisation, Hiérarchie des rôles, Limitation du débit, Session
 
 ## Knowledge Gaps
-- **479 isolated node(s):** `js`, `globals`, `sharedRules`, `crypto`, `{ weekStart, currentWeekStart, WEEK_CUTOFF_HOUR }` (+474 more)
+- **510 isolated node(s):** `js`, `globals`, `sharedRules`, `crypto`, `{
+    weekStart, currentWeekStart, WEEK_CUTOFF_HOUR, toDateStr, disposWeekStart,
+    disposHorizonRange, disposHorizonMondays, clampHorizonWeeks, DISPO_HORIZON_MAX,
+}` (+505 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **10 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -384,16 +407,16 @@ Nodes (3): Flag CALENDAR_ENABLED (iCal désactivé D-83), Synchronisation agenda
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `check()` connect `DB Seed Script` to `Route Tests`?**
-  _High betweenness centrality (0.052) - this node is a cross-community bridge._
+  _High betweenness centrality (0.060) - this node is a cross-community bridge._
 - **Why does `fn()` connect `DB Seed Script` to `html2canvas Render Engine`?**
-  _High betweenness centrality (0.052) - this node is a cross-community bridge._
-- **Why does `toDateStr()` connect `Community 67` to `Express Server & API`, `Shared Utils & Validation`, `Patron Creation Script`, `Route Tests`, `html2canvas Internals B`?**
-  _High betweenness centrality (0.019) - this node is a cross-community bridge._
+  _High betweenness centrality (0.060) - this node is a cross-community bridge._
+- **Why does `m()` connect `html2canvas Parser` to `html2canvas Internals F`, `html2canvas Color`, `html2canvas SVG Draw`?**
+  _High betweenness centrality (0.008) - this node is a cross-community bridge._
 - **Are the 19 inferred relationships involving `m()` (e.g. with `Ee()` and `Ae()`) actually correct?**
   _`m()` has 19 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `js`, `globals`, `sharedRules` to the rest of the system?**
-  _484 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _515 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Planning Board UI` be split into smaller, more focused modules?**
-  _Cohesion score 0.0532724505327245 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.051929824561403506 - nodes in this community are weakly interconnected._
 - **Should `html2canvas Render Engine` be split into smaller, more focused modules?**
   _Cohesion score 0.03989071038251366 - nodes in this community are weakly interconnected._

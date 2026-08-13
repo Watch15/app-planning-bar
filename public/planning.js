@@ -1478,10 +1478,34 @@ const DISPO_TYPES = {
 let dispoSettings  = null;
 let dispoSelections = {}; // { "2025-06-23": { type, start_time, end_time, note } }
 
+// B2 — horizon de saisie. `dispoMondays` porte les lundis autorisés (N+1 … N+X, calculés
+// par la MÊME fonction que le serveur) et `dispoWeekIndex` celui qu'on affiche.
+// Le formulaire reste MONO-SEMAINE à l'écran, par navigation : empiler six semaines
+// ferait défiler 42 cartes pour en corriger une seule.
+let dispoMondays   = [];
+let dispoWeekIndex = 0;
+
+// Le lundi de la semaine actuellement affichée, en Date locale.
+function currentDispoMonday() {
+    const iso = dispoMondays[dispoWeekIndex] || dispoMondays[0];
+    if (!iso) return getMondayOf(addDays(new Date(), 7));   // avant tout chargement
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d);
+}
+
+// La semaine affichée est-elle celle que la deadline verrouille ? (règle A : la deadline
+// ne garde QUE la semaine en cours de collecte, l'index 0 de l'horizon.)
+function currentDispoWeekLocked() {
+    return dispoWeekIndex === 0 && dispoSettings && dispoSettings.collectionWeekOpen === false;
+}
+
 async function loadDisposTab() {
     // Charger les paramètres
     const sRes = await fetch('/api/dispo-settings', { credentials: 'include' });
     dispoSettings = await sRes.json();
+
+    dispoMondays = Week.disposHorizonMondays(new Date(), dispoSettings.horizon_weeks || 1);
+    if (dispoWeekIndex >= dispoMondays.length) dispoWeekIndex = 0;
 
     const statusEl = document.getElementById('dispos-status');
     const formEl   = document.getElementById('dispos-form');
@@ -1505,13 +1529,17 @@ async function loadDisposTab() {
     // Deadline dépassée mais saisie quand même acceptée (force_open, réouverture
     // nominative, ou rôle directeur) : ne pas l'afficher comme si elle courait encore.
     const late = dispoSettings.deadlinePassed && dispoSettings.deadlineWaived;
+    // B2 règle A — sur un horizon élargi, la deadline ne concerne QUE la semaine
+    // prochaine. L'annoncer sans le dire ferait croire que toute la saisie ferme.
+    const multiWeek = dispoMondays.length > 1;
     statusEl.textContent = late  ? 'Deadline dépassée le ' + fmtDate + ' — saisie encore ouverte pour toi.'
         : dispoSettings.force_open ? '🔓 Saisie ouverte en urgence par le responsable'
+        : multiWeek ? 'Deadline : ' + fmtDate + ' (pour la semaine prochaine seulement)'
         : 'Deadline : ' + fmtDate;
     statusEl.style.color = (late || dispoSettings.force_open) ? '#27ae60' : '#aaa';
 
-    // Semaine suivante
-    const nextMonday = getMondayOf(addDays(new Date(), 7));
+    // Semaine affichée, dans l'horizon autorisé
+    const nextMonday = currentDispoMonday();
 
     // Charger les dispos existantes
     const from = toDateStr(nextMonday);
@@ -1568,6 +1596,56 @@ async function loadDisposTab() {
 
     // Générer les cartes (jours de repos en lecture seule)
     formEl.innerHTML = '';
+
+    // B2 — navigation entre les semaines de l'horizon. Absente si l'horizon vaut 1 :
+    // des flèches désactivées des deux côtés n'apprendraient rien à personne.
+    if (multiWeek) {
+        const MONTHS = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+        const sunday = addDays(nextMonday, 6);
+        const nav = document.createElement('div');
+        nav.className = 'dispo-week-nav';
+        nav.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px';
+        const label = 'Semaine du ' + nextMonday.getDate() + ' ' + MONTHS[nextMonday.getMonth()] +
+                      ' au ' + sunday.getDate() + ' ' + MONTHS[sunday.getMonth()];
+        nav.innerHTML =
+            '<button type="button" id="dispo-week-prev" class="dispo-week-arrow" ' +
+                (dispoWeekIndex === 0 ? 'disabled ' : '') +
+                'style="padding:6px 12px;border-radius:8px;border:1.5px solid var(--border,#ddd);background:transparent;color:inherit;font-size:15px;cursor:pointer' +
+                (dispoWeekIndex === 0 ? ';opacity:.3;cursor:default' : '') + '">‹</button>' +
+            '<div style="text-align:center;line-height:1.3">' +
+                '<div style="font-size:13px;font-weight:700">' + label + '</div>' +
+                '<div style="font-size:11px;color:var(--text-muted,#999)">Semaine ' + (dispoWeekIndex + 1) + ' sur ' + dispoMondays.length + '</div>' +
+            '</div>' +
+            '<button type="button" id="dispo-week-next" class="dispo-week-arrow" ' +
+                (dispoWeekIndex >= dispoMondays.length - 1 ? 'disabled ' : '') +
+                'style="padding:6px 12px;border-radius:8px;border:1.5px solid var(--border,#ddd);background:transparent;color:inherit;font-size:15px;cursor:pointer' +
+                (dispoWeekIndex >= dispoMondays.length - 1 ? ';opacity:.3;cursor:default' : '') + '">›</button>';
+        formEl.appendChild(nav);
+        const go = delta => {
+            dispoWeekIndex = Math.min(Math.max(dispoWeekIndex + delta, 0), dispoMondays.length - 1);
+            loadDisposTab();
+        };
+        nav.querySelector('#dispo-week-prev').addEventListener('click', () => go(-1));
+        nav.querySelector('#dispo-week-next').addEventListener('click', () => go(1));
+    }
+
+    // Semaine figée par la deadline : on ne montre PAS de cartes modifiables — le
+    // serveur refuserait l'envoi, et un formulaire qui accepte des clics pour rien est
+    // pire qu'un formulaire absent. Les autres semaines restent accessibles.
+    if (currentDispoWeekLocked()) {
+        const locked = document.createElement('div');
+        locked.style.cssText = 'background:#fdf3f3;border:1px solid #f5c6c6;border-radius:10px;padding:14px 16px;font-size:13px;color:#b03a3a;line-height:1.5';
+        locked.textContent = 'Cette semaine est figée depuis la deadline du ' + fmtDate +
+            ' — le planning est en cours de préparation.' +
+            (dispoMondays.length > 1 ? ' Les semaines suivantes restent ouvertes à la saisie.' : '');
+        formEl.appendChild(locked);
+        btnSubmit.disabled = true;
+        btnSubmit.style.background = '#ccc';
+        return;
+    }
+    btnSubmit.disabled = false;
+    btnSubmit.style.background = '';
+
     for (let i = 0; i < 7; i++) {
         const d    = addDays(nextMonday, i);
         const date = toDateStr(d);
@@ -1765,7 +1843,10 @@ async function submitDispos() {
     btn.textContent = 'Envoi…';
 
     const dispos = [];
-    const nextMonday = getMondayOf(addDays(new Date(), 7));
+    // B2 — la semaine AFFICHÉE, pas « la semaine prochaine ». Chaque envoi porte sur une
+    // semaine : l'upsert serveur est keyé par (staff_id, date), donc valider une semaine
+    // ne touche jamais aux autres.
+    const nextMonday = currentDispoMonday();
 
     for (let i = 0; i < 7; i++) {
         const date = toDateStr(addDays(nextMonday, i));

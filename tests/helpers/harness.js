@@ -49,4 +49,27 @@ const req = (path, user, init = {}) => fetch(base + path, {
 // Pour les rares tests qui construisent l'URL eux-mêmes (routes sans session).
 const baseUrl = () => base;
 
-module.exports = { app, startApp, stopApp, req, baseUrl };
+// ── Dates de test pour les dispos (B2) ───────────────────────────────────────
+// `POST /api/dispos` est borné par un horizon calculé à partir de MAINTENANT. Les dates
+// en dur (`2099-01-05`…) que ces tests utilisaient ne passaient que parce que la route
+// n'avait aucune borne de date — le trou que B2 a fermé. Une dispo est par nature
+// relative à l'instant présent : les fixtures doivent l'être aussi.
+//
+// ⚠️ Utilise le MÊME helper que le serveur. Recalculer « lundi prochain » à la main dans
+// les tests laisserait passer une erreur de calendrier des deux côtés à la fois.
+const { disposHorizonMondays } = require('../../lib/utils');
+
+// Les 7 dates (lundi→dimanche) de la n-ième semaine de l'horizon.
+// `horizonWeekDates(1)` = la semaine EN COURS DE COLLECTE (N+1), celle que la deadline
+// protège ; `horizonWeekDates(2)` = la suivante, libre de deadline (B2 règle A).
+function horizonWeekDates(n = 1, now = new Date()) {
+    const monday = disposHorizonMondays(now, n)[n - 1];
+    const [y, mo, d] = monday.split('-').map(Number);
+    const pad = v => String(v).padStart(2, '0');
+    return Array.from({ length: 7 }, (_, i) => {
+        const day = new Date(y, mo - 1, d + i);
+        return day.getFullYear() + '-' + pad(day.getMonth() + 1) + '-' + pad(day.getDate());
+    });
+}
+
+module.exports = { app, startApp, stopApp, req, baseUrl, horizonWeekDates };

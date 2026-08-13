@@ -13,7 +13,13 @@ const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const { weekStart, toDateStr } = require('../lib/utils');
 const { makeDb } = require('./helpers/fake-db');
-const { app, startApp, stopApp, req } = require('./helpers/harness');
+const { app, startApp, stopApp, req, horizonWeekDates } = require('./helpers/harness');
+
+// B2 — la semaine en cours de collecte. `POST /api/dispos` et la pastille sont désormais
+// bornés sur l'horizon : une date fictive (`2099-…`) tombe hors plage. Utiliser la vraie
+// semaine rend d'ailleurs les tests de deadline PLUS forts — la règle A ne protège que
+// cette semaine-là, donc c'est bien elle qu'il faut viser pour prouver le refus.
+const W = horizonWeekDates(1);
 
 const MGR_STAFF   = '0123456789abcdef0123aaaa';
 const MGR_USER    = '0123456789abcdef0123bbbb';
@@ -156,20 +162,20 @@ test('semaine-type : saute un jour couvert par une absence déclarée (E-19)', a
 
 test('POST /api/dispos : une absence directeur ignore le jour, comme un congé staff', async () => {
     const db = seed({
-        manager_time_off: [{ user_id: MGR_USER, start_date: '2099-01-06', end_date: '2099-01-06' }],
+        manager_time_off: [{ user_id: MGR_USER, start_date: W[1], end_date: W[1] }],
     });
     app.locals.setTestDb(db);
     const res = await req('/api/dispos', DIRECTEUR, {
         method: 'POST',
         body: JSON.stringify({ dispos: [
-            { date: '2099-01-05', type: 'custom', start_time: 18, end_time: 24 },
-            { date: '2099-01-06', type: 'custom', start_time: 18, end_time: 24 }, // absence
-            { date: '2099-01-07', type: 'custom', start_time: 18, end_time: 24 },
+            { date: W[0], type: 'custom', start_time: 18, end_time: 24 },
+            { date: W[1], type: 'custom', start_time: 18, end_time: 24 }, // absence
+            { date: W[2], type: 'custom', start_time: 18, end_time: 24 },
         ] }),
     });
     assert.equal(res.status, 201);
     assert.match((await res.json()).message, /congé ignoré/);
-    assert.deepEqual(disposOf(db).map(d => d.date).sort(), ['2099-01-05', '2099-01-07']);
+    assert.deepEqual(disposOf(db).map(d => d.date).sort(), [W[0], W[2]]);
 });
 
 // ── Déclarer une absence purge les dispos de la période ───────────────────────
@@ -232,13 +238,13 @@ function seedPendingAcrossBars() {
             { _id: '0123456789abcdef0123ffff', name: 'Zoé', venues: ['bar2'], can_submit_dispos: true },
         ],
         availabilities: [
-            { staff_id: STAFF_ID, date: '2099-01-05', status: 'pending', start_time: 18, end_time: 24 },
-            { staff_id: '0123456789abcdef0123ffff', date: '2099-01-05', status: 'pending', start_time: 18, end_time: 24 },
+            { staff_id: STAFF_ID, date: W[0], status: 'pending', start_time: 18, end_time: 24 },
+            { staff_id: '0123456789abcdef0123ffff', date: W[0], status: 'pending', start_time: 18, end_time: 24 },
         ],
     });
 }
 
-const PENDING = '/api/dispos/pending?from=2099-01-01&to=2099-01-31';
+const PENDING = '/api/dispos/pending?from=' + W[0] + '&to=' + W[6];
 
 test('S-04 : le directeur ne voit que les dispos du staff de ses bars', async () => {
     app.locals.setTestDb(seedPendingAcrossBars());
@@ -285,7 +291,7 @@ const STAFF_USER = { _id: '0123456789abcdef0123eeee', staff_id: STAFF_ID, name: 
 
 const postOneDispo = user => req('/api/dispos', user, {
     method: 'POST',
-    body: JSON.stringify({ dispos: [{ date: '2099-06-01', type: 'custom', start_time: 18, end_time: 24 }] }),
+    body: JSON.stringify({ dispos: [{ date: W[0], type: 'custom', start_time: 18, end_time: 24 }] }),
 });
 
 test('deadline passée : le directeur peut quand même envoyer ses dispos', async () => {
@@ -293,7 +299,7 @@ test('deadline passée : le directeur peut quand même envoyer ses dispos', asyn
     app.locals.setTestDb(db);
     const res = await postOneDispo(DIRECTEUR);
     assert.equal(res.status, 201, 'le directeur n\'est pas bloqué par la deadline');
-    assert.deepEqual(disposOf(db).map(d => d.date), ['2099-06-01']);
+    assert.deepEqual(disposOf(db).map(d => d.date), [W[0]]);
 });
 
 test('deadline passée : le staff ordinaire reste bloqué', async () => {

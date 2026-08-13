@@ -17,6 +17,7 @@ const {
     toDateStr, datesOverlap, congeDaysInRange, splitDisposByConges, isFullRangeOnConge,
     validateOffPeriod, scopeManagerOff, resolvePerfSettings, pickStaffColor, buildTemplateDispos,
     datesCoveredByPeriods, dispoDeadlineWaived, shouldMaterializeTemplate,
+    disposHorizonRange, clampHorizonWeeks, DISPO_HORIZON_MAX, dispoMateriallyDiffers,
 } = require('./lib/utils');
 
 // Sentry — initialisation conditionnelle (ne se charge que si SENTRY_DSN fourni).
@@ -333,9 +334,15 @@ async function connectDB() {
         // Idem : le count des dispos en attente était index-only sur `{status:1}` ; le
         // filtre de périmètre y ajoute `staff_id`, d'où l'index composé (sinon Mongo doit
         // charger chaque document `pending` pour tester l'appartenance au $in).
+        // B2 y ajoute `date` : la pastille ET la file sont désormais bornées sur la plage
+        // d'horizon. Ordre ESR — égalités (`status`, `staff_id: $in`) d'abord, intervalle
+        // (`date`) en dernier ; la requête reste couverte, donc sans fetch.
+        // ⚠️ En base existante, l'ancien `status_1_staff_id_1` devient un préfixe redondant
+        // de celui-ci : il reste en place (il coûte des écritures pour rien) tant qu'il
+        // n'est pas droppé à la main — opération de prod, hors périmètre de ce lot.
         db.collection('availabilities').createIndex(
-            { status: 1, staff_id: 1 }
-        ).catch(e => console.warn('⚠️ Index availabilities.status+staff_id:', e.message));
+            { status: 1, staff_id: 1, date: 1 }
+        ).catch(e => console.warn('⚠️ Index availabilities.status+staff_id+date:', e.message));
         // Une seule instance par base doit porter le cron (cf. CRON_ENABLED).
         if (CRON_ENABLED) {
             scheduleDailyAt10();
@@ -3043,6 +3050,17 @@ function computeEffectiveDeadline(customDeadlineIso, now) {
     return result;
 }
 
+// B2 — les deux horizons, lus à UN SEUL endroit. X borne la saisie du staff, Y la file
+// de validation du patron, avec Y ≤ X.
+// L'invariant est déjà tenu à l'écriture (`PATCH /api/dispo-settings`) ; il est
+// ré-appliqué ici parce qu'un doc `settings` antérieur à B2, ou édité à la main en base,
+// n'a jamais traversé cette écriture — et un Y > X ferait remonter dans la file des
+// dispos que le staff n'a même pas le droit de saisir.
+function dispoHorizons(settings) {
+    const x = clampHorizonWeeks(settings && settings.horizon_weeks);
+    return { x, y: Math.min(clampHorizonWeeks(settings && settings.validation_horizon_weeks), x) };
+}
+
 app.get('/api/dispo-settings', checkDB, requireAuth, async (req, res) => {
     try {
         const settings = await db.collection('settings').findOne({ key: 'dispo' }) || { open: true, message: null };
@@ -3075,12 +3093,23 @@ app.get('/api/dispo-settings', checkDB, requireAuth, async (req, res) => {
 
         const forceOpenStaff = Array.isArray(settings.force_open_staff) ? settings.force_open_staff : [];
         const staffForceOpen = staffId ? forceOpenStaff.includes(staffId) : false;
+        // B2 — horizon de saisie (X) et de validation (Y). Le client construit sa plage
+        // avec la MÊME fonction que le serveur (`disposHorizonRange`) : c'est ce qui
+        // garantit que le formulaire n'affiche jamais une semaine que `POST /api/dispos`
+        // refusera, et que la file du patron couvre exactement ce que la pastille compte.
+        const { x: horizonWeeks, y: validationWeeks } = dispoHorizons(settings);
         // open : ouvert POUR CE STAFF (≥1 venue ouvert). open_venues : pour l'UI patron.
         const staffOpen = staffDispoOpen(settings, staffDoc ? staffDoc.venues : []);
         const openVenuesNorm = dispoOpenVenues(settings);
         // Même règle que POST /api/dispos — le client ne doit jamais afficher un
         // formulaire que le serveur refusera, ni le fermer alors qu'il l'accepterait.
         const deadlineWaived = dispoDeadlineWaived(settings, req.session.user.role, staffForceOpen);
+        // B2 règle A — la deadline ne garde QUE la semaine en cours de collecte (N+1).
+        // Au-delà, la saisie reste ouverte : refuser une dispo pour N+4 un samedi parce
+        // que la deadline de N+1 est passée n'aurait aucun sens, cette deadline protège
+        // la semaine que le patron est en train de monter, pas la saisie en général.
+        const collectionWeekOpen = !effectiveDeadlinePassed || deadlineWaived;
+        const horizonRange = disposHorizonRange(now, horizonWeeks);
         res.json({
             open: staffOpen,
             open_venues: openVenuesNorm === 'ALL' ? 'ALL' : [...openVenuesNorm],
@@ -3088,7 +3117,17 @@ app.get('/api/dispo-settings', checkDB, requireAuth, async (req, res) => {
             deadline: deadlineLocalIso,
             deadlinePassed: effectiveDeadlinePassed,
             deadlineWaived,
-            canSubmit: staffCanSubmit && staffOpen && (!effectiveDeadlinePassed || deadlineWaived),
+            // « Peut-il saisir QUELQUE CHOSE » — vrai dès qu'une semaine de l'horizon est
+            // ouverte. `collectionWeekOpen` dit si N+1 l'est ; les deux sont nécessaires,
+            // sinon le front grise tout le formulaire pour une seule semaine figée.
+            canSubmit: staffCanSubmit && staffOpen && (collectionWeekOpen || horizonWeeks > 1),
+            collectionWeekOpen,
+            horizon_weeks: horizonWeeks,
+            validation_horizon_weeks: validationWeeks,
+            horizon_range: horizonRange,
+            // Le patron construit ses deux sélecteurs à partir de cette borne : la
+            // recopier en dur dans `script.js` ferait diverger l'UI du clamp serveur.
+            horizon_max: DISPO_HORIZON_MAX,
             staffCanSubmit,
             force_open: forceOpen,
             force_open_staff: forceOpenStaff,
@@ -3119,6 +3158,7 @@ app.patch('/api/dispo-settings/force-open-staff', checkDB, requirePatron, denyOb
 
 app.patch('/api/dispo-settings', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
     const { open, open_venues, message, force_open, custom_deadline, open_day } = req.body;
+    const { horizon_weeks, validation_horizon_weeks } = req.body;
     try {
         // Ne mettre à jour que les champs fournis (le toggle rapide n'envoie que `open`).
         const update = { key: 'dispo' };
@@ -3135,6 +3175,21 @@ app.patch('/api/dispo-settings', checkDB, requirePatron, denyObservateurEdit, as
         if (force_open !== undefined) update.force_open = !!force_open;
         if (custom_deadline !== undefined) update.custom_deadline = custom_deadline || null;
         if (open_day !== undefined) update.open_day = (open_day !== null && open_day !== '') ? parseInt(open_day) : null;
+        // B2 — deux horizons : X = jusqu'où le staff saisit, Y = jusqu'où la file de
+        // validation remonte. L'invariant Y ≤ X est tenu ICI, au seul point d'écriture :
+        // le laisser aux lecteurs voudrait dire le redériver dans la file, la pastille et
+        // le formulaire, soit trois occasions de l'oublier.
+        // Le doc en base est relu quand UN SEUL des deux champs est fourni — sinon envoyer
+        // Y seul le comparerait à un X par défaut et non à celui réellement réglé.
+        if (horizon_weeks !== undefined || validation_horizon_weeks !== undefined) {
+            const current = await db.collection('settings').findOne({ key: 'dispo' }) || {};
+            const nextX = clampHorizonWeeks(
+                horizon_weeks !== undefined ? horizon_weeks : current.horizon_weeks);
+            const nextY = Math.min(clampHorizonWeeks(
+                validation_horizon_weeks !== undefined ? validation_horizon_weeks : current.validation_horizon_weeks), nextX);
+            update.horizon_weeks            = nextX;
+            update.validation_horizon_weeks = nextY;
+        }
         await db.collection('settings').updateOne(
             { key: 'dispo' },
             { $set: update },
@@ -3280,6 +3335,44 @@ app.post('/api/dispos/week-note', checkDB, requireAuth, async (req, res) => {
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
+// B2 — le titulaire d'un créneau change sa dispo APRÈS validation : que devient le shift ?
+// Décision produit du 2026-08-13, identique à celle prise en F-14 pour le même problème
+// (un shift dont le titulaire s'en va) : le créneau n'est PAS supprimé, il repasse en
+// Joker. Le poste était tenu, il reste à pourvoir — le supprimer ferait disparaître un
+// besoin en silence d'un planning déjà publié, et le patron ne verrait rien.
+//
+// Deux garde-fous :
+//   • un shift POINTÉ (real_start/real_end) n'est jamais touché — ce sont des heures
+//     réellement travaillées, donc de la paie ; la dispo n'a plus voix au chapitre.
+//   • un Joker l'est déjà : ne rien faire plutôt que réécrire.
+//
+// ⚠️ Limite assumée : rien ne relie un shift à la dispo qui l'a fait naître. On retrouve
+// le shift par le triplet (staff_id, date, establishment_id) — exactement celui dont
+// `PATCH /api/dispos/:id/confirm` se sert déjà pour son idempotence. Un shift que le
+// patron aurait créé à la main sur ce même triplet est donc indiscernable et sera libéré
+// lui aussi. Poser un `dispo_id` sur les shifts lèverait l'ambiguïté, mais ne vaudrait
+// que pour les shifts créés APRÈS la migration : la déduction resterait nécessaire.
+async function releaseShiftsOnDispoChange(staffId, changes) {
+    if (!changes.length) return { released: [], keptPointed: 0 };
+    const wanted = new Set(changes.map(c => c.date + '|' + c.establishment_id));
+    const shifts = await db.collection('shifts').find({
+        staff_id: staffId,
+        date:             { $in: [...new Set(changes.map(c => c.date))] },
+        establishment_id: { $in: [...new Set(changes.map(c => c.establishment_id))] },
+    }).toArray();
+    const released = [];
+    let keptPointed = 0;
+    for (const s of shifts) {
+        // Le produit cartésien des deux `$in` ramène des paires qu'on n'a pas demandées.
+        if (!wanted.has(s.date + '|' + s.establishment_id)) continue;
+        if (s.is_joker || s.staff_id === '__joker__') continue;
+        if (s.real_start != null || s.real_end != null) { keptPointed++; continue; }
+        await db.collection('shifts').updateOne({ _id: s._id }, { $set: { ...JOKER_SHIFT } });
+        released.push(s);
+    }
+    return { released, keptPointed };
+}
+
 app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
     const staffId = req.session.user.staff_id;
     if (!staffId) return res.status(400).json({ error: 'Aucun profil staff lié' });
@@ -3295,19 +3388,49 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
     const effectiveDeadline = computeEffectiveDeadline(settings.custom_deadline || null, now);
     const forceOpenStaff = Array.isArray(settings.force_open_staff) ? settings.force_open_staff : [];
     const staffForceOpen = forceOpenStaff.includes(staffId);
-    if (!dispoDeadlineWaived(settings, req.session.user.role, staffForceOpen) && now > effectiveDeadline)
-        return res.status(403).json({ error: 'La deadline est passée.' });
     const { dispos } = req.body;
     if (!Array.isArray(dispos) || dispos.length === 0) return res.status(400).json({ error: 'Aucune disponibilité fournie' });
+
+    // B2 — BORNE D'HORIZON. Cette route n'a jamais vérifié que les dates reçues
+    // appartenaient à la semaine cible : la limite « semaine prochaine » ne vivait que
+    // dans `planning.js`, donc elle était AFFICHÉE, pas TENUE — n'importe quel client
+    // pouvait poster une dispo pour décembre. Élargir l'horizon sans le borner ici
+    // aurait laissé le trou ouvert plus grand ; c'est le moment de le fermer, pas plus tard.
+    const horizonWeeks = dispoHorizons(settings).x;
+    const horizon      = disposHorizonRange(now, horizonWeeks);
+    const outOfHorizon = dispos.filter(d => d.date && (d.date < horizon.from || d.date > horizon.to));
+    if (outOfHorizon.length)
+        return res.status(403).json({ error: horizonWeeks > 1
+            ? 'Saisie ouverte du ' + horizon.from + ' au ' + horizon.to + ' seulement.'
+            : 'Saisie ouverte pour la semaine du ' + horizon.from + ' seulement.' });
+
+    // B2 règle A — la deadline ne garde que la semaine EN COURS DE COLLECTE (N+1),
+    // celle que le patron est en train de monter. Les semaines au-delà restent libres,
+    // sinon un staff qui déclare sa dispo de N+4 un samedi se prendrait « deadline
+    // passée » — absurde. `dispoDeadlineWaived` reste AU-DESSUS de cette règle.
+    const collectionWeek = disposHorizonRange(now, 1);
+    const isCollectionWeek = d => d.date >= collectionWeek.from && d.date <= collectionWeek.to;
+    let dispos1 = dispos;
+    let lockedDates = [];
+    if (!dispoDeadlineWaived(settings, req.session.user.role, staffForceOpen) && now > effectiveDeadline) {
+        lockedDates = dispos.filter(isCollectionWeek).map(d => d.date);
+        // Tout le lot est dans la semaine figée ⇒ 403, message d'avant B2 conservé.
+        // Sinon on retire ces jours et on enregistre le reste : refuser N+2..N+4 parce
+        // que N+1 est figée serait la même hostilité que refuser 40 shifts pour un seul
+        // archivé (F-14). Le compte rendu annonce ce qui n'est pas passé.
+        if (lockedDates.length === dispos.length)
+            return res.status(403).json({ error: 'La deadline est passée.' });
+        if (lockedDates.length) dispos1 = dispos.filter(d => !isCollectionWeek(d));
+    }
     try {
         // Un jour couvert par un congé posé (non refusé) ne reçoit pas de dispo.
         // On IGNORE silencieusement ces jours (au lieu de rejeter tout le lot en 409) :
         // ainsi un préremplissage de la semaine précédente, une saisie tardive ou un
         // état client désynchronisé qui retombe sur un congé n'empêche JAMAIS
         // l'enregistrement des autres jours. Le serveur reste la source de vérité.
-        let dispos2 = dispos;
+        let dispos2 = dispos1;
         let skippedConges = [];
-        const dates = dispos.map(d => d.date).filter(Boolean).sort();
+        const dates = dispos1.map(d => d.date).filter(Boolean).sort();
         if (dates.length) {
             // Un directeur déclare ses absences dans `manager_time_off` (E-19, keyé
             // user_id) et non dans `time_off` : sans cette jointure il pourrait poser
@@ -3322,7 +3445,7 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
                     .toArray(),
                 managerOffPeriods(staffId, dates[0], dates[dates.length - 1], req.session.user._id),
             ]);
-            const split   = splitDisposByConges(dispos, conges.concat(mgrOffs));
+            const split   = splitDisposByConges(dispos1, conges.concat(mgrOffs));
             dispos2       = split.kept;
             skippedConges = split.skippedDates;
             // Purger d'éventuelles dispos déjà posées sur ces jours de congé.
@@ -3331,12 +3454,36 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
                     staff_id: staffId, date: { $in: skippedConges }, type: { $ne: 'week_note' },
                 });
         }
+        // Ce qui n'a PAS été enregistré, dit une seule fois : jours de congé (ci-dessus)
+        // et jours de la semaine figée par la deadline (règle A). Un lot partiellement
+        // accepté doit annoncer ce qu'il a laissé de côté, sinon le staff croit avoir
+        // envoyé une semaine qui n'est jamais arrivée.
+        const skipSuffix =
+            (skippedConges.length ? ' · ' + skippedConges.length + ' jour(s) de congé ignoré(s)' : '') +
+            (lockedDates.length   ? ' · ' + lockedDates.length + ' jour(s) non enregistré(s) (deadline passée pour la semaine du ' + collectionWeek.from + ')' : '');
         if (dispos2.length === 0) {
             touchLastUpdated();
-            return res.status(200).json({ message: skippedConges.length
-                ? skippedConges.length + ' jour(s) de congé ignoré(s) — aucune autre dispo à enregistrer.'
-                : 'Aucune disponibilité à enregistrer.' });
+            return res.status(200).json({ message: (skipSuffix
+                ? 'Aucune autre dispo à enregistrer' + skipSuffix
+                : 'Aucune disponibilité à enregistrer.') });
         }
+
+        // B2 — une re-soumission qui change une dispo DÉJÀ VALIDÉE laisse derrière elle
+        // le shift créé à la validation. Il faut donc lire l'état AVANT l'upsert : après,
+        // le `status: 'pending'` a écrasé l'information. (C'est aussi, au passage, le
+        // « find préalable » que F-12 réclamera pour son journal d'audit — même lecture.)
+        // On garde un INSTANTANÉ des seuls champs comparés, pas le document : l'upsert
+        // qui suit réécrit ces docs, et retenir la référence reviendrait à comparer
+        // l'après avec l'après.
+        const prevByDate = new Map(
+            (await db.collection('availabilities').find({
+                staff_id: staffId,
+                date: { $in: dispos2.map(d => d.date) },
+                type: { $ne: 'week_note' },
+            }).toArray()).map(p => [p.date, {
+                status: p.status, establishment_id: p.establishment_id,
+                type: p.type, start_time: p.start_time, end_time: p.end_time,
+            }]));
         // Modifiable jusqu'à la deadline : on UPSERT par (staff_id, date) — une seule
         // dispo par jour. Re-soumettre met à jour le type/les horaires/la note et
         // repasse la dispo en 'pending' (le patron re-valide la version modifiée).
@@ -3361,10 +3508,40 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
         }));
         const result = await db.collection('availabilities').bulkWrite(ops, { ordered: false });
         const n = (result.upsertedCount || 0) + (result.modifiedCount || 0);
+
+        // B2 — libérer les créneaux dont la dispo validée vient d'être modifiée.
+        // Trois conditions cumulées, et c'est la troisième qui compte : une dispo
+        // re-soumise à l'IDENTIQUE (le staff rouvre son formulaire et renvoie sans rien
+        // changer, cas le plus courant) ne doit toucher à aucun planning.
+        const changed = dispos2.reduce((acc, d) => {
+            const prev = prevByDate.get(d.date);
+            if (prev && prev.status === 'confirmed' && prev.establishment_id
+                && dispoMateriallyDiffers(prev, d))
+                acc.push({ date: d.date, establishment_id: prev.establishment_id });
+            return acc;
+        }, []);
+        const { released, keptPointed } = await releaseShiftsOnDispoChange(staffId, changed);
+
         let message = n > 0 ? n + ' disponibilité(s) enregistrée(s)' : 'Disponibilités à jour';
-        if (skippedConges.length) message += ' · ' + skippedConges.length + ' jour(s) de congé ignoré(s)';
+        message += skipSuffix;
+        if (released.length) message += ' · ' + released.length + ' créneau(x) déjà planifié(s) repassé(s) en Joker';
+        if (keptPointed)     message += ' · ' + keptPointed + ' créneau(x) déjà pointé(s) inchangé(s)';
         res.status(201).json({ message });
         touchLastUpdated();
+
+        // Le patron doit l'apprendre : un créneau qu'il avait validé n'a plus de titulaire
+        // sur une semaine peut-être déjà publiée. Sans ça la modification est silencieuse
+        // — c'est précisément ce qui a fait écarter la suppression pure.
+        if (released.length) {
+            const staffName = req.session.user.name || 'Un membre du staff';
+            notifyPatrons({
+                title: 'Créneau à repourvoir',
+                body: staffName + ' a modifié sa disponibilité — '
+                    + released.length + ' créneau(x) validé(s) repassé(s) en Joker ('
+                    + [...new Set(released.map(s => s.date))].sort().join(', ') + ')',
+                url: '/#planning',
+            });
+        }
         if (staffForceOpen) {
             db.collection('settings').updateOne(
                 { key: 'dispo' },
@@ -3423,11 +3600,22 @@ app.get('/api/dispos/pending', checkDB, requirePatron, async (req, res) => {
 app.get('/api/dispos/count', checkDB, requirePatron, async (req, res) => {
     try {
         // Même périmètre que la liste, sinon la pastille annonce 12 et la file en montre 3.
+        // B2 — et MÊME PLAGE DE DATES, pour la même raison sur l'autre axe. La file est
+        // bornée depuis toujours (`from`/`to`), la pastille ne l'était pas : avec un
+        // horizon d'une semaine ça ne se voyait pas, avec six semaines saisies la
+        // pastille annonçait 40 et la file en montrait 7. C'est l'asymétrie que S-04 a
+        // déjà corrigée une fois sur l'axe du périmètre, revenue sur l'axe du temps.
+        // Les deux bornes sortent du même `disposHorizonRange`, appelé côté serveur ici
+        // et côté navigateur par `loadDisposList` — une seule fonction, pas deux calculs
+        // qu'il faudrait tenir d'accord à la main.
+        const settings = await db.collection('settings').findOne({ key: 'dispo' }) || {};
+        const range = disposHorizonRange(new Date(), dispoHorizons(settings).y);
         const count = await db.collection('availabilities').countDocuments({
             status: 'pending',
+            date: { $gte: range.from, $lte: range.to },
             ...(await pendingScopeFilter(req.session.user, req.query.scope)),
         });
-        res.json({ count });
+        res.json({ count, from: range.from, to: range.to });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 

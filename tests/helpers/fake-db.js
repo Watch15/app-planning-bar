@@ -103,9 +103,20 @@ function makeCollection(initialDocs) {
         // Le setter écrit donc EN PLACE. La lecture est inchangée.
         get _docs() { return docs; },
         set _docs(next) { docs.length = 0; docs.push(...(next || [])); },
-        async findOne(query)      { return docs.find(d => matchDoc(d, query)) || null; },
+        // 7e lacune comblée (2026-08-13) : ces deux méthodes rendaient les objets STOCKÉS,
+        // pas des copies. Un vrai driver Mongo désérialise le BSON à chaque lecture, donc
+        // le document rendu est toujours une copie détachée. La différence est invisible
+        // tant qu'on ne fait que lire ; elle ment dès qu'une route relit un état AVANT de
+        // le réécrire (B2 : lire la dispo avant l'upsert pour savoir si elle a changé) —
+        // l'écriture mutait l'instantané en place, et le test échouait sur du code correct.
+        // Copie SUPERFICIELLE : suffisante ici, les documents de ce projet sont plats
+        // (les tableaux comme `venues` restent partagés, à garder en tête).
+        async findOne(query)      {
+            const found = docs.find(d => matchDoc(d, query));
+            return found ? { ...found } : null;
+        },
         find(query)               {
-            const res = docs.filter(d => matchDoc(d, query));
+            const res = docs.filter(d => matchDoc(d, query)).map(d => ({ ...d }));
             return { sort() { return this; }, limit() { return this; }, async toArray() { return res.slice(); } };
         },
         // Mongo attribue toujours un _id : le simuler est nécessaire dès qu'une route

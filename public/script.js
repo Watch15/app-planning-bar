@@ -6682,20 +6682,36 @@ const staffIndex = () => new Map(allStaff.map(s => [String(s._id), s]));
 async function loadDisposList() {
     const list = document.getElementById('dispos-list');
     list.innerHTML = '<div style="padding:16px;text-align:center;color:#ccc;font-size:13px">Chargement…</div>';
-    const nextMonday = getMondayOf(addDays(new Date(), 7));
-    const from = toDateStr(nextMonday);
-    const to   = toDateStr(addDays(nextMonday, 6));
     const scopeQS = disposScopeQS('&');
     try {
-        const [res, notesRes] = await Promise.all([
-            fetch('/api/dispos/pending?from=' + from + '&to=' + to + scopeQS, { credentials: 'include' }),
-            fetch('/api/dispos/week-notes?week_start=' + from, { credentials: 'include' }),
+        // B2 — la file couvrait UNE semaine, câblée en dur sur N+1. Elle suit désormais
+        // l'horizon de VALIDATION réglé par le patron (Y), et la plage est calculée par
+        // `Week.disposHorizonRange` — la MÊME fonction que `GET /api/dispos/count` côté
+        // serveur. C'est ce qui garantit que la pastille et la file ne peuvent pas
+        // annoncer deux nombres différents ; les recalculer chacun de son côté était
+        // exactement la façon dont l'asymétrie de S-04 est revenue sur l'axe du temps.
+        const sRes     = await fetch('/api/dispo-settings', { credentials: 'include' });
+        const settings = sRes.ok ? await sRes.json() : {};
+        const weeksY   = settings.validation_horizon_weeks || 1;
+        const now      = new Date();
+        const range    = Week.disposHorizonRange(now, weeksY);
+        const mondays  = Week.disposHorizonMondays(now, weeksY);
+
+        // Une note de semaine par semaine (elle est keyée par `week_start`).
+        const [res, ...noteResList] = await Promise.all([
+            fetch('/api/dispos/pending?from=' + range.from + '&to=' + range.to + scopeQS, { credentials: 'include' }),
+            ...mondays.map(m => fetch('/api/dispos/week-notes?week_start=' + m, { credentials: 'include' })),
         ]);
         const dispos = await res.json();
         if (!res.ok) throw new Error(dispos.error);
-        const weekNotes = notesRes.ok ? await notesRes.json() : [];
-        const noteByStaff = {};
-        weekNotes.forEach(n => { noteByStaff[n.staff_id] = n.week_note; });
+        const notesByWeek = {};
+        for (let i = 0; i < mondays.length; i++) {
+            const r   = noteResList[i];
+            const arr = (r && r.ok) ? await r.json() : [];
+            const map = {};
+            arr.forEach(n => { map[n.staff_id] = n.week_note; });
+            notesByWeek[mondays[i]] = map;
+        }
 
         // Barre d'en-tête : bascule de périmètre (S-04) + validation en masse.
         // La bascule décide du LOT (« mon staff » ou tout le monde) ; l'établissement
@@ -6740,17 +6756,24 @@ async function loadDisposList() {
             return;
         }
 
+        const DAY_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+
+        // Une section par semaine de l'horizon. Le corps est celui d'avant B2, à ceci
+        // près que le lundi de référence et les notes lui sont PASSÉS au lieu d'être
+        // capturés : c'est tout ce qui séparait une file mono-semaine d'une file
+        // multi-semaines.
+        const renderWeekSection = (weekMonday, weekDispos, noteByStaff) => {
         // Grouper par staff_id
         const byStaff = {};
-        dispos.forEach(d => {
+        weekDispos.forEach(d => {
             if (!byStaff[d.staff_id]) byStaff[d.staff_id] = { name: d.staff_name, dispos: [] };
             byStaff[d.staff_id].dispos.push(d);
         });
 
         // Semaine : lun → dim
         const weekDays = [];
-        for (let i = 0; i < 7; i++) weekDays.push(toDateStr(addDays(nextMonday, i)));
-        const DAY_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+        const monday   = parseDate(weekMonday);
+        for (let i = 0; i < 7; i++) weekDays.push(toDateStr(addDays(monday, i)));
 
         // Sections « ★ Staff de mon établissement » / « Autres ».
         // Depuis S-04, le serveur ne renvoie QUE mon staff par défaut : le tri et les
@@ -6893,6 +6916,33 @@ async function loadDisposList() {
             });
 
             list.appendChild(card);
+        });
+        };  // fin renderWeekSection
+
+        // Répartir les dispos par semaine, puis rendre les semaines dans l'ordre.
+        // Une semaine sans rien en attente est simplement sautée : afficher « aucune
+        // dispo » six fois de suite noierait celles qui demandent une décision.
+        const disposByWeek = {};
+        dispos.forEach(d => {
+            const wk = Week.toDateStr(Week.weekStart(parseDate(d.date)));
+            (disposByWeek[wk] = disposByWeek[wk] || []).push(d);
+        });
+        mondays.forEach(m => {
+            const weekDispos = disposByWeek[m];
+            if (!weekDispos || !weekDispos.length) return;
+            // L'en-tête de semaine n'a de sens qu'en horizon élargi : sur une seule
+            // semaine il ajouterait un bandeau au-dessus de la seule chose affichée.
+            if (mondays.length > 1) {
+                const sunday = addDays(parseDate(m), 6);
+                const hdr = document.createElement('div');
+                hdr.style.cssText = 'margin:16px 16px 4px;padding:7px 12px;border-radius:9px;background:var(--color-bg-secondary,#f4f4f6);font-size:12px;font-weight:700;color:#555;display:flex;justify-content:space-between;align-items:center';
+                hdr.innerHTML =
+                    '<span>Semaine du ' + parseDate(m).getDate() + ' au ' + sunday.getDate() + ' ' +
+                        ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][sunday.getMonth()] + '</span>' +
+                    '<span style="font-weight:600;color:#999">' + weekDispos.length + ' en attente</span>';
+                list.appendChild(hdr);
+            }
+            renderWeekSection(m, weekDispos, notesByWeek[m] || {});
         });
 
     } catch (e) {
@@ -7284,6 +7334,34 @@ async function loadDispoControl() {
             cutoffOpenOpts += '<option value="' + h + '"' + (cutoffOpenHourVal === h ? ' selected' : '') + '>' + h + 'h00</option>';
         }
 
+        // B2 — les deux horizons. `horizon_max` vient du serveur : recopier la borne en
+        // dur ici la ferait diverger du clamp le jour où elle bouge.
+        const horizonMax = settings.horizon_max || 12;
+        const weekOpts = sel => {
+            let o = '';
+            for (let i = 1; i <= horizonMax; i++)
+                o += '<option value="' + i + '"' + (sel === i ? ' selected' : '') + '>' +
+                     i + ' semaine' + (i > 1 ? 's' : '') + '</option>';
+            return o;
+        };
+        const horizonSection =
+            '<div style="margin-bottom:10px;border-top:1px solid #f0f0f0;padding-top:10px">' +
+                '<div style="font-size:11px;color:#aaa;margin-bottom:6px">Horizon de saisie</div>' +
+                '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
+                    '<span style="font-size:11px;color:#666">Le staff saisit</span>' +
+                    '<select id="dispo-horizon" style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px">' +
+                        weekOpts(settings.horizon_weeks || 1) +
+                    '</select>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px">' +
+                    '<span style="font-size:11px;color:#666">Je valide sur</span>' +
+                    '<select id="dispo-horizon-validation" style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px">' +
+                        weekOpts(settings.validation_horizon_weeks || 1) +
+                    '</select>' +
+                '</div>' +
+                '<div style="font-size:10px;color:#bbb;margin-top:4px">À partir de la semaine prochaine. La file de validation et sa pastille suivent la seconde valeur, qui ne peut pas dépasser la première. La deadline ne verrouille que la semaine prochaine.</div>' +
+            '</div>';
+
         // Saisie ouverte par établissement (affiché uniquement en multi-établissement).
         const venuesSection = multiEstab
             ? '<div style="margin-bottom:10px;border-top:1px solid #f0f0f0;padding-top:10px">' +
@@ -7323,6 +7401,7 @@ async function loadDispoControl() {
                 '</select>' +
                 '<div style="font-size:10px;color:#bbb;margin-top:3px">Jour où le rappel d\'ouverture est envoyé à 10h</div>' +
             '</div>' +
+            horizonSection +
             venuesSection +
             '<div style="margin-bottom:10px;border-top:1px solid #f0f0f0;padding-top:10px">' +
                 '<div style="font-size:11px;color:#aaa;margin-bottom:6px">Fenêtre de saisie pointage</div>' +
@@ -7384,6 +7463,10 @@ async function loadDispoControl() {
             } else {
                 dispoBody = { open: toggle.checked, force_open: forceOpen, custom_deadline: customDeadline, open_day: document.getElementById('dispo-open-day').value };
             }
+            // B2 — envoyés dans les deux branches : le serveur écrête Y sur X, donc
+            // l'ordre des deux valeurs dans le corps n'a aucune importance ici.
+            dispoBody.horizon_weeks            = parseInt(document.getElementById('dispo-horizon').value);
+            dispoBody.validation_horizon_weeks = parseInt(document.getElementById('dispo-horizon-validation').value);
             await Promise.all([
                 fetch('/api/dispo-settings', {
                     credentials: 'include', method: 'PATCH',

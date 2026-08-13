@@ -1,7 +1,10 @@
 # B2 — Horizon de saisie · note de design
 
-> **Statut : préparation. Aucune ligne de code écrite.** Ouverte le 2026-08-12 à la demande
-> du user (« la deuxième feature, qu'on peut préparer sans la lancer »).
+> **Statut : B2-a LIVRÉ le 2026-08-13.** B2-b (ergonomie patron) reste ouvert.
+> Les décisions prises et ce qui a changé par rapport à cette note sont consignés au **§8**,
+> qui fait autorité sur les sections antérieures.
+> Ouverte le 2026-08-12 à la demande du user (« la deuxième feature, qu'on peut préparer
+> sans la lancer »).
 > Tout ce qui est affirmé ici sur le code existant a été **vérifié dans les fichiers**, pas
 > supposé — les références (`fichier:ligne`) sont là pour être recontrôlées.
 
@@ -162,3 +165,97 @@ C'est la partie utile de cette note : **rien de tout ça ne lèverait d'erreur.*
 - **Rien ne teste le front.** `planning.js` n'a aucune couverture ; tout ce qui peut sortir en
   helper pur va dans `public/lib/` (UMD), testable le jour même — c'est le chemin ouvert par
   A-14 (cf. T-03).
+
+---
+
+## 8. Décisions et livraison de B2-a (2026-08-13)
+
+**Ce §8 fait autorité** sur les sections antérieures quand elles divergent.
+
+### 8.1 Réponses aux questions du §6
+
+| # | Question | Réponse du user |
+|---|---|---|
+| 1 | Quel `n` ? | **Réglable par le patron**, pas de constante. Écrêté à 12 semaines côté serveur (`DISPO_HORIZON_MAX`) — un horizon infini fait entrer dans la file des dispos qui auront changé avant d'être utilisées. |
+| 2 | Une dispo lointaine entre-t-elle dans la file tout de suite ? | **Selon le choix du patron**, via un **second** réglage : `X` = jusqu'où le staff saisit, `Y` = jusqu'où la file de validation remonte, avec **Y ≤ X**. |
+| 3 | Modifier une dispo lointaine déjà validée ? | Comportement actuel (retour en `pending`) **+ le shift déjà créé est libéré** (cf. 8.3). |
+| 4 | Tracer ces dépôts ? | **Séquencé, pas fusionné** : F-12 reste un lot à part. |
+
+### 8.2 Rectification du §6 question 2 — B2 ne touche PAS au modèle
+
+Le §6 affirmait que distinguer « déposée » de « à valider maintenant » exigerait un
+nouveau statut, et que **c'était le seul endroit où B2 pouvait toucher au modèle**.
+**C'est faux, et vérifié dans le code** : la file est bornée par `from`/`to` depuis
+toujours (`server.js:3402`). « À valider maintenant » = `pending` **et** date dans la
+fenêtre de validation — entièrement **dérivable de la date**. Aucun champ, aucun statut,
+aucune migration. Le seul vrai travail était d'aligner `count`, qui était déjà au
+programme comme le 🔴 du §4.
+
+### 8.3 Ce qu'un shift devient quand sa dispo validée change
+
+Question posée parce que la réponse initiale (« supprime les shifts ») aurait fait
+**disparaître un poste en silence** d'une semaine peut-être déjà publiée. Décision
+retenue, identique à celle prise en **F-14** pour le même problème (un shift dont le
+titulaire s'en va) : le créneau **repasse en Joker** — le poste était tenu, il reste à
+pourvoir — et `notifyPatrons` l'annonce.
+
+Trois conditions cumulées pour libérer, et la troisième est celle qui compte :
+la dispo était `confirmed`, elle porte un `establishment_id`, et la re-soumission
+**diffère matériellement** (`dispoMateriallyDiffers` — type/horaires, **pas** la note).
+Sans ce dernier test, un staff qui rouvre son formulaire et renvoie sans rien changer se
+dé-planifierait tout seul.
+
+Deux garde-fous : un shift **pointé** (`real_start`/`real_end`) n'est jamais touché — ce
+sont des heures travaillées, donc de la paie ; un Joker l'est déjà.
+
+⚠️ **Limite assumée, à ne pas perdre** : rien ne relie un shift à la dispo qui l'a fait
+naître. On le retrouve par le triplet `(staff_id, date, establishment_id)`, celui-là même
+dont `PATCH /api/dispos/:id/confirm` se sert pour son idempotence. Un shift créé **à la
+main** par le patron sur ce triplet est donc indiscernable et sera libéré lui aussi. Poser
+un `dispo_id` sur les shifts lèverait l'ambiguïté, mais ne vaudrait que pour les shifts
+créés APRÈS la migration : la déduction resterait nécessaire de toute façon.
+
+### 8.4 Deadline : règle A retenue
+
+Conforme à la recommandation du §3. La deadline ne garde plus que la semaine **en cours de
+collecte** (N+1). Un lot **partiellement** figé n'est plus refusé en bloc : les jours de
+N+1 sont retirés, le reste est enregistré, et le compte rendu annonce ce qui n'est pas
+passé — même choix qu'en F-14, où refuser 40 shifts pour un seul archivé aurait été
+hostile. Un lot **entièrement** dans la semaine figée rend toujours 403 avec le message
+d'avant B2. `dispoDeadlineWaived` reste au-dessus de tout.
+
+**Non fait, et toujours ouvert** : la réouverture nominative (`force_open_staff[]`) ne
+porte **pas** de semaine. Rouvrir « pour Kevin » sur un horizon long reste ambigu — le §3
+le signalait, B2-a ne l'a pas traité.
+
+### 8.5 Ce qui a été livré
+
+- `public/lib/week.js` — `disposHorizonRange`, `disposHorizonMondays`, `clampHorizonWeeks`,
+  `DISPO_HORIZON_MAX`. `toDateStr` et `disposWeekStart` y ont **migré** depuis
+  `lib/utils.js` : B2 en a besoin côté navigateur, et `script.js` en portait déjà une copie
+  manuelle dont le commentaire disait qu'elle rejouait le serveur.
+- **La garantie structurelle** : la borne de saisie (serveur), la pastille (serveur) et la
+  file (navigateur) sortent toutes du **même** `disposHorizonRange`. L'asymétrie de S-04,
+  revenue sur l'axe du temps, ne peut plus revenir par recalcul divergent.
+- Le **trou du §2.1 est fermé** : `POST /api/dispos` refuse désormais hors horizon, y
+  compris les dates passées.
+- Index `availabilities` étendu à `{status, staff_id, date}` (ordre ESR). ⚠️ L'ancien
+  `status_1_staff_id_1` en devient un préfixe redondant : à dropper à la main en prod.
+- 27 tests (`tests/dispos-horizon.test.js`), **non-vacuité vérifiée par mutation sur les
+  7 gardes, une par une** — chacune fait tomber au moins un test.
+
+### 8.6 La lacune de `fake-db` de cette session — la 7e
+
+Annoncée par le §7, trouvée : `find().toArray()` et `findOne()` rendaient les **objets
+stockés**, pas des copies. Un vrai driver Mongo désérialise le BSON à chaque lecture, donc
+rend toujours un document détaché. Invisible tant qu'on ne fait que lire ; **mensonger dès
+qu'une route relit un état AVANT de le réécrire** — exactement ce que fait B2 pour savoir
+si une dispo a changé. L'upsert mutait l'instantané en place, et **trois tests échouaient
+sur du code pourtant correct en prod**.
+
+Comblée (copie superficielle des deux méthodes). Le code de production a été corrigé
+**aussi**, indépendamment : il ne retient plus le document mais un instantané des seuls
+champs comparés — dépendre de l'identité d'objet était fragile quel que soit le driver.
+
+**À noter pour les prochaines sessions** : cette lacune-là ment dans le sens *bénin*
+(test rouge sur code juste). Les six précédentes mentaient dans le sens inverse.

@@ -42,5 +42,70 @@
         return weekStart(d);
     }
 
-    return { weekStart, currentWeekStart, WEEK_CUTOFF_HOUR };
+    // Formate une Date en "YYYY-MM-DD" en heure LOCALE.
+    // NE JAMAIS utiliser toISOString() — il convertit en UTC et peut décaler d'un jour
+    // (convention architecture.md §3.1). `lib/utils.js` ré-exporte celle-ci.
+    function toDateStr(date) {
+        const pad = n => String(n).padStart(2, '0');
+        return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
+    }
+
+    // Le lundi de la semaine ciblée pour la saisie des disponibilités : toujours la
+    // semaine suivante (now + 7 jours, recalé au lundi). Un lundi → le lundi de N+1.
+    // C'est la semaine « en cours de collecte » — celle que la deadline protège (B2 §3
+    // règle A), et le point de départ de tout horizon multi-semaines.
+    function disposWeekStart(now) {
+        const d7 = new Date(now);
+        d7.setDate(d7.getDate() + 7);
+        return weekStart(d7);
+    }
+
+    // B2 — garde-fou de l'horizon réglable par le patron. 12 semaines = un trimestre :
+    // au-delà, on fait entrer dans la file des dispos qui auront changé avant d'être
+    // utilisées. Borne HAUTE seulement ; 1 = comportement d'avant B2.
+    const DISPO_HORIZON_MAX = 12;
+
+    function clampHorizonWeeks(weeks) {
+        const n = parseInt(weeks, 10);
+        if (!Number.isFinite(n) || n < 1) return 1;      // absent, 0, négatif, NaN → 1
+        return Math.min(n, DISPO_HORIZON_MAX);
+    }
+
+    // B2 — la plage de dates couverte par un horizon de `weeks` semaines, en chaînes
+    // "YYYY-MM-DD" (le format stocké dans `availabilities.date`).
+    //
+    // ⚠️ C'est LA fonction qui empêche l'asymétrie pastille/file de revenir. S-04 avait
+    // déjà corrigé cette asymétrie à la main sur l'axe du périmètre ; elle est revenue
+    // sur l'axe du temps (`/api/dispos/count` sans borne alors que la file en a une).
+    // Faire dériver la file, la pastille ET la borne de saisie du MÊME appel rend
+    // l'écart structurellement impossible plutôt que corrigé une fois de plus.
+    //
+    // weeks=1 → exactement la semaine N+1, soit le comportement d'avant B2.
+    function disposHorizonRange(now, weeks) {
+        const n     = clampHorizonWeeks(weeks);
+        const start = disposWeekStart(now);
+        const end   = new Date(start);
+        end.setDate(start.getDate() + n * 7 - 1);        // dimanche de la n-ième semaine
+        return { from: toDateStr(start), to: toDateStr(end) };
+    }
+
+    // Les lundis des `weeks` semaines de l'horizon, dans l'ordre. Le front en a besoin
+    // pour construire sa navigation et ses notes de semaine (une par semaine, cf. B2 §4).
+    function disposHorizonMondays(now, weeks) {
+        const n     = clampHorizonWeeks(weeks);
+        const start = disposWeekStart(now);
+        const out   = [];
+        for (let i = 0; i < n; i++) {
+            const d = new Date(start);
+            d.setDate(start.getDate() + i * 7);
+            out.push(toDateStr(d));
+        }
+        return out;
+    }
+
+    return {
+        weekStart, currentWeekStart, WEEK_CUTOFF_HOUR, toDateStr,
+        disposWeekStart, disposHorizonRange, disposHorizonMondays,
+        clampHorizonWeeks, DISPO_HORIZON_MAX,
+    };
 });
