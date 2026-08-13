@@ -275,3 +275,73 @@ test('le patron, lui, lit l\'historique de n\'importe qui', async () => {
     assert.equal(res.status, 200);
     assert.equal((await res.json()).length, 1);
 });
+
+// ── Les deux derniers points d'accrochage ────────────────────────────────────
+//
+// Ajoutés après vérification : 9 actions étaient instrumentées, 7 seulement sous test.
+// `purge_absence` et `template` étaient branchées sans que rien ne le prouve — soit
+// exactement le profil des trois tests vacants de F-14, à ceci près qu'ici il n'y avait
+// même pas de test à rendre non vacant.
+
+const MGR_STAFF = '0123456789abcdef0123aaaa';
+const MGR_USER  = '0123456789abcdef0123bbbb';
+const DIRECTEUR = { _id: MGR_USER, staff_id: MGR_STAFF, name: 'Dir Test', role: 'directeur' };
+
+test('déclarer une absence : les dispos purgées sont consignées (`purge_absence`)', async () => {
+    // Troisième suppression silencieuse d'avant F-12. La dispo disparaît du planning du
+    // directeur sans qu'il ait rien saisi ce jour-là : c'est précisément ce qu'un litige
+    // lui reprochera de ne pas pouvoir expliquer.
+    const db = makeDb({
+        settings: [{ key: 'dispo', open: true, force_open: true }],
+        users:    [{ _id: MGR_USER, role: 'directeur', staff_id: MGR_STAFF, name: 'Dir Test' }],
+        staff:    [{ _id: MGR_STAFF, name: 'Dir Test', venues: [], can_submit_dispos: true }],
+        availabilities: [
+            { staff_id: MGR_STAFF, staff_name: 'Dir Test', date: W[1], type: 'soir',
+              start_time: 16, end_time: 26, status: 'pending' },
+        ],
+        manager_time_off: [],
+        dispo_events: [],
+    });
+    app.locals.setTestDb(db);
+    const res = await req('/api/me/manager-off', DIRECTEUR, {
+        method: 'POST', body: JSON.stringify({ start_date: W[0], end_date: W[2] }),
+    });
+    assert.equal(res.status, 201);
+    assert.equal(disposOf(db).length, 0, 'la dispo a bien été purgée');
+
+    const ev = eventsOf(db).filter(e => e.action === 'purge_absence');
+    assert.equal(ev.length, 1, 'et la purge est consignée');
+    assert.equal(ev[0].date, W[1]);
+    assert.equal(ev[0].before.start_time, 16);
+    assert.deepEqual(ev[0].after, {}, 'plus rien après');
+    assert.equal(ev[0].by.role, 'directeur');
+});
+
+test('semaine-type : les dispos pré-remplies sont consignées au nom du MODÈLE', async () => {
+    // LE cas où « je n'ai jamais saisi ça » est littéralement vrai : ces dispos partent
+    // dans la file du patron sans le moindre geste du directeur ce jour-là. L'acteur
+    // consigné doit donc être le système, pas la personne — sinon le journal ment.
+    const db = makeDb({
+        // Deadline franchie (lundi 00:00) : c'est elle qui déclenche la matérialisation.
+        settings: [{ key: 'dispo', open: true, force_open: true, custom_deadline: '2026-01-05T00:00' }],
+        users:    [{ _id: MGR_USER, role: 'directeur', staff_id: MGR_STAFF, name: 'Dir Test' }],
+        staff:    [{ _id: MGR_STAFF, name: 'Dir Test', venues: [], can_submit_dispos: true }],
+        availabilities: [],
+        manager_time_off: [],
+        dispo_events: [],
+    });
+    app.locals.setTestDb(db);
+    await req('/api/me/manager-dispo-template', DIRECTEUR, {
+        method: 'PUT',
+        body: JSON.stringify({ days: { 0: { type: 'soir', start_time: 16, end_time: 26 } } }),
+    });
+    await app.locals.runManagerTemplateCron();
+
+    assert.equal(disposOf(db).length, 1, 'la semaine-type a bien matérialisé');
+    const ev = eventsOf(db).filter(e => e.action === 'template');
+    assert.equal(ev.length, 1);
+    assert.equal(ev[0].by.role, 'system', 'l\'acteur est le modèle, pas le directeur');
+    assert.equal(ev[0].staff_id, MGR_STAFF);
+    assert.equal(ev[0].after.start_time, 16);
+    assert.deepEqual(ev[0].before, {}, 'création : rien avant');
+});

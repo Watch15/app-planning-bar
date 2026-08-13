@@ -1,16 +1,16 @@
 # Graph Report - app-planning-bar  (2026-08-13)
 
 ## Corpus Check
-- 57 files · ~233,947 words
+- 57 files · ~234,470 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1334 nodes · 2148 edges · 75 communities (65 shown, 10 thin omitted)
+- 1335 nodes · 2149 edges · 75 communities (65 shown, 10 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 86 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `bfb510cb`
+- Built from commit: `da35fbce`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -166,10 +166,10 @@ Nodes (22): acknowledgeOffDispo(), buildStaffDisplayNames(), checkAuth(), decide
 
 ### Community 10 - "Shift CRUD & Rendering"
 Cohesion: 0.09
-Nodes (18): makeDb(), dispoMateriallyDiffers(), staffReopenedFor(), { app, startApp, stopApp, req, horizonWeekDates }, assert, {
+Nodes (19): makeDb(), dispoMateriallyDiffers(), staffReopenedFor(), { app, startApp, stopApp, req, horizonWeekDates }, assert, {
     disposHorizonRange, disposHorizonMondays, clampHorizonWeeks,
     DISPO_HORIZON_MAX, dispoMateriallyDiffers, staffReopenedFor,
-}, { makeDb }, PATRON (+10 more)
+}, { makeDb }, PATRON (+11 more)
 
 ### Community 11 - "Shared Utils & Validation"
 Cohesion: 0.11
@@ -296,12 +296,12 @@ Cohesion: 0.39
 Nodes (7): closeMobileDrawer(), _closeStaffBar(), openDispoSettingsMobile(), openMobileDrawer(), _openStaffBar(), syncDrawerDispoToggle(), toggleStaffBar()
 
 ### Community 42 - "Community 42"
-Cohesion: 0.16
-Nodes (13): baseUrl(), splitDisposByConges(), { app, startApp, stopApp, baseUrl, horizonWeekDates }, assert, getJson(), { makeDb }, postDispos(), seedKpiDb() (+5 more)
+Cohesion: 0.13
+Nodes (19): app, baseUrl(), { disposHorizonMondays }, horizonWeekDates(), startApp(), stopApp(), splitDisposByConges(), { app, startApp, stopApp, baseUrl, horizonWeekDates } (+11 more)
 
 ### Community 43 - "Community 43"
-Cohesion: 0.18
-Nodes (8): { app, startApp, stopApp, req, baseUrl }, assert, bcrypt, EQUIPIER, { makeDb }, PATRON, seed(), { test, before, after, beforeEach }
+Cohesion: 0.17
+Nodes (9): { app, startApp, stopApp, req, baseUrl }, assert, bcrypt, EQUIPIER, login(), { makeDb }, PATRON, seed() (+1 more)
 
 ### Community 46 - "html2canvas Internals F"
 Cohesion: 0.18
@@ -328,16 +328,16 @@ Cohesion: 0.05
 Nodes (43): 5 échecs au smoke `dev` — aucun n'était un bug du produit (2026-08-10), Audit complet du jeu de recette (2026-08-07), Audit Railway complet (2026-08-05) — origine, variables, secrets, Base de recette (2026-08-05), Ce qui n'a pas bougé et pèse toujours, 🔴 CI rouge depuis 3 jours, `main` non déployé — les logs HTTP cassaient le runner (2026-08-10), Colonne « Masse sal. brute » dans le tableau Performance (2026-08-07), Devant les features (+35 more)
 
 ### Community 61 - "Community 61"
-Cohesion: 0.16
-Nodes (12): { app, startApp, stopApp, req, horizonWeekDates }, assert, day(), { dispoEventDelta }, { makeDb }, PATRON, postDispos(), seed() (+4 more)
+Cohesion: 0.15
+Nodes (13): { app, startApp, stopApp, req, horizonWeekDates }, assert, day(), DIRECTEUR, { dispoEventDelta }, { makeDb }, PATRON, postDispos() (+5 more)
 
 ### Community 62 - "Community 62"
 Cohesion: 0.17
 Nodes (12): Flag CALENDAR_ENABLED (iCal désactivé D-83), Synchronisation agenda — flux iCal (D-72), F-09 Abonnement agenda iCal, Backlog — Templyo, Déjà livré / non prioritaire, Fait, Notes pour les agents, P1 — Bugs bloquants (à faire en premier) (+4 more)
 
 ### Community 63 - "Community 63"
-Cohesion: 0.12
-Nodes (13): app, { disposHorizonMondays }, horizonWeekDates(), startApp(), stopApp(), assert, { startApp, stopApp, baseUrl }, { test, before, after } (+5 more)
+Cohesion: 0.18
+Nodes (5): { app, startApp, stopApp, req }, assert, { makeDb }, PATRON, { test, before, after, beforeEach }
 
 ### Community 64 - "Community 64"
 Cohesion: 0.12
@@ -384,10 +384,10 @@ Cohesion: 0.28
 Nodes (9): activeStaff(), openAccountsModal(), populateBarsCheckboxes(), populateStaffSelect(), renderAccountsList(), renderPendingInvites(), renderRestDaysTab(), switchAccountsTab() (+1 more)
 
 ## Knowledge Gaps
-- **527 isolated node(s):** `js`, `globals`, `sharedRules`, `crypto`, `{
+- **528 isolated node(s):** `js`, `globals`, `sharedRules`, `crypto`, `{
     weekStart, currentWeekStart, WEEK_CUTOFF_HOUR, toDateStr, disposWeekStart,
     disposHorizonRange, disposHorizonMondays, clampHorizonWeeks, DISPO_HORIZON_MAX,
-}` (+522 more)
+}` (+523 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **10 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -399,11 +399,11 @@ _Questions this graph is uniquely positioned to answer:_
 - **Why does `fn()` connect `DB Seed Script` to `html2canvas Render Engine`?**
   _High betweenness centrality (0.047) - this node is a cross-community bridge._
 - **Why does `Backlog — Templyo` connect `Community 62` to `Timeline Rendering`, `Community 60`?**
-  _High betweenness centrality (0.007) - this node is a cross-community bridge._
+  _High betweenness centrality (0.008) - this node is a cross-community bridge._
 - **Are the 19 inferred relationships involving `m()` (e.g. with `Ee()` and `Ae()`) actually correct?**
   _`m()` has 19 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `js`, `globals`, `sharedRules` to the rest of the system?**
-  _532 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _533 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Planning Board UI` be split into smaller, more focused modules?**
   _Cohesion score 0.051929824561403506 - nodes in this community are weakly interconnected._
 - **Should `html2canvas Render Engine` be split into smaller, more focused modules?**
