@@ -6674,6 +6674,11 @@ async function sendRappelDispos() {
 let disposScopeAll = false;
 const disposScopeQS = (sep = '?') => (disposScopeAll ? sep + 'scope=all' : '');
 
+// B2 — la semaine de l'horizon de validation actuellement affichée dans la file.
+// Module-level pour survivre au re-rendu : `loadDisposList()` se rappelle elle-même à
+// chaque navigation, et une variable locale ramènerait toujours à la première semaine.
+let disposFileWeekIndex = 0;
+
 // Index par id — `allStaff.find(s => String(s._id) === x)` est écrit une douzaine de fois
 // dans ce fichier, dont deux fois DANS une boucle. Une Map construite à la demande sert
 // tous les appelants sans en dupliquer la construction.
@@ -6713,6 +6718,18 @@ async function loadDisposList() {
             notesByWeek[mondays[i]] = map;
         }
 
+        // Répartition par semaine. Une seule requête couvre tout l'horizon ; on trie
+        // ici, puis on n'affiche QUE la semaine choisie — ce qui permet d'annoncer les
+        // effectifs des autres sans les charger une seconde fois.
+        const disposByWeek = {};
+        dispos.forEach(d => {
+            const wk = Week.toDateStr(Week.weekStart(parseDate(d.date)));
+            (disposByWeek[wk] = disposByWeek[wk] || []).push(d);
+        });
+        if (disposFileWeekIndex >= mondays.length) disposFileWeekIndex = 0;
+        const shownMonday = mondays[disposFileWeekIndex];
+        const shownDispos = disposByWeek[shownMonday] || [];
+
         // Barre d'en-tête : bascule de périmètre (S-04) + validation en masse.
         // La bascule décide du LOT (« mon staff » ou tout le monde) ; l'établissement
         // cible est choisi dans la modale — une dispo ne peut aller que dans UN bar.
@@ -6729,13 +6746,16 @@ async function loadDisposList() {
                 bar.appendChild(toggle);
             }
 
-            if (dispos.length) {
+            // « Tout confirmer » ne porte QUE sur la semaine affichée. Il agissait sur
+            // tout le lot chargé : sur un horizon de plusieurs semaines, il aurait validé
+            // des dispos hors de l'écran — un geste dont on ne voit pas la portée.
+            if (shownDispos.length) {
                 const all = document.createElement('button');
                 all.style.cssText = 'padding:5px 12px;border-radius:8px;border:1.5px solid #2ecc71;background:#eafaf1;color:#27ae60;font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--font)';
-                all.textContent = '✓ Tout confirmer (' + dispos.length + ')';
-                all.title = 'Confirme toutes les dispos affichées sur un même établissement';
-                all.onclick = () => confirmDisposBatch(dispos, {
-                    preferStaffId: dispos[0]?.staff_id,
+                all.textContent = '✓ Tout confirmer (' + shownDispos.length + ')';
+                all.title = 'Confirme les dispos de la semaine affichée sur un même établissement';
+                all.onclick = () => confirmDisposBatch(shownDispos, {
+                    preferStaffId: shownDispos[0]?.staff_id,
                     onDone: () => loadDisposList(),
                 });
                 bar.appendChild(all);
@@ -6743,15 +6763,62 @@ async function loadDisposList() {
             list.appendChild(bar);
         };
 
+        // Navigation par semaine, calquée sur celle du planning (`.week-nav` /
+        // `.week-arrow` / `.week-label`, cf. index.html) plutôt qu'un troisième style
+        // maison. Les semaines sont ainsi SÉPARÉES : une à l'écran, pas empilées.
+        //
+        // ⚠️ La pastille compte tout l'horizon de validation alors que la file n'en
+        // montre qu'une semaine : c'est voulu, mais ça ne doit pas se deviner. Le total
+        // est donc affiché À CÔTÉ du compte de la semaine — sans quoi on retomberait sur
+        // l'asymétrie « la pastille annonce 9, l'écran en montre 3 » que B2 vient de
+        // corriger, cette fois par la faute de la navigation.
+        const renderWeekNav = () => {
+            if (mondays.length <= 1) return;
+            const MONTHS = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+            const mon = parseDate(shownMonday), sun = addDays(mon, 6);
+            const nav = document.createElement('div');
+            nav.className = 'week-nav';
+            nav.style.cssText = 'display:flex;align-items:center;gap:8px;justify-content:center;padding:10px 16px 2px';
+            const atStart = disposFileWeekIndex === 0;
+            const atEnd   = disposFileWeekIndex >= mondays.length - 1;
+            const arrow = (id, glyph, off) =>
+                '<button class="week-arrow" id="' + id + '"' + (off ? ' disabled' : '') +
+                ' style="padding:4px 12px;border-radius:8px;border:1.5px solid var(--color-border-secondary,#ddd);background:transparent;color:inherit;font-size:15px;cursor:' +
+                (off ? 'default;opacity:.3' : 'pointer') + '">' + glyph + '</button>';
+            nav.innerHTML =
+                arrow('dispos-week-prev', '&#8592;', atStart) +
+                '<span class="week-label" style="text-align:center;line-height:1.35">' +
+                    '<span style="display:block;font-size:13px;font-weight:700">Semaine du ' +
+                        mon.getDate() + ' ' + MONTHS[mon.getMonth()] + ' au ' +
+                        sun.getDate() + ' ' + MONTHS[sun.getMonth()] + '</span>' +
+                    '<span style="display:block;font-size:11px;color:#999">' +
+                        shownDispos.length + ' en attente ici · ' + dispos.length +
+                        ' sur ' + mondays.length + ' semaines</span>' +
+                '</span>' +
+                arrow('dispos-week-next', '&#8594;', atEnd);
+            list.appendChild(nav);
+            const go = delta => {
+                disposFileWeekIndex = Math.min(Math.max(disposFileWeekIndex + delta, 0), mondays.length - 1);
+                loadDisposList();
+            };
+            if (!atStart) nav.querySelector('#dispos-week-prev').addEventListener('click', () => go(-1));
+            if (!atEnd)   nav.querySelector('#dispos-week-next').addEventListener('click', () => go(1));
+        };
+
         list.innerHTML = '';
         renderListHeader();
+        renderWeekNav();
 
-        if (dispos.length === 0) {
+        if (shownDispos.length === 0) {
+            // Distinguer « rien nulle part » de « rien CETTE semaine » : sur un horizon
+            // long, la seconde est le cas courant et n'a rien d'anormal.
             const empty = document.createElement('div');
             empty.style.cssText = 'padding:24px;text-align:center;color:#ccc;font-size:13px';
-            empty.textContent = disposScopeAll
-                ? 'Aucune disponibilité en attente'
-                : 'Aucune disponibilité en attente pour ton staff';
+            empty.textContent = dispos.length
+                ? 'Aucune disponibilité en attente sur cette semaine'
+                : (disposScopeAll
+                    ? 'Aucune disponibilité en attente'
+                    : 'Aucune disponibilité en attente pour ton staff');
             list.appendChild(empty);
             return;
         }
@@ -6919,31 +6986,8 @@ async function loadDisposList() {
         });
         };  // fin renderWeekSection
 
-        // Répartir les dispos par semaine, puis rendre les semaines dans l'ordre.
-        // Une semaine sans rien en attente est simplement sautée : afficher « aucune
-        // dispo » six fois de suite noierait celles qui demandent une décision.
-        const disposByWeek = {};
-        dispos.forEach(d => {
-            const wk = Week.toDateStr(Week.weekStart(parseDate(d.date)));
-            (disposByWeek[wk] = disposByWeek[wk] || []).push(d);
-        });
-        mondays.forEach(m => {
-            const weekDispos = disposByWeek[m];
-            if (!weekDispos || !weekDispos.length) return;
-            // L'en-tête de semaine n'a de sens qu'en horizon élargi : sur une seule
-            // semaine il ajouterait un bandeau au-dessus de la seule chose affichée.
-            if (mondays.length > 1) {
-                const sunday = addDays(parseDate(m), 6);
-                const hdr = document.createElement('div');
-                hdr.style.cssText = 'margin:16px 16px 4px;padding:7px 12px;border-radius:9px;background:var(--color-bg-secondary,#f4f4f6);font-size:12px;font-weight:700;color:#555;display:flex;justify-content:space-between;align-items:center';
-                hdr.innerHTML =
-                    '<span>Semaine du ' + parseDate(m).getDate() + ' au ' + sunday.getDate() + ' ' +
-                        ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][sunday.getMonth()] + '</span>' +
-                    '<span style="font-weight:600;color:#999">' + weekDispos.length + ' en attente</span>';
-                list.appendChild(hdr);
-            }
-            renderWeekSection(m, weekDispos, notesByWeek[m] || {});
-        });
+        // Une seule semaine à l'écran — celle que la navigation désigne.
+        renderWeekSection(shownMonday, shownDispos, notesByWeek[shownMonday] || {});
 
     } catch (e) {
         list.innerHTML = '<div style="padding:16px;text-align:center;color:#e74c3c;font-size:13px">' + e.message + '</div>';
