@@ -420,6 +420,64 @@ async function main() {
         });
     }
 
+    // ── B2-b : un planning NON PUBLIÉ n'est pas lisible par le staff ─────────
+    //
+    // ⚠️ AUTOPORTANT, et il faut l'être ici plus qu'ailleurs : se contenter de demander
+    // une semaine future et de constater « 0 shift » passerait au vert même si la garde
+    // n'existait pas, simplement parce que le jeu de recette n'y place rien. Le bloc crée
+    // donc son propre shift, vérifie qu'il est invisible, publie, vérifie qu'il apparaît,
+    // puis efface et restaure la publication. C'est le piège rencontré deux fois
+    // aujourd'hui (§9.1 et F-12), en version « faux positif ».
+    {
+        const WK   = D(7);              // lundi de N+2 — jamais auto-publiée
+        const WKend = D(13);
+        const pubOf = async () => (await req('pat', '/api/publish/' + WK)).data;
+        const setPub = establishments =>
+            req('pat', '/api/publish/' + WK, { method: 'PATCH', body: { establishments } });
+        const vuParBruno = async () =>
+            ((await req('bru', `/api/my-shifts?from=${WK}&to=${WKend}`)).data.shifts || []).length;
+
+        const pubInitial = (await pubOf()).establishments;
+        const bruno = ((await req('pat', '/api/staff')).data || []).find(s => /Bruno/i.test(s.name || ''));
+        let shiftId = null;
+
+        await check('B2-b', 'semaine future NON publiée : le staff ne voit rien', async () => {
+            if (!bruno) throw new Error('Bruno introuvable dans le jeu de recette');
+            await setPub([]);                                  // garantir non publiée
+            const created = await req('pat', '/api/shifts', { method: 'POST', body: {
+                staff_id: String(bruno._id), staff_name: bruno.name,
+                establishment_id: 'Josy_pub', date: D(9), start_time: 18, end_time: 24 } });
+            shiftId = created.data && created.data._id;
+            if (!shiftId) throw new Error('shift non créé : ' + JSON.stringify(created.data));
+            return eq(await vuParBruno(), 0, 'shifts visibles');
+        });
+
+        await check('B2-b', 'une fois publiée, le staff la voit', async () => {
+            // La moitié qui rend la précédente non vacante : le shift EXISTE, seule la
+            // publication change entre les deux mesures.
+            await setPub('ALL');
+            return eq(await vuParBruno(), 1, 'shifts visibles');
+        });
+
+        await check('B2-b', 'la semaine publiée entre dans la navigation du staff', async () => {
+            const weeks = (await req('bru', '/api/my-published-weeks?weeks=4')).data;
+            if (!Array.isArray(weeks)) throw new Error('réponse inattendue : ' + JSON.stringify(weeks));
+            if (!weeks.includes(WK)) throw new Error(WK + ' absent de ' + JSON.stringify(weeks));
+            return weeks.length + ' semaine(s) ouvrable(s)';
+        });
+
+        await check('B2-b', 'dépubliée, elle sort de la navigation', async () => {
+            await setPub([]);
+            const weeks = (await req('bru', '/api/my-published-weeks?weeks=4')).data;
+            return eq((weeks || []).includes(WK), false, 'encore listée');
+        });
+
+        // Remise en état : le shift créé ici n'a rien à faire dans le jeu de recette,
+        // et la publication doit retrouver la valeur trouvée en arrivant.
+        if (shiftId) await req('pat', '/api/shifts/' + shiftId, { method: 'DELETE' });
+        await setPub(pubInitial === undefined ? [] : pubInitial);
+    }
+
     // ── Congés (F-10) ────────────────────────────────────────────────────────
     await check('F-10', 'congés en attente visibles du patron', async () => {
         const r = await req('pat', `/api/conges?from=${FROM}&to=${D(30)}`);

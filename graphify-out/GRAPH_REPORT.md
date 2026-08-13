@@ -1,16 +1,16 @@
 # Graph Report - app-planning-bar  (2026-08-13)
 
 ## Corpus Check
-- 58 files · ~237,030 words
+- 58 files · ~237,696 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1355 nodes · 2177 edges · 78 communities (68 shown, 10 thin omitted)
+- 1356 nodes · 2178 edges · 78 communities (68 shown, 10 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 86 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `50b8f8aa`
+- Built from commit: `4b1f45f6`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -175,8 +175,8 @@ Nodes (20): makeCollection(), makeDb(), dispoMateriallyDiffers(), staffReopenedF
 }, { makeDb } (+12 more)
 
 ### Community 11 - "Shared Utils & Validation"
-Cohesion: 0.11
-Nodes (15): chargeMultiplier(), computeActiveDate(), dispoDeadlineWaived(), hashToken(), normalizePhone(), normalizePublishDoc(), resolvePerfSettings(), fetchPublishedWeeks() (+7 more)
+Cohesion: 0.13
+Nodes (12): chargeMultiplier(), computeActiveDate(), dispoDeadlineWaived(), hashToken(), normalizePhone(), resolvePerfSettings(), loadPerfSettings(), assert (+4 more)
 
 ### Community 12 - "Community 12"
 Cohesion: 0.12
@@ -192,7 +192,7 @@ Nodes (22): applyCardNameContrast(), _buildCongeRow(), createShiftEl(), createSt
 
 ### Community 15 - "Week Calculation Module"
 Cohesion: 0.06
-Nodes (30): 10.1 Rectification : ce n'était PAS que de l'ergonomie, 10.2 Livré, 10.3 Ce qui n'avait PAS besoin d'être fait, 10.4 Deux filtres redondants, assumés et étiquetés, 10. B2-b (2026-08-13) — et pourquoi le §2.4 était faux, 1. Besoin et arbitrage, 2.1 L'horizon d'une semaine n'existe pas dans le modèle. C'est une convention du navigateur., 2.2 Le vrai obstacle est la deadline, et elle est à valeur unique. (+22 more)
+Nodes (31): 10.1 Rectification : ce n'était PAS que de l'ergonomie, 10.2 Livré, 10.3 Ce qui n'avait PAS besoin d'être fait, 10.4 Vérifications, 10.5 Deux filtres redondants, assumés et étiquetés, 10. B2-b (2026-08-13) — et pourquoi le §2.4 était faux, 1. Besoin et arbitrage, 2.1 L'horizon d'une semaine n'existe pas dans le modèle. C'est une convention du navigateur. (+23 more)
 
 ### Community 16 - "Shift Hours Module"
 Cohesion: 0.33
@@ -323,8 +323,8 @@ Cohesion: 0.15
 Nodes (12): req(), postOneDispo(), putTemplate(), { app, startApp, stopApp, req }, assert, DIRECTEUR, { makeDb }, OBSERVATEUR (+4 more)
 
 ### Community 59 - "Community 59"
-Cohesion: 0.33
-Nodes (7): public/lib/shift-hours.js (heures effectives), Module UMD partagé navigateur/Node, WEEK_CUTOFF_HOUR = 6 (cutoff semaine en cours), public/lib/week.js (weekStart/currentWeekStart), Refacto incrémentale (modèle D-73), planning.html (interface staff), Onglet Mon équipe (responsable)
+Cohesion: 0.40
+Nodes (6): public/lib/shift-hours.js (heures effectives), Module UMD partagé navigateur/Node, public/lib/week.js (weekStart/currentWeekStart), Refacto incrémentale (modèle D-73), planning.html (interface staff), Onglet Mon équipe (responsable)
 
 ### Community 60 - "Community 60"
 Cohesion: 0.06
@@ -355,8 +355,8 @@ Cohesion: 0.29
 Nodes (9): contains(), eq(), isObjId(), isOperator(), matchDoc(), matchField(), plainEq(), pullHits() (+1 more)
 
 ### Community 67 - "Community 67"
-Cohesion: 0.13
-Nodes (24): congeCoversDate(), congeDaysInRange(), crypto, datesOverlap(), DISPO_AUDIT_FIELDS, isAutoPublished(), isDatePublished(), PERF_DEFAULTS (+16 more)
+Cohesion: 0.11
+Nodes (27): congeCoversDate(), congeDaysInRange(), crypto, datesOverlap(), DISPO_AUDIT_FIELDS, isAutoPublished(), isDatePublished(), normalizePublishDoc() (+19 more)
 
 ### Community 68 - "Community 68"
 Cohesion: 0.14
@@ -395,14 +395,14 @@ Cohesion: 0.40
 Nodes (5): Devant les features, Le risque structurel le plus lourd, qui n'est pas une feature, Les autres features, par nécessité décroissante, Priorisation — revue de l'ensemble (2026-08-08), Reclassement de la Feature A — c'est un correctif, pas un confort
 
 ### Community 77 - "Community 77"
-Cohesion: 1.00
-Nodes (3): Flag CALENDAR_ENABLED (iCal désactivé D-83), Synchronisation agenda — flux iCal (D-72), F-09 Abonnement agenda iCal
+Cohesion: 0.67
+Nodes (4): Flag CALENDAR_ENABLED (iCal désactivé D-83), Synchronisation agenda — flux iCal (D-72), WEEK_CUTOFF_HOUR = 6 (cutoff semaine en cours), F-09 Abonnement agenda iCal
 
 ## Knowledge Gaps
-- **541 isolated node(s):** `js`, `globals`, `sharedRules`, `crypto`, `{
+- **542 isolated node(s):** `js`, `globals`, `sharedRules`, `crypto`, `{
     weekStart, currentWeekStart, WEEK_CUTOFF_HOUR, toDateStr, disposWeekStart,
     disposHorizonRange, disposHorizonMondays, clampHorizonWeeks, DISPO_HORIZON_MAX,
-}` (+536 more)
+}` (+537 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **10 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -414,11 +414,11 @@ _Questions this graph is uniquely positioned to answer:_
 - **Why does `fn()` connect `DB Seed Script` to `html2canvas Render Engine`?**
   _High betweenness centrality (0.046) - this node is a cross-community bridge._
 - **Why does `Backlog — Templyo` connect `Community 62` to `Community 60`, `Community 77`?**
-  _High betweenness centrality (0.008) - this node is a cross-community bridge._
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
 - **Are the 19 inferred relationships involving `m()` (e.g. with `Ee()` and `Ae()`) actually correct?**
   _`m()` has 19 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `js`, `globals`, `sharedRules` to the rest of the system?**
-  _546 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _547 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Planning Board UI` be split into smaller, more focused modules?**
   _Cohesion score 0.051929824561403506 - nodes in this community are weakly interconnected._
 - **Should `html2canvas Render Engine` be split into smaller, more focused modules?**

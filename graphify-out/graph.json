@@ -173,7 +173,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "lib_utils_normalizepublishdoc",
-      "community": 11,
+      "community": 67,
       "norm_label": "normalizepublishdoc()"
     },
     {
@@ -7533,7 +7533,7 @@
       "source_location": "L629",
       "_origin": "ast",
       "id": "server_fetchpublishedweeks",
-      "community": 11,
+      "community": 67,
       "norm_label": "fetchpublishedweeks()"
     },
     {
@@ -7883,7 +7883,7 @@
       "source_location": "L3478",
       "_origin": "ast",
       "id": "server_releaseshiftsondispochange",
-      "community": 11,
+      "community": 67,
       "norm_label": "releaseshiftsondispochange()"
     },
     {
@@ -11677,14 +11677,24 @@
       "norm_label": "10.3 ce qui n'avait pas besoin d'etre fait"
     },
     {
-      "label": "10.4 Deux filtres redondants, assum\u00e9s et \u00e9tiquet\u00e9s",
+      "label": "10.4 V\u00e9rifications",
       "file_type": "document",
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L392",
       "_origin": "ast",
-      "id": "docs_design_b2_horizon_saisie_10_4_deux_filtres_redondants_assum\u00e9s_et_\u00e9tiquet\u00e9s",
+      "id": "docs_design_b2_horizon_saisie_10_4_v\u00e9rifications",
       "community": 15,
-      "norm_label": "10.4 deux filtres redondants, assumes et etiquetes"
+      "norm_label": "10.4 verifications"
+    },
+    {
+      "label": "10.5 Deux filtres redondants, assum\u00e9s et \u00e9tiquet\u00e9s",
+      "file_type": "document",
+      "source_file": "docs/design-b2-horizon-saisie.md",
+      "source_location": "L410",
+      "_origin": "ast",
+      "id": "docs_design_b2_horizon_saisie_10_5_deux_filtres_redondants_assum\u00e9s_et_\u00e9tiquet\u00e9s",
+      "community": 15,
+      "norm_label": "10.5 deux filtres redondants, assumes et etiquetes"
     },
     {
       "label": "design-e22-dispos-directeur.md",
@@ -13187,7 +13197,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 77,
       "norm_label": "week_cutoff_hour = 6 (cutoff semaine en cours)",
       "id": "architecture_week_cutoff"
     },
@@ -14345,9 +14355,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "lib_utils",
-      "confidence_score": 1.0
+      "target": "lib_utils"
     },
     {
       "relation": "imports_from",
@@ -31291,9 +31301,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L15",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "helpers_fake_db",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db"
     },
     {
       "relation": "imports_from",
@@ -31489,9 +31499,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L15",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "helpers_fake_db_makedb",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db_makedb"
     },
     {
       "relation": "calls",
@@ -31636,9 +31646,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "helpers_harness",
-      "confidence_score": 1.0
+      "target": "helpers_harness"
     },
     {
       "relation": "imports_from",
@@ -31702,9 +31712,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "helpers_harness_app",
-      "confidence_score": 1.0
+      "target": "helpers_harness_app"
     },
     {
       "relation": "imports",
@@ -31757,9 +31767,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "helpers_harness_startapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_startapp"
     },
     {
       "relation": "imports",
@@ -31823,9 +31833,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "helpers_harness_stopapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_stopapp"
     },
     {
       "relation": "imports",
@@ -31922,9 +31932,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "helpers_harness_req",
-      "confidence_score": 1.0
+      "target": "helpers_harness_req"
     },
     {
       "relation": "imports",
@@ -32409,9 +32419,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "tests_planning_publication_test_app_startapp_stopapp_req",
-      "confidence_score": 1.0
+      "target": "tests_planning_publication_test_app_startapp_stopapp_req"
     },
     {
       "relation": "contains",
@@ -32419,9 +32429,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L13",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "tests_planning_publication_test_assert",
-      "confidence_score": 1.0
+      "target": "tests_planning_publication_test_assert"
     },
     {
       "relation": "contains",
@@ -32429,9 +32439,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "tests_planning_publication_test_cur",
-      "confidence_score": 1.0
+      "target": "tests_planning_publication_test_cur"
     },
     {
       "relation": "contains",
@@ -32439,9 +32449,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L26",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "tests_planning_publication_test_day",
-      "confidence_score": 1.0
+      "target": "tests_planning_publication_test_day"
     },
     {
       "relation": "contains",
@@ -32449,9 +32459,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L15",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "tests_planning_publication_test_makedb",
-      "confidence_score": 1.0
+      "target": "tests_planning_publication_test_makedb"
     },
     {
       "relation": "contains",
@@ -32459,9 +32469,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L45",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "tests_planning_publication_test_mine",
-      "confidence_score": 1.0
+      "target": "tests_planning_publication_test_mine"
     },
     {
       "relation": "contains",
@@ -32469,9 +32479,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L24",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "tests_planning_publication_test_n1",
-      "confidence_score": 1.0
+      "target": "tests_planning_publication_test_n1"
     },
     {
       "relation": "contains",
@@ -32479,9 +32489,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L25",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "tests_planning_publication_test_n2",
-      "confidence_score": 1.0
+      "target": "tests_planning_publication_test_n2"
     },
     {
       "relation": "contains",
@@ -32489,9 +32499,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L118",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "tests_planning_publication_test_publishedweeks",
-      "confidence_score": 1.0
+      "target": "tests_planning_publication_test_publishedweeks"
     },
     {
       "relation": "contains",
@@ -32499,9 +32509,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L36",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "tests_planning_publication_test_seed",
-      "confidence_score": 1.0
+      "target": "tests_planning_publication_test_seed"
     },
     {
       "relation": "contains",
@@ -32509,9 +32519,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L31",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "tests_planning_publication_test_shift",
-      "confidence_score": 1.0
+      "target": "tests_planning_publication_test_shift"
     },
     {
       "relation": "contains",
@@ -32519,9 +32529,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L19",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "tests_planning_publication_test_staff",
-      "confidence_score": 1.0
+      "target": "tests_planning_publication_test_staff"
     },
     {
       "relation": "contains",
@@ -32529,9 +32539,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "tests_planning_publication_test_test_before_after",
-      "confidence_score": 1.0
+      "target": "tests_planning_publication_test_test_before_after"
     },
     {
       "relation": "contains",
@@ -32539,9 +32549,9 @@
       "source_file": "tests/planning-publication.test.js",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_planning_publication_test",
-      "target": "tests_planning_publication_test_weekstart_todatestr",
-      "confidence_score": 1.0
+      "target": "tests_planning_publication_test_weekstart_todatestr"
     },
     {
       "relation": "contains",
@@ -34309,9 +34319,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L346",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_b2_horizon_de_saisie_note_de_design",
-      "target": "docs_design_b2_horizon_saisie_10_b2_b_2026_08_13_et_pourquoi_le_2_4_\u00e9tait_faux",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_10_b2_b_2026_08_13_et_pourquoi_le_2_4_\u00e9tait_faux"
     },
     {
       "relation": "contains",
@@ -34559,9 +34569,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L348",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_10_b2_b_2026_08_13_et_pourquoi_le_2_4_\u00e9tait_faux",
-      "target": "docs_design_b2_horizon_saisie_10_1_rectification_ce_n_\u00e9tait_pas_que_de_l_ergonomie",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_10_1_rectification_ce_n_\u00e9tait_pas_que_de_l_ergonomie"
     },
     {
       "relation": "contains",
@@ -34569,9 +34579,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L367",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_10_b2_b_2026_08_13_et_pourquoi_le_2_4_\u00e9tait_faux",
-      "target": "docs_design_b2_horizon_saisie_10_2_livr\u00e9",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_10_2_livr\u00e9"
     },
     {
       "relation": "contains",
@@ -34579,9 +34589,9 @@
       "source_file": "docs/design-b2-horizon-saisie.md",
       "source_location": "L379",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_design_b2_horizon_saisie_10_b2_b_2026_08_13_et_pourquoi_le_2_4_\u00e9tait_faux",
-      "target": "docs_design_b2_horizon_saisie_10_3_ce_qui_n_avait_pas_besoin_d_\u00eatre_fait",
-      "confidence_score": 1.0
+      "target": "docs_design_b2_horizon_saisie_10_3_ce_qui_n_avait_pas_besoin_d_\u00eatre_fait"
     },
     {
       "relation": "contains",
@@ -34590,7 +34600,17 @@
       "source_location": "L392",
       "weight": 1.0,
       "source": "docs_design_b2_horizon_saisie_10_b2_b_2026_08_13_et_pourquoi_le_2_4_\u00e9tait_faux",
-      "target": "docs_design_b2_horizon_saisie_10_4_deux_filtres_redondants_assum\u00e9s_et_\u00e9tiquet\u00e9s",
+      "target": "docs_design_b2_horizon_saisie_10_4_v\u00e9rifications",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/design-b2-horizon-saisie.md",
+      "source_location": "L410",
+      "weight": 1.0,
+      "source": "docs_design_b2_horizon_saisie_10_b2_b_2026_08_13_et_pourquoi_le_2_4_\u00e9tait_faux",
+      "target": "docs_design_b2_horizon_saisie_10_5_deux_filtres_redondants_assum\u00e9s_et_\u00e9tiquet\u00e9s",
       "confidence_score": 1.0
     },
     {
@@ -36466,5 +36486,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "50b8f8aa63c562ed807d80b15580474b42c3c8ec"
+  "built_at_commit": "4b1f45f6f8e6b7fe6157b3c5c146dfded097e316"
 }

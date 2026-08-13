@@ -389,7 +389,25 @@ Les deux autres items du §5 étaient **déjà corrects**, vérification faite :
   affichée » le pointerait sur la semaine EN COURS, dont la deadline est passée — donc
   strictement pire. Non fait, volontairement.
 
-### 10.4 Deux filtres redondants, assumés et étiquetés
+### 10.4 Vérifications
+
+**10 tests** (`tests/planning-publication.test.js`) et **3 mutations non vacantes** :
+retirer le filtre de publication des shifts fait tomber 3 tests, retirer le contrôle de
+publication de `my-published-weeks` en fait tomber 1, et rendre « ouvrable » une semaine
+où le staff n'a rien en fait tomber 3.
+
+**4 vérifications de smoke** contre un vrai Mongo, **autoportantes** : le bloc crée son
+propre shift sur N+2, vérifie qu'il est invisible, publie, vérifie qu'il apparaît,
+dépublie, vérifie qu'il sort de la navigation — puis efface le shift et restaure la
+publication. Se contenter de demander une semaine future et de constater « 0 shift »
+serait passé au vert **même sans la garde**, le jeu de recette n'y plaçant rien : c'est le
+piège du §9.4 en version « faux positif », et le troisième de la journée.
+
+⚠️ Le smoke peut annoncer des vérifications **sautées** (⊘) sur S-04 : le préflight exige
+des dispos en attente d'autres personnes que la directrice sur N+1. C'est une dérive du
+**jeu de recette**, pas du code — remède : `npm run dev:seed`.
+
+### 10.5 Deux filtres redondants, assumés et étiquetés
 
 Les `.filter(isVisible)` posés sur les **Jokers** et les **collègues** sont
 **inatteignables** : leurs requêtes sont bornées par `myDates`/`myEstablishments`, eux-mêmes
