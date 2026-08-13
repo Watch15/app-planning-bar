@@ -340,3 +340,61 @@ que N+2 passe ne vaut rien si l'on n'a pas prouvé au même instant que N+1 est 
 **42 vérifications, 0 échec, sur deux lancements consécutifs depuis un état propre.** La
 base client `gestion_bar` n'a jamais été touchée : elle ne porte aucun compte `@templyo.test`,
 et le garde-fou du script s'arrête avant d'écrire.
+
+---
+
+## 10. B2-b (2026-08-13) — et pourquoi le §2.4 était faux
+
+### 10.1 Rectification : ce n'était PAS que de l'ergonomie
+
+Le §2.4 concluait « B2-b n'est pas un moteur à écrire, c'est de l'ergonomie et de la
+visibilité ». **Vérifié avant de coder : faux, et sur deux points opposés.**
+
+**Une semaine lointaine publiée était inatteignable.** `planning.js` ne créait qu'un seul
+onglet, « Semaine prochaine ✨ », câblé en dur sur N+1 et conditionné à sa publication.
+Publier N+3 envoyait le push (« la semaine du … est publiée — consulte ton planning »)
+vers une page que personne ne pouvait ouvrir. Publier loin était donc **sans effet**.
+
+**Une semaine NON publiée était lisible.** `GET /api/my-shifts` ne filtrait sur aucune
+publication : shifts, Jokers et collègues de n'importe quelle plage demandée. Le seul
+rempart était que le client ne demandait pas ces dates — **la règle était affichée, pas
+tenue**, exactement le trou §2.1 refermé par B2-a sur l'axe de la saisie.
+
+Ce qui rendait ce second point net plutôt qu'opinable : **le flux iCal, sur la même
+donnée, filtrait déjà** par `isDatePublished`. L'intention produit était écrite dans le
+code ; c'est la route utilisée tous les jours qui l'oubliait.
+
+### 10.2 Livré
+
+- `my-shifts` borné par `isDatePublished` (shifts, Jokers, collègues). Sans effet sur
+  l'usage courant : semaine en cours et passées sont auto-publiées.
+- `GET /api/my-published-weeks?weeks=N` — même sémantique que
+  `GET /api/publish/:weekStart` pour un staff (publiée POUR MOI = au moins un de mes
+  shifts dans un établissement publié), mais sur une plage, en deux requêtes au lieu
+  d'un aller-retour par semaine. Une semaine publiée où le staff n'a rien n'est pas
+  listée : l'y envoyer afficherait une page blanche présentée comme un planning.
+- Front staff : la vue « à venir » navigue sur les semaines publiées et s'arrête à la
+  dernière. Libellé « Semaine prochaine ✨ » conservé quand il n'y en a qu'une.
+
+### 10.3 Ce qui n'avait PAS besoin d'être fait
+
+Les deux autres items du §5 étaient **déjà corrects**, vérification faite :
+
+- **Repères visuels du patron** : `renderPublishControl` / `updatePublishBtnLabel`
+  (`script.js:1207`) affichent « ✓ Publié / Publié n/total / Publier — *semaine* » et
+  suivent déjà la semaine affichée, lointaine comprise.
+- **KPI de complétion du responsable** : il annonce déjà sa semaine (« Dispos envoyées —
+  semaine prochaine »), et le tableau de bord responsable n'a **aucune** navigation
+  (`refreshResp` prend toujours `currentWeekStart`). Le faire « suivre la semaine
+  affichée » le pointerait sur la semaine EN COURS, dont la deadline est passée — donc
+  strictement pire. Non fait, volontairement.
+
+### 10.4 Deux filtres redondants, assumés et étiquetés
+
+Les `.filter(isVisible)` posés sur les **Jokers** et les **collègues** sont
+**inatteignables** : leurs requêtes sont bornées par `myDates`/`myEstablishments`, eux-mêmes
+dérivés des shifts déjà filtrés. Vérifié par mutation — les retirer ne fait tomber aucun
+test. Conservés (ils redeviennent porteurs si quelqu'un dérive ces plages autrement), mais
+**étiquetés comme tels dans le code ET dans le nom des tests** : un intitulé qui promet plus
+que le test ne prouve fabrique une confiance fausse, et c'est le mécanisme exact des trois
+tests vacants de F-14.

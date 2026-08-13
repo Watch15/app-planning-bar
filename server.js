@@ -2430,17 +2430,37 @@ app.get('/api/my-shifts', checkDB, requireAuth, async (req, res) => {
         const shiftQuery = { staff_id: staffId, date: { $gte: from, $lte: to } };
         if (allowedEstabIds) shiftQuery.establishment_id = { $in: allowedEstabIds };
 
-        const myRawShifts = await db.collection('shifts').find(shiftQuery)
-            .sort({ date: 1, start_time: 1 }).toArray();
+        // B2-b — NE RENDRE QUE DU PUBLIÉ. Cette route ne filtrait sur aucune
+        // publication : elle rendait les shifts, les Jokers et les collègues de
+        // n'importe quelle plage demandée. Le seul rempart était que `planning.js` ne
+        // demandait jamais ces dates — c'est-à-dire une règle AFFICHÉE et pas TENUE,
+        // exactement le trou refermé par B2-a sur l'horizon de saisie.
+        // Ce qui tranche : le flux iCal, sur la MÊME donnée, filtre déjà par
+        // `isDatePublished`. L'intention produit était donc déjà écrite dans le code ;
+        // c'est cette route-ci, celle qu'utilise l'app tous les jours, qui l'oubliait.
+        // Sans effet sur l'usage courant : la semaine en cours et les passées sont
+        // auto-publiées, donc elles traversent le filtre inchangées.
+        const publishedWeeks = await fetchPublishedWeeks();
+        const isVisible = s => isDatePublished(s.date, publishedWeeks, s.establishment_id);
+
+        const myRawShifts = (await db.collection('shifts').find(shiftQuery)
+            .sort({ date: 1, start_time: 1 }).toArray()).filter(isVisible);
 
         const myEstablishments = [...new Set(myRawShifts.map(s => s.establishment_id))];
         const myDates          = [...new Set(myRawShifts.map(s => s.date))];
 
-        const jokers = myEstablishments.length ? await db.collection('shifts').find({
+        const jokers = myEstablishments.length ? (await db.collection('shifts').find({
             is_joker: true,
             establishment_id: { $in: myEstablishments },
             date: { $in: myDates }
-        }).toArray() : [];
+        // ⚠️ Ce `.filter` est REDONDANT aujourd'hui, et il est conservé sciemment :
+        // `myEstablishments` et `myDates` dérivent de `myRawShifts`, déjà filtré, donc
+        // la date d'une semaine non publiée n'entre jamais dans cette requête. Vérifié
+        // par mutation — le retirer ne fait tomber AUCUN test, il est donc inatteignable.
+        // Gardé parce qu'il redevient porteur à la seconde où quelqu'un calcule `myDates`
+        // autrement (à partir de la requête brute, par exemple), et que ce jour-là
+        // l'oubli serait silencieux. Même arbitrage qu'en F-14 pour `joker-open`.
+        }).toArray()).filter(isVisible) : [];
 
         const myShifts = [...myRawShifts, ...jokers].sort((a, b) =>
             a.date < b.date ? -1 : a.date > b.date ? 1 : a.start_time - b.start_time
@@ -2455,7 +2475,12 @@ app.get('/api/my-shifts', checkDB, requireAuth, async (req, res) => {
                 establishment_id: { $in: myShifts.filter(s => s.date === date).map(s => s.establishment_id) },
                 staff_id: { $nin: [staffId, '__joker__'] },
             };
-            colleagueMap[date] = await db.collection('shifts').find(colleagueQuery).toArray();
+            // Même statut que le filtre des Jokers ci-dessus : REDONDANT et inatteignable
+            // (`dates` vient de `myShifts`, déjà filtré), conservé pour la même raison.
+            // Les collègues d'un brouillon sont donc invisibles par CONSTRUCTION, pas
+            // par cette ligne — et c'est ce que le test prouve réellement.
+            colleagueMap[date] = (await db.collection('shifts').find(colleagueQuery).toArray())
+                .filter(isVisible);
         }
         res.json({ shifts: myShifts, colleagues: colleagueMap });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
@@ -5031,6 +5056,37 @@ function weekEndStr(weekStartStr) {
 // - staff        → { published, auto } : publié = le staff a ≥1 shift cette semaine
 //                  dans un établissement publié (basé sur les SHIFTS, pas sur venues).
 // - patron/dir.  → { auto, establishments } : 'ALL' ou liste des établissements publiés.
+// B2-b — « quelles semaines À VENIR puis-je ouvrir ? »
+// Même sémantique que `GET /api/publish/:weekStart` pour un staff (une semaine est
+// publiée POUR MOI si au moins un de mes shifts y est dans un établissement publié),
+// mais sur une plage : le client construisait sinon sa navigation en interrogeant
+// semaine par semaine, soit un aller-retour par semaine d'horizon.
+// Deux requêtes au total, quel que soit le nombre de semaines.
+app.get('/api/my-published-weeks', checkDB, requireAuth, async (req, res) => {
+    const staffId = req.session.user.staff_id;
+    if (!staffId) return res.json([]);
+    try {
+        const weeks   = clampHorizonWeeks(req.query.weeks || 8);
+        const mondays = disposHorizonMondays(new Date(), weeks);
+        const range   = disposHorizonRange(new Date(), weeks);
+        const [publishedWeeks, myShifts] = await Promise.all([
+            fetchPublishedWeeks(),
+            db.collection('shifts').find(
+                { staff_id: staffId, date: { $gte: range.from, $lte: range.to }, is_joker: { $ne: true } },
+                { projection: { date: 1, establishment_id: 1 } }
+            ).toArray(),
+        ]);
+        // Une semaine vide n'est pas « ouvrable » : le staff n'y a rien, l'y envoyer
+        // afficherait une page blanche présentée comme un planning.
+        const out = mondays.filter(m => {
+            const end = weekEndStr(m);
+            return myShifts.some(s => s.date >= m && s.date <= end
+                && isDatePublished(s.date, publishedWeeks, s.establishment_id));
+        });
+        res.json(out);
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
 app.get('/api/publish/:weekStart', checkDB, requireAuth, async (req, res) => {
     const weekStart = req.params.weekStart;
     try {

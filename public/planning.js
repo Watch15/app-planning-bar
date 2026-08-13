@@ -296,13 +296,16 @@ async function init() {
         }
     } catch { /* silencieux */ }
 
-    // Vérifier si la semaine suivante est publiée
+    // B2-b — quelles semaines À VENIR ce staff peut-il ouvrir ?
+    // Avant, on n'interrogeait que N+1 : publier N+3 envoyait un push (« la semaine du …
+    // est publiée — consulte ton planning ») vers une page que personne ne pouvait
+    // atteindre. La liste rendue par le serveur ne contient que des semaines publiées
+    // ET non vides pour ce staff.
     const nextMonday = getMondayOf(addDays(new Date(), 7));
-    const nextWeekStart = toDateStr(nextMonday);
     try {
-        const pubRes  = await fetch('/api/publish/' + nextWeekStart, { credentials: 'include' });
-        const pubData = await pubRes.json();
-        if (pubData.published) {
+        const pubRes  = await fetch('/api/my-published-weeks?weeks=8', { credentials: 'include' });
+        const futureWeeks = pubRes.ok ? await pubRes.json() : [];
+        if (Array.isArray(futureWeeks) && futureWeeks.length) {
             // Créer la vue semaine suivante (avant l'onglet pour que showTab la trouve)
             const viewNext = document.createElement('div');
             viewNext.id            = 'view-next-week';
@@ -314,24 +317,58 @@ async function init() {
             const tabNext = document.createElement('button');
             tabNext.className   = 'tab-btn';
             tabNext.dataset.tab = 'next-week';
-            tabNext.innerHTML = '<span class="tab-full">Semaine prochaine ✨</span><span class="tab-short">Semaine pro</span>';
+            // Une seule semaine ouvrable → on garde le libellé familier ; plusieurs → un
+            // libellé qui annonce qu'il y a de quoi naviguer.
+            tabNext.innerHTML = futureWeeks.length > 1
+                ? '<span class="tab-full">À venir ✨</span><span class="tab-short">À venir</span>'
+                : '<span class="tab-full">Semaine prochaine ✨</span><span class="tab-short">Semaine pro</span>';
             const histTab = tabBar.querySelector('[data-tab="historique"]');
             tabBar.insertBefore(tabNext, histTab || null);
             initTabs(); // rebind pour inclure le nouvel onglet
 
-            // Charger le contenu au premier clic
-            tabNext.addEventListener('click', async () => {
-                if (viewNext.dataset.loaded) return;
+            // Rendu d'UNE semaine de la liste. Le contenu est celui d'avant B2-b ; ce qui
+            // change, c'est que la semaine est un paramètre au lieu d'être `nextMonday`.
+            let futureIndex = 0;
+            const renderFutureWeek = async () => {
+                const nFrom = futureWeeks[futureIndex];
+                // Midi local : idiome du fichier, insensible au changement d'heure.
+                const nTo   = toDateStr(addDays(new Date(nFrom + 'T12:00:00'), 6));
                 viewNext.innerHTML = '<div style="padding:20px;text-align:center;color:#ccc">Chargement…</div>';
-                const nextSunday = addDays(nextMonday, 6);
-                const nFrom = toDateStr(nextMonday);
-                const nTo   = toDateStr(nextSunday);
-
                 try {
                     const res  = await fetch('/api/my-shifts?from=' + nFrom + '&to=' + nTo, { credentials: 'include' });
                     const data = await res.json();
 
                     viewNext.innerHTML = '';
+                    // Navigation, seulement s'il y a plus d'une semaine ouvrable : deux
+                    // flèches inertes n'apprendraient rien. Même système que partout.
+                    if (futureWeeks.length > 1) {
+                        const mon = new Date(nFrom + 'T12:00:00'), sun = addDays(mon, 6);
+                        const atStart = futureIndex === 0;
+                        const atEnd   = futureIndex >= futureWeeks.length - 1;
+                        const nav = document.createElement('div');
+                        nav.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px 4px';
+                        const arrow = (id, glyph, off) =>
+                            '<button type="button" id="' + id + '"' + (off ? ' disabled' : '') +
+                            ' style="padding:6px 12px;border-radius:8px;border:1.5px solid var(--border,#ddd);background:transparent;color:inherit;font-size:15px;cursor:' +
+                            (off ? 'default;opacity:.3' : 'pointer') + '">' + glyph + '</button>';
+                        nav.innerHTML =
+                            arrow('future-prev', '&#8592;', atStart) +
+                            '<div style="text-align:center;line-height:1.3">' +
+                                '<div style="font-size:13px;font-weight:700">Semaine du ' + mon.getDate() + ' ' +
+                                    MONTH_NAMES[mon.getMonth()] + ' au ' + sun.getDate() + ' ' + MONTH_NAMES[sun.getMonth()] + '</div>' +
+                                '<div style="font-size:11px;color:var(--text-muted,#999)">' +
+                                    (futureIndex + 1) + ' sur ' + futureWeeks.length + ' publiée(s)</div>' +
+                            '</div>' +
+                            arrow('future-next', '&#8594;', atEnd);
+                        viewNext.appendChild(nav);
+                        const go = delta => {
+                            futureIndex = Math.min(Math.max(futureIndex + delta, 0), futureWeeks.length - 1);
+                            renderFutureWeek();
+                        };
+                        if (!atStart) nav.querySelector('#future-prev').addEventListener('click', () => go(-1));
+                        if (!atEnd)   nav.querySelector('#future-next').addEventListener('click', () => go(1));
+                    }
+
                     const tempStats = document.createElement('div');
                     tempStats.className = 'week-stats';
                     const tempJokers = document.createElement('div');
@@ -347,13 +384,20 @@ async function init() {
                     renderStatsInto(myShifts2, tempStats);
                     renderDaysInto(nFrom, myShifts2, data.colleagues, tempList, jokers2);
                     renderOpenJokers(nFrom, nTo, 'open-jokers-section-next');
-                    viewNext.dataset.loaded = '1';
                 } catch (e) {
                     viewNext.innerHTML = '<div style="padding:20px;text-align:center;color:#e74c3c">' + e.message + '</div>';
                 }
+            };
+
+            // Charger au premier clic seulement (le contenu n'est pas utile tant que
+            // l'onglet n'est pas ouvert), puis laisser la navigation reprendre la main.
+            tabNext.addEventListener('click', () => {
+                if (viewNext.dataset.loaded) return;
+                viewNext.dataset.loaded = '1';
+                renderFutureWeek();
             });
         } else {
-            // Semaine pas encore publiée — afficher un message discret
+            // Aucune semaine à venir ouvrable — message discret, inchangé.
             const msgEl = document.createElement('div');
             msgEl.style.cssText = 'padding:16px 20px;font-size:13px;color:#bbb;text-align:center';
             msgEl.textContent = 'Le planning de la semaine prochaine n’est pas encore disponible.';
