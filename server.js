@@ -554,6 +554,21 @@ async function notifyPatrons(payload) {
 }
 
 
+// B2-b — LA porte de LECTURE d'un planning par un compte staff.
+//
+// Rend un prédicat « ce créneau est-il annoncé ? », qui couvre l'auto-publication
+// (semaine en cours et passées) autant que le drapeau `publish_<lundi>`.
+//
+// Une seule porte, pour la raison de F-14 : le refus posé sur `POST /api/shifts` n'avait
+// pas empêché cinq autres routes d'écrire un `staff_id`. Ici c'est le pendant en lecture —
+// TROIS routes rendent des shifts à un staff (`my-shifts`, `responsable-week`,
+// `joker-ouverts`) et la quatrième qu'on écrira oubliera le filtre si chacune recompose
+// le sien. Sans effet sur l'usage courant : la semaine en cours est auto-publiée.
+async function publishedShiftFilter() {
+    const publishedWeeks = await fetchPublishedWeeks();
+    return s => isDatePublished(s.date, publishedWeeks, s.establishment_id);
+}
+
 // ── F-12 — Journal d'audit des dispos ─────────────────────────────────────────
 //
 // Besoin : arbitrer « j'avais mis dispo » / « non ». Avant, RIEN n'était conservé —
@@ -2440,8 +2455,7 @@ app.get('/api/my-shifts', checkDB, requireAuth, async (req, res) => {
         // c'est cette route-ci, celle qu'utilise l'app tous les jours, qui l'oubliait.
         // Sans effet sur l'usage courant : la semaine en cours et les passées sont
         // auto-publiées, donc elles traversent le filtre inchangées.
-        const publishedWeeks = await fetchPublishedWeeks();
-        const isVisible = s => isDatePublished(s.date, publishedWeeks, s.establishment_id);
+        const isVisible = await publishedShiftFilter();
 
         const myRawShifts = (await db.collection('shifts').find(shiftQuery)
             .sort({ date: 1, start_time: 1 }).toArray()).filter(isVisible);
@@ -3444,6 +3458,22 @@ app.post('/api/dispos/week-note', checkDB, requireAuth, async (req, res) => {
     if (week_note !== undefined && String(week_note).length > 200)
         return res.status(400).json({ error: 'Note trop longue (200 caractères max)' });
     try {
+        // B2 — la note de semaine est l'AUTRE écriture staff sur `availabilities`, et
+        // elle n'avait ni borne d'horizon ni deadline : le formulaire ne l'envoie que
+        // pour la semaine navigée et masque le bloc quand la semaine est figée, mais
+        // c'était encore une règle affichée et non tenue. Mêmes gardes que
+        // `POST /api/dispos`, sur la semaine visée plutôt que sur des jours.
+        const settings = await db.collection('settings').findOne({ key: 'dispo' }) || { open: true };
+        const now = new Date();
+        if (!disposHorizonMondays(now, dispoHorizons(settings).x).includes(week_start))
+            return res.status(403).json({ error: 'Semaine hors de l\'horizon de saisie.' });
+        // Règle A : seule la semaine en cours de collecte est verrouillée par la deadline.
+        const forceOpenStaff = staffReopenedFor(settings, staffId, disposHorizonRange(now, 1).from);
+        if (week_start === disposHorizonRange(now, 1).from
+            && !dispoDeadlineWaived(settings, req.session.user.role, forceOpenStaff)
+            && now > computeEffectiveDeadline(settings.custom_deadline || null, now))
+            return res.status(403).json({ error: 'La deadline est passée.' });
+
         await db.collection('availabilities').updateOne(
             { staff_id: staffId, week_start, type: 'week_note' },
             { $set: { staff_id: staffId, week_start, type: 'week_note', week_note: String(week_note || '').slice(0, 200) } },
@@ -3633,19 +3663,29 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
         // dispo par jour. Re-soumettre met à jour le type/les horaires/la note et
         // repasse la dispo en 'pending' (le patron re-valide la version modifiée).
         // `type: { $ne: 'week_note' }` protège la note de semaine (autre code path).
-        const ops = dispos2.map(d => ({
+        // La forme normalisée d'une dispo, calculée UNE fois : elle alimente l'écriture
+        // ET le journal d'audit. Les deux la construisaient séparément — le jour où la
+        // normalisation bouge (arrondi, champ ajouté), le journal aurait consigné un
+        // `after` que la base ne contient pas, c'est-à-dire exactement la propriété de
+        // preuve que F-12 achète.
+        const auditName = req.session.user.name || '';
+        const normalized = dispos2.map(d => ({
+            date: d.date,
+            prev: prevByDate.get(d.date) || null,
+            fields: {
+                type:       d.type || 'custom',
+                start_time: d.start_time != null ? parseFloat(d.start_time) : null,
+                end_time:   d.end_time   != null ? parseFloat(d.end_time)   : null,
+                note:       d.note || '',
+                status:     'pending',
+            },
+        }));
+
+        const ops = normalized.map(({ date, fields }) => ({
             updateOne: {
-                filter: { staff_id: staffId, date: d.date, type: { $ne: 'week_note' } },
+                filter: { staff_id: staffId, date, type: { $ne: 'week_note' } },
                 update: {
-                    $set: {
-                        type:       d.type || 'custom',
-                        start_time: d.start_time != null ? parseFloat(d.start_time) : null,
-                        end_time:   d.end_time   != null ? parseFloat(d.end_time)   : null,
-                        note:       d.note || '',
-                        status:     'pending',
-                        staff_name: req.session.user.name || '',
-                        updated_at: new Date(),
-                    },
+                    $set: { ...fields, staff_name: auditName, updated_at: new Date() },
                     $setOnInsert: { created_at: new Date() },
                 },
                 upsert: true,
@@ -3660,24 +3700,17 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
         // ⚠️ `establishment_id` est RECOPIÉ de l'avant : l'upsert n'y touche pas, et
         // l'omettre ferait consigner une désaffectation qui n'a jamais eu lieu.
         const actor = auditActor(req);
-        const auditName = req.session.user.name || '';
         const evSubmit = [], evUpdate = [];
-        dispos2.forEach(d => {
-            const prev = prevByDate.get(d.date) || null;
+        normalized.forEach(({ date, prev, fields }) => {
             (prev ? evUpdate : evSubmit).push({
-                staff_id: staffId, staff_name: auditName, date: d.date, before: prev,
-                after: {
-                    type:       d.type || 'custom',
-                    start_time: d.start_time != null ? parseFloat(d.start_time) : null,
-                    end_time:   d.end_time   != null ? parseFloat(d.end_time)   : null,
-                    note:       d.note || '',
-                    status:     'pending',
-                    establishment_id: prev ? prev.establishment_id : null,
-                },
+                staff_id: staffId, staff_name: auditName, date, before: prev,
+                after: { ...fields, establishment_id: prev ? prev.establishment_id : null },
             });
         });
-        await recordDispoEvents('submit', actor, evSubmit);
-        await recordDispoEvents('update', actor, evUpdate);
+        await Promise.all([
+            recordDispoEvents('submit', actor, evSubmit),
+            recordDispoEvents('update', actor, evUpdate),
+        ]);
 
         // B2 — libérer les créneaux dont la dispo validée vient d'être modifiée.
         // Trois conditions cumulées, et c'est la troisième qui compte : une dispo
@@ -4904,9 +4937,14 @@ app.get('/api/shifts/joker-ouverts', checkDB, requireAuth, async (req, res) => {
             $or: [{ is_joker: true }, { staff_id: '__joker__' }],
         };
         if (establishment_id) query.establishment_id = establishment_id;
-        const shifts = await db.collection('shifts').find(query, {
+        // B2-b — un Joker d'une semaine NON PUBLIÉE appartient à un planning que le staff
+        // n'a pas à voir : le proposer reviendrait à annoncer un besoin sur un brouillon,
+        // et à laisser postuler dessus (`joker-candidature`). La route n'avait ni borne de
+        // date ni filtre — c'est `planning.js` qui bornait, dans le navigateur.
+        const isVisible = await publishedShiftFilter();
+        const shifts = (await db.collection('shifts').find(query, {
             projection: { _id: 1, date: 1, start_time: 1, end_time: 1, establishment_id: 1, joker_candidates: 1 }
-        }).toArray();
+        }).toArray()).filter(isVisible);
         // Résoudre les noms d'établissements en une requête batch
         const estabIds = [...new Set(shifts.map(s => s.establishment_id).filter(Boolean))];
         const estabDocs = estabIds.length
@@ -5522,11 +5560,18 @@ app.get('/api/me/responsable-week', checkDB, requireAuth, async (req, res) => {
     const user = req.session.user;
     if (!user.staff_id) return res.json({ authorized: false, days: {} });
     try {
+        // B2-b — cette route rend le roster NOMINATIF de l'équipe et les TÉLÉPHONES, sur
+        // une plage fournie par le client, et ne filtrait sur aucune publication. Elle
+        // rendait donc plus qu'un brouillon de planning : elle en rendait les contacts.
+        // Le seul rempart était que `planning.js` ne demande que la semaine en cours —
+        // une règle affichée et non tenue, la même que celle refermée sur `my-shifts`.
+        const isVisible = await publishedShiftFilter();
+
         // Mes shifts sur la période
-        const myShifts = await db.collection('shifts').find({
+        const myShifts = (await db.collection('shifts').find({
             staff_id: user.staff_id,
             date: { $gte: from, $lte: to },
-        }).toArray();
+        }).toArray()).filter(isVisible);
         if (myShifts.length === 0) return res.json({ authorized: false, days: {} });
 
         // Vérifier qu'il a au moins un rôle de type 'responsable'
@@ -5552,9 +5597,17 @@ app.get('/api/me/responsable-week', checkDB, requireAuth, async (req, res) => {
         if (pairs.length === 0) return res.json({ authorized: false, days: {} });
 
         // Tous les shifts de l'équipe sur ces (date, établissement)
-        const teamShifts = await db.collection('shifts').find({
+        // ⚠️ Ce `.filter` est REDONDANT et inatteignable : la requête ne porte que sur
+        // les couples (date, établissement) de `pairs`, qui dérivent de `myShifts` déjà
+        // filtré — donc tout ce qu'elle ramène est publié par construction. Vérifié par
+        // mutation : le retirer ne fait tomber aucun test.
+        // Conservé au même titre que ceux de `my-shifts` : il redevient porteur le jour
+        // où `pairs` sera dérivé autrement, et ce jour-là l'oubli serait silencieux.
+        // (Une version antérieure de ce commentaire prétendait couvrir « un autre
+        // établissement le même jour » — c'est faux, l'établissement est fixé par `pairs`.)
+        const teamShifts = (await db.collection('shifts').find({
             $or: pairs.map(p => ({ date: p.date, establishment_id: p.establishment_id })),
-        }).sort({ date: 1, start_time: 1 }).toArray();
+        }).sort({ date: 1, start_time: 1 }).toArray()).filter(isVisible);
 
         // Augmenter chaque shift avec téléphone + nickname du staff (contact +
         // affichage cohérent avec le tableau de bord patron : nickname si défini,

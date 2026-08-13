@@ -36,6 +36,10 @@ function applyVenueHours(venueId) {
 
 const DAY_NAMES_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 const DAY_NAMES_LONG  = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+// Mois abrégés — UNE seule définition. Il en existait 5 copies locales identiques,
+// et B2/F-12 en ont ajouté 3 avec une AUTRE abréviation ('févr.' au lieu de 'fév.') :
+// deux onglets voisins de la même modale n'écrivaient plus le mois pareil.
+const MONTH_NAMES_SHORT = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
 const MONTH_NAMES     = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 
 // ── État global ──────────────────────────────────────────────────────────────
@@ -4773,7 +4777,6 @@ async function renderPendingInvites() {
         counter.textContent = pending.length + ' invitation' + (pending.length > 1 ? 's' : '') + ' non activée' + (pending.length > 1 ? 's' : '');
         list.appendChild(counter);
 
-        const MONTHS = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
         pending.forEach(user => {
             const sm    = allStaff.find(s => String(s._id) === user.staff_id);
             const color = sm ? sm.color : '#888';
@@ -4790,7 +4793,7 @@ async function renderPendingInvites() {
                 if (!user.created_at) return '';
                 const d = new Date(user.created_at);
                 if (isNaN(d.getTime())) return '';
-                return 'invité le ' + d.getDate() + ' ' + MONTHS[d.getMonth()];
+                return 'invité le ' + d.getDate() + ' ' + MONTH_NAMES_SHORT[d.getMonth()];
             })();
 
             const row = document.createElement('div');
@@ -5990,9 +5993,8 @@ const _CONGE_STATUS_PATRON = {
 const _MONTHS_FR = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 
 function _fmtCongeDateFr(iso) {
-    const MONTHS = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
     const [, m, d] = iso.split('-').map(Number);
-    return d + ' ' + MONTHS[m - 1];
+    return d + ' ' + MONTH_NAMES_SHORT[m - 1];
 }
 
 // Badge de l'onglet Congés (demandes en attente). La pastille header est gérée
@@ -6179,7 +6181,6 @@ async function loadNonAffectees() {
     list.innerHTML = '<div style="padding:16px;text-align:center;color:#ccc;font-size:13px">Chargement…</div>';
     const { from, to } = _reassignDateRange();
     const DAY_LONG = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-    const MONTHS   = ['jan.', 'fév.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sep.', 'oct.', 'nov.', 'déc.'];
     const fmtH = ShiftHours.fmtHourOfDay;
     const slotOrder = dispo => {
         if (dispo.type === 'midi') return [0, 0];
@@ -6213,7 +6214,7 @@ async function loadNonAffectees() {
                 return oa[0] - ob[0] || oa[1] - ob[1];
             });
             const d         = parseDate(dateStr);
-            const dateLabel = DAY_LONG[d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()];
+            const dateLabel = DAY_LONG[d.getDay()] + ' ' + d.getDate() + ' ' + MONTH_NAMES_SHORT[d.getMonth()];
 
             const card = document.createElement('div');
             card.style.cssText = 'background:#fff;border:1px solid #eee;border-radius:10px;margin:8px 16px;overflow:hidden';
@@ -6344,10 +6345,9 @@ function _reminderResolveWeek() {
 function _renderReminderWeekLabel(weekStart) {
     const label = document.getElementById('reminder-week-label');
     if (!label || !weekStart) return;
-    const MONTHS = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
     const end = addDays(weekStart, 6);
-    const startStr = weekStart.getDate() + ' ' + MONTHS[weekStart.getMonth()];
-    const endStr   = end.getDate() + ' ' + MONTHS[end.getMonth()] + ' ' + end.getFullYear();
+    const startStr = weekStart.getDate() + ' ' + MONTH_NAMES_SHORT[weekStart.getMonth()];
+    const endStr   = end.getDate() + ' ' + MONTH_NAMES_SHORT[end.getMonth()] + ' ' + end.getFullYear();
     label.textContent = 'Semaine du ' + startStr + ' au ' + endStr;
 }
 
@@ -6452,10 +6452,9 @@ async function loadReminderTab() {
 function _renderModifyWeekLabel(weekStart) {
     const label = document.getElementById('modify-week-label');
     if (!label || !weekStart) return;
-    const MONTHS = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
     const end = addDays(weekStart, 6);
-    const startStr = weekStart.getDate() + ' ' + MONTHS[weekStart.getMonth()];
-    const endStr   = end.getDate() + ' ' + MONTHS[end.getMonth()] + ' ' + end.getFullYear();
+    const startStr = weekStart.getDate() + ' ' + MONTH_NAMES_SHORT[weekStart.getMonth()];
+    const endStr   = end.getDate() + ' ' + MONTH_NAMES_SHORT[end.getMonth()] + ' ' + end.getFullYear();
     label.textContent = 'Semaine du ' + startStr + ' au ' + endStr;
 }
 
@@ -6578,9 +6577,10 @@ const HISTORY_ACTIONS = {
     template:      { label: 'pré-remplie par la semaine-type',       color: '#7f8c8d' },
 };
 
-const _histH = h => (h == null || h === '' ? '—'
-    : String(Math.floor(h % 24)).padStart(2, '0') + 'h'
-      + (Math.round((h % 1) * 60) ? String(Math.round((h % 1) * 60)).padStart(2, '0') : ''));
+// Formatage délégué à `ShiftHours.fmtHourOfDay` : ce module existe précisément pour
+// qu'il n'y ait qu'UNE façon d'écrire une heure. Le journal doit afficher exactement la
+// même chose que le shift affiché à côté — sinon la preuve devient discutable.
+const _histH = h => (h == null || h === '' ? '—' : ShiftHours.fmtHourOfDay(h));
 
 const _histTypes  = { soir: 'Soir', midi: 'Midi', long: 'Long', custom: 'Horaires précis', off: 'Indisponible' };
 const _histStatus = { pending: 'en attente', confirmed: 'validée', rejected: 'refusée', ignored: 'ignorée' };
@@ -6620,10 +6620,9 @@ async function loadDisposHistory() {
     const to   = toDateStr(addDays(historyWeekStart, 6));
     const lbl  = document.getElementById('history-week-label');
     if (lbl) {
-        const MONTHS = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
         const end = addDays(historyWeekStart, 6);
-        lbl.textContent = 'Semaine du ' + historyWeekStart.getDate() + ' ' + MONTHS[historyWeekStart.getMonth()]
-                        + ' au ' + end.getDate() + ' ' + MONTHS[end.getMonth()];
+        lbl.textContent = 'Semaine du ' + historyWeekStart.getDate() + ' ' + MONTH_NAMES_SHORT[historyWeekStart.getMonth()]
+                        + ' au ' + end.getDate() + ' ' + MONTH_NAMES_SHORT[end.getMonth()];
     }
     list.innerHTML = '<div style="padding:16px;text-align:center;color:#ccc;font-size:13px">Chargement…</div>';
     try {
@@ -6666,7 +6665,7 @@ function renderDisposHistory() {
         row.innerHTML =
             '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline">' +
                 '<span style="font-size:13px;font-weight:700;color:#333">' + escapeHtml(ev.staff_name || '—') +
-                    '<span style="font-weight:500;color:#888"> · ' + DAYS[d.getDay()] + ' ' + d.getDate() + '</span></span>' +
+                    '<span style="font-weight:500;color:#888"> · ' + DAY_NAMES_SHORT[d.getDay()] + ' ' + d.getDate() + '</span></span>' +
                 '<span style="font-size:11px;color:' + meta.color + ';font-weight:700">' + meta.label + '</span>' +
             '</div>' +
             (details.length
@@ -6851,33 +6850,27 @@ async function loadDisposList() {
         const range    = Week.disposHorizonRange(now, weeksY);
         const mondays  = Week.disposHorizonMondays(now, weeksY);
 
-        // Une note de semaine par semaine (elle est keyée par `week_start`).
-        const [res, ...noteResList] = await Promise.all([
+        // La semaine affichée est connue AVANT d'appeler le serveur : on ne demande donc
+        // que SA note. La version précédente demandait les notes de tout l'horizon —
+        // jusqu'à 12 requêtes, dépilées en série — pour n'en lire qu'une, à chaque rendu
+        // ET à chaque clic de flèche.
+        if (disposFileWeekIndex >= mondays.length) disposFileWeekIndex = 0;
+        const shownMonday = mondays[disposFileWeekIndex];
+
+        // La file, elle, couvre tout l'horizon en UNE requête : c'est ce qui permet
+        // d'annoncer les effectifs des autres semaines sans les charger.
+        const [res, notesRes] = await Promise.all([
             fetch('/api/dispos/pending?from=' + range.from + '&to=' + range.to + scopeQS, { credentials: 'include' }),
-            ...mondays.map(m => fetch('/api/dispos/week-notes?week_start=' + m, { credentials: 'include' })),
+            fetch('/api/dispos/week-notes?week_start=' + shownMonday, { credentials: 'include' }),
         ]);
         const dispos = await res.json();
         if (!res.ok) throw new Error(dispos.error);
-        const notesByWeek = {};
-        for (let i = 0; i < mondays.length; i++) {
-            const r   = noteResList[i];
-            const arr = (r && r.ok) ? await r.json() : [];
-            const map = {};
-            arr.forEach(n => { map[n.staff_id] = n.week_note; });
-            notesByWeek[mondays[i]] = map;
-        }
+        const noteByStaff = {};
+        ((notesRes && notesRes.ok) ? await notesRes.json() : [])
+            .forEach(n => { noteByStaff[n.staff_id] = n.week_note; });
 
-        // Répartition par semaine. Une seule requête couvre tout l'horizon ; on trie
-        // ici, puis on n'affiche QUE la semaine choisie — ce qui permet d'annoncer les
-        // effectifs des autres sans les charger une seconde fois.
-        const disposByWeek = {};
-        dispos.forEach(d => {
-            const wk = Week.toDateStr(Week.weekStart(parseDate(d.date)));
-            (disposByWeek[wk] = disposByWeek[wk] || []).push(d);
-        });
-        if (disposFileWeekIndex >= mondays.length) disposFileWeekIndex = 0;
-        const shownMonday = mondays[disposFileWeekIndex];
-        const shownDispos = disposByWeek[shownMonday] || [];
+        const weekOf      = d => Week.toDateStr(Week.weekStart(parseDate(d.date)));
+        const shownDispos = dispos.filter(d => weekOf(d) === shownMonday);
 
         // Barre d'en-tête : bascule de périmètre (S-04) + validation en masse.
         // La bascule décide du LOT (« mon staff » ou tout le monde) ; l'établissement
@@ -6923,7 +6916,6 @@ async function loadDisposList() {
         // corriger, cette fois par la faute de la navigation.
         const renderWeekNav = () => {
             if (mondays.length <= 1) return;
-            const MONTHS = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
             const mon = parseDate(shownMonday), sun = addDays(mon, 6);
             const nav = document.createElement('div');
             nav.className = 'week-nav';
@@ -6938,8 +6930,8 @@ async function loadDisposList() {
                 arrow('dispos-week-prev', '&#8592;', atStart) +
                 '<span class="week-label" style="text-align:center;line-height:1.35">' +
                     '<span style="display:block;font-size:13px;font-weight:700">Semaine du ' +
-                        mon.getDate() + ' ' + MONTHS[mon.getMonth()] + ' au ' +
-                        sun.getDate() + ' ' + MONTHS[sun.getMonth()] + '</span>' +
+                        mon.getDate() + ' ' + MONTH_NAMES_SHORT[mon.getMonth()] + ' au ' +
+                        sun.getDate() + ' ' + MONTH_NAMES_SHORT[sun.getMonth()] + '</span>' +
                     '<span style="display:block;font-size:11px;color:#999">' +
                         shownDispos.length + ' en attente ici · ' + dispos.length +
                         ' sur ' + mondays.length + ' semaines</span>' +
@@ -7136,7 +7128,7 @@ async function loadDisposList() {
         };  // fin renderWeekSection
 
         // Une seule semaine à l'écran — celle que la navigation désigne.
-        renderWeekSection(shownMonday, shownDispos, notesByWeek[shownMonday] || {});
+        renderWeekSection(shownMonday, shownDispos, noteByStaff);
 
     } catch (e) {
         list.innerHTML = '<div style="padding:16px;text-align:center;color:#e74c3c;font-size:13px">' + e.message + '</div>';
@@ -7544,7 +7536,7 @@ async function loadDispoControl() {
 
         // B2 — les deux horizons. `horizon_max` vient du serveur : recopier la borne en
         // dur ici la ferait diverger du clamp le jour où elle bouge.
-        const horizonMax = settings.horizon_max || 12;
+        const horizonMax = settings.horizon_max || Week.DISPO_HORIZON_MAX;
         const weekOpts = sel => {
             let o = '';
             for (let i = 1; i <= horizonMax; i++)

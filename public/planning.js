@@ -301,7 +301,6 @@ async function init() {
     // est publiée — consulte ton planning ») vers une page que personne ne pouvait
     // atteindre. La liste rendue par le serveur ne contient que des semaines publiées
     // ET non vides pour ce staff.
-    const nextMonday = getMondayOf(addDays(new Date(), 7));
     try {
         const pubRes  = await fetch('/api/my-published-weeks?weeks=8', { credentials: 'include' });
         const futureWeeks = pubRes.ok ? await pubRes.json() : [];
@@ -985,13 +984,13 @@ function _respKpiInnerHtml() {
     // horizon élargi, il aurait menti dès le premier clic sur la flèche.
     const weeks = _respKpiWeeks || [];
     const from  = weeks[_respKpiIndex];
+    // Deux états seulement : la semaine en cours de collecte porte son nom usuel, les
+    // suivantes portent leurs dates. Inutile de construire les Dates dans le premier cas.
     let weekLbl = 'semaine prochaine';
-    if (from) {
+    if (from && _respKpiIndex > 0) {
         const mon = new Date(from + 'T12:00:00');
         const sun = addDays(mon, 6);
-        weekLbl = _respKpiIndex === 0
-            ? 'semaine prochaine'
-            : mon.getDate() + ' ' + MONTH_NAMES[mon.getMonth()] + ' → ' + sun.getDate() + ' ' + MONTH_NAMES[sun.getMonth()];
+        weekLbl = mon.getDate() + ' ' + MONTH_NAMES[mon.getMonth()] + ' → ' + sun.getDate() + ' ' + MONTH_NAMES[sun.getMonth()];
     }
     // Navigation seulement s'il y a plus d'une semaine saisissable.
     let html = '';
@@ -1699,13 +1698,12 @@ async function loadDisposTab() {
     // B2 — navigation entre les semaines de l'horizon. Absente si l'horizon vaut 1 :
     // des flèches désactivées des deux côtés n'apprendraient rien à personne.
     if (multiWeek) {
-        const MONTHS = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
         const sunday = addDays(nextMonday, 6);
         const nav = document.createElement('div');
         nav.className = 'dispo-week-nav';
         nav.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px';
-        const label = 'Semaine du ' + nextMonday.getDate() + ' ' + MONTHS[nextMonday.getMonth()] +
-                      ' au ' + sunday.getDate() + ' ' + MONTHS[sunday.getMonth()];
+        const label = 'Semaine du ' + nextMonday.getDate() + ' ' + MONTH_NAMES[nextMonday.getMonth()] +
+                      ' au ' + sunday.getDate() + ' ' + MONTH_NAMES[sunday.getMonth()];
         nav.innerHTML =
             '<button type="button" id="dispo-week-prev" class="dispo-week-arrow" ' +
                 (dispoWeekIndex === 0 ? 'disabled ' : '') +

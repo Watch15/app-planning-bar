@@ -74,11 +74,18 @@
     // B2 — la plage de dates couverte par un horizon de `weeks` semaines, en chaînes
     // "YYYY-MM-DD" (le format stocké dans `availabilities.date`).
     //
-    // ⚠️ C'est LA fonction qui empêche l'asymétrie pastille/file de revenir. S-04 avait
-    // déjà corrigé cette asymétrie à la main sur l'axe du périmètre ; elle est revenue
-    // sur l'axe du temps (`/api/dispos/count` sans borne alors que la file en a une).
-    // Faire dériver la file, la pastille ET la borne de saisie du MÊME appel rend
-    // l'écart structurellement impossible plutôt que corrigé une fois de plus.
+    // ⚠️ C'est la fonction qui tient l'alignement pastille/file. S-04 avait déjà corrigé
+    // cette asymétrie à la main sur l'axe du périmètre ; elle est revenue sur l'axe du
+    // temps (`/api/dispos/count` sans borne alors que la file en a une). Faire dériver
+    // la file, la pastille ET la borne de saisie du MÊME calcul supprime la cause.
+    //
+    // ⚠️ Mais l'alignement n'est PAS garanti par le serveur, contrairement à ce que
+    // ce commentaire a d'abord affirmé : `GET /api/dispos/count` dérive sa plage
+    // côté serveur, tandis que `GET /api/dispos/pending` accepte encore le `from`/`to`
+    // du client. Les deux coïncident parce que les deux côtés appellent CETTE fonction,
+    // donc via une horloge locale — un appareil déréglé, autour de la bascule
+    // dimanche→lundi, peut demander une autre plage. Le vrai verrou serait que
+    // `pending` écrête sa plage sur `dispoHorizons(settings).y` comme `count` le fait.
     //
     // weeks=1 → exactement la semaine N+1, soit le comportement d'avant B2.
     function disposHorizonRange(now, weeks) {

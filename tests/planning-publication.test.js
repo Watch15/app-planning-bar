@@ -146,3 +146,100 @@ test('my-published-weeks : un compte sans profil staff obtient une liste vide', 
     const body = await (await req('/api/my-published-weeks', { role: 'patron' })).json();
     assert.deepEqual(body, []);
 });
+
+// ── La porte de lecture couvre les TROIS routes, pas seulement my-shifts ─────
+//
+// Constat de la revue d'altitude : le filtre de publication n'était posé que sur
+// `my-shifts`. Deux autres routes rendent des shifts à un compte staff — et l'une
+// d'elles rend le roster NOMINATIF et les TÉLÉPHONES. C'est le défaut de F-13 (un refus
+// sur une porte sur six) reproduit en lecture ; le remède est le même : une porte unique.
+
+const ROLE_RESP = '0123456789abcdef0123r001';
+
+function seedResponsable(shifts, settings = []) {
+    return makeDb({
+        shifts,
+        settings,
+        roles: [{ _id: ROLE_RESP, type: 'responsable', name: 'Responsable de soirée' }],
+        staff: [
+            { _id: STAFF_ID, name: 'Bob', venues: ['bar1'], roles: [ROLE_RESP] },
+            { _id: '0123456789abcdef0123zzzz', name: 'Zoé', venues: ['bar1'] },
+        ],
+        establishments: [{ id: 'bar1', name: 'Bar 1' }],
+    });
+}
+
+test('responsable-week : semaine en cours (publiée) → le roster remonte', async () => {
+    app.locals.setTestDb(seedResponsable([
+        shift(day(CUR, 2)),
+        { staff_id: '0123456789abcdef0123zzzz', staff_name: 'Zoé', establishment_id: 'bar1',
+          date: day(CUR, 2), start_time: 18, end_time: 24 },
+    ]));
+    const body = await (await req(
+        '/api/me/responsable-week?from=' + CUR + '&to=' + day(CUR, 6), STAFF)).json();
+    assert.equal(body.authorized, true);
+});
+
+test('responsable-week : semaine NON publiée → ni roster ni téléphones', async () => {
+    // La fuite la plus large des trois : cette route rend plus que `my-shifts`.
+    app.locals.setTestDb(seedResponsable([
+        shift(day(N1, 2)),
+        { staff_id: '0123456789abcdef0123zzzz', staff_name: 'Zoé', establishment_id: 'bar1',
+          date: day(N1, 2), start_time: 18, end_time: 24, phone: '0600000000' },
+    ]));
+    const body = await (await req(
+        '/api/me/responsable-week?from=' + N1 + '&to=' + day(N1, 6), STAFF)).json();
+    assert.equal(body.authorized, false, 'aucun brouillon, donc aucun contact');
+    assert.deepEqual(body.days, {});
+});
+
+test('joker-ouverts : un Joker d\'une semaine non publiée n\'est pas proposé', async () => {
+    // Le proposer reviendrait à annoncer un besoin sur un brouillon — et à laisser
+    // postuler dessus.
+    app.locals.setTestDb(seed([
+        { staff_id: '__joker__', is_joker: true, joker_open: true, establishment_id: 'bar1',
+          date: day(CUR, 2), start_time: 18, end_time: 24 },
+        { staff_id: '__joker__', is_joker: true, joker_open: true, establishment_id: 'bar1',
+          date: day(N1, 2), start_time: 18, end_time: 24 },
+    ]));
+    const body = await (await req('/api/shifts/joker-ouverts', STAFF)).json();
+    assert.deepEqual(body.map(j => j.date), [day(CUR, 2)]);
+});
+
+// ── La note de semaine est bornée comme la saisie ────────────────────────────
+
+const postNote = week_start => req('/api/dispos/week-note', STAFF, {
+    method: 'POST', body: JSON.stringify({ week_start, week_note: 'coucou' }),
+});
+const N2mon = toDateStr(weekStart(new Date(Date.now() + 14 * 864e5)));
+const N5mon = toDateStr(weekStart(new Date(Date.now() + 35 * 864e5)));
+
+test('week-note : une semaine hors horizon est refusée', async () => {
+    // Elle acceptait n'importe quel `week_start` : ni horizon, ni deadline.
+    app.locals.setTestDb(makeDb({
+        settings: [{ key: 'dispo', open: true, force_open: true, horizon_weeks: 2 }],
+        availabilities: [],
+    }));
+    assert.equal((await postNote(N5mon)).status, 403);
+});
+
+test('week-note : une semaine DANS l\'horizon passe', async () => {
+    const db = makeDb({
+        settings: [{ key: 'dispo', open: true, force_open: true, horizon_weeks: 2 }],
+        availabilities: [],
+    });
+    app.locals.setTestDb(db);
+    assert.equal((await postNote(N2mon)).status, 200);
+    assert.equal(db.collection('availabilities')._docs.length, 1);
+});
+
+test('week-note : règle A — deadline passée bloque N+1, pas N+2', async () => {
+    const db = makeDb({
+        settings: [{ key: 'dispo', open: true, force_open: false,
+                     custom_deadline: '2026-01-05T00:00', horizon_weeks: 4 }],
+        availabilities: [],
+    });
+    app.locals.setTestDb(db);
+    assert.equal((await postNote(N1)).status, 403, 'semaine figée');
+    assert.equal((await postNote(N2mon)).status, 200, 'semaine libre');
+});
