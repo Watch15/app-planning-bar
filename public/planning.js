@@ -967,8 +967,11 @@ function _kpiBarHtml(sent, total, big) {
     '</div>';
 }
 
-let _respKpiData = null;
-let _respKpiOpen = false;
+let _respKpiData  = null;
+let _respKpiOpen  = false;
+// B2 — les lundis de l'horizon de saisie, et celui qu'on regarde.
+let _respKpiWeeks = null;
+let _respKpiIndex = 0;
 
 function _respKpiInnerHtml() {
     const data = _respKpiData;
@@ -978,8 +981,33 @@ function _respKpiInnerHtml() {
     const o   = data.overall || { sent: 0, total: 0 };
     const pct = o.total > 0 ? Math.round((o.sent / o.total) * 100) : 0;
     const missing = data.missing || [];
-    let html = '<div id="resp-kpi-toggle" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;cursor:pointer" title="Voir qui n\'a pas envoyé">' +
-        '<span style="font-size:13px;font-weight:700;color:#1a1a2e">🗓️ Dispos envoyées — semaine prochaine</span>' +
+    // Libellé de la semaine regardée. « semaine prochaine » était écrit en dur : sur un
+    // horizon élargi, il aurait menti dès le premier clic sur la flèche.
+    const weeks = _respKpiWeeks || [];
+    const from  = weeks[_respKpiIndex];
+    let weekLbl = 'semaine prochaine';
+    if (from) {
+        const mon = new Date(from + 'T12:00:00');
+        const sun = addDays(mon, 6);
+        weekLbl = _respKpiIndex === 0
+            ? 'semaine prochaine'
+            : mon.getDate() + ' ' + MONTH_NAMES[mon.getMonth()] + ' → ' + sun.getDate() + ' ' + MONTH_NAMES[sun.getMonth()];
+    }
+    // Navigation seulement s'il y a plus d'une semaine saisissable.
+    let html = '';
+    if (weeks.length > 1) {
+        const arrow = (id, glyph, off) =>
+            '<button type="button" id="' + id + '"' + (off ? ' disabled' : '') +
+            ' style="padding:2px 10px;border-radius:7px;border:1px solid #e8eaed;background:#fff;color:inherit;font-size:13px;cursor:' +
+            (off ? 'default;opacity:.3' : 'pointer') + '">' + glyph + '</button>';
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">' +
+            arrow('resp-kpi-prev', '&#8592;', _respKpiIndex === 0) +
+            '<span style="font-size:11px;color:#888">semaine ' + (_respKpiIndex + 1) + ' sur ' + weeks.length + '</span>' +
+            arrow('resp-kpi-next', '&#8594;', _respKpiIndex >= weeks.length - 1) +
+        '</div>';
+    }
+    html += '<div id="resp-kpi-toggle" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;cursor:pointer" title="Voir qui n\'a pas envoyé">' +
+        '<span style="font-size:13px;font-weight:700;color:#1a1a2e">🗓️ Dispos envoyées — ' + weekLbl + '</span>' +
         '<span style="font-size:12px;color:#888;white-space:nowrap">' + pct + '% ' + (_respKpiOpen ? '▾' : '▸') + '</span>' +
     '</div>' + _kpiBarHtml(o.sent, o.total, true);
     const bars = (data.by_establishment || []).filter(b => b.total > 0 || b.sent > 0);
@@ -1014,20 +1042,27 @@ function _respKpiInnerHtml() {
     return html;
 }
 
-// KPI complétion des dispos (semaine prochaine), inséré en tête du tableau de bord
-// responsable. Le serveur scope déjà aux établissements du responsable. Cliquable
-// pour dérouler la liste des staff qui n'ont pas encore envoyé.
+// KPI complétion des dispos, en tête du tableau de bord responsable. Le serveur scope
+// déjà aux établissements du responsable. Cliquable pour dérouler la liste des staff
+// qui n'ont pas encore envoyé.
+//
+// B2 — il était FIGÉ sur la semaine prochaine. Depuis que le patron règle un horizon de
+// saisie, le staff peut envoyer ses dispos plusieurs semaines à l'avance : un responsable
+// bloqué sur N+1 ne pouvait pas voir qui manquait au-delà, alors que c'est justement là
+// qu'il reste du temps pour relancer.
+//
+// Borné sur l'horizon de SAISIE (X) et non sur celui de validation (Y) : au-delà de X,
+// personne n'a le droit d'envoyer quoi que ce soit, et le KPI afficherait 0/N pour des
+// semaines que nul ne pouvait remplir — un rouge qui n'accuse personne.
 async function renderRespDispoKpi(container) {
     if (!container) return;
     try {
-        const nextMonday = getMondayOf(addDays(new Date(), 7));
-        const from = toDateStr(nextMonday);
-        const to   = toDateStr(addDays(nextMonday, 6));
-        const res  = await fetch('/api/dispos/kpi?from=' + from + '&to=' + to, { credentials: 'include' });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!data.authorized) return;
-        _respKpiData = data;
+        if (!_respKpiWeeks) {
+            const sRes = await fetch('/api/dispo-settings', { credentials: 'include' });
+            const s    = sRes.ok ? await sRes.json() : {};
+            _respKpiWeeks = Week.disposHorizonMondays(new Date(), s.horizon_weeks || 1);
+        }
+        if (_respKpiIndex >= _respKpiWeeks.length) _respKpiIndex = 0;
 
         let block = container.querySelector('#resp-kpi-block');
         if (!block) {
@@ -1036,12 +1071,32 @@ async function renderRespDispoKpi(container) {
             block.style.cssText = 'margin:14px 12px 4px;background:#fff;border:1px solid #e8eaed;border-radius:14px;padding:14px 16px';
             container.insertBefore(block, container.firstChild);
         }
+
         const paint = () => {
             block.innerHTML = _respKpiInnerHtml();
             const t = block.querySelector('#resp-kpi-toggle');
             if (t) t.addEventListener('click', () => { _respKpiOpen = !_respKpiOpen; paint(); });
+            // Les flèches vivent HORS de la ligne repliable : à l'intérieur, un clic sur
+            // « semaine suivante » aurait aussi ouvert ou fermé la liste des manquants.
+            const p = block.querySelector('#resp-kpi-prev');
+            const n = block.querySelector('#resp-kpi-next');
+            if (p) p.addEventListener('click', () => { _respKpiIndex--; load(); });
+            if (n) n.addEventListener('click', () => { _respKpiIndex++; load(); });
         };
-        paint();
+
+        const load = async () => {
+            _respKpiIndex = Math.min(Math.max(_respKpiIndex, 0), _respKpiWeeks.length - 1);
+            const from = _respKpiWeeks[_respKpiIndex];
+            const to   = toDateStr(addDays(new Date(from + 'T12:00:00'), 6));
+            const res  = await fetch('/api/dispos/kpi?from=' + from + '&to=' + to, { credentials: 'include' });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (!data.authorized) return;
+            _respKpiData = data;
+            paint();
+        };
+
+        await load();
     } catch { /* silencieux */ }
 }
 

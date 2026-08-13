@@ -7168,10 +7168,14 @@ async function patchEachDispo(dispos, action, body) {
         await Promise.all(chains.slice(i, i + POOL).map(async chain => {
             for (const dispo of chain) { // séquentiel À L'INTÉRIEUR d'une même clé
                 try {
+                    // `body` peut être une FONCTION du dispo : la validation en masse
+                    // vise désormais l'établissement de CHAQUE personne, pas un bar
+                    // unique pour tout le lot.
+                    const payload = typeof body === 'function' ? body(dispo) : body;
                     const res = await fetch('/api/dispos/' + dispo._id + '/' + action, {
                         credentials: 'include', method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
-                        body: body ? JSON.stringify(body) : undefined,
+                        body: payload ? JSON.stringify(payload) : undefined,
                     });
                     if (res.ok) ok++; else failed++;
                 } catch { failed++; }
@@ -7200,26 +7204,37 @@ async function confirmDisposBatch(dispos, { preferStaffId, onDone, onCancel }) {
         const establishmentId = document.getElementById('confirm-dispo-establishment').value;
         const createShift     = document.getElementById('confirm-create-shift').checked;
 
-        // Garde-fou : affecter en masse à un bar où le staff ne travaille pas est
-        // possible mais rarement voulu — et si `create_shift` est coché, ça crée de
-        // vrais shifts. On le dit avant, avec le nombre exact.
-        // ⚠️ Confort d'alerte, PAS un contrôle : le serveur ne l'applique pas (cf. R-16).
+        // Chaque dispo part vers l'établissement de SA personne quand celui-ci est
+        // certain, c.-à-d. quand elle est rattachée à un seul bar. Sinon — aucun bar,
+        // ou plusieurs — on retombe sur celui choisi dans la modale : il n'y a alors
+        // aucune façon de deviner, et refuser bloquerait tout le lot.
+        // ⚠️ `venues` vide ne veut PAS dire « partout » (cf. `staffDispoOpen`) : c'est
+        // « rattachée à rien », et c'est le cas le plus fréquent en base aujourd'hui.
         const staffById = staffIndex();
-        const outsiders = new Set(dispos
-            .filter(d => d.type !== 'off')
-            .map(d => staffById.get(String(d.staff_id)))
-            .filter(sm => sm && Array.isArray(sm.venues) && !sm.venues.includes(establishmentId))
-            .map(sm => String(sm._id)));
-        if (outsiders.size) {
+        const venuesOf  = d => {
+            const sm = staffById.get(String(d.staff_id));
+            return (sm && Array.isArray(sm.venues)) ? sm.venues : [];
+        };
+        const targetFor = d => {
+            const v = venuesOf(d);
+            return v.length === 1 ? v[0] : establishmentId;
+        };
+
+        // On annonce ce qui va être affecté « faute de mieux », avec le nombre exact —
+        // c'est le seul endroit où le patron peut encore corriger le tir.
+        const fallbacks = new Set(dispos
+            .filter(d => d.type !== 'off' && venuesOf(d).length !== 1)
+            .map(d => String(d.staff_id)));
+        if (fallbacks.size) {
             const estabName = (allEstablishments.find(e => e.id === establishmentId) || {}).name || 'ce bar';
-            if (!await askConfirm(outsiders.size + ' membre(s) du lot ne sont pas rattachés à '
-                + estabName + '. Les affecter quand même ?')) return;
+            if (!await askConfirm(fallbacks.size + ' membre(s) du lot ne sont rattachés à aucun '
+                + 'établissement précis. Les affecter à ' + estabName + ' ?')) return;
         }
         modal.style.display = 'none';
         release();
 
         const { ok, failed } = await patchEachDispo(dispos, 'confirm',
-            { establishment_id: establishmentId, create_shift: createShift });
+            d => ({ establishment_id: targetFor(d), create_shift: createShift }));
         loadDisposBadge();
         if (createShift) await refreshWeek();
         batchToast(ok, 'confirmée(s)', failed);
