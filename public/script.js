@@ -381,6 +381,14 @@ async function init() {
     if (disposTabModify) disposTabModify.addEventListener('click', () => switchDisposTab('modify'));
     const disposTabConges = document.getElementById('dispos-tab-btn-conges');
     if (disposTabConges) disposTabConges.addEventListener('click', () => switchDisposTab('conges'));
+    const disposTabHistory = document.getElementById('dispos-tab-btn-history');
+    if (disposTabHistory) disposTabHistory.addEventListener('click', () => switchDisposTab('history'));
+    const histPrev = document.getElementById('history-prev');
+    const histNext = document.getElementById('history-next');
+    if (histPrev) histPrev.addEventListener('click', () => { historyWeekStart = addDays(historyWeekStart, -7); loadDisposHistory(); });
+    if (histNext) histNext.addEventListener('click', () => { historyWeekStart = addDays(historyWeekStart,  7); loadDisposHistory(); });
+    const histSearch = document.getElementById('history-search');
+    if (histSearch) histSearch.addEventListener('input', () => renderDisposHistory());
     const staffNotesPrev = document.getElementById('staff-notes-prev');
     if (staffNotesPrev) staffNotesPrev.addEventListener('click', () => {
         if (!staffNotesWeekStart) return;
@@ -6551,13 +6559,139 @@ async function loadModifyTab() {
     }
 }
 
+// ── F-12 — Historique des dispos (lecture seule) ─────────────────────────────
+//
+// Le journal ne sert que s'il est LISIBLE le jour du litige : chaque ligne doit se
+// comprendre sans décodage (« qui · quoi · quand »), pas afficher un diff JSON.
+let historyWeekStart = null;
+let historyEvents    = [];
+
+const HISTORY_ACTIONS = {
+    submit:        { label: 'a déclaré sa dispo',                    color: '#2980b9' },
+    update:        { label: 'a modifié sa dispo',                    color: '#e67e22' },
+    confirm:       { label: 'a validé',                              color: '#27ae60' },
+    reject:        { label: 'a refusé',                              color: '#e74c3c' },
+    ignore:        { label: 'a ignoré',                              color: '#95a5a6' },
+    purge_conge:   { label: 'dispo retirée — congé posé',            color: '#8e44ad' },
+    purge_absence: { label: 'dispo retirée — absence déclarée',      color: '#8e44ad' },
+    reopen:        { label: 'saisie effacée pour correction',        color: '#c0392b' },
+    template:      { label: 'pré-remplie par la semaine-type',       color: '#7f8c8d' },
+};
+
+const _histH = h => (h == null || h === '' ? '—'
+    : String(Math.floor(h % 24)).padStart(2, '0') + 'h'
+      + (Math.round((h % 1) * 60) ? String(Math.round((h % 1) * 60)).padStart(2, '0') : ''));
+
+const _histTypes  = { soir: 'Soir', midi: 'Midi', long: 'Long', custom: 'Horaires précis', off: 'Indisponible' };
+const _histStatus = { pending: 'en attente', confirmed: 'validée', rejected: 'refusée', ignored: 'ignorée' };
+
+// Rend un champ modifié en français. Les horaires sont regroupés (« 18h→24h ») parce
+// qu'ils changent presque toujours ensemble : deux lignes séparées se liraient mal.
+function _histFields(before, after) {
+    const b = before || {}, a = after || {};
+    const out = [];
+    const estab = id => {
+        const e = (allEstablishments || []).find(x => x.id === id);
+        return e ? (e.name || e.id) : id;
+    };
+    if (b.start_time !== undefined || b.end_time !== undefined
+        || a.start_time !== undefined || a.end_time !== undefined) {
+        const bs = _histH(b.start_time), be = _histH(b.end_time);
+        const as = _histH(a.start_time), ae = _histH(a.end_time);
+        out.push('horaires ' + bs + '→' + be + ' devenus ' + as + '→' + ae);
+    }
+    if (b.type !== undefined || a.type !== undefined)
+        out.push('type ' + (_histTypes[b.type] || b.type || '—') + ' → ' + (_histTypes[a.type] || a.type || '—'));
+    if (b.status !== undefined || a.status !== undefined)
+        out.push('statut ' + (_histStatus[b.status] || b.status || '—') + ' → ' + (_histStatus[a.status] || a.status || '—'));
+    if (b.establishment_id !== undefined || a.establishment_id !== undefined)
+        out.push('bar ' + (b.establishment_id ? estab(b.establishment_id) : '—')
+                 + ' → ' + (a.establishment_id ? estab(a.establishment_id) : '—'));
+    if (b.note !== undefined || a.note !== undefined)
+        out.push('note « ' + (b.note || '') + ' » → « ' + (a.note || '') + ' »');
+    return out;
+}
+
+async function loadDisposHistory() {
+    const list = document.getElementById('history-list');
+    if (!list) return;
+    if (!historyWeekStart) historyWeekStart = getMondayOf(addDays(new Date(), 7));
+    const from = toDateStr(historyWeekStart);
+    const to   = toDateStr(addDays(historyWeekStart, 6));
+    const lbl  = document.getElementById('history-week-label');
+    if (lbl) {
+        const MONTHS = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+        const end = addDays(historyWeekStart, 6);
+        lbl.textContent = 'Semaine du ' + historyWeekStart.getDate() + ' ' + MONTHS[historyWeekStart.getMonth()]
+                        + ' au ' + end.getDate() + ' ' + MONTHS[end.getMonth()];
+    }
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:#ccc;font-size:13px">Chargement…</div>';
+    try {
+        const res  = await fetch('/api/dispos/events?from=' + from + '&to=' + to + disposScopeQS('&'),
+            { credentials: 'include' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        historyEvents = Array.isArray(data) ? data : [];
+        renderDisposHistory();
+    } catch (e) {
+        list.innerHTML = '<div style="padding:16px;text-align:center;color:#e74c3c;font-size:13px">'
+            + escapeHtml(e.message || 'Erreur') + '</div>';
+    }
+}
+
+function renderDisposHistory() {
+    const list = document.getElementById('history-list');
+    if (!list) return;
+    const q = (document.getElementById('history-search')?.value || '').trim().toLowerCase();
+    const events = q
+        ? historyEvents.filter(e => (e.staff_name || '').toLowerCase().includes(q))
+        : historyEvents;
+
+    if (!events.length) {
+        list.innerHTML = '<div style="padding:24px;text-align:center;color:#ccc;font-size:13px">'
+            + (historyEvents.length ? 'Aucun résultat pour ce nom' : 'Aucun mouvement sur cette semaine')
+            + '</div>';
+        return;
+    }
+
+    const DAYS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
+    const frag = document.createDocumentFragment();
+    events.forEach(ev => {
+        const meta = HISTORY_ACTIONS[ev.action] || { label: ev.action, color: '#888' };
+        const d    = parseDate(ev.date);
+        const at   = new Date(ev.at);
+        const row  = document.createElement('div');
+        row.style.cssText = 'margin:8px 16px;padding:10px 12px;border-radius:10px;background:var(--color-bg-secondary,#f8f8f8);border:1px solid var(--color-border-secondary,#eee);border-left:3px solid ' + meta.color;
+        const details = _histFields(ev.before, ev.after);
+        row.innerHTML =
+            '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline">' +
+                '<span style="font-size:13px;font-weight:700;color:#333">' + escapeHtml(ev.staff_name || '—') +
+                    '<span style="font-weight:500;color:#888"> · ' + DAYS[d.getDay()] + ' ' + d.getDate() + '</span></span>' +
+                '<span style="font-size:11px;color:' + meta.color + ';font-weight:700">' + meta.label + '</span>' +
+            '</div>' +
+            (details.length
+                ? '<div style="font-size:12px;color:#555;margin-top:4px;line-height:1.5">' +
+                      details.map(escapeHtml).join('<br>') + '</div>'
+                : '') +
+            '<div style="font-size:10.5px;color:#aaa;margin-top:5px">par ' +
+                escapeHtml((ev.by && ev.by.name) || 'inconnu') +
+                ((ev.by && ev.by.role) ? ' (' + escapeHtml(ev.by.role) + ')' : '') +
+                ' · ' + at.toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) +
+            '</div>';
+        frag.appendChild(row);
+    });
+    list.innerHTML = '';
+    list.appendChild(frag);
+}
+
 function switchDisposTab(tab) {
     const isNotes    = tab === 'notes';
     const isReassign = tab === 'reassign';
     const isReminder = tab === 'reminder';
     const isModify   = tab === 'modify';
     const isConges   = tab === 'conges';
-    const isList     = !isNotes && !isReassign && !isReminder && !isModify && !isConges;
+    const isHistory  = tab === 'history';
+    const isList     = !isNotes && !isReassign && !isReminder && !isModify && !isConges && !isHistory;
 
     document.getElementById('dispos-tab-list').style.display  = isList ? '' : 'none';
     document.getElementById('dispos-tab-notes').style.display = isNotes ? '' : 'none';
@@ -6569,6 +6703,8 @@ function switchDisposTab(tab) {
     if (tabModify) tabModify.style.display = isModify ? '' : 'none';
     const tabConges = document.getElementById('dispos-tab-conges');
     if (tabConges) tabConges.style.display = isConges ? '' : 'none';
+    const tabHistory = document.getElementById('dispos-tab-history');
+    if (tabHistory) tabHistory.style.display = isHistory ? '' : 'none';
 
     const btnList     = document.getElementById('dispos-tab-btn-list');
     const btnNotes    = document.getElementById('dispos-tab-btn-notes');
@@ -6605,6 +6741,19 @@ function switchDisposTab(tab) {
         btnConges.style.borderBottomColor = isConges ? 'var(--accent)' : 'transparent';
         btnConges.style.color             = isConges ? 'var(--accent)' : 'var(--text-secondary)';
         btnConges.style.fontWeight        = isConges ? '600' : '500';
+    }
+    const btnHistory = document.getElementById('dispos-tab-btn-history');
+    if (btnHistory) {
+        btnHistory.style.borderBottomColor = isHistory ? 'var(--accent)' : 'transparent';
+        btnHistory.style.color             = isHistory ? 'var(--accent)' : 'var(--text-secondary)';
+        btnHistory.style.fontWeight        = isHistory ? '600' : '500';
+    }
+    if (isHistory) {
+        // Ouvre sur la semaine en cours de collecte — celle dont on discute.
+        historyWeekStart = getMondayOf(addDays(new Date(), 7));
+        const s = document.getElementById('history-search');
+        if (s) s.value = '';
+        loadDisposHistory();
     }
     if (isConges) loadCongesList();
     if (isNotes) {

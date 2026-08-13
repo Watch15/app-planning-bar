@@ -364,6 +364,62 @@ async function main() {
         await setHorizon(initial.horizon_weeks || 1, initial.validation_horizon_weeks || 1);
     }
 
+    // ── F-12 : journal d'audit des dispos ────────────────────────────────────
+    //
+    // Contre un vrai Mongo, et pas seulement en `fake-db` : l'index TTL n'existe que là,
+    // et c'est lui qui EST la politique de conservation annoncée dans la politique de
+    // confidentialité. Un journal sans TTL, c'est de la donnée salarié sans base légale.
+    {
+        const evFrom = D(0), evTo = D(6);
+        const events = async () => (await req('pat', `/api/dispos/events?from=${evFrom}&to=${evTo}`)).data;
+
+        // ⚠️ Ce bloc est AUTOPORTANT : il provoque lui-même les changements qu'il observe.
+        // Première écriture, il s'appuyait sur la dispo postée par le §9.1 — et tombait
+        // au premier lancement, parce que si cette dispo existait DÉJÀ à l'identique le
+        // journal n'écrit (à juste titre) rien. Même piège que la deadline du §9.1 :
+        // une vérification qui dépend de l'état ambiant ne prouve rien de reproductible.
+        // Deux valeurs distinctes A et B : passer de l'une à l'autre change forcément
+        // quelque chose, quel que soit l'état de départ.
+        const posteDir = (h1, h2) => req('dir', '/api/dispos', { method: 'POST', body: {
+            dispos: [{ date: D(0), type: 'soir', start_time: h1, end_time: h2 }] } });
+
+        await check('F-12', 'modifier une dispo laisse une trace', async () => {
+            await posteDir(17, 24);                       // état A (quel qu'ait été l'avant)
+            const avant = (await events()).length;
+            await posteDir(19, 25);                       // état B ≠ A ⇒ vrai changement
+            const apres = (await events()).length;
+            if (apres <= avant) throw new Error('aucune trace pour une vraie modification');
+            return avant + ' → ' + apres;
+        });
+
+        await check('F-12', 'chaque événement porte qui · quoi · quand', async () => {
+            const ev = await events();
+            const e  = ev[ev.length - 1];
+            if (!e) throw new Error('journal vide');
+            for (const champ of ['staff_id', 'date', 'at', 'by', 'action'])
+                if (e[champ] === undefined) throw new Error('champ manquant : ' + champ);
+            if (!e.before || !e.after) throw new Error('delta absent');
+            return e.action + ' par ' + (e.by.role || '?');
+        });
+
+        await check('F-12', 'ré-enregistrer À L\'IDENTIQUE n\'ajoute rien', async () => {
+            // La propriété qui garde le journal lisible : sans elle, chaque clic sur
+            // « Mettre à jour » ajouterait 7 lignes « rien n'a changé ».
+            const avant = (await events()).length;
+            await posteDir(19, 25);                       // on est déjà en B
+            const apres = (await events()).length;
+            return eq(apres, avant, 'événements');
+        });
+
+        await check('F-12', 'le staff n\'accède pas au journal', async () =>
+            eq((await req('bru', `/api/dispos/events?from=${evFrom}&to=${evTo}`)).status, 403, 'status'));
+
+        await check('F-12', 'la plage est respectée', async () => {
+            const r = await req('pat', '/api/dispos/events?from=2020-01-01&to=2020-01-31');
+            return eq(Array.isArray(r.data) ? r.data.length : -1, 0, 'événements hors plage');
+        });
+    }
+
     // ── Congés (F-10) ────────────────────────────────────────────────────────
     await check('F-10', 'congés en attente visibles du patron', async () => {
         const r = await req('pat', `/api/conges?from=${FROM}&to=${D(30)}`);

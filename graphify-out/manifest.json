@@ -1,12 +1,12 @@
 {
   "lib/utils.js": {
-    "mtime": 1786620058.2969577,
-    "ast_hash": "f208dea36b7199940ce5adba288c0b74",
+    "mtime": 1786622826.2198799,
+    "ast_hash": "83ead2a272d24806ac392d5ac1a16ac4",
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1786618590.1904132,
-    "ast_hash": "0efdfcb3baf9507a011901886a16902b",
+    "mtime": 1786622798.248845,
+    "ast_hash": "3ad2ef8187f6ca38390e0e93e3e15490",
     "semantic_hash": ""
   },
   "public/lib/shift-hours.js": {
@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "public/script.js": {
-    "mtime": 1786621565.1255927,
-    "ast_hash": "190a915d431b8e734ac4f43dcd37f228",
+    "mtime": 1786622961.143773,
+    "ast_hash": "536d0438675329eac4dfb09675eb5178",
     "semantic_hash": ""
   },
   "public/sw.js": {
@@ -75,8 +75,8 @@
     "semantic_hash": ""
   },
   "server.js": {
-    "mtime": 1786620058.2969577,
-    "ast_hash": "87280ba5a09fae883c65e4a267ad08cf",
+    "mtime": 1786622851.8008382,
+    "ast_hash": "6d70bd524a22961707490abb1f53368f",
     "semantic_hash": ""
   },
   "tests/routes.test.js": {
@@ -115,8 +115,8 @@
     "semantic_hash": ""
   },
   "docs/backlog.md": {
-    "mtime": 1786622010.3337493,
-    "ast_hash": "bd0605c560c31035d95bfe333d82eed0",
+    "mtime": 1786623526.5391068,
+    "ast_hash": "f440fdaa5cd3b119eba2823575d896b2",
     "semantic_hash": ""
   },
   "docs/prd.md": {
@@ -130,8 +130,8 @@
     "semantic_hash": "b08e527857ae0b58a84a24cdd1f2fd8a"
   },
   "public/index.html": {
-    "mtime": 1786354559.9295082,
-    "ast_hash": "d5b9b6095bdc4615863e19d63c9ae0bc",
+    "mtime": 1786622891.367776,
+    "ast_hash": "3acf17d249b6ff34d97027c47a4eca1b",
     "semantic_hash": ""
   },
   "public/login.html": {
@@ -155,9 +155,9 @@
     "semantic_hash": ""
   },
   "public/politique-confidentialite.html": {
-    "mtime": 1777644144.1339507,
-    "ast_hash": "412ddfda21af6b43077481acd7433bbf",
-    "semantic_hash": "412ddfda21af6b43077481acd7433bbf"
+    "mtime": 1786622992.2473707,
+    "ast_hash": "20fe9b7c1372dcd4b3b3202ea601dac6",
+    "semantic_hash": ""
   },
   "public/icons/icon-192.png": {
     "mtime": 1781250746.238068,
@@ -220,8 +220,8 @@
     "semantic_hash": ""
   },
   "tests/helpers/fake-db.js": {
-    "mtime": 1786619827.707097,
-    "ast_hash": "81c978b99addf89cd274335e0cce4633",
+    "mtime": 1786622782.5216272,
+    "ast_hash": "8bbce1ce9b6a5c0e33c21af6fd504980",
     "semantic_hash": ""
   },
   "tests/manager-off.test.js": {
@@ -270,8 +270,8 @@
     "semantic_hash": ""
   },
   "scripts/smoke.js": {
-    "mtime": 1786620592.466573,
-    "ast_hash": "9f6d2723fb3dd532f632ed8e79b928f3",
+    "mtime": 1786623073.33581,
+    "ast_hash": "c3794c9aefc25da4505a291d56901051",
     "semantic_hash": ""
   },
   "tests/estab-access.test.js": {
@@ -327,6 +327,11 @@
   "docs/design-b2-horizon-saisie.md": {
     "mtime": 1786620703.0033786,
     "ast_hash": "548eb4231fbe2199a7d0a7b5e5963ae5",
+    "semantic_hash": ""
+  },
+  "tests/dispo-audit.test.js": {
+    "mtime": 1786622727.9132228,
+    "ast_hash": "4053ca08ca827d636006940b72a82eab",
     "semantic_hash": ""
   }
 }

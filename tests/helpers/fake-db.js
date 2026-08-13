@@ -149,8 +149,31 @@ function makeCollection(initialDocs) {
             return found ? { ...found } : null;
         },
         find(query)               {
-            const res = docs.filter(d => matchDoc(d, query)).map(d => ({ ...d }));
-            return { sort() { return this; }, limit() { return this; }, async toArray() { return res.slice(); } };
+            let res = docs.filter(d => matchDoc(d, query)).map(d => ({ ...d }));
+            return {
+                // 10e lacune (2026-08-13) : `sort` était un no-op. Les routes qui trient
+                // rendaient donc l'ordre d'INSERTION, et tout test sur l'ordre passait ou
+                // échouait par accident. F-12 lit un journal — un litige se lit dans
+                // l'ordre où les choses se sont passées, donc l'ordre EST le comportement.
+                // Champ absent = trié en dernier (Mongo le met en premier en ascendant ;
+                // l'écart est assumé, aucun tri du projet ne porte sur un champ optionnel).
+                sort(spec) {
+                    const keys = Object.entries(spec || {});
+                    if (keys.length) res.sort((a, b) => {
+                        for (const [k, dir] of keys) {
+                            const av = a[k], bv = b[k];
+                            if (av === bv) continue;
+                            if (av === undefined || av === null) return 1;
+                            if (bv === undefined || bv === null) return -1;
+                            return (av < bv ? -1 : 1) * (dir < 0 ? -1 : 1);
+                        }
+                        return 0;
+                    });
+                    return this;
+                },
+                limit(n) { if (typeof n === 'number' && n >= 0) res = res.slice(0, n); return this; },
+                async toArray() { return res.slice(); },
+            };
         },
         // Mongo attribue toujours un _id : le simuler est nécessaire dès qu'une route
         // réutilise l'`insertedId` (ex. createManagerStaffProfile, dont le retour
@@ -236,7 +259,14 @@ function makeCollection(initialDocs) {
                     matchedCount++;
                     if (update.$set) { Object.assign(docs[idx], update.$set); modifiedCount++; }
                 } else if (upsert) {
-                    docs.push({ ...plainEq(filter), ...(update.$setOnInsert || {}), ...(update.$set || {}) });
+                    // 9e lacune (2026-08-13) : l'upsert de `bulkWrite` ne posait pas d'`_id`,
+                    // alors qu'`insertOne` le fait depuis une session précédente pour
+                    // exactement la même raison. Conséquence : une dispo créée par
+                    // `POST /api/dispos` (qui passe par bulkWrite) n'avait pas d'identifiant,
+                    // donc AUCUNE des routes qui la prennent par `_id` — confirm, reject,
+                    // ignore — n'était testable sur un document réellement créé par la route.
+                    docs.push({ ...plainEq(filter), ...(update.$setOnInsert || {}),
+                        ...(update.$set || {}), _id: nextObjectIdHex() });
                     upsertedCount++;
                 }
             }

@@ -1200,6 +1200,20 @@
             <button id="dispos-tab-btn-modify"   style="background:none;border:none;border-bottom:2px solid transparent;padding:10px 12px;min-height:40px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap">Modifier</button>
             <button id="dispos-tab-btn-notes"    style="background:none;border:none;border-bottom:2px solid transparent;padding:10px 12px;min-height:40px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap">Notes</button>
             <button id="dispos-tab-btn-conges"   style="background:none;border:none;border-bottom:2px solid transparent;padding:10px 12px;min-height:40px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap">Congés <span id="conges-tab-badge" style="display:none;background:#ef4444;color:white;font-size:10px;font-weight:700;border-radius:10px;min-width:16px;height:16px;line-height:16px;padding:0 5px;text-align:center;vertical-align:middle;margin-left:2px"></span></button>
+            <button id="dispos-tab-btn-history"  style="background:none;border:none;border-bottom:2px solid transparent;padding:10px 12px;min-height:40px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap">Historique</button>
+        </div>
+        <!-- F-12 — journal d'audit, LECTURE SEULE : aucun bouton d'action ici, c'est
+             ce qui lui donne sa valeur de preuve. -->
+        <div id="dispos-tab-history" style="display:none">
+            <div style="padding:10px 16px;border-bottom:1px solid var(--light-border);display:flex;align-items:center;gap:8px;justify-content:center">
+                <button class="week-arrow" id="history-prev" style="padding:4px 12px;border-radius:8px;border:1.5px solid var(--light-border);background:transparent;color:inherit;font-size:15px;cursor:pointer">&#8592;</button>
+                <span class="week-label" id="history-week-label" style="font-size:13px;font-weight:700;text-align:center;flex:1"></span>
+                <button class="week-arrow" id="history-next" style="padding:4px 12px;border-radius:8px;border:1.5px solid var(--light-border);background:transparent;color:inherit;font-size:15px;cursor:pointer">&#8594;</button>
+            </div>
+            <div style="padding:8px 16px 0">
+                <input type="text" id="history-search" placeholder="Filtrer par nom…" style="width:100%;border:1.5px solid var(--light-border);border-radius:8px;padding:8px 10px;font-size:13px;box-sizing:border-box;background:var(--light-bg);color:var(--text-primary);font-family:inherit">
+            </div>
+            <div id="history-list"></div>
         </div>
         <div id="dispos-tab-conges" style="display:none">
             <div style="padding:10px 16px;border-bottom:1px solid var(--light-border);display:flex;flex-direction:column;gap:8px">

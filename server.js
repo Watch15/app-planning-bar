@@ -18,7 +18,7 @@ const {
     validateOffPeriod, scopeManagerOff, resolvePerfSettings, pickStaffColor, buildTemplateDispos,
     datesCoveredByPeriods, dispoDeadlineWaived, shouldMaterializeTemplate,
     disposHorizonRange, disposHorizonMondays, clampHorizonWeeks, DISPO_HORIZON_MAX,
-    dispoMateriallyDiffers, staffReopenedFor,
+    dispoMateriallyDiffers, staffReopenedFor, dispoEventDelta,
 } = require('./lib/utils');
 
 // Sentry — initialisation conditionnelle (ne se charge que si SENTRY_DSN fourni).
@@ -344,6 +344,16 @@ async function connectDB() {
         db.collection('availabilities').createIndex(
             { status: 1, staff_id: 1, date: 1 }
         ).catch(e => console.warn('⚠️ Index availabilities.status+staff_id+date:', e.message));
+        // F-12 — journal d'audit. Le TTL EST la politique de conservation : sans lui, une
+        // donnée salarié gardée « à titre de preuve » s'accumulerait sans limite ni base
+        // légale. 3 ans, cf. politique-confidentialite.html.
+        db.collection('dispo_events').createIndex(
+            { at: 1 }, { expireAfterSeconds: DISPO_EVENT_TTL_DAYS * 24 * 60 * 60 }
+        ).catch(e => console.warn('⚠️ TTL dispo_events:', e.message));
+        // Lecture : « l'historique de cette personne sur cette semaine ».
+        db.collection('dispo_events').createIndex(
+            { staff_id: 1, date: 1, at: -1 }
+        ).catch(e => console.warn('⚠️ Index dispo_events.staff_id+date:', e.message));
         // Une seule instance par base doit porter le cron (cf. CRON_ENABLED).
         if (CRON_ENABLED) {
             scheduleDailyAt10();
@@ -543,6 +553,68 @@ async function notifyPatrons(payload) {
     } catch (e) { console.error('❌ notifyPatrons error:', e.message); }
 }
 
+
+// ── F-12 — Journal d'audit des dispos ─────────────────────────────────────────
+//
+// Besoin : arbitrer « j'avais mis dispo » / « non ». Avant, RIEN n'était conservé —
+// `POST /api/dispos` upserte sur `(staff_id, date)` et écrase l'ancienne version sans
+// trace, `confirm`/`reject` écrasent le statut sur place, et trois chemins SUPPRIMENT
+// des dispos en silence (purge congé, réouverture, absence directeur).
+//
+// Collection `dispo_events`, **append-only** : on n'y modifie ni n'y supprime jamais rien
+// à la main. C'est ce qui lui donne sa valeur de preuve ; un journal réinscriptible n'en
+// est pas un.
+//
+// Keyé sur `(staff_id, date)` et NON sur l'`_id` de la dispo : deux chemins la
+// suppriment puis la recréent, donc l'`_id` ne survit pas à ce qu'on veut justement
+// tracer. `staff_name` est dénormalisé pour que le journal reste lisible même après
+// suppression du profil (`DELETE /api/staff/:id` purge les `availabilities`).
+//
+// Durée de conservation : 3 ans (décision du 2026-08-13), calée sur la prescription des
+// créances de salaire — la fenêtre où le litige peut devenir chiffré. Consignée dans
+// `public/politique-confidentialite.html`, comme l'exige une donnée salarié gardée à
+// titre de preuve.
+const DISPO_EVENT_TTL_DAYS = 3 * 365;
+
+// Qui agit. Le rôle est figé au login (cf. R-17) mais c'est justement ce qu'on veut
+// consigner : le rôle SOUS LEQUEL le geste a été fait.
+function auditActor(req) {
+    const u = (req && req.session && req.session.user) || {};
+    return { user_id: u._id ? String(u._id) : null, role: u.role || null, name: u.name || '' };
+}
+
+// LA porte d'écriture. Une seule, pour la même raison qu'en F-14 : les 8 points
+// d'accrochage divergeraient s'ils construisaient chacun leur document.
+//
+// ⚠️ Elle n'ÉCHOUE JAMAIS vers l'appelant. Auditer est second par rapport à enregistrer :
+// si Mongo refuse l'insertion du journal, le staff doit quand même pouvoir déclarer ses
+// dispos. L'erreur part dans les logs, pas dans la réponse HTTP.
+//
+// `changes` : [{ staff_id, staff_name, date, before, after }] — `before`/`after` sont les
+// documents (ou `null` en création/suppression) ; le delta est calculé ICI, donc aucun
+// appelant ne peut se tromper sur ce qu'il faut comparer.
+async function recordDispoEvents(action, actor, changes) {
+    if (!db || !Array.isArray(changes) || changes.length === 0) return 0;
+    try {
+        const at   = new Date();
+        const docs = [];
+        for (const c of changes) {
+            const delta = dispoEventDelta(c.before, c.after);
+            if (!delta) continue;              // rien n'a bougé → rien à consigner
+            docs.push({
+                staff_id: String(c.staff_id), staff_name: c.staff_name || '',
+                date: c.date, at, by: actor, action,
+                before: delta.before, after: delta.after,
+            });
+        }
+        if (docs.length === 0) return 0;
+        await db.collection('dispo_events').insertMany(docs);
+        return docs.length;
+    } catch (e) {
+        console.error('[dispo_events] journal non écrit:', e.message);
+        return 0;
+    }
+}
 
 // ── Helpers semaine ───────────────────────────────────────────────────────────
 // Wrappers vers lib/utils.js (testés). Conservés pour compatibilité avec les
@@ -3484,10 +3556,19 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
             dispos2       = split.kept;
             skippedConges = split.skippedDates;
             // Purger d'éventuelles dispos déjà posées sur ces jours de congé.
-            if (skippedConges.length)
-                await db.collection('availabilities').deleteMany({
+            // F-12 : les LIRE avant de les supprimer — c'était l'un des trois chemins qui
+            // faisaient disparaître une dispo sans laisser la moindre trace.
+            if (skippedConges.length) {
+                const purgeFilter = {
                     staff_id: staffId, date: { $in: skippedConges }, type: { $ne: 'week_note' },
-                });
+                };
+                const purged = await db.collection('availabilities').find(purgeFilter).toArray();
+                await db.collection('availabilities').deleteMany(purgeFilter);
+                await recordDispoEvents('purge_conge', auditActor(req), purged.map(p => ({
+                    staff_id: staffId, staff_name: req.session.user.name || '',
+                    date: p.date, before: p, after: null,
+                })));
+            }
         }
         // Ce qui n'a PAS été enregistré, dit une seule fois : jours de congé (ci-dessus)
         // et jours de la semaine figée par la deadline (règle A). Un lot partiellement
@@ -3518,6 +3599,10 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
             }).toArray()).map(p => [p.date, {
                 status: p.status, establishment_id: p.establishment_id,
                 type: p.type, start_time: p.start_time, end_time: p.end_time,
+                // F-12 : la note fait partie de ce qu'on doit pouvoir prouver
+                // (« j'avais précisé que je finissais tôt »), même si elle ne libère
+                // aucun créneau (cf. `dispoMateriallyDiffers`, qui l'exclut à dessein).
+                note: p.note,
             }]));
         // Modifiable jusqu'à la deadline : on UPSERT par (staff_id, date) — une seule
         // dispo par jour. Re-soumettre met à jour le type/les horaires/la note et
@@ -3543,6 +3628,31 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
         }));
         const result = await db.collection('availabilities').bulkWrite(ops, { ordered: false });
         const n = (result.upsertedCount || 0) + (result.modifiedCount || 0);
+
+        // F-12 — consigner ce que cet enregistrement vient de changer. `submit` (le jour
+        // n'avait rien) et `update` (il avait déjà une dispo) sont séparés : c'est la
+        // première question qu'on pose devant un litige.
+        // ⚠️ `establishment_id` est RECOPIÉ de l'avant : l'upsert n'y touche pas, et
+        // l'omettre ferait consigner une désaffectation qui n'a jamais eu lieu.
+        const actor = auditActor(req);
+        const auditName = req.session.user.name || '';
+        const evSubmit = [], evUpdate = [];
+        dispos2.forEach(d => {
+            const prev = prevByDate.get(d.date) || null;
+            (prev ? evUpdate : evSubmit).push({
+                staff_id: staffId, staff_name: auditName, date: d.date, before: prev,
+                after: {
+                    type:       d.type || 'custom',
+                    start_time: d.start_time != null ? parseFloat(d.start_time) : null,
+                    end_time:   d.end_time   != null ? parseFloat(d.end_time)   : null,
+                    note:       d.note || '',
+                    status:     'pending',
+                    establishment_id: prev ? prev.establishment_id : null,
+                },
+            });
+        });
+        await recordDispoEvents('submit', actor, evSubmit);
+        await recordDispoEvents('update', actor, evUpdate);
 
         // B2 — libérer les créneaux dont la dispo validée vient d'être modifiée.
         // Trois conditions cumulées, et c'est la troisième qui compte : une dispo
@@ -3673,6 +3783,33 @@ app.get('/api/dispos/count', checkDB, requirePatron, async (req, res) => {
             ...(await pendingScopeFilter(req.session.user, req.query.scope)),
         });
         res.json({ count, from: range.from, to: range.to });
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+// F-12 — lecture du journal d'audit. LECTURE SEULE : `recordDispoEvents` est le seul
+// écrivain, et rien ne modifie ni ne supprime un événement (le TTL s'en charge).
+app.get('/api/dispos/events', checkDB, requirePatron, async (req, res) => {
+    const { staff_id, from, to } = req.query;
+    if (!from || !to) return res.status(400).json({ error: 'from et to requis' });
+    try {
+        const query = { date: { $gte: from, $lte: to } };
+        const scope = await pendingScopeFilter(req.session.user, req.query.scope);
+        // ⚠️ Le piège : `Object.assign(query, scope)` ÉCRASERAIT un `staff_id` demandé
+        // par le périmètre — ou l'inverse. Un directeur aurait alors lu l'historique de
+        // n'importe qui en le nommant explicitement, c.-à-d. S-04 contourné par l'audit.
+        // On teste donc l'appartenance au lieu de fusionner deux contraintes homonymes.
+        if (staff_id) {
+            const allowed = scope.staff_id ? scope.staff_id.$in.includes(String(staff_id)) : true;
+            if (!allowed) return res.status(403).json({ error: 'Accès refusé à l\'historique de ce membre' });
+            query.staff_id = String(staff_id);
+        } else {
+            Object.assign(query, scope);
+        }
+        // Chronologique : un litige se lit dans l'ordre où les choses se sont passées.
+        // Borné, pour qu'une plage large ne rende pas une réponse ingérable.
+        const events = await db.collection('dispo_events')
+            .find(query).sort({ date: 1, at: 1 }).limit(500).toArray();
+        res.json(events);
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
@@ -3951,11 +4088,15 @@ app.post('/api/dispos/reopen-for-correction', checkDB, requirePatron, denyObserv
     if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to))
         return res.status(400).json({ error: 'from/to invalides (YYYY-MM-DD)' });
     try {
-        const del = await db.collection('availabilities').deleteMany({
-            staff_id,
-            date: { $gte: from, $lte: to },
-            type: { $ne: 'week_note' },
-        });
+        // F-12 : rouvrir pour correction EFFACE la saisie précédente. C'est exactement
+        // la version qu'un litige réclamera — « qu'est-ce qu'il avait mis, avant qu'on
+        // lui demande de recommencer ? ».
+        const reopenFilter = { staff_id, date: { $gte: from, $lte: to }, type: { $ne: 'week_note' } };
+        const wiped = await db.collection('availabilities').find(reopenFilter).toArray();
+        const del = await db.collection('availabilities').deleteMany(reopenFilter);
+        await recordDispoEvents('reopen', auditActor(req), wiped.map(w => ({
+            staff_id, staff_name: w.staff_name, date: w.date, before: w, after: null,
+        })));
         // B2 — cette route CONNAISSAIT déjà la semaine à rouvrir (`from`) et la jetait :
         // la réouverture qu'elle posait ne disait pas pour quoi elle avait été posée.
         // Elle la porte maintenant.
@@ -4003,6 +4144,12 @@ app.patch('/api/dispos/:id/confirm', checkDB, requirePatron, denyObservateurEdit
         const setFields = { status: 'confirmed' };
         if (!isOff) setFields.establishment_id = establishment_id;
         await db.collection('availabilities').updateOne({ _id: new ObjectId(req.params.id) }, { $set: setFields });
+        // F-12 — confirmer, c'est AFFECTER à un bar autant que valider : les deux
+        // changements partent dans le même événement, via le delta.
+        await recordDispoEvents('confirm', auditActor(req), [{
+            staff_id: dispo.staff_id, staff_name: dispo.staff_name, date: dispo.date,
+            before: dispo, after: { ...dispo, ...setFields },
+        }]);
         let shiftCreated = false;
         if (create_shift && !isOff) {
             // Idempotence : ne pas recréer un shift si ce staff en a déjà un ce jour-là
@@ -4037,6 +4184,10 @@ app.patch('/api/dispos/:id/reject', checkDB, requirePatron, denyObservateurEdit,
         if (!dispo) return res.status(404).json({ error: 'Dispo introuvable' });
         const result = await db.collection('availabilities').updateOne({ _id: new ObjectId(req.params.id) }, { $set: { status: 'rejected' } });
         if (result.matchedCount === 0) return res.status(404).json({ error: 'Dispo introuvable' });
+        await recordDispoEvents('reject', auditActor(req), [{
+            staff_id: dispo.staff_id, staff_name: dispo.staff_name, date: dispo.date,
+            before: dispo, after: { ...dispo, status: 'rejected' },
+        }]);
         res.json({ message: 'Dispo refusée' });
         touchLastUpdated();
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
@@ -4045,11 +4196,19 @@ app.patch('/api/dispos/:id/reject', checkDB, requirePatron, denyObservateurEdit,
 app.patch('/api/dispos/:id/ignore', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     try {
+        // F-12 : lire avant d'écraser — cette route était la seule des trois décisions à
+        // ne pas relire la dispo, donc la seule dont on ne pouvait pas dire ce qu'elle
+        // avait remplacé.
+        const dispo = await db.collection('availabilities').findOne({ _id: new ObjectId(req.params.id) });
         const result = await db.collection('availabilities').updateOne(
             { _id: new ObjectId(req.params.id) },
             { $set: { status: 'ignored' } }
         );
         if (result.matchedCount === 0) return res.status(404).json({ error: 'Dispo introuvable' });
+        if (dispo) await recordDispoEvents('ignore', auditActor(req), [{
+            staff_id: dispo.staff_id, staff_name: dispo.staff_name, date: dispo.date,
+            before: dispo, after: { ...dispo, status: 'ignored' },
+        }]);
         res.json({ message: 'Dispo ignorée' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -4180,11 +4339,19 @@ app.post('/api/me/manager-off', checkDB, requireDirecteur, async (req, res) => {
         // il resterait « dispo » un jour où il vient de se déclarer absent. Les SHIFTS
         // éventuellement déjà créés par le patron ne sont PAS touchés — le planning
         // reste sa décision, à lui de le retirer s'il le souhaite.
-        if (req.session.user.staff_id)
-            await db.collection('availabilities').deleteMany({
+        // F-12 : troisième et dernier chemin qui supprimait des dispos sans trace.
+        if (req.session.user.staff_id) {
+            const offFilter = {
                 staff_id: req.session.user.staff_id,
                 date: { $gte: start, $lte: end }, type: { $ne: 'week_note' },
-            });
+            };
+            const purged = await db.collection('availabilities').find(offFilter).toArray();
+            await db.collection('availabilities').deleteMany(offFilter);
+            await recordDispoEvents('purge_absence', auditActor(req), purged.map(p => ({
+                staff_id: req.session.user.staff_id, staff_name: p.staff_name,
+                date: p.date, before: p, after: null,
+            })));
+        }
         res.status(201).json({ message: 'Absence enregistrée', _id: insertedId });
         touchLastUpdated();
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
@@ -4300,6 +4467,11 @@ async function materializeManagerTemplateWeek(staffId, staffName, template, week
         status: 'pending', created_at: now, updated_at: now,
     }));
     if (docs.length) await db.collection('availabilities').insertMany(docs);
+    // F-12 — ces dispos partent dans la file du patron sans que le directeur ait fait le
+    // moindre geste ce jour-là. C'est le cas où « je n'ai jamais saisi ça » est vrai :
+    // l'acteur consigné est le MODÈLE, pas la personne.
+    await recordDispoEvents('template', { user_id: null, role: 'system', name: 'Semaine-type' },
+        docs.map(d => ({ staff_id: staffId, staff_name: staffName, date: d.date, before: null, after: d })));
     return docs.length;
 }
 
