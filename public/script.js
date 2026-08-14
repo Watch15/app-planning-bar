@@ -7812,17 +7812,21 @@ function renderRestDaysTab() {
         ? ['L', 'M', 'M', 'J', 'V', 'S', 'D']
         : ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
     const REST_VALUES = [1, 2, 3, 4, 5, 6, 0];
-    const colW  = portrait ? '28px' : '44px';
-    const pad   = portrait ? '5px 8px' : '7px 14px';
-    const hpad  = portrait ? '6px 8px 4px' : '8px 14px 6px';
-    const COL   = '1fr repeat(7,' + colW + ')';
-    const cbSz  = portrait ? '14px' : '16px';
-    const nameFz = portrait ? '12px' : '13px';
+    // En portrait, le nom passe sur SA PROPRE LIGNE et les 7 jours se partagent toute la
+    // largeur. Avant, la grille était `1fr repeat(7,28px)` : 7 colonnes de 28px espacées de
+    // 2px, avec des cases de 14px dedans. On visait mercredi, on cochait jeudi. Répartir la
+    // largeur est ce qui permet d'atteindre les 44px de cible tactile sans écraser le nom.
+    const pad   = portrait ? '8px 10px 10px' : '7px 14px';
+    const hpad  = portrait ? '6px 10px 4px' : '8px 14px 6px';
+    const COL   = portrait ? 'repeat(7,1fr)' : '1fr repeat(7,44px)';
+    const cbSz  = portrait ? '22px' : '16px';
+    const nameFz = '13px';
 
     // En-tête sticky
     const header = document.createElement('div');
     header.style.cssText = 'display:grid;grid-template-columns:' + COL + ';gap:0 2px;align-items:center;padding:' + hpad + ';border-bottom:2px solid #ececec;font-size:10px;font-weight:600;color:#aaa;position:sticky;top:0;background:#fff;z-index:1;';
-    header.innerHTML = '<span>Membre</span>' +
+    // Pas de colonne « Membre » en portrait : le nom n'est plus dans la grille des jours.
+    header.innerHTML = (portrait ? '' : '<span>Membre</span>') +
         REST_LABELS.map(l => '<span style="text-align:center">' + escapeHtml(l) + '</span>').join('');
     container.appendChild(header);
 
@@ -7839,14 +7843,19 @@ function renderRestDaysTab() {
         row.style.cssText = 'display:grid;grid-template-columns:' + COL + ';gap:0 2px;align-items:center;padding:' + pad + ';border-bottom:1px solid #f5f5f5;';
 
         const nameEl = document.createElement('span');
-        nameEl.style.cssText = 'font-size:' + nameFz + ';font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+        nameEl.style.cssText = 'font-size:' + nameFz + ';font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'
+            + (portrait ? 'grid-column:1/-1;margin-bottom:2px;' : '');
         nameEl.title = staff.name;
         nameEl.innerHTML = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + escapeHtml(staff.color) + ';margin-right:5px;vertical-align:middle;flex-shrink:0"></span>' + escapeHtml(staff.name);
         row.appendChild(nameEl);
 
         REST_VALUES.forEach(dayVal => {
-            const cell = document.createElement('div');
-            cell.style.cssText = 'display:flex;justify-content:center;align-items:center;';
+            // `label` et non `div` : le navigateur bascule nativement la case contenue quand
+            // on touche N'IMPORTE OÙ dans le label. C'est ce qui donne une cible de 44px sans
+            // écouteur maison, et ça reste une case à cocher pour l'accessibilité.
+            const cell = document.createElement('label');
+            cell.style.cssText = 'display:flex;justify-content:center;align-items:center;cursor:pointer;'
+                + (portrait ? 'min-height:44px;border-radius:8px;' : '');
             const cb = document.createElement('input');
             cb.type = 'checkbox';
             cb.dataset.day = String(dayVal);

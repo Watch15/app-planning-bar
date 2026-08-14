@@ -340,6 +340,40 @@
         }
 
         /* ════════════════════════════════════════════════════════════
+           TÉLÉPHONE EN PORTRAIT — cibles tactiles de « Gestion du staff »
+           La modale passait bien en bottom-sheet, mais son CONTENU restait dessiné
+           pour la souris : cases à cocher de 14px, filtres de 32px de haut, et un
+           panneau à hauteur fixe imbriqué dans une feuille déjà défilante.
+           Rien de tout ça n'est visable au doigt ; 44px est le minimum tenable.
+
+           ⚠️ Portrait UNIQUEMENT. En paysage la hauteur utile tombe sous 500px et
+           imposer 44px partout y ferait déborder la feuille — c'est pourquoi ce bloc
+           ne réutilise pas le `max-width: 768px` ci-dessus, qui matche les deux.
+           ════════════════════════════════════════════════════════════ */
+        @media (max-width: 768px) and (orientation: portrait) {
+
+            /* Le panneau « Jours de repos » portait son propre `max-height:460px` en
+               style inline : sur un écran de téléphone c'est presque toute la hauteur,
+               donc DEUX ascenseurs imbriqués. On pousse la liste, l'interne défile,
+               arrive en butée, et la feuille ne bouge pas. Un seul ascenseur suffit. */
+            #staff-tab-repos { max-height: none !important; overflow-y: visible !important; }
+
+            /* 16px sur les champs n'est pas un choix esthétique : en dessous, iOS zoome
+               à la mise au point et décale toute la feuille sous le doigt. */
+            .staff-manage-filters input,
+            .staff-manage-filters select {
+                height: 44px !important;
+                font-size: 16px !important;
+            }
+            .staff-input {
+                padding: 11px 12px !important;
+                font-size: 16px !important;
+            }
+            .btn-add-staff   { min-height: 44px !important; }
+            .staff-color-pick { width: 44px !important; height: 44px !important; }
+        }
+
+        /* ════════════════════════════════════════════════════════════
            MODE PAYSAGE TÉLÉPHONE — compact et pleinement exploitable
            Cible : téléphones en paysage (hauteur ≤ 500px, toute largeur)
            ════════════════════════════════════════════════════════════ */
