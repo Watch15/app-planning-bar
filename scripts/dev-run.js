@@ -13,16 +13,24 @@
 const { spawn } = require('child_process');
 const path = require('path');
 
-const [target, ...rest] = process.argv.slice(2);
+// `--env <fichier>` en tête choisit l'environnement ; sans lui, `.env.dev`. Ajouté parce
+// que seul le côté `dev` était outillé alors que `smoke:dev`/`smoke:main` et
+// `db:uri:dev`/`db:uri:main` existent en paire — l'asymétrie envoyait vers un
+// `npm run main:seed` inexistant, puis vers une commande à composer à la main.
+const argv = process.argv.slice(2);
+let envFile = null;
+if (argv[0] === '--env') { envFile = argv[1]; argv.splice(0, 2); }
+
+const [target, ...rest] = argv;
 if (!target) {
-    console.error('Usage : node scripts/dev-run.js <fichier.js> [args…]');
+    console.error('Usage : node scripts/dev-run.js [--env .env.main] <fichier.js> [args…]');
     process.exit(1);
 }
 
 const child = spawn(process.execPath, [target, ...rest], {
     stdio: 'inherit',
     cwd: path.resolve(__dirname, '..'),
-    env: { ...process.env, ENV_FILE: process.env.ENV_FILE || '.env.dev' },
+    env: { ...process.env, ENV_FILE: envFile || process.env.ENV_FILE || '.env.dev' },
 });
 
 // Sans ceci, tuer ce lanceur laisse `node server.js` ORPHELIN : il continue de tourner,

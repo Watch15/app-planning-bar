@@ -9,6 +9,7 @@
     "init": "node scripts/init-db.js",
     "seed": "node scripts/seed.js",
     "dev:seed": "node scripts/dev-run.js scripts/seed-dev.js",
+    "main:seed": "node scripts/dev-run.js --env .env.main scripts/seed-dev.js",
     "seed:all": "node scripts/seed-all.js",
     "dev:server": "node scripts/dev-run.js server.js",
     "smoke": "node scripts/smoke.js",
