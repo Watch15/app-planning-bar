@@ -36,7 +36,12 @@
 
 const bcrypt = require('bcryptjs');
 const { openDb, APP_COLLECTIONS } = require('./_db');
-const { toDateStr, weekStart, chargeMultiplier, normName } = require('../lib/utils');
+const {
+    toDateStr, weekStart, chargeMultiplier, normName, hashToken,
+    // Les trois fonctions qui définissent l'horizon et l'audit CÔTÉ PRODUIT. Les
+    // re-dériver à la main ici, c'était semer un jeu décalé de ce que l'app ouvre.
+    disposHorizonRange, clampHorizonWeeks, dispoEventDelta, staffReopenedFor,
+} = require('../lib/utils');
 
 const PASSWORD = process.env.SEED_PASSWORD || 'Demo2026!';
 const MAIL_DOMAIN = 'demo.templyo.fr';
@@ -48,6 +53,21 @@ const MAIL_DOMAIN = 'demo.templyo.fr';
 // précisément l'écran que ce jeu de données existe pour vendre.
 const CHARGE_RATE = 45;
 const CHARGE_MULT = chargeMultiplier(CHARGE_RATE);
+
+// Horizon de collecte des dispos (B2). SANS ce réglage le défaut est 1 : le patron ne
+// peut ouvrir que la semaine N+1, et toute la planification à l'avance — la question que
+// pose systématiquement un prospect qui gère plusieurs établissements — reste invisible.
+// X = semaines de SAISIE, Y = semaines de VALIDATION (Y est borné à X par le serveur).
+//
+// ⚠️ L'horizon est ancré sur **N+1**, pas sur la semaine courante (`disposWeekStart`).
+// X = 4 ouvre donc N+1 → N+4. C'est `disposHorizonRange` qui en fait foi, et c'est d'elle
+// que ce script dérive la fin de ses plannings : le calculer à la main donnait N+3, donc
+// une 4ᵉ semaine ouverte au staff et vide de tout — le prospect cliquait sur la dernière
+// semaine de l'horizon et tombait sur du blanc.
+const HORIZON_WEEKS    = 4;
+const VALIDATION_WEEKS = 2;
+if (clampHorizonWeeks(HORIZON_WEEKS) !== HORIZON_WEEKS || VALIDATION_WEEKS > HORIZON_WEEKS)
+    throw new Error('Horizon invalide : le serveur le ramènerait à ' + clampHorizonWeeks(HORIZON_WEEKS));
 
 // ── Aléatoire REPRODUCTIBLE ───────────────────────────────────────────────────
 // Math.random() ferait raconter une histoire différente à chaque passage : impossible
@@ -112,6 +132,15 @@ const STAFF = [
     // horaire) et ses vacations sont marquées `extra: true` — le récap mensuel les
     // isole. C'est le cas qui montre les deux modes de rémunération côte à côte.
     { name: 'Loïc Vidal',      color: '#7f8c8d', venues: [C, B, R], roles: [],                      groups: [],          fixed: 95, extra: true },
+    // Partie il y a trois semaines. `archived: true` (F-13) : elle disparaît des dispos,
+    // des relances et de la planification, mais ses heures passées restent dans le récap
+    // mensuel et dans la masse salariale. C'est LE cas du turnover en restauration, et il
+    // était invisible tant que personne n'était archivé. `leftWeeksAgo` n'est pas un champ
+    // du modèle : c'est LE fait à saisir, et `archived` en est la conséquence, dérivée
+    // plus bas. Porter les deux à la main laissait poser l'un sans l'autre — quelqu'un
+    // d'archivé mais encore planifié sur trois semaines, en silence.
+    { name: 'Marion Ferrand',  color: '#95a5a6', venues: [B, C],    roles: ['Chef de rang'],        groups: ['Salle'],   rate: 12.4,
+      leftWeeksAgo: 3 },
 ];
 
 // La directrice a un VRAI profil staff (E-22 modèle A) : planifiable, comptée en paie,
@@ -136,8 +165,11 @@ const SERVICES = {
     [C]: { closed: [],
            slots:   [{ start: 17, end: 24, resp: true }, { start: 18, end: 26 }],
            weekend: [{ start: 20, end: 26 }] },
+    // La Brasserie désigne DEUX responsables par jour, un par service : c'est le cas que
+    // D-56 a ouvert (« plusieurs responsables de soirée par jour ») et qui ne se voyait
+    // nulle part tant que chaque journée n'en portait qu'un.
     [B]: { closed: [0],
-           slots:   [{ start: 11,   end: 16 },
+           slots:   [{ start: 11,   end: 16,   resp: true },
                      { start: 11.5, end: 16 },
                      { start: 18,   end: 24.5, resp: true },
                      { start: 18.5, end: 24.5 },
@@ -186,6 +218,16 @@ async function run() {
         const thisMon   = weekStart(now);
         const nextMon   = weekStart(addDays(now, 7));
         const nextSun   = addDays(nextMon, 6);
+        // Le planning couvre EXACTEMENT l'horizon que l'app ouvre au staff — même
+        // fonction, donc pas de semaine ouverte et vide. Au-delà de N+1 il n'est
+        // volontairement qu'ébauché (cf. `ossatureFrom`).
+        const horizon    = disposHorizonRange(now, HORIZON_WEEKS);
+        const horizonEnd = new Date(horizon.to + 'T12:00:00');
+        // Frontière du remplissage : à partir de N+2, on ne pose plus que l'ossature.
+        // Une date-chaîne comparée comme partout ailleurs dans ce fichier (`date < today`),
+        // et la MÊME expression que celle affichée en fin de script — le récap ne peut
+        // donc pas mentir sur ce que le jeu contient.
+        const ossatureFrom = toDateStr(addDays(nextSun, 1));
         // On remonte au 1er du mois précédent OU à 6 semaines en arrière, le plus
         // lointain des deux : le récap mensuel du mois passé doit être COMPLET,
         // sinon la première chose que le prospect ouvre est un tableau tronqué.
@@ -218,6 +260,7 @@ async function run() {
             // `fixed_rate_snapshot` d'abord, poser les deux rendrait le taux horaire mort.
             if (s.fixed != null) doc.fixed_rate = s.fixed;
             else doc.hourly_rate = s.rate;
+            if (s.leftWeeksAgo) doc.archived = true;   // F-13 — cf. NOT_ARCHIVED côté serveur
             if (s === DIRECTOR) { doc.is_manager = true; doc.email = 'directeur@' + MAIL_DOMAIN; }
             return doc;
         });
@@ -232,6 +275,11 @@ async function run() {
         staffDefs.forEach((s, i) => {
             s.id = String(staffIns.insertedIds[i]);
             s.hours = 0;  // heures cumulées, pour affecter le moins chargé (cf. plus bas)
+            // Date de départ d'un archivé : on cesse de le planifier à partir de là, mais
+            // tout ce qu'il a fait avant reste. Posée SUR la définition, comme `id` et
+            // `hours` — une table `leftOn` séparée aurait été un quatrième index de la
+            // même population, et keyée par nom là où le reste cible par `_id`.
+            if (s.leftWeeksAgo) s.leftOn = toDateStr(weekStart(addDays(now, -7 * s.leftWeeksAgo)));
             sid[s.name] = s.id;
         });
 
@@ -250,17 +298,43 @@ async function run() {
             { email: 'patron@' + MAIL_DOMAIN,    role: 'patron',      name: 'Paul Mercier', staff: null,          estabs: [] },
             { email: 'directeur@' + MAIL_DOMAIN, role: 'directeur',   name: DIRECTOR.name,  staff: DIRECTOR.name, estabs: [C, R] },
             { email: 'comptable@' + MAIL_DOMAIN, role: 'observateur', name: 'Odile Bassin', staff: null,          estabs: [] },
-            ...STAFF.map(s => ({
+            // Les archivés n'ont plus de compte : ils sont partis. Le KPI « Dispos
+            // envoyées » les exclut de toute façon (`NOT_ARCHIVED`), mais leur laisser un
+            // accès contredirait ce que la démo raconte.
+            ...STAFF.filter(s => !s.leftWeeksAgo).map(s => ({
                 email: slug(s.name) + '@' + MAIL_DOMAIN, role: 'staff',
                 name: s.name, staff: s.name, estabs: [],
             })),
+            // Invitation ENVOYÉE, PAS ENCORE ACCEPTÉE. `active: false` est ce qui la range
+            // dans l'onglet « ⚠️ Invitations en attente » de la modale Comptes
+            // (`script.js:4691`), jusqu'ici toujours vide — alors que « comment j'ajoute
+            // quelqu'un ? » est la question que pose tout prospect.
+            { email: 'nouveau@' + MAIL_DOMAIN, role: 'staff', name: 'Théo Lambert',
+              staff: null, estabs: [], pendingInvite: true },
         ];
-        const userIns = await db.collection('users').insertMany(accounts.map(a => ({
-            email: a.email, role: a.role, name: a.name,
-            staff_id: a.staff ? sid[a.staff] : null,
-            assigned_establishments: a.estabs,
-            password_hash: hash, active: true, created_at: new Date(),
-        })));
+        const userIns = await db.collection('users').insertMany(accounts.map(a => {
+            const doc = {
+                email: a.email, role: a.role, name: a.name,
+                staff_id: a.staff ? sid[a.staff] : null,
+                assigned_establishments: a.estabs,
+                active: !a.pendingInvite, created_at: new Date(),
+            };
+            // Un invité n'a pas encore de mot de passe : il en pose un via son lien.
+            // Le jeton est stocké HACHÉ (`hashToken`), comme le fait `server.js:1643` —
+            // en clair, la base contiendrait un identifiant de connexion utilisable.
+            if (a.pendingInvite) {
+                doc.invite_token   = hashToken('demo-invite-' + a.email);
+                // 24 h, comme le chemin e-mail du serveur (`server.js:1671`, et le corps
+                // du mail l'annonce). Les 7 jours sont réservés au chemin SMS. Envoyée il
+                // y a 2 h : encore valable pendant la démo, sans inventer une durée que
+                // le produit ne pose jamais.
+                doc.created_at     = addDays(now, -2 / 24);
+                doc.invite_expires = addDays(doc.created_at, 1);
+            } else {
+                doc.password_hash = hash;
+            }
+            return doc;
+        }));
         // Seule l'absence de la directrice référence un compte : un index des 15
         // ressemblerait à une table générale à maintenir alors qu'il porte une valeur.
         const directorUserId = String(userIns.insertedIds[accounts.findIndex(a => a.role === 'directeur')]);
@@ -295,8 +369,15 @@ async function run() {
         });
 
         // ── Génération des plannings ──────────────────────────────────────────
-        // Du 1er du mois précédent au dimanche de la semaine PROCHAINE : les semaines
-        // futures existent donc en base mais restent NON PUBLIÉES → brouillon.
+        // Du 1er du mois précédent au dimanche de N+3. Les semaines futures existent en
+        // base mais restent NON PUBLIÉES → brouillon.
+        //
+        // Le degré de remplissage décroît avec l'éloignement, comme dans la vraie vie :
+        //   N et N+1        → complet    (N publiée, N+1 le brouillon qu'on publie en direct)
+        //   N+2 et au-delà  → OSSATURE   (seuls les créneaux `resp` sont posés)
+        // Un patron ne monte pas quatre semaines d'affilée au créneau près ; il place
+        // d'abord ses responsables. Remplir les semaines lointaines à fond aurait aussi
+        // vidé la file de dispos de son sens — il ne resterait plus rien à arbitrer.
         const shifts = [];
         const wageByEstabDate = {};   // (estab|date) → masse salariale brute pointée
         const eligible = {};          // estab → [définitions] des gens pouvant y travailler
@@ -322,14 +403,15 @@ async function run() {
                 : (shift.real_end - shift.real_start) * def.rate;
         }
 
-        for (let d = new Date(histStart); d <= nextSun; d = addDays(d, 1)) {
+        for (let d = new Date(histStart); d <= horizonEnd; d = addDays(d, 1)) {
             const date = toDateStr(d);
             const dow  = dowOf(d);
             const past = date < today;
             const busyToday = new Set();   // personne ne fait deux services le même jour
 
             for (const estab of ESTABS) {
-                const slots = slotsFor(estab.id, dow);
+                let slots = slotsFor(estab.id, dow);
+                if (date >= ossatureFrom) slots = slots.filter(s => s.resp);
                 if (!slots.length) continue;
 
                 // Vivier du jour : éligible, pas en congé. L'extra n'est appelé qu'en
@@ -338,6 +420,7 @@ async function run() {
                 // occupation, lui, est refait à chaque créneau (`free` ci-dessous).
                 const usable = eligible[estab.id].filter(s =>
                     !blocked.has(s.id + '|' + date)
+                    && !(s.leftOn && date >= s.leftOn)
                     && (s.extra !== true || (WEEKEND.includes(dow) && rnd() < 0.2)));
 
                 for (const slot of slots) {
@@ -426,17 +509,35 @@ async function run() {
         // réparties sur les 3 établissements : la directrice, limitée au Comptoir et
         // au Rooftop, en voit moins que le patron — c'est le périmètre par
         // établissement qu'on montre en basculant de compte.
+        // La colonne `sem` porte la semaine visée (1 = N+1). Une seule table pour tout
+        // l'horizon : elle était scindée en deux jumelles parcourues par deux boucles
+        // identiques, et il fallait comparer deux blocs distants pour voir que la file
+        // décroît à mesure qu'on s'éloigne. Ici ça se lit d'un coup d'œil.
+        // Toutes les semaines de l'horizon DOIVENT être représentées, sinon l'app en
+        // ouvre une que le prospect trouvera vide.
+        //           qui                sem  jours          type      début  fin
         const dispoPlan = [
-            ['Alice Rambert',  [0, 1, 3, 4], 'soir',   18, 26],
-            ['Bruno Peyre',    [1, 2, 5],    'midi',   11, 17],
-            ['Chloé Marchand', [0, 2, 4, 5], 'soir',   18, 24.5],
-            ['Elena Costa',    [3, 4],       'custom', 16, 23],
-            ['Farid Benali',   [2, 4, 5],    'soir',   17, 26],
-            ['Gaëlle Nunès',   [4, 5],       'soir',   19, 26],
-            ['Hugo Delaunay',  [1, 2, 3],    'midi',   11, 16],
-            ['Inès Traoré',    [0, 5],       'soir',   17, 24],
-            ['Kenza Amrani',   [2, 3, 6],    'soir',   18, 24.5],
-            [DIRECTOR.name,    [0, 2],       'soir',   17, 24],   // E-22 : même file que tous
+            // Le jour 0 d'Alice est volontairement absent : c'est celui que le journal
+            // d'audit raconte, et il est semé plus bas dans son état d'arrivée.
+            ['Alice Rambert',   1, [1, 3, 4],    'soir',   18, 26],
+            ['Bruno Peyre',     1, [1, 2, 5],    'midi',   11, 17],
+            ['Chloé Marchand',  1, [0, 2, 4, 5], 'soir',   18, 24.5],
+            ['Elena Costa',     1, [3, 4],       'custom', 16, 23],
+            ['Farid Benali',    1, [2, 4, 5],    'soir',   17, 26],
+            ['Gaëlle Nunès',    1, [4, 5],       'soir',   19, 26],
+            ['Hugo Delaunay',   1, [1, 2, 3],    'midi',   11, 16],
+            ['Inès Traoré',     1, [0, 5],       'soir',   17, 24],
+            ['Kenza Amrani',    1, [2, 3, 6],    'soir',   18, 24.5],
+            [DIRECTOR.name,     1, [0, 2],       'soir',   17, 24],   // E-22 : même file que tous
+            ['Alice Rambert',   2, [0, 2, 4],    'soir',   18, 26],
+            ['Farid Benali',    2, [3, 4, 5],    'soir',   17, 26],
+            ['Chloé Marchand',  2, [1, 4],       'soir',   18, 24.5],
+            ['Kenza Amrani',    2, [2, 5],       'midi',   11, 16],
+            ['Bruno Peyre',     3, [1, 3],       'midi',   11, 17],
+            ['Elena Costa',     3, [4, 5],       'soir',   18, 26],
+            ['Hugo Delaunay',   3, [2],          'midi',   11, 16],
+            ['Alice Rambert',   4, [1, 4],       'soir',   18, 26],
+            ['Gaëlle Nunès',    4, [5],          'soir',   19, 26],
         ];
         const dispos = [];
 
@@ -457,10 +558,11 @@ async function run() {
             });
         }
 
-        for (const [who, days, type, s, e] of dispoPlan) {
+        for (const [who, sem, days, type, s, e] of dispoPlan) {
+            const mon = weekStart(addDays(now, 7 * sem));
             for (const off of days) {
                 dispos.push({
-                    staff_id: sid[who], staff_name: who, date: toDateStr(addDays(nextMon, off)),
+                    staff_id: sid[who], staff_name: who, date: toDateStr(addDays(mon, off)),
                     type, start_time: s, end_time: e, note: '', status: 'pending',
                     created_at: addDays(now, -3), updated_at: addDays(now, -3),
                 });
@@ -478,6 +580,51 @@ async function run() {
             type: 'soir', start_time: 18, end_time: 24.5, status: 'confirmed',
             establishment_id: B, created_at: addDays(now, -4),
         });
+
+        // Note de semaine : un commentaire libre attaché à la SEMAINE, pas à un jour.
+        // Stocké dans la même collection avec `type: 'week_note'` et `week_start` — c'est
+        // pourquoi toutes les requêtes de dispos excluent ce type (`server.js:755`).
+        dispos.push({
+            staff_id: sid['Elena Costa'], staff_name: 'Elena Costa',
+            week_start: toDateStr(nextMon), type: 'week_note',
+            week_note: 'Je peux dépanner au Rooftop si besoin, prévenez-moi la veille.',
+            created_at: addDays(now, -3),
+        });
+        // ── Journal d'audit des dispos (F-12) ─────────────────────────────────
+        // Append-only, conservé 3 ans : c'est la preuve « qui a modifié quoi, et quand ».
+        //
+        // Le journal est GÉNÉRÉ à partir des états successifs, par `dispoEventDelta` — la
+        // fonction que le serveur utilise lui-même. Les deltas étaient écrits à la main :
+        // en plus de réencoder un format qui peut changer (`DISPO_AUDIT_FIELDS`), le
+        // journal affirmait une dispo confirmée à 17 h alors que la dispo réellement semée
+        // pour ce jour-là était en attente à 18 h. L'écran vendu comme « preuve »
+        // contredisait la file de validation ouverte deux étapes plus tôt.
+        //
+        // Ici l'état final EST le document inséré dans `availabilities` : la contradiction
+        // est devenue structurellement impossible.
+        const alice  = staffDefs.find(s => s.name === 'Alice Rambert');
+        const jour   = toDateStr(nextMon);
+        const events = [];
+        let etat = null;
+        const journal = (action, by, at, apres) => {
+            const d = dispoEventDelta(etat, apres);
+            if (d) events.push({
+                staff_id: alice.id, staff_name: alice.name, date: jour,
+                at, by, action, before: d.before, after: d.after,
+            });
+            etat = apres;
+        };
+        const parElle = { user_id: null, role: 'staff', name: alice.name };
+        const parDiane = { user_id: directorUserId, role: 'directeur', name: DIRECTOR.name };
+        journal('submit',  parElle,  addDays(now, -3), { type: 'soir', start_time: 18, end_time: 26, status: 'pending' });
+        journal('update',  parElle,  addDays(now, -2), { type: 'soir', start_time: 17, end_time: 26, status: 'pending' });
+        journal('confirm', parDiane, addDays(now, -1), { type: 'soir', start_time: 17, end_time: 26, status: 'confirmed', establishment_id: C });
+        dispos.push({
+            staff_id: alice.id, staff_name: alice.name, date: jour, note: '',
+            created_at: addDays(now, -3), updated_at: addDays(now, -1), ...etat,
+        });
+        writes.push(db.collection('dispo_events').insertMany(events));
+
         writes.push(db.collection('availabilities').insertMany(dispos));
 
         // La semaine-type de la directrice PRÉ-REMPLIT ses dispos, elle ne les envoie
@@ -504,7 +651,20 @@ async function run() {
         const deadlineSunday = toDateStr(addDays(thisMon, 6)) + 'T23:00';
         const settings = [
             { key: 'dispo', open: true, force_open: false, message: null,
-              custom_deadline: deadlineSunday, force_open_staff: [] },
+              custom_deadline: deadlineSunday,
+              // Horizon B2 : saisie sur 4 semaines, validation sur 2. Absents, ces deux
+              // réglages retombent à 1 (`clampHorizonWeeks`) et la planification à
+              // l'avance disparaît de la démo — c'est ce qui manquait.
+              horizon_weeks: HORIZON_WEEKS, validation_horizon_weeks: VALIDATION_WEEKS,
+              // Réouverture NOMINATIVE (E-15) posée pour Jonas sur la semaine N+1.
+              // ⚠️ Elle ne DÉBLOQUE personne ici, et c'est voulu : la deadline visant le
+              // dimanche 23 h, `computeEffectiveDeadline` la ramène toujours dans la
+              // semaine courante, donc elle n'est pratiquement jamais franchie (cf. le
+              // commentaire de `deadlineSunday`). L'entrée est là pour que le réglage
+              // soit VISIBLE dans l'écran du patron, pas pour lever un blocage.
+              // La forme `{ staff_id, week_start }` est celle que lit `staffReopenedFor` ;
+              // une chaîne nue est l'ancienne forme, encore acceptée mais à ne pas semer.
+              force_open_staff: [{ staff_id: sid['Jonas Weber'], week_start: toDateStr(nextMon) }] },
             // Objectif global + surcharges par établissement : un rooftop et une
             // brasserie n'ont pas la même structure de coût, et l'app le sait.
             // ⚠️ Ces valeurs sont calées SUR LES DONNÉES générées (médiane du coefficient
@@ -522,12 +682,19 @@ async function run() {
             // La semaine PROCHAINE n'a volontairement PAS de doc publish_ : c'est le
             // brouillon qu'on publiera en direct devant le prospect.
         ];
+        // Relire la forme avec la fonction du produit plutôt que de la croire correcte.
+        // `force_open_staff` accepte deux formes (objet et chaîne legacy) : une faute de
+        // frappe sur une clé passerait sans bruit et ne se verrait qu'en démo.
+        if (!staffReopenedFor(settings[0], sid['Jonas Weber'], toDateStr(nextMon)))
+            throw new Error('force_open_staff : forme non reconnue par staffReopenedFor');
         writes.push(db.collection('settings').insertMany(settings));
 
         // ── Notifications ─────────────────────────────────────────────────────
         // Le compte affiché est DÉRIVÉ de `sent_to` : il était écrit « 11 membre(s) »
         // pour 13 destinataires, et le message contredisait la donnée juste en dessous.
-        const rappelTo = staffDefs.map(s => s.id);
+        // Les archivés sont exclus : le serveur ne relance jamais quelqu'un qui est parti
+        // (`DISPO_TARGET` porte `NOT_ARCHIVED`), le journal ne doit pas dire le contraire.
+        const rappelTo = staffDefs.filter(s => !s.leftWeeksAgo).map(s => s.id);
         writes.push(db.collection('notifications').insertOne({
             type: 'rappel_dispo',
             message: 'Rappel dispos envoyé à ' + rappelTo.length + ' membre(s) — semaine du ' + toDateStr(nextMon),
@@ -554,7 +721,9 @@ async function run() {
         console.log('\n╭─ Base « ' + dbName + ' » prête pour la démo');
         console.log('│  ' + ESTABS.length + ' établissements · ' + staffDefs.length + ' membres · '
             + shifts.length + ' shifts (' + pointed + ' pointés) · ' + revenues.length + ' jours de CA');
-        console.log('│  Historique du ' + toDateStr(histStart) + ' au ' + toDateStr(nextSun));
+        console.log('│  Plannings du ' + toDateStr(histStart) + ' au ' + horizon.to
+            + ' (complets jusqu\'au ' + toDateStr(nextSun) + ', ossature à partir du ' + ossatureFrom + ')');
+        const valid = disposHorizonRange(now, VALIDATION_WEEKS);
         console.log('│');
         console.log('│  Mot de passe commun : ' + PASSWORD);
         accounts.filter(a => a.role !== 'staff')
@@ -564,12 +733,24 @@ async function run() {
         console.log('╰─ Déroulé de démo suggéré :\n');
         [
             'Planning, semaine courante — la semaine est publiée, l\'équipe la voit. Basculer entre les 3 établissements.',
+            // Le chiffre annoncé doit être CELUI QUE L'ÉCRAN MONTRE : la file du patron
+            // est bornée par l'horizon de VALIDATION (`server.js:3837`), pas par le total
+            // des dispos semées. Compter brut annonçait 44 pour un écran à 39.
             'Semaine suivante — elle est en BROUILLON. Ouvrir la file de dispos ('
-                + dispos.filter(d => d.status === 'pending').length
-                + ' en attente), en valider quelques-unes, puis publier. C\'est le cycle complet.',
+                + dispos.filter(d => d.status === 'pending'
+                    && d.date >= valid.from && d.date <= valid.to).length
+                + ' en attente sur les ' + VALIDATION_WEEKS + ' semaines validables), en valider'
+                + ' quelques-unes, puis publier. C\'est le cycle complet.',
+            'Planifier À L\'AVANCE — la saisie est ouverte sur ' + HORIZON_WEEKS + ' semaines ('
+                + horizon.from + ' → ' + horizon.to + '). À partir de N+2 le planning n\'a que'
+                + ' son ossature — les responsables sont posés, le reste non — et la file de'
+                + ' dispos s\'y remplit déjà.',
             'Se connecter en directrice (directeur@' + MAIL_DOMAIN + ') — elle ne voit que Le Comptoir et Le Rooftop, et ses propres dispos passent par la même validation.',
             'Onglet Congés — une demande de Chloé Marchand attend une réponse ; David Ferry est déjà en congé cette semaine et apparaît grisé.',
             'Joker ouvert samedi au Rooftop — 2 candidatures reçues, en retenir une en un clic.',
+            'Gestion du staff — Marion Ferrand est ARCHIVÉE : partie il y a 3 semaines, elle sort des dispos et du planning mais ses heures restent au récap. Le turnover, en clair.',
+            'Modale Comptes, onglet « Invitations en attente » — Théo Lambert a été invité et n\'a pas encore posé son mot de passe.',
+            'Historique d\'une dispo (F-12) — Alice a saisi, corrigé, puis la directrice a validé : qui a fait quoi, et quand.',
             'Pointage — comparer planifié et réel sur les semaines passées : c\'est là que les heures non facturées apparaissent.',
             'Performance — CA, masse salariale chargée et coefficient jour par jour, coloré contre l\'objectif propre à chaque établissement.',
             'Récap mensuel du mois dernier — heures par personne, écart planifié/réel, ventilation par établissement, congés validés.',
