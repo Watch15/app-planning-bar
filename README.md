@@ -80,7 +80,9 @@ app-templyo/
 └── scripts/
     ├── init-db.js                 ← Initialise collections et indexes MongoDB
     ├── create-patron.js           ← Crée le compte patron en CLI
-    ├── seed.js / seed-dev.js / seed-all.js  ← Jeux de données (démo / recette)
+    ├── seed-dev.js / seed-all.js   ← Jeu de RECETTE (minimal, chaque feature observable)
+    ├── seed-demo.js                ← Jeu de DÉMO prospects (2 mois de plannings, CA, pointage)
+    ├── seed.js                     ← Ancien jeu, établissements obsolètes — ne plus utiliser
     ├── dev-run.js                 ← Lance une commande sur une cible d'env (--env .env.main)
     ├── db-uri.js                  ← Affiche l'URI Mongo complète d'un environnement
     ├── smoke.js                   ← Vérification bout-en-bout contre une vraie instance
@@ -151,11 +153,13 @@ PORT=3000
 | `npm start` | Serveur en production (remplace `%%BUILD_TIME%%` dans sw.js au démarrage) |
 | `npm run init` | ⚠️ **DESTRUCTIF** — recrée collections et index (refuse la base `gestion_bar` sans `--force`) |
 | `npm run create-patron` | Crée le compte patron en CLI |
-| `npm run seed` | Insère des shifts de démonstration |
+| `npm run seed` | ⚠️ Ancien jeu — écrit des shifts sur des établissements qui n'existent plus. Utiliser `dev:seed` ou `demo:seed` |
 | `npm test` | Tests unitaires + intégration, sur un faux Mongo (aucune base réelle) |
 | `npm run seed:all` | (Re)construit les bases de recette `templyo_dev` **et** `templyo_main` |
 | `npm run dev:seed` | Idem, base de `.env.dev` seulement |
 | `npm run dev:server` | Serveur local sur la base de `.env.dev` |
+| `npm run demo:seed` | (Re)construit le jeu de **démo prospects** dans `templyo_demo` (refuse toute base sans « demo ») |
+| `npm run demo:server` | Serveur de démo sur la base de `.env.demo` (port 3100) |
 | `npm run smoke` | 29 vérifications HTTP sur l'instance locale (⊘ sautées si le seed date d'une autre semaine) |
 | `npm run smoke:dev` / `smoke:main` | Idem sur l'environnement déployé |
 | `npm run smoke -- <url>` | Idem sur une URL quelconque |

@@ -23,22 +23,20 @@
 
 const bcrypt = require('bcryptjs');
 const { ObjectId } = require('mongodb');
-const { openDb } = require('./_db');
+const { openDb, APP_COLLECTIONS } = require('./_db');
 const { toDateStr, weekStart } = require('../lib/utils');
 
 const PASSWORD = process.env.SEED_PASSWORD || 'Templyo2026!';
 
-// Collections remises à zéro à chaque passage.
+// Collections remises à zéro à chaque passage : la liste vit dans `_db.js` (elle était
+// recopiée ici ET dans `seed-demo.js`, et les deux copies avaient déjà pris du retard
+// sur le produit).
 // ⚠️ Les index NE sont PAS recréés — l'affirmation inverse figurait ici et était fausse :
 // `connectDB()` n'en pose que 6 au démarrage, les ~19 autres viennent de `npm run init`
 // (destructif, et il refuse la base de prod). Sur une base de recette fraîche, les requêtes
 // tournent donc sans la plupart des index : sans effet à cette volumétrie, mais à savoir
 // avant d'y mesurer quoi que ce soit.
-const WIPE = [
-    'establishments', 'staff', 'users', 'sessions', 'shifts', 'availabilities',
-    'time_off', 'manager_time_off', 'manager_dispo_templates', 'roles', 'settings',
-    'daily_revenue', 'notifications', 'staff_notifications', 'push_subscriptions',
-];
+const WIPE = APP_COLLECTIONS;
 
 // ── Les features, dans l'ordre d'exécution ───────────────────────────────────
 const FEATURES = [
@@ -254,7 +252,10 @@ const FEATURES = [
 
 // ── Exécution ────────────────────────────────────────────────────────────────
 async function run() {
-    const { client, db, dbName } = await openDb({ destructive: true });
+    // `expect` : la recette vise les bases en `…_dev` / `…_main`. Sans cette borne, un
+    // `ENV_FILE=.env.demo npm run dev:seed` écrasait la base de démo par le jeu minimal,
+    // sans rien dire — les deux scripts purgent exactement les mêmes collections.
+    const { client, db, dbName } = await openDb({ destructive: true, expect: /(dev|main)$/ });
     try {
         // 15 purges indépendantes : en série c'était 15 allers-retours Atlas (~1,5 s).
         await Promise.all(WIPE.map(c => db.collection(c).deleteMany({})));

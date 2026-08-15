@@ -12,6 +12,19 @@ const { MongoClient } = require('mongodb');
 
 const PROD_DB_NAME = 'gestion_bar';
 
+// TOUTES les collections écrites par l'application. Domicile unique : cette liste vivait
+// recopiée dans `seed-dev.js` et `seed-demo.js`, et les deux copies avaient déjà divergé
+// du produit — il y manquait `shift_swaps` et `dispo_events`. Un jeu « relançable à
+// volonté » laissait donc survivre des échanges de shifts en attente et un journal
+// d'audit peuplé de gens qui n'existent plus dans la base fraîchement semée.
+// Toute nouvelle collection s'ajoute ICI et nulle part ailleurs.
+const APP_COLLECTIONS = [
+    'establishments', 'staff', 'users', 'sessions', 'shifts', 'availabilities',
+    'dispo_events', 'time_off', 'manager_time_off', 'manager_dispo_templates',
+    'roles', 'settings', 'daily_revenue', 'notifications', 'staff_notifications',
+    'push_subscriptions', 'shift_swaps',
+];
+
 function loadEnv() {
     require('dotenv').config({ path: process.env.ENV_FILE || '.env' });
 }
@@ -22,10 +35,14 @@ function safeUri(uri) {
 }
 
 /**
- * @param {{ destructive?: boolean }} opts
+ * @param {{ destructive?: boolean, expect?: RegExp }} opts
+ *   `expect` : motif que le nom de base DOIT vérifier. Sans lui, la seule règle est
+ *   « pas la prod » — ce qui laissait `npm run demo:seed` écraser la recette et
+ *   `npm run dev:seed` écraser la démo, en silence. Chaque script destructif déclare
+ *   donc sa cible ici plutôt que de rebâtir son propre garde-fou par-dessus celui-ci.
  * @returns {Promise<{ client, db, dbName }>}
  */
-async function openDb({ destructive = false } = {}) {
+async function openDb({ destructive = false, expect = null } = {}) {
     loadEnv();
     const uri = process.env.MONGO_URI;
     if (!uri) {
@@ -44,6 +61,13 @@ async function openDb({ destructive = false } = {}) {
         process.exit(1);
     }
 
+    if (destructive && expect && !expect.test(dbName) && !forced) {
+        console.error('\n⛔ REFUS — ce script EFFACE des données, et la base ciblée est « ' + dbName + ' »,');
+        console.error('   qui ne correspond pas à ce qu\'il attend (' + expect + ').\n');
+        console.error('   Vérifie ENV_FILE / MONGO_DB, ou relance avec --force si c\'est voulu.\n');
+        process.exit(1);
+    }
+
     const client = new MongoClient(uri);
     await client.connect();
     console.log('🔗 ' + safeUri(uri));
@@ -51,4 +75,4 @@ async function openDb({ destructive = false } = {}) {
     return { client, db: client.db(dbName), dbName };
 }
 
-module.exports = { openDb, PROD_DB_NAME };
+module.exports = { openDb, PROD_DB_NAME, APP_COLLECTIONS };
