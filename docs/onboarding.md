@@ -20,7 +20,7 @@ MongoDB, frontend **HTML/CSS/Vanilla JS sans aucun build**, le tout installable 
 
 ```bash
 npm install
-npm run init          # crée collections + indexes MongoDB
+npm run init          # pose les index MongoDB (aucune donnée)
 npm run create-patron # crée un compte patron (CLI interactive)
 npm run dev           # node --watch server.js (hot reload)
 

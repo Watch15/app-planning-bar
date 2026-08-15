@@ -1,91 +1,97 @@
+'use strict';
+// Pose les INDEX de la base. Rien d'autre.
+//
+// Ce script insérait aussi 4 établissements (`Josy`, `Poni`, `FanFan`, `Caval`) et
+// 3 membres du staff (`Julien`, `Marc`, `Sophie`), après un `deleteMany({})` sur
+// `establishments`, `staff`, `shifts`, `users` et `sessions`. C'était un jeu de données
+// de 2024 qui ne correspond plus à rien : ni à la recette (`seed-dev.js`), ni à la démo
+// (`seed-demo.js`), ni à la base client. Le lancer « pour créer les index » effaçait donc
+// les comptes et les plannings pour les remplacer par des établissements fantômes — et
+// `npm run init` est la première commande des deux guides de démarrage.
+//
+// Les données sont maintenant l'affaire des seeds, exclusivement :
+//   npm run dev:seed    → jeu de recette   (base de .env.dev)
+//   npm run demo:seed   → jeu de démo      (base de .env.demo)
+//   npm run create-patron → le compte patron
+//
+// Reste `destructive: true` : ce script REPOSE tous les index. Aucune donnée n'est perdue,
+// mais le faire sur la base client lui coûte ses index le temps de la reconstruction.
+
 const { openDb } = require('./_db');
 
+// ── Les index, par collection ────────────────────────────────────────────────
+// Source UNIQUE : la liste des collections à purger de leurs index était écrite à part,
+// et rien ne garantissait qu'elle corresponde aux index effectivement recréés en dessous.
+// Elles ne peuvent plus diverger : on droppe exactement les clés de cette table.
+//
+// ⚠️ Ne PAS remplacer cette liste par `APP_COLLECTIONS` de `_db.js` : celle-ci recense
+// les collections que l'application ÉCRIT (pour les purger), celle-là uniquement celles
+// qui portent un index sur mesure. `time_off`, `manager_time_off`, `dispo_events`… sont
+// dans la première et n'ont rien à faire ici — les dropper sans les recréer serait une
+// régression silencieuse.
+const TTL_30_JOURS = { expireAfterSeconds: 30 * 24 * 60 * 60 };
+const INDEXES = {
+    establishments:      [[{ id: 1 }, { unique: true }]],
+    shifts:              [[{ establishment_id: 1, date: 1 }],
+                          [{ staff_id: 1, date: 1 }]],
+    users:               [[{ email: 1 }, { unique: true, sparse: true }],
+                          [{ phone: 1 }, { sparse: true }],
+                          [{ invite_token: 1 }, { sparse: true }],
+                          [{ reset_token: 1 }, { sparse: true }],
+                          [{ staff_id: 1 }, { sparse: true }]],
+    sessions:            [[{ sid: 1 }, { unique: true }],
+                          [{ expires: 1 }, { expireAfterSeconds: 0 }]],
+    availabilities:      [[{ staff_id: 1, date: 1 }],
+                          [{ date: 1, status: 1 }],
+                          [{ status: 1 }],
+                          [{ status: 1, staff_id: 1 }]],          // S-04 — count scopé
+    staff:               [[{ venues: 1 }]],                       // S-04 — périmètre directeur (multikey)
+    push_subscriptions:  [[{ user_id: 1 }]],
+    notifications:       [[{ user_id: 1, read: 1, created_at: -1 }],
+                          [{ created_at: 1 }, TTL_30_JOURS]],     // cleanup auto
+    shift_swaps:         [[{ status: 1, created_at: -1 }],
+                          [{ from_staff_id: 1 }],
+                          [{ to_staff_id: 1 }]],
+    settings:            [[{ key: 1 }, { unique: true }]],
+    roles:               [[{ type: 1, name: 1 }]],
+    daily_revenue:       [[{ establishment_id: 1, date: 1 }, { unique: true }]],
+    staff_notifications: [[{ staff_id: 1, created_at: -1 }],
+                          [{ created_at: 1 }, TTL_30_JOURS]],
+};
+
 async function main() {
-    // destructive: les deleteMany ci-dessous effacent comptes, staff et plannings.
-    const { client, db } = await openDb({ destructive: true });
+    const { client, db, dbName } = await openDb({ destructive: true });
     try {
-        await db.collection('establishments').deleteMany({});
-        await db.collection('staff').deleteMany({});
-        await db.collection('shifts').deleteMany({});
-        await db.collection('users').deleteMany({});
-        await db.collection('sessions').deleteMany({});
+        // Drop puis recréation : sans le drop, changer les options d'un index existant
+        // (unique, sparse, TTL) échoue en IndexOptionsConflict au lieu de le remplacer.
+        await Promise.all(Object.keys(INDEXES).map(async col => {
+            try { await db.collection(col).dropIndexes(); }
+            catch { /* collection inexistante — normal sur une base neuve */ }
+        }));
 
-        await db.collection('establishments').insertMany([
-            { id: 'Josy_pub',          name: 'Josy',   type: 'pub',        hours: { open: 10, close: 26 } },
-            { id: 'Poni_restaurant',   name: 'Poni',   type: 'restaurant', hours: { open: 10, close: 26 } },
-            { id: 'FanFan_restaurant', name: 'FanFan', type: 'restaurant', hours: { open: 10, close: 26 } },
-            { id: 'Caval_restaurant',  name: 'Caval',  type: 'restaurant', hours: { open: 10, close: 26 } },
-        ]);
-        console.log('✅ 4 établissements créés');
+        let count = 0;
+        await Promise.all(Object.entries(INDEXES).flatMap(([col, defs]) =>
+            defs.map(([keys, opts]) => {
+                count++;
+                return db.collection(col).createIndex(keys, opts || {});
+            })));
+        console.log('✅ ' + count + ' index posés sur ' + Object.keys(INDEXES).length
+            + ' collections — base « ' + dbName + ' »');
 
-        await db.collection('staff').insertMany([
-            { name: 'Julien', color: '#3498db', email: '' },
-            { name: 'Marc',   color: '#9b59b6', email: '' },
-            { name: 'Sophie', color: '#e67e22', email: '' },
-        ]);
-        console.log('✅ 3 membres du staff créés');
-        
-        // Supprimer les indexes existants (sauf _id) avant de les recréer
-        const collections = [
-            'establishments', 'staff', 'shifts', 'users',
-            'sessions', 'availabilities', 'push_subscriptions',
-            'notifications', 'staff_notifications', 'shift_swaps',
-            'settings', 'roles', 'daily_revenue'
-        ];
-        for (const col of collections) {
-            try {
-                await db.collection(col).dropIndexes();
-            } catch (e) {
-                // Collection inexistante — on ignore
-            }
-        }
-
-        await db.collection('establishments').createIndex({ id: 1 }, { unique: true });
-        await db.collection('shifts').createIndex({ establishment_id: 1, date: 1 });
-        await db.collection('shifts').createIndex({ staff_id: 1, date: 1 });
-        await db.collection('users').createIndex({ email: 1 }, { unique: true, sparse: true });
-        await db.collection('users').createIndex({ phone: 1 }, { sparse: true });
-        await db.collection('users').createIndex({ invite_token: 1 }, { sparse: true });
-        await db.collection('users').createIndex({ reset_token: 1 }, { sparse: true });
-        await db.collection('users').createIndex({ staff_id: 1 }, { sparse: true });
-        await db.collection('sessions').createIndex({ sid: 1 }, { unique: true });
-        await db.collection('sessions').createIndex({ expires: 1 }, { expireAfterSeconds: 0 });
-        await db.collection('availabilities').createIndex({ staff_id: 1, date: 1 });
-        await db.collection('availabilities').createIndex({ date: 1, status: 1 });
-        await db.collection('availabilities').createIndex({ status: 1 });
-        await db.collection('availabilities').createIndex({ status: 1, staff_id: 1 }); // S-04 — count scopé
-        await db.collection('staff').createIndex({ venues: 1 });                       // S-04 — périmètre directeur (multikey)
-        await db.collection('push_subscriptions').createIndex({ user_id: 1 });
-        await db.collection('notifications').createIndex({ user_id: 1, read: 1, created_at: -1 });
-        await db.collection('shift_swaps').createIndex({ status: 1, created_at: -1 });
-        await db.collection('shift_swaps').createIndex({ from_staff_id: 1 });
-        await db.collection('shift_swaps').createIndex({ to_staff_id: 1 });
-        await db.collection('settings').createIndex({ key: 1 }, { unique: true });
-        await db.collection('roles').createIndex({ type: 1, name: 1 });
-        await db.collection('daily_revenue').createIndex(
-            { establishment_id: 1, date: 1 },
-            { unique: true }
-        );
-        await db.collection('staff_notifications').createIndex({ staff_id: 1, created_at: -1 });
-        // TTL 30 jours : cleanup auto des vieilles notifications
-        await db.collection('notifications').createIndex(
-            { created_at: 1 },
-            { expireAfterSeconds: 30 * 24 * 60 * 60 }
-        );
-        await db.collection('staff_notifications').createIndex(
-            { created_at: 1 },
-            { expireAfterSeconds: 30 * 24 * 60 * 60 }
-        );
-        console.log('✅ Index créés');
-        // Paramètres par défaut : saisie ouverte
+        // Saisie des dispos ouverte par défaut. `$setOnInsert` : relancer ce script ne
+        // doit pas rouvrir la saisie sur une base où le patron l'a fermée.
         await db.collection('settings').updateOne(
             { key: 'dispo' },
             { $setOnInsert: { key: 'dispo', open: true, message: null } },
             { upsert: true }
         );
-        console.log('\n⚠️  Lance ensuite : npm run create-patron');
+
+        console.log('\n   Base vide : ce script ne crée AUCUNE donnée. Ensuite :');
+        console.log('     npm run create-patron      le compte patron');
+        console.log('     npm run dev:seed           un jeu de recette complet\n');
     } catch (e) {
         console.error('❌ Erreur :', e.message);
+        process.exitCode = 1;
     } finally {
         await client.close();
     }

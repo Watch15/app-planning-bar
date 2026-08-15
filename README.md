@@ -78,7 +78,7 @@ app-templyo/
 │       ├── icon-192.png
 │       └── icon-512.png
 └── scripts/
-    ├── init-db.js                 ← Initialise collections et indexes MongoDB
+    ├── init-db.js                 ← Pose les index MongoDB (aucune donnée)
     ├── create-patron.js           ← Crée le compte patron en CLI
     ├── seed-dev.js / seed-all.js   ← Jeu de RECETTE (minimal, chaque feature observable)
     ├── seed-demo.js                ← Jeu de DÉMO prospects (2 mois de plannings, CA, pointage)
@@ -153,7 +153,7 @@ PORT=3000
 |---|---|
 | `npm run dev` | Serveur avec rechargement automatique (`node --watch`) |
 | `npm start` | Serveur en production (remplace `%%BUILD_TIME%%` dans sw.js au démarrage) |
-| `npm run init` | ⚠️ **DESTRUCTIF** — recrée collections et index (refuse la base `gestion_bar` sans `--force`) |
+| `npm run init` | Repose tous les index. N'écrit **aucune** donnée (refuse la base `gestion_bar` sans `--force`) |
 | `npm run create-patron` | Crée le compte patron en CLI |
 | `npm test` | Tests unitaires + intégration, sur un faux Mongo (aucune base réelle) |
 | `npm run seed:all` | (Re)construit les bases de recette `templyo_dev` **et** `templyo_main` |

@@ -86,7 +86,7 @@ app-planning-bar/
 │   ├── backlog.md
 │   └── ux-design.md
 └── scripts/
-    ├── init-db.js              ← Initialise collections et indexes
+    ├── init-db.js              ← Pose les index MongoDB (aucune donnée)
     ├── create-patron.js        ← Crée un compte patron en CLI
     ├── seed-dev.js             ← Jeu de recette (base de .env.dev)
     └── seed-demo.js            ← Jeu de démo prospects (base de .env.demo)
