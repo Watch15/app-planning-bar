@@ -1,12 +1,13 @@
 'use strict';
 // Connexion partagée par les scripts CLI + GARDE-FOU sur la base ciblée.
 //
-// Pourquoi ce fichier existe : `init-db.js` et `seed.js` faisaient `deleteMany({})` sur
-// `users`, `staff`, `shifts`… dans une base écrite EN DUR (`gestion_bar`). Lancer
-// `npm run init` avec le `.env` de prod dans le dossier effaçait donc les comptes réels,
-// sans confirmation ni message. Le nom de base est maintenant choisi par `MONGO_DB`, et
-// tout script destructif doit passer par `openDb({ destructive: true })`, qui REFUSE la
-// base de production sauf `--force` explicite.
+// Pourquoi ce fichier existe : `init-db.js` et l'ancien `seed.js` (supprimé) faisaient
+// `deleteMany({})` sur `users`, `staff`, `shifts`… dans une base écrite EN DUR
+// (`gestion_bar`). Lancer `npm run init` avec le `.env` de prod dans le dossier effaçait
+// donc les comptes réels, sans confirmation ni message. Le nom de base est maintenant
+// choisi par `MONGO_DB`, et tout script destructif doit passer par
+// `openDb({ destructive: true })`, qui REFUSE la base de production sauf `--force`
+// explicite — et, avec `expect`, toute base qui n'est pas celle que le script vise.
 
 const { MongoClient } = require('mongodb');
 

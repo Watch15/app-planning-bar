@@ -82,7 +82,6 @@ app-templyo/
     ├── create-patron.js           ← Crée le compte patron en CLI
     ├── seed-dev.js / seed-all.js   ← Jeu de RECETTE (minimal, chaque feature observable)
     ├── seed-demo.js                ← Jeu de DÉMO prospects (2 mois de plannings, CA, pointage)
-    ├── seed.js                     ← Ancien jeu, établissements obsolètes — ne plus utiliser
     ├── dev-run.js                 ← Lance une commande sur une cible d'env (--env .env.main)
     ├── db-uri.js                  ← Affiche l'URI Mongo complète d'un environnement
     ├── smoke.js                   ← Vérification bout-en-bout contre une vraie instance
@@ -99,8 +98,11 @@ npm install
 # Créer le fichier .env (voir section Variables d'environnement)
 npm run init
 npm run create-patron
-npm run seed      # optionnel — données de démo
 npm run dev       # → http://localhost:3000
+
+# Pour un jeu de données, viser une base dédiée (jamais celle du .env racine) :
+#   npm run dev:seed    → recette,       base de .env.dev
+#   npm run demo:seed   → démo prospects, base de .env.demo
 ```
 
 ---
@@ -153,7 +155,6 @@ PORT=3000
 | `npm start` | Serveur en production (remplace `%%BUILD_TIME%%` dans sw.js au démarrage) |
 | `npm run init` | ⚠️ **DESTRUCTIF** — recrée collections et index (refuse la base `gestion_bar` sans `--force`) |
 | `npm run create-patron` | Crée le compte patron en CLI |
-| `npm run seed` | ⚠️ Ancien jeu — écrit des shifts sur des établissements qui n'existent plus. Utiliser `dev:seed` ou `demo:seed` |
 | `npm test` | Tests unitaires + intégration, sur un faux Mongo (aucune base réelle) |
 | `npm run seed:all` | (Re)construit les bases de recette `templyo_dev` **et** `templyo_main` |
 | `npm run dev:seed` | Idem, base de `.env.dev` seulement |

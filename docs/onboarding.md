@@ -21,9 +21,12 @@ MongoDB, frontend **HTML/CSS/Vanilla JS sans aucun build**, le tout installable 
 ```bash
 npm install
 npm run init          # crée collections + indexes MongoDB
-npm run seed          # données de démo
 npm run create-patron # crée un compte patron (CLI interactive)
 npm run dev           # node --watch server.js (hot reload)
+
+# Jeu de données — toujours sur une base dédiée, jamais celle du .env racine :
+npm run dev:seed      # recette (.env.dev) — le jeu à utiliser pour développer
+npm run demo:seed     # démo prospects (.env.demo)
 ```
 
 Variables d'environnement minimales dans un `.env` (non commité) :

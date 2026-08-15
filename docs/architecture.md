@@ -88,7 +88,8 @@ app-planning-bar/
 └── scripts/
     ├── init-db.js              ← Initialise collections et indexes
     ├── create-patron.js        ← Crée un compte patron en CLI
-    └── seed.js                 ← Insère des données de démo
+    ├── seed-dev.js             ← Jeu de recette (base de .env.dev)
+    └── seed-demo.js            ← Jeu de démo prospects (base de .env.demo)
 ```
 
 ---
