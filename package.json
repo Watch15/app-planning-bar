@@ -11,6 +11,8 @@
     "dev:seed": "node scripts/dev-run.js scripts/seed-dev.js",
     "main:seed": "node scripts/dev-run.js --env .env.main scripts/seed-dev.js",
     "seed:all": "node scripts/seed-all.js",
+    "demo:seed": "node scripts/dev-run.js --env .env.demo scripts/seed-demo.js",
+    "demo:server": "node scripts/dev-run.js --env .env.demo server.js",
     "dev:server": "node scripts/dev-run.js server.js",
     "smoke": "node scripts/smoke.js",
     "create-patron": "node scripts/create-patron.js",

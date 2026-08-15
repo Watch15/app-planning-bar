@@ -2,6 +2,10 @@
 
 Application web SaaS de gestion de plannings pour bars et restaurants multi-établissements. Conçue pour un patron gérant plusieurs adresses et une équipe de staff, avec une vue dédiée pour chaque employé.
 
+> 📁 **Question qui n'est pas une question de code** (client, environnements, livraison,
+> roadmap, RGPD, glossaire des identifiants du backlog) → **[`docs/dossier-projet.md`](docs/dossier-projet.md)**.
+> Ce README couvre l'installation, la configuration et l'API.
+
 ---
 
 ## Stack technique
@@ -27,20 +31,25 @@ Application web SaaS de gestion de plannings pour bars et restaurants multi-éta
 
 ```
 app-templyo/
-├── server.js                      ← Serveur Express — toutes les routes API et auth (5379 l., 115 routes)
+├── server.js                      ← Serveur Express — toutes les routes API et auth (6281 l., 118 routes)
 ├── package.json
 ├── .env                           ← Variables d'environnement (à créer, ne jamais commiter)
+├── .env.dev / .env.main           ← Cibles de recette pour scripts/dev-run.js (gitignorés)
 ├── lib/
-│   └── utils.js                   ← Helpers purs testables (isValidObjectId, hashToken, normalizePhone, computeActiveDate, toDateStr)
-├── tests/                         ← 243 tests, 11 fichiers (node --test, zéro framework)
+│   └── utils.js                   ← Helpers purs testables (isValidObjectId, hashToken, normalizePhone, computeActiveDate, isDatePublished…)
+├── tests/                         ← 366 tests, 16 fichiers (node --test, zéro framework)
 │   ├── helpers/                   ← harness.js (env + x-test-user) + fake-db.js (faux Mongo)
-│   ├── utils.test.js              ← 80 — helpers purs
+│   ├── utils.test.js              ← 89 — helpers purs
 │   ├── shift-hours.test.js        ← 12 — heures effectives d'un shift
 │   ├── week.test.js               ← 15 — lundi de semaine (weekStart + currentWeekStart 6h)
 │   ├── auth-guard.test.js         ← 21 — rattrapage des 401 en cours de session (A-14)
-│   ├── routes.test.js             ← 4 — intégration HTTP (boot app, middlewares auth/DB)
+│   ├── routes.test.js             ← 6 — intégration HTTP (boot app, middlewares auth/DB)
 │   ├── dispos / conges / manager-off / manager-dispos  ← 66 — intégration métier
-│   └── perf-settings / estab-access                    ← 44 — périmètre (S-02…S-06, R-15, R-17)
+│   ├── perf-settings / estab-access                    ← 45 — périmètre (S-02…S-06, R-15, R-17)
+│   ├── staff-archive / staff-archive-portes            ← 32 — archivage staff (F-13 / F-14)
+│   ├── dispos-horizon.test.js     ← 42 — horizon de saisie, deadline règle A, réouverture par semaine (B2)
+│   ├── dispo-audit.test.js        ← 22 — journal append-only des dispos (F-12)
+│   └── planning-publication.test.js ← 16 — lecture bornée aux semaines publiées (B2-b / B2-d / F-15)
 ├── .github/
 │   └── workflows/
 │       └── ci.yml                 ← CI : npm ci → syntax check → lint → npm test (Node 20/22)
@@ -53,9 +62,15 @@ app-templyo/
 │   ├── politique-confidentialite.html  ← Page légale RGPD
 │   ├── login.html                 ← Page de connexion (email ou téléphone)
 │   ├── set-password.html          ← Activation / réinitialisation mot de passe
-│   ├── script.js                  ← Logique patron — planning, drag & drop, modales (9124 l.)
-│   ├── planning.js                ← Logique staff (externalisée de planning.html)
-│   ├── pointage.js                ← Logique pointage (externalisée de pointage.html)
+│   ├── script.js                  ← Logique patron — planning, drag & drop, modales (9533 l.)
+│   ├── planning.js                ← Logique staff (2635 l., externalisée de planning.html)
+│   ├── pointage.js                ← Logique pointage (830 l., ex-pointage.html)
+│   ├── performance.js             ← Logique pilotage éco (594 l.)
+│   ├── login.js / set-password.js / index-init.js / sw-register.js  ← glue (CSP : zéro script inline)
+│   ├── lib/                       ← Modules UMD partagés navigateur ↔ Node (D-73)
+│   │   ├── week.js                ← weekStart, currentWeekStart, disposHorizonRange
+│   │   ├── shift-hours.js         ← heures effectives d'un shift (réel vs planifié)
+│   │   └── auth-guard.js          ← enveloppe de window.fetch, redirection sur 401 (A-14)
 │   ├── style.css                  ← Styles globaux
 │   ├── manifest.json              ← PWA manifest
 │   ├── sw.js                      ← Service Worker — cache offline + Web Push
@@ -65,7 +80,12 @@ app-templyo/
 └── scripts/
     ├── init-db.js                 ← Initialise collections et indexes MongoDB
     ├── create-patron.js           ← Crée le compte patron en CLI
-    └── seed.js                    ← Insère des données de démonstration
+    ├── seed.js / seed-dev.js / seed-all.js  ← Jeux de données (démo / recette)
+    ├── dev-run.js                 ← Lance une commande sur une cible d'env (--env .env.main)
+    ├── db-uri.js                  ← Affiche l'URI Mongo complète d'un environnement
+    ├── smoke.js                   ← Vérification bout-en-bout contre une vraie instance
+    ├── link-director-staff.js     ← Migration : rattache les directeurs à un profil staff (E-22)
+    └── fix-orphan-staff-link.js   ← Réparation ponctuelle des liens users ↔ staff
 ```
 
 ---
@@ -195,6 +215,7 @@ travail de dev (253 shifts). Les scripts destructifs la refusent — ne pas cont
 | `directeur` | Manager — limité aux établissements assignés |
 | `staff` | Employé — lecture seule de son planning, envoi de disponibilités |
 | `etablissement` | Compte par lieu — accès pointage uniquement (`pointage.html`) |
+| `observateur` | Vue patron + administration (staff, comptes, établissements, pointage). ⚠️ **Pas** « lecture seule » : il est écarté des seules écritures de planning (`denyObservateurEdit` — shifts, publication, validation des dispos) et du changement de rôle d'autrui (`requirePatronOnly`) |
 
 ---
 
@@ -406,7 +427,7 @@ d.toISOString().slice(0, 10)
 ```
 
 ### `script.js` — monolithique, ne pas découper
-`script.js` est volontairement gardé en un seul fichier (~4700 lignes) pour la stabilité. Ne pas refactoriser ni découper en modules sans décision architecturale explicite. Toute modification doit être **additive et ciblée**.
+`script.js` est volontairement gardé en un seul fichier (~9530 lignes) pour la stabilité. Ne pas refactoriser ni découper en modules sans décision architecturale explicite. Toute modification doit être **additive et ciblée**.
 
 ### Sessions MongoDB — promesses uniquement
 MongoDB 6+ ne supporte plus les callbacks. Le `CustomMongoStore` utilise exclusivement `.then().catch()`.
@@ -423,17 +444,19 @@ Tout ce qui est testable sans Express/Mongo/réseau doit aller dans `lib/utils.j
 
 ```bash
 npm test
-# 243 tests, 11 fichiers (liste explicite dans package.json — le mode répertoire
+# 366 tests, 16 fichiers (liste explicite dans package.json — le mode répertoire
 # `node --test tests/` n'est pas fiable selon la version de Node).
 #
-# Unitaires purs (128) : utils (80 — timezone, padding dates, téléphones, tokens,
+# Unitaires purs (137) : utils (89 — timezone, padding dates, téléphones, tokens,
 #   ObjectId, publication, dispoDeadlineWaived, congés), shift-hours (12 — heures
 #   effectives réel/planifié, pointage partiel, shift de nuit), week (15 — weekStart
 #   bascule mois/année, currentWeekStart cutoff 6h), auth-guard (21 — rattrapage
 #   des 401 en cours de session, A-14).
-# Intégration HTTP (113, harnais `tests/helpers/harness.js` + `fake-db`) : routes (4),
-#   dispos (15), conges (12), manager-off (14), manager-dispos (23),
-#   perf-settings (11), estab-access (33).
+# Intégration HTTP (229, harnais `tests/helpers/harness.js` + `fake-db`) : routes (6),
+#   dispos (15), conges (12), manager-off (14), manager-dispos (25),
+#   perf-settings (11), estab-access (34), staff-archive (14),
+#   staff-archive-portes (18), dispos-horizon (42), dispo-audit (22),
+#   planning-publication (16).
 ```
 
 L'intégration démarre la **vraie app Express** sur un port éphémère et ne remplace que Mongo

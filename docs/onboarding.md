@@ -65,15 +65,15 @@ planning ou valide une dispo **doit** porter le middleware `denyObservateurEdit`
 
 ```
 app-planning-bar/
-├── server.js                  ← Backend Express monolithique (TOUT le back, 5379 l., 115 routes)
-├── lib/utils.js               ← Helpers purs testables (339 l.)
+├── server.js                  ← Backend Express monolithique (TOUT le back, 6281 l., 118 routes)
+├── lib/utils.js               ← Helpers purs testables (478 l.)
 ├── package.json               ← Scripts npm + dépendances (10, toutes back)
 │
 ├── public/                    ← Frontend statique (zéro build)
-│   ├── index.html  + script.js (9124 l.) + index-init.js   → Console PATRON
-│   ├── planning.html + planning.js (2457 l.)               → Espace STAFF
-│   ├── pointage.html + pointage.js (820 l.)                → POINTAGE (rôle établissement)
-│   ├── performance.html + performance.js (579 l.)          → PILOTAGE ÉCO
+│   ├── index.html  + script.js (9533 l.) + index-init.js   → Console PATRON
+│   ├── planning.html + planning.js (2635 l.)               → Espace STAFF
+│   ├── pointage.html + pointage.js (830 l.)                → POINTAGE (rôle établissement)
+│   ├── performance.html + performance.js (594 l.)          → PILOTAGE ÉCO
 │   ├── login.html + login.js                               → Connexion
 │   ├── set-password.html + set-password.js                 → Activation / reset MDP
 │   ├── politique-confidentialite.html                      → Légal RGPD
@@ -81,11 +81,12 @@ app-planning-bar/
 │   ├── sw.js + sw-register.js + manifest.json + icons/     → PWA
 │   ├── lib/                    ← Modules UMD partagés navigateur ↔ Node
 │   │   ├── week.js             → weekStart / currentWeekStart (cutoff 6h)
-│   │   └── shift-hours.js      → heures effectives d'un shift
+│   │   ├── shift-hours.js      → heures effectives d'un shift
+│   │   └── auth-guard.js       → enveloppe de fetch, redirection sur 401 (A-14)
 │   └── vendor/                 ← Libs tierces auto-hébergées (jspdf, html2canvas, xlsx)
 │
-├── scripts/                   ← Outils CLI (init-db, seed, create-patron)
-├── tests/                     ← node --test, sans framework (243 tests, 11 fichiers + helpers/)
+├── scripts/                   ← Outils CLI (init-db, seed, create-patron, dev-run, smoke, link-directors)
+├── tests/                     ← node --test, sans framework (366 tests, 16 fichiers + helpers/)
 ├── docs/                      ← prd, architecture, backlog, ux-design, CE fichier
 └── .github/workflows/ci.yml   ← CI Node 20 + 22
 ```
@@ -237,7 +238,7 @@ Le sous-onglet **Congés** patron (`loadCongesList`) et le calendrier récap (`l
 
 ## 8. Le frontend, fichier par fichier
 
-### `script.js` — Console patron (8074 l., le plus gros morceau)
+### `script.js` — Console patron (9533 l., le plus gros morceau)
 Organisé en blocs fonctionnels. Repères principaux (n° de ligne indicatifs) :
 
 | Zone | Fonctions clés |
@@ -258,7 +259,7 @@ Organisé en blocs fonctionnels. Repères principaux (n° de ligne indicatifs) :
 | **Recherche** | `normalizeStr`, `matchesWordPrefix` (match par **début de mot**, partagé par toutes les recherches nom : staff, congés, notes, gestion) |
 | **Jokers/Swaps** | `loadSwapsBadge`, `openSwapsPanel` |
 
-### `planning.js` — Espace staff (2440 l.)
+### `planning.js` — Espace staff (2635 l.)
 `init` → `loadPlanning` → `renderDays`. Domaines : **planning perso** (`renderStats`,
 `renderDaysInto`, `renderResponsableDashboard`), **disponibilités** (`loadDisposTab`,
 `createDispoCard`, `submitDispos`), **congés** (`initCongesForm`, `submitConge`,
@@ -266,12 +267,12 @@ Organisé en blocs fonctionnels. Repères principaux (n° de ligne indicatifs) :
 `togglePushSubscription`), **notifs staff** (`loadStaffNotifs`), **historique**
 (`loadHistoriqueWeek`). Le bloc swaps (`openSwapModal`…) suit F-05 (désactivé côté UI).
 
-### `pointage.js` — Pointage établissement (807 l.)
+### `pointage.js` — Pointage établissement (830 l.)
 `init` → `loadShifts` → `buildShiftCard`. Saisie des heures réelles (`parseTimeInput`,
 `roundQuarter`, `ecartLabel`), CA du soir (`loadRevenue`, `initRevenueForm`), shifts
 extra (`initExtraForm`), bascule du jour (`getActiveDate`/`setActiveDate`, cutoff 9h).
 
-### `performance.js` — Pilotage éco (544 l.)
+### `performance.js` — Pilotage éco (594 l.)
 `init` → `loadData` → `renderKpis` + `renderTable` + `renderDetail`. Coefficient de
 masse salariale, saisie CA (`openCAModal`/`saveCAFromModal`), objectifs (`saveTargets`),
 calendrier (`loadCalendarWeek`/`renderCalendarGrid`).
@@ -326,10 +327,12 @@ call sites serveur inchangés. C'est le **gabarit** de toute future extraction i
 ## 12. Tests & CI
 
 - **Runner** : `node --test` intégré, **zéro framework**.
-- **243 tests, 11 fichiers** dans `tests/` (état 2026-08-10) : **128 unitaires purs**
-  (`utils` 80, `shift-hours` 12, `week` 15, `auth-guard` 21 — aucun Express, aucune base) et
-  **115 d'intégration HTTP** (`routes` 4, `dispos` 15, `conges` 12, `manager-off` 14,
-  `manager-dispos` 25, `perf-settings` 11, `estab-access` 33).
+- **366 tests, 16 fichiers** dans `tests/` (état 2026-08-14) : **137 unitaires purs**
+  (`utils` 89, `shift-hours` 12, `week` 15, `auth-guard` 21 — aucun Express, aucune base) et
+  **229 d'intégration HTTP** (`routes` 6, `dispos` 15, `conges` 12, `manager-off` 14,
+  `manager-dispos` 25, `perf-settings` 11, `estab-access` 34, `staff-archive` 14,
+  `staff-archive-portes` 18, `dispos-horizon` 42, `dispo-audit` 22,
+  `planning-publication` 16).
 - **Lancer** : `npm test` (liste **explicite** des fichiers — ⚠️ ne jamais repasser en
   mode répertoire `node --test tests/`, instable selon la version Node).
 - **App testable** : `server.js` n'appelle `listen()`/`connectDB()` que sous
@@ -362,8 +365,13 @@ ou on corrige un bug régressable.
 | Fichier | Contenu |
 |---|---|
 | `architecture.md` | ⭐ Référence technique exhaustive (à lire en premier) |
+| `dossier-projet.md` | ⭐ La couche **non-code** : client, environnements, processus de livraison, garde-fous d'exploitation, glossaire des identifiants |
 | `prd.md` | Product Requirements — le « pourquoi » produit |
 | `backlog.md` | Décisions (D-xx), features (F-xx), bugs (B-xx) — **mémoire des choix** |
+| `design-b2-horizon-saisie.md` | Horizon de saisie des dispos — **§8 fait autorité** |
+| `design-e22-dispos-directeur.md` | Dispos des directeurs — **§8/§9 font autorité**, sections antérieures supersédées |
+| `methodologie-et-cicd.md` | Méthode de travail et pipeline |
+| `note-client-mise-a-jour.md` | Ce qui est annoncé au client |
 | `ux-design.md` | Choix UX |
 | `onboarding.md` | Ce fichier |
 | `graphify-out/` | Graphe de connaissances **généré** (ne pas éditer à la main ; `graphify update .` après modif code) |
