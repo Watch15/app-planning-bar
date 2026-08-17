@@ -18,6 +18,7 @@ const {
     validateOffPeriod, scopeManagerOff, resolvePerfSettings, pickStaffColor, buildTemplateDispos,
     datesCoveredByPeriods, dispoDeadlineWaived, shouldMaterializeTemplate,
     disposHorizonRange, disposHorizonMondays, clampHorizonWeeks, DISPO_HORIZON_MAX,
+    upcomingWeekRange, upcomingWeekMondays,
     dispoMateriallyDiffers, staffReopenedFor, dispoEventDelta,
 } = require('./lib/utils');
 
@@ -5104,9 +5105,16 @@ app.get('/api/my-published-weeks', checkDB, requireAuth, async (req, res) => {
     const staffId = req.session.user.staff_id;
     if (!staffId) return res.json([]);
     try {
+        // Horizon de CONSULTATION, calé sur le cutoff (`upcomingWeek*`), et surtout PAS
+        // sur l'horizon de saisie des dispos (`disposHorizon*`) qui l'ignore : voir le
+        // commentaire de `upcomingWeekStart` dans public/lib/week.js — la divergence
+        // rendait la semaine qui commence invisible le lundi de 00:00 à 06:00.
+        // Un seul `now` pour les deux calculs : deux `new Date()` distincts peuvent
+        // tomber de part et d'autre de minuit et rendre une plage incohérente.
         const weeks   = clampHorizonWeeks(req.query.weeks || 8);
-        const mondays = disposHorizonMondays(new Date(), weeks);
-        const range   = disposHorizonRange(new Date(), weeks);
+        const now     = new Date();
+        const mondays = upcomingWeekMondays(now, weeks);
+        const range   = upcomingWeekRange(now, weeks);
         const [publishedWeeks, myShifts] = await Promise.all([
             fetchPublishedWeeks(),
             db.collection('shifts').find(

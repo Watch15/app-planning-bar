@@ -87,21 +87,19 @@
     // dimanche→lundi, peut demander une autre plage. Le vrai verrou serait que
     // `pending` écrête sa plage sur `dispoHorizons(settings).y` comme `count` le fait.
     //
-    // weeks=1 → exactement la semaine N+1, soit le comportement d'avant B2.
-    function disposHorizonRange(now, weeks) {
-        const n     = clampHorizonWeeks(weeks);
-        const start = disposWeekStart(now);
-        const end   = new Date(start);
+    // « n semaines consécutives à partir du lundi `start` », les deux formes dont on a
+    // besoin partout : la plage [lundi .. dimanche de la n-ième] et la liste des lundis.
+    // Extraites parce que DEUX horizons s'en servent maintenant (dispos et planning) et
+    // qu'ils ne se distinguent QUE par leur point de départ — c'est ce point de départ,
+    // et rien d'autre, qui doit rester lisible sur chaque call site.
+    function rangeFrom(start, n) {
+        const end = new Date(start);
         end.setDate(start.getDate() + n * 7 - 1);        // dimanche de la n-ième semaine
         return { from: toDateStr(start), to: toDateStr(end) };
     }
 
-    // Les lundis des `weeks` semaines de l'horizon, dans l'ordre. Le front en a besoin
-    // pour construire sa navigation et ses notes de semaine (une par semaine, cf. B2 §4).
-    function disposHorizonMondays(now, weeks) {
-        const n     = clampHorizonWeeks(weeks);
-        const start = disposWeekStart(now);
-        const out   = [];
+    function mondaysFrom(start, n) {
+        const out = [];
         for (let i = 0; i < n; i++) {
             const d = new Date(start);
             d.setDate(start.getDate() + i * 7);
@@ -110,9 +108,54 @@
         return out;
     }
 
+    // weeks=1 → exactement la semaine N+1, soit le comportement d'avant B2.
+    function disposHorizonRange(now, weeks) {
+        return rangeFrom(disposWeekStart(now), clampHorizonWeeks(weeks));
+    }
+
+    // Les lundis des `weeks` semaines de l'horizon, dans l'ordre. Le front en a besoin
+    // pour construire sa navigation et ses notes de semaine (une par semaine, cf. B2 §4).
+    function disposHorizonMondays(now, weeks) {
+        return mondaysFrom(disposWeekStart(now), clampHorizonWeeks(weeks));
+    }
+
+    // ── Horizon de CONSULTATION du planning (≠ horizon de saisie des dispos) ──────
+    //
+    // Le lundi de la première semaine qu'un staff peut consulter EN PLUS de celle qu'il
+    // a sous les yeux. Calé sur `currentWeekStart` — donc sur le cutoff — et NON sur
+    // `disposWeekStart`.
+    //
+    // ⚠️ C'est la correction du bug « planning invisible la nuit » (signalé le 2026-08-17).
+    // `disposWeekStart` = weekStart(now + 7j) ignore le cutoff. Le lundi entre 00:00 et
+    // 06:00, la vue principale du staff montre encore la semaine écoulée (cutoff), pendant
+    // que la liste des semaines à venir démarrait déjà à lundi+7 : la semaine qui VENAIT DE
+    // COMMENCER n'était alors dans AUCUNE DES DEUX, et devenait inatteignable pendant six
+    // heures — l'onglet « À venir » ne navigue que dans cette liste, et l'historique ne va
+    // que vers le passé. Fenêtre nocturne = précisément l'heure où le staff sort de service
+    // et consulte son planning.
+    //
+    // Ne PAS corriger en touchant `disposWeekStart` : il pilote aussi le cycle de collecte
+    // des dispos et les rappels (`checkDispoRappels`), qui n'ont pas la même sémantique —
+    // la saisie se raisonne en semaines calendaires, la consultation en soirées de travail.
+    // Hors de la fenêtre lundi 00:00–06:00, les deux calculs coïncident exactement.
+    function upcomingWeekStart(now, cutoffHour) {
+        const d = currentWeekStart(now, cutoffHour);     // rend déjà une copie
+        d.setDate(d.getDate() + 7);
+        return d;
+    }
+
+    function upcomingWeekRange(now, weeks, cutoffHour) {
+        return rangeFrom(upcomingWeekStart(now, cutoffHour), clampHorizonWeeks(weeks));
+    }
+
+    function upcomingWeekMondays(now, weeks, cutoffHour) {
+        return mondaysFrom(upcomingWeekStart(now, cutoffHour), clampHorizonWeeks(weeks));
+    }
+
     return {
         weekStart, currentWeekStart, WEEK_CUTOFF_HOUR, toDateStr,
         disposWeekStart, disposHorizonRange, disposHorizonMondays,
+        upcomingWeekStart, upcomingWeekRange, upcomingWeekMondays,
         clampHorizonWeeks, DISPO_HORIZON_MAX,
     };
 });
