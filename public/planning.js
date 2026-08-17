@@ -27,6 +27,38 @@ function toDateStr(d) {
 // Lundi de la semaine — délègue au module partagé/testé (public/lib/week.js, R-01).
 function getMondayOf(d) { return Week.weekStart(d); }
 
+// ── Heure de bascule de la journée de service ─────────────────────────────────
+//
+// UNE seule notion de « quand la journée bascule », partagée par le planning et le
+// pointage. Avant, il y en avait deux : la semaine du planning basculait à 6h (constante
+// en dur) pendant que la journée de pointage basculait à `cutoff_hour` (9h par défaut,
+// réglable). Entre les deux, le lundi matin, le responsable pouvait encore pointer le
+// service du dimanche alors que le planning était déjà passé à la semaine neuve — le jour
+// qu'il pointait n'était plus visible que dans l'Historique.
+//
+// Valeur de repli = la constante partagée : si le réglage ne se charge pas, on retombe
+// exactement sur le comportement d'avant plutôt que sur une troisième convention.
+//
+// ⚠️ TOUT calcul de semaine de cette page doit passer par `currentMonday` /
+// `upcomingRange`. Un seul call site qui appellerait `Week.currentWeekStart(new Date())`
+// en direct recréerait le désaccord de calculs corrigé le 2026-08-17.
+let _serviceCutoffHour = Week.WEEK_CUTOFF_HOUR;
+
+async function loadServiceCutoff() {
+    try {
+        const r = await fetch('/api/pointage-settings', { credentials: 'include' });
+        if (!r.ok) return _serviceCutoffHour;
+        const s = await r.json();
+        if (Number.isInteger(s.cutoff_hour) && s.cutoff_hour >= 0 && s.cutoff_hour <= 23) {
+            _serviceCutoffHour = s.cutoff_hour;
+        }
+    } catch { /* repli sur la constante */ }
+    return _serviceCutoffHour;
+}
+
+function currentMonday()      { return Week.currentWeekStart(new Date(), _serviceCutoffHour); }
+function upcomingRange(weeks) { return Week.upcomingWeekRange(new Date(), weeks, _serviceCutoffHour); }
+
 function addDays(d, n) {
     const r = new Date(d);
     r.setDate(r.getDate() + n);
@@ -210,8 +242,13 @@ async function init() {
         }
     } catch { /* silencieux */ }
 
+    // L'heure de bascule AVANT tout calcul de semaine : c'est elle qui décide si, à 7h
+    // du matin un lundi, on est encore sur la semaine qui s'achève ou déjà sur la neuve.
+    // Le seul appel de l'init qui doit précéder l'affichage.
+    const cutoffH = await loadServiceCutoff();
+
     // Semaine en cours
-    const monday = Week.currentWeekStart(new Date());
+    const monday = currentMonday();
     const sunday = addDays(monday, 6);
     const from   = toDateStr(monday);
     const to     = toDateStr(sunday);
@@ -221,10 +258,10 @@ async function init() {
     window._currentPlan = { from, to, user };
 
     // Lancée MAINTENANT, attendue plus bas : la liste des semaines à venir ne dépend
-    // d'aucun des appels qui suivent (pointage-settings, responsable-tonight,
-    // responsable-week). L'attendre ici la reléguait au 8e aller-retour de l'init —
-    // près d'une seconde de latence mobile avant qu'elle s'affiche, et autant avant que
-    // `scrollToHashWeek` puisse emmener le staff sur la semaine annoncée par le push.
+    // d'aucun des appels qui suivent (responsable-tonight, responsable-week). L'attendre
+    // ici la reléguait au 8e aller-retour de l'init — près d'une seconde de latence
+    // mobile avant qu'elle s'affiche, et autant avant que `scrollToHashWeek` puisse
+    // emmener le staff sur la semaine annoncée par le push.
     const upcoming = loadUpcomingWeeks();
 
     await loadPlanning(from, to, user);
@@ -250,11 +287,9 @@ async function init() {
     // Avant l'heure de bascule (ex: 9h) on considère encore la date "d'hier" pour
     // que le responsable puisse pointer le lendemain matin.
     try {
-        let cutoffH = 9;
-        try {
-            const cr = await fetch('/api/pointage-settings', { credentials: 'include' });
-            if (cr.ok) { const cs = await cr.json(); cutoffH = cs.cutoff_hour ?? 9; }
-        } catch { /* défaut */ }
+        // `cutoffH` vient de `loadServiceCutoff` plus haut — MÊME valeur que celle qui
+        // décide la semaine affichée. C'est tout l'objet du branchement : la journée de
+        // pointage et la semaine du planning basculent au même instant.
         const now = new Date();
         const refDate = new Date(now);
         if (now.getHours() < cutoffH) refDate.setDate(now.getDate() - 1);
@@ -281,7 +316,7 @@ async function init() {
     // modifs patron pendant l'absence de l'utilisateur, et recalcule monday/
     // todayStr à chaque rendu (corrige le badge « Aujourd hui » après minuit).
     try {
-        const respMondayInit = Week.currentWeekStart(new Date());
+        const respMondayInit = currentMonday();
         const initFrom = toDateStr(respMondayInit);
         const initTo   = toDateStr(addDays(respMondayInit, 6));
         const rRes     = await fetch('/api/me/responsable-week?from=' + initFrom + '&to=' + initTo, { credentials: 'include' });
@@ -310,7 +345,7 @@ async function init() {
                 let lastRendered = false;
 
                 const refreshResp = async () => {
-                    const monday = Week.currentWeekStart(new Date());
+                    const monday = currentMonday();
                     const from   = toDateStr(monday);
                     const to     = toDateStr(addDays(monday, 6));
                     try {
@@ -575,7 +610,7 @@ async function _loadUpcomingWeeks() {
     // serveur et couverte par tests/week.test.js. La recalculer à la main ici, c'était
     // reproduire le désaccord de calculs qui a causé le bug qu'on vient de fermer —
     // et court-circuiter au passage l'écrêtage de `clampHorizonWeeks`.
-    const { from, to } = Week.upcomingWeekRange(new Date(), UPCOMING_WEEKS);
+    const { from, to } = upcomingRange(UPCOMING_WEEKS);
 
     const [data, openJokers] = await Promise.all([fetchMyShifts(from, to), fetchOpenJokers()]);
     // Silencieux en cas d'échec : la semaine en cours, elle, reste lisible — mieux vaut
@@ -663,7 +698,7 @@ function scrollToHashWeek() {
     // La semaine annoncée peut être celle EN COURS (le patron republie souvent la semaine
     // entamée) : elle n'a pas de bloc à elle, elle EST le haut de la page.
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    else if (id.slice(8) === toDateStr(Week.currentWeekStart(new Date()))) {
+    else if (id.slice(8) === toDateStr(currentMonday())) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
@@ -1560,7 +1595,7 @@ async function loadHistoriqueWeek() {
     const wrap  = document.getElementById('hist-content');
     if (!navEl || !wrap) return;
 
-    const todayMonday = Week.currentWeekStart(new Date());
+    const todayMonday = currentMonday();
     const weekMonday  = addDays(todayMonday, -7 * _histOffset);
     const weekSunday  = addDays(weekMonday, 6);
     const weekKey     = toDateStr(weekMonday);

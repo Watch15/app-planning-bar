@@ -185,3 +185,62 @@ test('upcomingWeekMondays : invariant tenu aussi aux bascules DST 2026', () => {
         }
     }
 });
+
+// ── Le cutoff est désormais RÉGLABLE (branché sur settings.pointage.cutoff_hour) ──
+//
+// La semaine du planning basculait à 6h en dur pendant que la journée de pointage
+// basculait à `cutoff_hour` (9h par défaut). Entre les deux, le lundi matin, le
+// responsable pointait un service que le planning n'affichait plus. Les deux notions
+// n'en font plus qu'une — donc l'invariant doit tenir pour TOUTE valeur du réglage,
+// pas seulement pour 6.
+
+test('invariant tenu pour TOUTE heure de bascule (0h→23h), 24h/24, 7j/7', () => {
+    for (let cutoff = 0; cutoff <= 23; cutoff++) {
+        for (const now of everyHourOfWeek()) {
+            const displayed = toDateStr(currentWeekStart(now, cutoff));
+            const calendar  = toDateStr(weekStart(now));
+            const upcoming  = upcomingWeekMondays(now, 8, cutoff);
+            assert.ok(calendar === displayed || upcoming.includes(calendar),
+                'semaine injoignable à ' + now.toString() + ' (cutoff ' + cutoff + 'h)');
+        }
+    }
+});
+
+test('la vue courante et la liste à venir restent CONTIGUËS quel que soit le cutoff', () => {
+    // Le trou du 2026-08-17 était exactement une rupture de contiguïté : la liste
+    // démarrait deux semaines après celle affichée. Aucun cutoff ne doit rouvrir ça.
+    for (let cutoff = 0; cutoff <= 23; cutoff++) {
+        for (const now of everyHourOfWeek()) {
+            const displayed = currentWeekStart(now, cutoff);
+            const attendu   = new Date(displayed);
+            attendu.setDate(attendu.getDate() + 7);
+            assert.strictEqual(upcomingWeekMondays(now, 3, cutoff)[0], toDateStr(attendu),
+                'discontinuité à ' + now.toString() + ' (cutoff ' + cutoff + 'h)');
+        }
+    }
+});
+
+test('cutoff 9h : lundi 07h reste sur la semaine qui s\'achève (cas du pointage)', () => {
+    // Le cas concret : à 7h le lundi, avec cutoff_hour=9, le responsable peut encore
+    // pointer le service du dimanche — le planning doit donc encore le montrer.
+    const lundi7h = new Date(2026, 4, 11, 7, 0);
+    assert.deepStrictEqual(ymd(currentWeekStart(lundi7h, 9)), [2026, 5, 4], 'semaine du 4 mai');
+    // …et la semaine neuve est en tête de la liste à venir, donc accessible.
+    assert.strictEqual(upcomingWeekMondays(lundi7h, 2, 9)[0], '2026-05-11');
+    // Avec l'ancien cutoff figé à 6h, on serait déjà passé à la semaine du 11.
+    assert.deepStrictEqual(ymd(currentWeekStart(lundi7h, 6)), [2026, 5, 11]);
+});
+
+test('upcomingWeekRange propage le cutoff comme upcomingWeekMondays', () => {
+    // Les deux alimentent la MÊME vue (la plage sert à la requête, les lundis au rendu) :
+    // un cutoff qui ne passerait que dans l'une des deux redonnerait deux calculs.
+    for (const cutoff of [0, 6, 9, 12]) {
+        const now = new Date(2026, 4, 11, 7, 0);
+        const mondays = upcomingWeekMondays(now, 4, cutoff);
+        const range   = upcomingWeekRange(now, 4, cutoff);
+        assert.strictEqual(range.from, mondays[0], 'cutoff ' + cutoff);
+        const lastSunday = new Date(mondays[3] + 'T12:00:00');
+        lastSunday.setDate(lastSunday.getDate() + 6);
+        assert.strictEqual(range.to, toDateStr(lastSunday), 'cutoff ' + cutoff);
+    }
+});
