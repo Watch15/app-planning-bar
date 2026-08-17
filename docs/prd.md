@@ -80,7 +80,7 @@ Le patron peut choisir, shift par shift, d'**ouvrir un Joker aux candidatures du
   - Bouton « Assigner » par candidat → le Joker devient un shift normal, `joker_open` repasse à `false`, candidatures vidées
   - Désactivation manuelle → `joker_open: false`, candidatures vidées, pas de notification
   - Polling toutes les 30s sur la modale ouverte pour rafraîchir la liste
-- **Côté staff** (planning.html, vues « Mon planning » et « Semaine prochaine »):
+- **Côté staff** (planning.html, vue « Mon planning » — semaine en cours puis semaines à venir empilées):
   - Bloc dédié « 📢 Créneau disponible » au-dessus du planning
   - Bouton « Je suis disponible » → POST candidature, désactivé immédiatement, devient « ✅ Candidature envoyée »
   - Pas de retrait possible depuis l'app

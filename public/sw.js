@@ -144,7 +144,16 @@ self.addEventListener('notificationclick', event => {
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
             for (const client of list) {
-                if (client.url.includes(url.split('#')[0]) && 'focus' in client) return client.focus();
+                if (!client.url.includes(url.split('#')[0]) || !('focus' in client)) continue;
+                // `focus()` seul RAMÈNE la fenêtre mais jette le fragment : un push qui
+                // pointe une semaine précise (`#semaine-<lundi>`) déposait le staff sur la
+                // page telle qu'il l'avait laissée. Or une PWA déjà ouverte est le cas
+                // COURANT d'un push, pas le cas rare. On navigue donc d'abord, quand le
+                // navigateur le permet, et on retombe sur `focus()` sinon.
+                if ('navigate' in client) {
+                    return client.navigate(url).then(c => (c || client).focus()).catch(() => client.focus());
+                }
+                return client.focus();
             }
             if (clients.openWindow) return clients.openWindow(url);
         })

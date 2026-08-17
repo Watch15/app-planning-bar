@@ -376,6 +376,23 @@ code ; c'est la route utilisée tous les jours qui l'oubliait.
 - Front staff : la vue « à venir » navigue sur les semaines publiées et s'arrête à la
   dernière. Libellé « Semaine prochaine ✨ » conservé quand il n'y en a qu'une.
 
+> **⚠️ Superseded le 2026-08-17 — l'onglet « À venir » n'existe plus.**
+>
+> Tenir DEUX listes de semaines (la vue principale d'un côté, l'onglet de l'autre) s'est
+> retourné contre nous : elles se calculaient différemment — cutoff 6h pour l'une,
+> horizon de saisie pour l'autre — et le lundi de 00h à 06h la semaine qui commençait
+> tombait dans le trou entre les deux, invisible pour le staff. Signalé par le client.
+>
+> Les semaines à venir sont désormais **empilées dans « Mon planning »** en liste
+> continue (`loadUpcomingWeeks`, `planning.js`), avec un séparateur par semaine. Il n'y a
+> plus qu'un seul axe de lecture, donc plus rien à garder d'accord.
+>
+> `GET /api/my-published-weeks` **reste en place et reste juste** (son calcul de semaine
+> a été corrigé au passage), mais la vue staff ne s'en sert plus : `my-shifts` filtrant
+> déjà la publication shift par shift, une seule requête sur tout l'horizon suffit et une
+> semaine non publiée ne produit simplement aucun bloc. La porte reste tenue par le
+> serveur — c'est l'acquis du §10.2 qui rend la simplification possible, pas l'inverse.
+
 ### 10.3 Ce qui n'avait PAS besoin d'être fait
 
 Les deux autres items du §5 étaient **déjà corrects**, vérification faite :

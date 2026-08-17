@@ -2481,21 +2481,46 @@ app.get('/api/my-shifts', checkDB, requireAuth, async (req, res) => {
             a.date < b.date ? -1 : a.date > b.date ? 1 : a.start_time - b.start_time
         );
 
-        const dates = [...new Set(myShifts.map(s => s.date))];
+        // Collègues présents chaque jour où JE travaille, dans LES établissements où
+        // je travaille ce jour-là.
+        //
+        // UNE requête pour toutes les dates, au lieu d'un aller-retour Mongo par jour
+        // travaillé dans une boucle séquentielle. La vue staff demandait une semaine
+        // (~4 requêtes) ; depuis qu'elle empile les semaines à venir, elle en demande
+        // jusqu'à huit d'un coup — la boucle serait devenue le coût dominant du
+        // chargement de la page.
+        // `myDates` / `myEstablishments` couvrent déjà `myShifts` : les Jokers ajoutés
+        // ci-dessus sont bornés par ces deux mêmes ensembles, ils ne peuvent donc pas
+        // les élargir. Les recalculer donnerait deux noms au même concept — et le jour
+        // où l'un des deux se dérive autrement, la requête des collègues raterait
+        // silencieusement le changement.
         const colleagueMap = {};
-        for (const date of dates) {
-            // Les collègues sont filtrés au même groupe si le staff a des groupes
-            const colleagueQuery = {
-                date,
-                establishment_id: { $in: myShifts.filter(s => s.date === date).map(s => s.establishment_id) },
-                staff_id: { $nin: [staffId, '__joker__'] },
-            };
+        for (const date of myDates) colleagueMap[date] = [];
+
+        if (myDates.length) {
+            // La requête croise TOUTES mes dates avec TOUS mes établissements ; ce Set
+            // referme le produit cartésien sur les couples réellement travaillés.
+            const worked = new Set(myShifts.map(s => s.date + '|' + s.establishment_id));
+
             // Même statut que le filtre des Jokers ci-dessus : REDONDANT et inatteignable
-            // (`dates` vient de `myShifts`, déjà filtré), conservé pour la même raison.
-            // Les collègues d'un brouillon sont donc invisibles par CONSTRUCTION, pas
-            // par cette ligne — et c'est ce que le test prouve réellement.
-            colleagueMap[date] = (await db.collection('shifts').find(colleagueQuery).toArray())
-                .filter(isVisible);
+            // (`myDates` vient de `myRawShifts`, déjà filtré), conservé pour la même
+            // raison. Les collègues d'un brouillon sont donc invisibles par CONSTRUCTION,
+            // pas par cette ligne — et c'est ce que le test prouve réellement.
+            const rows = (await db.collection('shifts').find({
+                date: { $in: myDates },
+                establishment_id: { $in: myEstablishments },
+                staff_id: { $nin: [staffId, '__joker__'] },
+            }, {
+                // Les seuls champs que le front lit d'un collègue (cf. `renderDaysInto`).
+                // Sans projection, l'élargissement de la vue à huit semaines multipliait
+                // par autant le poids d'un document complet par collègue et par jour.
+                projection: { date: 1, staff_id: 1, staff_name: 1, establishment_id: 1,
+                              color: 1, is_joker: 1, start_time: 1, end_time: 1 },
+            }).toArray()).filter(isVisible);
+
+            for (const r of rows) {
+                if (worked.has(r.date + '|' + r.establishment_id)) colleagueMap[r.date].push(r);
+            }
         }
         res.json({ shifts: myShifts, colleagues: colleagueMap });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
@@ -5213,7 +5238,11 @@ app.patch('/api/publish/:weekStart', checkDB, requirePatron, denyObservateurEdit
                     title:   '📅 Planning disponible',
                     body:    'La ' + formatWeekFR(weekStart) + ' est publiée — consulte ton planning.',
                     tag:     'planning-publie',
-                    url:     '/planning.html',
+                    // Ancre sur la semaine annoncée : depuis que le staff voit ses semaines
+                    // empilées en liste continue, `/planning.html` tout court le déposerait
+                    // en haut, sur la semaine EN COURS, en le laissant deviner qu'il faut
+                    // faire défiler pour trouver celle dont parle la notification.
+                    url:     '/planning.html#semaine-' + weekStart,
                     actions: [{ action: 'voir', title: 'Voir mon planning' }],
                 });
             }).catch(() => { /* silencieux — ne pas bloquer */ });

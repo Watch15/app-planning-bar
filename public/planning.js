@@ -44,6 +44,48 @@ function fmtDuration(h) {
     return mins > 0 ? hrs + 'h' + String(mins).padStart(2, '0') : hrs + 'h';
 }
 
+// Une date 'YYYY-MM-DD' → Date locale à MIDI. Midi et pas minuit : insensible au
+// changement d'heure, idiome déjà partout dans le fichier.
+function parseDate(str) { return new Date(str + 'T12:00:00'); }
+
+// Dimanche de la semaine du lundi `monday` ('YYYY-MM-DD' → 'YYYY-MM-DD').
+function weekEndStr(monday) { return toDateStr(addDays(parseDate(monday), 6)); }
+
+// « Semaine du 24 août au 30 août ». Un seul endroit : le libellé était assemblé à
+// l'identique pour l'en-tête de la semaine en cours, pour chaque bloc à venir et pour la
+// navigation des dispos — et la variante de l'historique avait déjà dérivé.
+function weekRangeLabel(monday) {
+    const mon = parseDate(monday), sun = addDays(mon, 6);
+    return 'Semaine du ' + mon.getDate() + ' ' + MONTH_NAMES[mon.getMonth()] +
+           ' au ' + sun.getDate() + ' ' + MONTH_NAMES[sun.getMonth()];
+}
+
+// Un créneau Joker se reconnaît à l'UN ou l'AUTRE des deux marqueurs : les lignes
+// anciennes ne portent que `staff_id === '__joker__'`, les récentes `is_joker`. La
+// double condition était recopiée à sept endroits — n'en oublier qu'une moitié fait
+// apparaître un Joker comme un shift à soi, sans rien signaler.
+function isJoker(s) { return !!s.is_joker || s.staff_id === '__joker__'; }
+
+// LA lecture de `/api/my-shifts`. Centralisée pour que la détection de session expirée
+// (HTML au lieu de JSON → redirection login) vaille pour TOUS les appelants : la liste
+// des semaines à venir se contentait sinon de rester vide en silence pendant que la
+// semaine en cours, elle, redirigeait. Rend `null` si la donnée n'est pas exploitable.
+async function fetchMyShifts(from, to) {
+    try {
+        const res = await fetch('/api/my-shifts?from=' + from + '&to=' + to, { credentials: 'include' });
+        const ct  = res.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) {
+            if (res.status === 401) { window.location.href = '/login.html'; return null; }
+            throw new Error('Erreur serveur (' + res.status + ')');
+        }
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur inconnue');
+        return data;
+    } catch (e) {
+        return { error: e.message || 'Erreur' };
+    }
+}
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 async function checkAuth() {
@@ -174,11 +216,17 @@ async function init() {
     const from   = toDateStr(monday);
     const to     = toDateStr(sunday);
 
-    document.getElementById('header-week').textContent =
-        'Semaine du ' + monday.getDate() + ' ' + MONTH_NAMES[monday.getMonth()] +
-        ' au ' + sunday.getDate() + ' ' + MONTH_NAMES[sunday.getMonth()];
+    document.getElementById('header-week').textContent = weekRangeLabel(from);
 
     window._currentPlan = { from, to, user };
+
+    // Lancée MAINTENANT, attendue plus bas : la liste des semaines à venir ne dépend
+    // d'aucun des appels qui suivent (pointage-settings, responsable-tonight,
+    // responsable-week). L'attendre ici la reléguait au 8e aller-retour de l'init —
+    // près d'une seconde de latence mobile avant qu'elle s'affiche, et autant avant que
+    // `scrollToHashWeek` puisse emmener le staff sur la semaine annoncée par le push.
+    const upcoming = loadUpcomingWeeks();
+
     await loadPlanning(from, to, user);
     startStaffAutoRefresh(from, to, user);
 
@@ -188,11 +236,14 @@ async function init() {
         if (document.visibilityState !== 'visible') return;
         loadStaffNotifs();
         // P-08 : rafraîchir le bloc « 📢 Créneau disponible » au retour au premier
-        // plan — le patron peut avoir ouvert un Joker pendant l'absence
+        // plan — le patron peut avoir ouvert un Joker pendant l'absence. Et le patron a
+        // pu publier une semaine : la liste des semaines à venir vit dans cette vue,
+        // elle doit se remettre à jour comme le reste.
         const cur = window._currentPlan;
         if (cur && cur.from && cur.to && document.getElementById('open-jokers-section')) {
             renderOpenJokers(cur.from, cur.to, 'open-jokers-section');
         }
+        loadUpcomingWeeks();
     });
 
     // Vérifier si le staff est responsable de soirée ce soir → onglet Pointage
@@ -296,124 +347,57 @@ async function init() {
         }
     } catch { /* silencieux */ }
 
-    // B2-b — quelles semaines À VENIR ce staff peut-il ouvrir ?
-    // Avant, on n'interrogeait que N+1 : publier N+3 envoyait un push (« la semaine du …
-    // est publiée — consulte ton planning ») vers une page que personne ne pouvait
-    // atteindre. La liste rendue par le serveur ne contient que des semaines publiées
-    // ET non vides pour ce staff.
-    try {
-        const pubRes  = await fetch('/api/my-published-weeks?weeks=8', { credentials: 'include' });
-        const futureWeeks = pubRes.ok ? await pubRes.json() : [];
-        if (Array.isArray(futureWeeks) && futureWeeks.length) {
-            // Créer la vue semaine suivante (avant l'onglet pour que showTab la trouve)
-            const viewNext = document.createElement('div');
-            viewNext.id            = 'view-next-week';
-            viewNext.style.display = 'none';
-            document.getElementById('view-dispos').after(viewNext);
+    // Semaines à venir — empilées SOUS la semaine en cours, dans la MÊME vue.
+    // Remplace l'onglet « À venir » : voir `loadUpcomingWeeks` pour le pourquoi.
+    // Lancée bien plus haut, on ne fait que la rejoindre ici — l'ancre du push a besoin
+    // que les blocs existent.
+    await upcoming;
 
-            // Ajouter l'onglet et rebinder initTabs
-            const tabBar  = document.querySelector('.tabs-bar');
-            const tabNext = document.createElement('button');
-            tabNext.className   = 'tab-btn';
-            tabNext.dataset.tab = 'next-week';
-            // Une seule semaine ouvrable → on garde le libellé familier ; plusieurs → un
-            // libellé qui annonce qu'il y a de quoi naviguer.
-            tabNext.innerHTML = futureWeeks.length > 1
-                ? '<span class="tab-full">À venir ✨</span><span class="tab-short">À venir</span>'
-                : '<span class="tab-full">Semaine prochaine ✨</span><span class="tab-short">Semaine pro</span>';
-            const histTab = tabBar.querySelector('[data-tab="historique"]');
-            tabBar.insertBefore(tabNext, histTab || null);
-            initTabs(); // rebind pour inclure le nouvel onglet
-
-            // Rendu d'UNE semaine de la liste. Le contenu est celui d'avant B2-b ; ce qui
-            // change, c'est que la semaine est un paramètre au lieu d'être `nextMonday`.
-            let futureIndex = 0;
-            const renderFutureWeek = async () => {
-                const nFrom = futureWeeks[futureIndex];
-                // Midi local : idiome du fichier, insensible au changement d'heure.
-                const nTo   = toDateStr(addDays(new Date(nFrom + 'T12:00:00'), 6));
-                viewNext.innerHTML = '<div style="padding:20px;text-align:center;color:#ccc">Chargement…</div>';
-                try {
-                    const res  = await fetch('/api/my-shifts?from=' + nFrom + '&to=' + nTo, { credentials: 'include' });
-                    const data = await res.json();
-
-                    viewNext.innerHTML = '';
-                    // Navigation, seulement s'il y a plus d'une semaine ouvrable : deux
-                    // flèches inertes n'apprendraient rien. Même système que partout.
-                    if (futureWeeks.length > 1) {
-                        const mon = new Date(nFrom + 'T12:00:00'), sun = addDays(mon, 6);
-                        const atStart = futureIndex === 0;
-                        const atEnd   = futureIndex >= futureWeeks.length - 1;
-                        const nav = document.createElement('div');
-                        nav.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px 4px';
-                        const arrow = (id, glyph, off) =>
-                            '<button type="button" id="' + id + '"' + (off ? ' disabled' : '') +
-                            ' style="padding:6px 12px;border-radius:8px;border:1.5px solid var(--border,#ddd);background:transparent;color:inherit;font-size:15px;cursor:' +
-                            (off ? 'default;opacity:.3' : 'pointer') + '">' + glyph + '</button>';
-                        nav.innerHTML =
-                            arrow('future-prev', '&#8592;', atStart) +
-                            '<div style="text-align:center;line-height:1.3">' +
-                                '<div style="font-size:13px;font-weight:700">Semaine du ' + mon.getDate() + ' ' +
-                                    MONTH_NAMES[mon.getMonth()] + ' au ' + sun.getDate() + ' ' + MONTH_NAMES[sun.getMonth()] + '</div>' +
-                                '<div style="font-size:11px;color:var(--text-muted,#999)">' +
-                                    (futureIndex + 1) + ' sur ' + futureWeeks.length + ' publiée(s)</div>' +
-                            '</div>' +
-                            arrow('future-next', '&#8594;', atEnd);
-                        viewNext.appendChild(nav);
-                        const go = delta => {
-                            futureIndex = Math.min(Math.max(futureIndex + delta, 0), futureWeeks.length - 1);
-                            renderFutureWeek();
-                        };
-                        if (!atStart) nav.querySelector('#future-prev').addEventListener('click', () => go(-1));
-                        if (!atEnd)   nav.querySelector('#future-next').addEventListener('click', () => go(1));
-                    }
-
-                    const tempStats = document.createElement('div');
-                    tempStats.className = 'week-stats';
-                    const tempJokers = document.createElement('div');
-                    tempJokers.id = 'open-jokers-section-next';
-                    const tempList  = document.createElement('div');
-                    tempList.className  = 'days-list';
-                    viewNext.appendChild(tempStats);
-                    viewNext.appendChild(tempJokers);
-                    viewNext.appendChild(tempList);
-
-                    const myShifts2 = data.shifts.filter(s => !s.is_joker && s.staff_id !== '__joker__');
-                    const jokers2   = data.shifts.filter(s =>  s.is_joker || s.staff_id === '__joker__');
-                    renderStatsInto(myShifts2, tempStats);
-                    renderDaysInto(nFrom, myShifts2, data.colleagues, tempList, jokers2);
-                    renderOpenJokers(nFrom, nTo, 'open-jokers-section-next');
-                } catch (e) {
-                    viewNext.innerHTML = '<div style="padding:20px;text-align:center;color:#e74c3c">' + e.message + '</div>';
-                }
-            };
-
-            // Charger au premier clic seulement (le contenu n'est pas utile tant que
-            // l'onglet n'est pas ouvert), puis laisser la navigation reprendre la main.
-            tabNext.addEventListener('click', () => {
-                if (viewNext.dataset.loaded) return;
-                viewNext.dataset.loaded = '1';
-                renderFutureWeek();
-            });
-        } else {
-            // Aucune semaine à venir ouvrable — message discret, inchangé.
-            const msgEl = document.createElement('div');
-            msgEl.style.cssText = 'padding:16px 20px;font-size:13px;color:#bbb;text-align:center';
-            msgEl.textContent = 'Le planning de la semaine prochaine n’est pas encore disponible.';
-            document.getElementById('view-planning').appendChild(msgEl);
-        }
-    } catch { }
+    // Le push de publication pointe sur `#semaine-<lundi>` — y amener directement, à
+    // l'ouverture ET si le Service Worker re-navigue une PWA déjà ouverte (sw.js).
+    scrollToHashWeek();
+    window.addEventListener('hashchange', scrollToHashWeek);
 }
 
 // ── Jokers ouverts — affichage staff ─────────────────────────────────────────
 
+// Le lot brut des Jokers ouverts (déjà filtré « publié » côté serveur). Séparé du rendu
+// parce que la liste continue empile plusieurs semaines : sans cette césure, chaque
+// semaine affichée rappellerait la MÊME route pour n'en garder qu'une tranche.
+//
+// Mémoïsé sur une fenêtre COURTE, parce que la route n'est bornée par aucune date : tous
+// les appelants d'un même rendu veulent le même lot, et ils sont trois (semaine en cours,
+// semaines à venir, retour au premier plan). Sans ça un chargement de page tapait deux
+// fois la même route et un rafraîchissement quatre — chacune coûtant 3 allers-retours
+// Mongo côté serveur. 3 s : assez pour couvrir une salve de rendu, trop court pour
+// servir du périmé (le prochain rafraîchissement réel est à 30 s au plus tôt).
+const JOKERS_TTL_MS = 3000;
+let _jokersCache = null;                    // { at, promise }
+
+function fetchOpenJokers() {
+    if (_jokersCache && Date.now() - _jokersCache.at < JOKERS_TTL_MS) return _jokersCache.promise;
+    const promise = (async () => {
+        try {
+            const res = await fetch('/api/shifts/joker-ouverts', { credentials: 'include' });
+            if (!res.ok) return null;
+            return await res.json();
+        } catch { return null; }
+    })();
+    _jokersCache = { at: Date.now(), promise };
+    return promise;
+}
+
+// Call site historique : une semaine, un conteneur désigné par son id.
 async function renderOpenJokers(from, to, containerId) {
     const section = document.getElementById(containerId);
     if (!section) return;
+    renderOpenJokersInto(await fetchOpenJokers(), from, to, section);
+}
+
+// Rendu d'un lot DÉJÀ récupéré, borné à la plage [from, to].
+function renderOpenJokersInto(jokers, from, to, section) {
+    if (!section || !Array.isArray(jokers)) return;
     try {
-        const res = await fetch('/api/shifts/joker-ouverts', { credentials: 'include' });
-        if (!res.ok) return;
-        const jokers = await res.json();
         // Filtrer à la plage de dates de la semaine visible
         const weekJokers = jokers
             .filter(j => j.date >= from && j.date <= to)
@@ -474,51 +458,213 @@ async function renderOpenJokers(from, to, containerId) {
 async function loadPlanning(from, to, user) {
     const list = document.getElementById('days-list');
 
+    const data = await fetchMyShifts(from, to);
+    if (!data) return;                               // session expirée → redirection en cours
+
+    if (data.error) {
+        // Cas spécifique : compte non lié à un profil staff
+        if (data.error.includes('profil staff')) {
+            list.innerHTML =
+                '<div class="empty-week">' +
+                    '<div class="empty-week-icon">⚠️</div>' +
+                    '<div class="empty-week-text">Compte non configuré</div>' +
+                    '<div class="empty-week-sub">Ton compte n est pas encore lié à un profil staff.<br>Contacte ton responsable.</div>' +
+                '</div>';
+            return;
+        }
+        list.innerHTML = '<div class="state-msg error">' + data.error + '</div>';
+        return;
+    }
+
+    const myShifts = (data.shifts || []).filter(s => !isJoker(s));
+    const jokers   = (data.shifts || []).filter(isJoker);
+    // await loadMyPendingSwaps(); // F-05 désactivé
+    _lastWeekData = { shifts: myShifts };
+    if (_statsPeriod === 'week') {
+        renderStats(myShifts);
+    } else {
+        // L'utilisateur a basculé sur Mois — on l'a déjà rendu, rien à faire ici
+        loadMonthRecap();
+    }
+    renderDays(from, myShifts, data.colleagues, jokers);
+    renderOpenJokers(from, to, 'open-jokers-section');
+}
+
+// ── Semaines à venir — empilées sous la semaine en cours ─────────────────────
+//
+// Remplace l'onglet « À venir » (supprimé le 2026-08-17). Deux raisons, dans l'ordre :
+//
+// 1. ROBUSTESSE. L'onglet tenait sa propre liste de semaines, calculée autrement que la
+//    vue principale — c'est ce désaccord qui rendait le planning invisible le lundi de
+//    00h à 06h. Deux listes à garder d'accord, c'est un bug qui revient ; une seule, non.
+//    Ici le seul « maintenant » est le POINT DE DÉPART (`Week.upcomingWeekStart`, cutoff).
+//    Le regroupement passe par `Week.weekStart` sur une date calendaire, insensible au
+//    cutoff par construction.
+//
+// 2. UNE SEULE REQUÊTE. On ne demande plus « quelles semaines puis-je ouvrir ? »
+//    (`/api/my-published-weeks`) : `/api/my-shifts` filtre déjà la publication SHIFT PAR
+//    SHIFT (`isDatePublished` côté serveur). Une semaine non publiée ne rend donc rien et
+//    ne produit aucun bloc — la porte reste tenue par le serveur, pas par le navigateur.
+
+// Horizon chargé d'un coup. 8 = ce que l'ancien onglet interrogeait déjà. Au-delà on ne
+// chargerait que du vide, le serveur ne rendant que du publié.
+const UPCOMING_WEEKS = 8;
+
+// ── Pastille « nouveau » ──────────────────────────────────────────────────────
+// Un ENSEMBLE de lundis déjà vus, et non un simple « vu jusqu'à » : le patron publie
+// couramment N+1 APRÈS N+2, et une borne haute cesserait alors de pastiller la semaine
+// la plus proche — exactement celle qui compte.
+const SEEN_WEEKS_KEY = 'templyo_seen_weeks';
+
+function loadSeenWeeks() {
+    try { return new Set(JSON.parse(localStorage.getItem(SEEN_WEEKS_KEY) || '[]')); }
+    catch { return new Set(); }
+}
+
+function markWeekSeen(seen, monday) {
+    if (seen.has(monday)) return;
+    seen.add(monday);
     try {
-        const res = await fetch('/api/my-shifts?from=' + from + '&to=' + to, { credentials: 'include' });
+        // Borné : sans ça on accumulerait indéfiniment des lundis révolus.
+        localStorage.setItem(SEEN_WEEKS_KEY, JSON.stringify([...seen].sort().slice(-24)));
+    } catch { /* mode privé / quota : la pastille se réaffichera, sans gravité */ }
+}
 
-        // Vérifier que la réponse est bien du JSON
-        const contentType = res.headers.get('content-type') || '';
-        if (!contentType.includes('application/json')) {
-            // Le serveur a renvoyé du HTML → session expirée ou erreur serveur
-            if (res.status === 401) {
-                window.location.href = '/login.html';
-                return;
-            }
-            throw new Error('Erreur serveur (' + res.status + ')');
+// Les observateurs du rendu PRÉCÉDENT. `loadUpcomingWeeks` vide son conteneur à chaque
+// passage (retour au premier plan, rafraîchissement) : sans cette liste, chaque passage
+// abandonnerait jusqu'à 8 observateurs sur des blocs détachés, qui n'intersectent plus
+// jamais et ne se déconnectent donc jamais d'eux-mêmes.
+let _weekObservers = [];
+
+function disconnectWeekObservers() {
+    for (const io of _weekObservers) io.disconnect();
+    _weekObservers = [];
+}
+
+// La pastille ne se consomme qu'une fois le bloc RÉELLEMENT arrivé sous les yeux. La
+// marquer au rendu la ferait disparaître sans avoir jamais été lue — les semaines à
+// venir sont plus bas dans le défilement, souvent hors écran au chargement.
+function observeWeekSeen(seen, block, monday) {
+    if (typeof IntersectionObserver !== 'function') { markWeekSeen(seen, monday); return; }
+    const io = new IntersectionObserver(entries => {
+        if (!entries.some(e => e.isIntersecting)) return;
+        markWeekSeen(seen, monday);
+        io.disconnect();
+    }, { threshold: 0.35 });
+    io.observe(block);
+    _weekObservers.push(io);
+}
+
+// ── Chargement des semaines à venir ───────────────────────────────────────────
+// Garde anti-recouvrement : trois déclencheurs peuvent tomber en même temps (init,
+// retour au premier plan, tick d'auto-refresh) et chacun vide puis reconstruit le
+// conteneur. Sans elle, deux passages concurrents se marchent dessus.
+let _upcomingInFlight = null;
+
+function loadUpcomingWeeks() {
+    if (_upcomingInFlight) return _upcomingInFlight;
+    _upcomingInFlight = _loadUpcomingWeeks().finally(() => { _upcomingInFlight = null; });
+    return _upcomingInFlight;
+}
+
+async function _loadUpcomingWeeks() {
+    const wrap = document.getElementById('upcoming-weeks');
+    if (!wrap) return;
+
+    // `Week.upcomingWeekRange` : LA source unique de cet horizon, partagée avec le
+    // serveur et couverte par tests/week.test.js. La recalculer à la main ici, c'était
+    // reproduire le désaccord de calculs qui a causé le bug qu'on vient de fermer —
+    // et court-circuiter au passage l'écrêtage de `clampHorizonWeeks`.
+    const { from, to } = Week.upcomingWeekRange(new Date(), UPCOMING_WEEKS);
+
+    const [data, openJokers] = await Promise.all([fetchMyShifts(from, to), fetchOpenJokers()]);
+    // Silencieux en cas d'échec : la semaine en cours, elle, reste lisible — mieux vaut
+    // une liste absente qu'un message d'erreur sous un planning qui s'affiche bien.
+    if (!data || data.error) return;
+
+    // Regroupement par lundi — `Week.weekStart` sur une date calendaire, surtout PAS
+    // `currentWeekStart` qui répondrait « quelle semaine est-on maintenant ».
+    // Les Jokers sont rangés dans la même passe : les re-filtrer par semaine ensuite
+    // rebalayait le tableau entier une fois par bloc.
+    const byWeek = new Map();
+    const bucket = wk => {
+        if (!byWeek.has(wk)) byWeek.set(wk, { mine: [], jokers: [] });
+        return byWeek.get(wk);
+    };
+    for (const s of (data.shifts || [])) {
+        const wk = toDateStr(Week.weekStart(new Date(s.date + 'T12:00:00')));
+        bucket(wk)[isJoker(s) ? 'jokers' : 'mine'].push(s);
+    }
+    // Une semaine où je n'ai QUE des Jokers de collègues n'est pas mon planning.
+    for (const [wk, b] of byWeek) if (!b.mine.length) byWeek.delete(wk);
+
+    disconnectWeekObservers();
+    wrap.innerHTML = '';
+
+    if (byWeek.size === 0) {
+        wrap.innerHTML = '<div class="state-msg">Le planning des semaines suivantes n’est pas encore publié.</div>';
+        return;
+    }
+
+    const seen = loadSeenWeeks();
+    for (const monday of [...byWeek.keys()].sort()) {
+        const { mine, jokers } = byWeek.get(monday);
+        renderUpcomingWeek(wrap, monday, mine, jokers, data.colleagues || {},
+                           openJokers, !seen.has(monday));
+        if (!seen.has(monday)) {
+            observeWeekSeen(seen, document.getElementById('semaine-' + monday), monday);
         }
+    }
+}
 
-        const data = await res.json();
+function renderUpcomingWeek(wrap, monday, weekShifts, weekJokers, colleagues, openJokers, isNew) {
+    const end = weekEndStr(monday);
 
-        if (!res.ok) {
-            // Cas spécifique : compte non lié à un profil staff
-            if (data.error && data.error.includes('profil staff')) {
-                list.innerHTML =
-                    '<div class="empty-week">' +
-                        '<div class="empty-week-icon">⚠️</div>' +
-                        '<div class="empty-week-text">Compte non configuré</div>' +
-                        '<div class="empty-week-sub">Ton compte n est pas encore lié à un profil staff.<br>Contacte ton responsable.</div>' +
-                    '</div>';
-                return;
-            }
-            throw new Error(data.error || 'Erreur inconnue');
-        }
+    // ⚠️ Chaque semaine rend dans SON PROPRE conteneur. Contrat de `renderDaysInto` :
+    // elle est PROPRIÉTAIRE de la liste qu'on lui passe et l'écrase (les deux branches
+    // le font). C'est un contrat sain — ne pas le « corriger » pour tout empiler dans
+    // une liste unique, chaque semaine a de toute façon besoin de son séparateur, de
+    // ses stats, de son emplacement Joker et de son ancre.
+    const block = document.createElement('section');
+    block.className = 'upcoming-week';
+    block.id        = 'semaine-' + monday;          // cible de l'ancre du push
 
-        const myShifts = data.shifts.filter(s => !s.is_joker && s.staff_id !== '__joker__');
-        const jokers   = data.shifts.filter(s =>  s.is_joker || s.staff_id === '__joker__');
-        // await loadMyPendingSwaps(); // F-05 désactivé
-        _lastWeekData = { shifts: myShifts };
-        if (_statsPeriod === 'week') {
-            renderStats(myShifts);
-        } else {
-            // L'utilisateur a basculé sur Mois — on l'a déjà rendu, rien à faire ici
-            loadMonthRecap();
-        }
-        renderDays(from, myShifts, data.colleagues, jokers);
-        renderOpenJokers(from, to, 'open-jokers-section');
+    const sep = document.createElement('div');
+    sep.className = 'week-sep';
+    sep.innerHTML =
+        '<span class="week-sep-label">' + weekRangeLabel(monday) + '</span>' +
+        (isNew ? '<span class="week-sep-new">✨ Nouveau</span>' : '');
 
-    } catch (e) {
-        list.innerHTML = '<div class="state-msg error">' + e.message + '</div>';
+    const stats = document.createElement('div');
+    stats.className = 'week-stats';
+    const jokerSection = document.createElement('div');
+    const list = document.createElement('div');
+    list.className = 'days-list';
+
+    block.append(sep, stats, jokerSection, list);
+    wrap.appendChild(block);
+
+    renderStatsInto(weekShifts, stats);
+    renderDaysInto(monday, weekShifts, colleagues, list, weekJokers);
+    renderOpenJokersInto(openJokers, monday, end, jokerSection);
+}
+
+// Le push de publication pointe sur `#semaine-<lundi>` : amener le staff DIRECTEMENT sur
+// la semaine annoncée plutôt que de le déposer en haut du planning en le laissant deviner
+// qu'il faut faire défiler.
+//
+// Rebranché sur `hashchange` en plus de l'init : le Service Worker peut désormais
+// re-naviguer une PWA DÉJÀ OUVERTE vers l'ancre (cf. sw.js), ce qui ne relance pas la page
+// et ne passerait donc jamais par l'init.
+function scrollToHashWeek() {
+    const id = (window.location.hash || '').slice(1);
+    if (!/^semaine-\d{4}-\d{2}-\d{2}$/.test(id)) return;
+    const el = document.getElementById(id);
+    // La semaine annoncée peut être celle EN COURS (le patron republie souvent la semaine
+    // entamée) : elle n'a pas de bloc à elle, elle EST le haut de la page.
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else if (id.slice(8) === toDateStr(Week.currentWeekStart(new Date()))) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
 
@@ -1306,7 +1452,8 @@ function openContactSheet(name, phone) {
 
 function showTab(tab) {
     // Cacher toutes les vues connues
-    const views = ['view-planning', 'view-dispos', 'view-next-week', 'view-historique', 'view-resp-dashboard'];
+    // `view-next-week` a disparu : les semaines à venir sont empilées dans `view-planning`.
+    const views = ['view-planning', 'view-dispos', 'view-historique', 'view-resp-dashboard'];
     views.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -2466,11 +2613,11 @@ async function startStaffAutoRefresh(from, to, user) {
             const { ts } = await res.json();
             if (ts && ts !== _staffLastTs) {
                 _staffLastTs = ts;
-                // Recharger silencieusement le planning affiché
-                await loadPlanning(from, to, user);
-                // Si la vue "semaine prochaine" était chargée, la marquer à recharger
-                const viewNext = document.getElementById('view-next-week');
-                if (viewNext) delete viewNext.dataset.loaded;
+                // Recharger silencieusement le planning affiché, semaines à venir
+                // comprises : elles sont dans la même vue, donc déjà sous les yeux.
+                // En parallèle — les deux sont indépendants — et le lot de Jokers
+                // ouverts qu'ils partagent ne part qu'une fois (cf. `fetchOpenJokers`).
+                await Promise.all([loadPlanning(from, to, user), loadUpcomingWeeks()]);
             }
         } catch { /* silencieux */ }
     }, 30000);

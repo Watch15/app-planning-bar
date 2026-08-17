@@ -619,6 +619,35 @@
         .cal-sync-url { flex: 1; min-width: 0; border: 1.5px solid var(--light-border); border-radius: 8px; padding: 9px 10px; font-size: 12px; font-family: inherit; background: var(--light-bg); color: var(--text-primary); }
         .cal-sync-help { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
         .cal-sync-help b { color: var(--text-primary); }
+
+        /* ── Semaines à venir (liste continue) ────────────────────────────── */
+        /* Le séparateur porte la date ET le signal de nouveauté : dans un flux
+           continu il est sur le chemin de lecture, là où l'ancien onglet « À venir »
+           demandait au staff de savoir qu'il existait. */
+        .week-sep {
+            display: flex; align-items: center; gap: 10px;
+            padding: 26px 20px 10px;
+        }
+        .week-sep::after {
+            content: ''; flex: 1; height: 1px; background: var(--light-border);
+        }
+        .week-sep-label {
+            font-size: 12px; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: .5px;
+        }
+        .week-sep-new {
+            background: var(--accent); color: #fff;
+            font-size: 10px; font-weight: 700; padding: 3px 8px;
+            border-radius: 20px; letter-spacing: .3px; white-space: nowrap;
+        }
+        /* Le rembourrage bas de `.days-list` était de l'air en fin de page, pas une
+           propriété d'une liste de jours. Depuis qu'une liste peut en suivre une autre,
+           il se porte sur le conteneur : sélecteurs d'id et de classe, donc plus de
+           dépendance à l'ordre des media queries. */
+        #days-list { padding-bottom: 4px; }
+        .upcoming-week .days-list  { padding-bottom: 0; }
+        .upcoming-week .week-stats { padding-top: 6px; }
+        #upcoming-weeks { padding-bottom: 32px; }
     </style>
 </head>
 <body>
@@ -665,6 +694,10 @@
 <div class="days-list" id="days-list">
     <div class="state-msg">Chargement…</div>
 </div>
+
+<!-- Semaines à venir, empilées sous la semaine en cours (liste continue).
+     Remplace l'ancien onglet « À venir » : une seule vue, un seul axe de lecture. -->
+<div id="upcoming-weeks"></div>
 
 <!-- Synchronisation agenda (Google / Apple / Outlook) -->
 <div class="cal-sync-card" id="cal-sync-card">
