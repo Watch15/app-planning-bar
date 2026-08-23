@@ -1392,36 +1392,20 @@ dispo, un seul touche au planning.
 
 | Chemin | Journal | Créneau déjà planifié |
 |---|---|---|
-| Re-soumission DIFFÉRENTE (`POST /api/dispos`) | `update` | **intact** — la dispo repasse en `pending`, le patron est notifié, et c'est SA revalidation qui reporte les horaires (cf. décision ci-dessous) |
+| Re-soumission DIFFÉRENTE (`POST /api/dispos`) | `update` | **→ Joker**, si la dispo était `confirmed` ET porte un établissement ET que le type ou les horaires changent (la note ne compte pas, à dessein). Sauf déjà pointé (intact) ou semaine déjà publiée (intact, patron notifié « à toi de trancher ») |
 | Re-soumission à l'IDENTIQUE | rien | intact — voulu, c'est le cas le plus courant |
 | Jour couvert par un congé, au moment d'un envoi | `purge_conge` | **intact, personne n'est prévenu** |
 | Réouverture pour correction (patron) | `reopen` | **intact** |
 | Absence déclarée par un directeur | `purge_absence` | **intact — décision assumée** : « le planning reste sa décision, à lui de le retirer » |
 
-#### Décision du 2026-08-23 — la jokerisation automatique est RETIRÉE
-
-Elle existait depuis le 2026-08-13 : une dispo validée modifiée faisait repasser le
-créneau en Joker, sauf s'il était déjà pointé ou sur une semaine publiée. **Retirée à la
-demande du user** : jokeriser, c'était décider à la place du patron, et décider à
-l'aveugle — le poste redevenait vacant sur la foi d'un formulaire renvoyé, parfois pour
-deux heures de décalage qu'il aurait acceptées d'un mot.
-
-Le planning ne bouge donc plus tout seul. La dispo repasse simplement `pending`, atterrit
-dans la file de validation, et le patron reçoit « Dispo revue sur un jour planifié » — sa
-file, elle, ne dit pas que le jour était DÉJÀ planifié, d'où la notification distincte.
-
-⚠️ **La contrepartie était obligatoire, et non demandée explicitement** :
-`PATCH /api/dispos/:id/confirm` sautait toute écriture quand un shift existait déjà
-(idempotence). Retirer la jokerisation sans y toucher aurait rendu la modification
-**invisible** — le patron validait 20h–02h et gardait 18h–24h à l'écran, sans un mot. La
-revalidation **réaligne** donc désormais les horaires du créneau existant. Deux garde-fous
-conservés : rien n'est réécrit si les horaires sont déjà les bons, ni si le créneau est
-**déjà pointé** (les heures réelles ont été relevées contre l'horaire prévu — réécrire
-l'un fausse la lecture de l'autre, et le récap avec).
-
-`releaseShiftsOnDispoChange` → `shiftsTouchedByDispoChange` : elle ne mute plus rien,
-elle relève. Le code qui posait `JOKER_SHIFT` est **supprimé et non commenté** — git le
-garde si la décision se retourne, un bloc mort finirait par mentir.
+**Retrait de la jokerisation : tenté puis annulé (2026-08-23).** Le remplacement de la
+jokerisation automatique par un simple « à revalider » a été implémenté (`4f90785`) puis
+**reverté à la demande du user**, qui a retiré son idée. Le comportement décrit dans le
+tableau ci-dessus est donc bien celui en vigueur. Le code de la tentative reste dans
+l'historique git — il embarquait une contrepartie obligatoire, le réalignement des
+horaires du créneau à la revalidation, sans laquelle la modification devenait invisible
+(`PATCH /api/dispos/:id/confirm` saute toute écriture quand un shift existe déjà). **À
+reprendre depuis ce commit si le sujet revient** plutôt que depuis zéro.
 
 **🔮 À trancher — le trou du congé approuvé.** `PATCH /api/conges/:id/decision` ne touche
 **ni les dispos ni les shifts** : approuver un congé sur une semaine où la personne est

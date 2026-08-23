@@ -303,12 +303,7 @@ test('GET /api/dispo-settings : deadline passée mais horizon large → la saisi
     assert.equal(body.canSubmit, true, 'les semaines suivantes restent ouvertes');
 });
 
-// ── Dispo revue sur un jour DÉJÀ VALIDÉ : le planning ne bouge plus tout seul ─
-//
-// Décision du 2026-08-23 : la jokerisation automatique est retirée. Une dispo revue
-// repasse « à revalider » dans la file du patron, et c'est SA revalidation qui reporte
-// la nouvelle version sur le planning. Ce que ces tests tiennent : le staff ne peut plus
-// vider un poste en renvoyant un formulaire, et la revalidation n'est pas un no-op.
+// ── Libération en Joker d'un créneau dont la dispo validée a changé ──────────
 
 const BAR = 'bar1';
 const SHIFT_ID = 'aaaaaaaaaaaaaaaaaaaaaaaa';
@@ -329,32 +324,20 @@ function seedConfirmed(shiftExtra = {}) {
     });
 }
 
-test('dispo validée modifiée → le créneau reste au titulaire, AUCUN Joker', async () => {
-    // LE test du retrait. Avec le code d'avant le 2026-08-23, ce shift devenait un Joker
-    // et le poste se retrouvait vacant sur la foi d'un formulaire renvoyé — parfois pour
-    // deux heures de décalage que le patron aurait acceptées d'un mot.
+test('dispo validée modifiée → le créneau repasse en Joker, il n\'est pas supprimé', async () => {
+    // Décision du 2026-08-13, alignée sur F-14 : le poste était tenu, il reste à
+    // pourvoir. Le supprimer le ferait disparaître en silence d'un planning publié.
     const db = seedConfirmed();
     app.locals.setTestDb(db);
     const res = await postDispos([day(W1[0], 20, 26)]);
     assert.equal(res.status, 201);
 
     const shifts = shiftsOf(db);
-    assert.equal(shifts.length, 1);
-    assert.equal(shifts[0].staff_id, STAFF_ID, 'toujours titulaire');
-    assert.ok(!shifts[0].is_joker, 'aucun Joker créé');
-    assert.equal(shifts[0].start_time, 18, 'et l\'horaire planifié n\'a pas bougé non plus');
-    assert.match((await res.json()).message, /planning est inchangé/);
-});
-
-test('dispo validée modifiée → elle repart bien en attente de validation', async () => {
-    // Le pendant du précédent : ne rien faire au planning n'a de sens que si la dispo
-    // atterrit dans la file. Sinon la modification est simplement perdue.
-    const db = seedConfirmed();
-    app.locals.setTestDb(db);
-    await postDispos([day(W1[0], 20, 26)]);
-    const dispo = disposOf(db).find(d => d.date === W1[0]);
-    assert.equal(dispo.status, 'pending', 'à revalider');
-    assert.equal(dispo.start_time, 20, 'dans sa nouvelle version');
+    assert.equal(shifts.length, 1, 'le créneau existe toujours');
+    assert.equal(shifts[0].is_joker, true);
+    assert.equal(shifts[0].staff_id, '__joker__');
+    assert.equal(shifts[0].date, W1[0], 'même jour, même besoin');
+    assert.match((await res.json()).message, /Joker/);
 });
 
 test('re-soumission À L\'IDENTIQUE → le planning n\'est pas touché', async () => {
@@ -368,32 +351,29 @@ test('re-soumission À L\'IDENTIQUE → le planning n\'est pas touché', async (
     assert.ok(!shiftsOf(db)[0].is_joker);
 });
 
-test('créneau déjà POINTÉ → intact (ce sont des heures travaillées)', async () => {
+test('créneau déjà POINTÉ → jamais libéré (ce sont des heures travaillées)', async () => {
     const db = seedConfirmed({ real_start: 18.5, real_end: 24 });
     app.locals.setTestDb(db);
     const res = await postDispos([day(W1[0], 20, 26)]);
     assert.equal(res.status, 201);
     assert.equal(shiftsOf(db)[0].staff_id, STAFF_ID, 'la paie n\'est pas effacée par une dispo');
-    assert.equal(shiftsOf(db)[0].real_start, 18.5, 'le pointage non plus');
+    assert.match((await res.json()).message, /pointé/);
 });
 
-test('dispo jamais validée (pending) → le staff n\'est pas signalé au patron', async () => {
-    // Le relevé ne vise QUE ce que le patron avait validé : une dispo encore en attente
-    // qu'on modifie est un cas ordinaire, pas une décision à lui remonter.
+test('dispo jamais validée (pending) → aucun créneau libéré', async () => {
+    // La libération ne vise QUE ce que le patron avait validé.
     const db = seedConfirmed();
     db.collection('availabilities')._docs[0].status = 'pending';
     app.locals.setTestDb(db);
-    const res = await postDispos([day(W1[0], 20, 26)]);
+    await postDispos([day(W1[0], 20, 26)]);
     assert.equal(shiftsOf(db)[0].staff_id, STAFF_ID);
-    assert.doesNotMatch((await res.json()).message, /déjà planifié/);
 });
 
 // ── Règle du 2026-08-13 : le staff n'altère pas un planning publié ───────────
 
 test('semaine PUBLIÉE : le créneau reste au titulaire, le patron est prévenu', async () => {
     // Une action du staff ne peut pas modifier un planning déjà annoncé aux équipes.
-    // Depuis le 2026-08-23 c'est vrai de TOUTES les semaines — mais la règle garde son
-    // test propre : c'est elle qui devra tenir si la jokerisation revient un jour.
+    // La règle est volontairement asymétrique — le patron, lui, garde la main.
     const db = seedConfirmed();
     db.collection('settings')._docs.push({ key: 'publish_' + W1[0], establishments: 'ALL' });
     app.locals.setTestDb(db);
@@ -403,7 +383,7 @@ test('semaine PUBLIÉE : le créneau reste au titulaire, le patron est prévenu'
     const shift = shiftsOf(db)[0];
     assert.equal(shift.staff_id, STAFF_ID, 'le planning publié n\'a pas bougé');
     assert.ok(!shift.is_joker);
-    assert.match((await res.json()).message, /déjà planifié/);
+    assert.match((await res.json()).message, /déjà publié/);
 });
 
 test('semaine publiée : la dispo elle-même est bien enregistrée', async () => {
@@ -418,77 +398,26 @@ test('semaine publiée : la dispo elle-même est bien enregistrée', async () =>
     assert.equal(dispo.status, 'pending', 'et repart en validation');
 });
 
-test('un créneau d\'un AUTRE bar que celui de la dispo n\'est pas relevé', async () => {
-    // Le relevé reste scopé par établissement : ce qui remonte au patron doit être le
-    // créneau dont on parle, sinon la notification lui désigne le mauvais jour.
+test('publication d\'un AUTRE bar : le créneau du bar concerné reste libérable', async () => {
+    // `isDatePublished` est scopé par établissement : publier bar2 ne protège pas bar1.
+    const db = seedConfirmed();
+    db.collection('settings')._docs.push({ key: 'publish_' + W1[0], establishments: ['bar2'] });
+    app.locals.setTestDb(db);
+    await postDispos([day(W1[0], 20, 26)]);
+    assert.equal(shiftsOf(db)[0].is_joker, true);
+});
+
+test('un créneau d\'un AUTRE bar que celui de la dispo n\'est pas touché', async () => {
     const db = seedConfirmed();
     db.collection('shifts')._docs.push({
         _id: 'bbbbbbbbbbbbbbbbbbbbbbbb', staff_id: STAFF_ID, staff_name: 'Bob',
         establishment_id: 'bar2', date: W1[0], start_time: 18, end_time: 24,
     });
     app.locals.setTestDb(db);
-    const res = await postDispos([day(W1[0], 20, 26)]);
+    await postDispos([day(W1[0], 20, 26)]);
     const byBar = Object.fromEntries(shiftsOf(db).map(s => [s.establishment_id, s]));
-    assert.equal(byBar[BAR].staff_id, STAFF_ID);
-    assert.equal(byBar.bar2.staff_id, STAFF_ID);
-    assert.match((await res.json()).message, /1 créneau/, 'un seul créneau relevé, pas deux');
-});
-
-// ── La revalidation reporte la nouvelle version sur le planning ──────────────
-//
-// C'est la contrepartie du retrait ci-dessus : sans elle, retirer la jokerisation
-// rendrait la modification INVISIBLE. Le patron validerait 20h–02h et garderait
-// 18h–24h à l'écran, l'idempotence de la route sautant l'écriture en silence.
-
-const confirmDispo = (db, extra = {}) => req(
-    '/api/dispos/' + db.collection('availabilities')._docs[0]._id + '/confirm', PATRON,
-    { method: 'PATCH', body: JSON.stringify({ establishment_id: BAR, create_shift: true, ...extra }) });
-
-function seedRevalidation(dispoExtra = {}, shiftExtra = {}) {
-    return makeDb({
-        settings: [{ key: 'dispo', open: true }],
-        availabilities: [{
-            _id: 'cccccccccccccccccccccccc', staff_id: STAFF_ID, staff_name: 'Bob',
-            date: W1[0], type: 'custom', start_time: 20, end_time: 26,
-            status: 'pending', ...dispoExtra,
-        }],
-        staff: [{ _id: STAFF_ID, name: 'Bob', venues: [BAR] }],
-        shifts: [{
-            _id: SHIFT_ID, staff_id: STAFF_ID, staff_name: 'Bob',
-            establishment_id: BAR, date: W1[0], start_time: 18, end_time: 24, ...shiftExtra,
-        }],
-    });
-}
-
-test('revalider une dispo modifiée aligne les horaires du créneau existant', async () => {
-    const db = seedRevalidation();
-    app.locals.setTestDb(db);
-    const res = await confirmDispo(db);
-    assert.equal(res.status, 200);
-    const shifts = shiftsOf(db);
-    assert.equal(shifts.length, 1, 'pas de doublon : le créneau est mis à jour, pas recréé');
-    assert.equal(shifts[0].start_time, 20);
-    assert.equal(shifts[0].end_time, 26);
-    assert.equal(shifts[0].staff_id, STAFF_ID, 'toujours le même titulaire');
-});
-
-test('revalider une dispo IDENTIQUE au créneau ne réécrit rien', async () => {
-    const db = seedRevalidation({ start_time: 18, end_time: 24 });
-    app.locals.setTestDb(db);
-    await confirmDispo(db);
-    const shifts = shiftsOf(db);
-    assert.equal(shifts.length, 1);
-    assert.equal(shifts[0].start_time, 18, 'l\'idempotence d\'origine tient toujours');
-});
-
-test('revalider ne réécrit pas un créneau DÉJÀ POINTÉ', async () => {
-    // Les heures réelles ont été relevées CONTRE l'horaire prévu : réécrire l'un fausse
-    // la lecture de l'autre, et le récap avec.
-    const db = seedRevalidation({}, { real_start: 18, real_end: 24.5 });
-    app.locals.setTestDb(db);
-    const res = await confirmDispo(db);
-    assert.equal(shiftsOf(db)[0].start_time, 18, 'l\'horaire prévu est laissé tel quel');
-    assert.match((await res.json()).message, /pointé/, 'et le patron l\'apprend');
+    assert.equal(byBar[BAR].is_joker, true, 'le bar de la dispo est libéré');
+    assert.equal(byBar.bar2.staff_id, STAFF_ID, 'l\'autre bar est hors sujet');
 });
 
 // ── Réouverture nominative de la deadline, par semaine ───────────────────────
