@@ -632,6 +632,31 @@ async function recordDispoEvents(action, actor, changes) {
     }
 }
 
+// Retire les dispos d'un staff et laisse la trace, en un seul geste.
+//
+// QUATRE chemins font disparaître une dispo : congé rencontré au moment d'un envoi, congé
+// approuvé, réouverture pour correction, absence déclarée par un directeur. Ils faisaient
+// tous les mêmes trois appels, recopiés. Ce qu'on perd à les recopier n'est pas du confort,
+// ce sont DEUX INVARIANTS : `type: { $ne: 'week_note' }` — une note de semaine n'est pas
+// une dispo et ne doit pas être effacée sous ce nom — et « LIRE avant de supprimer »
+// (F-12), qui est toute la valeur de preuve du journal. Un cinquième chemin écrit à la
+// main en oublierait un, et l'oubli serait muet : la dispo disparaîtrait avec un événement
+// qui certifie la suppression.
+//
+// `dateFilter` est le prédicat Mongo tel quel — `{ $in: [...] }` ou `{ $gte, $lte }`.
+// Renvoie les documents supprimés : l'appelant y lit un compte, ou les cite.
+async function purgeDisposAvecTrace(staffId, dateFilter, action, req, fallbackName) {
+    const filter = { staff_id: staffId, date: dateFilter, type: { $ne: 'week_note' } };
+    const purged = await db.collection('availabilities').find(filter).toArray();
+    if (!purged.length) return purged;      // rien à supprimer, rien à journaliser
+    await db.collection('availabilities').deleteMany(filter);
+    await recordDispoEvents(action, auditActor(req), purged.map(p => ({
+        staff_id: staffId, staff_name: p.staff_name || fallbackName || '',
+        date: p.date, before: p, after: null,
+    })));
+    return purged;
+}
+
 // ── Helpers semaine ───────────────────────────────────────────────────────────
 // Wrappers vers lib/utils.js (testés). Conservés pour compatibilité avec les
 // nombreux callsites historiques (`_weekStart`, `_disposWeekStart`, `_isAutoPublished`).
@@ -3652,19 +3677,11 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
             dispos2       = split.kept;
             skippedConges = split.skippedDates;
             // Purger d'éventuelles dispos déjà posées sur ces jours de congé.
-            // F-12 : les LIRE avant de les supprimer — c'était l'un des trois chemins qui
-            // faisaient disparaître une dispo sans laisser la moindre trace.
-            if (skippedConges.length) {
-                const purgeFilter = {
-                    staff_id: staffId, date: { $in: skippedConges }, type: { $ne: 'week_note' },
-                };
-                const purged = await db.collection('availabilities').find(purgeFilter).toArray();
-                await db.collection('availabilities').deleteMany(purgeFilter);
-                await recordDispoEvents('purge_conge', auditActor(req), purged.map(p => ({
-                    staff_id: staffId, staff_name: req.session.user.name || '',
-                    date: p.date, before: p, after: null,
-                })));
-            }
+            // F-12 : les LIRE avant de les supprimer — c'était l'un des chemins qui
+            // faisaient disparaître une dispo sans laisser la moindre trace. La garde
+            // évite un aller-retour Mongo dans le cas courant (aucun jour de congé).
+            if (skippedConges.length)
+                await purgeDisposAvecTrace(staffId, { $in: skippedConges }, 'purge_conge', req, req.session.user.name);
         }
         // Ce qui n'a PAS été enregistré, dit une seule fois : jours de congé (ci-dessus)
         // et jours de la semaine figée par la deadline (règle A). Un lot partiellement
@@ -4190,12 +4207,7 @@ app.post('/api/dispos/reopen-for-correction', checkDB, requirePatron, denyObserv
         // F-12 : rouvrir pour correction EFFACE la saisie précédente. C'est exactement
         // la version qu'un litige réclamera — « qu'est-ce qu'il avait mis, avant qu'on
         // lui demande de recommencer ? ».
-        const reopenFilter = { staff_id, date: { $gte: from, $lte: to }, type: { $ne: 'week_note' } };
-        const wiped = await db.collection('availabilities').find(reopenFilter).toArray();
-        const del = await db.collection('availabilities').deleteMany(reopenFilter);
-        await recordDispoEvents('reopen', auditActor(req), wiped.map(w => ({
-            staff_id, staff_name: w.staff_name, date: w.date, before: w, after: null,
-        })));
+        const wiped = await purgeDisposAvecTrace(staff_id, { $gte: from, $lte: to }, 'reopen', req);
         // B2 — cette route CONNAISSAIT déjà la semaine à rouvrir (`from`) et la jetait :
         // la réouverture qu'elle posait ne disait pas pour quoi elle avait été posée.
         // Elle la porte maintenant.
@@ -4205,7 +4217,7 @@ app.post('/api/dispos/reopen-for-correction', checkDB, requirePatron, denyObserv
             { $addToSet: { force_open_staff: { staff_id, week_start: targetWeek } } },
             { upsert: true }
         );
-        res.json({ message: 'OK', deleted: del.deletedCount, week_start: targetWeek });
+        res.json({ message: 'OK', deleted: wiped.length, week_start: targetWeek });
         touchLastUpdated();
     } catch (e) { console.error('[POST /api/dispos/reopen-for-correction]', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -4313,6 +4325,37 @@ app.patch('/api/dispos/:id/ignore', checkDB, requirePatron, denyObservateurEdit,
 });
 
 // ── Congés / vacances (collection `time_off`) ────────────────────────────────
+
+// Un congé APPROUVÉ est opposable : il retire les dispos de la période, et signale les
+// créneaux déjà planifiés sans y toucher.
+//
+// Vit ICI et non dans la route de décision, parce qu'un congé peut NAÎTRE approuvé :
+// `POST /api/conges` en mode `info` (déclaration, pas demande) insère directement en
+// `approved`. Accrocher le nettoyage au seul bouton « Valider » laissait donc le trou grand
+// ouvert sur ce chemin-là — c'est la transition « ce congé devient opposable » qui le
+// porte, pas l'un des deux gestes qui la produisent.
+//
+// Les CRÉNEAUX ne sont pas retirés, ils sont COMPTÉS : même règle que l'archivage — ne
+// jamais trouer un planning que l'équipe a déjà reçu. Bornés à aujourd'hui, parce
+// qu'annoncer « à réattribuer » sur des soirées déjà travaillées n'aurait aucun sens.
+//
+// Le libellé est rendu ici, et pas dans chacune des deux routes : c'est la même phrase.
+async function appliquerCongeApprouve(conge, req) {
+    const staffId = conge.staff_id ? String(conge.staff_id) : null;
+    if (!staffId) return { purged: 0, shifts: 0, suffix: '' };
+    const today   = toDateStr(new Date());
+    const debutAV = conge.start_date > today ? conge.start_date : today;
+    // Purge et comptage portent sur deux collections et ne dépendent pas l'un de l'autre.
+    const [purged, shifts] = await Promise.all([
+        purgeDisposAvecTrace(staffId, { $gte: conge.start_date, $lte: conge.end_date },
+            'purge_conge', req, conge.staff_name),
+        db.collection('shifts').countDocuments({ staff_id: staffId, date: { $gte: debutAV, $lte: conge.end_date } }),
+    ]);
+    let suffix = '';
+    if (purged.length) suffix += ' · ' + purged.length + ' dispo(s) retirée(s) sur la période';
+    if (shifts)        suffix += ' · ⚠️ ' + shifts + ' créneau(x) déjà planifié(s) laissé(s) en place, à réattribuer';
+    return { purged: purged.length, shifts, suffix };
+}
 // Mécanique dédiée, distincte des dispos : long terme, personnelle (vaut sur tous
 // les établissements du staff), NON purgée au changement de semaine.
 //   { staff_id, staff_name, start_date, end_date, mode:'request'|'info',
@@ -4358,7 +4401,17 @@ app.post('/api/conges', checkDB, requireAuth, async (req, res) => {
             created_at: new Date(), decided_at: null, decided_by: null,
         };
         const { insertedId } = await db.collection('time_off').insertOne(doc);
-        res.status(201).json({ message: mode === 'info' ? 'Congé enregistré' : 'Demande de congé envoyée', _id: insertedId });
+        // Un congé déclaré en mode `info` NAÎT approuvé : il est opposable immédiatement,
+        // donc il nettoie comme s'il venait d'être validé. Sans cet appel, le correctif du
+        // 2026-08-23 ne couvrait qu'une des deux portes — et celle-ci est la plus
+        // fréquente pour un staff dont le mode de congé est « déclaration ».
+        const applied = status === 'approved'
+            ? await appliquerCongeApprouve(doc, req)
+            : { suffix: '' };
+        res.status(201).json({
+            message: (mode === 'info' ? 'Congé enregistré' : 'Demande de congé envoyée') + applied.suffix,
+            _id: insertedId,
+        });
         touchLastUpdated();
         if (mode === 'request') {
             notifyPatrons({
@@ -4438,19 +4491,11 @@ app.post('/api/me/manager-off', checkDB, requireDirecteur, async (req, res) => {
         // il resterait « dispo » un jour où il vient de se déclarer absent. Les SHIFTS
         // éventuellement déjà créés par le patron ne sont PAS touchés — le planning
         // reste sa décision, à lui de le retirer s'il le souhaite.
-        // F-12 : troisième et dernier chemin qui supprimait des dispos sans trace.
-        if (req.session.user.staff_id) {
-            const offFilter = {
-                staff_id: req.session.user.staff_id,
-                date: { $gte: start, $lte: end }, type: { $ne: 'week_note' },
-            };
-            const purged = await db.collection('availabilities').find(offFilter).toArray();
-            await db.collection('availabilities').deleteMany(offFilter);
-            await recordDispoEvents('purge_absence', auditActor(req), purged.map(p => ({
-                staff_id: req.session.user.staff_id, staff_name: p.staff_name,
-                date: p.date, before: p, after: null,
-            })));
-        }
+        // F-12 : l'un des chemins qui supprimaient des dispos sans trace. Ils passent
+        // tous par `purgeDisposAvecTrace` depuis le 2026-08-23 — inutile de tenir
+        // l'inventaire à jour dans un commentaire, il se lit sur les appelants.
+        if (req.session.user.staff_id)
+            await purgeDisposAvecTrace(req.session.user.staff_id, { $gte: start, $lte: end }, 'purge_absence', req);
         res.status(201).json({ message: 'Absence enregistrée', _id: insertedId });
         touchLastUpdated();
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
@@ -4710,6 +4755,7 @@ app.patch('/api/conges/:id/decision', checkDB, requirePatron, async (req, res) =
     const decision = req.body.decision;
     if (decision !== 'approved' && decision !== 'rejected')
         return res.status(400).json({ error: 'decision invalide (approved|rejected)' });
+    const approuve = decision === 'approved';
     try {
         const conge = await db.collection('time_off').findOne({ _id: new ObjectId(req.params.id) });
         if (!conge) return res.status(404).json({ error: 'Congé introuvable' });
@@ -4718,44 +4764,21 @@ app.patch('/api/conges/:id/decision', checkDB, requirePatron, async (req, res) =
             { $set: { status: decision, decided_at: new Date(), decided_by: req.session.user.name || 'patron' } }
         );
 
-        // Valider un congé ne touchait NI les dispos NI les shifts. La personne restait
-        // donc « disponible » sur des jours où on venait de l'autoriser à ne pas venir, et
-        // ses dispos continuaient de remonter dans la file de validation. Le nettoyage
-        // existait déjà, mais sur l'autre porte seulement : il ne se déclenchait que si
-        // elle RENVOYAIT ses dispos après coup (`POST /api/dispos`). Deux portes, une
-        // seule règle — d'où la même action de journal `purge_conge` ici, sinon l'audit
-        // raconte deux histoires pour un même effet.
-        let purgedCount = 0, plannedShifts = 0;
-        if (decision === 'approved' && conge.staff_id) {
-            const staffId = String(conge.staff_id);
-            const period  = { $gte: conge.start_date, $lte: conge.end_date };
-            const purgeFilter = { staff_id: staffId, date: period, type: { $ne: 'week_note' } };
-            // Lire avant de supprimer : c'est la version qu'un litige réclamera.
-            const purged = await db.collection('availabilities').find(purgeFilter).toArray();
-            if (purged.length) {
-                await db.collection('availabilities').deleteMany(purgeFilter);
-                await recordDispoEvents('purge_conge', auditActor(req), purged.map(p => ({
-                    staff_id: staffId, staff_name: p.staff_name || conge.staff_name || '',
-                    date: p.date, before: p, after: null,
-                })));
-                purgedCount = purged.length;
-            }
-            // Les CRÉNEAUX DÉJÀ PLANIFIÉS ne sont pas retirés — on les COMPTE. Même
-            // règle que l'archivage (« ne jamais trouer un planning déjà reçu par
-            // l'équipe ») et que l'absence déclarée par un directeur. Le patron vient de
-            // décider d'un congé, pas de qui le remplace : le trou dans le planning est
-            // une décision distincte, et elle lui appartient.
-            plannedShifts = await db.collection('shifts').countDocuments({ staff_id: staffId, date: period });
-        }
-
-        let message = decision === 'approved' ? 'Congé validé' : 'Congé refusé';
-        if (purgedCount)   message += ' · ' + purgedCount + ' dispo(s) retirée(s) sur la période';
-        if (plannedShifts) message += ' · ⚠️ ' + plannedShifts + ' créneau(x) déjà planifié(s) laissé(s) en place, à réattribuer';
-        res.json({ message, purged_dispos: purgedCount, planned_shifts: plannedShifts });
+        // Valider un congé ne touchait NI les dispos NI les shifts : la personne restait
+        // « disponible » sur des jours où on venait de l'autoriser à ne pas venir, et ses
+        // dispos continuaient de remonter dans la file de validation.
+        const applied = approuve
+            ? await appliquerCongeApprouve(conge, req)
+            : { purged: 0, shifts: 0, suffix: '' };
+        res.json({
+            message: (approuve ? 'Congé validé' : 'Congé refusé') + applied.suffix,
+            purged_dispos: applied.purged,
+            planned_shifts: applied.shifts,
+        });
         touchLastUpdated();
         sendPushToStaff([conge.staff_id], {
-            title: decision === 'approved' ? 'Templyo — Congé validé' : 'Templyo — Congé refusé',
-            body:  (decision === 'approved' ? '✅ Ton congé du ' : '❌ Ta demande de congé du ') + conge.start_date + ' au ' + conge.end_date + (decision === 'approved' ? ' est validé.' : ' a été refusée.'),
+            title: approuve ? 'Templyo — Congé validé' : 'Templyo — Congé refusé',
+            body:  (approuve ? '✅ Ton congé du ' : '❌ Ta demande de congé du ') + conge.start_date + ' au ' + conge.end_date + (approuve ? ' est validé.' : ' a été refusée.'),
             tag:   'decision-conge',
             url:   '/planning.html#conges',
         }).catch(e => console.error('[notify conge decision]', e.message));

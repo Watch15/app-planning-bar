@@ -31,6 +31,7 @@ const day = (date, start = 18, end = 24, note = '') =>
 
 const eventsOf = db => db.collection('dispo_events')._docs;
 const disposOf = db => db.collection('availabilities')._docs;
+const shiftsOf = db => db.collection('shifts')._docs;
 
 function seed(extra = {}) {
     return makeDb({
@@ -356,21 +357,46 @@ test('toute action journalisée appartient à une famille de filtre', () => {
     // muet, qui ne se voit qu'en cliquant la bonne puce sur la bonne semaine. Le
     // couplage est réel (deux fichiers, aucun import possible entre eux), donc il se
     // vérifie ici plutôt qu'à l'œil au moment d'ajouter une dixième action.
+    // Le VOCABULAIRE des actions est `HISTORY_ACTIONS` (un libellé par action). On part
+    // de lui et non des appels serveur : ces appels changent de forme au gré des
+    // refontes — l'extraction de `purgeDisposAvecTrace` le 2026-08-23 a fait passer trois
+    // actions d'un littéral en argument direct à un paramètre, et une regex sur
+    // `recordDispoEvents(` cessait de les voir. Le vocabulaire, lui, est stable.
     const fs   = require('node:fs');
     const path = require('node:path');
-    const server = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
     const script = fs.readFileSync(path.join(__dirname, '..', 'public', 'script.js'), 'utf8');
+    const bloc   = (from, to) => {
+        const start = script.indexOf(from), end = script.indexOf(to);
+        assert.ok(start > 0 && end > start, from + ' introuvable dans public/script.js');
+        return script.slice(start, end);
+    };
+    const vocabulaire = [...bloc('const HISTORY_ACTIONS', 'const HISTORY_FAMILIES')
+        .matchAll(/^\s{4}([a-z_]+):/gm)].map(m => m[1]);
+    assert.ok(vocabulaire.length >= 9, 'le relevé de HISTORY_ACTIONS ne matche plus');
 
-    const recorded = new Set([...server.matchAll(/recordDispoEvents\(\s*'([a-z_]+)'/g)].map(m => m[1]));
-    assert.ok(recorded.size >= 8, 'le relevé des actions serveur ne matche plus — regex à revoir');
+    const classees = new Set([...bloc('const HISTORY_FAMILIES', 'const HISTORY_FAMILY_OF')
+        .matchAll(/'([a-z_]+)'/g)].map(m => m[1]));
+    for (const action of vocabulaire)
+        assert.ok(classees.has(action), 'action « ' + action + ' » absente de HISTORY_FAMILIES');
 
-    const start = script.indexOf('const HISTORY_FAMILIES');
-    const end   = script.indexOf('const HISTORY_FAMILY_OF');
-    assert.ok(start > 0 && end > start, 'HISTORY_FAMILIES introuvable dans public/script.js');
-    const classified = new Set([...script.slice(start, end).matchAll(/'([a-z_]+)'/g)].map(m => m[1]));
-
-    for (const action of recorded)
-        assert.ok(classified.has(action), 'action « ' + action + ' » absente de HISTORY_FAMILIES');
+    // Et l'autre moitié du couplage : une action écrite par le serveur mais absente du
+    // vocabulaire s'afficherait sous son nom technique (`purge_conge`) dans le journal.
+    // Les deux seuls écrivains du journal : l'appel direct, et le helper de purge qui
+    // reçoit l'action en 3ᵉ argument. Le `[^;]*?` non gourmand s'arrête sur le premier
+    // littéral de la liste d'arguments — les autres arguments (filtres de dates, `req`)
+    // n'en contiennent aucun. Un compte plancher fait échouer ce test si une refonte
+    // rend les actions invisibles à ce relevé, au lieu de le laisser passer à vide.
+    const server = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+    const ecrites = new Set([
+        ...[...server.matchAll(/recordDispoEvents\(\s*'([a-z_]+)'/g)].map(m => m[1]),
+        // Le lookbehind écarte la DÉCLARATION du helper : son corps contient
+        // `'week_note'`, qui n'est pas une action mais le type qu'elle refuse d'effacer.
+        ...[...server.matchAll(/(?<!function )purgeDisposAvecTrace\([^;]*?'([a-z_]+)'/g)].map(m => m[1]),
+    ]);
+    assert.ok(ecrites.size >= 8, 'le relevé des actions écrites par le serveur ne matche plus');
+    const connues = new Set(vocabulaire);
+    for (const action of ecrites)
+        assert.ok(connues.has(action), 'action « ' + action + ' » écrite par le serveur mais absente de HISTORY_ACTIONS');
 });
 
 // ── Le congé APPROUVÉ nettoie les dispos (le trou du 2026-08-23) ─────────────
@@ -382,24 +408,24 @@ test('toute action journalisée appartient à une famille de filtre', () => {
 
 const CONGE_ID = 'dddddddddddddddddddddddd';
 
-function seedConge(extra = {}) {
-    return makeDb({
-        settings: [{ key: 'dispo', open: true, force_open: true, force_open_week: W[0] }],
-        time_off: [{
-            _id: CONGE_ID, staff_id: STAFF_ID, staff_name: 'Bob',
-            start_date: W[1], end_date: W[3], status: 'pending',
-        }],
-        availabilities: [
-            { staff_id: STAFF_ID, staff_name: 'Bob', date: W[0], type: 'custom', start_time: 18, end_time: 24, status: 'pending' },
-            { staff_id: STAFF_ID, staff_name: 'Bob', date: W[2], type: 'custom', start_time: 18, end_time: 24, status: 'confirmed' },
-        ],
-        dispo_events: [],
-        ...extra,
-    });
-}
+// Passe par `seed` : le document `settings` y est écrit UNE fois. Le redéclarer ici
+// laisserait ces tests tourner contre un état de réglages périmé le jour où il évolue —
+// verts pour la mauvaise raison.
+const seedConge = (extra = {}) => seed({
+    time_off: [{
+        _id: CONGE_ID, staff_id: STAFF_ID, staff_name: 'Bob',
+        start_date: W[1], end_date: W[3], status: 'pending',
+    }],
+    availabilities: [
+        { staff_id: STAFF_ID, staff_name: 'Bob', date: W[0], type: 'custom', start_time: 18, end_time: 24, status: 'pending' },
+        { staff_id: STAFF_ID, staff_name: 'Bob', date: W[2], type: 'custom', start_time: 18, end_time: 24, status: 'confirmed' },
+    ],
+    ...extra,
+});
 
-const decide = (decision) => req('/api/conges/' + CONGE_ID + '/decision', PATRON,
+const decide     = (decision) => req('/api/conges/' + CONGE_ID + '/decision', PATRON,
     { method: 'PATCH', body: JSON.stringify({ decision }) });
+const decideJson = (decision) => decide(decision).then(r => r.json());
 
 test('congé approuvé : les dispos de la période sont retirées, les autres restent', async () => {
     const db = seedConge();
@@ -441,10 +467,9 @@ test('congé approuvé : les créneaux déjà planifiés sont COMPTÉS, pas reti
                    establishment_id: 'bar1', date: W[2], start_time: 18, end_time: 24 }],
     });
     app.locals.setTestDb(db);
-    const res  = await decide('approved');
-    const body = await res.json();
-    assert.equal(db.collection('shifts')._docs.length, 1, 'le créneau est toujours là');
-    assert.equal(db.collection('shifts')._docs[0].staff_id, STAFF_ID, 'et toujours au même nom');
+    const body = await decideJson('approved');
+    assert.equal(shiftsOf(db).length, 1, 'le créneau est toujours là');
+    assert.equal(shiftsOf(db)[0].staff_id, STAFF_ID, 'et toujours au même nom');
     assert.equal(body.planned_shifts, 1);
     assert.match(body.message, /à réattribuer/, 'le patron l\'apprend au moment où il décide');
 });
@@ -452,8 +477,31 @@ test('congé approuvé : les créneaux déjà planifiés sont COMPTÉS, pas reti
 test('congé approuvé sans dispo ni créneau : message sobre, aucun bruit', async () => {
     const db = seedConge({ availabilities: [] });
     app.locals.setTestDb(db);
-    const body = await (await decide('approved')).json();
+    const body = await decideJson('approved');
     assert.equal(body.message, 'Congé validé');
     assert.equal(body.purged_dispos, 0);
     assert.equal(body.planned_shifts, 0);
+});
+
+test('congé déclaré en mode `info` : il NAÎT approuvé, donc il purge aussi', async () => {
+    // Le trou d'altitude : accrocher le nettoyage au bouton « Valider » laissait ce
+    // chemin-ci ouvert. `POST /api/conges` en mode `info` insère directement en
+    // `approved` — c'est une déclaration, pas une demande, et elle est opposable tout de
+    // suite. Ce test échoue si le nettoyage retourne vivre dans la route de décision.
+    const db = seed({
+        time_off: [],
+        staff: [{ _id: STAFF_ID, name: 'Bob', conge_mode: 'info' }],
+        availabilities: [
+            { staff_id: STAFF_ID, staff_name: 'Bob', date: W[2], type: 'custom', start_time: 18, end_time: 24, status: 'confirmed' },
+            { staff_id: STAFF_ID, staff_name: 'Bob', date: W[5], type: 'custom', start_time: 18, end_time: 24, status: 'pending' },
+        ],
+    });
+    app.locals.setTestDb(db);
+    const res = await req('/api/conges', STAFF, {
+        method: 'POST',
+        body: JSON.stringify({ start_date: W[1], end_date: W[3], mode: 'info', reason: 'Mariage' }),
+    });
+    assert.equal(res.status, 201);
+    assert.deepEqual(disposOf(db).map(d => d.date), [W[5]], 'seule la dispo hors période survit');
+    assert.equal(eventsOf(db).filter(e => e.action === 'purge_conge').length, 1, 'et la trace est là');
 });
