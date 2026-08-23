@@ -3546,8 +3546,21 @@ app.post('/api/dispos/week-note', checkDB, requireAuth, async (req, res) => {
 // patron aurait créé à la main sur ce même triplet est donc indiscernable et sera libéré
 // lui aussi. Poser un `dispo_id` sur les shifts lèverait l'ambiguïté, mais ne vaudrait
 // que pour les shifts créés APRÈS la migration : la déduction resterait nécessaire.
-async function releaseShiftsOnDispoChange(staffId, changes) {
-    if (!changes.length) return { released: [], keptPointed: 0, keptPublished: [] };
+// EN ATTENTE — décision du 2026-08-23 : une dispo revue sur un jour DÉJÀ VALIDÉ ne crée
+// plus de Joker. Elle repasse simplement « à revalider » dans la file du patron (l'upsert
+// la remet en `pending`), et le planning ne bouge pas tant qu'il n'a pas tranché.
+//
+// Ce qui a motivé le retrait : jokeriser, c'était décider à la place du patron, et décider
+// à l'aveugle — le poste redevenait vacant sur la foi d'un formulaire renvoyé, parfois
+// pour un quart d'heure de décalage. C'est maintenant la revalidation qui reporte la
+// nouvelle version sur le planning (cf. `PATCH /api/dispos/:id/confirm`).
+//
+// Cette fonction ne fait donc plus que RELEVER les créneaux concernés, pour que le patron
+// sache ce qu'il aura à trancher. Le code qui posait `JOKER_SHIFT` est SUPPRIMÉ et non
+// mis en commentaire : git le garde si la décision se retourne, et un bloc mort finirait
+// par mentir. Elle ne mute rien — d'où le nom.
+async function shiftsTouchedByDispoChange(staffId, changes) {
+    if (!changes.length) return { touched: [], published: [] };
     const wanted = new Set(changes.map(c => c.date + '|' + c.establishment_id));
     const [shifts, publishedWeeks] = await Promise.all([
         db.collection('shifts').find({
@@ -3557,22 +3570,19 @@ async function releaseShiftsOnDispoChange(staffId, changes) {
         }).toArray(),
         fetchPublishedWeeks(),
     ]);
-    const released = [];
-    const keptPublished = [];
-    let keptPointed = 0;
+    const touched = [], published = [];
     for (const s of shifts) {
         // Le produit cartésien des deux `$in` ramène des paires qu'on n'a pas demandées.
         if (!wanted.has(s.date + '|' + s.establishment_id)) continue;
         if (s.is_joker || s.staff_id === '__joker__') continue;
-        if (s.real_start != null || s.real_end != null) { keptPointed++; continue; }
+        touched.push(s);
         // `isDatePublished` couvre l'auto-publication (semaine en cours et passées) EN
         // PLUS du flag `publish_<lundi>` : c'est bien « ce créneau est-il annoncé ? »,
-        // pas « le patron a-t-il cliqué Publier ? ».
-        if (isDatePublished(s.date, publishedWeeks, s.establishment_id)) { keptPublished.push(s); continue; }
-        await db.collection('shifts').updateOne({ _id: s._id }, { $set: { ...JOKER_SHIFT } });
-        released.push(s);
+        // pas « le patron a-t-il cliqué Publier ? ». Ça ne change plus rien au traitement
+        // — plus rien n'est traité — mais ça change l'urgence de ce qu'on lui annonce.
+        if (isDatePublished(s.date, publishedWeeks, s.establishment_id)) published.push(s);
     }
-    return { released, keptPointed, keptPublished };
+    return { touched, published };
 }
 
 app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
@@ -3764,36 +3774,30 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
                 acc.push({ date: d.date, establishment_id: prev.establishment_id });
             return acc;
         }, []);
-        const { released, keptPointed, keptPublished } = await releaseShiftsOnDispoChange(staffId, changed);
+        const { touched, published } = await shiftsTouchedByDispoChange(staffId, changed);
 
         let message = n > 0 ? n + ' disponibilité(s) enregistrée(s)' : 'Disponibilités à jour';
         message += skipSuffix;
-        if (released.length)      message += ' · ' + released.length + ' créneau(x) déjà planifié(s) repassé(s) en Joker';
-        if (keptPublished.length) message += ' · ' + keptPublished.length + ' créneau(x) sur un planning déjà publié : inchangé(s), le responsable est prévenu';
-        if (keptPointed)          message += ' · ' + keptPointed + ' créneau(x) déjà pointé(s) inchangé(s)';
+        // Dit au staff ce qui NE s'est PAS passé : son créneau tient toujours. Sans cette
+        // phrase, il croit s'être déplanifié en renvoyant son formulaire.
+        if (touched.length) message += ' · ' + touched.length + ' créneau(x) déjà planifié(s) : le planning est inchangé, ta dispo repart en validation';
         res.status(201).json({ message });
         touchLastUpdated();
 
-        // Le patron doit l'apprendre dans les DEUX cas — c'est ce qui a fait écarter la
-        // suppression pure. Deux messages distincts parce que l'action attendue diffère :
-        // un Joker est un trou à combler, un créneau publié est une décision à prendre
-        // (garder la personne, ou la remplacer et republier).
+        // Le patron doit l'apprendre, puisque plus rien ne se fait tout seul : la dispo
+        // est repassée en attente dans sa file, mais sa file ne dit pas que le jour était
+        // DÉJÀ PLANIFIÉ — c'est toute la différence entre une dispo à valider et une
+        // décision à prendre. Une seule notification, l'action attendue étant la même
+        // dans les deux cas ; la publication ne change que l'urgence, donc le libellé.
         const staffName = req.session.user.name || 'Un membre du staff';
         const listDates = list => [...new Set(list.map(s => s.date))].sort().join(', ');
-        if (released.length) {
+        if (touched.length) {
             notifyPatrons({
-                title: 'Créneau à repourvoir',
-                body: staffName + ' a modifié sa disponibilité — '
-                    + released.length + ' créneau(x) validé(s) repassé(s) en Joker (' + listDates(released) + ')',
-                url: '/#planning',
-            });
-        }
-        if (keptPublished.length) {
-            notifyPatrons({
-                title: 'Dispo modifiée sur un planning publié',
-                body: staffName + ' n\'est plus disponible comme prévu sur '
-                    + keptPublished.length + ' créneau(x) DÉJÀ PUBLIÉ(S) (' + listDates(keptPublished)
-                    + '). Le planning n\'a pas été touché — à toi de trancher.',
+                title: published.length ? 'Dispo revue sur un planning publié' : 'Dispo revue sur un jour planifié',
+                body: staffName + ' a modifié sa dispo sur ' + touched.length
+                    + ' jour(s) déjà planifié(s) (' + listDates(touched) + '). Le planning n\'a pas bougé — '
+                    + 'à revalider dans la file.'
+                    + (published.length ? ' Dont ' + published.length + ' sur une semaine DÉJÀ PUBLIÉE.' : ''),
                 url: '/#planning',
             });
         }
@@ -4249,15 +4253,34 @@ app.patch('/api/dispos/:id/confirm', checkDB, requirePatron, denyObservateurEdit
             staff_id: dispo.staff_id, staff_name: dispo.staff_name, date: dispo.date,
             before: dispo, after: { ...dispo, ...setFields },
         }]);
-        let shiftCreated = false;
+        let shiftCreated = false, shiftRealigned = false, shiftKeptPointed = false;
         if (create_shift && !isOff) {
             // Idempotence : ne pas recréer un shift si ce staff en a déjà un ce jour-là
             // dans cet établissement (double confirmation, « Tout confirmer » après
             // confirmation individuelle, ou « Recréer » après réaffectation).
             const existingShift = await db.collection('shifts').findOne(
                 { staff_id: dispo.staff_id, date: dispo.date, establishment_id },
-                { projection: { _id: 1 } }
+                { projection: { _id: 1, start_time: 1, end_time: 1, real_start: 1, real_end: 1 } }
             );
+            // Le créneau existe mais porte les horaires D'AVANT. Depuis que la dispo revue
+            // ne libère plus le créneau (2026-08-23), c'est ici — et nulle part ailleurs —
+            // que le planning apprend la nouvelle version. L'idempotence seule ferait
+            // valider 20h–02h au patron en gardant 18h–24h à l'écran, sans un mot.
+            // Un créneau DÉJÀ POINTÉ n'est pas réécrit : les heures réelles ont été
+            // relevées contre l'horaire prévu, réécrire l'un fausse la lecture de l'autre.
+            if (existingShift
+                && (Number(existingShift.start_time) !== Number(dispo.start_time)
+                 || Number(existingShift.end_time)   !== Number(dispo.end_time))) {
+                if (existingShift.real_start == null && existingShift.real_end == null) {
+                    await db.collection('shifts').updateOne(
+                        { _id: existingShift._id },
+                        { $set: { start_time: dispo.start_time, end_time: dispo.end_time } }
+                    );
+                    shiftRealigned = true;
+                } else {
+                    shiftKeptPointed = true;
+                }
+            }
             if (!existingShift) {
                 // Le profil vient de `resolveStaffForPlanning` ci-dessus : c'est la même
                 // lecture, elle servait déjà à trancher l'archivage. En refaire une seconde
@@ -4271,7 +4294,11 @@ app.patch('/api/dispos/:id/confirm', checkDB, requirePatron, denyObservateurEdit
                 shiftCreated = true;
             }
         }
-        res.json({ message: isOff ? 'Indisponibilité confirmée' : ('Dispo confirmée' + (shiftCreated ? ' et shift créé' : '')) });
+        const suite = shiftCreated     ? ' et shift créé'
+                    : shiftRealigned   ? ' — horaires du créneau mis à jour'
+                    : shiftKeptPointed ? ' — créneau déjà pointé, horaires laissés tels quels'
+                    : '';
+        res.json({ message: isOff ? 'Indisponibilité confirmée' : ('Dispo confirmée' + suite) });
         touchLastUpdated();
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
