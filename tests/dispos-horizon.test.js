@@ -47,7 +47,7 @@ const DEADLINE_FRANCHIE = '2026-01-05T00:00';   // 5 janvier 2026 = un lundi
 
 function seed(dispoSettings = {}, extra = {}) {
     return makeDb({
-        settings: [{ key: 'dispo', open: true, force_open: true, ...dispoSettings }],
+        settings: [{ key: 'dispo', open: true, force_open: true, force_open_week: W1[0], ...dispoSettings }],
         availabilities: [],
         ...extra,
     });
@@ -176,6 +176,67 @@ test('règle A : l\'exemption de rôle reste AU-DESSUS — le directeur passe su
     assert.deepEqual(disposOf(db).map(d => d.date), [W1[0]]);
 });
 
+// ── L'ouverture d'urgence expire avec sa semaine ─────────────────────────────
+// La règle est unitairement tenue dans `tests/utils.test.js` (`forceOpenActive`). Ce qui
+// se joue ICI, c'est le CÂBLAGE : la route lit-elle la valeur effective, ou le drapeau
+// nu ? C'est la seule question que le test unitaire ne peut pas poser.
+
+// Lundi de la semaine PRÉCÉDANT celle en cours de collecte — une urgence armée là est
+// forcément périmée, quel que soit le jour où la suite tourne.
+const SEMAINE_REVOLUE = (() => {
+    const [y, m, d] = W1[0].split('-').map(Number);
+    const prev = new Date(y, m - 1, d - 7);
+    const pad  = v => String(v).padStart(2, '0');
+    return prev.getFullYear() + '-' + pad(prev.getMonth() + 1) + '-' + pad(prev.getDate());
+})();
+
+test('urgence périmée : POST sur la semaine de collecte est refusé comme sans urgence', async () => {
+    // Le test à dents : avec l'ancien code (drapeau nu), ceci renvoyait 201.
+    const db = seed({ force_open: true, force_open_week: SEMAINE_REVOLUE, custom_deadline: DEADLINE_FRANCHIE });
+    app.locals.setTestDb(db);
+    const res = await postDispos([day(W1[0])]);
+    assert.equal(res.status, 403);
+    assert.equal(disposOf(db).length, 0);
+});
+
+test('urgence de LA semaine en cours : la route la respecte toujours', async () => {
+    // Le pendant du précédent — sans lui, on ne saurait pas si la route refuse par
+    // expiration ou parce qu'elle a cessé de lire l'urgence tout court.
+    const db = seed({ force_open: true, force_open_week: W1[0], custom_deadline: DEADLINE_FRANCHIE });
+    app.locals.setTestDb(db);
+    const res = await postDispos([day(W1[0])]);
+    assert.equal(res.status, 201);
+    assert.deepEqual(disposOf(db).map(d => d.date), [W1[0]]);
+});
+
+test('GET /api/dispo-settings : la case du patron ressort DÉCOCHÉE une fois l\'urgence périmée', async () => {
+    // Sans ça, le patron voit une urgence cochée que le serveur n'applique plus.
+    const db = seed({ force_open: true, force_open_week: SEMAINE_REVOLUE, custom_deadline: DEADLINE_FRANCHIE });
+    app.locals.setTestDb(db);
+    const body = await (await req('/api/dispo-settings', PATRON)).json();
+    assert.equal(body.force_open, false);
+    // Et le document en base n'a pas été réécrit : l'expiration est LUE, pas exécutée.
+    assert.equal((db.collection('settings')._docs.find(s => s.key === 'dispo') || {}).force_open, true);
+});
+
+test('PATCH force_open : l\'urgence est datée de la semaine en cours de collecte', async () => {
+    const db = seed({ force_open: false });
+    app.locals.setTestDb(db);
+    await req('/api/dispo-settings', PATRON, { method: 'PATCH', body: JSON.stringify({ force_open: true }) });
+    const doc = db.collection('settings')._docs.find(s => s.key === 'dispo');
+    assert.equal(doc.force_open, true);
+    assert.equal(doc.force_open_week, W1[0], 'sans ce tampon, l\'urgence naîtrait déjà périmée');
+});
+
+test('PATCH force_open à false : le tampon est effacé, pas laissé derrière', async () => {
+    const db = seed({ force_open: true, force_open_week: W1[0] });
+    app.locals.setTestDb(db);
+    await req('/api/dispo-settings', PATRON, { method: 'PATCH', body: JSON.stringify({ force_open: false }) });
+    const doc = db.collection('settings')._docs.find(s => s.key === 'dispo');
+    assert.equal(doc.force_open, false);
+    assert.equal(doc.force_open_week, null);
+});
+
 // ── Alignement pastille / file (le 🔴 du §4) ─────────────────────────────────
 
 function seedPending(settings = {}) {
@@ -249,7 +310,7 @@ const SHIFT_ID = 'aaaaaaaaaaaaaaaaaaaaaaaa';
 
 function seedConfirmed(shiftExtra = {}) {
     return makeDb({
-        settings: [{ key: 'dispo', open: true, force_open: true }],
+        settings: [{ key: 'dispo', open: true, force_open: true, force_open_week: W1[0] }],
         users: [],
         availabilities: [{
             staff_id: STAFF_ID, date: W1[0], type: 'custom',

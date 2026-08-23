@@ -34,7 +34,7 @@ const disposOf = db => db.collection('availabilities')._docs;
 
 function seed(extra = {}) {
     return makeDb({
-        settings: [{ key: 'dispo', open: true, force_open: true }],
+        settings: [{ key: 'dispo', open: true, force_open: true, force_open_week: W[0] }],
         availabilities: [],
         dispo_events: [],
         ...extra,
@@ -292,7 +292,7 @@ test('déclarer une absence : les dispos purgées sont consignées (`purge_absen
     // directeur sans qu'il ait rien saisi ce jour-là : c'est précisément ce qu'un litige
     // lui reprochera de ne pas pouvoir expliquer.
     const db = makeDb({
-        settings: [{ key: 'dispo', open: true, force_open: true }],
+        settings: [{ key: 'dispo', open: true, force_open: true, force_open_week: W[0] }],
         users:    [{ _id: MGR_USER, role: 'directeur', staff_id: MGR_STAFF, name: 'Dir Test' }],
         staff:    [{ _id: MGR_STAFF, name: 'Dir Test', venues: [], can_submit_dispos: true }],
         availabilities: [
@@ -323,7 +323,7 @@ test('semaine-type : les dispos pré-remplies sont consignées au nom du MODÈLE
     // consigné doit donc être le système, pas la personne — sinon le journal ment.
     const db = makeDb({
         // Deadline franchie (lundi 00:00) : c'est elle qui déclenche la matérialisation.
-        settings: [{ key: 'dispo', open: true, force_open: true, custom_deadline: '2026-01-05T00:00' }],
+        settings: [{ key: 'dispo', open: true, force_open: true, force_open_week: W[0], custom_deadline: '2026-01-05T00:00' }],
         users:    [{ _id: MGR_USER, role: 'directeur', staff_id: MGR_STAFF, name: 'Dir Test' }],
         staff:    [{ _id: MGR_STAFF, name: 'Dir Test', venues: [], can_submit_dispos: true }],
         availabilities: [],

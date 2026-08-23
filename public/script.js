@@ -7582,6 +7582,10 @@ async function loadDispoControl() {
                 '<input type="checkbox" id="dispo-force-open"' + (settings.force_open ? ' checked' : '') + '>' +
                 'Ignorer deadline (urgence)' +
             '</label>' +
+            // `settings.force_open` est déjà la valeur EFFECTIVE renvoyée par le serveur :
+            // la case se retrouve décochée d'elle-même la semaine suivante. Le dire ici,
+            // sinon le patron croit l'avoir décochée sans le faire — ou l'inverse.
+            '<div style="font-size:10px;color:#bbb;margin:-4px 0 10px 22px">Se décoche seule au changement de semaine</div>' +
             '<div style="margin-bottom:10px">' +
                 '<div style="font-size:11px;color:#aaa;margin-bottom:4px">Deadline personnalisée</div>' +
                 '<div style="display:flex;gap:6px">' +

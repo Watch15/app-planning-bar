@@ -14,7 +14,7 @@ const {
     chargeMultiplier,
     resolvePerfSettings,
     datesCoveredByPeriods,
-    dispoDeadlineWaived,
+    dispoDeadlineWaived, forceOpenActive,
     shouldMaterializeTemplate,
     buildTemplateDispos,
     classifyDirectorLinks,
@@ -458,8 +458,51 @@ test('dispoDeadlineWaived : par défaut, personne n\'est exempté', () => {
     assert.equal(dispoDeadlineWaived(null, 'staff', false), false);
 });
 
+const WEEK = '2026-08-24';   // un lundi — semaine en cours de collecte dans ces tests
+const NEXT = '2026-08-31';   // le lundi suivant
+
 test('dispoDeadlineWaived : force_open global lève la deadline pour tout le monde', () => {
-    assert.equal(dispoDeadlineWaived({ force_open: true }, 'staff', false), true);
+    assert.equal(dispoDeadlineWaived({ force_open: true, force_open_week: WEEK }, 'staff', false, WEEK), true);
+});
+
+// ── L'ouverture d'urgence se périme avec sa semaine ──────────────────────────
+// Ce que ces tests tiennent : une urgence oubliée ne survit pas au lundi suivant. La
+// règle vit dans `forceOpenActive` et NON dans une tâche planifiée — donc elle est
+// vérifiable ici, sans horloge à avancer ni cron à déclencher.
+
+test('forceOpenActive : armée POUR la semaine en cours → active', () => {
+    assert.equal(forceOpenActive({ force_open: true, force_open_week: WEEK }, WEEK), true);
+});
+
+test('forceOpenActive : la semaine suivante l\'a éteinte, sans écriture en base', () => {
+    // Le document en base n'a pas bougé (`force_open` vaut toujours true) : c'est la
+    // LECTURE qui change de réponse. C'est ce qui rend l'expiration infaillible.
+    const settings = { force_open: true, force_open_week: WEEK };
+    assert.equal(forceOpenActive(settings, NEXT), false);
+    assert.equal(settings.force_open, true);
+});
+
+test('forceOpenActive : forme LEGACY (drapeau sans semaine) → périmée', () => {
+    // Une urgence armée on ne sait quand. La traiter comme active la rendrait éternelle,
+    // ce qui est exactement le défaut à corriger.
+    assert.equal(forceOpenActive({ force_open: true }, WEEK), false);
+});
+
+test('forceOpenActive : drapeau à false, quelle que soit la semaine stampée', () => {
+    assert.equal(forceOpenActive({ force_open: false, force_open_week: WEEK }, WEEK), false);
+});
+
+test('dispoDeadlineWaived : une urgence périmée ne lève plus rien pour le staff', () => {
+    // Le test à dents du lot : sans l'expiration, ceci renverrait `true`.
+    assert.equal(dispoDeadlineWaived({ force_open: true, force_open_week: WEEK }, 'staff', false, NEXT), false);
+});
+
+test('dispoDeadlineWaived : une urgence périmée ne retire rien au directeur ni au nominatif', () => {
+    // L'expiration ne doit éteindre QUE l'urgence globale — les deux autres exemptions
+    // passent par d'autres chemins et ne sont pas datées.
+    const perimee = { force_open: true, force_open_week: WEEK };
+    assert.equal(dispoDeadlineWaived(perimee, 'directeur', false, NEXT), true);
+    assert.equal(dispoDeadlineWaived(perimee, 'staff',     true,  NEXT), true);
 });
 
 test('dispoDeadlineWaived : réouverture nominative lève la deadline pour ce staff', () => {

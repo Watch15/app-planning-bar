@@ -16,7 +16,7 @@ const {
     weekStart, currentWeekStart, disposWeekStart, isAutoPublished, isDatePublished, normalizePublishDoc, chargeMultiplier,
     toDateStr, datesOverlap, congeDaysInRange, splitDisposByConges, isFullRangeOnConge,
     validateOffPeriod, scopeManagerOff, resolvePerfSettings, pickStaffColor, buildTemplateDispos,
-    datesCoveredByPeriods, dispoDeadlineWaived, shouldMaterializeTemplate,
+    datesCoveredByPeriods, dispoDeadlineWaived, forceOpenActive, shouldMaterializeTemplate,
     disposHorizonRange, disposHorizonMondays, clampHorizonWeeks, DISPO_HORIZON_MAX,
     upcomingWeekRange, upcomingWeekMondays,
     dispoMateriallyDiffers, staffReopenedFor, dispoEventDelta,
@@ -681,9 +681,12 @@ async function checkDispoRappels() {
     if (!db) return;
     try {
         const settings = await db.collection('settings').findOne({ key: 'dispo' }) || {};
-        if (settings.force_open) return;
-
         const now = new Date();
+        // Urgence en cours = plus personne à relancer. Elle se périme avec sa semaine
+        // (`forceOpenActive`) : une urgence d'il y a trois semaines ne doit plus éteindre
+        // les rappels d'aujourd'hui — c'était le cas tant qu'on lisait le drapeau nu.
+        if (forceOpenActive(settings, disposHorizonRange(now, 1).from)) return;
+
         const pad = n => String(n).padStart(2, '0');
         const dateStr = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 
@@ -3203,7 +3206,14 @@ app.get('/api/dispo-settings', checkDB, requireAuth, async (req, res) => {
     try {
         const settings = await db.collection('settings').findOne({ key: 'dispo' }) || { open: true, message: null };
         const now    = new Date();
-        const forceOpen = !!settings.force_open;
+        // B2 — la réouverture nominative vise une semaine, et c'est forcément celle en
+        // cours de collecte : la règle A ne laisse la deadline verrouiller qu'elle.
+        // L'urgence GLOBALE est arrimée à la même semaine (cf. `forceOpenActive`).
+        const collectionWeekStart = disposHorizonRange(now, 1).from;
+        // Valeur EFFECTIVE et non le drapeau nu : une urgence armée pour une semaine
+        // révolue est déjà éteinte. C'est cette valeur que relit la case à cocher du
+        // patron, qui se retrouve donc décochée d'elle-même — sans écriture en base.
+        const forceOpen = forceOpenActive(settings, collectionWeekStart);
         const customDeadline = settings.custom_deadline || null;
         const effectiveDeadline = computeEffectiveDeadline(customDeadline, now);
         const effectiveDeadlinePassed = now > effectiveDeadline;
@@ -3230,9 +3240,6 @@ app.get('/api/dispo-settings', checkDB, requireAuth, async (req, res) => {
             _pad(effectiveDeadline.getSeconds());
 
         const forceOpenStaff = Array.isArray(settings.force_open_staff) ? settings.force_open_staff : [];
-        // B2 — la réouverture nominative vise une semaine, et c'est forcément celle en
-        // cours de collecte : la règle A ne laisse la deadline verrouiller qu'elle.
-        const collectionWeekStart = disposHorizonRange(now, 1).from;
         const staffForceOpen = staffId ? staffReopenedFor(settings, staffId, collectionWeekStart) : false;
         // B2 — horizon de saisie (X) et de validation (Y). Le client construit sa plage
         // avec la MÊME fonction que le serveur (`disposHorizonRange`) : c'est ce qui
@@ -3244,7 +3251,7 @@ app.get('/api/dispo-settings', checkDB, requireAuth, async (req, res) => {
         const openVenuesNorm = dispoOpenVenues(settings);
         // Même règle que POST /api/dispos — le client ne doit jamais afficher un
         // formulaire que le serveur refusera, ni le fermer alors qu'il l'accepterait.
-        const deadlineWaived = dispoDeadlineWaived(settings, req.session.user.role, staffForceOpen);
+        const deadlineWaived = dispoDeadlineWaived(settings, req.session.user.role, staffForceOpen, collectionWeekStart);
         // B2 règle A — la deadline ne garde QUE la semaine en cours de collecte (N+1).
         // Au-delà, la saisie reste ouverte : refuser une dispo pour N+4 un samedi parce
         // que la deadline de N+1 est passée n'aurait aucun sens, cette deadline protège
@@ -3330,7 +3337,14 @@ app.patch('/api/dispo-settings', checkDB, requirePatron, denyObservateurEdit, as
             update.open_venues = open ? 'ALL' : [];
         }
         if (message !== undefined) update.message = message || null;
-        if (force_open !== undefined) update.force_open = !!force_open;
+        // L'urgence est DATÉE à l'écriture : elle vaut pour la semaine en cours de
+        // collecte et pas au-delà (`forceOpenActive`). Stocker la semaine ici plutôt que
+        // de balayer la base au changement de semaine, c'est faire porter l'expiration
+        // par la donnée elle-même — il n'y a aucun moment où elle peut être ratée.
+        if (force_open !== undefined) {
+            update.force_open      = !!force_open;
+            update.force_open_week = force_open ? disposHorizonRange(new Date(), 1).from : null;
+        }
         if (custom_deadline !== undefined) update.custom_deadline = custom_deadline || null;
         if (open_day !== undefined) update.open_day = (open_day !== null && open_day !== '') ? parseInt(open_day) : null;
         // B2 — deux horizons : X = jusqu'où le staff saisit, Y = jusqu'où la file de
@@ -3494,9 +3508,10 @@ app.post('/api/dispos/week-note', checkDB, requireAuth, async (req, res) => {
         if (!disposHorizonMondays(now, dispoHorizons(settings).x).includes(week_start))
             return res.status(403).json({ error: 'Semaine hors de l\'horizon de saisie.' });
         // Règle A : seule la semaine en cours de collecte est verrouillée par la deadline.
-        const forceOpenStaff = staffReopenedFor(settings, staffId, disposHorizonRange(now, 1).from);
-        if (week_start === disposHorizonRange(now, 1).from
-            && !dispoDeadlineWaived(settings, req.session.user.role, forceOpenStaff)
+        const collectionWeekStart = disposHorizonRange(now, 1).from;
+        const forceOpenStaff = staffReopenedFor(settings, staffId, collectionWeekStart);
+        if (week_start === collectionWeekStart
+            && !dispoDeadlineWaived(settings, req.session.user.role, forceOpenStaff, collectionWeekStart)
             && now > computeEffectiveDeadline(settings.custom_deadline || null, now))
             return res.status(403).json({ error: 'La deadline est passée.' });
 
@@ -3600,7 +3615,7 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
     const isCollectionWeek = d => d.date >= collectionWeek.from && d.date <= collectionWeek.to;
     let dispos1 = dispos;
     let lockedDates = [];
-    if (!dispoDeadlineWaived(settings, req.session.user.role, staffForceOpen) && now > effectiveDeadline) {
+    if (!dispoDeadlineWaived(settings, req.session.user.role, staffForceOpen, collectionWeek.from) && now > effectiveDeadline) {
         lockedDates = dispos.filter(isCollectionWeek).map(d => d.date);
         // Tout le lot est dans la semaine figée ⇒ 403, message d'avant B2 conservé.
         // Sinon on retire ces jours et on enregistre le reste : refuser N+2..N+4 parce

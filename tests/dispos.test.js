@@ -136,7 +136,7 @@ test('saisie fermée (settings.open=false) → 403', async () => {
 
 test('jour de congé ignoré, les autres jours sont enregistrés → 201', async () => {
     const db = makeDb({
-        settings:       [{ key: 'dispo', open: true, force_open: true }],
+        settings:       [{ key: 'dispo', open: true, force_open: true, force_open_week: W[0] }],
         time_off:       [{ staff_id: STAFF_ID, status: 'approved', start_date: W[1], end_date: W[1] }],
         availabilities: [],
     });
@@ -156,7 +156,7 @@ test('jour de congé ignoré, les autres jours sont enregistrés → 201', async
 
 test('toute la semaine en congé → 200, rien enregistré', async () => {
     const db = makeDb({
-        settings:       [{ key: 'dispo', open: true, force_open: true }],
+        settings:       [{ key: 'dispo', open: true, force_open: true, force_open_week: W[0] }],
         time_off:       [{ staff_id: STAFF_ID, status: 'approved', start_date: W[0], end_date: W[4] }],
         availabilities: [],
     });
@@ -171,7 +171,7 @@ test('toute la semaine en congé → 200, rien enregistré', async () => {
 
 test('purge d\'une dispo déjà posée sur un jour devenu congé', async () => {
     const db = makeDb({
-        settings:       [{ key: 'dispo', open: true, force_open: true }],
+        settings:       [{ key: 'dispo', open: true, force_open: true, force_open_week: W[0] }],
         time_off:       [{ staff_id: STAFF_ID, status: 'approved', start_date: W[1], end_date: W[1] }],
         // dispo périmée déjà en base sur le jour désormais en congé
         availabilities: [{ staff_id: STAFF_ID, date: W[1], type: 'custom', status: 'pending' }],
@@ -189,7 +189,7 @@ test('purge d\'une dispo déjà posée sur un jour devenu congé', async () => {
 
 test('cas nominal sans congé → 201, tous les jours enregistrés', async () => {
     const db = makeDb({
-        settings:       [{ key: 'dispo', open: true, force_open: true }],
+        settings:       [{ key: 'dispo', open: true, force_open: true, force_open_week: W[0] }],
         time_off:       [],
         availabilities: [],
     });
