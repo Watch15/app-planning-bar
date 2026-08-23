@@ -13,10 +13,11 @@ Bonjour,
 Cette mise à jour **corrige le problème que vous nous avez signalé** (« certains staff ne
 voient plus leur planning ») et simplifie au passage la page planning de votre équipe.
 
-L'essentiel concerne **la vue de vos employés** (§1 à §3). Deux points vous concernent
+L'essentiel concerne **la vue de vos employés** (§1 à §3). Trois points vous concernent
 directement, vous : l'**ouverture d'urgence** des disponibilités, qui se désactive
-désormais seule chaque semaine (§5), et le **journal des disponibilités**, qui devient
-filtrable (§6). Votre écran de planning et la page Performance ne bougent pas.
+désormais seule chaque semaine (§5), le **journal des disponibilités**, qui devient
+filtrable (§6), et les **congés validés**, qui retirent enfin les disponibilités de la
+période (§7). Votre écran de planning et la page Performance ne bougent pas.
 
 ## 1. Corrigé : le planning invisible la nuit du dimanche au lundi
 
@@ -112,6 +113,24 @@ vrac. Il gagne :
   d'une liste plate.
 
 Le filtre par nom que vous connaissez reste là, et se combine avec les trois autres.
+
+## 7. Un congé validé retire enfin les disponibilités de la période
+
+Jusqu'ici, valider un congé ne touchait **rien d'autre**. La personne restait affichée
+comme disponible sur des jours où vous veniez pourtant de l'autoriser à ne pas venir, et
+ses disponibilités continuaient de remonter dans votre file de validation. Il fallait
+qu'elle renvoie ses disponibilités pour que le ménage se fasse.
+
+Désormais, dès qu'un congé devient **validé** — que vous l'approuviez, ou qu'un employé le
+**déclare** lui-même si c'est le mode que vous lui avez donné — ses disponibilités sur la
+période sont retirées automatiquement. Elles disparaissent de votre file, et la
+suppression est tracée dans l'onglet Historique (§6), sous « Suppressions ».
+
+⚠️ **Ses créneaux déjà placés au planning ne sont PAS retirés.** C'est délibéré, et c'est
+la même règle que pour l'archivage : l'application ne troue jamais un planning que votre
+équipe a déjà reçu. À la place, elle vous le **dit** au moment où vous validez :
+« ⚠️ 2 créneaux déjà planifiés laissés en place, à réattribuer ». À vous de décider qui
+remplace — ce n'est pas une décision que le logiciel doit prendre seul.
 
 ---
 
