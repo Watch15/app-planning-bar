@@ -1289,6 +1289,84 @@ double garde et test `if (archived.size)` inutiles retirés de `sendPushToStaff`
 - *`createNotifForPatrons` échappe au filtre* — cible `users` par rôle, pas `staff`. Effet
   réel mais nul en pratique (le compte ne peut plus se connecter, TTL fait le reste).
 
+### Planning staff — trou du lundi 00h–06h, liste continue, cutoff branché (2026-08-17)
+
+**Signalé par le client** : « certains staff ne voient plus le planning », vers 1h/2h du
+matin, au moment d'envoyer la semaine suivante. **Ce n'était pas le changement d'heure
+été/hiver** — vérifié aux deux bascules 2026, l'arithmétique de dates est saine et
+`TZ=Europe/Paris` est bien posé.
+
+**Cause** : deux calculs de semaine désaccordés côté staff. La vue principale suivait
+`currentWeekStart` (cutoff 6h), la liste « À venir » suivait `disposHorizonMondays`
+(l'horizon de SAISIE, sans cutoff). Le lundi de 00h à 06h ils divergent d'une semaine :
+la semaine qui venait de commencer n'était dans **aucune des deux** et devenait
+inatteignable pendant six heures — l'onglet ne naviguait que dans sa liste, l'historique
+ne va que vers le passé. Fenêtre nocturne = précisément l'heure où le staff sort de
+service et consulte.
+
+**Livré en trois temps** :
+1. `upcomingWeekStart|Range|Mondays` (horizon de CONSULTATION, calé sur le cutoff),
+   utilisé par `GET /api/my-published-weeks`. Correctif minimal, déployé sur `dev`.
+2. **Onglet « À venir » supprimé** : les semaines à venir sont empilées sous la semaine
+   en cours dans `view-planning` (`loadUpcomingWeeks`). Une seule liste, donc plus rien
+   à garder d'accord — la classe de bug disparaît au lieu d'être corrigée. Possible
+   parce que `/api/my-shifts` filtre déjà la publication **shift par shift** : une
+   semaine non publiée ne rend rien et ne produit aucun bloc.
+3. **Cutoff branché sur `settings.pointage.cutoff_hour`** (cf. entrée D-75 corrigée
+   plus bas) — il y avait une SECONDE paire de notions désaccordées.
+
+**Découvrabilité** : l'onglet qui apparaissait était le signal « nouveau ». Remplacé par
+une pastille sur le séparateur (consommée à l'entrée réelle dans le champ de vision), le
+push ancré sur `#semaine-<lundi>`, et `sw.js` qui **navigue** au lieu de `focus()` —
+`focus()` seul jetait le fragment, or une PWA déjà ouverte est le cas courant d'un push.
+
+**Perf au passage** : `/api/my-shifts` faisait **une requête Mongo par jour travaillé**
+pour les collègues (boucle séquentielle) ; ~32 allers-retours sur huit semaines, réduits
+à un, plus une projection. `fetchOpenJokers` mémoïsé 3 s (2 appels par chargement → 1).
+
+#### 🔮 À faire plus tard — le cutoff n'est branché que côté CLIENT
+
+Le réglage `cutoff_hour` pilote maintenant la semaine affichée dans `planning.js`, mais
+**deux routes serveur calculent encore leur semaine avec le cutoff par défaut (6h)**.
+Elles divergeront de la vue staff dès qu'un patron met `cutoff_hour` au-delà de 6 :
+
+| Route | Ligne | Effet de la dérive |
+|---|---|---|
+| `GET /api/calendar/:token.ics` | `server.js:2663` | le flux agenda démarre une semaine après ce que l'app affiche. **Sans impact aujourd'hui** : fonctionnalité désactivée (`CALENDAR_ENABLED=false`, F-09/D-83) |
+| `GET /api/dispos/kpi` | `server.js:4087` | le périmètre « établissements du responsable » est déduit de ses shifts de la semaine en cours ; pendant la fenêtre de bascule il peut porter sur une autre semaine que celle affichée |
+| `GET /api/my-published-weeks` | `server.js:5139` | appelle `upcomingWeekMondays(now, weeks)` **sans** le cutoff. La vue staff ne s'en sert plus, donc dormant — mais c'est *la route où vivait le bug d'origine*, re-divergée un commit après avoir été corrigée. À traiter avec les deux autres, ou à supprimer si rien ne la consomme |
+
+`isAutoPublished` : ⚠️ **nuance, mon premier jugement était trop large.** Il est bien plus
+permissif que la vue client, donc **aucun créneau ne peut disparaître** — ça, c'est
+vérifié. Mais l'inverse est vrai : il déclare la semaine N auto-publiée dès **lundi
+00:00** (calcul calendaire, aucun cutoff), alors que la journée de service ne bascule
+qu'à `cutoff_hour`. Un planning que le patron retouche encore est donc visible en avance
+— jusqu'à 9h d'avance avec le défaut, 14h s'il monte le réglage. **Pré-existant** (c'était
+déjà 6h avant), pas une régression du branchement, mais le branchement élargit la
+fenêtre. À trancher si ça gêne : soit `isAutoPublished` prend le cutoff, soit on assume
+que « auto-publiée » est une notion calendaire et on le dit.
+
+**Correctif propre le jour où on y touche** : un helper serveur `serviceCutoffHour()`
+qui lit `settings.pointage` (mis en cache), passé à `currentWeekStart` sur ces deux call
+sites. Petit, mais ça implique une lecture `settings` de plus sur des routes chaudes —
+d'où le report.
+
+**Deux autres limites connues, assumées** :
+- Le réglage est **global** (un seul document `settings.pointage`). Si des
+  établissements ferment à des heures très différentes, la semaine bascule au même
+  moment pour tous. Passer en par-établissement voudrait dire que « quelle semaine
+  suis-je en train de regarder » dépend de l'établissement — question produit avant
+  d'être technique.
+- `public/script.js` (patron) garde le cutoff par défaut. Sa semaine relève de la
+  planification, pas du service. **Vérifié** : la semaine publiée reste visible des deux
+  côtés quelle que soit la valeur du réglage.
+
+**Piège d'environnement à connaître** : en dev, `sw.js` garde le token
+`%%BUILD_TIME%%` littéral (seul `npm start` le substitue), donc **le cache du Service
+Worker ne s'invalide jamais** et resert un `planning.js` périmé. M'a fait mesurer deux
+fois des chiffres faux avant que je m'en aperçoive. Purger le SW à chaque modif front en
+local (`getRegistrations().unregister()` + `caches.delete()`), ou tester sur `dev`.
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique. 🔄 **Rafraîchi le 2026-08-10** (1180 nœuds, 1897 arêtes, 68 communautés) — il datait de `c72affe`, 7 commits de retard : la consigne « après chaque session » n'a **pas** été tenue sur les sessions des 06→08/08. Ancien graphe dans `graphify-out/2026-08-10/`.

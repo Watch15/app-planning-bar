@@ -1,113 +1,89 @@
 # Templyo — ce qui change à la prochaine mise à jour
 
 *Note à envoyer avant le déploiement. Rédigée pour être lue par le patron, pas par un
-développeur.*
+développeur. Version du 2026-08-23.*
+
+> Les notes des mises à jour précédentes restent consultables dans l'historique du dépôt
+> (`git log docs/note-client-mise-a-jour.md`).
 
 ---
 
 Bonjour,
 
-Une mise à jour importante de Templyo arrive. Voici ce que vous et votre équipe allez
-remarquer, pour éviter les surprises.
+Cette mise à jour **corrige le problème que vous nous avez signalé** (« certains staff ne
+voient plus leur planning ») et simplifie au passage la page planning de votre équipe.
 
-## 1. L'application change un peu d'allure
+Elle ne touche **que la vue de vos employés**. Votre écran de planning, la page
+Performance, les disponibilités et le pointage fonctionnent exactement comme avant.
 
-Les petits pictogrammes (📋, 👥, 📊…) disparaissent des menus et des onglets. Les libellés
-restent les mêmes, seuls les symboles partent. Rien ne bouge de place.
+## 1. Corrigé : le planning invisible la nuit du dimanche au lundi
 
-## 2. La page Performance ne montre plus que le « chargé »
+Le symptôme que vous nous aviez remonté : **entre minuit et 6 h du matin le lundi**, un
+employé qui ouvrait son planning ne trouvait plus la semaine qui venait de commencer — ni
+dans « Mon planning », ni dans l'onglet « À venir ». Elle réapparaissait toute seule à 6 h.
+La panne tombait précisément à l'heure où l'équipe sort de service et consulte son
+téléphone.
 
-Les colonnes **masse salariale brute**, **coefficient brut** et l'objectif brut sont
-retirées. Seuls les montants **chargés** subsistent — ce sont ceux qui reflètent votre coût
-réel.
+Ce **n'était pas** le changement d'heure été/hiver. C'étaient deux calculs de semaine qui,
+pendant ces six heures, ne tombaient pas d'accord : la semaine neuve n'était dans aucune
+des deux listes. C'est corrigé, et verrouillé par des tests qui balayent les 168 heures
+d'une semaine, heure par heure.
 
-⚠️ **Conséquence à connaître** : le calendrier se colore désormais sur le coefficient
-chargé et non plus sur le brut. **Des journées affichées en vert hier peuvent apparaître en
-rouge après la mise à jour, sans qu'aucune donnée n'ait changé.** Le calcul n'est pas faux :
-il change simplement de référence.
+## 2. L'onglet « À venir » disparaît — tout est dans « Mon planning »
 
-Vous pouvez maintenant régler vos objectifs et votre taux de charges **par établissement**,
-et non plus seulement globalement.
+Vos employés ne changent plus d'onglet pour voir la suite. La semaine en cours s'affiche en
+haut, **les semaines suivantes s'empilent dessous**, séparées par un titre de semaine : il
+suffit de faire défiler.
 
-## 3. Vos directeurs deviennent des membres de l'équipe à part entière
+Seules les semaines **que vous avez publiées** apparaissent — inchangé. Un planning encore
+en brouillon reste invisible, créneau par créneau.
 
-C'est le changement le plus structurant. Jusqu'ici, un directeur était un compte de gestion,
-invisible dans les plannings. Désormais :
+L'onglet qui apparaissait était jusqu'ici le signal « il y a du nouveau ». Il est remplacé
+par :
 
-- il **apparaît dans la barre du personnel** et peut être placé sur un planning ;
-- il **compte dans le récapitulatif mensuel et dans la masse salariale**.
+- une pastille **✨ Nouveau** sur le titre de la semaine fraîchement publiée, qui ne
+  s'efface que lorsque l'employé l'a réellement fait défiler sous ses yeux ;
+- la **notification de publication ouvre directement sur la bonne semaine**, y compris
+  quand l'application était déjà ouverte sur le téléphone.
 
-⚠️ **Vos chiffres de masse salariale vont donc augmenter mécaniquement**, sans qu'aucun
-planning n'ait été modifié. C'est attendu : le travail de vos directeurs était simplement
-absent du calcul jusqu'à présent.
+L'onglet **« Historique » ne bouge pas**.
 
-En contrepartie, chaque directeur peut maintenant :
+## 3. La semaine de vos employés suit maintenant votre heure de pointage
 
-- **saisir ses propres disponibilités** (menu utilisateur → « Mes disponibilités ») ; vous
-  les validez comme celles du reste de l'équipe, et **c'est vous qui choisissez
-  l'établissement** au moment de valider ;
-- enregistrer une **semaine-type** — ses disponibilités habituelles. Elle n'est **pas
-  envoyée tout de suite** : elle part automatiquement **au moment de la deadline**, et
-  seulement sur les jours qu'elle n'a pas remplis elle-même d'ici là. Vous ne verrez donc
-  pas ses dispos arriver en début de semaine ; elles tombent dans votre file de validation
-  en même temps que celles de l'équipe. De son côté, elle voit ses jours marqués
-  « 🕓 prévu » pour savoir ce qui partira ;
-- déclarer ses absences, ce qui retire ses disponibilités sur la période (jamais les
-  créneaux que vous avez déjà planifiés).
+⚠️ **C'est le seul changement qui peut vous surprendre.**
 
-## 4. La file d'attente des disponibilités est filtrée pour les directeurs
+Dans les réglages des disponibilités, la ligne **« Fenêtre de saisie pointage — de X
+jusqu'à Y le lendemain »**. L'heure de fin (**Y, 9 h par défaut**) ne servait jusqu'ici
+qu'à une chose : jusqu'à quelle heure un responsable peut encore pointer le service de la
+veille. Elle définit **désormais aussi le moment où le planning de vos employés bascule sur
+la semaine suivante**.
 
-Un directeur ne voit par défaut que les disponibilités du personnel **de ses
-établissements**. Un bouton « Voir tout le staff » lui rend la liste complète s'il en a
-besoin. Vous, en tant que patron, continuez de tout voir.
+Concrètement, avec le réglage par défaut : **le lundi matin jusqu'à 9 h**, vos employés
+voient encore la semaine qui s'achève comme « semaine en cours » — auparavant elle
+basculait à 6 h. La semaine neuve est juste en dessous, à portée de défilement. **Rien
+n'est caché : seul l'ordre d'affichage change**, pendant trois heures par semaine.
 
-Nouveauté pratique : un bouton **« Tout confirmer »** valide d'un coup toutes les
-disponibilités affichées, sur un établissement que vous choisissez.
+Pourquoi ce raccordement : un responsable qui pointait le service du dimanche à 7 h du
+matin ne voyait plus, dans son planning, la journée qu'il était en train de pointer — elle
+était déjà passée dans l'Historique. Les deux notions de « quand la journée bascule » sont
+maintenant une seule.
 
-## 5. Les changements de droits s'appliquent tout de suite
+À savoir : ce réglage est **commun à tous vos établissements**. Et **votre écran à vous**
+(le planning patron) n'est pas concerné — il reste calé sur la semaine calendaire.
 
-Quand vous **changez le rôle d'une personne ou les établissements d'un directeur**, sa
-session en cours est désormais **coupée automatiquement**. À sa prochaine action, elle est
-renvoyée à l'écran de connexion, et retrouve ses nouveaux droits en se reconnectant.
+## 4. Fiches du personnel plus lisibles sur téléphone
 
-Jusqu'ici elle conservait ses anciens accès tant qu'elle ne se déconnectait pas d'elle-même :
-un directeur retiré d'un établissement continuait d'y voir le planning. Ce n'est plus le cas.
-
-💡 **En pratique** : prévenez la personne quand vous modifiez son périmètre, sinon elle
-subira une déconnexion qu'elle n'a pas demandée. Elle ne perd rien — ce qu'elle avait
-enregistré est conservé.
-
-Une reconnexion reste nécessaire **une fois après cette mise à jour** pour vos directeurs —
-nous vous le rappellerons le jour J.
-
-## 6. Retirer quelqu'un de l'équipe sans perdre ses heures
-
-Nouveau bouton **« Archiver »** sur chaque membre du personnel, à côté de la suppression.
-
-Archiver une personne, c'est dire « elle ne travaille plus ici » :
-
-- elle **disparaît de la barre du personnel**, des rappels de disponibilités et de la file
-  de validation — vous ne la voyez plus quand vous construisez vos plannings ;
-- elle **ne peut plus se connecter** ;
-- **ses heures, son pointage, ses récapitulatifs et sa masse salariale des mois passés
-  restent intacts.** Vos anciens plannings et vos comptes ne bougent pas d'un centime.
-
-C'est **réversible** : un clic sur « Réactiver » et la personne revient comme avant.
-
-⚠️ **Ses créneaux déjà placés dans les semaines à venir ne sont PAS retirés** — archiver
-quelqu'un ne doit jamais trouer un planning que votre équipe a déjà reçu. L'application
-vous dit combien il en reste ; à vous de les réattribuer.
-
-👉 **Préférez « Archiver » à la suppression.** Supprimer efface les shifts de la personne,
-donc son historique de paie. C'était jusqu'ici la seule sortie possible.
+Les fenêtres d'ajout et de modification d'un membre du personnel s'affichent correctement
+en mode portrait ; elles débordaient de l'écran sur certains téléphones.
 
 ---
 
 ## Ce qui ne change pas
 
-- Vos plannings, vos historiques et vos heures pointées sont **intégralement conservés**.
-- Le fonctionnement pour vos employés est **inchangé** : même envoi de disponibilités, même
-  vue planning, même pointage.
-- Aucune action de votre part n'est requise avant la mise à jour.
+- L'envoi et la validation des **disponibilités**, la deadline et les rappels.
+- Le **pointage** et ses réglages (seul l'effet de l'heure de fin s'élargit, cf. §3).
+- Vos **plannings, historiques et heures pointées** sont intégralement conservés.
+- **Aucune action de votre part n'est requise.** Vos employés n'ont rien à réinstaller :
+  l'application se met à jour d'elle-même à la prochaine ouverture.
 
 Nous restons disponibles pour toute question, avant comme après.
