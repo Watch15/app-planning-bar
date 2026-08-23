@@ -345,3 +345,30 @@ test('semaine-type : les dispos pré-remplies sont consignées au nom du MODÈLE
     assert.equal(ev[0].after.start_time, 16);
     assert.deepEqual(ev[0].before, {}, 'création : rien avant');
 });
+
+// ── Le journal côté patron : filtre par type ─────────────────────────────────
+
+test('toute action journalisée appartient à une famille de filtre', () => {
+    // Le journal du patron regroupe les neuf actions en trois familles
+    // (`HISTORY_FAMILIES`, public/script.js) pour ses puces Saisies / Validations /
+    // Suppressions. Une action enregistrée par le serveur mais absente de ce mapping
+    // resterait visible dans « Tout » et disparaîtrait de TOUS les filtres : un trou
+    // muet, qui ne se voit qu'en cliquant la bonne puce sur la bonne semaine. Le
+    // couplage est réel (deux fichiers, aucun import possible entre eux), donc il se
+    // vérifie ici plutôt qu'à l'œil au moment d'ajouter une dixième action.
+    const fs   = require('node:fs');
+    const path = require('node:path');
+    const server = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+    const script = fs.readFileSync(path.join(__dirname, '..', 'public', 'script.js'), 'utf8');
+
+    const recorded = new Set([...server.matchAll(/recordDispoEvents\(\s*'([a-z_]+)'/g)].map(m => m[1]));
+    assert.ok(recorded.size >= 8, 'le relevé des actions serveur ne matche plus — regex à revoir');
+
+    const start = script.indexOf('const HISTORY_FAMILIES');
+    const end   = script.indexOf('const HISTORY_FAMILY_OF');
+    assert.ok(start > 0 && end > start, 'HISTORY_FAMILIES introuvable dans public/script.js');
+    const classified = new Set([...script.slice(start, end).matchAll(/'([a-z_]+)'/g)].map(m => m[1]));
+
+    for (const action of recorded)
+        assert.ok(classified.has(action), 'action « ' + action + ' » absente de HISTORY_FAMILIES');
+});

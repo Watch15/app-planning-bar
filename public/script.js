@@ -6564,6 +6564,7 @@ async function loadModifyTab() {
 // comprendre sans décodage (« qui · quoi · quand »), pas afficher un diff JSON.
 let historyWeekStart = null;
 let historyEvents    = [];
+let historyFamily    = 'all';   // puce de type active : 'all' | clé de HISTORY_FAMILIES
 
 const HISTORY_ACTIONS = {
     submit:        { label: 'a déclaré sa dispo',                    color: '#2980b9' },
@@ -6576,6 +6577,21 @@ const HISTORY_ACTIONS = {
     reopen:        { label: 'saisie effacée pour correction',        color: '#c0392b' },
     template:      { label: 'pré-remplie par la semaine-type',       color: '#7f8c8d' },
 };
+
+// Trois familles, parce que la question qu'on se pose devant ce journal en a trois :
+// « qui a annoncé quoi », « qu'est-ce que j'en ai fait », « qu'est-ce qui a disparu ».
+// Les neuf actions restent distinctes à l'affichage — c'est le FILTRE qui regroupe :
+// chercher « la suppression » sans savoir si elle vient d'un congé, d'une absence ou
+// d'une réouverture, c'est précisément le cas d'usage.
+const HISTORY_FAMILIES = {
+    saisie:      { label: 'Saisies',      actions: ['submit', 'update', 'template'] },
+    validation:  { label: 'Validations',  actions: ['confirm', 'reject', 'ignore'] },
+    suppression: { label: 'Suppressions', actions: ['purge_conge', 'purge_absence', 'reopen'] },
+};
+const HISTORY_FAMILY_OF = Object.entries(HISTORY_FAMILIES).reduce((m, [fam, def]) => {
+    def.actions.forEach(a => { m[a] = fam; });
+    return m;
+}, {});
 
 // Formatage délégué à `ShiftHours.fmtHourOfDay` : ce module existe précisément pour
 // qu'il n'y ait qu'UNE façon d'écrire une heure. Le journal doit afficher exactement la
@@ -6638,44 +6654,97 @@ async function loadDisposHistory() {
     }
 }
 
+// Les puces de type. Comptées sur le lot DÉJÀ filtré par nom : une puce qui annonce
+// « 4 » et n'ouvre sur rien est pire que pas de compteur du tout.
+function renderHistoryFilters(scopedEvents) {
+    const box = document.getElementById('history-filters');
+    if (!box) return;
+    const counts = { all: scopedEvents.length };
+    Object.keys(HISTORY_FAMILIES).forEach(f => { counts[f] = 0; });
+    scopedEvents.forEach(e => {
+        const fam = HISTORY_FAMILY_OF[e.action];
+        if (fam) counts[fam]++;
+    });
+
+    const chips = [['all', 'Tout'], ...Object.entries(HISTORY_FAMILIES).map(([k, d]) => [k, d.label])];
+    box.innerHTML = chips.map(([key, label]) => {
+        const on = historyFamily === key;
+        return '<button type="button" class="_hist-chip" data-family="' + key + '" ' +
+            'style="font-size:12px;padding:5px 11px;border-radius:999px;cursor:pointer;font-family:inherit;' +
+                'border:1.5px solid ' + (on ? 'var(--accent)' : 'var(--light-border)') + ';' +
+                'background:' + (on ? 'var(--accent)' : 'transparent') + ';' +
+                'color:' + (on ? '#fff' : 'var(--text-secondary)') + ';font-weight:' + (on ? '700' : '500') + '">' +
+            label + ' <span style="opacity:.65">' + counts[key] + '</span></button>';
+    }).join('');
+
+    box.querySelectorAll('._hist-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Recliquer la puce active revient à « Tout » : sans ça, il faut viser une
+            // autre puce pour sortir d'un filtre, et on croit l'écran vide.
+            const key = btn.dataset.family;
+            historyFamily = (historyFamily === key) ? 'all' : key;
+            renderDisposHistory();
+        });
+    });
+}
+
 function renderDisposHistory() {
     const list = document.getElementById('history-list');
     if (!list) return;
     const q = (document.getElementById('history-search')?.value || '').trim().toLowerCase();
-    const events = q
+    const byName = q
         ? historyEvents.filter(e => (e.staff_name || '').toLowerCase().includes(q))
         : historyEvents;
+    const events = historyFamily === 'all'
+        ? byName
+        : byName.filter(e => HISTORY_FAMILY_OF[e.action] === historyFamily);
+
+    renderHistoryFilters(byName);
 
     if (!events.length) {
-        list.innerHTML = '<div style="padding:24px;text-align:center;color:#ccc;font-size:13px">'
-            + (historyEvents.length ? 'Aucun résultat pour ce nom' : 'Aucun mouvement sur cette semaine')
-            + '</div>';
+        // Trois vides différents, trois messages : sinon on cherche une panne là où il
+        // n'y a qu'un filtre actif.
+        const why = !historyEvents.length ? 'Aucun mouvement sur cette semaine'
+                  : !byName.length        ? 'Aucun résultat pour ce nom'
+                  :                         'Aucun mouvement de ce type';
+        list.innerHTML = '<div style="padding:24px;text-align:center;color:#ccc;font-size:13px">' + why + '</div>';
         return;
     }
 
-    const DAYS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
     const frag = document.createDocumentFragment();
+    // La route rend déjà les événements triés par `date` puis `at` : il suffit de rendre
+    // visible ce regroupement, qui existait dans les données et pas à l'écran. La date
+    // sort donc des lignes — répétée à chaque ligne, elle noyait le nom.
+    let lastDate = null;
     events.forEach(ev => {
+        if (ev.date !== lastDate) {
+            lastDate = ev.date;
+            const d   = parseDate(ev.date);
+            const sep = document.createElement('div');
+            sep.style.cssText = 'margin:14px 16px 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-secondary)';
+            sep.textContent = DAY_NAMES_LONG[d.getDay()] + ' ' + d.getDate() + ' ' + MONTH_NAMES_SHORT[d.getMonth()];
+            frag.appendChild(sep);
+        }
         const meta = HISTORY_ACTIONS[ev.action] || { label: ev.action, color: '#888' };
-        const d    = parseDate(ev.date);
         const at   = new Date(ev.at);
         const row  = document.createElement('div');
-        row.style.cssText = 'margin:8px 16px;padding:10px 12px;border-radius:10px;background:var(--color-bg-secondary,#f8f8f8);border:1px solid var(--color-border-secondary,#eee);border-left:3px solid ' + meta.color;
+        row.style.cssText = 'margin:6px 16px;padding:10px 12px;border-radius:10px;background:var(--color-bg-secondary,#f8f8f8);border:1px solid var(--color-border-secondary,#eee);border-left:3px solid ' + meta.color;
         const details = _histFields(ev.before, ev.after);
         row.innerHTML =
             '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline">' +
-                '<span style="font-size:13px;font-weight:700;color:#333">' + escapeHtml(ev.staff_name || '—') +
-                    '<span style="font-weight:500;color:#888"> · ' + DAY_NAMES_SHORT[d.getDay()] + ' ' + d.getDate() + '</span></span>' +
+                '<span style="font-size:13px;font-weight:700;color:#333">' + escapeHtml(ev.staff_name || '—') + '</span>' +
                 '<span style="font-size:11px;color:' + meta.color + ';font-weight:700">' + meta.label + '</span>' +
             '</div>' +
             (details.length
                 ? '<div style="font-size:12px;color:#555;margin-top:4px;line-height:1.5">' +
                       details.map(escapeHtml).join('<br>') + '</div>'
                 : '') +
+            // L'auteur reste, l'horodatage se réduit à l'heure : le jour est désormais
+            // porté par le séparateur, et « par Untel » suffit à situer la décision.
             '<div style="font-size:10.5px;color:#aaa;margin-top:5px">par ' +
                 escapeHtml((ev.by && ev.by.name) || 'inconnu') +
                 ((ev.by && ev.by.role) ? ' (' + escapeHtml(ev.by.role) + ')' : '') +
-                ' · ' + at.toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) +
+                ' · ' + at.toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) +
             '</div>';
         frag.appendChild(row);
     });
@@ -6752,6 +6821,9 @@ function switchDisposTab(tab) {
         historyWeekStart = getMondayOf(addDays(new Date(), 7));
         const s = document.getElementById('history-search');
         if (s) s.value = '';
+        // Les deux filtres repartent à zéro avec l'onglet : rouvrir sur un filtre posé
+        // la fois d'avant fait lire un journal amputé en croyant le lire entier.
+        historyFamily = 'all';
         loadDisposHistory();
     }
     if (isConges) loadCongesList();
