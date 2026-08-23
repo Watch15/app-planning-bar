@@ -644,23 +644,23 @@ async function run() {
         }));
 
         // ── Réglages ──────────────────────────────────────────────────────────
-        // Deadline dispos = dimanche 23 h. Le jour de la semaine seul compte (elle est
-        // RECALCULÉE chaque semaine par `computeEffectiveDeadline`) : viser le dimanche
-        // garantit qu'elle est encore à venir quel que soit le jour de la démo — une
-        // deadline dépassée grise le formulaire au pire moment.
-        const deadlineSunday = toDateStr(addDays(thisMon, 6)) + 'T23:00';
+        // Deadline dispos = samedi 23 h. Le jour de la semaine seul compte (elle est
+        // RECALCULÉE chaque semaine par `computeEffectiveDeadline`) : viser le samedi
+        // garantit qu'elle est encore à venir tous les jours de démo sauf le
+        // dimanche — une deadline dépassée grise le formulaire au pire moment.
+        const deadlineSaturday = toDateStr(addDays(thisMon, 5)) + 'T23:00';
         const settings = [
             { key: 'dispo', open: true, force_open: false, message: null,
-              custom_deadline: deadlineSunday,
+              custom_deadline: deadlineSaturday,
               // Horizon B2 : saisie sur 4 semaines, validation sur 2. Absents, ces deux
               // réglages retombent à 1 (`clampHorizonWeeks`) et la planification à
               // l'avance disparaît de la démo — c'est ce qui manquait.
               horizon_weeks: HORIZON_WEEKS, validation_horizon_weeks: VALIDATION_WEEKS,
               // Réouverture NOMINATIVE (E-15) posée pour Jonas sur la semaine N+1.
-              // ⚠️ Elle ne DÉBLOQUE personne ici, et c'est voulu : la deadline visant le
-              // dimanche 23 h, `computeEffectiveDeadline` la ramène toujours dans la
-              // semaine courante, donc elle n'est pratiquement jamais franchie (cf. le
-              // commentaire de `deadlineSunday`). L'entrée est là pour que le réglage
+              // ⚠️ Elle ne DÉBLOQUE personne hors dimanche, et c'est voulu : la deadline visant le
+              // samedi 23 h, `computeEffectiveDeadline` la ramène toujours dans la
+              // semaine courante, donc elle n'est franchie qu'un dimanche (cf. le
+              // commentaire de `deadlineSaturday`). L'entrée est là pour que le réglage
               // soit VISIBLE dans l'écran du patron, pas pour lever un blocage.
               // La forme `{ staff_id, week_start }` est celle que lit `staffReopenedFor` ;
               // une chaîne nue est l'ancienne forme, encore acceptée mais à ne pas semer.
