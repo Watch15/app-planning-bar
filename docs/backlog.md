@@ -1367,6 +1367,45 @@ Worker ne s'invalide jamais** et resert un `planning.js` périmé. M'a fait mesu
 fois des chiffres faux avant que je m'en aperçoive. Purger le SW à chaque modif front en
 local (`getRegistrations().unregister()` + `caches.delete()`), ou tester sur `dev`.
 
+### Urgence dispos périmable + journal filtrable (2026-08-23)
+
+**Ouverture d'urgence** — « Ignorer deadline (urgence) » restait coché indéfiniment. Une
+urgence posée un vendredi soir levait la deadline des semaines suivantes ET éteignait les
+rappels automatiques (`checkDispoRappels` sortait sur le drapeau nu), sans rien signaler.
+Elle est désormais **datée à l'écriture** (`force_open_week`) et relue par
+`forceOpenActive` — même modèle que `force_open_staff`, qui portait déjà son
+`week_start`. Expiration **lue et non exécutée** : pas de cron, donc pas de cron qui peut
+ne pas tourner. ⚠️ `force_open: true` sans tampon = **périmé** : si une urgence est
+active en prod au déploiement, elle s'éteint (le patron n'a qu'à recocher).
+
+**Journal du patron** — trois puces Saisies / Validations / Suppressions regroupant les
+neuf actions, compteurs calculés après le filtre par nom, et séparateur par journée (le
+tri `date` puis `at` existait déjà côté route, il n'était simplement pas visible). Un
+test vérifie que toute action passée à `recordDispoEvents` appartient à une famille — le
+couplage traverse deux fichiers sans import possible entre eux.
+
+#### Question du user : une dispo modifiée ou supprimée libère-t-elle un Joker ?
+
+Réponse courte : **oui pour la re-soumission, non pour les trois autres chemins.** Il n'y
+a pas de bouton « supprimer ma dispo » côté staff ; quatre chemins font disparaître une
+dispo, un seul touche au planning.
+
+| Chemin | Journal | Créneau déjà planifié |
+|---|---|---|
+| Re-soumission DIFFÉRENTE (`POST /api/dispos`) | `update` | **→ Joker**, si la dispo était `confirmed` ET porte un établissement ET que le type ou les horaires changent (la note ne compte pas, à dessein). Sauf déjà pointé (intact) ou semaine déjà publiée (intact, patron notifié « à toi de trancher ») |
+| Re-soumission à l'IDENTIQUE | rien | intact — voulu, c'est le cas le plus courant |
+| Jour couvert par un congé, au moment d'un envoi | `purge_conge` | **intact, personne n'est prévenu** |
+| Réouverture pour correction (patron) | `reopen` | **intact** |
+| Absence déclarée par un directeur | `purge_absence` | **intact — décision assumée** : « le planning reste sa décision, à lui de le retirer » |
+
+**🔮 À trancher — le trou du congé approuvé.** `PATCH /api/conges/:id/decision` ne touche
+**ni les dispos ni les shifts** : approuver un congé sur une semaine où la personne est
+déjà planifiée laisse le créneau à son nom, sans la moindre alerte. Le `purge_conge`
+ci-dessus ne joue que si la personne **renvoie** ses dispos après coup. Deux options :
+jokeriser à l'approbation comme sur la re-soumission, ou au minimum afficher au patron
+« cette personne est planifiée N jours sur la période » avant qu'il valide — exactement le
+compteur que l'archivage affiche déjà. Rien n'est fait ici : c'est une décision produit.
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique. 🔄 **Rafraîchi le 2026-08-10** (1180 nœuds, 1897 arêtes, 68 communautés) — il datait de `c72affe`, 7 commits de retard : la consigne « après chaque session » n'a **pas** été tenue sur les sessions des 06→08/08. Ancien graphe dans `graphify-out/2026-08-10/`.
