@@ -87,7 +87,14 @@ if (process.env.NODE_ENV !== 'test') {
 // Même raison que morgan : tout ce qui s'écrit sur stdout pendant un test traverse le
 // flux que le runner parse. `logInfo` remplace `console.log` pour les messages
 // d'exploitation qui partent EN BOUCLE (un par requête, un par entité traitée).
-// Les `console.error` restent tels quels : rares, et on veut les voir même en test.
+// Les `console.error` et `console.warn` restent tels quels : ils partent sur stderr, que
+// le runner ne parse pas, et on veut les voir même en test.
+//
+// ⚠️ Toute sortie « une ligne par entité traitée » DOIT passer par ici. Le 2026-08-23,
+// les cinq `console.log` d'envoi (SMS/push) y avaient échappé : un test qui déclenche une
+// notification écrivait donc sur le flux du runner, et cinq tests de plus sur les congés
+// ont suffi à refaire tomber `dispo-audit.test.js` sur la même erreur qu'en août
+// (« Unable to deserialize cloned data »), sur Node 20 comme sur Node 22.
 const logInfo = process.env.NODE_ENV === 'test' ? () => {} : (...a) => console.log(...a);
 
 app.use(express.json());
@@ -410,7 +417,7 @@ function appUrl() {
 async function sendSMS(to, body) {
     // Idem sendEmail : bloqué hors client, et on lève pour déclencher le repli manuel.
     if (!OUTBOUND_ENABLED) {
-        console.log('🔇 SMS bloqué (OUTBOUND_ENABLED=false) → ' + to);
+        logInfo('🔇 SMS bloqué (OUTBOUND_ENABLED=false) → ' + to);
         throw new Error('Envois sortants désactivés sur cet environnement (OUTBOUND_ENABLED=false)');
     }
     const sid   = process.env.TWILIO_ACCOUNT_SID;
@@ -470,7 +477,7 @@ async function sendPushToStaff(staffIds, payload) {
     // La notif in-app ci-dessus est conservée (elle ne quitte pas l'app) ; c'est le push,
     // qui part sur un vrai téléphone, qui est coupé hors environnement client.
     if (!OUTBOUND_ENABLED) {
-        console.log('🔇 Push bloqué (OUTBOUND_ENABLED=false) → ' + (payload.title || '') + ' · ' + staffIds.length + ' destinataire(s)');
+        logInfo('🔇 Push bloqué (OUTBOUND_ENABLED=false) → ' + (payload.title || '') + ' · ' + staffIds.length + ' destinataire(s)');
         return;
     }
     if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
@@ -485,7 +492,7 @@ async function sendPushToStaff(staffIds, payload) {
         }
         const users = await db.collection('users').find(userQuery, { projection: { _id: 1 } }).toArray();
         const userIds = users.map(u => String(u._id));
-        console.log(`📤 Push [${payload.tag || '?'}] → staffIds=${JSON.stringify(staffIds)} → ${users.length} user(s) trouvé(s)`);
+        logInfo(`📤 Push [${payload.tag || '?'}] → staffIds=${JSON.stringify(staffIds)} → ${users.length} user(s) trouvé(s)`);
         if (userIds.length === 0) {
             console.warn('⚠️  Push annulé : aucun user trouvé pour ces staff_ids');
             return;
@@ -494,7 +501,7 @@ async function sendPushToStaff(staffIds, payload) {
         const subs = await db.collection('push_subscriptions')
             .find({ user_id: { $in: userIds } })
             .toArray();
-        console.log(`📤 Push → ${subs.length} subscription(s) trouvée(s)`);
+        logInfo(`📤 Push → ${subs.length} subscription(s) trouvée(s)`);
         if (subs.length === 0) {
             console.warn('⚠️  Push annulé : aucune subscription — staff non abonnés ou clé périmée');
             return;
@@ -506,7 +513,7 @@ async function sendPushToStaff(staffIds, payload) {
         await Promise.allSettled(subs.map(async sub => {
             try {
                 await webpush.sendNotification(sub.subscription, payloadStr);
-                console.log(`✅ Push envoyé → user_id=${sub.user_id}`);
+                logInfo(`✅ Push envoyé → user_id=${sub.user_id}`);
             } catch (err) {
                 // 410 Gone = subscription expirée → à supprimer
                 if (err.statusCode === 410 || err.statusCode === 404) {

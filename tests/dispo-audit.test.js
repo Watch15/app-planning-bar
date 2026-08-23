@@ -505,3 +505,30 @@ test('congé déclaré en mode `info` : il NAÎT approuvé, donc il purge aussi'
     assert.deepEqual(disposOf(db).map(d => d.date), [W[5]], 'seule la dispo hors période survit');
     assert.equal(eventsOf(db).filter(e => e.action === 'purge_conge').length, 1, 'et la trace est là');
 });
+
+// ── Le flux du runner reste propre ───────────────────────────────────────────
+
+test('les fonctions d\'envoi n\'écrivent pas sur stdout', () => {
+    // `node --test` PARSE le stdout de chaque worker pour en recevoir les résultats. Une
+    // ligne applicative qui y tombe peut couper une trame en deux, et le runner abandonne
+    // le fichier ENTIER — sans qu'une seule assertion n'échoue, et avec un décompte de
+    // tests qui baisse en silence. C'est arrivé en août (48bd333, CI rouge 3 jours), puis
+    // le 2026-08-23 : `sendSMS` et `sendPushToStaff` avaient gardé cinq `console.log`, et
+    // cinq tests de congé de plus — chacun déclenchant un push — ont suffi à refaire
+    // tomber ce fichier-ci sur Node 20 ET 22.
+    //
+    // Ces deux fonctions sont visées parce qu'elles sont sur le chemin d'une REQUÊTE et
+    // journalisent une ligne par envoi : c'est le profil qui met en danger le flux. Les
+    // logs de démarrage et de cron ne tournent pas pendant les tests, et `console.error` /
+    // `console.warn` partent sur stderr, que le runner ne parse pas.
+    const fs     = require('node:fs');
+    const path   = require('node:path');
+    const server = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+    const debut  = server.indexOf('async function sendSMS(');
+    const fin    = server.indexOf('async function notifyPatrons(');
+    assert.ok(debut > 0 && fin > debut, 'bornes des fonctions d\'envoi introuvables');
+    const bloc = server.slice(debut, fin);
+    assert.ok(!/console\.log\(/.test(bloc),
+        'un console.log a été ajouté dans sendSMS/sendPushToStaff — utiliser `logInfo`, ' +
+        'sinon il écrit sur le flux que le runner de tests parse');
+});
