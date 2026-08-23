@@ -372,3 +372,88 @@ test('toute action journalisée appartient à une famille de filtre', () => {
     for (const action of recorded)
         assert.ok(classified.has(action), 'action « ' + action + ' » absente de HISTORY_FAMILIES');
 });
+
+// ── Le congé APPROUVÉ nettoie les dispos (le trou du 2026-08-23) ─────────────
+//
+// `purge_conge` existait, mais sur une seule porte : il ne se déclenchait que si la
+// personne RENVOYAIT ses dispos après que son congé a été validé. Valider un congé ne
+// touchait donc rien, et elle restait « disponible » sur des jours où on venait de
+// l'autoriser à ne pas venir — ses dispos continuant de remonter dans la file.
+
+const CONGE_ID = 'dddddddddddddddddddddddd';
+
+function seedConge(extra = {}) {
+    return makeDb({
+        settings: [{ key: 'dispo', open: true, force_open: true, force_open_week: W[0] }],
+        time_off: [{
+            _id: CONGE_ID, staff_id: STAFF_ID, staff_name: 'Bob',
+            start_date: W[1], end_date: W[3], status: 'pending',
+        }],
+        availabilities: [
+            { staff_id: STAFF_ID, staff_name: 'Bob', date: W[0], type: 'custom', start_time: 18, end_time: 24, status: 'pending' },
+            { staff_id: STAFF_ID, staff_name: 'Bob', date: W[2], type: 'custom', start_time: 18, end_time: 24, status: 'confirmed' },
+        ],
+        dispo_events: [],
+        ...extra,
+    });
+}
+
+const decide = (decision) => req('/api/conges/' + CONGE_ID + '/decision', PATRON,
+    { method: 'PATCH', body: JSON.stringify({ decision }) });
+
+test('congé approuvé : les dispos de la période sont retirées, les autres restent', async () => {
+    const db = seedConge();
+    app.locals.setTestDb(db);
+    const res = await decide('approved');
+    assert.equal(res.status, 200);
+    // W[2] est dans le congé (W[1]→W[3]), W[0] est en dehors.
+    assert.deepEqual(disposOf(db).map(d => d.date), [W[0]], 'seul le jour hors congé survit');
+    assert.match((await res.json()).message, /dispo\(s\) retirée/);
+});
+
+test('congé approuvé : la suppression laisse une trace `purge_conge`', async () => {
+    // Sans trace, « je n'ai jamais retiré cette dispo » est indémontrable — et c'est
+    // l'application qui l'a retirée, pas la personne.
+    const db = seedConge();
+    app.locals.setTestDb(db);
+    await decide('approved');
+    const ev = eventsOf(db).filter(e => e.action === 'purge_conge');
+    assert.equal(ev.length, 1);
+    assert.equal(ev[0].date, W[2]);
+    assert.deepEqual(ev[0].after, {}, 'une suppression : rien après (convention du journal)');
+    assert.equal(ev[0].before.status, 'confirmed', 'et on sait ce qu\'elle valait');
+});
+
+test('congé REFUSÉ : rien n\'est touché', async () => {
+    // Le test à dents du lot : sans la garde sur `decision`, refuser purgerait aussi.
+    const db = seedConge();
+    app.locals.setTestDb(db);
+    await decide('rejected');
+    assert.equal(disposOf(db).length, 2, 'les deux dispos sont intactes');
+    assert.equal(eventsOf(db).length, 0);
+});
+
+test('congé approuvé : les créneaux déjà planifiés sont COMPTÉS, pas retirés', async () => {
+    // Règle de l'archivage : ne jamais trouer un planning que l'équipe a déjà reçu. Le
+    // patron décide d'un congé, pas de qui remplace — c'est une décision distincte.
+    const db = seedConge({
+        shifts: [{ _id: 'eeeeeeeeeeeeeeeeeeeeeeee', staff_id: STAFF_ID, staff_name: 'Bob',
+                   establishment_id: 'bar1', date: W[2], start_time: 18, end_time: 24 }],
+    });
+    app.locals.setTestDb(db);
+    const res  = await decide('approved');
+    const body = await res.json();
+    assert.equal(db.collection('shifts')._docs.length, 1, 'le créneau est toujours là');
+    assert.equal(db.collection('shifts')._docs[0].staff_id, STAFF_ID, 'et toujours au même nom');
+    assert.equal(body.planned_shifts, 1);
+    assert.match(body.message, /à réattribuer/, 'le patron l\'apprend au moment où il décide');
+});
+
+test('congé approuvé sans dispo ni créneau : message sobre, aucun bruit', async () => {
+    const db = seedConge({ availabilities: [] });
+    app.locals.setTestDb(db);
+    const body = await (await decide('approved')).json();
+    assert.equal(body.message, 'Congé validé');
+    assert.equal(body.purged_dispos, 0);
+    assert.equal(body.planned_shifts, 0);
+});

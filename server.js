@@ -4717,7 +4717,41 @@ app.patch('/api/conges/:id/decision', checkDB, requirePatron, async (req, res) =
             { _id: new ObjectId(req.params.id) },
             { $set: { status: decision, decided_at: new Date(), decided_by: req.session.user.name || 'patron' } }
         );
-        res.json({ message: decision === 'approved' ? 'Congé validé' : 'Congé refusé' });
+
+        // Valider un congé ne touchait NI les dispos NI les shifts. La personne restait
+        // donc « disponible » sur des jours où on venait de l'autoriser à ne pas venir, et
+        // ses dispos continuaient de remonter dans la file de validation. Le nettoyage
+        // existait déjà, mais sur l'autre porte seulement : il ne se déclenchait que si
+        // elle RENVOYAIT ses dispos après coup (`POST /api/dispos`). Deux portes, une
+        // seule règle — d'où la même action de journal `purge_conge` ici, sinon l'audit
+        // raconte deux histoires pour un même effet.
+        let purgedCount = 0, plannedShifts = 0;
+        if (decision === 'approved' && conge.staff_id) {
+            const staffId = String(conge.staff_id);
+            const period  = { $gte: conge.start_date, $lte: conge.end_date };
+            const purgeFilter = { staff_id: staffId, date: period, type: { $ne: 'week_note' } };
+            // Lire avant de supprimer : c'est la version qu'un litige réclamera.
+            const purged = await db.collection('availabilities').find(purgeFilter).toArray();
+            if (purged.length) {
+                await db.collection('availabilities').deleteMany(purgeFilter);
+                await recordDispoEvents('purge_conge', auditActor(req), purged.map(p => ({
+                    staff_id: staffId, staff_name: p.staff_name || conge.staff_name || '',
+                    date: p.date, before: p, after: null,
+                })));
+                purgedCount = purged.length;
+            }
+            // Les CRÉNEAUX DÉJÀ PLANIFIÉS ne sont pas retirés — on les COMPTE. Même
+            // règle que l'archivage (« ne jamais trouer un planning déjà reçu par
+            // l'équipe ») et que l'absence déclarée par un directeur. Le patron vient de
+            // décider d'un congé, pas de qui le remplace : le trou dans le planning est
+            // une décision distincte, et elle lui appartient.
+            plannedShifts = await db.collection('shifts').countDocuments({ staff_id: staffId, date: period });
+        }
+
+        let message = decision === 'approved' ? 'Congé validé' : 'Congé refusé';
+        if (purgedCount)   message += ' · ' + purgedCount + ' dispo(s) retirée(s) sur la période';
+        if (plannedShifts) message += ' · ⚠️ ' + plannedShifts + ' créneau(x) déjà planifié(s) laissé(s) en place, à réattribuer';
+        res.json({ message, purged_dispos: purgedCount, planned_shifts: plannedShifts });
         touchLastUpdated();
         sendPushToStaff([conge.staff_id], {
             title: decision === 'approved' ? 'Templyo — Congé validé' : 'Templyo — Congé refusé',

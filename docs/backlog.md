@@ -1394,6 +1394,7 @@ dispo, un seul touche au planning.
 |---|---|---|
 | Re-soumission DIFFÉRENTE (`POST /api/dispos`) | `update` | **→ Joker**, si la dispo était `confirmed` ET porte un établissement ET que le type ou les horaires changent (la note ne compte pas, à dessein). Sauf déjà pointé (intact) ou semaine déjà publiée (intact, patron notifié « à toi de trancher ») |
 | Re-soumission à l'IDENTIQUE | rien | intact — voulu, c'est le cas le plus courant |
+| Congé APPROUVÉ par le patron | `purge_conge` | **intact mais COMPTÉ** — « N créneau(x) laissé(s) en place, à réattribuer » (corrigé le 2026-08-23, cf. ci-dessous) |
 | Jour couvert par un congé, au moment d'un envoi | `purge_conge` | **intact, personne n'est prévenu** |
 | Réouverture pour correction (patron) | `reopen` | **intact** |
 | Absence déclarée par un directeur | `purge_absence` | **intact — décision assumée** : « le planning reste sa décision, à lui de le retirer » |
@@ -1407,13 +1408,30 @@ horaires du créneau à la revalidation, sans laquelle la modification devenait 
 (`PATCH /api/dispos/:id/confirm` saute toute écriture quand un shift existe déjà). **À
 reprendre depuis ce commit si le sujet revient** plutôt que depuis zéro.
 
-**🔮 À trancher — le trou du congé approuvé.** `PATCH /api/conges/:id/decision` ne touche
-**ni les dispos ni les shifts** : approuver un congé sur une semaine où la personne est
-déjà planifiée laisse le créneau à son nom, sans la moindre alerte. Le `purge_conge`
-ci-dessus ne joue que si la personne **renvoie** ses dispos après coup. Deux options :
-jokeriser à l'approbation comme sur la re-soumission, ou au minimum afficher au patron
-« cette personne est planifiée N jours sur la période » avant qu'il valide — exactement le
-compteur que l'archivage affiche déjà. Rien n'est fait ici : c'est une décision produit.
+**✅ Le trou du congé approuvé — corrigé le 2026-08-23.** `PATCH /api/conges/:id/decision`
+ne touchait **ni les dispos ni les shifts** : approuver un congé laissait la personne
+« disponible » sur des jours où on venait de l'autoriser à ne pas venir, et ses dispos
+remontaient dans la file de validation. Le `purge_conge` existait, mais sur **une seule
+porte** — il ne se déclenchait que si elle **renvoyait** ses dispos après coup.
+
+Ce qui a été fait, et le partage de responsabilité qui le justifie :
+
+- **Les dispos de la période sont supprimées**, avec la même action de journal
+  `purge_conge` que l'autre porte — deux portes, une seule règle, sinon l'audit raconte
+  deux histoires pour un même effet. C'est la partie **sans ambiguïté** : un congé validé
+  veut dire non disponible.
+- **Les créneaux déjà planifiés ne sont PAS retirés, ils sont COMPTÉS** et annoncés au
+  patron dans la réponse (« ⚠️ N créneau(x) déjà planifié(s) laissé(s) en place, à
+  réattribuer »). Même règle que l'archivage — ne jamais trouer un planning que l'équipe a
+  déjà reçu — et que l'absence déclarée par un directeur.
+
+**La jokerisation automatique a été explicitement écartée**, par cohérence avec la décision
+prise le même jour sur la re-soumission de dispo : le patron décide d'un congé, pas de qui
+remplace. Le trou dans le planning est une décision distincte, et elle lui appartient.
+
+Tests : 5 dans `dispo-audit.test.js`, dont le refus (qui ne doit rien purger — sans la
+garde sur `decision`, refuser purgerait aussi) et le message sobre quand il n'y a rien à
+signaler. Dents vérifiées.
 
 ### Divers — outillage & process
 
