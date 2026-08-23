@@ -13,8 +13,10 @@ Bonjour,
 Cette mise à jour **corrige le problème que vous nous avez signalé** (« certains staff ne
 voient plus leur planning ») et simplifie au passage la page planning de votre équipe.
 
-Elle ne touche **que la vue de vos employés**. Votre écran de planning, la page
-Performance, les disponibilités et le pointage fonctionnent exactement comme avant.
+L'essentiel concerne **la vue de vos employés** (§1 à §3). Deux points vous concernent
+directement, vous : l'**ouverture d'urgence** des disponibilités, qui se désactive
+désormais seule chaque semaine (§5), et le **journal des disponibilités**, qui devient
+filtrable (§6). Votre écran de planning et la page Performance ne bougent pas.
 
 ## 1. Corrigé : le planning invisible la nuit du dimanche au lundi
 
@@ -76,11 +78,47 @@ maintenant une seule.
 Les fenêtres d'ajout et de modification d'un membre du personnel s'affichent correctement
 en mode portrait ; elles débordaient de l'écran sur certains téléphones.
 
+## 5. L'ouverture d'urgence se désactive seule chaque semaine
+
+⚠️ **Point à lire même si vous ne lisez rien d'autre.**
+
+Dans les réglages des disponibilités, la case **« Ignorer deadline (urgence) »** permet de
+laisser un retardataire envoyer ses disponibilités après l'heure limite. Jusqu'ici, elle
+restait cochée jusqu'à ce que vous pensiez à la décocher. Une urgence ouverte un vendredi
+soir levait donc la deadline **des semaines suivantes**, sans que rien ne le signale.
+
+Elle vaut désormais **pour la semaine en cours de collecte, et pour elle seule** : au
+changement de semaine, elle se décoche d'elle-même. La mention « Se décoche seule au
+changement de semaine » apparaît sous la case.
+
+⚠️ **Effet immédiat au moment de la mise à jour** : si cette case est cochée aujourd'hui,
+elle sera **décochée** après le déploiement. Si vous aviez ouvert une urgence en cours,
+recochez-la — elle repartira alors pour la semaine en cours.
+
+Bénéfice de bord que vous ne verrez pas mais qui compte : les **rappels automatiques** de
+disponibilités étaient eux aussi éteints tant qu'une urgence traînait. Ils ne le sont plus
+que le temps de l'urgence réelle.
+
+## 6. Le journal des disponibilités devient filtrable
+
+Dans la fenêtre Disponibilités, l'onglet **Historique** listait tous les mouvements en
+vrac. Il gagne :
+
+- **trois filtres** — Saisies, Validations, Suppressions — avec le nombre de mouvements de
+  chaque type. Utile pour la question qu'on se pose vraiment devant ce journal : « qu'est-ce
+  qui a disparu, et pourquoi ? », sans avoir à deviner d'avance si c'est un congé, une
+  absence ou une réouverture qui l'a retiré ;
+- **un regroupement par journée**, pour que la lecture suive le fil des jours au lieu
+  d'une liste plate.
+
+Le filtre par nom que vous connaissez reste là, et se combine avec les trois autres.
+
 ---
 
 ## Ce qui ne change pas
 
-- L'envoi et la validation des **disponibilités**, la deadline et les rappels.
+- L'envoi et la validation des **disponibilités** au quotidien, et la deadline elle-même —
+  seule l'**ouverture d'urgence** change de durée de vie (cf. §5).
 - Le **pointage** et ses réglages (seul l'effet de l'heure de fin s'élargit, cf. §3).
 - Vos **plannings, historiques et heures pointées** sont intégralement conservés.
 - **Aucune action de votre part n'est requise.** Vos employés n'ont rien à réinstaller :
