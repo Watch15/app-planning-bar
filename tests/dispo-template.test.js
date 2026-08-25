@@ -301,3 +301,19 @@ test('modèle : le staff rouvert nominativement n\'est PAS neutralisé', async (
     await runCron();
     assert.deepEqual(disposOf(db).map(d => d.date).sort(), [dayOf(0), dayOf(2)]);
 });
+
+test('modèle : le GET expose `last_materialized_week` — l\'écran doit savoir QUELLE deadline', async () => {
+    // Sans ce champ, la carte annonce « ça partira pour la semaine du X » alors que le
+    // rendez-vous de X a déjà eu lieu : le modèle vise la SUIVANTE. Le smoke s'appuie
+    // aussi dessus pour vérifier la garde de deadline sur une instance réelle — c'est la
+    // seule façon de l'observer en HTTP, le cron n'ayant aucune route pour le déclencher.
+    const db = seed();
+    app.locals.setTestDb(db);
+
+    const avant = await (await req('/api/me/dispo-template', STAFF)).json();
+    assert.equal(avant.last_materialized_week, null, 'aucun modèle ⇒ aucun rendez-vous passé');
+
+    await putTemplate();   // deadline franchie dans ces tests ⇒ marqueur posé
+    const apres = await (await req('/api/me/dispo-template', STAFF)).json();
+    assert.equal(apres.last_materialized_week, NEXT_MONDAY);
+});

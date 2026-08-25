@@ -4749,7 +4749,14 @@ app.get(DISPO_TEMPLATE_PATHS, checkDB, requireAuth, async (req, res) => {
     const staffId = requireStaffProfileId(req, res); if (!staffId) return;
     try {
         const tpl = await db.collection('manager_dispo_templates').findOne({ staff_id: staffId });
-        res.json({ days: (tpl && tpl.days) || {} });
+        // `last_materialized_week` sort avec le modèle : sans lui, l'écran promet un envoi
+        // « à la prochaine deadline » alors que le rendez-vous de la semaine a déjà eu lieu
+        // (modèle enregistré après la deadline, ou déjà matérialisé). C'est la seule
+        // information qui distingue « ça part vendredi » de « ça part vendredi PROCHAIN ».
+        res.json({
+            days: (tpl && tpl.days) || {},
+            last_materialized_week: (tpl && tpl.last_materialized_week) || null,
+        });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
@@ -4816,7 +4823,14 @@ app.put(DISPO_TEMPLATE_PATHS, checkDB, requireAuth, async (req, res) => {
         await db.collection('manager_dispo_templates').updateOne(
             { staff_id: staffId }, { $set: set }, { upsert: true }
         );
-        res.json({ message: 'Semaine-type enregistrée · envoi automatique à la deadline' });
+        // Le message dit lequel des deux cas s'applique : annoncer « envoi automatique à la
+        // deadline » juste après avoir posé le marqueur serait faux d'une semaine entière.
+        res.json({
+            message: set.last_materialized_week
+                ? 'Semaine-type enregistrée · elle prendra effet à la deadline SUIVANTE'
+                : 'Semaine-type enregistrée · envoi automatique à la deadline',
+            last_materialized_week: set.last_materialized_week || null,
+        });
         touchLastUpdated();
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });

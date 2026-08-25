@@ -57,7 +57,7 @@ const results = [];
 // Une vérification qui en dépend est SAUTÉE, pas comptée en échec : le code n'y est
 // pour rien, et un ✗ ferait chercher le bug au mauvais endroit — c'est exactement ce
 // qui est arrivé le 2026-08-10.
-const stale = { dispos: null, soiree: null, bruno: null };
+const stale = { dispos: null, soiree: null, bruno: null, semaineType: null };
 
 async function check(section, name, fn, needs) {
     const reason = needs && stale[needs];
@@ -418,6 +418,109 @@ async function main() {
             const r = await req('pat', '/api/dispos/events?from=2020-01-01&to=2020-01-31');
             return eq(Array.isArray(r.data) ? r.data.length : -1, 0, 'événements hors plage');
         });
+    }
+
+    // ── E-22s : la semaine-type, ouverte à TOUT le staff (2026-08-24) ────────
+    //
+    // Ce que ce bloc peut prouver en HTTP, et ce qu'il ne peut pas. La matérialisation
+    // est déclenchée par un `setInterval` (et au démarrage), JAMAIS par une route : rien
+    // à appeler d'ici pour la provoquer. Le bloc se coupe donc en deux.
+    //   · Les GARDES autour du modèle : autoportantes, elles imposent leur propre
+    //     deadline comme le §9.1 et restaurent tout en sortant.
+    //   · Le RÉSULTAT de l'envoi automatique : il dépend du jeu semé PUIS d'un
+    //     redémarrage de l'instance. Sauté (⊘) et non compté en échec si le cron n'a pas
+    //     encore eu son tour — un ✗ enverrait chercher un bug de code là où il n'y a
+    //     qu'un cron qui n'est pas passé.
+    {
+        const tpl    = who => req(who, '/api/me/dispo-template');
+        const putTpl = (who, days) => req(who, '/api/me/dispo-template', { method: 'PUT', body: { days } });
+        const MODELE = { 0: { type: 'soir', start_time: 18, end_time: 26 },
+                         4: { type: 'midi', start_time: 11, end_time: 17 } };
+
+        // L'ouverture elle-même. Avant le 2026-08-24 ces routes étaient `requireDirecteur` :
+        // Bruno recevait 403. C'est la vérification qui garde la fonctionnalité en vie.
+        await check('E-22s', 'un staff ordinaire lit sa semaine-type (403 avant)', async () =>
+            eq((await tpl('bru')).status, 200, 'status'));
+
+        await check('E-22s', 'aller-retour : ce qui est enregistré est relu', async () => {
+            await putTpl('ali', MODELE);
+            const d = (await tpl('ali')).data.days || {};
+            if (!d[0] || !d[4]) throw new Error('jours perdus : [' + Object.keys(d).join(',') + ']');
+            return eq(d[0].type + ' ' + Number(d[0].start_time), 'soir 18', 'lundi');
+        });
+
+        // Le chemin legacy sert les onglets déjà ouverts et les PWA dont le service worker
+        // n'a pas repris le nouveau JS. Même handler : on vérifie qu'il le reste.
+        await check('E-22s', 'le chemin legacy rend le même modèle', async () => {
+            const a = (await req('ali', '/api/me/dispo-template')).data.days;
+            const b = (await req('ali', '/api/me/manager-dispo-template')).data.days;
+            return eq(JSON.stringify(b), JSON.stringify(a), 'days');
+        });
+
+        // La garde du 2026-08-24 : un modèle enregistré APRÈS la deadline ne rattrape pas
+        // la semaine déjà figée. Elle vaut d'être vérifiée sur un vrai serveur parce
+        // qu'elle dépend de `computeEffectiveDeadline` évaluée à l'heure de L'INSTANCE.
+        // Paire discriminante : même deadline, deux staff. Bruno la subit, Alice en est
+        // exemptée (rouverte nominativement par le seed). Sans le second, un marqueur posé
+        // systématiquement — donc une fonctionnalité morte — passerait au vert.
+        await setDeadline(DEADLINE_FRANCHIE);
+        await check('E-22s', 'enregistré après la deadline : la semaine figée n\'est pas rattrapée', async () => {
+            await putTpl('bru', MODELE);
+            return eq((await tpl('bru')).data.last_materialized_week, FROM, 'marqueur');
+        });
+        await check('E-22s', 'le staff rouvert nominativement n\'est PAS neutralisé', async () => {
+            await putTpl('ali', MODELE);
+            const m = (await tpl('ali')).data.last_materialized_week;
+            if (m === FROM) throw new Error('marqueur posé alors que la deadline ne s\'applique pas à Alice');
+            return 'marqueur ' + (m || 'absent');
+        });
+        await setDeadline(DEADLINE_INITIALE);
+
+        // Remise en état, et elle n'est pas cosmétique : le jeu ne sème aucun modèle pour
+        // ces deux-là, et la deadline de recette est TOUJOURS dépassée — les laisser ferait
+        // matérialiser des dispos d'Alice au prochain tour du cron, et le lancement suivant
+        // compterait une file que personne n'a semée.
+        await check('E-22s', 'remise en état : modèles de test retirés', async () => {
+            await putTpl('ali', {});
+            await putTpl('bru', {});
+            const a = Object.keys((await tpl('ali')).data.days || {}).length;
+            const b = Object.keys((await tpl('bru')).data.days || {}).length;
+            return eq(a + b, 0, 'jours restants');
+        });
+
+        // L'envoi automatique tel que le jeu le met en scène : Chloé a un modèle sur
+        // lundi / mercredi / jeudi / vendredi, une dispo DÉJÀ saisie le mercredi et un
+        // congé VALIDÉ le jeudi. Deux des quatre jours doivent arriver, pas les autres.
+        const file  = (await req('pat', `/api/dispos/pending?from=${FROM}&to=${TO}`)).data || [];
+        const chloe = Object.fromEntries(file
+            .filter(d => /Chlo/i.test(d.staff_name || ''))
+            .map(d => [d.date, d]));
+        if (!chloe[D(0)] && !chloe[D(4)]) {
+            stale.semaineType = 'la semaine-type de Chloé n\'a pas été matérialisée '
+                + '(cron non passé depuis le seed — redémarrer l\'instance, il tourne au démarrage)';
+            console.log('⚠️  ' + stale.semaineType + '\n');
+        }
+
+        await check('E-22s', 'les jours du modèle arrivent dans la file', async () => {
+            const l = chloe[D(0)], v = chloe[D(4)];
+            if (!l || !v) throw new Error('lundi/vendredi absents de la file');
+            return eq(l.type + '·' + v.type, 'midi·soir', 'types matérialisés');
+        }, 'semaineType');
+
+        // La quasi-régression du 2026-08-24 : sans la jointure `time_off`, un congé validé
+        // se faisait recouvrir de dispos automatiques à CHAQUE deadline.
+        await check('E-22s', 'le congé validé n\'est PAS recouvert', async () => {
+            if (chloe[D(3)]) throw new Error('une dispo a été posée sur le jeudi de congé');
+            return 'jeudi laissé libre';
+        }, 'semaineType');
+
+        await check('E-22s', 'création seule : la saisie manuelle n\'est pas écrasée', async () => {
+            const m = chloe[D(2)];
+            if (!m) throw new Error('la dispo semée du mercredi a disparu');
+            // Semée en `custom` 14→22 quand le modèle porte `soir` 18→26 : si le modèle avait
+            // écrasé, on lirait 18. Deux valeurs distinctes, sinon la vérification est vacante.
+            return eq(Number(m.start_time), 14, 'mercredi start_time');
+        }, 'semaineType');
     }
 
     // ── B2-b : un planning NON PUBLIÉ n'est pas lisible par le staff ─────────

@@ -1596,6 +1596,131 @@ n'est plus testé que là où c'est lui le sujet. Le garde-fou est vérifié par
 
 Après revue : **416 tests verts**, lint 0 erreur, 0 pollution du runner.
 
+#### Le jeu de recette rendait la fonctionnalité intestable (2026-08-25)
+
+Retour du user : « avec les profils créés je n'ai pas trouvé celui qui peut être utile
+pour faire l'envoi auto de la semaine type. » Il n'y en avait pas — **et c'est ma garde
+du 2026-08-24 qui l'a supprimé**.
+
+`seed-dev.js` pose `custom_deadline: '2026-01-05T00:00'` (« lundi 00:00 = toujours
+passée »), utile pour §9.1. Conséquence non vue au moment de la revue : sur la recette, la
+semaine de collecte est **en permanence figée** pour un staff ordinaire. Le bouton
+« enregistrer comme modèle » est donc masqué, et un PUT direct se fait neutraliser par le
+marqueur — les deux effets voulus, mais qui, combinés à cette deadline, ne laissaient
+**aucun** chemin pour armer une semaine-type de staff. Seule Diane pouvait : elle est
+exemptée par `dispoDeadlineWaived`, et c'est le seul modèle que le jeu semait.
+
+Le jeu couvrait donc exactement l'ancien périmètre, et **rien du nouveau**.
+
+Ajouté :
+
+| Fixture | Ce qu'elle rend observable |
+|---|---|
+| Semaine-type de **Chloé** (lundi, mercredi, jeudi, vendredi) | l'envoi automatique lui-même — le cron tourne **au démarrage** en plus de son quart d'heure, donc un redémarrage après le seed suffit |
+| Sa dispo semée du **mercredi** (déjà présente) | la **création seule** : ce jour-là n'est pas recouvert |
+| Un congé **validé** sur son **jeudi** de N+1 | la jointure `time_off` — sans ce congé, rien sur la recette ne montrait la quasi-régression du 2026-08-24 |
+| **Alice** dans `force_open_staff` (forme chaîne, sans semaine, pour ne pas périmer au lundi suivant) | l'écran d'enregistrement du modèle, autrement inatteignable sous cette deadline |
+
+Résultat attendu : sur les quatre jours du modèle de Chloé, **deux seulement** arrivent
+dans la file du patron, chacun des deux autres écarté pour un motif différent et
+documenté. Une 2ᵉ exécution n'ajoute rien (`last_materialized_week`).
+
+#### La carte semaine-type n'annonçait pas ce qu'elle allait envoyer (2026-08-25)
+
+Second retour du user : « l'affichage montre simplement les jours sans spécifier comment
+elle fonctionne. » Exact : le texte se réduisait à `Modèle actif : Lun, Mar, Jeu.` — les
+jours en abrégé, **sans les horaires**. Pour un mécanisme dont tout l'intérêt est d'écrire
+des dispos à la place de quelqu'un, ne pas montrer ce qui partira est le défaut central,
+pas un détail de libellé.
+
+La carte annonce désormais les trois choses qui manquaient : **quand** (la deadline
+datée), **pour quelle semaine** (celle en cours de collecte — pas celle affichée si le
+staff a navigué plus loin dans son horizon), et **quoi**, ligne par ligne avec les
+horaires. Deux règles y sont écrites plutôt que supposées : congés et repos sautés, et
+surtout la **précédence** — une saisie manuelle n'est jamais remplacée. Sans modèle, le
+message dit « rien ne partira » au lieu d'un « aucun modèle » qui laissait deviner.
+
+`deadlineLabel()` extrait au passage : l'en-tête et la carte parlent de la MÊME échéance,
+deux formats auraient donné l'impression qu'il y en avait deux.
+
+#### La CI n'était pas en panne (2026-08-25)
+
+Le user la croyait morte. Elle a tourné sur les trois commits ; l'échec est sur
+`323e595`, commit **intermédiaire**, à l'étape ESLint : il n'apporte que
+`public/lib/dispo-template.js` et son test, alors que les globales `require` /
+`DispoTemplate` d'`eslint.config.js` n'arrivent qu'au commit suivant. La pointe de
+`dev` (`51c9f6b`) est **verte**. Découpé dans l'autre sens — outillage d'abord, module
+ensuite — il n'y aurait pas eu de rouge dans l'historique.
+
+⚠️ Note d'outillage : `gh` n'est pas installé sur ce poste, mais le dépôt est **public**
+et `api.github.com/repos/Watch15/app-planning-bar/actions/runs` répond sans jeton — c'est
+la façon de vérifier la CI d'ici, plutôt que de renvoyer la question au user.
+
+#### Le modèle dit désormais CE QU'IL ENVOIE, et le smoke le vérifie (2026-08-25)
+
+Deux demandes du user dans la foulée des précédentes : dire au staff « à quoi correspond
+cette semaine type — pas uniquement les jours mais le type, soirée, longue journée ou
+horaires spécifiques », et couvrir l'envoi automatique au smoke.
+
+**Le vocabulaire des types vivait en double.** `DISPO_TYPES` (horaires + un `label` que
+plus personne ne lisait : « Horaires précis ») et `BTN_CONFIG`, local à la carte du jour
+(« Personnalisé »). Deux noms pour le même bouton, et la carte semaine-type n'en affichait
+aucun. Les deux tables sont fusionnées : la carte nomme un « Soir » exactement comme le
+bouton qui l'a produit. La ligne du modèle porte maintenant le type ET les horaires —
+`Soir · 18h → 02h` — parce que 18h → 02h ne dit pas si le staff a choisi un préréglage ou
+saisi ses heures à la main, et c'est ce choix-là qu'il est en train de valider.
+
+**🔴 L'écran promettait la mauvaise semaine.** Le marqueur `last_materialized_week` ne
+sortait pas de `GET /api/me/dispo-template` : la carte annonçait « ça partira pour la
+semaine du 31 » y compris quand le rendez-vous de cette semaine-là avait déjà eu lieu —
+cas fréquent depuis la garde du 2026-08-24, qui pose le marqueur dès qu'on enregistre
+après la deadline. Le chemin existe dès que l'horizon dépasse 1 semaine : sur un onglet
+N+2, `figee` est faux, le bouton s'affiche, et la promesse était fausse d'une semaine
+entière. Le marqueur est exposé, la carte distingue les deux cas, et le message du PUT
+aussi (« elle prendra effet à la deadline SUIVANTE »).
+
+#### Smoke — ce qu'un test HTTP peut prouver de la semaine-type, et ce qu'il ne peut pas
+
+La matérialisation est déclenchée par un `setInterval` (et au démarrage), **jamais par une
+route**. Aucun appel ne peut la provoquer depuis le smoke : la section est donc coupée en
+deux, et c'est la seule conception honnête.
+
+| Ce qui est vérifié | Nature |
+|---|---|
+| un staff ordinaire lit sa semaine-type (**403 avant le 2026-08-24**) | autoportant |
+| aller-retour PUT → GET | autoportant |
+| le chemin legacy `manager-dispo-template` rend le même modèle | autoportant |
+| enregistré après la deadline : marqueur posé, semaine figée non rattrapée | autoportant, impose sa deadline comme le §9.1 |
+| staff rouvert nominativement : marqueur **non** posé | autoportant — **la contre-épreuve** |
+| lundi + vendredi du modèle de Chloé arrivent dans la file | dépend du seed + d'un redémarrage ⇒ `stale` (⊘) |
+| son jeudi de congé validé n'est **pas** recouvert | idem |
+| son mercredi déjà saisi n'est **pas** écrasé | idem |
+
+La paire deadline est ce qui donne sa valeur au bloc : **même deadline, deux staff**. Sans
+le second cas, un marqueur posé systématiquement — donc une fonctionnalité morte — passerait
+au vert. Même raisonnement que les tests vacants de F-14.
+
+⚠️ Deux pièges corrigés en écrivant ces vérifications :
+
+1. **La contre-épreuve « création seule » était vacante dans le seed** : le mercredi du
+   modèle de Chloé portait les mêmes horaires que sa dispo semée (`custom` 14→22). Écrasé
+   ou pas, on lisait la même chose. Le modèle porte désormais `soir` 18→26 : si la
+   matérialisation écrasait, on lirait 18.
+2. **Remise en état obligatoire** : le smoke écrit des modèles pour Alice et Bruno, que le
+   jeu ne sème pas — et la deadline de recette étant toujours dépassée, les laisser ferait
+   matérialiser des dispos d'Alice au prochain tour du cron. Le lancement suivant compterait
+   une file que personne n'a semée.
+
+Côté unitaire, un 417ᵉ test verrouille l'exposition du marqueur (le contrat dont dépendent
+à la fois l'écran et le smoke), **vérifié par mutation** : champ retiré → exactement
+1 échec.
+
+**Reste non couvert, et assumé** : la matérialisation elle-même n'est pas déclenchable
+depuis un test HTTP. L'exposer par une route serait ouvrir en production une porte pour
+le confort de la recette. Elle reste couverte en unitaire via `app.locals.runDispoTemplateCron`
+(harnais CD-05, inerte hors test), et en bout de chaîne par les trois vérifications `stale`
+ci-dessus.
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique. 🔄 **Rafraîchi le 2026-08-10** (1180 nœuds, 1897 arêtes, 68 communautés) — il datait de `c72affe`, 7 commits de retard : la consigne « après chaque session » n'a **pas** été tenue sur les sessions des 06→08/08. Ancien graphe dans `graphify-out/2026-08-10/`.

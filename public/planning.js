@@ -1748,11 +1748,11 @@ function renderHistoriqueWeek(wrap, data) {
 // ── Disponibilités ────────────────────────────────────────────────────────────
 
 const DISPO_TYPES = {
-    soir:   { label: 'Soir',   start: 16, end: 26 },
-    midi:   { label: 'Midi',   start: 10, end: 17 },
-    long:   { label: 'Long',   start: 10, end: 26 },
-    custom: { label: 'Horaires précis', start: null, end: null },
-    off:    { label: 'Indisponible', start: null, end: null },
+    soir:   { label: 'Soir',         sub: '16h → 02h',       start: 16,   end: 26 },
+    midi:   { label: 'Midi',         sub: '10h → 17h',       start: 10,   end: 17 },
+    long:   { label: 'Long',         sub: '10h → 02h',       start: 10,   end: 26 },
+    custom: { label: 'Personnalisé', sub: 'horaires libres', start: null, end: null },
+    off:    { label: 'Indispo',      sub: null,              start: null, end: null },
 };
 
 let dispoSettings  = null;
@@ -1792,8 +1792,7 @@ async function loadDisposTab() {
     const btnSubmit = document.getElementById('btn-submit-dispos');
 
     // Deadline
-    const deadline = new Date(dispoSettings.deadline);
-    const fmtDate  = deadline.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+    const fmtDate = deadlineLabel();
 
     // Saisie fermée : la semaine-type n'a plus rien à proposer non plus — le serveur ne
     // la matérialise pas pour un établissement fermé ou un staff sans droit d'envoi
@@ -2051,14 +2050,10 @@ function createDispoCard(date, d) {
 
     const fmt = h => String(Math.floor(h % 24)).padStart(2, '0') + 'h';
 
-    // Labels avec horaires affichés directement
-    const BTN_CONFIG = {
-        soir:   { label: 'Soir',        sub: '16h → 02h', col: '#1a1a2e' },
-        midi:   { label: 'Midi',        sub: '10h → 17h', col: '#534AB7' },
-        long:   { label: 'Long',        sub: '10h → 02h', col: '#e67e22' },
-        custom: { label: 'Personnalisé', sub: 'horaires libres', col: '#2ecc71' },
-        off:    { label: 'Indispo',     sub: null,           col: '#888' },
-    };
+    // Même table que la carte semaine-type (`DISPO_TYPES`) : deux vocabulaires pour les
+    // mêmes cinq boutons obligeaient le staff à traduire d'un écran à l'autre.
+    // La couleur vit dans la CSS (`.selected-<type>`), pas ici.
+    const BTN_CONFIG = DISPO_TYPES;
 
     const isSelected = sel.type !== null;
 
@@ -2257,6 +2252,10 @@ async function submitDispos() {
 // mon modèle » est un bouton. Une grille supplémentaire aurait dupliqué toute la
 // mécanique de saisie pour la même information.
 let dispoTemplate = null;   // { 0..6: { type, start_time, end_time } } — 0 = lundi
+// Lundi de la dernière semaine pour laquelle le rendez-vous de la deadline a DÉJÀ eu lieu
+// (matérialisée, ou neutralisée parce que le modèle a été enregistré trop tard). Sans lui,
+// la carte promettrait un envoi « à la prochaine deadline » alors qu'il vise la suivante.
+let dispoTemplateDone = null;
 
 // Les jours du modèle, triés, en index lundi = 0.
 const dispoTemplateDays = () =>
@@ -2268,9 +2267,20 @@ const dispoTemplateDays = () =>
 async function loadDispoTemplate() {
     if (dispoTemplate !== null) return;
     try {
-        const res = await fetch('/api/me/dispo-template', { credentials: 'include' });
-        dispoTemplate = res.ok ? ((await res.json()).days || {}) : {};
-    } catch { dispoTemplate = {}; }
+        const res  = await fetch('/api/me/dispo-template', { credentials: 'include' });
+        const data = res.ok ? await res.json() : {};
+        dispoTemplate     = data.days || {};
+        dispoTemplateDone = data.last_materialized_week || null;
+    } catch { dispoTemplate = {}; dispoTemplateDone = null; }
+}
+
+// Une seule mise en forme de la deadline pour toute la page : l'en-tête et la carte
+// semaine-type parlent de la MÊME échéance, deux formats donneraient l'impression
+// qu'il y en a deux.
+function deadlineLabel() {
+    if (!dispoSettings || !dispoSettings.deadline) return '';
+    return new Date(dispoSettings.deadline).toLocaleDateString('fr-FR',
+        { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 }
 
 function setTplFeedback(msg, type) {
@@ -2282,6 +2292,33 @@ function setTplFeedback(msg, type) {
     fb.style.color = type === 'error' ? '#c0392b' : '#1a7a4a';
     fb.textContent = msg;
     if (type !== 'error') setTimeout(() => { if (fb.textContent === msg) fb.textContent = ''; }, 3000);
+}
+
+// Le jour du modèle tel qu'il partira : nom du jour ET horaires. N'afficher que le nom
+// laissait le staff deviner ce qui allait être envoyé en son nom — c'est exactement ce
+// qu'une semaine-type doit rendre vérifiable d'un coup d'œil.
+// DAY_NAMES_LONG_HIST est indexé sur getDay() (0 = dimanche) ; le modèle sur lundi = 0.
+function templateDayLine(i) {
+    const cell = (dispoTemplate || {})[i] || {};
+    const cfg  = DISPO_TYPES[cell.type] || DISPO_TYPES.custom;
+    const h = (cell.start_time == null || cell.end_time == null)
+        ? '—' : fmtHour(cell.start_time) + ' → ' + fmtHour(cell.end_time);
+    return '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:3px 0">'
+         +     '<span>' + DAY_NAMES_LONG_HIST[(i + 1) % 7] + '</span>'
+         +     '<span style="display:inline-flex;align-items:baseline;gap:8px">'
+         +         '<span style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;'
+         +             'padding:1px 6px;border-radius:5px;background:var(--light-border,#e6e6ef);color:var(--text-primary)">'
+         +             cfg.label + '</span>'
+         +         '<span style="font-weight:600;font-variant-numeric:tabular-nums">' + h + '</span>'
+         +     '</span>'
+         + '</div>';
+}
+
+// La matérialisation ne vise QUE la semaine en cours de collecte (index 0 de l'horizon),
+// jamais celle qui est affichée si le staff a navigué plus loin dans son horizon.
+function templateTargetLabel() {
+    const iso = dispoMondays[0];
+    return iso ? fmtCongeDate(iso) : 'prochaine';
 }
 
 // Pas de paramètre « semaine » : la carte agit toujours sur la semaine AFFICHÉE, et la
@@ -2304,18 +2341,35 @@ function renderDispoTplCard() {
     const figee = currentDispoWeekLocked();
     const days  = dispoTemplateDays();
     if (days.length) {
-        // DAY_NAMES est indexé sur getDay() (0 = dimanche) ; le modèle sur lundi = 0.
-        const noms = days.map(i => DAY_NAMES[(i + 1) % 7]).join(', ');
-        statusEl.innerHTML = 'Modèle actif : <b>' + noms + '</b>. Si tu n\'envoies rien avant la ' +
-            'deadline, ces jours partent automatiquement à ta place sur la semaine en cours de collecte.';
+        // Le rendez-vous de la semaine en cours de collecte a-t-il déjà eu lieu ? Si oui,
+        // annoncer « pour la semaine du 31 » serait faux : ce modèle vise la suivante.
+        const servie = dispoTemplateDone && dispoTemplateDone === dispoMondays[0];
+        statusEl.innerHTML =
+            (servie
+                ? '<div>La deadline de la semaine du <b>' + templateTargetLabel() + '</b> est déjà passée : '
+                  + 'ce modèle prendra effet à la <b>deadline suivante</b>. Voilà ce qui partira alors '
+                  + 'à ta place, sur les jours que tu auras laissés vides :</div>'
+                : '<div>Si tu n\'as rien envoyé quand la deadline tombe (<b>' + deadlineLabel() + '</b>), '
+                  + 'voilà ce qui partira tout seul à ta place, pour la <b>semaine du ' + templateTargetLabel() + '</b> :</div>')
+          + '<div style="margin:8px 0;padding:8px 10px;border-radius:8px;background:var(--light-bg,#f7f7fa)">'
+          + days.map(templateDayLine).join('')
+          + '</div>'
+          + '<div style="font-size:12px;color:var(--text-muted,#888);line-height:1.45">'
+          + 'Tes congés et tes jours de repos sont sautés. Et si tu envoies tes dispos toi-même, '
+          + 'ce sont les tiennes qui comptent : le modèle ne les remplace jamais.</div>';
         clearBtn.style.display = '';
         saveBtn.textContent    = 'Remplacer par cette semaine';
     } else {
-        statusEl.textContent = figee
-            ? 'Aucun modèle. Dès que la prochaine semaine s\'ouvrira, tu pourras renseigner tes '
-              + 'dispos et les enregistrer comme modèle : elles partiront alors toutes seules à la deadline.'
-            : 'Aucun modèle. Renseigne ta semaine ci-dessus puis enregistre-la : '
-              + 'les jours du modèle seront envoyés à la deadline si tu as oublié tes dispos.';
+        statusEl.innerHTML =
+            '<div>Aucun modèle enregistré : si tu n\'envoies rien avant la deadline, '
+          + '<b>rien ne partira</b> à ta place.</div>'
+          + '<div style="font-size:12px;color:var(--text-muted,#888);line-height:1.45;margin-top:6px">'
+          + (figee
+              ? 'Dès que la prochaine semaine s\'ouvrira, remplis-la puis enregistre-la ici : '
+                + 'ces horaires seront renvoyés automatiquement à chaque deadline où tu n\'as rien saisi.'
+              : 'Remplis ta semaine ci-dessus puis enregistre-la ici : ces horaires seront renvoyés '
+                + 'automatiquement à chaque deadline où tu n\'as rien saisi.')
+          + '</div>';
         clearBtn.style.display = 'none';
         saveBtn.textContent    = 'Enregistrer cette semaine comme modèle';
     }
@@ -2355,7 +2409,8 @@ async function putDispoTemplate(days, okMsg) {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || 'Erreur');
-        dispoTemplate = days;
+        dispoTemplate = null;             // force la relecture ci-dessous
+        await loadDispoTemplate();        // le serveur a pu poser `last_materialized_week`
         renderDispoTplCard();
         setTplFeedback('✅ ' + okMsg);
     } catch (e) {

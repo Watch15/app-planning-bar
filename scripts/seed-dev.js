@@ -196,15 +196,34 @@ const FEATURES = [
     ]);
 } },
 
-{ id: 'semaine-type', label: 'Semaine-type de la directrice (E-22 v2)',
-  howToTest: 'Modale « Ma semaine-type » côté directrice. Enregistrer n\'envoie RIEN (règle du 2026-08-10) : les jours apparaissent « 🕓 prévu » sur la semaine suivante et ne partent qu\'au déclenchement de la deadline, sur les seuls jours restés vides — une saisie manuelle n\'est jamais écrasée.',
+{ id: 'semaine-type', label: 'Semaine-type — directrice ET staff (E-22 v2, ouvert à tous le 2026-08-24)',
+  howToTest: "OBSERVER L'ENVOI AUTOMATIQUE — le cas que le jeu ne fournissait pas avant le 2026-08-25. "
+      + "La deadline de recette est TOUJOURS dépassée (bloc « reglages ») et le cron tourne AU DÉMARRAGE "
+      + "en plus de son quart d'heure : redémarrer le serveur après le seed suffit à le déclencher. "
+      + "Chloé a un modèle sur lundi / mercredi / jeudi / vendredi, et SEULS LUNDI ET VENDREDI doivent "
+      + "arriver dans la file du patron — mercredi est déjà pris par sa dispo semée (création seule), "
+      + "jeudi tombe sur son congé validé (bloc « conges »). Les deux règles se lisent sur un seul profil. "
+      + "Une 2e exécution ne doit RIEN ajouter (marqueur last_materialized_week). "
+      + "TESTER L'ENREGISTREMENT côté staff : se connecter en alice@ — seule rouverte nominativement, "
+      + "donc seule à voir le bouton « Enregistrer cette semaine comme modèle » malgré la deadline "
+      + "passée. Sur bruno@ / chloe@ le bouton est ABSENT, et c'est voulu : un modèle enregistré après "
+      + "la deadline ne rattrape pas la semaine déjà figée.",
   async seed(ctx) {
-    await ctx.db.collection('manager_dispo_templates').insertOne({
-        staff_id: ctx.staff.Diane,
-        days: { 0: { type: 'soir', start_time: 17, end_time: 24 },
-                2: { type: 'soir', start_time: 17, end_time: 24 } },
-        updated_at: new Date(),
-    });
+    await ctx.db.collection('manager_dispo_templates').insertMany([
+        { staff_id: ctx.staff.Diane,
+          days: { 0: { type: 'soir', start_time: 17, end_time: 24 },
+                  2: { type: 'soir', start_time: 17, end_time: 24 } },
+          updated_at: new Date() },
+        // Le cas STAFF. Mercredi (2) et jeudi (3) sont là EXPRÈS pour être écartés :
+        // sans eux, un envoi automatique qui recouvrirait un congé validé passerait
+        // inaperçu sur la recette — c'était la quasi-régression du 2026-08-24.
+        { staff_id: ctx.staff['Chloé'], staff_name: 'Chloé',
+          days: { 0: { type: 'midi',   start_time: 11, end_time: 17 },
+                  2: { type: 'soir',   start_time: 18, end_time: 26 },   // ≠ de sa dispo semée (custom 14→22)
+                  3: { type: 'midi',   start_time: 11, end_time: 17 },
+                  4: { type: 'soir',   start_time: 18, end_time: 26 } },
+          updated_at: new Date() },
+    ]);
 } },
 
 { id: 'conges', label: 'Congés staff (F-10) + absence directrice (E-19)',
@@ -217,6 +236,13 @@ const FEATURES = [
         { staff_id: ctx.staff.David, staff_name: 'David', mode: 'info', status: 'approved',
           start_date: ctx.day(ctx.thisMon, 5), end_date: ctx.day(ctx.thisMon, 6),
           reason: 'Week-end', created_at: new Date() },
+        // Jeudi de la semaine EN COURS DE COLLECTE : le jour que la semaine-type de Chloé
+        // couvre et que l'envoi automatique doit sauter. Un congé validé recouvert de
+        // dispos à chaque deadline annulerait la purge des congés, semaine après semaine —
+        // sans ce congé-là, rien sur la recette ne le montrerait.
+        { staff_id: ctx.staff['Chloé'], staff_name: 'Chloé', mode: 'request', status: 'approved',
+          start_date: ctx.day(ctx.nextMon, 3), end_date: ctx.day(ctx.nextMon, 3),
+          reason: 'RDV médical', created_at: new Date() },
     ]);
     await ctx.db.collection('manager_time_off').insertOne({
         user_id: ctx.users.Diane, name: 'Diane', start_date: ctx.day(ctx.nextMon, 3),
@@ -228,8 +254,14 @@ const FEATURES = [
   howToTest: 'La deadline est VOLONTAIREMENT dépassée : la directrice peut quand même envoyer ses dispos (§9.1), un staff non. Réglages perf : la directrice ne voit que Josy, l\'observateur lit mais n\'écrit pas.',
   async seed(ctx) {
     await ctx.db.collection('settings').insertMany([
+        // La deadline de recette est toujours dépassée — pratique pour §9.1, mais elle rend
+        // la SAISIE d'une semaine-type intestable pour un staff ordinaire (bouton masqué, et
+        // un PUT tardif ne rattrape pas la semaine figée). Alice est donc rouverte en
+        // permanence : c'est le seul profil staff sur lequel l'écran d'enregistrement du
+        // modèle se montre. Forme CHAÎNE et non { staff_id, week_start } volontairement :
+        // elle ne porte pas de semaine, donc le jeu ne périme pas au lundi suivant.
         { key: 'dispo', open: true, force_open: false, message: null,
-          custom_deadline: '2026-01-05T00:00', force_open_staff: [] }, // lundi 00:00 = toujours passée
+          custom_deadline: '2026-01-05T00:00', force_open_staff: [ctx.staff.Alice] }, // lundi 00:00 = toujours passée
         { key: 'performance',          target_charged: 30, charge_rate: 45 },
         { key: 'performance_Josy_pub', target_charged: 28, charge_rate: 42 },
     ]);

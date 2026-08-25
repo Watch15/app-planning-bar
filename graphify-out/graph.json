@@ -93,7 +93,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_utils",
-      "community": 28,
+      "community": 11,
       "norm_label": "utils.js"
     },
     {
@@ -103,7 +103,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "lib_utils_crypto",
-      "community": 28,
+      "community": 11,
       "norm_label": "crypto"
     },
     {
@@ -113,7 +113,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "lib_utils_isvalidobjectid",
-      "community": 70,
+      "community": 65,
       "norm_label": "isvalidobjectid()"
     },
     {
@@ -153,7 +153,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "lib_utils_weekstart_currentweekstart_week_cutoff_hour_todatestr_disposweekstart_disposhorizonrange_disposhorizonmondays_clamphorizonweeks_dispo_horizon_max_upcomingweekstart_upcomingweekrange_upcomingweekmondays",
-      "community": 28,
+      "community": 11,
       "norm_label": "{\r\n    weekstart, currentweekstart, week_cutoff_hour, todatestr, disposweekstart,\r\n    disposhorizonrange, disposhorizonmondays, clamphorizonweeks, dispo_horizon_max,\r\n    upcomingweekstart, upcomingweekrange, upcomingweekmondays,\r\n}"
     },
     {
@@ -173,7 +173,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "lib_utils_normalizepublishdoc",
-      "community": 11,
+      "community": 5,
       "norm_label": "normalizepublishdoc()"
     },
     {
@@ -193,7 +193,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "lib_utils_datesoverlap",
-      "community": 28,
+      "community": 11,
       "norm_label": "datesoverlap()"
     },
     {
@@ -203,7 +203,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "lib_utils_congecoversdate",
-      "community": 28,
+      "community": 11,
       "norm_label": "congecoversdate()"
     },
     {
@@ -213,7 +213,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "lib_utils_congedaysinrange",
-      "community": 28,
+      "community": 11,
       "norm_label": "congedaysinrange()"
     },
     {
@@ -253,7 +253,7 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "lib_utils_perf_defaults",
-      "community": 28,
+      "community": 11,
       "norm_label": "perf_defaults"
     },
     {
@@ -273,7 +273,7 @@
       "source_location": "L202",
       "_origin": "ast",
       "id": "lib_utils_staff_colors",
-      "community": 28,
+      "community": 11,
       "norm_label": "staff_colors"
     },
     {
@@ -383,7 +383,7 @@
       "source_location": "L375",
       "_origin": "ast",
       "id": "lib_utils_dispo_audit_fields",
-      "community": 28,
+      "community": 11,
       "norm_label": "dispo_audit_fields"
     },
     {
@@ -953,7 +953,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_dispo_template",
-      "community": 28,
+      "community": 11,
       "norm_label": "dispo-template.js"
     },
     {
@@ -963,7 +963,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "lib_dispo_template_buildtemplatedispos",
-      "community": 28,
+      "community": 11,
       "norm_label": "buildtemplatedispos()"
     },
     {
@@ -1713,7 +1713,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "public_planning_adddays",
-      "community": 75,
+      "community": 81,
       "norm_label": "adddays()"
     },
     {
@@ -1723,7 +1723,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "public_planning_fmthour",
-      "community": 78,
+      "community": 81,
       "norm_label": "fmthour()"
     },
     {
@@ -1743,7 +1743,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "public_planning_parsedate",
-      "community": 79,
+      "community": 81,
       "norm_label": "parsedate()"
     },
     {
@@ -1753,7 +1753,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "public_planning_weekendstr",
-      "community": 79,
+      "community": 81,
       "norm_label": "weekendstr()"
     },
     {
@@ -1763,7 +1763,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "public_planning_weekrangelabel",
-      "community": 79,
+      "community": 81,
       "norm_label": "weekrangelabel()"
     },
     {
@@ -1943,7 +1943,7 @@
       "source_location": "L655",
       "_origin": "ast",
       "id": "public_planning_renderupcomingweek",
-      "community": 79,
+      "community": 81,
       "norm_label": "renderupcomingweek()"
     },
     {
@@ -2043,7 +2043,7 @@
       "source_location": "L877",
       "_origin": "ast",
       "id": "public_planning_renderdaysinto",
-      "community": 78,
+      "community": 81,
       "norm_label": "renderdaysinto()"
     },
     {
@@ -2053,7 +2053,7 @@
       "source_location": "L1080",
       "_origin": "ast",
       "id": "public_planning_formatestablishment",
-      "community": 78,
+      "community": 81,
       "norm_label": "formatestablishment()"
     },
     {
@@ -2073,7 +2073,7 @@
       "source_location": "L1138",
       "_origin": "ast",
       "id": "public_planning_kpibarhtml",
-      "community": 0,
+      "community": 81,
       "norm_label": "_kpibarhtml()"
     },
     {
@@ -2083,7 +2083,7 @@
       "source_location": "L1156",
       "_origin": "ast",
       "id": "public_planning_respkpiinnerhtml",
-      "community": 0,
+      "community": 81,
       "norm_label": "_respkpiinnerhtml()"
     },
     {
@@ -2280,7 +2280,7 @@
       "label": "createDispoCard()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2047",
+      "source_location": "L2046",
       "_origin": "ast",
       "id": "public_planning_createdispocard",
       "community": 0,
@@ -2290,7 +2290,7 @@
       "label": "createRestDayCard()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2142",
+      "source_location": "L2137",
       "_origin": "ast",
       "id": "public_planning_createrestdaycard",
       "community": 75,
@@ -2300,7 +2300,7 @@
       "label": "createCongeDayCard()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2154",
+      "source_location": "L2149",
       "_origin": "ast",
       "id": "public_planning_createcongedaycard",
       "community": 75,
@@ -2310,7 +2310,7 @@
       "label": "parseDispoTime()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2169",
+      "source_location": "L2164",
       "_origin": "ast",
       "id": "public_planning_parsedispotime",
       "community": 75,
@@ -2320,7 +2320,7 @@
       "label": "readDispoTimes()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2182",
+      "source_location": "L2177",
       "_origin": "ast",
       "id": "public_planning_readdispotimes",
       "community": 75,
@@ -2330,7 +2330,7 @@
       "label": "submitDispos()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2193",
+      "source_location": "L2188",
       "_origin": "ast",
       "id": "public_planning_submitdispos",
       "community": 75,
@@ -2340,7 +2340,7 @@
       "label": "dispoTemplateDays()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2262",
+      "source_location": "L2261",
       "_origin": "ast",
       "id": "public_planning_dispotemplatedays",
       "community": 75,
@@ -2350,27 +2350,57 @@
       "label": "loadDispoTemplate()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2268",
+      "source_location": "L2267",
       "_origin": "ast",
       "id": "public_planning_loaddispotemplate",
       "community": 75,
       "norm_label": "loaddispotemplate()"
     },
     {
+      "label": "deadlineLabel()",
+      "file_type": "code",
+      "source_file": "public/planning.js",
+      "source_location": "L2280",
+      "_origin": "ast",
+      "id": "public_planning_deadlinelabel",
+      "community": 75,
+      "norm_label": "deadlinelabel()"
+    },
+    {
       "label": "setTplFeedback()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2276",
+      "source_location": "L2286",
       "_origin": "ast",
       "id": "public_planning_settplfeedback",
       "community": 75,
       "norm_label": "settplfeedback()"
     },
     {
+      "label": "templateDayLine()",
+      "file_type": "code",
+      "source_file": "public/planning.js",
+      "source_location": "L2301",
+      "_origin": "ast",
+      "id": "public_planning_templatedayline",
+      "community": 81,
+      "norm_label": "templatedayline()"
+    },
+    {
+      "label": "templateTargetLabel()",
+      "file_type": "code",
+      "source_file": "public/planning.js",
+      "source_location": "L2319",
+      "_origin": "ast",
+      "id": "public_planning_templatetargetlabel",
+      "community": 0,
+      "norm_label": "templatetargetlabel()"
+    },
+    {
       "label": "renderDispoTplCard()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2290",
+      "source_location": "L2327",
       "_origin": "ast",
       "id": "public_planning_renderdispotplcard",
       "community": 75,
@@ -2380,7 +2410,7 @@
       "label": "saveDispoTemplate()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2327",
+      "source_location": "L2381",
       "_origin": "ast",
       "id": "public_planning_savedispotemplate",
       "community": 75,
@@ -2390,7 +2420,7 @@
       "label": "putDispoTemplate()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2346",
+      "source_location": "L2400",
       "_origin": "ast",
       "id": "public_planning_putdispotemplate",
       "community": 75,
@@ -2400,7 +2430,7 @@
       "label": "showDisposSub()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2371",
+      "source_location": "L2426",
       "_origin": "ast",
       "id": "public_planning_showdispossub",
       "community": 86,
@@ -2410,7 +2440,7 @@
       "label": "fmtCongeDate()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2387",
+      "source_location": "L2442",
       "_origin": "ast",
       "id": "public_planning_fmtcongedate",
       "community": 0,
@@ -2420,7 +2450,7 @@
       "label": "setCongeStatus()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2392",
+      "source_location": "L2447",
       "_origin": "ast",
       "id": "public_planning_setcongestatus",
       "community": 86,
@@ -2430,7 +2460,7 @@
       "label": "applyCongeModes()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2400",
+      "source_location": "L2455",
       "_origin": "ast",
       "id": "public_planning_applycongemodes",
       "community": 77,
@@ -2440,7 +2470,7 @@
       "label": "initCongesForm()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2415",
+      "source_location": "L2470",
       "_origin": "ast",
       "id": "public_planning_initcongesform",
       "community": 77,
@@ -2450,7 +2480,7 @@
       "label": "submitConge()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2431",
+      "source_location": "L2486",
       "_origin": "ast",
       "id": "public_planning_submitconge",
       "community": 86,
@@ -2460,7 +2490,7 @@
       "label": "loadCongesTab()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2461",
+      "source_location": "L2516",
       "_origin": "ast",
       "id": "public_planning_loadcongestab",
       "community": 86,
@@ -2470,7 +2500,7 @@
       "label": "_CONGE_STATUS",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2474",
+      "source_location": "L2529",
       "_origin": "ast",
       "id": "public_planning_conge_status",
       "community": 0,
@@ -2480,7 +2510,7 @@
       "label": "renderCongesList()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2480",
+      "source_location": "L2535",
       "_origin": "ast",
       "id": "public_planning_rendercongeslist",
       "community": 86,
@@ -2490,7 +2520,7 @@
       "label": "cancelConge()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2513",
+      "source_location": "L2568",
       "_origin": "ast",
       "id": "public_planning_cancelconge",
       "community": 86,
@@ -2500,7 +2530,7 @@
       "label": "_NOTIF_CFG",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2527",
+      "source_location": "L2582",
       "_origin": "ast",
       "id": "public_planning_notif_cfg",
       "community": 0,
@@ -2510,7 +2540,7 @@
       "label": "_notifQueue",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2534",
+      "source_location": "L2589",
       "_origin": "ast",
       "id": "public_planning_notifqueue",
       "community": 0,
@@ -2520,7 +2550,7 @@
       "label": "_shownNotifs",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2537",
+      "source_location": "L2592",
       "_origin": "ast",
       "id": "public_planning_shownnotifs",
       "community": 0,
@@ -2530,7 +2560,7 @@
       "label": "loadStaffNotifs()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2539",
+      "source_location": "L2594",
       "_origin": "ast",
       "id": "public_planning_loadstaffnotifs",
       "community": 0,
@@ -2540,7 +2570,7 @@
       "label": "_drainNotifQueue()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2553",
+      "source_location": "L2608",
       "_origin": "ast",
       "id": "public_planning_drainnotifqueue",
       "community": 0,
@@ -2550,7 +2580,7 @@
       "label": "_showNotifToast()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2559",
+      "source_location": "L2614",
       "_origin": "ast",
       "id": "public_planning_shownotiftoast",
       "community": 0,
@@ -2560,7 +2590,7 @@
       "label": "_dismissToast()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2604",
+      "source_location": "L2659",
       "_origin": "ast",
       "id": "public_planning_dismisstoast",
       "community": 0,
@@ -2570,7 +2600,7 @@
       "label": "_esc()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2614",
+      "source_location": "L2669",
       "_origin": "ast",
       "id": "public_planning_esc",
       "community": 0,
@@ -2580,7 +2610,7 @@
       "label": "_showColleagueToast()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2633",
+      "source_location": "L2688",
       "_origin": "ast",
       "id": "public_planning_showcolleaguetoast",
       "community": 0,
@@ -2590,7 +2620,7 @@
       "label": "showMsg()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2664",
+      "source_location": "L2719",
       "_origin": "ast",
       "id": "public_planning_showmsg",
       "community": 75,
@@ -2600,7 +2630,7 @@
       "label": "urlBase64ToUint8Array()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2683",
+      "source_location": "L2738",
       "_origin": "ast",
       "id": "public_planning_urlbase64touint8array",
       "community": 0,
@@ -2610,7 +2640,7 @@
       "label": "initPushButton()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2690",
+      "source_location": "L2745",
       "_origin": "ast",
       "id": "public_planning_initpushbutton",
       "community": 0,
@@ -2620,7 +2650,7 @@
       "label": "togglePushSubscription()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2720",
+      "source_location": "L2775",
       "_origin": "ast",
       "id": "public_planning_togglepushsubscription",
       "community": 0,
@@ -2630,7 +2660,7 @@
       "label": "startStaffAutoRefresh()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2803",
+      "source_location": "L2858",
       "_origin": "ast",
       "id": "public_planning_startstaffautorefresh",
       "community": 77,
@@ -7610,7 +7640,7 @@
       "label": "run()",
       "file_type": "code",
       "source_file": "scripts/seed-dev.js",
-      "source_location": "L254",
+      "source_location": "L286",
       "_origin": "ast",
       "id": "scripts_seed_dev_run",
       "community": 82,
@@ -8013,7 +8043,7 @@
       "source_location": "L244",
       "_origin": "ast",
       "id": "server_archivedstaff",
-      "community": 70,
+      "community": 65,
       "norm_label": "archivedstaff()"
     },
     {
@@ -8023,7 +8053,7 @@
       "source_location": "L272",
       "_origin": "ast",
       "id": "server_resolvestaffforplanning",
-      "community": 70,
+      "community": 65,
       "norm_label": "resolvestaffforplanning()"
     },
     {
@@ -8103,7 +8133,7 @@
       "source_location": "L575",
       "_origin": "ast",
       "id": "server_publishedshiftfilter",
-      "community": 11,
+      "community": 5,
       "norm_label": "publishedshiftfilter()"
     },
     {
@@ -8143,7 +8173,7 @@
       "source_location": "L677",
       "_origin": "ast",
       "id": "server_fetchpublishedweeks",
-      "community": 11,
+      "community": 5,
       "norm_label": "fetchpublishedweeks()"
     },
     {
@@ -8493,7 +8523,7 @@
       "source_location": "L3583",
       "_origin": "ast",
       "id": "server_releaseshiftsondispochange",
-      "community": 11,
+      "community": 5,
       "norm_label": "releaseshiftsondispochange()"
     },
     {
@@ -8620,7 +8650,7 @@
       "label": "weekEndStr()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5305",
+      "source_location": "L5319",
       "_origin": "ast",
       "id": "server_weekendstr",
       "community": 5,
@@ -8630,7 +8660,7 @@
       "label": "loadPerfSettings()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5911",
+      "source_location": "L5925",
       "_origin": "ast",
       "id": "server_loadperfsettings",
       "community": 11,
@@ -8640,7 +8670,7 @@
       "label": "pickPointageEstab()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6106",
+      "source_location": "L6120",
       "_origin": "ast",
       "id": "server_pickpointageestab",
       "community": 5,
@@ -8650,7 +8680,7 @@
       "label": "formatShiftTime()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6327",
+      "source_location": "L6341",
       "_origin": "ast",
       "id": "server_formatshifttime",
       "community": 5,
@@ -8660,7 +8690,7 @@
       "label": "formatDateFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6334",
+      "source_location": "L6348",
       "_origin": "ast",
       "id": "server_formatdatefr",
       "community": 5,
@@ -8670,7 +8700,7 @@
       "label": "formatDateShortFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6340",
+      "source_location": "L6354",
       "_origin": "ast",
       "id": "server_formatdateshortfr",
       "community": 5,
@@ -8680,7 +8710,7 @@
       "label": "formatWeekFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6346",
+      "source_location": "L6360",
       "_origin": "ast",
       "id": "server_formatweekfr",
       "community": 5,
@@ -8690,7 +8720,7 @@
       "label": "touchLastUpdated()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6354",
+      "source_location": "L6368",
       "_origin": "ast",
       "id": "server_touchlastupdated",
       "community": 5,
@@ -8700,7 +8730,7 @@
       "label": "DEPLOYED_COMMIT",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6441",
+      "source_location": "L6455",
       "_origin": "ast",
       "id": "server_deployed_commit",
       "community": 5,
@@ -8773,7 +8803,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conges_test",
-      "community": 28,
+      "community": 11,
       "norm_label": "conges.test.js"
     },
     {
@@ -8783,7 +8813,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conges_test_test",
-      "community": 28,
+      "community": 11,
       "norm_label": "{ test }"
     },
     {
@@ -8793,7 +8823,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "tests_conges_test_assert",
-      "community": 28,
+      "community": 11,
       "norm_label": "assert"
     },
     {
@@ -8803,7 +8833,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "tests_conges_test_datesoverlap_congecoversdate_congedaysinrange",
-      "community": 28,
+      "community": 11,
       "norm_label": "{ datesoverlap, congecoversdate, congedaysinrange }"
     },
     {
@@ -11043,7 +11073,7 @@
       "source_location": "L170",
       "_origin": "ast",
       "id": "readme_environnements_comment_s_y_connecter",
-      "community": 93,
+      "community": 25,
       "norm_label": "environnements \u2014 comment s'y connecter"
     },
     {
@@ -11053,7 +11083,7 @@
       "source_location": "L172",
       "_origin": "ast",
       "id": "readme_par_l_application_le_plus_courant",
-      "community": 93,
+      "community": 25,
       "norm_label": "par l'application (le plus courant)"
     },
     {
@@ -11063,7 +11093,7 @@
       "source_location": "L196",
       "_origin": "ast",
       "id": "readme_directement_\u00e0_la_base_mongosh_compass",
-      "community": 93,
+      "community": 25,
       "norm_label": "directement a la base (mongosh / compass)"
     },
     {
@@ -11083,7 +11113,7 @@
       "source_location": "L227",
       "_origin": "ast",
       "id": "readme_fonctionnalit\u00e9s",
-      "community": 89,
+      "community": 25,
       "norm_label": "fonctionnalites"
     },
     {
@@ -11093,7 +11123,7 @@
       "source_location": "L229",
       "_origin": "ast",
       "id": "readme_authentification",
-      "community": 89,
+      "community": 25,
       "norm_label": "authentification"
     },
     {
@@ -11103,7 +11133,7 @@
       "source_location": "L237",
       "_origin": "ast",
       "id": "readme_vue_patron_index_html",
-      "community": 89,
+      "community": 25,
       "norm_label": "vue patron (`index.html`)"
     },
     {
@@ -11113,7 +11143,7 @@
       "source_location": "L252",
       "_origin": "ast",
       "id": "readme_vue_staff_planning_html",
-      "community": 89,
+      "community": 25,
       "norm_label": "vue staff (`planning.html`)"
     },
     {
@@ -11123,7 +11153,7 @@
       "source_location": "L260",
       "_origin": "ast",
       "id": "readme_pointage_pointage_html",
-      "community": 89,
+      "community": 25,
       "norm_label": "pointage (`pointage.html`)"
     },
     {
@@ -11133,7 +11163,7 @@
       "source_location": "L271",
       "_origin": "ast",
       "id": "readme_performance_performance_html",
-      "community": 89,
+      "community": 25,
       "norm_label": "performance (`performance.html`)"
     },
     {
@@ -11143,7 +11173,7 @@
       "source_location": "L280",
       "_origin": "ast",
       "id": "readme_web_push",
-      "community": 89,
+      "community": 25,
       "norm_label": "web push"
     },
     {
@@ -11153,7 +11183,7 @@
       "source_location": "L286",
       "_origin": "ast",
       "id": "readme_pwa",
-      "community": 89,
+      "community": 25,
       "norm_label": "pwa"
     },
     {
@@ -11173,7 +11203,7 @@
       "source_location": "L315",
       "_origin": "ast",
       "id": "readme_routes_api_principales",
-      "community": 83,
+      "community": 25,
       "norm_label": "routes api principales"
     },
     {
@@ -11183,7 +11213,7 @@
       "source_location": "L317",
       "_origin": "ast",
       "id": "readme_auth",
-      "community": 83,
+      "community": 25,
       "norm_label": "auth"
     },
     {
@@ -11193,7 +11223,7 @@
       "source_location": "L327",
       "_origin": "ast",
       "id": "readme_comptes_staff",
-      "community": 83,
+      "community": 25,
       "norm_label": "comptes & staff"
     },
     {
@@ -11203,7 +11233,7 @@
       "source_location": "L337",
       "_origin": "ast",
       "id": "readme_\u00e9tablissements",
-      "community": 83,
+      "community": 25,
       "norm_label": "etablissements"
     },
     {
@@ -11213,7 +11243,7 @@
       "source_location": "L344",
       "_origin": "ast",
       "id": "readme_shifts_pointage",
-      "community": 83,
+      "community": 25,
       "norm_label": "shifts & pointage"
     },
     {
@@ -11223,7 +11253,7 @@
       "source_location": "L365",
       "_origin": "ast",
       "id": "readme_disponibilit\u00e9s",
-      "community": 83,
+      "community": 25,
       "norm_label": "disponibilites"
     },
     {
@@ -11233,7 +11263,7 @@
       "source_location": "L383",
       "_origin": "ast",
       "id": "readme_performance_ca",
-      "community": 83,
+      "community": 25,
       "norm_label": "performance / ca"
     },
     {
@@ -11243,7 +11273,7 @@
       "source_location": "L391",
       "_origin": "ast",
       "id": "readme_\u00e9changes_de_shifts_routes_d\u00e9sactiv\u00e9es_en_attente_validation_client_code_conserv\u00e9_comment\u00e9_dans_server_js",
-      "community": 83,
+      "community": 25,
       "norm_label": "echanges de shifts *(routes desactivees en attente validation client \u2014 code conserve, commente dans server.js)*"
     },
     {
@@ -11253,7 +11283,7 @@
       "source_location": "L401",
       "_origin": "ast",
       "id": "readme_web_push_notifications",
-      "community": 83,
+      "community": 25,
       "norm_label": "web push & notifications"
     },
     {
@@ -11263,7 +11293,7 @@
       "source_location": "L409",
       "_origin": "ast",
       "id": "readme_infra",
-      "community": 83,
+      "community": 25,
       "norm_label": "infra"
     },
     {
@@ -11273,7 +11303,7 @@
       "source_location": "L416",
       "_origin": "ast",
       "id": "readme_r\u00e8gles_techniques_\u00e0_ne_jamais_casser",
-      "community": 90,
+      "community": 25,
       "norm_label": "regles techniques a ne jamais casser"
     },
     {
@@ -11283,7 +11313,7 @@
       "source_location": "L418",
       "_origin": "ast",
       "id": "readme_timezone_jamais_toisostring",
-      "community": 90,
+      "community": 25,
       "norm_label": "timezone \u2014 jamais `toisostring()`"
     },
     {
@@ -11293,7 +11323,7 @@
       "source_location": "L434",
       "_origin": "ast",
       "id": "readme_script_js_monolithique_ne_pas_d\u00e9couper",
-      "community": 90,
+      "community": 25,
       "norm_label": "`script.js` \u2014 monolithique, ne pas decouper"
     },
     {
@@ -11303,7 +11333,7 @@
       "source_location": "L437",
       "_origin": "ast",
       "id": "readme_sessions_mongodb_promesses_uniquement",
-      "community": 90,
+      "community": 25,
       "norm_label": "sessions mongodb \u2014 promesses uniquement"
     },
     {
@@ -11313,7 +11343,7 @@
       "source_location": "L440",
       "_origin": "ast",
       "id": "readme_cache_service_worker_ne_pas_toucher_build_time",
-      "community": 90,
+      "community": 25,
       "norm_label": "cache service worker \u2014 ne pas toucher `%%build_time%%`"
     },
     {
@@ -11323,7 +11353,7 @@
       "source_location": "L443",
       "_origin": "ast",
       "id": "readme_helpers_purs_lib_utils_js",
-      "community": 90,
+      "community": 25,
       "norm_label": "helpers purs \u2192 `lib/utils.js`"
     },
     {
@@ -12297,10 +12327,60 @@
       "norm_label": "revue `/code-review high` du 2026-08-24 \u2014 un contournement de deadline"
     },
     {
-      "label": "Divers \u2014 outillage & process",
+      "label": "Le jeu de recette rendait la fonctionnalit\u00e9 intestable (2026-08-25)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
       "source_location": "L1599",
+      "_origin": "ast",
+      "id": "docs_backlog_le_jeu_de_recette_rendait_la_fonctionnalit\u00e9_intestable_2026_08_25",
+      "community": 95,
+      "norm_label": "le jeu de recette rendait la fonctionnalite intestable (2026-08-25)"
+    },
+    {
+      "label": "La carte semaine-type n'annon\u00e7ait pas ce qu'elle allait envoyer (2026-08-25)",
+      "file_type": "document",
+      "source_file": "docs/backlog.md",
+      "source_location": "L1628",
+      "_origin": "ast",
+      "id": "docs_backlog_la_carte_semaine_type_n_annon\u00e7ait_pas_ce_qu_elle_allait_envoyer_2026_08_25",
+      "community": 95,
+      "norm_label": "la carte semaine-type n'annoncait pas ce qu'elle allait envoyer (2026-08-25)"
+    },
+    {
+      "label": "La CI n'\u00e9tait pas en panne (2026-08-25)",
+      "file_type": "document",
+      "source_file": "docs/backlog.md",
+      "source_location": "L1646",
+      "_origin": "ast",
+      "id": "docs_backlog_la_ci_n_\u00e9tait_pas_en_panne_2026_08_25",
+      "community": 95,
+      "norm_label": "la ci n'etait pas en panne (2026-08-25)"
+    },
+    {
+      "label": "Le mod\u00e8le dit d\u00e9sormais CE QU'IL ENVOIE, et le smoke le v\u00e9rifie (2026-08-25)",
+      "file_type": "document",
+      "source_file": "docs/backlog.md",
+      "source_location": "L1659",
+      "_origin": "ast",
+      "id": "docs_backlog_le_mod\u00e8le_dit_d\u00e9sormais_ce_qu_il_envoie_et_le_smoke_le_v\u00e9rifie_2026_08_25",
+      "community": 95,
+      "norm_label": "le modele dit desormais ce qu'il envoie, et le smoke le verifie (2026-08-25)"
+    },
+    {
+      "label": "Smoke \u2014 ce qu'un test HTTP peut prouver de la semaine-type, et ce qu'il ne peut pas",
+      "file_type": "document",
+      "source_file": "docs/backlog.md",
+      "source_location": "L1682",
+      "_origin": "ast",
+      "id": "docs_backlog_smoke_ce_qu_un_test_http_peut_prouver_de_la_semaine_type_et_ce_qu_il_ne_peut_pas",
+      "community": 95,
+      "norm_label": "smoke \u2014 ce qu'un test http peut prouver de la semaine-type, et ce qu'il ne peut pas"
+    },
+    {
+      "label": "Divers \u2014 outillage & process",
+      "file_type": "document",
+      "source_file": "docs/backlog.md",
+      "source_location": "L1724",
       "_origin": "ast",
       "id": "docs_backlog_divers_outillage_process",
       "community": 60,
@@ -12310,7 +12390,7 @@
       "label": "D\u00e9j\u00e0 livr\u00e9 / non prioritaire",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L1606",
+      "source_location": "L1731",
       "_origin": "ast",
       "id": "docs_backlog_d\u00e9j\u00e0_livr\u00e9_non_prioritaire",
       "community": 62,
@@ -12320,7 +12400,7 @@
       "label": "Fait",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L1616",
+      "source_location": "L1741",
       "_origin": "ast",
       "id": "docs_backlog_fait",
       "community": 62,
@@ -12330,7 +12410,7 @@
       "label": "P2 \u2014 Audit ergonomie restant (mai 2026)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L1722",
+      "source_location": "L1847",
       "_origin": "ast",
       "id": "docs_backlog_p2_audit_ergonomie_restant_mai_2026",
       "community": 62,
@@ -12340,7 +12420,7 @@
       "label": "Reste \u00e0 faire \u2014 dette technique & refacto (incr\u00e9mental)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L1740",
+      "source_location": "L1865",
       "_origin": "ast",
       "id": "docs_backlog_reste_\u00e0_faire_dette_technique_refacto_incr\u00e9mental",
       "community": 62,
@@ -12350,7 +12430,7 @@
       "label": "Notes pour les agents",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L1756",
+      "source_location": "L1881",
       "_origin": "ast",
       "id": "docs_backlog_notes_pour_les_agents",
       "community": 62,
@@ -14123,7 +14203,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "docs_ux_design_2_audit_page_par_page",
-      "community": 81,
+      "community": 83,
       "norm_label": "2. audit page par page"
     },
     {
@@ -14133,7 +14213,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "docs_ux_design_2_1_login_html",
-      "community": 81,
+      "community": 83,
       "norm_label": "2.1 login.html"
     },
     {
@@ -14143,7 +14223,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "docs_ux_design_2_2_set_password_html",
-      "community": 81,
+      "community": 83,
       "norm_label": "2.2 set-password.html"
     },
     {
@@ -14153,7 +14233,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "docs_ux_design_2_3_index_html_patron_directeur",
-      "community": 81,
+      "community": 83,
       "norm_label": "2.3 index.html (patron / directeur)"
     },
     {
@@ -14163,7 +14243,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "docs_ux_design_2_4_planning_html_staff",
-      "community": 81,
+      "community": 83,
       "norm_label": "2.4 planning.html (staff)"
     },
     {
@@ -14173,7 +14253,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "docs_ux_design_2_5_pointage_html",
-      "community": 81,
+      "community": 83,
       "norm_label": "2.5 pointage.html"
     },
     {
@@ -14183,7 +14263,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "docs_ux_design_2_6_performance_html_patron_directeur_pilotage_\u00e9conomique",
-      "community": 81,
+      "community": 83,
       "norm_label": "2.6 performance.html (patron / directeur \u2014 pilotage economique)"
     },
     {
@@ -14193,7 +14273,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "docs_ux_design_2_7_politique_confidentialite_html",
-      "community": 81,
+      "community": 83,
       "norm_label": "2.7 politique-confidentialite.html"
     },
     {
@@ -14300,7 +14380,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 91,
+      "community": 25,
       "norm_label": "server.js (serveur express monolithique)",
       "id": "readme_server_js"
     },
@@ -14417,7 +14497,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 94,
+      "community": 59,
       "norm_label": "week_cutoff_hour = 6 (cutoff semaine en cours)",
       "id": "architecture_week_cutoff"
     },
@@ -14625,7 +14705,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 94,
+      "community": 89,
       "norm_label": "synchronisation agenda \u2014 flux ical (d-72)",
       "id": "architecture_ical_feed"
     },
@@ -14638,7 +14718,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 94,
+      "community": 89,
       "norm_label": "flag calendar_enabled (ical desactive d-83)",
       "id": "architecture_calendar_enabled_flag"
     },
@@ -14677,7 +14757,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 91,
+      "community": 25,
       "norm_label": "f-05 echange de shifts (desactive)",
       "id": "backlog_f05_shift_swaps"
     },
@@ -14690,7 +14770,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 94,
+      "community": 89,
       "norm_label": "f-09 abonnement agenda ical",
       "id": "backlog_f09_ical"
     },
@@ -14716,7 +14796,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 91,
+      "community": 25,
       "norm_label": "r-04 decoupage server.js en routers (reporte)",
       "id": "backlog_r04_split_server"
     },
@@ -14755,7 +14835,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 91,
+      "community": 25,
       "norm_label": "pieges blocs /* f-05 desactive */ (d-47)",
       "id": "backlog_f05_blocks_trap"
     },
@@ -18852,6 +18932,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public/planning.js",
+      "source_location": "L2278",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "public_planning",
+      "target": "public_planning_deadlinelabel"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
       "source_location": "L574",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -19602,6 +19692,26 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public/planning.js",
+      "source_location": "L2299",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "public_planning",
+      "target": "public_planning_templatedayline"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
+      "source_location": "L2311",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "public_planning",
+      "target": "public_planning_templatetargetlabel"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
       "source_location": "L8",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -20061,6 +20171,17 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "public_planning_renderdaysinto",
+      "target": "public_planning_fmthour"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
+      "source_location": "L2302",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "public_planning_templatedayline",
       "target": "public_planning_fmthour"
     },
     {
@@ -20697,9 +20818,9 @@
       "source_file": "public/planning.js",
       "source_location": "L2304",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_renderdispotplcard",
-      "target": "public_planning_currentdispoweeklocked",
-      "confidence_score": 1.0
+      "target": "public_planning_currentdispoweeklocked"
     },
     {
       "relation": "calls",
@@ -20733,6 +20854,17 @@
       "confidence_score": 1.0,
       "source": "public_planning_loaddispostab",
       "target": "public_planning_createrestdaycard"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
+      "source_location": "L1795",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "public_planning_loaddispostab",
+      "target": "public_planning_deadlinelabel"
     },
     {
       "relation": "calls",
@@ -20838,6 +20970,28 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "public/planning.js",
+      "source_location": "L2413",
+      "weight": 1.0,
+      "source": "public_planning_putdispotemplate",
+      "target": "public_planning_loaddispotemplate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
+      "source_location": "L2337",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "public_planning_renderdispotplcard",
+      "target": "public_planning_deadlinelabel"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
       "source_location": "L2328",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -20865,6 +21019,28 @@
       "confidence_score": 1.0,
       "source": "public_planning_savedispotemplate",
       "target": "public_planning_settplfeedback"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
+      "source_location": "L2338",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "public_planning_renderdispotplcard",
+      "target": "public_planning_templatetargetlabel"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
+      "source_location": "L2313",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "public_planning_templatetargetlabel",
+      "target": "public_planning_fmtcongedate"
     },
     {
       "relation": "calls",
@@ -33525,9 +33701,9 @@
       "source_file": "tests/dispo-template.test.js",
       "source_location": "L52",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_dispo_template_test",
-      "target": "tests_dispo_template_test_seedtemplate",
-      "confidence_score": 1.0
+      "target": "tests_dispo_template_test_seedtemplate"
     },
     {
       "relation": "contains",
@@ -37677,11 +37853,51 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/backlog.md",
-      "source_location": "L1553",
+      "source_location": "L1628",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_backlog_semaine_type_ouverte_\u00e0_tout_le_staff_2026_08_24",
+      "target": "docs_backlog_la_carte_semaine_type_n_annon\u00e7ait_pas_ce_qu_elle_allait_envoyer_2026_08_25"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/backlog.md",
+      "source_location": "L1646",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_backlog_semaine_type_ouverte_\u00e0_tout_le_staff_2026_08_24",
+      "target": "docs_backlog_la_ci_n_\u00e9tait_pas_en_panne_2026_08_25"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/backlog.md",
+      "source_location": "L1599",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_backlog_semaine_type_ouverte_\u00e0_tout_le_staff_2026_08_24",
+      "target": "docs_backlog_le_jeu_de_recette_rendait_la_fonctionnalit\u00e9_intestable_2026_08_25"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/backlog.md",
+      "source_location": "L1659",
       "weight": 1.0,
       "source": "docs_backlog_semaine_type_ouverte_\u00e0_tout_le_staff_2026_08_24",
-      "target": "docs_backlog_revue_code_review_high_du_2026_08_24_un_contournement_de_deadline",
+      "target": "docs_backlog_le_mod\u00e8le_dit_d\u00e9sormais_ce_qu_il_envoie_et_le_smoke_le_v\u00e9rifie_2026_08_25",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/backlog.md",
+      "source_location": "L1553",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_backlog_semaine_type_ouverte_\u00e0_tout_le_staff_2026_08_24",
+      "target": "docs_backlog_revue_code_review_high_du_2026_08_24_un_contournement_de_deadline"
     },
     {
       "relation": "contains",
@@ -37692,6 +37908,16 @@
       "confidence_score": 1.0,
       "source": "docs_backlog_semaine_type_ouverte_\u00e0_tout_le_staff_2026_08_24",
       "target": "docs_backlog_revue_simplify_du_2026_08_24"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/backlog.md",
+      "source_location": "L1682",
+      "weight": 1.0,
+      "source": "docs_backlog_semaine_type_ouverte_\u00e0_tout_le_staff_2026_08_24",
+      "target": "docs_backlog_smoke_ce_qu_un_test_http_peut_prouver_de_la_semaine_type_et_ce_qu_il_ne_peut_pas",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -40106,5 +40332,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "ba01dc102a87b1503b25943af87e88bf6bb17933"
+  "built_at_commit": "51c9f6bd4a3d473ecc416a54d07e7aeb261219bd"
 }
