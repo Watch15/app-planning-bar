@@ -57,7 +57,7 @@ const results = [];
 // Une vérification qui en dépend est SAUTÉE, pas comptée en échec : le code n'y est
 // pour rien, et un ✗ ferait chercher le bug au mauvais endroit — c'est exactement ce
 // qui est arrivé le 2026-08-10.
-const stale = { dispos: null, soiree: null, bruno: null, semaineType: null };
+const stale = { dispos: null, soiree: null, bruno: null, semaineType: null, aliceRouverte: null };
 
 async function check(section, name, fn, needs) {
     const reason = needs && stale[needs];
@@ -463,17 +463,58 @@ async function main() {
         // Paire discriminante : même deadline, deux staff. Bruno la subit, Alice en est
         // exemptée (rouverte nominativement par le seed). Sans le second, un marqueur posé
         // systématiquement — donc une fonctionnalité morte — passerait au vert.
+        // La contre-épreuve repose ENTIÈREMENT sur une fixture : Alice doit être inscrite
+        // dans `force_open_staff`, ce que le seed ne fait que depuis le 2026-08-25. Sur une base
+        // semée avant, elle n'y est pas — et la vérification tombait en annonçant « marqueur
+        // posé alors que la deadline ne s'applique pas à Alice », c'est-à-dire en accusant le
+        // code d'un défaut de DONNÉES. Exactement le scénario du 2026-08-10 que `stale` existe
+        // pour empêcher. On lit donc la fixture avant de s'appuyer dessus.
+        {
+            const reglages = (await req('pat', '/api/dispo-settings')).data || {};
+            const alice    = ((await req('pat', '/api/staff')).data || []).find(s => /Alice/i.test(s.name || ''));
+            const liste    = reglages.force_open_staff || [];
+            const inscrite = liste.some(e =>
+                (typeof e === 'string' ? e : (e && e.staff_id)) === String(alice && alice._id));
+            if (!inscrite) {
+                stale.aliceRouverte = 'Alice n\'est pas rouverte nominativement — jeu de recette '
+                    + 'antérieur au 2026-08-25 (remède : `npm run dev:seed`)';
+                console.log('⚠️  ' + stale.aliceRouverte);
+                // Les deux valeurs côte à côte, parce qu'elles distinguent trois causes qui
+                // se ressemblent : liste VIDE (fixture absente), liste avec une AUTRE forme
+                // ou un AUTRE id (appariement staff/compte cassé), ou `[null]` (le seed a
+                // inséré un `ctx.staff.Alice` non résolu). Sans elles on relance à l'aveugle.
+                console.log('    force_open_staff = ' + JSON.stringify(liste));
+                console.log('    staff._id d\'Alice = ' + String(alice && alice._id) + '\n');
+            }
+        }
+
         await setDeadline(DEADLINE_FRANCHIE);
         await check('E-22s', 'enregistré après la deadline : la semaine figée n\'est pas rattrapée', async () => {
             await putTpl('bru', MODELE);
             return eq((await tpl('bru')).data.last_materialized_week, FROM, 'marqueur');
         });
         await check('E-22s', 'le staff rouvert nominativement n\'est PAS neutralisé', async () => {
+            // ⚠️ Le marqueur est PERSISTANT : le lire après le PUT ne dit pas QUI l'a posé.
+            // L'aller-retour plus haut a déjà fait un PUT d'Alice, sous la deadline du jeu
+            // (toujours dépassée) — s'il l'avait posé, cette vérification échouerait sans
+            // que le PUT d'ici y soit pour rien. On sépare donc les deux cas.
+            const avant = (await tpl('ali')).data.last_materialized_week;
+            if (avant === FROM) throw new Error('marqueur DÉJÀ posé avant ce PUT — '
+                + 'il vient de l\'aller-retour plus haut : Alice n\'était pas exemptée dès le départ');
             await putTpl('ali', MODELE);
             const m = (await tpl('ali')).data.last_materialized_week;
-            if (m === FROM) throw new Error('marqueur posé alors que la deadline ne s\'applique pas à Alice');
+            if (m === FROM) {
+                // Deux causes possibles se ressemblent à l'écran : soit le PUT pose le
+                // marqueur à tort (défaut du code), soit l'appariement session ↔
+                // `force_open_staff` ne prend pas (l'exemption n'existe pas côté serveur).
+                // On demande donc au serveur ce qu'il en pense, sinon le message envoie
+                // chercher au mauvais endroit — même piège que les `stale`.
+                const vu = (await req('ali', '/api/dispo-settings')).data || {};
+                throw new Error('marqueur posé — le serveur annonce deadlineWaived='
+                    + vu.deadlineWaived + ' (attendu true)');
+            }
             return 'marqueur ' + (m || 'absent');
-        });
+        }, 'aliceRouverte');
         await setDeadline(DEADLINE_INITIALE);
 
         // Remise en état, et elle n'est pas cosmétique : le jeu ne sème aucun modèle pour

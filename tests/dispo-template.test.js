@@ -317,3 +317,19 @@ test('modèle : le GET expose `last_materialized_week` — l\'écran doit savoir
     const apres = await (await req('/api/me/dispo-template', STAFF)).json();
     assert.equal(apres.last_materialized_week, NEXT_MONDAY);
 });
+
+test('modèle : la réouverture en forme CHAÎNE exempte aussi (jeu de recette)', async () => {
+    // `force_open_staff` accepte deux formes : `{ staff_id, week_start }` (courante) et la
+    // CHAÎNE nue (legacy), que `seed-dev.js` utilise volontairement — sans semaine, elle ne
+    // périme pas au lundi suivant. Le test au-dessus ne couvrait que la forme objet : si la
+    // chaîne n'exemptait pas, la seule fixture staff de la recette serait neutralisée à
+    // chaque enregistrement, et la semaine-type y resterait intestable.
+    const db = seed({ settings: [{ key: 'dispo', open: true, custom_deadline: DEADLINE_FRANCHIE,
+        force_open_staff: [STAFF_ID] }] });
+    app.locals.setTestDb(db);
+    await putTemplate();
+    assert.equal(tplOf(db).last_materialized_week, undefined, 'aucun marqueur : la chaîne exempte');
+
+    await runCron();
+    assert.deepEqual(disposOf(db).map(d => d.date).sort(), [dayOf(0), dayOf(2)]);
+});

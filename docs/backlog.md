@@ -1721,6 +1721,35 @@ le confort de la recette. Elle reste couverte en unitaire via `app.locals.runDis
 (harnais CD-05, inerte hors test), et en bout de chaîne par les trois vérifications `stale`
 ci-dessus.
 
+#### Premier `✗` du nouveau bloc smoke — et il accusait le code pour une fixture absente
+
+Retour du user au premier lancement :
+
+> ✗ le staff rouvert nominativement n'est PAS neutralisé · marqueur posé alors que la
+> deadline ne s'applique pas à Alice
+
+**Le code n'y était pour rien.** La contre-épreuve repose entièrement sur une fixture —
+Alice inscrite dans `force_open_staff` — que le seed ne pose que depuis le 2026-08-25.
+Sur une base semée avant, elle n'y est pas, la deadline s'applique à Alice comme à
+n'importe qui, le marqueur est posé, et la vérification tombe.
+
+Vérifié plutôt que supposé : un 418ᵉ test unitaire couvre la **forme chaîne** de
+`force_open_staff` (celle du seed, choisie parce qu'elle ne porte pas de semaine et ne
+périme donc pas au lundi suivant). Le test au-dessus ne couvrait que la forme objet — si
+la chaîne n'exemptait pas, la seule fixture staff de la recette aurait été neutralisée à
+chaque enregistrement. Elle exempte : le code est correct.
+
+⚠️ **La leçon est sur le smoke, pas sur la fonctionnalité.** Ce fichier a un dispositif
+entier (`stale` / `needs`) construit après le 2026-08-10 pour empêcher exactement ça : une
+base désalignée qui produit des `✗` et envoie chercher un bug là où il n'y en a pas. J'ai
+écrit une vérification qui dépend d'une fixture **neuve** sans la déclarer. La fixture est
+maintenant lue avant d'être utilisée, et son absence donne un `⊘` qui nomme le remède
+(`npm run dev:seed`) au lieu d'un `✗` qui accuse le produit.
+
+Règle à retenir pour la suite : **toute vérification de smoke qui s'appuie sur une fixture
+ajoutée en même temps qu'elle doit naître avec son entrée `stale`.** Une fixture neuve est
+par définition absente de toutes les bases déjà semées.
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique. 🔄 **Rafraîchi le 2026-08-10** (1180 nœuds, 1897 arêtes, 68 communautés) — il datait de `c72affe`, 7 commits de retard : la consigne « après chaque session » n'a **pas** été tenue sur les sessions des 06→08/08. Ancien graphe dans `graphify-out/2026-08-10/`.

@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "docs/backlog.md": {
-    "mtime": 1787680158.016581,
-    "ast_hash": "c88b3dc014a719f93b00102342323501",
+    "mtime": 1787683633.2138405,
+    "ast_hash": "4979cfe17b09a4098f97b2b9a0153046",
     "semantic_hash": ""
   },
   "docs/prd.md": {
@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "scripts/smoke.js": {
-    "mtime": 1787680049.0933037,
-    "ast_hash": "73cb61bca17c7f5e26e21f7e70b86b54",
+    "mtime": 1787683866.3583932,
+    "ast_hash": "cb25be4aed46feb7c3aa1988d41dee00",
     "semantic_hash": ""
   },
   "tests/estab-access.test.js": {
@@ -340,8 +340,8 @@
     "semantic_hash": ""
   },
   "tests/dispo-template.test.js": {
-    "mtime": 1787680086.2119367,
-    "ast_hash": "85e602314919ac613bffa0fdbc1fa8fa",
+    "mtime": 1787683540.3548772,
+    "ast_hash": "24e04c7e8e8a3e49ef37bb6f3a962973",
     "semantic_hash": ""
   },
   "docs/dossier-projet.md": {
