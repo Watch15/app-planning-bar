@@ -668,7 +668,7 @@ function renderUpcomingWeek(wrap, monday, weekShifts, weekJokers, colleagues, op
     sep.className = 'week-sep';
     sep.innerHTML =
         '<span class="week-sep-label">' + weekRangeLabel(monday) + '</span>' +
-        (isNew ? '<span class="week-sep-new">✨ Nouveau</span>' : '');
+        (isNew ? '<span class="week-sep-new">Nouveau</span>' : '');
 
     const stats = document.createElement('div');
     stats.className = 'week-stats';
