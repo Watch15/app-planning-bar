@@ -1795,7 +1795,21 @@ async function loadDisposTab() {
     const deadline = new Date(dispoSettings.deadline);
     const fmtDate  = deadline.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 
-    if (!dispoSettings.canSubmit) {
+    // Saisie fermée : la semaine-type n'a plus rien à proposer non plus — le serveur ne
+    // la matérialise pas pour un établissement fermé ou un staff sans droit d'envoi
+    // (`templateEligible`). Une carte visible promettrait un envoi qui n'aura pas lieu.
+    const tplCard = document.getElementById('dispo-tpl-card');
+    if (tplCard) tplCard.style.display = 'none';
+
+    // ⚠️ Fermée PAR LE PATRON, et non par la deadline. Ne pas remettre `canSubmit` ici :
+    // il vaut `staffCanSubmit && open && (collectionWeekOpen || horizon > 1)`, donc avec
+    // l'horizon par défaut (1 semaine) il passe à faux dès la deadline franchie. On
+    // masquait alors la semaine-type pendant tout le week-end — exactement la fenêtre où
+    // l'on se dit « la prochaine fois, que ça parte tout seul ». La semaine figée est
+    // traitée plus bas par `currentDispoWeekLocked()`, qui dit lequel des deux motifs joue.
+    const saisieFermee = dispoSettings.staffCanSubmit === false || dispoSettings.open === false;
+
+    if (saisieFermee) {
         statusEl.textContent   = dispoSettings.deadlinePassed
             ? 'Deadline dépassée le ' + fmtDate + '.'
             : 'Saisie fermée par le responsable.';
@@ -1814,9 +1828,14 @@ async function loadDisposTab() {
     const multiWeek = dispoMondays.length > 1;
     statusEl.textContent = late  ? 'Deadline dépassée le ' + fmtDate + ' — saisie encore ouverte pour toi.'
         : dispoSettings.force_open ? '🔓 Saisie ouverte en urgence par le responsable'
+        // Depuis que la deadline ne provoque plus le retour anticipé ci-dessus, ce cas
+        // arrive jusqu'ici : sans cette branche l'en-tête annonçait « Deadline : … » au
+        // futur, juste au-dessus de l'encadré rouge « cette semaine est figée ».
+        : dispoSettings.deadlinePassed ? 'Deadline dépassée le ' + fmtDate + '.'
         : multiWeek ? 'Deadline : ' + fmtDate + ' (pour la semaine prochaine seulement)'
         : 'Deadline : ' + fmtDate;
-    statusEl.style.color = (late || dispoSettings.force_open) ? '#27ae60' : '#aaa';
+    statusEl.style.color = (late || dispoSettings.force_open) ? '#27ae60'
+        : dispoSettings.deadlinePassed ? '#e74c3c' : '#aaa';
 
     // Semaine affichée, dans l'horizon autorisé
     const nextMonday = currentDispoMonday();
@@ -1824,6 +1843,9 @@ async function loadDisposTab() {
     // Charger les dispos existantes
     const from = toDateStr(nextMonday);
     const to   = toDateStr(addDays(nextMonday, 6));
+    // Lancée ICI mais attendue plus bas : elle ne dépend de rien de ce qui suit, et
+    // l'enchaîner coûtait un aller-retour de plus à la première ouverture de l'onglet.
+    const tplLoaded = loadDispoTemplate();
     const dRes = await fetch('/api/dispos/mine?from=' + from + '&to=' + to, { credentials: 'include' });
     const existingDispos = dRes.ok ? await dRes.json() : [];
 
@@ -1855,24 +1877,48 @@ async function loadDisposTab() {
         }
     } catch { /* silencieux */ }
 
-    // Pré-remplir depuis la semaine précédente si aucune dispo soumise
+    await tplLoaded;
+
+    // Pré-remplissage d'une semaine encore vide, par ordre de PRÉCISION de l'intention :
+    // la semaine-type d'abord — c'est un choix explicite, et surtout c'est elle qui
+    // partira vraiment à la deadline — la semaine précédente ensuite, qui n'est qu'une
+    // habitude déduite. Montrer la seconde alors que la première est armée afficherait
+    // autre chose que ce qui sera envoyé.
     if (!alreadySubmitted && existingDispos.length === 0) {
-        const pRes = await fetch('/api/dispos/previous?week_start=' + from, { credentials: 'include' });
-        if (pRes.ok) {
-            const prevDispos = await pRes.json();
-            prevDispos.forEach(p => {
-                const [py, pm, pd] = p.date.split('-').map(Number);
-                const curDate    = addDays(new Date(py, pm - 1, pd), 7);
-                const curDateStr = toDateStr(curDate);
-                // Ne pas reposer une dispo de la semaine passée sur un jour devenu
-                // repos OU congé : sinon submitDispos l'enverrait et le serveur
-                // rejetterait tout le lot (409 « jour de congé »).
-                if (!restDays.includes(curDate.getDay()) && !congeDates.has(curDateStr)) {
-                    dispoSelections[curDateStr] = { type: p.type, start_time: p.start_time, end_time: p.end_time, note: p.note || '' };
-                }
-            });
+        if (dispoTemplateDays().length) {
+            // MÊME fonction que le serveur (`materializeTemplateWeek`), donc mêmes
+            // exclusions et même convention lundi=0 : ce qui s'affiche ici est exactement
+            // ce qui partira à la deadline. La règle était recopiée à la main dans les
+            // deux fronts, et la copie du patron avait déjà divergé — cf. le commentaire
+            // en tête de `public/lib/dispo-template.js`.
+            DispoTemplate.buildTemplateDispos({ days: dispoTemplate }, toDateStr(nextMonday), congeDates, restDays)
+                .forEach(d => {
+                    dispoSelections[d.date] = { type: d.type, start_time: d.start_time, end_time: d.end_time, note: '' };
+                });
+        } else {
+            const pRes = await fetch('/api/dispos/previous?week_start=' + from, { credentials: 'include' });
+            if (pRes.ok) {
+                const prevDispos = await pRes.json();
+                prevDispos.forEach(p => {
+                    const [py, pm, pd] = p.date.split('-').map(Number);
+                    const curDate    = addDays(new Date(py, pm - 1, pd), 7);
+                    const curDateStr = toDateStr(curDate);
+                    // Ne pas reposer une dispo de la semaine passée sur un jour devenu
+                    // repos OU congé : sinon submitDispos l'enverrait et le serveur
+                    // rejetterait tout le lot (409 « jour de congé »).
+                    if (!restDays.includes(curDate.getDay()) && !congeDates.has(curDateStr)) {
+                        dispoSelections[curDateStr] = { type: p.type, start_time: p.start_time, end_time: p.end_time, note: p.note || '' };
+                    }
+                });
+            }
         }
     }
+
+    // Rendue AVANT le retour anticipé « semaine figée » : avec l'horizon par défaut (1
+    // semaine), la seule semaine affichée est justement verrouillée entre la deadline et
+    // le lundi suivant. C'est le moment où l'on se dit « la prochaine fois, que ça parte
+    // tout seul » — la carte doit y être.
+    renderDispoTplCard();
 
     // Générer les cartes (jours de repos en lecture seule)
     formEl.innerHTML = '';
@@ -2116,6 +2162,34 @@ function createCongeDayCard(d) {
     return card;
 }
 
+// « 16h30 », « 16:30 », « 16 » → 16.5. UNE seule règle de lecture, partagée par l'envoi
+// des dispos et par l'enregistrement de la semaine-type : deux parseurs finiraient par
+// diverger, et un modèle qui n'interprète pas les horaires comme l'envoi enverrait autre
+// chose que ce que le staff avait sous les yeux.
+function parseDispoTime(v) {
+    if (!v) return null;
+    v = v.trim().toLowerCase();
+    const sep = v.includes('h') ? 'h' : (v.includes(':') ? ':' : null);
+    if (!sep) return parseInt(v, 10) || 0;
+    const [hs, ms] = v.split(sep);
+    return (parseInt(hs, 10) || 0) + (parseInt(ms, 10) || 0) / 60;
+}
+
+// Horaires retenus pour un jour. Pour `custom`, ils ne vivent QUE dans les champs du DOM
+// tant que rien n'est envoyé (cf. `createDispoCard`, qui pose start/end à null au clic) —
+// d'où la lecture des inputs. Sans carte à l'écran (semaine figée par la deadline), les
+// valeurs déjà enregistrées font foi. Retourne null si la saisie est illisible.
+function readDispoTimes(date, sel) {
+    const startEl = document.getElementById('start-' + date);
+    const endEl   = document.getElementById('end-'   + date);
+    if (sel.type !== 'custom' || !startEl || !endEl) return { start: sel.start_time, end: sel.end_time };
+    const start = parseDispoTime(startEl.value);
+    let   end   = parseDispoTime(endEl.value);
+    if (start == null || end == null) return null;
+    if (end <= start) end += 24;   // fin après minuit (16h → 02h = 26)
+    return { start, end };
+}
+
 async function submitDispos() {
     const btn    = document.getElementById('btn-submit-dispos');
     btn.disabled = true;
@@ -2132,43 +2206,16 @@ async function submitDispos() {
         const sel  = dispoSelections[date];
         if (!sel || sel.type === null) continue; // jour non renseigné → ignoré (off = indispo, on l'enregistre)
 
-        // Horaires précis : lire les champs
-        let start = sel.start_time;
-        let end   = sel.end_time;
-        if (sel.type === 'custom') {
-            const parseDispoTime = v => {
-                if (!v) return null;
-                v = v.trim().toLowerCase();
-                let h = 0, m = 0;
-                if (v.includes('h')) {
-                    const parts = v.split('h');
-                    h = parseInt(parts[0], 10) || 0;
-                    m = parseInt(parts[1], 10) || 0;
-                } else if (v.includes(':')) {
-                    const parts = v.split(':');
-                    h = parseInt(parts[0], 10) || 0;
-                    m = parseInt(parts[1], 10) || 0;
-                } else {
-                    h = parseInt(v, 10) || 0;
-                }
-                return h + m / 60;
-            };
-            const startVal = document.getElementById('start-' + date)?.value;
-            const endVal   = document.getElementById('end-'   + date)?.value;
-            start = parseDispoTime(startVal);
-            end   = parseDispoTime(endVal);
-            if (start == null || end == null) {
-                showMsg('Horaires invalides pour le ' + date, 'error');
-                btn.disabled    = false;
-                btn.textContent = 'Envoyer mes dispos';
-                return;
-            }
-            // Fin après minuit (ex: début 16h, fin 02h → 26h)
-            if (end <= start) end += 24;
+        const times = readDispoTimes(date, sel);
+        if (!times) {
+            showMsg('Horaires invalides pour le ' + date, 'error');
+            btn.disabled    = false;
+            btn.textContent = 'Envoyer mes dispos';
+            return;
         }
 
         const note = document.getElementById('note-' + date)?.value || '';
-        dispos.push({ date, type: sel.type, start_time: start, end_time: end, note });
+        dispos.push({ date, type: sel.type, start_time: times.start, end_time: times.end, note });
     }
 
     if (dispos.length === 0) {
@@ -2196,6 +2243,125 @@ async function submitDispos() {
         showMsg(e.message, 'error');
         btn.disabled    = false;
         btn.textContent = 'Envoyer mes dispos';
+    }
+}
+
+// ── Semaine-type ──────────────────────────────────────────────────────────────
+//
+// « Ce qui part à ma place si je n'ai rien envoyé quand la deadline tombe. » Même
+// mécanisme que celui des directeurs depuis le 2026-08-24, mêmes règles côté serveur :
+// matérialisation au SEUL déclenchement de la deadline, en CRÉATION SEULE (une saisie
+// réelle de la semaine gagne toujours), jours de congé et de repos sautés.
+//
+// Pas de second éditeur 7 jours ici : le staff a déjà sa semaine sous les yeux, « fais-en
+// mon modèle » est un bouton. Une grille supplémentaire aurait dupliqué toute la
+// mécanique de saisie pour la même information.
+let dispoTemplate = null;   // { 0..6: { type, start_time, end_time } } — 0 = lundi
+
+// Les jours du modèle, triés, en index lundi = 0.
+const dispoTemplateDays = () =>
+    Object.keys(dispoTemplate || {}).filter(k => dispoTemplate[k]).map(Number).sort((a, b) => a - b);
+
+// Chargé une seule fois : `loadDisposTab` est rappelé à CHAQUE flèche de navigation
+// entre les semaines de l'horizon, et le modèle ne change que d'ici (`putDispoTemplate`
+// tient la copie locale à jour).
+async function loadDispoTemplate() {
+    if (dispoTemplate !== null) return;
+    try {
+        const res = await fetch('/api/me/dispo-template', { credentials: 'include' });
+        dispoTemplate = res.ok ? ((await res.json()).days || {}) : {};
+    } catch { dispoTemplate = {}; }
+}
+
+function setTplFeedback(msg, type) {
+    const fb = document.getElementById('dispo-tpl-feedback');
+    if (!fb) return;
+    // Effacement : sortir tout de suite. Sans ça, chaque rendu de carte — donc chaque
+    // flèche de navigation entre semaines — armait un timer de 3 s pour ne rien faire.
+    if (!msg) { fb.textContent = ''; return; }
+    fb.style.color = type === 'error' ? '#c0392b' : '#1a7a4a';
+    fb.textContent = msg;
+    if (type !== 'error') setTimeout(() => { if (fb.textContent === msg) fb.textContent = ''; }, 3000);
+}
+
+// Pas de paramètre « semaine » : la carte agit toujours sur la semaine AFFICHÉE, et la
+// lire au moment du clic (comme `submitDispos`) évite qu'un lundi capturé au rendu ne
+// reste collé au bouton après une navigation.
+function renderDispoTplCard() {
+    const card = document.getElementById('dispo-tpl-card');
+    if (!card) return;
+    card.style.display = '';
+    const statusEl = document.getElementById('dispo-tpl-status');
+    const saveBtn  = document.getElementById('dispo-tpl-save');
+    const clearBtn = document.getElementById('dispo-tpl-clear');
+    setTplFeedback('');
+
+    // Semaine figée : aucune carte de jour n'est rendue au-dessus. Proposer « enregistrer
+    // cette semaine » y ferait persister, sans que rien ne soit visible, le
+    // pré-remplissage automatique venu de la semaine précédente — un modèle que le staff
+    // n'aurait jamais vu ni choisi. La carte reste affichée (elle informe, et le retrait
+    // reste possible), l'enregistrement attend la semaine suivante.
+    const figee = currentDispoWeekLocked();
+    const days  = dispoTemplateDays();
+    if (days.length) {
+        // DAY_NAMES est indexé sur getDay() (0 = dimanche) ; le modèle sur lundi = 0.
+        const noms = days.map(i => DAY_NAMES[(i + 1) % 7]).join(', ');
+        statusEl.innerHTML = 'Modèle actif : <b>' + noms + '</b>. Si tu n\'envoies rien avant la ' +
+            'deadline, ces jours partent automatiquement à ta place sur la semaine en cours de collecte.';
+        clearBtn.style.display = '';
+        saveBtn.textContent    = 'Remplacer par cette semaine';
+    } else {
+        statusEl.textContent = figee
+            ? 'Aucun modèle. Dès que la prochaine semaine s\'ouvrira, tu pourras renseigner tes '
+              + 'dispos et les enregistrer comme modèle : elles partiront alors toutes seules à la deadline.'
+            : 'Aucun modèle. Renseigne ta semaine ci-dessus puis enregistre-la : '
+              + 'les jours du modèle seront envoyés à la deadline si tu as oublié tes dispos.';
+        clearBtn.style.display = 'none';
+        saveBtn.textContent    = 'Enregistrer cette semaine comme modèle';
+    }
+    saveBtn.style.display = figee ? 'none' : '';
+    saveBtn.onclick  = () => saveDispoTemplate();
+    clearBtn.onclick = () => putDispoTemplate({}, 'Modèle retiré — plus rien ne partira automatiquement.');
+}
+
+function saveDispoTemplate() {
+    const weekMonday = currentDispoMonday();
+    const days = {};
+    for (let i = 0; i < 7; i++) {
+        const date = toDateStr(addDays(weekMonday, i));
+        const sel  = dispoSelections[date];
+        // `off` (indisponible) n'a pas d'horaires : rien à envoyer ce jour-là, ce qui est
+        // exactement l'effet d'un jour ABSENT du modèle. Le serveur l'ignore aussi.
+        if (!sel || !sel.type || sel.type === 'off') continue;
+        const times = readDispoTimes(date, sel);
+        if (!times || times.start == null || times.end == null)
+            return setTplFeedback('Horaires incomplets sur un jour « Personnalisé » — complète-les d\'abord.', 'error');
+        days[i] = { type: sel.type, start_time: times.start, end_time: times.end };
+    }
+    if (!Object.keys(days).length)
+        return setTplFeedback('Renseigne au moins un jour avant d\'en faire ton modèle.', 'error');
+    putDispoTemplate(days, 'Modèle enregistré.');
+}
+
+async function putDispoTemplate(days, okMsg) {
+    const saveBtn  = document.getElementById('dispo-tpl-save');
+    const clearBtn = document.getElementById('dispo-tpl-clear');
+    saveBtn.disabled = true; clearBtn.disabled = true;
+    try {
+        const res  = await fetch('/api/me/dispo-template', {
+            method: 'PUT', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ days }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        dispoTemplate = days;
+        renderDispoTplCard();
+        setTplFeedback('✅ ' + okMsg);
+    } catch (e) {
+        setTplFeedback(e.message || 'Erreur', 'error');
+    } finally {
+        saveBtn.disabled = false; clearBtn.disabled = false;
     }
 }
 

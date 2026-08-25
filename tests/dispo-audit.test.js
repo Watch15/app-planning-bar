@@ -336,7 +336,7 @@ test('semaine-type : les dispos pré-remplies sont consignées au nom du MODÈLE
         method: 'PUT',
         body: JSON.stringify({ days: { 0: { type: 'soir', start_time: 16, end_time: 26 } } }),
     });
-    await app.locals.runManagerTemplateCron();
+    await app.locals.runDispoTemplateCron();
 
     assert.equal(disposOf(db).length, 1, 'la semaine-type a bien matérialisé');
     const ev = eventsOf(db).filter(e => e.action === 'template');

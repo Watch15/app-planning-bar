@@ -759,7 +759,7 @@ async function loadManagerTemplate() {
     if (fb) fb.textContent = '';
     wrap.innerHTML = '<div style="text-align:center;color:#ccc;font-size:13px;padding:8px 0">Chargement…</div>';
     try {
-        const res = await fetch('/api/me/manager-dispo-template', { credentials: 'include' });
+        const res = await fetch('/api/me/dispo-template', { credentials: 'include' });
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Erreur');
         const { days } = await res.json();
         Object.entries(days || {}).forEach(([i, c]) => { _mgrTplSel[i] = { type: c.type || 'custom', start_time: c.start_time, end_time: c.end_time }; });
@@ -795,7 +795,7 @@ async function saveManagerTemplate() {
     }
     btn.disabled = true; const prev = btn.textContent; btn.textContent = 'Envoi…';
     try {
-        const res = await fetch('/api/me/manager-dispo-template', {
+        const res = await fetch('/api/me/dispo-template', {
             method: 'PUT', credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ days }),
@@ -839,16 +839,19 @@ async function loadManagerDispos() {
         // Depuis le 2026-08-10 le modèle n'est matérialisé qu'au déclenchement de la
         // deadline — sans ce pré-remplissage d'affichage, la directrice ouvrirait une
         // semaine vide toute la semaine et croirait n'avoir rien d'enregistré.
-        // Même règle que le serveur (`buildTemplateDispos`) : CRÉATION SEULE, une saisie
-        // réelle n'est jamais recouverte. `_mgrTplSel` est keyé lundi=0 … dimanche=6.
-        for (let i = 0; i < 7; i++) {
-            const date = toDateStr(addDays(nextMonday, i));
-            if (_mgrDispoSel[date]) continue;
-            const cell = _mgrTplSel[i];
-            if (!cell || cell.start_time == null || cell.end_time == null) continue;
-            _mgrDispoSel[date]    = { type: cell.type || 'custom', start_time: cell.start_time, end_time: cell.end_time };
-            _mgrDispoStatus[date] = 'planned';
-        }
+        // MÊME fonction que le serveur (`materializeTemplateWeek`) : création seule, une
+        // saisie réelle n'est jamais recouverte, et `_mgrTplSel` est keyé lundi=0. La
+        // règle était recopiée à la main ici, elle ne peut plus dériver.
+        // ⚠️ Écart CONNU et non corrigé : on ne passe pas les jours d'absence déclarée
+        // (`manager_time_off`) ni les jours de repos, que la matérialisation, elle, saute.
+        // Un jour d'absence peut donc s'afficher « 🕓 prévu » sans jamais partir. Les
+        // charger demanderait un appel de plus ici ; c'est au backlog, pas oublié.
+        DispoTemplate.buildTemplateDispos({ days: _mgrTplSel }, _mgrDispoWeekStart,
+            new Set(Object.keys(_mgrDispoSel)))
+            .forEach(d => {
+                _mgrDispoSel[d.date]    = { type: d.type, start_time: d.start_time, end_time: d.end_time };
+                _mgrDispoStatus[d.date] = 'planned';
+            });
         renderManagerDisposDays();
     } catch (e) {
         wrap.innerHTML = '<div style="text-align:center;color:#e74c3c;font-size:13px;padding:12px 0">' + escapeHtml(e.message || 'Erreur de chargement') + '</div>';

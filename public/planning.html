@@ -728,6 +728,19 @@
             <div class="greeting-sub" id="dispos-status"></div>
         </div>
         <div id="dispos-form" style="padding:0 20px 24px;display:flex;flex-direction:column;gap:10px"></div>
+
+        <!-- Semaine-type : « ce qui part à ma place si je n'ai rien envoyé à la deadline ».
+             Hors de #dispos-form, qui est vidé à chaque rendu de semaine. -->
+        <div id="dispo-tpl-card" class="week-note-block" style="display:none;margin:0 20px 24px">
+            <div class="week-note-label">🔁 Ma semaine type</div>
+            <div id="dispo-tpl-status" style="font-size:13px;color:var(--text-primary);line-height:1.5"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+                <button type="button" id="dispo-tpl-save" class="week-note-save">Enregistrer cette semaine comme modèle</button>
+                <button type="button" id="dispo-tpl-clear" class="week-note-save" style="display:none;background:transparent;color:var(--text-muted);border:1.5px solid var(--light-border)">Retirer</button>
+            </div>
+            <div id="dispo-tpl-feedback" style="font-size:12px;margin-top:8px;min-height:16px"></div>
+        </div>
+
         <div style="height:calc(96px + env(safe-area-inset-bottom,0px))"></div>
     </div>
 
@@ -797,6 +810,7 @@
 <script src="/lib/auth-guard.js"></script>
 <script src="/lib/shift-hours.js"></script>
 <script src="/lib/week.js"></script>
+<script src="/lib/dispo-template.js"></script>
 <script src="/planning.js"></script>
 <script src="/sw-register.js"></script>
 </body>

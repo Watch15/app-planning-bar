@@ -914,10 +914,12 @@ function scheduleDailyAt10() {
     // `shouldMaterializeTemplate` sort immédiatement tant que la deadline n'est pas
     // franchie, et le marqueur `last_materialized_week` l'empêche de repasser ensuite.
     // Coût : une lecture `settings` + une lecture `manager_dispo_templates` par quart
-    // d'heure, sur une collection qui contient un document par directeur.
-    materializeAllManagerTemplates();
-    setInterval(materializeAllManagerTemplates, 15 * 60 * 1000);
-    console.log('⏰ Semaine-type directeur : envoi au déclenchement de la deadline (vérif. /15 min)');
+    // d'heure, sur une collection qui contient un document par personne AYANT enregistré
+    // un modèle — pas un par staff. Le profil de chacun n'est lu que le jour où son
+    // modèle doit effectivement partir (cf. `materializeAllDispoTemplates`).
+    materializeAllDispoTemplates();
+    setInterval(materializeAllDispoTemplates, 15 * 60 * 1000);
+    console.log('⏰ Semaine-type : envoi au déclenchement de la deadline (vérif. /15 min)');
 }
 
 // ── Debounce notifications shift (évite le spam lors du drag/resize) ─────────
@@ -3667,20 +3669,12 @@ app.post('/api/dispos', checkDB, requireAuth, async (req, res) => {
         let skippedConges = [];
         const dates = dispos1.map(d => d.date).filter(Boolean).sort();
         if (dates.length) {
-            // Un directeur déclare ses absences dans `manager_time_off` (E-19, keyé
-            // user_id) et non dans `time_off` : sans cette jointure il pourrait poser
-            // une dispo un jour où il s'est déclaré absent. Vide pour un staff ordinaire.
-            // R-13 : la session porte déjà l'`_id` → une seule requête, pas deux. NE PAS
-            // remplacer par un test sur le rôle en session : celui-ci est figé au login,
-            // un compte promu directeur perdrait la jointure jusqu'à sa reconnexion.
-            const [conges, mgrOffs] = await Promise.all([
-                db.collection('time_off')
-                    .find({ staff_id: staffId, status: { $ne: 'rejected' },
-                            start_date: { $lte: dates[dates.length - 1] }, end_date: { $gte: dates[0] } })
-                    .toArray(),
-                managerOffPeriods(staffId, dates[0], dates[dates.length - 1], req.session.user._id),
-            ]);
-            const split   = splitDisposByConges(dispos1, conges.concat(mgrOffs));
+            // Congés + absences déclarées, en une porte (cf. `disposOffPeriods`).
+            // R-13 : la session porte déjà l'`_id` → on le passe, une requête de moins.
+            // NE PAS remplacer par un test sur le rôle en session : celui-ci est figé au
+            // login, un compte promu directeur perdrait la jointure jusqu'à sa reconnexion.
+            const offs    = await disposOffPeriods(staffId, dates[0], dates[dates.length - 1], req.session.user._id);
+            const split   = splitDisposByConges(dispos1, offs);
             dispos2       = split.kept;
             skippedConges = split.skippedDates;
             // Purger d'éventuelles dispos déjà posées sur ces jours de congé.
@@ -4540,7 +4534,11 @@ app.delete('/api/me/manager-off/:id', checkDB, requireDirecteur, async (req, res
 // (`/api/dispos/pending` → `PATCH /api/dispos/:id/confirm`, qui choisit l'établissement
 // et crée le shift). Il poste sur `POST /api/dispos` comme tout le monde — la seule
 // spécificité restante est la SAISIE, qui vit sur index.html (il n'a pas accès à
-// planning.html), et la semaine-type ci-dessous.
+// planning.html).
+//
+// La SEMAINE-TYPE, elle, n'est plus une spécificité directeur depuis le 2026-08-24 :
+// elle vit toujours dans cette section (c'est là qu'elle est née) mais s'applique à
+// tout profil staff. Cf. le bloc « Semaine-type récurrente » plus bas.
 //
 // VOLONTAIRE (ne pas « corriger ») :
 //  • Une dispo n'est PAS un créneau planifié. Une version antérieure créait directement
@@ -4551,24 +4549,16 @@ app.delete('/api/me/manager-off/:id', checkDB, requireDirecteur, async (req, res
 //    inchangé. Elles sont simplement JOINTES au filtre congés de `POST /api/dispos`
 //    et à la matérialisation ci-dessous, pour ne pas poser de dispo un jour d'absence.
 
-// staff_id du directeur connecté. Un directeur d'avant la migration Modèle A peut ne
-// pas encore l'avoir en session (cache) → message explicite invitant à se reconnecter.
-function requireManagerStaffId(req, res) {
+// staff_id du profil de l'utilisateur connecté. Un directeur d'avant la migration
+// Modèle A peut ne pas encore l'avoir en session (cache) → message explicite invitant à
+// se reconnecter. Un staff ordinaire l'a toujours ; la garde reste, elle ne coûte rien.
+function requireStaffProfileId(req, res) {
     const staffId = req.session.user.staff_id;
     if (!staffId) { res.status(400).json({ error: 'Profil staff manquant — reconnecte-toi pour l\'activer.' }); return null; }
     return staffId;
 }
 
-const MANAGER_DISPO_TYPES = ['soir', 'midi', 'long', 'custom'];
-
-// Nom du profil staff du directeur (pour `staff_name` sur la dispo créée).
-async function managerStaffName(staffId, sessionName) {
-    if (sessionName) return sessionName;
-    const doc = isValidObjectId(staffId)
-        ? await db.collection('staff').findOne({ _id: new ObjectId(staffId) }, { projection: { name: 1 } })
-        : null;
-    return (doc && doc.name) || '';
-}
+const DISPO_TEMPLATE_TYPES = ['soir', 'midi', 'long', 'custom'];
 
 // Absences déclarées (E-19) chevauchant [from, to] du directeur lié à ce staff_id.
 // `manager_time_off` est keyé sur `user_id` → on repasse par `users.staff_id`. Le
@@ -4594,31 +4584,69 @@ async function managerOffPeriods(staffId, fromStr, toStr, knownUserId) {
     } catch (e) { console.error('[managerOffPeriods]', e.message); return []; }
 }
 
-// ── Semaine-type récurrente du directeur (E-22 v2) ─────────────────────────────
-// Collection `manager_dispo_templates` (doc par staff_id) : { days: {0..6} }.
-// Le modèle est une COMMODITÉ DE SAISIE : il matérialise des DISPOS `pending` sur la
-// semaine suivante (cron quotidien + à chaque sauvegarde du modèle), en CRÉATION SEULE
-// — un jour qui a déjà une dispo (saisie à la main, ou matérialisée hier, ou déjà
-// validée par le patron) n'est jamais retouché, et un jour d'absence est sauté.
+// TOUTES les périodes qui interdisent de poser une dispo sur un jour, pour un staff et
+// une fenêtre [from, to] : ses congés (`time_off`, tout profil) ET ses absences déclarées
+// s'il est directeur (`manager_time_off`, E-19). Forme commune `{ start_date, end_date }`,
+// celle qu'attendent `splitDisposByConges` et `datesCoveredByPeriods`.
+//
+// ⚠️ Une seule porte, parce que la divergence est déjà arrivée : la matérialisation de la
+// semaine-type ne joignait que `manager_time_off` alors que `POST /api/dispos` joignait
+// les deux. Sans conséquence tant que seuls trois directeurs avaient un modèle, faux à la
+// seconde où le staff en a eu un — un congé validé se serait fait recouvrir de dispos
+// automatiques à chaque deadline. Le prochain critère (un nouveau statut, une demi-journée)
+// ne doit pas avoir à être retrouvé à deux endroits, dont un que personne ne regarde.
+async function disposOffPeriods(staffId, fromStr, toStr, knownUserId) {
+    const [conges, mgrOffs] = await Promise.all([
+        db.collection('time_off').find(
+            { staff_id: staffId, status: { $ne: 'rejected' },
+              start_date: { $lte: toStr }, end_date: { $gte: fromStr } },
+            { projection: { start_date: 1, end_date: 1 } }).toArray(),
+        managerOffPeriods(staffId, fromStr, toStr, knownUserId),
+    ]);
+    return conges.concat(mgrOffs);
+}
+
+// ── Semaine-type récurrente (E-22 v2 ; ouverte à TOUT le staff le 2026-08-24) ───
+// Collection `manager_dispo_templates` (doc par staff_id) : { days: {0..6} }, lundi = 0.
+// Le nom de la collection date du temps où seuls les directeurs y avaient droit ; il
+// reste tel quel pour ne pas migrer une base client, mais le mécanisme, lui, ne connaît
+// plus le rôle. C'est la suite logique du Modèle A (E-22) : un directeur EST un staff,
+// il n'y avait donc aucune raison que « ce qui part à ma place si je n'ai rien envoyé »
+// soit un privilège de directeur.
+//
+// Le modèle matérialise des DISPOS `pending` sur la semaine suivante, au seul
+// déclenchement de la deadline (cf. `shouldMaterializeTemplate`), en CRÉATION SEULE —
+// un jour qui a déjà une dispo (saisie à la main, matérialisée hier, ou déjà validée par
+// le patron) n'est jamais retouché, et un jour d'absence est sauté.
 // Idempotent : relancer ne crée rien de plus.
-async function materializeManagerTemplateWeek(staffId, staffName, template, weekStartStr) {
+async function materializeTemplateWeek(staff, template, weekStartStr) {
     if (!template || !template.days) return 0;
+    const staffId   = String(staff._id);
+    const staffName = staff.name || '';   // résolu par l'appelant (cf. `materializeAllDispoTemplates`)
     const weekEnd = toDateStr(new Date(new Date(weekStartStr + 'T12:00:00').getTime() + 6 * 864e5));
-    const existing = await db.collection('availabilities').find(
-        { staff_id: staffId, date: { $gte: weekStartStr, $lte: weekEnd }, type: { $ne: 'week_note' } },
-        { projection: { date: 1 } }
-    ).toArray();
+    // Deux lectures indépendantes : en série, elles ajoutaient un aller-retour Mongo par
+    // staff sur une boucle qui tourne tous les quarts d'heure.
+    const [existing, offs] = await Promise.all([
+        db.collection('availabilities').find(
+            { staff_id: staffId, date: { $gte: weekStartStr, $lte: weekEnd }, type: { $ne: 'week_note' } },
+            { projection: { date: 1 } }).toArray(),
+        disposOffPeriods(staffId, weekStartStr, weekEnd),
+    ]);
     const taken = new Set(existing.map(d => d.date));
-    const offs  = await managerOffPeriods(staffId, weekStartStr, weekEnd);
     for (const d of datesCoveredByPeriods(offs, weekStartStr, weekEnd)) taken.add(d);
     const now  = new Date();
-    const docs = buildTemplateDispos(template, weekStartStr, taken).map(d => ({
+    // Jours de repos : le formulaire du staff ne les propose même pas (`createRestDayCard`).
+    // Le modèle a pu être enregistré AVANT que le patron ne pose le repos — c'est donc à
+    // l'envoi que la question se tranche, pas à la sauvegarde. Passés au helper plutôt
+    // que dépliés ici : il tient déjà la traversée des 7 jours et la conversion lundi=0
+    // ↔ `getDay()`, la refaire à côté en serait une seconde copie à garder en phase.
+    const docs = buildTemplateDispos(template, weekStartStr, taken, staff.rest_days).map(d => ({
         staff_id: staffId, staff_name: staffName, date: d.date, type: d.type,
         start_time: d.start_time, end_time: d.end_time, note: '',
         status: 'pending', created_at: now, updated_at: now,
     }));
     if (docs.length) await db.collection('availabilities').insertMany(docs);
-    // F-12 — ces dispos partent dans la file du patron sans que le directeur ait fait le
+    // F-12 — ces dispos partent dans la file du patron sans que l'intéressé ait fait le
     // moindre geste ce jour-là. C'est le cas où « je n'ai jamais saisi ça » est vrai :
     // l'acteur consigné est le MODÈLE, pas la personne.
     await recordDispoEvents('template', { user_id: null, role: 'system', name: 'Semaine-type' },
@@ -4626,50 +4654,99 @@ async function materializeManagerTemplateWeek(staffId, staffName, template, week
     return docs.length;
 }
 
-// Matérialise chaque semaine-type directeur sur la semaine suivante — mais SEULEMENT
-// une fois la deadline du cycle franchie (règle du 2026-08-10, cf.
-// `shouldMaterializeTemplate`). Appelé par un vérificateur toutes les 15 min, pas par le
-// cron de 10h : avec une deadline vendredi 13h, la passe quotidienne aurait déclenché
-// samedi 10h — 21 h trop tard, après que le patron a construit son planning.
+// Un modèle ne part que si son propriétaire pourrait l'envoyer LUI-MÊME à cet instant :
+// ce sont les portes de `POST /api/dispos`, ni plus ni moins. Sans elles, la semaine-type
+// serait un chemin parallèle qui contourne les décisions du patron — précisément le
+// travers que E-22 a refusé quand elle créait des shifts directement.
+// La deadline, elle, n'est PAS une porte ici : la matérialisation a lieu au moment même
+// où la deadline tombe, c'est sa raison d'être.
+function templateEligible(staff, settings) {
+    // Profil supprimé : le modèle n'appartient plus à personne. `DELETE /api/users/:id`
+    // le purge, mais un doc orphelin antérieur à cette purge ne doit pas continuer d'écrire.
+    if (!staff) return false;
+    // F-14 — un archivé se matérialisait des dispos `pending` chaque semaine, que personne
+    // n'avait saisies et que personne ne pouvait retirer. On SAUTE le modèle sans le
+    // supprimer : l'archivage est réversible (`PATCH /api/staff/:id/archive`) et détruire
+    // la semaine-type ferait perdre une config à la réactivation. C'est la différence avec
+    // `DELETE /api/users/:id`, qui la purge parce que le compte, lui, ne revient pas.
+    if (staff.archived === true) return false;
+    if (staff.can_submit_dispos === false) return false;
+    return staffDispoOpen(settings, staff.venues);
+}
+
+// Matérialise chaque semaine-type sur la semaine suivante — mais SEULEMENT une fois la
+// deadline du cycle franchie (règle du 2026-08-10, cf. `shouldMaterializeTemplate`).
+// Appelé par un vérificateur toutes les 15 min, pas par le cron de 10h : avec une
+// deadline vendredi 13h, la passe quotidienne aurait déclenché samedi 10h — 21 h trop
+// tard, après que le patron a construit son planning.
 //
 // Un marqueur `last_materialized_week` sur le doc du modèle borne l'effet à UN passage
 // par semaine cible. Il est posé même quand 0 dispo est créée (tous les jours déjà pris) :
 // ce qui compte est que le rendez-vous de cette semaine a eu lieu.
-async function materializeAllManagerTemplates() {
-    if (!db) return;
+// Une seule passe à la fois. Le marqueur n'est écrit qu'APRÈS les insertions : deux
+// passes qui se chevauchent calculeraient toutes deux `taken` avant que l'une n'écrive,
+// et dédoubleraient les dispos dans la file du patron. Improbable avec 3 directeurs,
+// plus du tout du même ordre maintenant qu'il peut y avoir un modèle par personne.
+// ⚠️ Ne protège QU'UN processus : deux réplicas Railway du même service passeraient tous
+// les deux. Non traité (un seul réplica aujourd'hui) — il faudrait revendiquer le
+// marqueur en `findOneAndUpdate` atomique AVANT d'écrire.
+let _materializeRunning = false;
+
+async function materializeAllDispoTemplates() {
+    if (!db || _materializeRunning) return;
+    _materializeRunning = true;
     try {
         const now        = new Date();
         const settings   = await db.collection('settings').findOne({ key: 'dispo' }) || {};
         const deadline   = computeEffectiveDeadline(settings.custom_deadline || null, now);
-        const nextMonday = toDateStr(weekStart(new Date(now.getTime() + 7 * 864e5)));
-        const templates  = await db.collection('manager_dispo_templates').find({}).toArray();
+        const nextMonday = toDateStr(disposWeekStart(now));
+        // Les deux conditions de `shouldMaterializeTemplate` qui ne dépendent pas du
+        // modèle, appliquées AVANT de lire la collection : tant que la deadline n'est pas
+        // franchie aucun modèle ne peut partir (avec une deadline vendredi 13h, c'est ~65 %
+        // des 672 passes de la semaine), et une fois la passe faite le marqueur écarte
+        // tout le monde côté base. `$ne` matche aussi les docs sans le champ, donc un
+        // premier modèle reste bien servi.
+        if (now.getTime() < deadline.getTime()) return;
+        const templates = await db.collection('manager_dispo_templates')
+            .find({ last_materialized_week: { $ne: nextMonday } }).toArray();
         for (const t of templates) {
             if (!isValidObjectId(t.staff_id)) continue;
+            // Test pur quand même : c'est LUI qui fait autorité (les deux filtres
+            // ci-dessus ne sont qu'un raccourci), et il reste la garde en cas d'appel
+            // direct depuis les tests.
             if (!shouldMaterializeTemplate(now, deadline, t.last_materialized_week, nextMonday)) continue;
-            // F-14 — sans ça, un directeur archivé se matérialise des dispos `pending`
-            // chaque semaine, indéfiniment : personne ne les a saisies, personne ne peut
-            // les retirer, et elles s'empilent dans la file du patron. On SAUTE le modèle
-            // sans le supprimer — l'archivage est réversible (`PATCH /api/staff/:id/archive`),
-            // et détruire la semaine-type ferait perdre une config à la réactivation.
-            // C'est la différence avec `DELETE /api/users/:id`, qui la purge parce que le
-            // compte, lui, ne revient pas.
-            // Placé APRÈS le test pur : cette boucle tourne toutes les 15 min, inutile
-            // d'aller lire un profil pour un modèle qu'on n'allait de toute façon pas écrire.
-            if (await archivedStaff(t.staff_id)) continue;
-            const name = await managerStaffName(t.staff_id, t.staff_name);
-            const n = await materializeManagerTemplateWeek(t.staff_id, name, t, nextMonday);
+            const staff = await db.collection('staff').findOne(
+                { _id: new ObjectId(t.staff_id) },
+                { projection: { name: 1, venues: 1, archived: 1, can_submit_dispos: 1, rest_days: 1 } });
+            // Aucun marqueur posé sur un modèle écarté : si le patron rouvre la saisie ou
+            // désarchive dans la foulée, le rendez-vous de la semaine a encore lieu.
+            if (!templateEligible(staff, settings)) continue;
+            // Le nom se résout ICI, une fois : `staff.name` fait foi (D-77), le nom
+            // recopié sur le modèle ne sert que de secours. Deux chaînes de repli
+            // écrites séparément finissent par ne plus dire la même chose.
+            staff.name = staff.name || t.staff_name || '';
+            const n = await materializeTemplateWeek(staff, t, nextMonday);
             await db.collection('manager_dispo_templates').updateOne(
                 { staff_id: t.staff_id },
                 { $set: { last_materialized_week: nextMonday } }
             );
-            logInfo('📋 Semaine-type matérialisée (' + name + ', ' + nextMonday + ') : ' + n + ' dispo(s)');
+            logInfo('📋 Semaine-type matérialisée (' + (staff.name || t.staff_id) +
+                ', ' + nextMonday + ') : ' + n + ' dispo(s)');
         }
-    } catch (e) { console.error('❌ materializeAllManagerTemplates error:', e.message); }
+    } catch (e) {
+        console.error('❌ materializeAllDispoTemplates error:', e.message);
+    } finally { _materializeRunning = false; }
 }
 
-// GET — la semaine-type du directeur connecté
-app.get('/api/me/manager-dispo-template', checkDB, requireDirecteur, async (req, res) => {
-    const staffId = requireManagerStaffId(req, res); if (!staffId) return;
+// Les deux chemins servent le MÊME modèle. `/api/me/manager-dispo-template` est l'ancien
+// nom, resté pour les onglets déjà ouverts et les PWA dont le service worker n'a pas
+// encore repris le nouveau JS : une route qui disparaît d'un déploiement à l'autre casse
+// la page de quelqu'un, ici pour rien.
+const DISPO_TEMPLATE_PATHS = ['/api/me/dispo-template', '/api/me/manager-dispo-template'];
+
+// GET — la semaine-type de l'utilisateur connecté (tout profil staff, directeur compris)
+app.get(DISPO_TEMPLATE_PATHS, checkDB, requireAuth, async (req, res) => {
+    const staffId = requireStaffProfileId(req, res); if (!staffId) return;
     try {
         const tpl = await db.collection('manager_dispo_templates').findOne({ staff_id: staffId });
         res.json({ days: (tpl && tpl.days) || {} });
@@ -4680,28 +4757,64 @@ app.get('/api/me/manager-dispo-template', checkDB, requireDirecteur, async (req,
 // enregistrer son modèle un lundi envoyait jusqu'ici 7 dispos dans la file du patron
 // séance tenante, ce qui est exactement le « avant la deadline » qu'on veut supprimer.
 // Le modèle est désormais matérialisé au seul déclenchement de la deadline
-// (`materializeAllManagerTemplates`). La directrice continue de VOIR ses jours prêts :
-// `public/script.js` pré-remplit sa semaine suivante depuis ce modèle, en prévisionnel.
-// Pas d'établissement ici : comme pour un staff, c'est le patron qui le choisit en
-// validant la dispo (`PATCH /api/dispos/:id/confirm`).
-app.put('/api/me/manager-dispo-template', checkDB, requireDirecteur, async (req, res) => {
-    const staffId = requireManagerStaffId(req, res); if (!staffId) return;
+// (`materializeAllDispoTemplates`). L'intéressé continue de VOIR ses jours prêts : les
+// deux fronts pré-remplissent la semaine suivante depuis ce modèle, en prévisionnel.
+// Pas d'établissement ici : c'est le patron qui le choisit en validant la dispo
+// (`PATCH /api/dispos/:id/confirm`).
+//
+// Aucune vérification d'ouverture ni de deadline à la sauvegarde : enregistrer un modèle
+// n'envoie rien. Tout se joue à la matérialisation (`templateEligible`), qui lit l'état
+// du moment — celui qui compte — plutôt que celui du jour où la case a été cochée.
+app.put(DISPO_TEMPLATE_PATHS, checkDB, requireAuth, async (req, res) => {
+    const staffId = requireStaffProfileId(req, res); if (!staffId) return;
     const src = req.body && req.body.days;
     if (!src || typeof src !== 'object') return res.status(400).json({ error: 'days requis' });
     const days = {};
     for (let i = 0; i <= 6; i++) {
         const c = src[i];
         if (!c || !c.type) continue; // jour non renseigné dans la semaine-type
+        // `off` (indisponible) n'a pas d'horaires, donc rien à matérialiser. Un jour
+        // ABSENT du modèle produit déjà exactement le même résultat — aucune dispo
+        // envoyée ce jour-là. On l'ignore au lieu de rejeter le lot sur « horaires
+        // invalides », message qui n'aurait aucun sens pour qui vient de cliquer
+        // « Indisponible » puis « enregistrer comme modèle ».
+        if (c.type === 'off') continue;
         const s = parseFloat(c.start_time), e = parseFloat(c.end_time);
         if (Number.isNaN(s) || Number.isNaN(e) || s < 0 || e > 30 || e <= s)
             return res.status(400).json({ error: 'Horaires invalides dans la semaine-type.' });
-        days[i] = { type: MANAGER_DISPO_TYPES.includes(c.type) ? c.type : 'custom', start_time: s, end_time: e };
+        days[i] = { type: DISPO_TEMPLATE_TYPES.includes(c.type) ? c.type : 'custom', start_time: s, end_time: e };
     }
     try {
+        const now      = new Date();
+        const settings = await db.collection('settings').findOne({ key: 'dispo' }) || {};
+        const set      = { days, staff_name: req.session.user.name || '', updated_at: now };
+
+        // ⚠️ Enregistrer un modèle APRÈS la deadline ne rattrape PAS la semaine déjà figée.
+        //
+        // Sans ça : un staff lit « cette semaine est figée depuis la deadline », enregistre
+        // son modèle dans la foulée pour la fois d'après, et voit ses 7 jours tomber dans la
+        // file du patron dans le quart d'heure — sur la semaine même que `POST /api/dispos`
+        // vient de lui refuser en 403. Le modèle deviendrait une porte dérobée sur la
+        // deadline, ce que `templateEligible` refuse par ailleurs pour toutes les autres.
+        // Le trou n'existait pas tant que la semaine-type était réservée aux directeurs :
+        // eux sont exemptés de deadline, donc rien à contourner.
+        //
+        // Le marqueur dit « le rendez-vous de cette semaine a eu lieu » : on le pose
+        // d'office, et le modèle démarre à la deadline suivante. On respecte les mêmes
+        // exemptions que la saisie (`dispoDeadlineWaived`) — pour un directeur ou un staff
+        // rouvert nominativement, la deadline ne s'applique pas, donc rien à neutraliser.
+        // Effet de bord assumé : modifier son modèle un samedi renonce à la semaine en
+        // cours même si elle n'avait pas encore été servie (établissement fermé à l'heure
+        // de la deadline, par exemple). « Ce que j'enregistre maintenant vaut à partir de
+        // la prochaine deadline » est la règle la plus simple à tenir et à expliquer.
+        const collectionWeekStart = disposHorizonRange(now, 1).from;
+        const waived = dispoDeadlineWaived(settings, req.session.user.role,
+            staffReopenedFor(settings, staffId, collectionWeekStart), collectionWeekStart);
+        if (!waived && now > computeEffectiveDeadline(settings.custom_deadline || null, now))
+            set.last_materialized_week = collectionWeekStart;
+
         await db.collection('manager_dispo_templates').updateOne(
-            { staff_id: staffId },
-            { $set: { days, staff_name: req.session.user.name || '', updated_at: new Date() } },
-            { upsert: true }
+            { staff_id: staffId }, { $set: set }, { upsert: true }
         );
         res.json({ message: 'Semaine-type enregistrée · envoi automatique à la deadline' });
         touchLastUpdated();
@@ -6391,7 +6504,7 @@ if (TEST_HARNESS) {
     // part au moment de la deadline, cf. `shouldMaterializeTemplate`) : sans cette
     // poignée, la seule façon de la tester serait d'attendre un vendredi 13h. Exposée
     // sous la même double garde que `setTestDb` — inerte hors test.
-    app.locals.runManagerTemplateCron = materializeAllManagerTemplates;
+    app.locals.runDispoTemplateCron = materializeAllDispoTemplates;
 }
 
 module.exports = app;

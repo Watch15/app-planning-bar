@@ -52,11 +52,13 @@ module.exports = [
                 ...globals.browser,
                 Week: 'readonly',          // public/lib/week.js (UMD)
                 ShiftHours: 'readonly',    // public/lib/shift-hours.js (UMD)
+                DispoTemplate: 'readonly', // public/lib/dispo-template.js (UMD)
                 XLSX: 'readonly',          // vendor/xlsx
                 jspdf: 'readonly',         // vendor/jspdf
                 jsPDF: 'readonly',
                 html2canvas: 'readonly',   // vendor/html2canvas
                 module: 'writable',        // les modules UMD testent `typeof module`
+                require: 'readonly',       // … et en chargent d'autres sous Node (dispo-template → week)
             },
         },
         rules: {

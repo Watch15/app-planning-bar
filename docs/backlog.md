@@ -1433,6 +1433,169 @@ Tests : 5 dans `dispo-audit.test.js`, dont le refus (qui ne doit rien purger —
 garde sur `decision`, refuser purgerait aussi) et le message sobre quand il n'y a rien à
 signaler. Dents vérifiées.
 
+### Semaine-type ouverte à tout le staff (2026-08-24)
+
+Demande du user : « le même système de semaine type pour le staff classique, avec la même
+chose que pour les directeurs, c'est-à-dire que la semaine type est envoyée s'il n'y a
+rien d'envoyé au moment de la deadline. »
+
+**Ce n'est pas une fonctionnalité neuve, c'est une restriction retirée.** Le mécanisme
+E-22 v2 (matérialisation au SEUL déclenchement de la deadline, en création seule, marqueur
+`last_materialized_week`) était déjà keyé sur `staff_id` : seules les deux routes
+(`requireDirecteur`) et l'UI limitaient l'accès. Le travail réel n'a donc pas été
+d'étendre le moteur mais de lui donner les **portes qui lui manquaient** dès qu'il cesse
+de ne concerner que trois directeurs.
+
+**Les portes ajoutées (`templateEligible`)** — ce sont celles de `POST /api/dispos`, ni
+plus ni moins. Sans elles, la semaine-type serait un chemin parallèle contournant les
+décisions du patron, exactement le travers qu'E-22 a refusé quand elle créait des shifts
+directement :
+
+| Porte | Pourquoi elle manquait | Effet si on l'oubliait |
+|---|---|---|
+| `staffDispoOpen` (établissement ouvert) | jamais posée : les directeurs testés avaient `venues: []` + `open: true`, donc toujours ouvert | un staff dont le patron a fermé la saisie recevrait quand même des dispos automatiques |
+| `can_submit_dispos !== false` | idem | le retrait du droit d'envoyer des dispos serait sans effet sur le modèle |
+| profil `staff` existant | `archivedStaff` rendait `null` aussi bien pour « actif » que pour « supprimé » | un doc orphelin continuerait d'écrire indéfiniment |
+
+⚠️ **Aucun marqueur n'est posé sur un modèle écarté** : si le patron rouvre la saisie dans
+la foulée, le rendez-vous de la semaine a encore lieu. Poser le marqueur ferait perdre la
+semaine entière pour une fermeture de dix minutes.
+
+**🔴 La régression que ce lot aurait pu rouvrir** — `materializeManagerTemplateWeek` ne
+joignait que `manager_time_off` (E-19, absences directeur), **pas `time_off`**. Correct
+tant que seuls les directeurs avaient un modèle ; faux à la seconde où un staff en a un.
+Sans la jointure, un **congé validé se serait fait recouvrir de dispos automatiques à
+chaque deadline** — annulant, semaine après semaine, la purge livrée la veille (cf. « Le
+trou du congé approuvé »). Deux corrections qui se seraient neutralisées à un jour
+d'intervalle. Trois tests la verrouillent (`approved`, `pending`, `rejected`).
+
+Ajouté au passage : les **jours de repos** sont sautés (le modèle a pu être enregistré
+avant que le patron ne pose le repos — la question se tranche à l'envoi, pas à la
+sauvegarde).
+
+**UI staff : un bouton, pas un second éditeur.** Le staff a déjà sa semaine sous les yeux
+dans `planning.html` ; « fais-en mon modèle » est un bouton sur la carte 🔁 Ma semaine
+type. Une grille 7 jours comme celle du directeur (qui, lui, n'a pas de formulaire de
+semaine — il saisit dans `index.html`) aurait dupliqué toute la mécanique de saisie pour
+la même information. La carte est rendue **avant** le retour anticipé « semaine figée » :
+avec l'horizon par défaut (1 semaine), la seule semaine affichée entre la deadline et le
+lundi est justement verrouillée — c'est le moment où l'on se dit « la prochaine fois, que
+ça parte tout seul ».
+
+Le **pré-remplissage** passe le modèle avant la semaine précédente : le premier est un
+choix explicite et c'est lui qui partira réellement ; la seconde n'est qu'une habitude
+déduite. Afficher la seconde alors que le premier est armé montrerait autre chose que ce
+qui sera envoyé.
+
+Réutilisations et renommages : `parseDispoTime` / `readDispoTimes` extraits de
+`submitDispos` (un modèle qui n'interprète pas « 16h30 » comme l'envoi enverrait autre
+chose que ce que le staff a lu) ; `materializeAllManagerTemplates` →
+`materializeAllDispoTemplates`, `MANAGER_DISPO_TYPES` → `DISPO_TEMPLATE_TYPES`,
+`requireManagerStaffId` → `requireStaffProfileId`. La **collection reste
+`manager_dispo_templates`** : la renommer imposerait une migration sur une base client
+pour un gain cosmétique. L'ancien chemin `/api/me/manager-dispo-template` répond toujours
+(onglets ouverts, PWA dont le SW n'a pas repris le nouveau JS) — les deux paths sont
+servis par le même handler.
+
+⚠️ **Piège d'outillage rencontré** : `npm test` est une **liste explicite de fichiers**,
+pas `tests/`. Le nouveau `dispo-template.test.js` (16 tests) a d'abord tourné à la main
+en étant **invisible pour la CI** — total inchangé à 396. Vérification à refaire à chaque
+ajout de fichier de test :
+`for f in tests/*.test.js; do grep -q "$(basename $f)" package.json || echo "ORPHELIN: $f"; done`
+(le mode répertoire de `node --test` reste écarté, cf. « Tests » dans les notes agents).
+
+Total : **412 tests verts**, lint 0 erreur, 0 ligne de pollution sur le flux du runner.
+
+#### Revue `/simplify` du 2026-08-24
+
+**🔴 Un défaut de la fonctionnalité elle-même, trouvé par la revue.** La carte semaine-type
+était gardée par `dispoSettings.canSubmit`, qui vaut
+`staffCanSubmit && open && (collectionWeekOpen || horizon > 1)`. Avec l'horizon par défaut
+(1 semaine), il passe à faux **dès la deadline franchie** : la carte était donc masquée
+tout le week-end — précisément la fenêtre que son propre commentaire disait viser. Elle est
+désormais gardée sur `staffCanSubmit && open` (fermeture décidée par le patron), et la
+semaine figée reste traitée par `currentDispoWeekLocked()`, qui dit lequel des deux motifs
+joue. Le message « Deadline dépassée » a été conservé au passage.
+
+**La duplication de trop : `public/lib/dispo-template.js`.** Trois agents sur quatre ont
+pointé la même chose — la projection de la semaine-type existait en **trois exemplaires**
+(le helper pur, plus une copie inline dans chaque front) et avait **déjà divergé** : le
+serveur sautait congés et absences, `script.js` ne sautait rien, donc la directrice voyait
+en « 🕓 prévu » des jours que la matérialisation allait écarter. `buildTemplateDispos` est
+partie dans un module UMD (patron D-73, comme `week.js`), ré-exportée par `lib/utils.js`,
+appelée par les deux fronts. Ajouté au précache SW et aux deux pages.
+
+Autres corrections appliquées : `disposOffPeriods` extrait (`time_off` + `manager_time_off`
+en une porte, consommée par `POST /api/dispos` **et** par la matérialisation — c'est
+exactement la jointure dont la divergence était la quasi-régression de ce lot) ; les jours
+de repos passés à `buildTemplateDispos` au lieu d'une 3ᵉ traversée de semaine écrite à la
+main dans `server.js` ; sortie avant la lecture de la collection tant que la deadline n'est
+pas franchie + filtre `last_materialized_week: { $ne: … }` (~65 % des 672 passes
+hebdomadaires ne lisent plus rien) ; paramètre `weekMonday` supprimé (il valait toujours
+`currentDispoMonday()`, donc un lundi capturé au rendu pouvait rester collé au bouton après
+navigation) ; commentaires de `lib/utils.js` encore libellés « directeur » ; références
+mortes à `materializeAllManagerTemplates` / `runManagerTemplateCron` dans deux docs de
+design ; les deux tests recalculaient « lundi prochain » à la main au lieu d'appeler
+`disposWeekStart` — ils mesuraient donc leur propre définition, pas celle du serveur.
+
+**Non appliqué, à trancher :**
+
+| Constat | Pourquoi laissé | Coût si on ne le fait pas |
+|---|---|---|
+| `time_off` et `manager_time_off` **sans index** (`scripts/init-db.js` les exclut explicitement) | Change la topologie d'index d'une base client, et `init-db` **repose tous les index** (fenêtre de reconstruction). Décision d'exploitation, pas de nettoyage. | Collscan à chaque `POST /api/dispos` — un vrai chemin de requête, pas seulement le cron |
+| `rest_days` non appliqué dans `POST /api/dispos` | Changement de comportement hors périmètre : la route se mettrait à écarter silencieusement des jours | Le chemin automatique est plus strict que le manuel ; un client obsolète peut poser une dispo sur un repos |
+| Aperçu « 🕓 prévu » du directeur : absences et repos toujours pas exclus | Demande un appel réseau de plus dans `script.js` ; l'écart est maintenant **écrit dans le code**, à côté de l'appel | Un jour d'absence peut s'afficher « prévu » sans jamais partir |
+| Les `findOne` de profil restent en N+1 dans la boucle | Avec le filtre `$ne` ci-dessus, la boucle ne tourne plus que sur les modèles qui partent — une fois par personne et par semaine | ~N lectures une fois par semaine, en tâche de fond |
+
+Après revue : **414 tests verts** (2 tests purs ajoutés sur la conversion lundi=0 ↔
+`getDay()`, la seule ligne du projet où les deux conventions se croisent), lint 0 erreur.
+
+#### Revue `/code-review high` du 2026-08-24 — un contournement de deadline
+
+**🔴 Le modèle était devenu une porte dérobée sur la deadline.** `templateEligible`
+reprend les portes de `POST /api/dispos` **sauf** la deadline — volontaire, puisque la
+matérialisation a lieu au moment même où elle tombe. Sans danger tant que la semaine-type
+était réservée aux directeurs : ils en sont exemptés (`dispoDeadlineWaived`), il n'y avait
+rien à contourner. Faux dès qu'un staff ordinaire peut en enregistrer une.
+
+Le scénario, ouvert par ma propre correction du `/simplify` (rendre la carte visible sur
+une semaine figée) : samedi, le staff lit « cette semaine est figée depuis la deadline »,
+enregistre son modèle pour la fois d'après — et le cron lui pose 7 dispos `pending` dans
+le quart d'heure, **sur la semaine que `POST /api/dispos` venait de lui refuser en 403**.
+
+Correction à la **sauvegarde**, pas à la matérialisation : le PUT pose d'office
+`last_materialized_week` quand la deadline du cycle est déjà passée — « le rendez-vous de
+cette semaine a eu lieu », le modèle démarre à la deadline suivante. Les exemptions de
+`dispoDeadlineWaived` sont respectées (directeur, réouverture nominative) : pour eux la
+deadline ne s'applique pas, il n'y a rien à neutraliser. Effet de bord assumé : modifier
+son modèle un samedi renonce à la semaine en cours même si elle n'avait pas encore été
+servie. « Ce que j'enregistre maintenant vaut à partir de la prochaine deadline » est la
+règle la plus simple à tenir et à expliquer.
+
+Côté écran, le bouton « enregistrer comme modèle » **disparaît sur une semaine figée** :
+aucune carte de jour n'y est rendue, donc il aurait persisté — invisible — le
+pré-remplissage venu de la semaine précédente, un modèle que le staff n'a ni vu ni choisi.
+La carte reste affichée (elle informe, et le retrait reste possible).
+
+Autres correctifs de cette revue : l'en-tête annonçait de nouveau « Deadline : … » au
+futur juste au-dessus de l'encadré rouge « cette semaine est figée » (régression de mon
+correctif `/simplify` sur `saisieFermee`) ; garde de réentrance `_materializeRunning` sur
+le cron — le marqueur n'est écrit qu'après les insertions, donc deux passes qui se
+chevauchent dédoubleraient les dispos, improbable à 3 directeurs, plus du tout à un modèle
+par personne (⚠️ ne protège qu'un processus : deux réplicas Railway passeraient tous les
+deux, il faudrait revendiquer le marqueur en `findOneAndUpdate` atomique) ; libellé du
+modèle actif précisé « sur la semaine en cours de collecte » (la matérialisation ne vise
+que N+1, jamais les semaines suivantes d'un horizon élargi) ; `public/lib/dispo-template.js`
+et `tests/dispo-template.test.js` étaient **non suivis par git** — `lib/utils.js` en
+dépend désormais, les livrer sans eux aurait planté le serveur au démarrage.
+
+⚠️ **Les tests de matérialisation passaient par le PUT** pour poser le modèle. La nouvelle
+règle le neutralise (la deadline est toujours franchie dans ces fixtures) : ils seraient
+tous devenus des faux positifs verts. Ils sèment désormais le doc directement, et le PUT
+n'est plus testé que là où c'est lui le sujet. Le garde-fou est vérifié par mutation.
+
+Après revue : **416 tests verts**, lint 0 erreur, 0 pollution du runner.
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique. 🔄 **Rafraîchi le 2026-08-10** (1180 nœuds, 1897 arêtes, 68 communautés) — il datait de `c72affe`, 7 commits de retard : la consigne « après chaque session » n'a **pas** été tenue sur les sessions des 06→08/08. Ancien graphe dans `graphify-out/2026-08-10/`.

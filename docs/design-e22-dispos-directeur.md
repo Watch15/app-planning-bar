@@ -20,7 +20,7 @@
 **Demande** : « la semaine-type doit être envoyée juste au déclenchement de la deadline de
 la semaine, pas avant ».
 
-**Ce qui se passait.** `materializeAllManagerTemplates` tournait dans le cron **quotidien de
+**Ce qui se passait.** `materializeAllDispoTemplates` tournait dans le cron **quotidien de
 10h**, et `PUT /api/me/manager-dispo-template` matérialisait en plus **immédiatement**. Avec
 une deadline vendredi 13h, les dispos de la directrice tombaient donc dans la file de
 validation dès le **lundi 10h** — quatre jours d'avance — et instantanément si elle
@@ -57,7 +57,7 @@ c'est une action explicite, exactement comme un staff qui envoie avant l'heure. 
 porte que sur l'envoi **automatique**.
 
 **Couverture.** 6 tests unitaires sur dates gelées (`shouldMaterializeTemplate`) + 6
-d'intégration qui pilotent le cron via `app.locals.runManagerTemplateCron` (poignée exposée
+d'intégration qui pilotent le cron via `app.locals.runDispoTemplateCron` (poignée exposée
 sous la double garde du harnais — sans elle, tester la matérialisation demanderait
 d'attendre un vendredi 13h). Mutations vérifiées : retirer la garde de deadline, ne plus
 poser le marqueur, ou rematérialiser dans le `PUT` fait tomber un test chacun.

@@ -11,7 +11,7 @@
 
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
-const { weekStart, toDateStr } = require('../lib/utils');
+const { disposWeekStart, toDateStr } = require('../lib/utils');
 const { makeDb } = require('./helpers/fake-db');
 const { app, startApp, stopApp, req, horizonWeekDates } = require('./helpers/harness');
 
@@ -30,7 +30,7 @@ const PATRON      = { role: 'patron' };
 // Le serveur matérialise TOUJOURS sur le lundi de la semaine suivante : on le
 // recalcule ici avec le même helper plutôt que de figer une date (sinon le test
 // pourrirait au fil du temps).
-const NEXT_MONDAY = toDateStr(weekStart(new Date(Date.now() + 7 * 864e5)));
+const NEXT_MONDAY = toDateStr(disposWeekStart(new Date()));
 const dayOf = i => toDateStr(new Date(new Date(NEXT_MONDAY + 'T12:00:00').getTime() + i * 864e5));
 
 // Semaine-type : lundi (0) + mercredi (2).
@@ -48,7 +48,7 @@ const putTemplate = (days = TEMPLATE_DAYS) =>
 // Depuis le 2026-08-10, la semaine-type n'est plus matérialisée par le PUT ni par le
 // cron de 10h : elle part au DÉCLENCHEMENT DE LA DEADLINE. Les tests la déclenchent donc
 // à la main, via la poignée exposée sous la double garde du harnais.
-const runCron = () => app.locals.runManagerTemplateCron();
+const runCron = () => app.locals.runDispoTemplateCron();
 
 // `custom_deadline` est un PATRON récurrent (jour de semaine + heure), jamais une date
 // absolue : viser un LUNDI 00:00 rend la deadline « déjà franchie » quel que soit le jour

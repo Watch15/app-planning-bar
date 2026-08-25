@@ -441,6 +441,28 @@ test('buildTemplateDispos : saute les jours d\'absence déclarée (E-19)', () =>
         ['2026-05-11']);
 });
 
+test('buildTemplateDispos : saute les jours de repos (conversion lundi=0 ↔ getDay)', () => {
+    // LA ligne où les deux conventions se croisent : le modèle est keyé lundi=0, alors
+    // que `staff.rest_days` suit `getDay()` (0 = dimanche). Se tromper d'un cran ici
+    // sauterait le mauvais jour, chaque semaine, sans que rien ne le signale.
+    // Lundi 11 mai 2026 → repos le lundi = 1 au sens getDay().
+    assert.deepEqual(buildTemplateDispos(_tplV2, '2026-05-11', new Set(), [1]).map(d => d.date),
+        ['2026-05-13'], 'le lundi de repos est écarté, le mercredi reste');
+    assert.deepEqual(buildTemplateDispos(_tplV2, '2026-05-11', new Set(), [3]).map(d => d.date),
+        ['2026-05-11'], 'repos le mercredi (getDay=3) → seul le lundi reste');
+    // Le test a des dents : avec la convention naïve (repos = index du modèle), [1]
+    // aurait écarté le mardi — un jour que le modèle ne porte même pas — et les deux
+    // assertions ci-dessus seraient tombées.
+    assert.deepEqual(buildTemplateDispos(_tplV2, '2026-05-11', new Set(), []).map(d => d.date),
+        ['2026-05-11', '2026-05-13'], 'aucun repos → rien n\'est écarté');
+});
+
+test('buildTemplateDispos : repos absent ou non-tableau → ignoré', () => {
+    // Un profil d'avant `rest_days` n'a pas le champ : la 4e place reste optionnelle.
+    assert.equal(buildTemplateDispos(_tplV2, '2026-05-11', new Set()).length, 2);
+    assert.equal(buildTemplateDispos(_tplV2, '2026-05-11', new Set(), undefined).length, 2);
+});
+
 test('buildTemplateDispos : modèle vide/null → aucune dispo', () => {
     assert.deepEqual(buildTemplateDispos(null, '2026-05-11', new Set()), []);
     assert.deepEqual(buildTemplateDispos({ days: {} }, '2026-05-11', new Set()), []);

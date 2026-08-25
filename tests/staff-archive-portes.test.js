@@ -311,7 +311,7 @@ test('la semaine-type d\'un directeur archivé ne se matérialise plus', async (
     poserTemplate(DIRECTEUR, 'Dir');
     poserTemplate(RESTANTE, 'Restante'); // témoin : le cron doit continuer de tourner
 
-    await app.locals.runManagerTemplateCron();
+    await app.locals.runDispoTemplateCron();
 
     // Le témoin prouve que la deadline est bien franchie et que la boucle écrit vraiment.
     // Sans lui, « 0 dispo pour l'archivé » serait vrai même si le cron ne faisait rien.
@@ -326,7 +326,7 @@ test('la semaine-type d\'un directeur archivé ne se matérialise plus', async (
 test('le modèle est SAUTÉ, pas supprimé — l\'archivage est réversible', async () => {
     poserTemplate(DIRECTEUR, 'Dir');
 
-    await app.locals.runManagerTemplateCron();
+    await app.locals.runDispoTemplateCron();
 
     const tpl = db.collection('manager_dispo_templates')._docs
         .find(t => String(t.staff_id) === DIRECTEUR);

@@ -25,6 +25,7 @@ const STATIC = [
     '/lib/auth-guard.js',
     '/lib/shift-hours.js',
     '/lib/week.js',
+    '/lib/dispo-template.js',
     '/style.css',
     '/manifest.json',
     '/vendor/html2canvas.min.js',
