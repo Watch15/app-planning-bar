@@ -470,21 +470,32 @@ async function main() {
         // code d'un défaut de DONNÉES. Exactement le scénario du 2026-08-10 que `stale` existe
         // pour empêcher. On lit donc la fixture avant de s'appuyer dessus.
         {
+            // ⚠️ Comparer au bon identifiant. Le serveur confronte `force_open_staff` à
+            // `req.session.user.staff_id` — le lien COMPTE → PROFIL — et non au `_id` du profil
+            // staff lu par ailleurs. Les deux coïncident quand le jeu est cohérent, et
+            // c'est justement ce qu'il faut vérifier : une sonde qui compare au `_id` du
+            // profil déclarerait la fixture présente là où le serveur ne la voit pas, et
+            // la vérification tomberait en accusant le code d'une incohérence de données.
             const reglages = (await req('pat', '/api/dispo-settings')).data || {};
-            const alice    = ((await req('pat', '/api/staff')).data || []).find(s => /Alice/i.test(s.name || ''));
-            const liste    = reglages.force_open_staff || [];
-            const inscrite = liste.some(e =>
-                (typeof e === 'string' ? e : (e && e.staff_id)) === String(alice && alice._id));
+            const moi      = ((await req('ali', '/auth/me')).data || {}).user || {};
+            const profil   = ((await req('pat', '/api/staff')).data || []).find(s => /Alice/i.test(s.name || ''));
+            const idSession = moi.staff_id == null ? null : String(moi.staff_id);
+            const idProfil  = profil ? String(profil._id) : null;
+            const liste     = reglages.force_open_staff || [];
+            const entree    = e => (typeof e === 'string' ? e : (e && e.staff_id));
+            const inscrite  = idSession !== null && liste.some(e => entree(e) === idSession);
             if (!inscrite) {
-                stale.aliceRouverte = 'Alice n\'est pas rouverte nominativement — jeu de recette '
-                    + 'antérieur au 2026-08-25 (remède : `npm run dev:seed`)';
+                stale.aliceRouverte = 'Alice n\'est pas rouverte pour le serveur — '
+                    + (idSession && idSession !== idProfil
+                        ? 'son compte pointe sur un AUTRE profil staff que celui nommé « Alice »'
+                        : 'fixture absente : jeu de recette antérieur au 2026-08-25 (`npm run dev:seed`)');
                 console.log('⚠️  ' + stale.aliceRouverte);
-                // Les deux valeurs côte à côte, parce qu'elles distinguent trois causes qui
-                // se ressemblent : liste VIDE (fixture absente), liste avec une AUTRE forme
-                // ou un AUTRE id (appariement staff/compte cassé), ou `[null]` (le seed a
-                // inséré un `ctx.staff.Alice` non résolu). Sans elles on relance à l'aveugle.
-                console.log('    force_open_staff = ' + JSON.stringify(liste));
-                console.log('    staff._id d\'Alice = ' + String(alice && alice._id) + '\n');
+                // Les trois valeurs côte à côte : elles séparent « liste vide » (fixture
+                // absente), « id différent » (compte délié du profil) et « forme objet »
+                // (entrée datée, périmée au lundi suivant).
+                console.log('    force_open_staff       = ' + JSON.stringify(liste));
+                console.log('    staff_id vu en session = ' + idSession);
+                console.log('    _id du profil « Alice » = ' + idProfil + '\n');
             }
         }
 
