@@ -1989,6 +1989,36 @@ Deux réductions, ~230 px récupérés :
   pictogramme nu : l'action recopie une semaine ENTIÈRE par-dessus une autre, et la flèche
   est ce qui dit « vers ». Une icône seule se serait confondue avec « copier ce jour ».
 
+#### Calendrier congés — lisibilité (2026-08-27)
+
+La grille de mois est déclarée `min-width: 620px` dans une modale de 720 px `max-width:95vw`.
+Sur téléphone cela laisse **trois colonnes visibles sur sept**, dans un conteneur qui défile
+déjà verticalement : deux axes de défilement imbriqués pour lire un mois. À cela s'ajoutaient
+trois pertes d'information plus discrètes :
+
+| Défaut | Effet |
+|---|---|
+| `.cal-names { overflow: hidden }` sur une cellule de 72 px | Au-delà de ~3 personnes, les suivantes disparaissaient **sans indicateur**. Le jour le plus chargé était le moins lisible — exactement l'inverse du besoin. |
+| Aucun état vide | Un mois sans congé rendait une grille de 35 cases muettes. |
+| Pastille ronde de 7 px à côté d'un texte de 11 px | La couleur, seul repère de la personne quand le prénom est tronqué, se perdait dans la ligne. |
+
+**Correctif : une liste des périodes rendue en même temps que la grille.** C'est la forme
+lisible de cette donnée — elle *est* faite de périodes (`start_date`/`end_date`), et « Marie,
+lun. 3 → ven. 7 août, 5 j » se lit d'un coup là où la grille demande de relier cinq cases
+orange et tronque les prénoms longs. La grille garde ce que la liste ne sait pas faire :
+répondre à « quelqu'un est-il absent le 14 ? » sans lire.
+
+⚠️ **Les deux vues sont rendues, et c'est le CSS seul qui en masque une** (`.conge-cal` en
+`display:none` sous 768 px). Aucun test de largeur dans le JS : le rendu ne se produit qu'à
+l'ouverture du sous-onglet, donc une branche sur `isMobileDevice()` aurait laissé la vue du
+téléphone en place après une rotation en paysage, jusqu'au rechargement. Même arbitrage que
+`.btn-week-qualifier` dans l'en-tête du jour, et pour la même raison.
+
+Reste : `overflow: hidden` retiré de `.cal-names` (une cellule chargée grandit au lieu
+d'avaler des noms), état vide explicite, barre de couleur pleine hauteur à la place de la
+pastille, marqueur du jour courant, week-ends assombris (`#f7f8fa` était indiscernable du
+fond de carte).
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique. 🔄 **Rafraîchi le 2026-08-10** (1180 nœuds, 1897 arêtes, 68 communautés) — il datait de `c72affe`, 7 commits de retard : la consigne « après chaque session » n'a **pas** été tenue sur les sessions des 06→08/08. Ancien graphe dans `graphify-out/2026-08-10/`.

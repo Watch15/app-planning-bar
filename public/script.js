@@ -5540,16 +5540,27 @@ function renderCongesCalendar(month, conges) {
 
     const totalPeople = new Set(conges.map(g => g.staff_id)).size;
     const monthLabel  = MONTH_NAMES[m - 1].charAt(0).toUpperCase() + MONTH_NAMES[m - 1].slice(1) + ' ' + y;
+    // Un directeur absent (E-19) n'est pas dans allStaff : sa couleur et son nom viennent d'ailleurs.
+    const nameOf = g => g.is_manager ? (g.staff_name || 'Directeur') : displayName(g.staff_id, g.staff_name);
+    const chipOf = g => g.is_manager ? '#e74c3c' : colorOf(g.staff_id);
+
+    let html = '<div class="conge-head"><strong>🌴 ' + monthLabel + '</strong> · ' +
+        conges.length + ' période(s) · ' + totalPeople + ' personne(s)' +
+        '<span class="conge-head-note">Toute l’équipe, tous établissements confondus.</span></div>';
+
+    // Un mois sans congé rendait une grille vide et muette : on le dit.
+    if (!conges.length) {
+        c.innerHTML = html + '<div class="conge-empty">Aucun congé ce mois-ci.</div>';
+        return;
+    }
 
     // Grille lundi-first : getDay() 0=dim..6=sam → décalage 0=lun..6=dim.
     const firstWd    = new Date(y, m - 1, 1).getDay();
     const lead       = (firstWd + 6) % 7;
     const totalCells = Math.ceil((lead + daysInMonth) / 7) * 7;
     const WD = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    const todayStr = toDateStr(new Date());
 
-    let html = '<div style="font-size:12px;color:var(--text-muted);margin:2px 0 12px">' +
-        '🌴 ' + monthLabel + ' — congés de toute l’équipe (indépendant de l’établissement) · ' +
-        conges.length + ' période(s), ' + totalPeople + ' personne(s).</div>';
     html += '<div class="conge-cal"><div class="cal-inner">';
     html += '<div class="cal-weekdays">' + WD.map(d => '<div class="cal-weekday">' + d + '</div>').join('') + '</div>';
     html += '<div class="cal-grid">';
@@ -5561,23 +5572,50 @@ function renderCongesCalendar(month, conges) {
         const people  = peopleByDate.get(dateStr) || [];
         let names = '';
         if (people.length) {
-            names = '<div class="cal-names">' + people.map(p => {
-                // Absence directeur (E-19) : pastille rouge + suffixe « Directeur »
-                const isMgr    = p.is_manager;
-                const chipCol  = isMgr ? '#e74c3c' : colorOf(p.staff_id);
-                const label    = isMgr ? (p.staff_name || 'Directeur') : displayName(p.staff_id, p.staff_name);
-                const titleTxt = (p.staff_name || '') + (isMgr ? ' — Directeur' : (p.mode === 'info' ? ' (info)' : ''));
-                return '<span class="cal-name" title="' + escapeHtml(titleTxt) + '">' +
-                    '<span class="d" style="background:' + escapeHtml(chipCol) + '"></span>' +
-                    escapeHtml(label) + (isMgr ? ' <span style="font-size:9px;color:#e74c3c;font-weight:700">DIR</span>' : '') +
-                '</span>';
-            }).join('') + '</div>';
+            names = '<div class="cal-names">' + people.map(p =>
+                // Le titre reste le nom COMPLET : la pastille n'affiche que le prénom d'usage.
+                '<span class="cal-name" title="' + escapeHtml((p.staff_name || '') +
+                        (p.is_manager ? ' — Directeur' : (p.mode === 'info' ? ' (info)' : ''))) + '">' +
+                    '<span class="d" style="background:' + escapeHtml(chipOf(p)) + '"></span>' +
+                    escapeHtml(nameOf(p)) + (p.is_manager ? '<span class="conge-dir">DIR</span>' : '') +
+                '</span>'
+            ).join('') + '</div>';
         }
-        html += '<div class="cal-cell' + (people.length ? ' has-conge' : '') + (isWe ? ' weekend' : '') + '">' +
+        html += '<div class="cal-cell' + (people.length ? ' has-conge' : '') + (isWe ? ' weekend' : '') +
+            (dateStr === todayStr ? ' today' : '') + '">' +
             '<div class="cal-day-num' + (isWe ? ' we' : '') + '">' + day + '</div>' + names +
         '</div>';
     }
     html += '</div></div></div>';
+
+    // La liste des périodes, rendue EN MÊME TEMPS que la grille : c'est le CSS qui masque
+    // l'une ou l'autre selon la largeur, jamais un test de largeur ici — sinon une rotation
+    // d'écran laisserait la mauvaise vue en place jusqu'au rechargement.
+    // Elle dit ce que la grille ne peut pas dire : « Marie, du 3 au 7 », en une ligne, sans
+    // avoir à relier cinq cases de suite ni à couper les noms trop longs.
+    const jourFr  = ds => new Date(ds + 'T12:00:00')
+        .toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+    const nbJours = g => Math.round(
+        (new Date(g.end_date + 'T12:00:00') - new Date(g.start_date + 'T12:00:00')) / 86400000) + 1;
+
+    const tri = conges.slice().sort((a, b) =>
+        a.start_date.localeCompare(b.start_date) || nameOf(a).localeCompare(nameOf(b), 'fr'));
+
+    html += '<div class="conge-list">' + tri.map(g => {
+        // Dates réelles de la période, non bornées au mois : un congé à cheval doit se voir
+        // comme un congé à cheval, pas comme s'il commençait le 1er.
+        const quand = g.start_date === g.end_date
+            ? jourFr(g.start_date)
+            : jourFr(g.start_date) + ' → ' + jourFr(g.end_date);
+        return '<div class="conge-row" style="--c:' + escapeHtml(chipOf(g)) + '">' +
+            '<span class="conge-who">' + escapeHtml(nameOf(g)) +
+                (g.is_manager ? '<span class="conge-dir">DIR</span>' : '') +
+                (g.mode === 'info' ? '<span class="conge-info">info</span>' : '') + '</span>' +
+            '<span class="conge-when">' + escapeHtml(quand) + '</span>' +
+            '<span class="conge-len">' + nbJours(g) + ' j</span>' +
+        '</div>';
+    }).join('') + '</div>';
+
     c.innerHTML = html;
 }
 

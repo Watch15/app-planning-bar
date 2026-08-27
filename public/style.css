@@ -1086,7 +1086,16 @@ body.observateur #staff-bar-overlay {
 .recap-subtab:hover { color: var(--text-primary); }
 .recap-subtab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-/* Calendrier congés — format mois (grille type calendrier papier) */
+/* ── Calendrier congés ──────────────────────────────────────────────────────
+   Deux vues du même rendu : la grille du mois (repérer un jour) et la liste des
+   périodes (lire « du 3 au 7 »). Le CSS choisit — sous 768 px la grille de 620 px
+   ne montrerait que trois colonnes à la fois, dans une modale qui défile déjà
+   verticalement. Le JS n'a aucun test de largeur : une rotation reste juste. */
+.conge-head { font-size: 12px; color: var(--text-secondary); margin: 2px 0 12px; line-height: 1.5; }
+.conge-head strong { font-size: 14px; color: var(--text-primary); }
+.conge-head-note { display: block; font-size: 11px; color: var(--text-muted); }
+.conge-empty { padding: 32px 12px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
 .conge-cal { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .cal-inner { min-width: 620px; }
 .cal-weekdays, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
@@ -1097,16 +1106,39 @@ body.observateur #staff-bar-overlay {
   padding: 4px 5px; background: var(--light-card); display: flex; flex-direction: column; gap: 3px;
 }
 .cal-cell.empty { background: transparent; border-color: transparent; }
-.cal-cell.weekend { background: #f7f8fa; }
+.cal-cell.weekend { background: #f1f3f7; }
 .cal-cell.has-conge { background: var(--warning-bg, #fff8ec); border-color: #f0d9a8; }
+.cal-cell.today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .cal-day-num { font-size: 12px; font-weight: 700; color: var(--text-secondary); line-height: 1; }
 .cal-day-num.we { color: var(--accent); }
-.cal-names { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+/* Pas d'overflow:hidden ici : une cellule à cinq noms doit grandir, pas en avaler deux
+   en silence. C'est le jour le plus chargé qui a le plus à dire. */
+.cal-names { display: flex; flex-direction: column; gap: 2px; }
 .cal-name {
-  display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-primary);
+  display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-primary);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: 1px 4px; border-radius: 4px; background: rgba(255,255,255,.75);
 }
-.cal-name .d { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+/* Barre pleine hauteur plutôt que pastille : à 11 px, 3 px de couleur sur toute la ligne
+   se repèrent de loin là où un point de 7 px se perd dans le texte. */
+.cal-name .d { width: 3px; align-self: stretch; border-radius: 2px; flex-shrink: 0; }
+
+.conge-list { margin-top: 16px; display: flex; flex-direction: column; gap: 6px; }
+.conge-row {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 13px;
+  padding: 8px 11px; border-radius: 8px; background: var(--light-card);
+  border: 1px solid var(--light-border); border-left: 3px solid var(--c, #888);
+}
+.conge-who  { font-weight: 700; color: var(--text-primary); }
+.conge-when { color: var(--text-secondary); }
+.conge-len  { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
+.conge-dir  { margin-left: 4px; font-size: 9px; font-weight: 700; color: #e74c3c; }
+.conge-info { margin-left: 4px; font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+
+@media (max-width: 768px) {
+  .conge-cal  { display: none; }
+  .conge-list { margin-top: 8px; }
+}
 
 /* ── Modale « Copier la semaine » ───────────────────────────────────────────*/
 .cw-mode-grid { display: flex; gap: 8px; margin-top: 6px; }
