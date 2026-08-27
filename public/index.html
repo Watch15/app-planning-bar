@@ -313,6 +313,12 @@
             .day-detail-title  { font-size: 12px !important; flex: 1 !important; min-width: 0 !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             #btn-copy-day      { display: none !important; }
             #btn-refresh-day   { display: none !important; }
+            /* L'en-tête est en overflow:hidden : sur téléphone on garde le cadenas seul,
+               le bandeau se charge de l'expliquer au premier geste bloqué. !important parce
+               que la règle de base est déclarée PLUS BAS dans le fichier, à specificité égale. */
+            #btn-edit-lock                { font-size: 14px !important; padding: 3px 7px !important; }
+            #btn-edit-lock::after         { content: '🔒' !important; }
+            #btn-edit-lock.editing::after { content: '✏️' !important; }
             #btn-publish-week  { font-size: 11px !important; padding: 5px 10px !important; white-space: nowrap; flex-shrink: 0; }
             .day-detail-close  { flex-shrink: 0 !important; }
 
@@ -501,7 +507,8 @@
             #fab-staff:active { transform: scale(0.93); }
 
             /* ── Bandeau tap-to-place ── */
-            #tap-place-banner { padding: 8px 12px max(6px, env(safe-area-inset-bottom)) !important; font-size: 12px !important; }
+            #tap-place-banner,
+            #edit-lock-banner { padding: 8px 12px max(6px, env(safe-area-inset-bottom)) !important; font-size: 12px !important; }
             #tap-place-banner.above-staff { bottom: 46vh !important; }
 
             /* ── Modales → bottom sheet avec plus de hauteur disponible ── */
@@ -529,8 +536,11 @@
             position: relative;
         }
 
-        /* ── Bandeau tap-to-place ── */
-        #tap-place-banner {
+        /* ── Bandeaux plein écran (tap-to-place, verrou d'édition) ──
+           Même géométrie, même teinte : un seul bloc. Les dupliquer avait déjà produit
+           deux paddings différents selon la media query. */
+        #tap-place-banner,
+        #edit-lock-banner {
             display: none;
             position: fixed;
             bottom: 0; left: 0; right: 0;
@@ -546,6 +556,23 @@
         #tap-place-banner.above-staff {
             bottom: 70vh; /* s'il faut coexister avec staff sheet ouvert */
         }
+
+        /* ── Mode éditeur tactile (semaine publiée) ───────────────────────────
+           Le bouton n'apparaît que sur pointeur grossier ET semaine publiée : c'est le
+           script qui décide, le CSS ne fait que l'habiller. Les deux libellés vivent ici
+           et nulle part ailleurs — le JS ne pilote qu'une classe. */
+        #btn-edit-lock                { font-size: 12px; padding: 5px 10px; white-space: nowrap; flex-shrink: 0; }
+        #btn-edit-lock::after         { content: '🔒 Verrouillé'; }
+        #btn-edit-lock.editing::after { content: '✏️ Édition'; }
+        #btn-edit-lock.editing {
+            background: var(--accent, #6C63FF);
+            border-color: var(--accent, #6C63FF);
+            color: #fff;
+        }
+        #edit-lock-banner > span    { flex: 1; line-height: 1.35; }
+        #edit-lock-banner button    { border: none; color: #fff; border-radius: 6px; font-size: 12px; cursor: pointer; flex-shrink: 0; font-family: inherit; }
+        #edit-lock-go               { background: var(--accent, #6C63FF); padding: 8px 13px; font-weight: 700; }
+        #edit-lock-dismiss          { background: rgba(255,255,255,0.2); padding: 8px 11px; }
 
         /* ── FAB staff mobile ── */
         #fab-staff {
@@ -935,6 +962,9 @@
 
         <div class="day-detail-header">
             <span class="day-detail-title" id="day-detail-title"></span>
+            <!-- Libellé en CSS (#btn-edit-lock::after) ; le style en ligne ne garde que
+                 l'état initial masqué, que refreshEditLockUI() retire. -->
+            <button class="btn-manage-staff" id="btn-edit-lock" style="display:none"></button>
             <button class="btn-copy-day" id="btn-copy-day">Copier ce jour →</button>
             <button class="btn-manage-staff" id="btn-copy-week" style="font-size:12px;padding:5px 12px">Copier la semaine →</button>
             <button class="btn-manage-staff" id="btn-refresh-day" title="Recharger les heures réelles saisies depuis la tablette de pointage" style="font-size:12px;padding:5px 10px">⟳ Actualiser</button>

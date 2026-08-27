@@ -936,7 +936,8 @@ label[for], select, .tab-btn, .staff-card, .shift-card {
 }
 
 /* ── Bandeau tap-to-place ────────────────────────────────────────────────────*/
-#tap-place-banner {
+#tap-place-banner,
+#edit-lock-banner {
   display: none;
   position: fixed;
   bottom: 0; left: 0; right: 0;
@@ -1066,6 +1067,7 @@ label[for], select, .tab-btn, .staff-card, .shift-card {
    écritures (403) ; ceci évite d'afficher des actions vouées à échouer. Les onglets
    Staff / Comptes / Récap / Performance / Pointage restent pleinement utilisables. */
 body.observateur #btn-publish-week,
+body.observateur #btn-edit-lock,
 body.observateur #btn-copy-day,
 body.observateur #btn-copy-week,
 body.observateur #fab-staff,

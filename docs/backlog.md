@@ -1750,6 +1750,137 @@ Règle à retenir pour la suite : **toute vérification de smoke qui s'appuie su
 ajoutée en même temps qu'elle doit naître avec son entrée `stale`.** Une fixture neuve est
 par définition absente de toutes les bases déjà semées.
 
+### Mode éditeur tactile sur une semaine publiée (2026-08-27)
+
+Demande : *« lorsqu'un planning est publié, pour déplacer un shift, un texte doit
+apparaître pour passer en mode éditeur, sur téléphone et tablette »*.
+
+Aucun « mode éditeur » n'existait : c'est la brique qui a été créée, pas un texte
+branché sur un mécanisme en place.
+
+**Le modèle avant l'écran.** Le déplacement n'est pas le seul geste qui abîme un
+planning déjà vu par le staff. Sur la même carte, au doigt, on redimensionne (poignées
+gauche/droite), on supprime (croix du shift) et surtout on efface **toute la journée**
+d'un staff (croix de la ligne, `removeStaffFromDay`, sans confirmation). Un garde-fou qui
+ne ferme que le glissement ne garde rien. Périmètre retenu, validé avec le patron :
+**tous** les gestes modifiants.
+
+| Geste | Point de blocage |
+|---|---|
+| Glisser / redimensionner (tactile) | `onTouchMove`, à la bascule `_touchIntent === 'drag'` |
+| Glisser / redimensionner / échanger (souris) | handler `mousedown` |
+| Créer un shift (tap sur rail, tap sur timeline vide, glisser-déposer) | `createShift` |
+| Supprimer un shift | `deleteShift` |
+| Vider la journée d'un staff | `removeStaffFromDay` |
+
+`createShift` est le point de passage obligé des **trois** chemins de création : le
+garde-fou y est posé une fois plutôt qu'en trois exemplaires — et cela a fermé au passage
+le glisser-déposer souris, que les gardes par-geste avaient laissé ouvert.
+
+**Ce qui reste délibérément ouvert.** Le **tap simple** n'est pas intercepté : c'est la
+raison pour laquelle le verrou tactile s'exprime dans `onTouchMove` et non dans
+`onTouchStart` — bloquer dès le premier contact du doigt aurait aussi fermé la
+consultation. La modale d'édition (tap sur un shift → horaires →
+« Enregistrer ») n'est pas verrouillée : elle demande trois gestes délibérés et un bouton
+de validation. Le verrou vise l'accident, pas l'intention. Même raison pour « Copier ce
+jour / la semaine » et la réaffectation d'établissement, qui passent toutes par une modale.
+
+**⚠️ `isMobileDevice()` ne convenait pas.** Il teste `window.innerWidth < 768` ; un iPad en
+portrait fait 768 ou 820 px et serait passé à travers le garde-fou alors que la demande
+visait explicitement les tablettes. Le verrou interroge donc le **pointeur**
+(`matchMedia('(pointer: coarse)')`) : « tactile » et « petit écran » sont deux questions
+différentes, et les confondre est ce qui aurait livré une protection à moitié absente.
+
+**Le verrou ne suit que les publications EXPLICITES.** `isAutoPublished` (lib/utils.js)
+publie d'office la semaine courante et toutes les passées : elles restent librement
+modifiables au doigt (`_publishedVenues = auto ? new Set() : pubSet`). Arbitrage du patron,
+2026-08-27 — et il tient sur une distinction que la première version avait ratée : le verrou
+protège une **décision d'envoi**, pas une visibilité subie. La semaine en cours se retouche
+au comptoir toute la soirée ; la verrouiller n'aurait ajouté qu'un tap à chaque ajustement,
+pour un planning que le staff regarde de toute façon en direct. Ce qui mérite d'être gardé,
+c'est la semaine suivante une fois publiée : là, le staff a organisé sa vie dessus et un
+décalage involontaire part chez lui.
+
+Conséquence pratique : sur une base neuve, le verrou ne se manifeste **que** si l'on navigue
+sur une semaine future ET qu'elle a été publiée au bouton. C'est le seul scénario de recette
+valable — tester sur la semaine en cours ne montrera jamais le bandeau.
+
+**État visible en permanence.** Un bandeau qui explique une fois puis disparaît laisserait
+un patron sans réponse à « pourquoi mon geste ne fait rien ». D'où le bouton `#btn-edit-lock`
+dans l'en-tête du jour : `🔒 Verrouillé` / `✏️ Édition`, cliquable dans les deux sens. Il est
+placé **avant** les autres boutons car `.day-detail-header` est en `overflow:hidden` sur
+téléphone et rogne par la droite ; sous 768 px, seule l'icône reste (l'en-tête y est déjà
+saturé) et c'est le bandeau qui porte l'explication.
+
+**En cas de doute, on n'entrave pas.** `_publishedVenues` vaut `null` tant que
+`GET /api/publish/:weekStart` n'a pas répondu (ou a échoué) : le verrou est alors inactif.
+Bloquer le patron sur une incertitude réseau coûte plus cher que le geste accidentel qu'on
+prévient.
+
+**Non couvert par les tests.** Changement 100 % client (`public/script.js`, `index.html`,
+`style.css`) : aucune route touchée, donc rien à ajouter au smoke ni à `node --test`, qui
+sont tous deux HTTP. Le comportement se vérifie à la main sur un vrai écran tactile — un
+émulateur de navigateur ne rapporte pas toujours `pointer: coarse`.
+
+**Trou pré-existant, non traité ici.** Le tap-to-place (sélectionner un staff puis taper
+une ligne) est gardé par `isMobileDevice()` : il ne fonctionne donc pas du tout sur tablette,
+verrou ou pas. Élargir cette détection touche aussi le choix de modale, le FAB et la
+bottom-sheet — hors périmètre, à traiter séparément.
+
+#### Revue `/simplify` du mode éditeur (2026-08-27) — une porte encore ouverte
+
+**Le constat qui comptait : le glisser-déposer était à moitié gardé.** Le handler `drop`
+de `#day-detail` a **trois** branches mutantes — `assignStaffToJoker`, `reassignShift`,
+`createShift` — et je n'avais gardé que la troisième, en posant le garde-fou dans
+`createShift`. Glisser une carte staff sur un shift existant réaffectait donc le shift sur
+une semaine publiée, verrou actif, sans bandeau : le même geste était protégé ou non selon
+l'endroit où l'on lâche le doigt. Corrigé en remontant le garde d'une ligne, au vrai point
+de passage du geste (`if (!draggedStaff) return;`).
+
+Leçon : « point de passage obligé » est un raisonnement qui doit se vérifier sur le GESTE,
+pas sur la fonction. `createShift` est bien le passage obligé de la *création* — il ne l'est
+pas du *glisser-déposer*, qui peut aussi réaffecter ou assigner.
+
+**Deuxième trou, même famille : le verrou se pose par (jour, établissement), pas par jour.**
+Déverrouiller lundi au Bar A laissait lundi au Bar B ouvert, `loadDayDetail()` n'y voyant
+que le même jour. Reset ajouté au changement d'onglet établissement.
+
+**`_publishedVenues` ne tenait pas la promesse de son commentaire.** Le `catch { }` de
+`loadPublishButton` laissait l'ensemble de la semaine précédente en place indéfiniment en
+cas d'échec réseau, alors que le commentaire annonce « null = inconnu → on n'entrave rien ».
+Même problème, plus court, entre le changement de jour et la réponse HTTP. Résolu en
+remettant `null` **avant** la requête et en rafraîchissant l'UI dans le `catch`.
+
+**Ce qui a été simplifié**
+
+| Constat | Correctif |
+|---|---|
+| `#edit-lock-banner` = copie octet pour octet de `#tap-place-banner`, + override paysage recopié, + un 3ᵉ padding divergent | Un seul bloc, sélecteurs fusionnés dans les deux fichiers |
+| `patchPublish` re-dérivait l'ensemble publié et **oubliait** la règle d'exclusion `auto` | Repasse par `renderPublishControl(btn, { auto: false, … })` ; paramètre `total` devenu inutile |
+| Trois prédicats en cascade, dont un à appelant unique ; la règle « tactile ET publié » écrite deux fois | Deux prédicats : `editLockApplies()` + `blockedByEditLock()` |
+| `_editModeDay` encodait un booléen dans une date ; `setEditMode(_editModeDay !== selectedDate)` se lisait à contresens | `_editMode` booléen, `setEditMode(!_editMode)` |
+| Bandeau reconstruit (HTML + 2 `addEventListener`) à chaque geste bloqué, pour un contenu 100 % statique | Construit et câblé une fois, puis réaffiché |
+| Libellé du bouton réparti entre HTML, JS et CSS | `#btn-edit-lock::after` seul ; le JS ne pilote qu'une classe |
+| `matchMedia()` re-parsé à chaque appel | `MediaQueryList` conservé — `.matches` reste **live**, un booléen figé au chargement aurait raté le branchement d'une souris |
+| `if (ouvert) hideEditLockBanner()` en fin de `refreshEditLockUI` : branche atteignable, effet impossible | Supprimée |
+| Règle du verrou en ternaire anonyme, qu'un « nettoyage » futur aurait pu inverser sans qu'aucun test ne bronche | Nommée `sousVerrou` |
+
+**Écarté volontairement**
+
+- **Un wrapper sur les `fetch` mutants** comme point de garde unique : au niveau HTTP, un
+  `PATCH /api/shifts/:id` venu d'un glissement et un venu du bouton « Enregistrer » sont
+  indiscernables. Il faudrait un `bypass` sur une dizaine d'appels délibérés, et le mode de
+  panne s'inverserait — « un geste échappe au verrou » (bénin) deviendrait « une sauvegarde
+  volontaire est refusée en silence » (grave).
+- **Renommer `isMobileDevice()` en `isNarrowScreen()`** (il teste `innerWidth < 768`, pas le
+  tactile). Le nom est effectivement devenu un piège maintenant qu'`isTouchDevice()` existe à
+  seize lignes de là, mais les 5 sites d'appel sont hors du périmètre de cette feature (FAB,
+  bottom-sheet, choix de modale). **Dette à traiter séparément.**
+- **Factoriser un `getOrCreateBanner(id)`** entre les deux bandeaux : ~10 lignes, pas de quoi
+  toucher `showTapBanner`. En revanche la revue a relevé que les deux bandeaux sont
+  `position:fixed; bottom:0` et **peuvent s'afficher en même temps** — `#tap-place-banner` a
+  une classe `.above-staff` pour cohabiter, `#edit-lock-banner` n'en a aucune. **Dette.**
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique. 🔄 **Rafraîchi le 2026-08-10** (1180 nœuds, 1897 arêtes, 68 communautés) — il datait de `c72affe`, 7 commits de retard : la consigne « après chaque session » n'a **pas** été tenue sur les sessions des 06→08/08. Ancien graphe dans `graphify-out/2026-08-10/`.

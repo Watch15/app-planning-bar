@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "public/script.js": {
-    "mtime": 1787599714.1402073,
-    "ast_hash": "74f0e12717846163fc8be77bec75dae9",
+    "mtime": 1787821997.4137166,
+    "ast_hash": "f69369d2b085b4e6df126783b9644806",
     "semantic_hash": ""
   },
   "public/sw.js": {
@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "docs/backlog.md": {
-    "mtime": 1787683633.2138405,
-    "ast_hash": "4979cfe17b09a4098f97b2b9a0153046",
+    "mtime": 1787822115.558026,
+    "ast_hash": "ed1bb97fff3fdc979144529001f7e0fd",
     "semantic_hash": ""
   },
   "docs/prd.md": {
@@ -125,8 +125,8 @@
     "semantic_hash": "b08e527857ae0b58a84a24cdd1f2fd8a"
   },
   "public/index.html": {
-    "mtime": 1787599638.9075904,
-    "ast_hash": "819712f5877614a00c72cdd26b64499b",
+    "mtime": 1787822036.0781145,
+    "ast_hash": "9193f6f4bd7123579fabdd51c7fb1083",
     "semantic_hash": ""
   },
   "public/login.html": {
@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "scripts/smoke.js": {
-    "mtime": 1787683866.3583932,
-    "ast_hash": "cb25be4aed46feb7c3aa1988d41dee00",
+    "mtime": 1787686772.9869003,
+    "ast_hash": "995591083172d8c74bbb23906959823f",
     "semantic_hash": ""
   },
   "tests/estab-access.test.js": {

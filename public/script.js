@@ -170,6 +170,103 @@ function isMobileDevice() {
     return window.innerWidth < 768;
 }
 
+// ── Mode éditeur tactile — garde-fou sur une semaine déjà publiée ─────────────
+// Au doigt, un glissement involontaire suffit à décaler un shift. Tant que la semaine
+// n'est pas publiée cela ne coûte rien ; une fois publiée, le shift est sous les yeux
+// du staff et le décalage part chez lui sans que personne l'ait voulu. On exige donc
+// un geste explicite avant d'autoriser la moindre modification tactile.
+//
+// La souris n'est pas concernée : un clic-glissé ne se déclenche pas par accident, et
+// verrouiller le poste de travail du patron n'apporterait que de la friction.
+
+// isMobileDevice() (largeur < 768) ne convient PAS ici : un iPad en portrait fait 768
+// ou 820 px et passerait à travers le garde-fou. C'est le pointeur qu'il faut
+// interroger, pas la largeur — « tactile » et « petit écran » sont deux choses.
+// Le MediaQueryList est VIVANT : `.matches` se réévalue à chaque lecture. Le conserver
+// évite de re-parser la requête à chaque geste SANS figer la réponse — brancher une souris
+// sur une tablette continue de faire basculer la valeur, ce qu'un booléen calculé au
+// chargement aurait manqué.
+const _pointeurGrossier = window.matchMedia ? window.matchMedia('(pointer: coarse)') : null;
+
+function isTouchDevice() {
+    return !!(_pointeurGrossier && _pointeurGrossier.matches);
+}
+
+let _publishedVenues = null;  // Set des établissements sous verrou pour la semaine affichée ; null = inconnu
+let _editMode        = false; // mode éditeur du jour affiché ; se referme en changeant de jour ou d'établissement
+
+// « Le verrou s'applique-t-il ici ? » — pointeur grossier ET semaine publiée explicitement
+// pour l'établissement affiché. Deux lecteurs, le blocage des gestes et l'affichage du
+// bouton d'en-tête : les tenir sur la MÊME expression est ce qui les empêche de diverger.
+//
+// _publishedVenues à null = état inconnu (requête en vol ou en échec) → on n'entrave rien.
+// Bloquer sur une incertitude réseau coûterait plus cher au patron que le geste accidentel
+// qu'on prévient.
+function editLockApplies() {
+    return isTouchDevice()
+        && !!(_publishedVenues && currentVenueId && _publishedVenues.has(currentVenueId));
+}
+
+// Point d'entrée unique des gestes modifiants : ils appellent tous ceci et abandonnent
+// si c'est verrouillé. Ajouter un geste plus tard = ajouter cette ligne, pas ré-inventer
+// la règle — c'est ce qui évite qu'une porte reste ouverte pendant que les autres ferment.
+function blockedByEditLock() {
+    if (_editMode || !editLockApplies()) return false;
+    showEditLockBanner();
+    return true;
+}
+
+// Contenu entièrement statique : construit et câblé UNE fois, puis simplement réaffiché.
+// Et pas avant le premier geste bloqué — une session qui ne rencontre jamais le verrou ne
+// paie jamais sa construction.
+function showEditLockBanner() {
+    let banner = document.getElementById('edit-lock-banner');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'edit-lock-banner';
+        banner.innerHTML =
+            '<span>🔒 <strong>Planning publié</strong> — le staff l\'a déjà sous les yeux. '
+          + 'Passe en mode éditeur pour le modifier.</span>'
+          + '<button id="edit-lock-go">Mode éditeur</button>'
+          + '<button id="edit-lock-dismiss" aria-label="Fermer">✕</button>';
+        banner.querySelector('#edit-lock-go').addEventListener('click', () => setEditMode(true));
+        banner.querySelector('#edit-lock-dismiss').addEventListener('click', hideEditLockBanner);
+        document.body.appendChild(banner);
+    }
+    banner.style.display = 'flex';
+}
+
+function hideEditLockBanner() {
+    const banner = document.getElementById('edit-lock-banner');
+    if (banner) banner.style.display = 'none';
+}
+
+function setEditMode(on) {
+    _editMode = on;
+    hideEditLockBanner();
+    refreshEditLockUI();
+    showToast(on ? 'Mode éditeur — tes modifications partent chez le staff' : 'Planning reverrouillé');
+}
+
+// Le bouton d'en-tête porte l'état en permanence. Sans lui, un patron dont le geste n'a
+// rien donné n'aurait plus aucun moyen de savoir pourquoi une fois le bandeau refermé.
+// Les deux libellés vivent en CSS (`#btn-edit-lock::after`) : un seul endroit à retoucher,
+// au lieu d'une valeur initiale en HTML et de deux valeurs suivantes ici.
+function refreshEditLockUI() {
+    const btn = document.getElementById('btn-edit-lock');
+    if (!btn) return;
+    if (!editLockApplies()) {
+        btn.style.display = 'none';
+        hideEditLockBanner();
+        return;
+    }
+    btn.style.display = '';
+    btn.classList.toggle('editing', _editMode);
+    btn.title = _editMode
+        ? 'Mode éditeur actif — toucher pour reverrouiller le planning publié'
+        : 'Semaine publiée : les modifications tactiles sont bloquées. Toucher pour passer en mode éditeur.';
+}
+
 // Copie de jour
 let copyShiftsBuffer = []; // shifts modifiables avant confirmation
 
@@ -450,6 +547,9 @@ async function init() {
             showToast('Planning rechargé');
         }
     });
+
+    const btnEditLock = document.getElementById('btn-edit-lock');
+    if (btnEditLock) btnEditLock.addEventListener('click', () => setEditMode(!_editMode));
 
     const disposClose = document.getElementById('dispos-modal-close');
     if (disposClose) disposClose.addEventListener('click', () => {
@@ -1130,6 +1230,10 @@ function renderWeekGrid() {
 // ── Détail d'un jour ──────────────────────────────────────────────────────────
 
 async function loadDayDetail(dateStr) {
+    // Chaque journée publiée redemande son déverrouillage. selectedDate porte encore le jour
+    // SORTANT à cet instant : c'est un simple rechargement du même jour (le chemin emprunté
+    // après chaque modification) qui doit conserver le mode, pas une navigation.
+    if (dateStr !== selectedDate) _editMode = false;
     selectedDate = dateStr;
     const date = parseDate(dateStr);
 
@@ -1197,11 +1301,16 @@ async function loadPublishButton(dateStr) {
                           : isPastWeek    ? 'Semaine passée'
                           : 'Semaine à venir';
 
+    // Le verrou raisonnerait sur la semaine PRÉCÉDENTE entre le changement de jour et la
+    // réponse ; et sans le reset du catch, un échec réseau laisserait cet ensemble périmé
+    // en place indéfiniment — l'inverse de ce que promet « null = inconnu ».
+    _publishedVenues = null;
+    refreshEditLockUI();
     try {
         const res  = await fetch('/api/publish/' + weekStart, { credentials: 'include' });
         const data = await res.json();
         renderPublishControl(btn, data, weekStart);
-    } catch { }
+    } catch { refreshEditLockUI(); }
 }
 
 // Établissements visibles côté patron (filtrés par le groupe courant s'il est actif).
@@ -1219,6 +1328,19 @@ function renderPublishControl(btn, data, weekStart) {
         ? new Set(estabs.map(e => e.id))
         : new Set(Array.isArray(data.establishments) ? data.establishments : []);
     btn.dataset.auto = auto ? '1' : '';
+    // Le verrou tactile se règle sur le MÊME ensemble que le bouton Publier — deux
+    // dérivations de « qui est publié » finiraient par diverger — À UNE EXCEPTION PRÈS :
+    // les semaines auto-publiées (la courante et les passées, cf. isAutoPublished) n'y
+    // entrent pas. Le verrou protège une DÉCISION d'envoi, pas une visibilité subie : la
+    // semaine en cours se retouche au comptoir toute la soirée, la verrouiller n'aurait
+    // fait qu'ajouter un tap à chaque ajustement. Ce qu'on garde, c'est la semaine
+    // suivante une fois publiée : là, un décalage involontaire part chez le staff.
+    // Nommée plutôt que laissée en ternaire : l'expression a l'air d'une redondance avec
+    // pubSet, et un « nettoyage » futur en _publishedVenues = pubSet verrouillerait toutes
+    // les semaines passées et courantes sans qu'aucun test ne bronche.
+    const sousVerrou = auto ? new Set() : pubSet;
+    _publishedVenues = sousVerrou;
+    refreshEditLockUI();
     updatePublishBtnLabel(btn, pubSet.size, estabs.length);
     btn.onclick = (ev) => {
         ev.stopPropagation();
@@ -1252,7 +1374,7 @@ function openPublishPopover(btn, weekStart, estabs, pubSet, auto) {
     if (auto) { showToast('Cette semaine est publiée automatiquement'); return; }
     // Un seul établissement → bascule directe tout/rien (pas de modale).
     if (estabs.length <= 1) {
-        patchPublish(weekStart, pubSet.size === 0 ? 'ALL' : [], btn, estabs.length);
+        patchPublish(weekStart, pubSet.size === 0 ? 'ALL' : [], btn);
         return;
     }
 
@@ -1278,7 +1400,7 @@ function openPublishPopover(btn, weekStart, estabs, pubSet, auto) {
 
     const persist = () => {
         const arr = [...sel];
-        patchPublish(weekStart, arr.length === estabs.length ? 'ALL' : arr, btn, estabs.length);
+        patchPublish(weekStart, arr.length === estabs.length ? 'ALL' : arr, btn);
     };
 
     const draw = () => {
@@ -1313,7 +1435,7 @@ function openPublishPopover(btn, weekStart, estabs, pubSet, auto) {
     draw();
 }
 
-async function patchPublish(weekStart, establishments, btn, total) {
+async function patchPublish(weekStart, establishments, btn) {
     try {
         const res = await fetch('/api/publish/' + weekStart, {
             credentials: 'include', method: 'PATCH',
@@ -1322,8 +1444,10 @@ async function patchPublish(weekStart, establishments, btn, total) {
         });
         if (!res.ok) { showToast('Erreur lors de la publication', true); return; }
         const data = await res.json();
-        const n = establishments === 'ALL' ? total : establishments.length;
-        updatePublishBtnLabel(btn, n, total);
+        // Repasser par le rendu normal plutôt que de re-dériver l'ensemble publié ici :
+        // une publication n'est jamais « auto » (openPublishPopover sort tôt sur ces
+        // semaines-là), et cette copie-ci oubliait justement la règle d'exclusion.
+        renderPublishControl(btn, { auto: false, establishments }, weekStart);
         showToast(data.message || 'Mis à jour');
     } catch { showToast('Erreur lors de la publication', true); }
 }
@@ -1725,6 +1849,7 @@ function renderTabs(list) {
             document.querySelectorAll('.venue-tab').forEach(t => t.classList.remove('active'));
             btn.classList.add('active');
             currentVenueId = v.id;
+            _editMode = false; // le verrou se pose par (jour, établissement), pas par jour seul
             applyVenueHours(v.id);
             renderSidebar(); // Mettre à jour immédiatement l'ordre staff
             await refreshWeek();
@@ -2573,6 +2698,10 @@ function initDropZone() {
         clearDragHighlights();
         document.getElementById('drop-hint').classList.remove('visible');
         if (!draggedStaff) return;
+        // Le garde-fou est ici, PAS dans createShift seul : ce handler a trois branches
+        // mutantes (assignation d'un joker, réaffectation, création) et n'en garder qu'une
+        // laissait le même geste protégé ou non selon l'endroit où l'on lâche le doigt.
+        if (blockedByEditLock()) return;
 
         if (!selectedDate) {
             showToast('Sélectionne un jour dans la semaine d\'abord', true);
@@ -3012,6 +3141,10 @@ async function openJokerNoteModal(shift, el) {
 }
 
 async function createShift(staff, startTime, endTime) {
+    // Point de passage obligé des trois chemins de création (tap sur rail, tap sur
+    // timeline vide, glisser-déposer souris) : le garde-fou est ici plutôt qu'en trois
+    // exemplaires, pour qu'un quatrième chemin naisse protégé sans qu'on y pense.
+    if (blockedByEditLock()) return;
     if (_createShiftPending) return;
     _createShiftPending = true;
     try {
@@ -3087,6 +3220,7 @@ async function createShift(staff, startTime, endTime) {
 
 async function deleteShift(e, shiftId, staffId) {
     e.stopPropagation();
+    if (blockedByEditLock()) return;
     try {
         await fetch(`/api/shifts/${shiftId}`, { method: 'DELETE', credentials: 'include' });
         currentShifts = currentShifts.filter(s => String(s._id) !== String(shiftId));
@@ -3114,6 +3248,9 @@ async function deleteShift(e, shiftId, staffId) {
 }
 
 async function removeStaffFromDay(rowId) {
+    // La croix de la ligne efface TOUS les shifts du staff pour la journée, sans
+    // confirmation : c'est le tap le plus coûteux de l'écran, donc le premier à verrouiller.
+    if (blockedByEditLock()) return;
     // Pour un Joker, rowId = _id du shift. Pour le staff normal, rowId = staff_id.
     const isJokerRow = displayedStaff.find(s => s._id === rowId && s.isJoker);
     let toDelete;
@@ -3211,6 +3348,11 @@ document.addEventListener('mousedown', e => {
     if (_touchActive) return; // ignore les mousedown synthétiques émis après touchstart sur Android
     const shiftEl = e.target.closest('.shift');
     if (!shiftEl || e.target.closest('.shift-delete') || e.target.closest('.shift-resp-btn')) return;
+    // Sur un appareil à pointeur grossier, ce handler reçoit soit un mousedown synthétique
+    // (Android le fait suivre le touchend), soit une vraie souris branchée sur une tablette.
+    // Dans les deux cas on n'amorce pas le drag ; le clic simple, lui, n'est pas concerné —
+    // il passe par son propre écouteur et ouvre la modale.
+    if (blockedByEditLock()) return;
     refreshPxPerHour();
 
     _shiftWasDragged = false; // réinitialiser au début de chaque interaction
@@ -3438,6 +3580,12 @@ function onTouchMove(e) {
     if (_touchIntent === 'scroll') return;
 
     if (_touchIntent === 'drag') {
+        // C'est ICI que le verrou se prononce, et pas au premier contact du doigt : un tap
+        // simple n'ouvre qu'une modale de consultation et doit rester libre sur une semaine
+        // publiée. On attend donc de savoir que le geste est un déplacement (ou un
+        // redimensionnement, qui arme _touchIntent dès onTouchStart) pour l'interrompre.
+        // activeEl remis à null : onTouchEnd n'enchaînera pas sur le clic de repli.
+        if (blockedByEditLock()) { activeEl = null; activeAction = null; return; }
         e.preventDefault();
         updateAutoScrollPos(touch.clientX, touch.clientY);
         startAutoScroll(false); // horizontal (timeline) seulement
