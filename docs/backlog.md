@@ -1791,19 +1791,33 @@ visait explicitement les tablettes. Le verrou interroge donc le **pointeur**
 (`matchMedia('(pointer: coarse)')`) : « tactile » et « petit écran » sont deux questions
 différentes, et les confondre est ce qui aurait livré une protection à moitié absente.
 
-**Le verrou ne suit que les publications EXPLICITES.** `isAutoPublished` (lib/utils.js)
-publie d'office la semaine courante et toutes les passées : elles restent librement
-modifiables au doigt (`_publishedVenues = auto ? new Set() : pubSet`). Arbitrage du patron,
-2026-08-27 — et il tient sur une distinction que la première version avait ratée : le verrou
-protège une **décision d'envoi**, pas une visibilité subie. La semaine en cours se retouche
-au comptoir toute la soirée ; la verrouiller n'aurait ajouté qu'un tap à chaque ajustement,
-pour un planning que le staff regarde de toute façon en direct. Ce qui mérite d'être gardé,
-c'est la semaine suivante une fois publiée : là, le staff a organisé sa vie dessus et un
-décalage involontaire part chez lui.
+**Toutes les semaines publiées sont gardées, auto-publiées comprises** (`_publishedVenues =
+pubSet`). Arbitrage du patron du 2026-08-27, en deux temps — et le détour vaut d'être noté,
+parce que la version intermédiaire était fausse pour une raison qu'aucun de nous n'avait vue
+en la décidant.
 
-Conséquence pratique : sur une base neuve, le verrou ne se manifeste **que** si l'on navigue
-sur une semaine future ET qu'elle a été publiée au bouton. C'est le seul scénario de recette
-valable — tester sur la semaine en cours ne montrera jamais le bandeau.
+Premier arbitrage : « restreins le verrou aux publications explicites, pas la semaine en
+cours ». Implémenté en `auto ? new Set() : pubSet`. Le raisonnement semblait bon — le verrou
+protège une décision d'envoi, pas une visibilité subie, et la semaine en cours se retouche au
+comptoir toute la soirée.
+
+**Ce que cette version cassait sans le dire : la garde était temporaire.** `isAutoPublished`
+(lib/utils.js) couvre la semaine courante et toutes les passées, et `GET /api/publish/:weekStart`
+renvoie alors `{ auto: true, establishments: 'ALL' }` — il **masque** l'existence d'une
+publication explicite. Une semaine publiée au bouton le vendredi était donc gardée tout le
+week-end, puis **perdait sa garde le lundi matin**, au moment précis où le staff commençait à
+travailler dessus. Exempter l'auto ne repoussait pas le verrou : ça lui donnait une date de
+péremption.
+
+Arbitrage final : toutes les semaines publiées verrouillent. Le critère redevient celui qui se
+défend seul — « le staff l'a-t-il sous les yeux ? » — et il couvre les deux cas d'un coup, sans
+toucher à `GET /api/publish/:weekStart`, route partagée avec l'écran staff.
+
+Conséquence pratique assumée : sur une tablette au comptoir, retoucher le planning du soir
+demande un déverrouillage par journée. C'est le prix du garde-fou, et il est explicite.
+
+Conséquence pour la recette : le verrou est visible **immédiatement**, sur n'importe quelle
+semaine passée ou courante, sans rien publier au préalable.
 
 **État visible en permanence.** Un bandeau qui explique une fois puis disparaît laisserait
 un patron sans réponse à « pourquoi mon geste ne fait rien ». D'où le bouton `#btn-edit-lock`
@@ -1863,7 +1877,7 @@ remettant `null` **avant** la requête et en rafraîchissant l'UI dans le `catch
 | Libellé du bouton réparti entre HTML, JS et CSS | `#btn-edit-lock::after` seul ; le JS ne pilote qu'une classe |
 | `matchMedia()` re-parsé à chaque appel | `MediaQueryList` conservé — `.matches` reste **live**, un booléen figé au chargement aurait raté le branchement d'une souris |
 | `if (ouvert) hideEditLockBanner()` en fin de `refreshEditLockUI` : branche atteignable, effet impossible | Supprimée |
-| Règle du verrou en ternaire anonyme, qu'un « nettoyage » futur aurait pu inverser sans qu'aucun test ne bronche | Nommée `sousVerrou` |
+| Règle du verrou en ternaire anonyme, qu'un « nettoyage » futur aurait pu inverser sans qu'aucun test ne bronche | Sans objet depuis l'arbitrage final : plus de ternaire, `_publishedVenues = pubSet` |
 
 **Écarté volontairement**
 
@@ -1880,6 +1894,76 @@ remettant `null` **avant** la requête et en rafraîchissant l'UI dans le `catch
   toucher `showTapBanner`. En revanche la revue a relevé que les deux bandeaux sont
   `position:fixed; bottom:0` et **peuvent s'afficher en même temps** — `#tap-place-banner` a
   une classe `.above-staff` pour cohabiter, `#edit-lock-banner` n'en a aucune. **Dette.**
+
+#### Seconde revue `/simplify` (2026-08-27) — la première avait introduit une régression
+
+Passée après l'arbitrage final (« toutes les semaines publiées verrouillent »). Le constat
+principal ne porte pas sur ce dernier changement mais sur **le passage `/simplify`
+précédent**, qui avait remplacé `_editModeDay` (une date) par `_editMode` (un booléen) au
+motif, juste en soi, qu'un booléen encodé dans une date se lit à contresens.
+
+**Ce que ce remplacement avait cassé.** Le booléen déplaçait la portée du mode éditeur dans
+une remise à zéro : `if (dateStr !== selectedDate) _editMode = false;` en tête de
+`loadDayDetail`. Or `switchToDayView()` écrit `selectedDate = date` **avant** d'appeler
+`loadDayDetail` : la condition est donc toujours fausse par ses quatre entrées — tableau de
+bord, agenda, Gantt, semaine pleine — et **le mode éditeur survivait au changement de jour**.
+La version à date, elle, comparait au paramètre et ne dépendait de l'ordre d'écriture
+d'aucun global.
+
+⚠️ **La leçon n'est pas « le booléen était une erreur ».** Une portée entretenue par des
+remises à zéro dispersées est fragile quel que soit le type qui la porte : il faut se souvenir
+de la réinitialiser à chaque nouveau chemin de navigation, et rien ne le rappelle. La forme
+retenue fait porter la portée **par la valeur** :
+
+```js
+let _editScope = null;                       // 'établissement|jour', ou null
+function editModeOn() {
+    return _editScope !== null && _editScope === currentVenueId + '|' + selectedDate;
+}
+```
+
+Zéro site de remise à zéro (les deux ont disparu), plus aucune dépendance à l'ordre
+d'affectation d'un global, et un cinquième chemin de navigation naîtrait correct sans qu'on
+y pense. Bilan en lignes : négatif.
+
+**Autres correctifs**
+
+| Constat | Correctif |
+|---|---|
+| Le mot « explicitement » dans l'en-tête d'`editLockApplies` documentait la règle abandonnée — à l'endroit exact où l'on va chercher la vérité | Retiré |
+| Commentaire de 8 lignes sur `_publishedVenues = pubSet` : il racontait l'historique des deux arbitrages, déjà écrit ici | Ramené à 3 lignes ; ne reste que le fait non déductible du code (le serveur masque la publication explicite) |
+| Le jumeau de ce commentaire, dans `patchPublish`, était resté au premier arbitrage et invoquait une « règle d'exclusion » supprimée depuis | Réécrit |
+| Tri-état `null` / `Set` vide / `Set` peuplé : aucun lecteur ne distinguait les deux premiers, et le design refuse explicitement de jamais bloquer sur l'inconnu | `_publishedVenues` est toujours un `Set` ; le prédicat tient sur une ligne |
+| `btn.dataset.auto` écrit et lu nulle part dans le dépôt (dette préexistante) | Supprimé — l'état « auto » circule déjà par le paramètre d'`openPublishPopover` |
+| `loadPublishButton()` appelée en **dernier** dans `loadDayDetail`, après trois requêtes et le rendu complet, alors qu'elle n'en dépend pas | Remontée avant le `Promise.all` : autant de seconde en moins où le verrou est inactif |
+
+**Le contrat serveur, documenté des deux côtés.** `GET /api/publish/:weekStart` court-circuite
+sur `auto` **avant** de lire le document `publish_*` : c'est ce court-circuit qui rend le
+client correct, et rien côté serveur ne le disait. Enrichir cette réponse — un correctif
+parfaitement naturel, la route perd de l'information — ferait perdre au verrou sa garde le
+lundi, sans qu'aucun test ne bronche. Un avertissement a été posé sur la ligne concernée.
+
+**Écarté**
+
+- **Extraire `publishedSetFrom(data, estabs)`** pour que `_publishedVenues` naisse dans
+  `loadPublishButton` plutôt que dans une fonction de rendu de bouton. L'objection est juste
+  sur le principe, mais le remède impose **deux** sites d'écriture (`patchPublish` devrait
+  écrire l'état lui-même) là où il y en a un — on échange un couplage théorique contre une
+  divergence possible. Le symptôme concret (sortie anticipée si `#btn-publish-week` manque)
+  suppose un bouton absent du HTML statique. **Dette notée.**
+- **Cacher la réponse de `/api/publish`** : elle est redemandée 30 à 80 fois par session
+  d'édition, toujours pour le même `weekStart`, et chaque requête rouvre une fenêtre de 30 à
+  150 ms où le verrou est inactif. Un cache d'une entrée réglerait les deux — mais une
+  publication faite depuis un autre appareil ne serait plus vue avant changement de semaine.
+  **Arbitrage produit, pas décision technique.**
+- **`openPublishPopover` émet un PATCH par case cochée** (5 établissements = 5 écritures pour
+  une seule intention). Préexistant, hors périmètre. **Dette.**
+
+**Confirmé sain, et il vaut la peine de savoir pourquoi.** Le verrou est passé d'un cas rare
+à un cas quasi permanent sur tactile ; la revue d'efficacité a vérifié que rien ne devient
+coûteux. Deux détails y suffisent : `activeEl = null` dans `onTouchMove` désarme le geste
+bloqué dès la première frame (sinon un doigt maintenu deux secondes aurait affiché le bandeau
+~120 fois), et le `position: fixed` du bandeau lui interdit de relayouter la timeline.
 
 ### Divers — outillage & process
 

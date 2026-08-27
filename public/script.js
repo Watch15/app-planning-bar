@@ -192,26 +192,36 @@ function isTouchDevice() {
     return !!(_pointeurGrossier && _pointeurGrossier.matches);
 }
 
-let _publishedVenues = null;  // Set des établissements sous verrou pour la semaine affichée ; null = inconnu
-let _editMode        = false; // mode éditeur du jour affiché ; se referme en changeant de jour ou d'établissement
+// Vide tant qu'on ne sait pas : une requête en vol ou en échec n'entrave rien. Bloquer sur
+// une incertitude réseau coûterait plus cher au patron que le geste accidentel qu'on prévient.
+let _publishedVenues = new Set(); // établissements sous verrou pour la semaine affichée
 
-// « Le verrou s'applique-t-il ici ? » — pointeur grossier ET semaine publiée explicitement
-// pour l'établissement affiché. Deux lecteurs, le blocage des gestes et l'affichage du
-// bouton d'en-tête : les tenir sur la MÊME expression est ce qui les empêche de diverger.
+// Portée du déverrouillage : `'établissement|jour'`, ou null. La valeur PORTE sa portée au lieu
+// d'être entretenue par des remises à zéro dispersées — un déverrouillage cesse de s'appliquer
+// dès qu'on change de jour ou d'établissement, sans qu'aucun chemin de navigation ait à y penser.
 //
-// _publishedVenues à null = état inconnu (requête en vol ou en échec) → on n'entrave rien.
-// Bloquer sur une incertitude réseau coûterait plus cher au patron que le geste accidentel
-// qu'on prévient.
+// La version précédente remettait un booléen à false dans loadDayDetail en comparant à
+// selectedDate, ce qui dépendait de l'ordre d'écriture d'un global : switchToDayView affecte
+// selectedDate AVANT d'appeler loadDayDetail, et le mode survivait donc au changement de jour
+// depuis le tableau de bord, l'agenda, le Gantt et la semaine pleine.
+let _editScope = null;
+
+function editModeOn() {
+    return _editScope !== null && _editScope === currentVenueId + '|' + selectedDate;
+}
+
+// « Le verrou s'applique-t-il ici ? » — pointeur grossier ET semaine publiée pour
+// l'établissement affiché. Deux lecteurs, le blocage des gestes et l'affichage du bouton
+// d'en-tête : les tenir sur la MÊME expression est ce qui les empêche de diverger.
 function editLockApplies() {
-    return isTouchDevice()
-        && !!(_publishedVenues && currentVenueId && _publishedVenues.has(currentVenueId));
+    return isTouchDevice() && _publishedVenues.has(currentVenueId);
 }
 
 // Point d'entrée unique des gestes modifiants : ils appellent tous ceci et abandonnent
 // si c'est verrouillé. Ajouter un geste plus tard = ajouter cette ligne, pas ré-inventer
 // la règle — c'est ce qui évite qu'une porte reste ouverte pendant que les autres ferment.
 function blockedByEditLock() {
-    if (_editMode || !editLockApplies()) return false;
+    if (editModeOn() || !editLockApplies()) return false;
     showEditLockBanner();
     return true;
 }
@@ -242,7 +252,7 @@ function hideEditLockBanner() {
 }
 
 function setEditMode(on) {
-    _editMode = on;
+    _editScope = on ? currentVenueId + '|' + selectedDate : null;
     hideEditLockBanner();
     refreshEditLockUI();
     showToast(on ? 'Mode éditeur — tes modifications partent chez le staff' : 'Planning reverrouillé');
@@ -260,9 +270,10 @@ function refreshEditLockUI() {
         hideEditLockBanner();
         return;
     }
+    const ouvert = editModeOn();
     btn.style.display = '';
-    btn.classList.toggle('editing', _editMode);
-    btn.title = _editMode
+    btn.classList.toggle('editing', ouvert);
+    btn.title = ouvert
         ? 'Mode éditeur actif — toucher pour reverrouiller le planning publié'
         : 'Semaine publiée : les modifications tactiles sont bloquées. Toucher pour passer en mode éditeur.';
 }
@@ -549,7 +560,7 @@ async function init() {
     });
 
     const btnEditLock = document.getElementById('btn-edit-lock');
-    if (btnEditLock) btnEditLock.addEventListener('click', () => setEditMode(!_editMode));
+    if (btnEditLock) btnEditLock.addEventListener('click', () => setEditMode(!editModeOn()));
 
     const disposClose = document.getElementById('dispos-modal-close');
     if (disposClose) disposClose.addEventListener('click', () => {
@@ -1230,16 +1241,17 @@ function renderWeekGrid() {
 // ── Détail d'un jour ──────────────────────────────────────────────────────────
 
 async function loadDayDetail(dateStr) {
-    // Chaque journée publiée redemande son déverrouillage. selectedDate porte encore le jour
-    // SORTANT à cet instant : c'est un simple rechargement du même jour (le chemin emprunté
-    // après chaque modification) qui doit conserver le mode, pas une navigation.
-    if (dateStr !== selectedDate) _editMode = false;
     selectedDate = dateStr;
     const date = parseDate(dateStr);
 
     document.getElementById('day-detail-title').textContent =
         formatDateLong(date);
     document.getElementById('day-detail').style.display = 'block';
+
+    // Lancée AVANT les trois autres requêtes (et non après le rendu) : elle n'en dépend pas,
+    // et c'est elle qui rétablit le verrou. Chaque milliseconde où il reste inactif est une
+    // milliseconde où un geste involontaire passe.
+    loadPublishButton(dateStr);
 
     currentShifts  = [];
     confirmedDispos = [];
@@ -1274,9 +1286,6 @@ async function loadDayDetail(dateStr) {
     }
 
     document.getElementById('day-detail').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-    // Charger et afficher le bouton Publier pour la semaine courante
-    loadPublishButton(dateStr);
 }
 
 async function loadPublishButton(dateStr) {
@@ -1301,10 +1310,9 @@ async function loadPublishButton(dateStr) {
                           : isPastWeek    ? 'Semaine passée'
                           : 'Semaine à venir';
 
-    // Le verrou raisonnerait sur la semaine PRÉCÉDENTE entre le changement de jour et la
-    // réponse ; et sans le reset du catch, un échec réseau laisserait cet ensemble périmé
-    // en place indéfiniment — l'inverse de ce que promet « null = inconnu ».
-    _publishedVenues = null;
+    // Sans cela, le verrou raisonnerait sur la semaine PRÉCÉDENTE entre le changement de jour
+    // et la réponse — et un échec réseau laisserait cet ensemble périmé en place indéfiniment.
+    _publishedVenues = new Set();
     refreshEditLockUI();
     try {
         const res  = await fetch('/api/publish/' + weekStart, { credentials: 'include' });
@@ -1327,19 +1335,11 @@ function renderPublishControl(btn, data, weekStart) {
     const pubSet = (auto || data.establishments === 'ALL')
         ? new Set(estabs.map(e => e.id))
         : new Set(Array.isArray(data.establishments) ? data.establishments : []);
-    btn.dataset.auto = auto ? '1' : '';
-    // Le verrou tactile se règle sur le MÊME ensemble que le bouton Publier — deux
-    // dérivations de « qui est publié » finiraient par diverger — À UNE EXCEPTION PRÈS :
-    // les semaines auto-publiées (la courante et les passées, cf. isAutoPublished) n'y
-    // entrent pas. Le verrou protège une DÉCISION d'envoi, pas une visibilité subie : la
-    // semaine en cours se retouche au comptoir toute la soirée, la verrouiller n'aurait
-    // fait qu'ajouter un tap à chaque ajustement. Ce qu'on garde, c'est la semaine
-    // suivante une fois publiée : là, un décalage involontaire part chez le staff.
-    // Nommée plutôt que laissée en ternaire : l'expression a l'air d'une redondance avec
-    // pubSet, et un « nettoyage » futur en _publishedVenues = pubSet verrouillerait toutes
-    // les semaines passées et courantes sans qu'aucun test ne bronche.
-    const sousVerrou = auto ? new Set() : pubSet;
-    _publishedVenues = sousVerrou;
+    // Auto-publiées comprises, sans exception : les exempter ferait EXPIRER la garde le lundi,
+    // où /api/publish répond auto:true (server.js) et masque une semaine pourtant publiée à la
+    // main. Ensemble partagé, jamais muté (openPublishPopover en prend une copie).
+    // Arbitrage complet : docs/backlog.md.
+    _publishedVenues = pubSet;
     refreshEditLockUI();
     updatePublishBtnLabel(btn, pubSet.size, estabs.length);
     btn.onclick = (ev) => {
@@ -1444,9 +1444,9 @@ async function patchPublish(weekStart, establishments, btn) {
         });
         if (!res.ok) { showToast('Erreur lors de la publication', true); return; }
         const data = await res.json();
-        // Repasser par le rendu normal plutôt que de re-dériver l'ensemble publié ici :
-        // une publication n'est jamais « auto » (openPublishPopover sort tôt sur ces
-        // semaines-là), et cette copie-ci oubliait justement la règle d'exclusion.
+        // Repasser par le rendu normal plutôt que de re-dériver l'ensemble publié ici : une
+        // publication n'est jamais « auto » (openPublishPopover sort tôt sur ces semaines-là),
+        // donc le payload synthétique dit vrai, et le verrou se rafraîchit sans rechargement.
         renderPublishControl(btn, { auto: false, establishments }, weekStart);
         showToast(data.message || 'Mis à jour');
     } catch { showToast('Erreur lors de la publication', true); }
@@ -1849,7 +1849,6 @@ function renderTabs(list) {
             document.querySelectorAll('.venue-tab').forEach(t => t.classList.remove('active'));
             btn.classList.add('active');
             currentVenueId = v.id;
-            _editMode = false; // le verrou se pose par (jour, établissement), pas par jour seul
             applyVenueHours(v.id);
             renderSidebar(); // Mettre à jour immédiatement l'ordre staff
             await refreshWeek();

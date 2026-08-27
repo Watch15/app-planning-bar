@@ -5382,6 +5382,11 @@ app.get('/api/publish/:weekStart', checkDB, requireAuth, async (req, res) => {
             return res.json({ published, auto: false });
         }
         // Patron / directeur / établissement → liste des établissements publiés.
+        // ⚠️ Ce court-circuit MASQUE une éventuelle publication explicite : dès qu'une semaine
+        // devient courante, le client ne peut plus savoir qu'elle avait été publiée au bouton.
+        // Le verrou tactile (renderPublishControl, public/script.js) en dépend — il verrouille
+        // les semaines auto justement parce qu'il ne peut pas les distinguer. Enrichir cette
+        // réponse sans revoir le verrou lui ferait perdre sa garde le lundi.
         if (auto) return res.json({ auto: true, establishments: 'ALL' });
         const pub = normalizePublishDoc(await db.collection('settings').findOne({ key: 'publish_' + weekStart }));
         const establishments = pub === 'ALL' ? 'ALL' : (pub ? [...pub] : []);
