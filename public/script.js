@@ -1586,7 +1586,7 @@ function renderSidebar() {
             (isPref ? '<span class="staff-pref-dot" title="Affecté à cet établissement">★</span>' : '') +
             '<span class="staff-dot" style="background:' + staff.color + '"></span>' +
             '<span class="staff-info-name"' + (staff.name_color ? ' style="color:' + staff.name_color + '"' : '') + '>' + displayName(staff._id, staff.name) + '</span>' +
-            (onLeave ? '<span class="staff-leave-badge" title="En congé ce jour">🌴 Congé</span>' : '') +
+            (onLeave ? '<span class="staff-leave-badge" title="En congé ce jour">Congé</span>' : '') +
             (firstRole
                 ? '<span class="staff-role-badge ' + firstRole.type + '">' + firstRole.name + '</span>'
                 : '') +
