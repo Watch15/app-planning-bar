@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "public/script.js": {
-    "mtime": 1787825632.9035776,
-    "ast_hash": "704fc8b9ecbc977009792f6cbe8305c2",
+    "mtime": 1787826128.9090586,
+    "ast_hash": "e54ff7930692964d14fc313213554227",
     "semantic_hash": ""
   },
   "public/sw.js": {
@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "docs/backlog.md": {
-    "mtime": 1787825705.4395788,
-    "ast_hash": "151f010874277af7c425840847bbe37a",
+    "mtime": 1787826196.3801725,
+    "ast_hash": "699c46ed4d9aac761825ec51eee44cd9",
     "semantic_hash": ""
   },
   "docs/prd.md": {
@@ -125,8 +125,8 @@
     "semantic_hash": "b08e527857ae0b58a84a24cdd1f2fd8a"
   },
   "public/index.html": {
-    "mtime": 1787822036.0781145,
-    "ast_hash": "9193f6f4bd7123579fabdd51c7fb1083",
+    "mtime": 1787826167.743817,
+    "ast_hash": "68c7c6a47049eac0cbc3781e09d23b48",
     "semantic_hash": ""
   },
   "public/login.html": {

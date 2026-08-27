@@ -320,6 +320,15 @@
             #btn-edit-lock::after         { content: '🔒' !important; }
             #btn-edit-lock.editing::after { content: '✏️' !important; }
             #btn-publish-week  { font-size: 11px !important; padding: 5px 10px !important; white-space: nowrap; flex-shrink: 0; }
+            /* La largeur utile tourne autour de 360 px et l'en-tête rogne ce qui dépasse :
+               les deux libellés longs sont réduits pour que le cadenas, l'état de publication
+               et la croix de fermeture tiennent tous les trois. */
+            .btn-week-qualifier { display: none !important; }   /* « — Semaine en cours » */
+            #btn-copy-week      { font-size: 0 !important; padding: 4px 8px !important; flex-shrink: 0; }
+            /* Libellé court plutôt qu'icône nue : l'action recopie une semaine ENTIÈRE par-dessus
+               une autre, la flèche est ce qui dit « vers ». Un pictogramme seul se confondrait
+               avec « copier ce jour », masqué ici mais présent dans la tête du patron. */
+            #btn-copy-week::after { content: 'Copier →'; font-size: 11px; line-height: 1.4; }
             .day-detail-close  { flex-shrink: 0 !important; }
 
             /* ── Timeline — évite le retour navigateur en scrollant horizontalement ── */

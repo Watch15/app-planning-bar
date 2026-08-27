@@ -1352,15 +1352,20 @@ function updatePublishBtnLabel(btn, nPublished, total) {
     const label = btn.dataset.weekLabel || 'la semaine';
     const nextMonday = toDateStr(addDays(getMondayOf(new Date()), 7));
     const isNextWeek = btn.dataset.weekStart === nextMonday;
+    // Le qualificatif de semaine est isolé pour que le CSS puisse le retirer sur téléphone,
+    // où il coûtait ~90 px dans un en-tête qui rogne ce qui dépasse. L'information n'est pas
+    // perdue : la semaine affichée est écrite juste au-dessus, dans la barre de navigation.
+    // En span plutôt qu'en test de largeur ici : le libellé reste juste après une rotation.
+    const suffixe = '<span class="btn-week-qualifier"> — ' + escapeHtml(label) + '</span>';
     btn.title = '';
     if (total > 0 && nPublished >= total) {
-        btn.textContent = '✓ Publié — ' + label;
+        btn.innerHTML = '✓ Publié' + suffixe;
         btn.style.background = '#d1fae5'; btn.style.borderColor = '#10b981'; btn.style.color = '#065f46';
     } else if (nPublished > 0) {
-        btn.textContent = 'Publié ' + nPublished + '/' + total + ' — ' + label;
+        btn.innerHTML = 'Publié ' + nPublished + '/' + total + suffixe;
         btn.style.background = '#fef3c7'; btn.style.borderColor = '#f59e0b'; btn.style.color = '#92400e';
     } else {
-        btn.textContent = 'Publier — ' + label;
+        btn.innerHTML = 'Publier' + suffixe;
         btn.style.background  = isNextWeek ? '#f0effe' : '#fff8ec';
         btn.style.borderColor = isNextWeek ? '#6C63FF' : '#f59e0b';
         btn.style.color       = isNextWeek ? '#534AB7' : '#92400e';

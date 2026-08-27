@@ -1965,6 +1965,30 @@ coûteux. Deux détails y suffisent : `activeEl = null` dans `onTouchMove` désa
 bloqué dès la première frame (sinon un doigt maintenu deux secondes aurait affiché le bandeau
 ~120 fois), et le `position: fixed` du bandeau lui interdit de relayouter la timeline.
 
+#### En-tête du jour saturé sur téléphone (2026-08-27)
+
+Signalé par le patron en testant le verrou : sur téléphone, l'en-tête de la journée ne
+laissait plus de place. `#btn-copy-day` et `⟳ Actualiser` y étaient déjà masqués, mais
+restaient « Copier la semaine → » (~140 px) et « ✓ Publié — Semaine en cours » (~165 px)
+dans ~360 px utiles. `.day-detail-header` étant en `overflow: hidden`, tout ce qui dépassait
+était **rogné par la droite** — dont le cadenas du mode éditeur et la croix de fermeture.
+
+⚠️ **Le verrou tactile a aggravé un problème qui existait déjà.** Ajouter un bouton à un
+en-tête qui rognait silencieusement, c'est ce qui a rendu le défaut visible. La leçon vaut
+pour la suite : `overflow: hidden` sur une barre d'actions ne « range » rien, il **supprime**
+des commandes sans le dire, et le coût se paie au prochain ajout.
+
+Deux réductions, ~230 px récupérés :
+
+- **Le qualificatif de semaine** (« — Semaine en cours ») est isolé dans un
+  `<span class="btn-week-qualifier">` par `updatePublishBtnLabel`, et masqué en CSS sous
+  768 px. En span plutôt qu'en test `isMobileDevice()` au moment du rendu : le libellé reste
+  juste après une rotation d'écran, ce qu'un test de largeur figé n'aurait pas tenu.
+  L'information n'est pas perdue — la semaine affichée est écrite juste au-dessus.
+- **« Copier la semaine → »** devient « Copier → » via `::after`. Libellé court et non
+  pictogramme nu : l'action recopie une semaine ENTIÈRE par-dessus une autre, et la flèche
+  est ce qui dit « vers ». Une icône seule se serait confondue avec « copier ce jour ».
+
 ### Divers — outillage & process
 
 - ~~**`graphify` est en panne, et le `CLAUDE.md` l'impose.**~~ ✅ **Réglé le 2026-08-05.** `graphify update .` repasse sans `--force` (il refusait avec 994 nœuds contre 997) et a reconstruit proprement : **1045 nœuds, 1699 arêtes, 72 communautés**, ancien graphe sauvegardé dans `graphify-out/2026-08-05/`. Fraîcheur **vérifiée** contre des faits connus (routes supprimées absentes, helpers de la session présents) — cf. DOC-06. Le `CLAUDE.md` peut rester en l'état. **À refaire après chaque session de code**, sinon le problème revient à l'identique. 🔄 **Rafraîchi le 2026-08-10** (1180 nœuds, 1897 arêtes, 68 communautés) — il datait de `c72affe`, 7 commits de retard : la consigne « après chaque session » n'a **pas** été tenue sur les sessions des 06→08/08. Ancien graphe dans `graphify-out/2026-08-10/`.
