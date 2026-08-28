@@ -79,6 +79,16 @@
 }
 .nv-item p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--text-secondary, #57606f); }
 
+/* Dépliage des semaines antérieures. Traité comme un lien plutôt que comme un bouton
+   plein : c'est une sortie de secours vers l'archive, pas l'action principale. */
+.nv-plus {
+  display: block; width: 100%; margin: 16px 0 4px; padding: 10px;
+  background: none; border: 1px dashed var(--light-border, #e8eaed); border-radius: 8px;
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  color: var(--text-secondary, #57606f); cursor: pointer;
+}
+.nv-plus:hover { border-color: var(--accent, #6C63FF); color: var(--accent, #6C63FF); }
+
 .nv-tag {
   display: inline-block; vertical-align: middle; margin-left: 7px;
   background: var(--accent, #6C63FF); color: #fff;

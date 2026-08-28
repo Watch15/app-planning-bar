@@ -300,6 +300,24 @@
         return [...groupes];
     }
 
+    // Deux semaines à l'ouverture. Au-delà, la fenêtre défile plus qu'elle n'informe : ce
+    // qu'on vient y chercher, c'est ce qui a changé récemment. Les semaines antérieures ne
+    // sont pas perdues pour autant — un bouton les déplie — parce que « pouvoir relire »
+    // était une demande explicite, et qu'un journal qui oublie n'est plus un journal.
+    const SEMAINES_AFFICHEES = 2;
+
+    // ⚠️ On ne tronque JAMAIS au-dessus de quelque chose de non lu. La pastille annonce un
+    // nombre ; si une partie de ce nombre se cachait derrière un bouton, elle mentirait, et
+    // le repère de lecture serait posé sur des entrées que personne n'a vues. Dans ce cas
+    // on déplie tout d'office — c'est le seul arbitrage de cette fonction, et la raison
+    // pour laquelle elle est pure et testée plutôt que noyée dans le rendu.
+    function limiterSemaines(semaines, neuves, tout) {
+        const cacheDuNonLu = semaines.slice(SEMAINES_AFFICHEES)
+            .some(([, items]) => items.some(n => neuves.has(n.id)));
+        const montrees = (tout || cacheDuNonLu) ? semaines : semaines.slice(0, SEMAINES_AFFICHEES);
+        return { montrees, restantes: semaines.length - montrees.length };
+    }
+
     // ── Mécanique d'affichage ────────────────────────────────────────────────
     // Deux points d'accroche déclaratifs, pour que les trois pages n'aient aucun code
     // spécifique à écrire :
@@ -315,6 +333,7 @@
     let _neuves   = [];
     let _dots     = [];      // éléments à pastiller, résolus une fois : ils sont statiques
     let _compte   = -1;      // dernier nombre écrit dans la pastille
+    let _neuvesAffichees = new Set();   // figé à l'ouverture, cf. `ouvrir()`
     let _overflow = null;    // valeur de `body.overflow` avant ouverture
 
     const esc = s => String(s ?? '')
@@ -390,16 +409,27 @@
             + '</article>';
     }
 
-    function ouvrir() {
+    function ouvrir(tout) {
+        // Les repères de nouveauté sont figés à la PREMIÈRE ouverture : `marquerLu()` vide
+        // `_neuves` dans la foulée, et sans cette copie le dépliage ferait disparaître les
+        // mentions « Nouveau » sous les yeux de la personne qui vient de cliquer.
+        if (!tout) _neuvesAffichees = new Set(_neuves.map(n => n.id));
         fermer();
-        const neuves = new Set(_neuves.map(n => n.id));
+
+        const { montrees, restantes } =
+            limiterSemaines(grouperParSemaine(_visibles), _neuvesAffichees, tout);
 
         const corps = _visibles.length
-            ? grouperParSemaine(_visibles).map(([lundi, items]) =>
+            ? montrees.map(([lundi, items]) =>
                 '<div class="nv-groupe">'
                 + '<div class="nv-date">' + esc(semaineFr(lundi)) + '</div>'
-                + items.map(n => carte(n, neuves)).join('')
+                + items.map(n => carte(n, _neuvesAffichees)).join('')
                 + '</div>').join('')
+              + (restantes > 0
+                  ? '<button type="button" class="nv-plus">Afficher les '
+                    + restantes + ' semaine' + (restantes > 1 ? 's' : '') + ' précédente'
+                    + (restantes > 1 ? 's' : '') + '</button>'
+                  : '')
             : '<p class="nv-vide">Rien de neuf pour l\'instant. Les évolutions qui vous '
               + 'concernent apparaîtront ici.</p>';
 
@@ -416,6 +446,8 @@
           + '</div>';
         o.addEventListener('click', e => { if (e.target === o) fermer(); });
         o.querySelector('.nv-close').addEventListener('click', fermer);
+        const plus = o.querySelector('.nv-plus');
+        if (plus) plus.addEventListener('click', () => ouvrir(true));
         document.body.appendChild(o);
         // Le planning derrière défile déjà sur deux axes : sans ce verrou, un geste sur
         // le rideau de nouveautés emportait la page au lieu du texte.
@@ -440,7 +472,9 @@
         _role = role;
         recalculer();
         const boutons = document.querySelectorAll('[data-nv-open]');
-        boutons.forEach(el => el.addEventListener('click', ouvrir));
+        // Enveloppé : passer `ouvrir` en écouteur lui livrerait l'objet Event comme
+        // premier argument, donc un `tout` toujours vrai — la fenêtre s'ouvrirait dépliée.
+        boutons.forEach(el => el.addEventListener('click', () => ouvrir()));
         if (!_visibles.length) return;
         boutons.forEach(el => { el.style.display = ''; });
         _dots = document.querySelectorAll('[data-nv-dot]');
@@ -450,5 +484,5 @@
         if (opts && opts.autoOuvrir && _seen && _neuves.length) ouvrir();
     }
 
-    return { init, filtrer, grouperParSemaine, NOUVEAUTES };
+    return { init, filtrer, grouperParSemaine, limiterSemaines, NOUVEAUTES };
 });

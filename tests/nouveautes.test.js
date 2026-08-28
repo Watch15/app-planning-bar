@@ -16,7 +16,7 @@ const { test, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const { makeDb } = require('./helpers/fake-db');
 const { startApp, stopApp, req, app } = require('./helpers/harness');
-const { NOUVEAUTES, filtrer, grouperParSemaine } = require('../public/lib/nouveautes');
+const { NOUVEAUTES, filtrer, grouperParSemaine, limiterSemaines } = require('../public/lib/nouveautes');
 
 const PATRON = { _id: '0123456789abcdef01230001', role: 'patron',        name: 'Paul' };
 const DIR    = { _id: '0123456789abcdef01230002', role: 'directeur',     name: 'Diane' };
@@ -171,6 +171,46 @@ test('grouperParSemaine : l\'ordre des semaines suit celui des entrées', () => 
     const semaines = grouperParSemaine(v).map(([lundi]) => lundi);
     assert.deepEqual(semaines, [...semaines].sort().reverse(),
         'la semaine la plus récente doit arriver en tête');
+});
+
+// ── La troncature à deux semaines ────────────────────────────────────────────
+// Elle peut faire disparaître du contenu de l'écran : c'est donc elle qu'il faut
+// empêcher de mentir. La pastille annonce un nombre ; si une partie se cachait derrière
+// un bouton, le repère de lecture serait posé sur des entrées que personne n'a vues.
+
+const semaine = (lundi, ...ids) => [lundi, ids.map(id => ({ id }))];
+const QUATRE = [
+    semaine('2026-08-24', 'a'), semaine('2026-08-17', 'b'),
+    semaine('2026-08-10', 'c'), semaine('2026-08-03', 'd'),
+];
+
+test('limiterSemaines : deux semaines par défaut, le reste est annoncé', () => {
+    const r = limiterSemaines(QUATRE, new Set(), false);
+    assert.deepEqual(r.montrees.map(([l]) => l), ['2026-08-24', '2026-08-17']);
+    assert.equal(r.restantes, 2);
+});
+
+test('limiterSemaines : on ne tronque jamais au-dessus d\'une entrée non lue', () => {
+    // `c` est en 3e semaine et n'est pas lu : le replier rendrait la pastille menteuse.
+    const r = limiterSemaines(QUATRE, new Set(['c']), false);
+    assert.equal(r.montrees.length, 4);
+    assert.equal(r.restantes, 0);
+});
+
+test('limiterSemaines : du non-lu dans les deux premières semaines ne déplie rien', () => {
+    const r = limiterSemaines(QUATRE, new Set(['a', 'b']), false);
+    assert.equal(r.montrees.length, 2);
+    assert.equal(r.restantes, 2);
+});
+
+test('limiterSemaines : deux semaines ou moins, rien à déplier', () => {
+    const r = limiterSemaines(QUATRE.slice(0, 2), new Set(), false);
+    assert.equal(r.montrees.length, 2);
+    assert.equal(r.restantes, 0);
+});
+
+test('limiterSemaines : le dépliage montre tout', () => {
+    assert.equal(limiterSemaines(QUATRE, new Set(), true).restantes, 0);
 });
 
 // ── La liste livrée ──────────────────────────────────────────────────────────

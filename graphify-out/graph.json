@@ -93,7 +93,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_utils",
-      "community": 11,
+      "community": 28,
       "norm_label": "utils.js"
     },
     {
@@ -103,7 +103,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "lib_utils_crypto",
-      "community": 11,
+      "community": 28,
       "norm_label": "crypto"
     },
     {
@@ -153,7 +153,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "lib_utils_weekstart_currentweekstart_week_cutoff_hour_todatestr_disposweekstart_disposhorizonrange_disposhorizonmondays_clamphorizonweeks_dispo_horizon_max_upcomingweekstart_upcomingweekrange_upcomingweekmondays",
-      "community": 11,
+      "community": 28,
       "norm_label": "{\r\n    weekstart, currentweekstart, week_cutoff_hour, todatestr, disposweekstart,\r\n    disposhorizonrange, disposhorizonmondays, clamphorizonweeks, dispo_horizon_max,\r\n    upcomingweekstart, upcomingweekrange, upcomingweekmondays,\r\n}"
     },
     {
@@ -193,7 +193,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "lib_utils_datesoverlap",
-      "community": 11,
+      "community": 28,
       "norm_label": "datesoverlap()"
     },
     {
@@ -203,7 +203,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "lib_utils_congecoversdate",
-      "community": 11,
+      "community": 28,
       "norm_label": "congecoversdate()"
     },
     {
@@ -213,7 +213,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "lib_utils_congedaysinrange",
-      "community": 11,
+      "community": 28,
       "norm_label": "congedaysinrange()"
     },
     {
@@ -253,7 +253,7 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "lib_utils_perf_defaults",
-      "community": 11,
+      "community": 28,
       "norm_label": "perf_defaults"
     },
     {
@@ -273,7 +273,7 @@
       "source_location": "L202",
       "_origin": "ast",
       "id": "lib_utils_staff_colors",
-      "community": 11,
+      "community": 28,
       "norm_label": "staff_colors"
     },
     {
@@ -383,7 +383,7 @@
       "source_location": "L375",
       "_origin": "ast",
       "id": "lib_utils_dispo_audit_fields",
-      "community": 11,
+      "community": 28,
       "norm_label": "dispo_audit_fields"
     },
     {
@@ -953,7 +953,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_dispo_template",
-      "community": 11,
+      "community": 28,
       "norm_label": "dispo-template.js"
     },
     {
@@ -963,7 +963,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "lib_dispo_template_buildtemplatedispos",
-      "community": 11,
+      "community": 28,
       "norm_label": "buildtemplatedispos()"
     },
     {
@@ -997,10 +997,20 @@
       "norm_label": "grouperparsemaine()"
     },
     {
+      "label": "limiterSemaines()",
+      "file_type": "code",
+      "source_file": "public/lib/nouveautes.js",
+      "source_location": "L314",
+      "_origin": "ast",
+      "id": "lib_nouveautes_limitersemaines",
+      "community": 63,
+      "norm_label": "limitersemaines()"
+    },
+    {
       "label": "recalculer()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L327",
+      "source_location": "L346",
       "_origin": "ast",
       "id": "lib_nouveautes_recalculer",
       "community": 63,
@@ -1010,7 +1020,7 @@
       "label": "semaineFr()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L333",
+      "source_location": "L352",
       "_origin": "ast",
       "id": "lib_nouveautes_semainefr",
       "community": 63,
@@ -1020,7 +1030,7 @@
       "label": "majPastille()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L338",
+      "source_location": "L357",
       "_origin": "ast",
       "id": "lib_nouveautes_majpastille",
       "community": 63,
@@ -1030,7 +1040,7 @@
       "label": "charger()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L348",
+      "source_location": "L367",
       "_origin": "ast",
       "id": "lib_nouveautes_charger",
       "community": 63,
@@ -1040,7 +1050,7 @@
       "label": "marquerLu()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L362",
+      "source_location": "L381",
       "_origin": "ast",
       "id": "lib_nouveautes_marquerlu",
       "community": 63,
@@ -1050,7 +1060,7 @@
       "label": "surEchap()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L374",
+      "source_location": "L393",
       "_origin": "ast",
       "id": "lib_nouveautes_surechap",
       "community": 63,
@@ -1060,7 +1070,7 @@
       "label": "fermer()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L376",
+      "source_location": "L395",
       "_origin": "ast",
       "id": "lib_nouveautes_fermer",
       "community": 63,
@@ -1070,7 +1080,7 @@
       "label": "carte()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L385",
+      "source_location": "L404",
       "_origin": "ast",
       "id": "lib_nouveautes_carte",
       "community": 63,
@@ -1080,7 +1090,7 @@
       "label": "ouvrir()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L393",
+      "source_location": "L412",
       "_origin": "ast",
       "id": "lib_nouveautes_ouvrir",
       "community": 63,
@@ -1090,7 +1100,7 @@
       "label": "init()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L439",
+      "source_location": "L471",
       "_origin": "ast",
       "id": "lib_nouveautes_init",
       "community": 63,
@@ -8283,7 +8293,7 @@
       "source_location": "L297",
       "_origin": "ast",
       "id": "server_archivedidsamong",
-      "community": 82,
+      "community": 5,
       "norm_label": "archivedidsamong()"
     },
     {
@@ -8333,7 +8343,7 @@
       "source_location": "L444",
       "_origin": "ast",
       "id": "server_sendpushtostaff",
-      "community": 82,
+      "community": 5,
       "norm_label": "sendpushtostaff()"
     },
     {
@@ -8403,7 +8413,7 @@
       "source_location": "L693",
       "_origin": "ast",
       "id": "server_dispoopenvenues",
-      "community": 5,
+      "community": 82,
       "norm_label": "dispoopenvenues()"
     },
     {
@@ -8413,7 +8423,7 @@
       "source_location": "L702",
       "_origin": "ast",
       "id": "server_staffdispoopen",
-      "community": 5,
+      "community": 82,
       "norm_label": "staffdispoopen()"
     },
     {
@@ -8423,7 +8433,7 @@
       "source_location": "L712",
       "_origin": "ast",
       "id": "server_checkdisporappels",
-      "community": 82,
+      "community": 5,
       "norm_label": "checkdisporappels()"
     },
     {
@@ -8623,7 +8633,7 @@
       "source_location": "L1516",
       "_origin": "ast",
       "id": "server_createmanagerstaffprofile",
-      "community": 28,
+      "community": 82,
       "norm_label": "createmanagerstaffprofile()"
     },
     {
@@ -8633,7 +8643,7 @@
       "source_location": "L1547",
       "_origin": "ast",
       "id": "server_ensuredirectorstaffprofile",
-      "community": 28,
+      "community": 82,
       "norm_label": "ensuredirectorstaffprofile()"
     },
     {
@@ -8713,7 +8723,7 @@
       "source_location": "L3195",
       "_origin": "ast",
       "id": "server_computeeffectivedeadline",
-      "community": 82,
+      "community": 5,
       "norm_label": "computeeffectivedeadline()"
     },
     {
@@ -8843,7 +8853,7 @@
       "source_location": "L4663",
       "_origin": "ast",
       "id": "server_templateeligible",
-      "community": 5,
+      "community": 82,
       "norm_label": "templateeligible()"
     },
     {
@@ -9033,7 +9043,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conges_test",
-      "community": 11,
+      "community": 28,
       "norm_label": "conges.test.js"
     },
     {
@@ -9043,7 +9053,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conges_test_test",
-      "community": 11,
+      "community": 28,
       "norm_label": "{ test }"
     },
     {
@@ -9053,7 +9063,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "tests_conges_test_assert",
-      "community": 11,
+      "community": 28,
       "norm_label": "assert"
     },
     {
@@ -9063,7 +9073,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "tests_conges_test_datesoverlap_congecoversdate_congedaysinrange",
-      "community": 11,
+      "community": 28,
       "norm_label": "{ datesoverlap, congecoversdate, congedaysinrange }"
     },
     {
@@ -10517,14 +10527,14 @@
       "norm_label": "{ startapp, stopapp, req, app }"
     },
     {
-      "label": "{ NOUVEAUTES, filtrer, grouperParSemaine }",
+      "label": "{ NOUVEAUTES, filtrer, grouperParSemaine, limiterSemaines }",
       "file_type": "code",
       "source_file": "tests/nouveautes.test.js",
       "source_location": "L19",
       "_origin": "ast",
-      "id": "tests_nouveautes_test_nouveautes_filtrer_grouperparsemaine",
+      "id": "tests_nouveautes_test_nouveautes_filtrer_grouperparsemaine_limitersemaines",
       "community": 63,
-      "norm_label": "{ nouveautes, filtrer, grouperparsemaine }"
+      "norm_label": "{ nouveautes, filtrer, grouperparsemaine, limitersemaines }"
     },
     {
       "label": "PATRON",
@@ -10635,6 +10645,26 @@
       "id": "tests_nouveautes_test_ids",
       "community": 63,
       "norm_label": "ids()"
+    },
+    {
+      "label": "semaine()",
+      "file_type": "code",
+      "source_file": "tests/nouveautes.test.js",
+      "source_location": "L181",
+      "_origin": "ast",
+      "id": "tests_nouveautes_test_semaine",
+      "community": 63,
+      "norm_label": "semaine()"
+    },
+    {
+      "label": "QUATRE",
+      "file_type": "code",
+      "source_file": "tests/nouveautes.test.js",
+      "source_location": "L182",
+      "_origin": "ast",
+      "id": "tests_nouveautes_test_quatre",
+      "community": 63,
+      "norm_label": "quatre"
     },
     {
       "label": "perf-settings.test.js",
@@ -11473,7 +11503,7 @@
       "source_location": "L170",
       "_origin": "ast",
       "id": "readme_environnements_comment_s_y_connecter",
-      "community": 103,
+      "community": 25,
       "norm_label": "environnements \u2014 comment s'y connecter"
     },
     {
@@ -11483,7 +11513,7 @@
       "source_location": "L172",
       "_origin": "ast",
       "id": "readme_par_l_application_le_plus_courant",
-      "community": 103,
+      "community": 25,
       "norm_label": "par l'application (le plus courant)"
     },
     {
@@ -11493,7 +11523,7 @@
       "source_location": "L196",
       "_origin": "ast",
       "id": "readme_directement_\u00e0_la_base_mongosh_compass",
-      "community": 103,
+      "community": 25,
       "norm_label": "directement a la base (mongosh / compass)"
     },
     {
@@ -12840,7 +12870,7 @@
       "label": "Calendrier cong\u00e9s \u2014 lisibilit\u00e9 (2026-08-27)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L2121",
+      "source_location": "L2143",
       "_origin": "ast",
       "id": "docs_backlog_calendrier_cong\u00e9s_lisibilit\u00e9_2026_08_27",
       "community": 74,
@@ -12850,7 +12880,7 @@
       "label": "Divers \u2014 outillage & process",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L2151",
+      "source_location": "L2173",
       "_origin": "ast",
       "id": "docs_backlog_divers_outillage_process",
       "community": 60,
@@ -12860,7 +12890,7 @@
       "label": "D\u00e9j\u00e0 livr\u00e9 / non prioritaire",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L2158",
+      "source_location": "L2180",
       "_origin": "ast",
       "id": "docs_backlog_d\u00e9j\u00e0_livr\u00e9_non_prioritaire",
       "community": 62,
@@ -12870,7 +12900,7 @@
       "label": "Fait",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L2168",
+      "source_location": "L2190",
       "_origin": "ast",
       "id": "docs_backlog_fait",
       "community": 62,
@@ -12880,7 +12910,7 @@
       "label": "P2 \u2014 Audit ergonomie restant (mai 2026)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L2274",
+      "source_location": "L2296",
       "_origin": "ast",
       "id": "docs_backlog_p2_audit_ergonomie_restant_mai_2026",
       "community": 62,
@@ -12890,7 +12920,7 @@
       "label": "Reste \u00e0 faire \u2014 dette technique & refacto (incr\u00e9mental)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L2292",
+      "source_location": "L2314",
       "_origin": "ast",
       "id": "docs_backlog_reste_\u00e0_faire_dette_technique_refacto_incr\u00e9mental",
       "community": 62,
@@ -12900,7 +12930,7 @@
       "label": "Notes pour les agents",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L2308",
+      "source_location": "L2330",
       "_origin": "ast",
       "id": "docs_backlog_notes_pour_les_agents",
       "community": 62,
@@ -14850,7 +14880,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 94,
+      "community": 90,
       "norm_label": "server.js (serveur express monolithique)",
       "id": "readme_server_js"
     },
@@ -14967,7 +14997,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 98,
+      "community": 59,
       "norm_label": "week_cutoff_hour = 6 (cutoff semaine en cours)",
       "id": "architecture_week_cutoff"
     },
@@ -15175,7 +15205,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 98,
+      "community": 59,
       "norm_label": "synchronisation agenda \u2014 flux ical (d-72)",
       "id": "architecture_ical_feed"
     },
@@ -15188,7 +15218,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 98,
+      "community": 59,
       "norm_label": "flag calendar_enabled (ical desactive d-83)",
       "id": "architecture_calendar_enabled_flag"
     },
@@ -15227,7 +15257,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 94,
+      "community": 62,
       "norm_label": "f-05 echange de shifts (desactive)",
       "id": "backlog_f05_shift_swaps"
     },
@@ -15240,7 +15270,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 98,
+      "community": 59,
       "norm_label": "f-09 abonnement agenda ical",
       "id": "backlog_f09_ical"
     },
@@ -15266,7 +15296,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 94,
+      "community": 90,
       "norm_label": "r-04 decoupage server.js en routers (reporte)",
       "id": "backlog_r04_split_server"
     },
@@ -15305,7 +15335,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 94,
+      "community": 62,
       "norm_label": "pieges blocs /* f-05 desactive */ (d-47)",
       "id": "backlog_f05_blocks_trap"
     },
@@ -17813,6 +17843,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public/lib/nouveautes.js",
+      "source_location": "L314",
+      "weight": 1.0,
+      "source": "lib_nouveautes",
+      "target": "lib_nouveautes_limitersemaines",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public/lib/nouveautes.js",
       "source_location": "L196",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -17923,6 +17963,28 @@
       "confidence_score": 1.0,
       "source": "tests_nouveautes_test",
       "target": "lib_nouveautes_grouperparsemaine"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/lib/nouveautes.js",
+      "source_location": "L420",
+      "weight": 1.0,
+      "source": "lib_nouveautes_ouvrir",
+      "target": "lib_nouveautes_limitersemaines",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/nouveautes.test.js",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "tests_nouveautes_test",
+      "target": "lib_nouveautes_limitersemaines",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -37019,9 +37081,9 @@
       "source_file": "tests/nouveautes.test.js",
       "source_location": "L19",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "tests_nouveautes_test",
-      "target": "tests_nouveautes_test_nouveautes_filtrer_grouperparsemaine"
+      "target": "tests_nouveautes_test_nouveautes_filtrer_grouperparsemaine_limitersemaines",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -37047,11 +37109,31 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/nouveautes.test.js",
+      "source_location": "L182",
+      "weight": 1.0,
+      "source": "tests_nouveautes_test",
+      "target": "tests_nouveautes_test_quatre",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/nouveautes.test.js",
       "source_location": "L26",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "tests_nouveautes_test",
       "target": "tests_nouveautes_test_roles_valides"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/nouveautes.test.js",
+      "source_location": "L181",
+      "weight": 1.0,
+      "source": "tests_nouveautes_test",
+      "target": "tests_nouveautes_test_semaine",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -41736,5 +41818,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "d4774984e3a6594869aec4c779f7024ec4e3f9ee"
+  "built_at_commit": "a52ea1a46028767d3666c5bbe98d62b3f6825310"
 }

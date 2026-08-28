@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "docs/backlog.md": {
-    "mtime": 1787907617.4223516,
-    "ast_hash": "bcdf987a803da28d3a68f6ee67ad1147",
+    "mtime": 1787908132.230688,
+    "ast_hash": "7eb3b242674e43b1a830b39c00c9912c",
     "semantic_hash": ""
   },
   "docs/prd.md": {
@@ -355,13 +355,13 @@
     "semantic_hash": ""
   },
   "public/lib/nouveautes.js": {
-    "mtime": 1787907536.3519416,
-    "ast_hash": "3b04c566d2a171d7263480836303ac40",
+    "mtime": 1787908080.2998662,
+    "ast_hash": "f4107f514fb637bc694c8e5761a989b2",
     "semantic_hash": ""
   },
   "tests/nouveautes.test.js": {
-    "mtime": 1787907551.4478877,
-    "ast_hash": "053484c76d61ee06be3ad5393aabffaf",
+    "mtime": 1787908095.1884663,
+    "ast_hash": "e5cb3b96b3a12562e32a93f5d386ec29",
     "semantic_hash": ""
   }
 }

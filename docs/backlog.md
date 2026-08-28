@@ -2036,6 +2036,28 @@ publiée le jeudi par qui a ouvert la fenêtre le lundi. Seul `grouperParSemaine
 testé) fait la conversion, via `Week.weekStart` — donc le dimanche appartient à la semaine qui
 s'achève, comme partout ailleurs dans l'app.
 
+**Deux semaines à l'ouverture, le reste sur un bouton (2026-08-28).** Quatorze entrées d'un
+coup faisaient une fenêtre qui défile plus qu'elle n'informe : ce qu'on vient y chercher, c'est
+ce qui a changé récemment. Les semaines antérieures ne sont pas perdues pour autant — un bouton
+« Afficher les N semaines précédentes » les déplie — parce que « pouvoir revoir les features »
+était une demande explicite du user, et qu'un journal qui oublie n'est plus un journal. Effet
+sur le remplissage initial : le patron voit 9 entrées sur 14, l'observateur 3 sur 4, le staff
+ses 6 (il n'a de contenu que sur deux semaines).
+
+⚠️ **La troncature ne s'applique jamais au-dessus d'une entrée NON LUE.** La pastille annonce
+un nombre ; si une partie se cachait derrière un bouton, elle mentirait — et pire, l'ouverture
+poserait le repère de lecture sur des entrées que personne n'a vues, les effaçant définitivement
+du compte. Dans ce cas la fenêtre s'ouvre dépliée. C'est le seul arbitrage de `limiterSemaines`,
+d'où sa forme : pure, exportée, cinq tests — plutôt que noyée dans le rendu, où elle n'aurait
+jamais été vérifiée.
+
+Détail d'implémentation qui vaut d'être noté : les mentions « Nouveau » sont **figées à la
+première ouverture** (`_neuvesAffichees`). Sans cette copie, `marquerLu()` vidant `_neuves` dans
+la foulée, déplier les semaines antérieures les ferait disparaître sous les yeux de la personne
+qui vient de cliquer. Et l'écouteur de clic est enveloppé (`() => ouvrir()`) : passer `ouvrir`
+directement lui livrerait l'objet `Event` comme premier argument, donc un `tout` toujours vrai,
+et la fenêtre s'ouvrirait dépliée en permanence.
+
 **Remplissage initial : 19 entrées couvrant trois semaines de livraisons** (semaines du 10, du
 17 et du 24 août), reconstituées depuis `git log` puis **vérifiées dans ce backlog** plutôt que
 déduites des messages de commit. Répartition : 14 pour le patron et le directeur, 6 pour le
