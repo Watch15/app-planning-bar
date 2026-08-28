@@ -16,7 +16,7 @@
     "smoke": "node scripts/smoke.js",
     "create-patron": "node scripts/create-patron.js",
     "lint": "eslint .",
-    "test": "node --test \"tests/*.test.js\"",
+    "test": "node --test",
     "smoke:dev": "node scripts/smoke.js https://dev.templyo.fr --expect origin/dev",
     "smoke:main": "node scripts/smoke.js https://app-planning-bar-production.up.railway.app --expect origin/main",
     "db:uri:dev": "node scripts/db-uri.js .env.dev",

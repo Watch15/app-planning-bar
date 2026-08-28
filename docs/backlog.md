@@ -1989,6 +1989,40 @@ Deux réductions, ~230 px récupérés :
   pictogramme nu : l'action recopie une semaine ENTIÈRE par-dessus une autre, et la flèche
   est ce qui dit « vers ». Une icône seule se serait confondue avec « copier ce jour ».
 
+#### 🔴 CI rouge sur Node 20 — le glob de `node --test` n'existe qu'à partir de Node 21 (2026-08-28)
+
+Trouvé en promouvant le lot : `main` poussé, CI **en échec**, `deploy` sauté (`needs: test`),
+donc prod interne restée sur `ba01dc1` et `smoke:main` refusant de valider un ancien build —
+le garde `--expect` a fait exactement son travail.
+
+**Cause.** La revue `/simplify` a remplacé la liste de fichiers énumérée à la main par
+`node --test "tests/*.test.js"`. Le glob est résolu par Node lui-même… **depuis Node 21
+seulement**. La CI teste en matrice `[20.x, 22.x]` : le job 20.x échoue, le 22.x est annulé
+par le fail-fast. Vérifié en local sur Node **24** uniquement — d'où le trou.
+
+⚠️ **Les deux formes « évidentes » sont chacune cassées sur une moitié de la matrice** :
+
+| Forme | Node 20 | Node 24 |
+|---|---|---|
+| `node --test tests/` | ✅ chemin de répertoire | ❌ résolu comme un module → `MODULE_NOT_FOUND` |
+| `node --test "tests/*.test.js"` | ❌ pas de glob | ✅ |
+| `node --test` (découverte par défaut) | ✅ | ✅ |
+
+**Retenu : `node --test` nu.** C'est la seule forme qui ne dépend d'aucune sémantique ayant
+changé entre 18 et 24, puisqu'elle ne passe aucun argument positionnel. Découverte vérifiée :
+18 fichiers, tous sous `tests/` — `tests/helpers/*.js` n'est pas ramassé (ne finit pas en
+`.test.js`, et le répertoire s'appelle `tests`, pas le `test` magique), et il n'existe aucun
+`*.test.js` ailleurs dans le dépôt. Même total qu'avant : 445.
+
+**La leçon, et elle vaut au-delà de ce cas** : un changement dans la façon de *lancer* les
+tests ne se valide pas en lançant les tests. Ils passent — c'est le lanceur qui ment. Le seul
+juge est la matrice CI, donc un tel changement se pousse sur `dev` et s'attend avant d'être
+promu. Ici la matrice a fait son travail ; c'est l'ordre des opérations qui était faux.
+
+À noter aussi : `main` porte désormais un commit à CI rouge dans son historique
+(`773dcf7`). Sans conséquence — `deploy` étant gardé par `needs: test`, **rien n'est parti en
+prod** ; c'est précisément ce que CD-01 existe pour garantir.
+
 #### Journal des nouveautés par rôle (2026-08-28)
 
 Les évolutions n'étaient annoncées que par `docs/note-client-mise-a-jour.md`, envoyée au
