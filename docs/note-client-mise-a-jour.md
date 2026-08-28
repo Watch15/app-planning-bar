@@ -1,7 +1,7 @@
 # Templyo — ce qui change à la prochaine mise à jour
 
 *Note à envoyer avant le déploiement. Rédigée pour être lue par le patron, pas par un
-développeur. Version du 2026-08-23.*
+développeur. Version du 2026-08-28.*
 
 > Les notes des mises à jour précédentes restent consultables dans l'historique du dépôt
 > (`git log docs/note-client-mise-a-jour.md`).
@@ -10,137 +10,101 @@ développeur. Version du 2026-08-23.*
 
 Bonjour,
 
-Cette mise à jour **corrige le problème que vous nous avez signalé** (« certains staff ne
-voient plus leur planning ») et simplifie au passage la page planning de votre équipe.
+Cette mise à jour tourne autour d'une chose que vous nous aviez demandée : **empêcher qu'un
+planning déjà envoyé à votre équipe soit modifié d'un geste involontaire sur téléphone**
+(§1). Le reste suit — un en-tête qui ne perd plus ses boutons (§2), la semaine-type ouverte
+à toute l'équipe (§3), le calendrier des congés enfin lisible (§4) — et l'application vous
+dira désormais elle-même ce qui change à chaque mise à jour (§5).
 
-L'essentiel concerne **la vue de vos employés** (§1 à §3). Trois points vous concernent
-directement, vous : l'**ouverture d'urgence** des disponibilités, qui se désactive
-désormais seule chaque semaine (§5), le **journal des disponibilités**, qui devient
-filtrable (§6), et les **congés validés**, qui retirent enfin les disponibilités de la
-période (§7). Votre écran de planning et la page Performance ne bougent pas.
+**Une seule chose demande votre attention** : le §1 modifie un geste quotidien.
 
-## 1. Corrigé : le planning invisible la nuit du dimanche au lundi
+## 1. Un planning publié ne se modifie plus d'un doigt qui glisse
 
-Le symptôme que vous nous aviez remonté : **entre minuit et 6 h du matin le lundi**, un
-employé qui ouvrait son planning ne trouvait plus la semaine qui venait de commencer — ni
-dans « Mon planning », ni dans l'onglet « À venir ». Elle réapparaissait toute seule à 6 h.
-La panne tombait précisément à l'heure où l'équipe sort de service et consulte son
-téléphone.
+Jusqu'ici, sur téléphone et tablette, rien ne distinguait un planning en cours de
+construction d'un planning **déjà reçu par votre équipe**. Un doigt qui glisse sur une carte
+déplaçait un créneau ; une croix effleurée effaçait toute la journée d'une personne, sans
+confirmation. Sur une semaine que vos employés consultent déjà, l'erreur est invisible pour
+vous et bien réelle pour eux.
 
-Ce **n'était pas** le changement d'heure été/hiver. C'étaient deux calculs de semaine qui,
-pendant ces six heures, ne tombaient pas d'accord : la semaine neuve n'était dans aucune
-des deux listes. C'est corrigé, et verrouillé par des tests qui balayent les 168 heures
-d'une semaine, heure par heure.
+Désormais, sur une semaine publiée, **tous les gestes qui modifient le planning sont
+verrouillés** : déplacer, redimensionner, créer, supprimer un créneau, et vider la journée
+de quelqu'un. Un cadenas apparaît en haut de la journée.
 
-## 2. L'onglet « À venir » disparaît — tout est dans « Mon planning »
+**Rien n'est interdit — tout est rendu délibéré.** Pour corriger, vous touchez le cadenas :
+vous passez en mode éditeur, et vous retrouvez la main sur tout. Le verrou se remet seul
+quand vous changez de journée.
 
-Vos employés ne changent plus d'onglet pour voir la suite. La semaine en cours s'affiche en
-haut, **les semaines suivantes s'empilent dessous**, séparées par un titre de semaine : il
-suffit de faire défiler.
+À savoir : le verrou ne concerne **que** les semaines publiées. Une semaine que vous êtes en
+train de construire se manipule exactement comme avant.
 
-Seules les semaines **que vous avez publiées** apparaissent — inchangé. Un planning encore
-en brouillon reste invisible, créneau par créneau.
+## 2. L'en-tête d'une journée ne perd plus ses boutons sur téléphone
 
-L'onglet qui apparaissait était jusqu'ici le signal « il y a du nouveau ». Il est remplacé
-par :
+En posant le cadenas du §1, nous avons découvert un défaut qui existait déjà : sur un écran
+de téléphone, l'en-tête d'une journée **rognait silencieusement ce qui dépassait** — dont la
+croix de fermeture, et maintenant le cadenas. Des commandes disparaissaient sans que rien ne
+l'indique.
 
-- une pastille **✨ Nouveau** sur le titre de la semaine fraîchement publiée, qui ne
-  s'efface que lorsque l'employé l'a réellement fait défiler sous ses yeux ;
-- la **notification de publication ouvre directement sur la bonne semaine**, y compris
-  quand l'application était déjà ouverte sur le téléphone.
+Deux libellés ont été raccourcis : « Copier la semaine → » devient « Copier → », et le
+rappel de semaine (« — Semaine en cours ») est retiré du bouton de publication, où il faisait
+doublon avec la semaine déjà affichée juste au-dessus. Tout tient de nouveau à l'écran.
 
-L'onglet **« Historique » ne bouge pas**.
+## 3. La semaine-type s'ouvre à toute votre équipe
 
-## 3. La semaine de vos employés suit maintenant votre heure de pointage
+Jusqu'ici, seuls vos directeurs pouvaient enregistrer leurs horaires habituels comme modèle.
+**C'est désormais possible pour tout le monde.**
 
-⚠️ **C'est le seul changement qui peut vous surprendre.**
+Le principe est inchangé : si une personne n'a **rien envoyé** au moment de la deadline, son
+modèle part à sa place. Elle n'a rien à faire, vous n'avez personne à relancer.
 
-Dans les réglages des disponibilités, la ligne **« Fenêtre de saisie pointage — de X
-jusqu'à Y le lendemain »**. L'heure de fin (**Y, 9 h par défaut**) ne servait jusqu'ici
-qu'à une chose : jusqu'à quelle heure un responsable peut encore pointer le service de la
-veille. Elle définit **désormais aussi le moment où le planning de vos employés bascule sur
-la semaine suivante**.
+Ce que ça change pour vous : **vous recevez plus de disponibilités à valider**, et moins de
+semaines vides. Ces disponibilités passent par votre file habituelle, exactement comme si la
+personne les avait saisies elle-même.
 
-Concrètement, avec le réglage par défaut : **le lundi matin jusqu'à 9 h**, vos employés
-voient encore la semaine qui s'achève comme « semaine en cours » — auparavant elle
-basculait à 6 h. La semaine neuve est juste en dessous, à portée de défilement. **Rien
-n'est caché : seul l'ordre d'affichage change**, pendant trois heures par semaine.
+⚠️ **Rien ne contourne vos décisions.** Un modèle n'est **pas** envoyé si vous avez fermé la
+saisie des disponibilités, ni si vous avez retiré à quelqu'un le droit d'en envoyer, ni si
+son profil n'existe plus. Et un modèle ne crée jamais de créneau au planning : ce sont des
+disponibilités, que vous validez ou non.
 
-Pourquoi ce raccordement : un responsable qui pointait le service du dimanche à 7 h du
-matin ne voyait plus, dans son planning, la journée qu'il était en train de pointer — elle
-était déjà passée dans l'Historique. Les deux notions de « quand la journée bascule » sont
-maintenant une seule.
+## 4. Le calendrier des congés se lit en liste
 
-À savoir : ce réglage est **commun à tous vos établissements**. Et **votre écran à vous**
-(le planning patron) n'est pas concerné — il reste calé sur la semaine calendaire.
+Le calendrier du mois affichait cinq cases orange qu'il fallait relier du regard pour
+comprendre qu'une personne était absente du 3 au 7. Pire : sur les journées chargées, à
+partir de la troisième personne, **les noms suivants disparaissaient sans rien indiquer** —
+c'est-à-dire précisément les jours où l'on ouvre ce calendrier.
 
-## 4. Fiches du personnel plus lisibles sur téléphone
+Il affiche maintenant, sous la grille, la **liste des périodes** : « Marie, lun. 3 → ven. 7
+août, 5 j ». Sur téléphone, seule la liste s'affiche — la grille du mois y demandait de
+faire défiler l'écran de côté pour atteindre la fin du mois.
 
-Les fenêtres d'ajout et de modification d'un membre du personnel s'affichent correctement
-en mode portrait ; elles débordaient de l'écran sur certains téléphones.
+La grille reste sur ordinateur : elle répond à « quelqu'un est-il absent le 14 ? » sans avoir
+à lire.
 
-## 5. L'ouverture d'urgence se désactive seule chaque semaine
+## 5. « Du neuf » — l'application vous dit ce qui change
 
-⚠️ **Point à lire même si vous ne lisez rien d'autre.**
+C'est la dernière fois que vous découvrez une mise à jour uniquement par cette note.
 
-Dans les réglages des disponibilités, la case **« Ignorer deadline (urgence) »** permet de
-laisser un retardataire envoyer ses disponibilités après l'heure limite. Jusqu'ici, elle
-restait cochée jusqu'à ce que vous pensiez à la décocher. Une urgence ouverte un vendredi
-soir levait donc la deadline **des semaines suivantes**, sans que rien ne le signale.
+Un bouton **« Du neuf »** apparaît : dans votre menu de profil, et dans le bandeau du haut
+pour votre équipe. Il ouvre la liste des évolutions, **regroupées par semaine**, avec pour
+chacune ce qui change et **où le trouver**. Une pastille signale ce que vous n'avez pas
+encore lu, et tout reste consultable ensuite — y compris après lecture.
 
-Elle vaut désormais **pour la semaine en cours de collecte, et pour elle seule** : au
-changement de semaine, elle se décoche d'elle-même. La mention « Se décoche seule au
-changement de semaine » apparaît sous la case.
+**Chacun ne voit que ce qui le concerne.** Vos employés n'y liront pas les évolutions de
+votre écran de planning, et vous n'y lirez pas les leurs.
 
-⚠️ **Effet immédiat au moment de la mise à jour** : si cette case est cochée aujourd'hui,
-elle sera **décochée** après le déploiement. Si vous aviez ouvert une urgence en cours,
-recochez-la — elle repartira alors pour la semaine en cours.
+Les deux dernières semaines s'affichent d'emblée ; un bouton en bas déplie les précédentes.
 
-Bénéfice de bord que vous ne verrez pas mais qui compte : les **rappels automatiques** de
-disponibilités étaient eux aussi éteints tant qu'une urgence traînait. Ils ne le sont plus
-que le temps de l'urgence réelle.
+## 6. Petits ajustements
 
-## 6. Le journal des disponibilités devient filtrable
-
-Dans la fenêtre Disponibilités, l'onglet **Historique** listait tous les mouvements en
-vrac. Il gagne :
-
-- **trois filtres** — Saisies, Validations, Suppressions — avec le nombre de mouvements de
-  chaque type. Utile pour la question qu'on se pose vraiment devant ce journal : « qu'est-ce
-  qui a disparu, et pourquoi ? », sans avoir à deviner d'avance si c'est un congé, une
-  absence ou une réouverture qui l'a retiré ;
-- **un regroupement par journée**, pour que la lecture suive le fil des jours au lieu
-  d'une liste plate.
-
-Le filtre par nom que vous connaissez reste là, et se combine avec les trois autres.
-
-## 7. Un congé validé retire enfin les disponibilités de la période
-
-Jusqu'ici, valider un congé ne touchait **rien d'autre**. La personne restait affichée
-comme disponible sur des jours où vous veniez pourtant de l'autoriser à ne pas venir, et
-ses disponibilités continuaient de remonter dans votre file de validation. Il fallait
-qu'elle renvoie ses disponibilités pour que le ménage se fasse.
-
-Désormais, dès qu'un congé devient **validé** — que vous l'approuviez, ou qu'un employé le
-**déclare** lui-même si c'est le mode que vous lui avez donné — ses disponibilités sur la
-période sont retirées automatiquement. Elles disparaissent de votre file, et la
-suppression est tracée dans l'onglet Historique (§6), sous « Suppressions ».
-
-⚠️ **Ses créneaux déjà placés au planning ne sont PAS retirés.** C'est délibéré, et c'est
-la même règle que pour l'archivage : l'application ne troue jamais un planning que votre
-équipe a déjà reçu. À la place, elle vous le **dit** au moment où vous validez :
-« ⚠️ 2 créneaux déjà planifiés laissés en place, à réattribuer ». À vous de décider qui
-remplace — ce n'est pas une décision que le logiciel doit prendre seul.
-
----
+- Les pictogrammes ont été retirés des libellés de boutons (« Import taux », « Invitations en
+  attente », « Sans dispo », « Congé »), qui restent identiques par ailleurs.
 
 ## Ce qui ne change pas
 
-- L'envoi et la validation des **disponibilités** au quotidien, et la deadline elle-même —
-  seule l'**ouverture d'urgence** change de durée de vie (cf. §5).
-- Le **pointage** et ses réglages (seul l'effet de l'heure de fin s'élargit, cf. §3).
-- Vos **plannings, historiques et heures pointées** sont intégralement conservés.
-- **Aucune action de votre part n'est requise.** Vos employés n'ont rien à réinstaller :
-  l'application se met à jour d'elle-même à la prochaine ouverture.
+- **Vos données.** Aucune migration, aucun réglage à refaire, rien à ressaisir.
+- **La page Performance** et le pointage ne bougent pas.
+- **Le planning sur ordinateur** se manipule exactement comme avant : le verrou du §1 ne
+  concerne que le tactile.
+- **Les règles de disponibilités et de congés** sont inchangées ; seule la semaine-type
+  s'ouvre à plus de monde (§3).
 
-Nous restons disponibles pour toute question, avant comme après.
+Bonne mise à jour,
