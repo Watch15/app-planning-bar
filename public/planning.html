@@ -11,6 +11,7 @@
     <meta name="apple-mobile-web-app-title" content="Templyo">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <title>Mon planning — Templyo</title>
+    <link rel="stylesheet" href="/lib/nouveautes.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -669,6 +670,7 @@
             <span>🔔</span>
             <span id="btn-notif-label">Notifs</span>
         </button>
+        <button class="btn-notif" type="button" title="Ce qui a changé dans l'application" data-nv-open data-nv-dot style="display:none">Du neuf</button>
         <button class="btn-logout" onclick="logout()">⎋ <span class="btn-logout-label">Sortir</span></button>
     </div>
 </div>
@@ -811,6 +813,7 @@
 <script src="/lib/shift-hours.js"></script>
 <script src="/lib/week.js"></script>
 <script src="/lib/dispo-template.js"></script>
+<script src="/lib/nouveautes.js"></script>
 <script src="/planning.js"></script>
 <script src="/sw-register.js"></script>
 </body>

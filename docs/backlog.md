@@ -1989,6 +1989,107 @@ Deux réductions, ~230 px récupérés :
   pictogramme nu : l'action recopie une semaine ENTIÈRE par-dessus une autre, et la flèche
   est ce qui dit « vers ». Une icône seule se serait confondue avec « copier ce jour ».
 
+#### Journal des nouveautés par rôle (2026-08-28)
+
+Les évolutions n'étaient annoncées que par `docs/note-client-mise-a-jour.md`, envoyée au
+patron avant déploiement. Le staff, lui, découvrait les changements en s'y cognant.
+
+**Le blocage à lever d'abord : il n'existe aucune identité de version exploitable.**
+`package.json` est figé à `3.0.0` et le token `%%BUILD_TIME%%` de `sw.js` change à *chaque*
+déploiement, correctif CSS compris. Ni l'un ni l'autre ne peut répondre à « cette personne
+a-t-elle déjà vu cette nouveauté ». Le journal porte donc **sa propre liste, à identifiants
+stables, découplée du déploiement** : trois déploiements peuvent n'annoncer rien, et une
+annonce peut couvrir trois déploiements.
+
+| Option écartée | Pourquoi |
+|---|---|
+| Tout en `localStorage` | Un staff avec un téléphone et un poste au bar relit deux fois. |
+| Réutiliser `notifications` / `staff_notifications` | **TTL de 30 jours** (`server.js`, index TTL) : qui revient après six semaines ne voit rien. Et ça noie « ton planning est publié » — périssable et actionnable — sous des annonces produit, dégradant le canal qui marche. |
+
+**Retenu :** liste statique livrée avec le code (`public/lib/nouveautes.js`), repère de
+lecture **sur le compte** (`users.news_seen_at`, un seul champ daté — tout ce qui le précède
+est lu, là où une liste d'ids grossirait sans jamais être purgée). Deux routes
+`requireAuth` : `GET` / `POST /api/nouveautes/vues`. Pas de TTL : une nouveauté n'est pas
+un message périssable.
+
+**Ciblage par RÔLE et non par écran.** `patron`, `directeur` et `observateur` partagent
+`index.html` sans y voir les mêmes boutons — annoncer à un directeur une fonction réservée
+au patron, c'est lui promettre un bouton introuvable. À l'inverse le directeur n'a **pas**
+accès à `planning.html` — c'est `checkAuth()` (`planning.js`) qui l'y renvoie sur `/`, et
+non `redirectByRole` qui ne choisit qu'une page d'atterrissage. ⚠️ Le commentaire « seul le
+staff et directeur ont accès à cette page », dans l'`init()` de la même page, est trompeur :
+il décrit un garde qui ne s'exécute qu'après. Donc pas de double casquette à gérer
+malgré le Modèle A d'E-22.
+
+Libellé affiché : **« Du neuf »**, et aucun pictogramme — plus court que « Nouveautés » dans
+un en-tête déjà serré, et lisible en texte seul là où les boutons voisins se réduisent à
+leur icône sous 768 px. Le vocabulaire interne (fichier, routes, `news_seen_at`) garde le
+mot du domaine : renommer une route pour suivre un libellé d'écran ferait bouger un contrat
+serveur à chaque retouche de formulation.
+
+**Points d'entrée** (déclaratifs, `[data-nv-open]` / `[data-nv-dot]`, aucun code par page) :
+
+| Écran | Entrée | Pastille | Ouverture auto |
+|---|---|---|---|
+| `index.html` | menu du profil → « Du neuf » | sur l'avatar | oui |
+| `planning.html` | bouton en texte, collé à l'activation des notifications | sur le bouton | oui |
+| `pointage.html` | bouton d'en-tête | sur le bouton | **non** — une fenêtre qui s'ouvre seule tomberait en plein service, devant une file d'attente |
+
+Décisions de bord, chacune contre un agacement précis :
+
+- **l'ouverture automatique n'a lieu que si un repère existe déjà.** Au tout premier
+  passage la liste entière est « neuve » : elle sauterait au visage de chaque personne au
+  déploiement. La pastille suffit à inviter ;
+- **repère illisible (hors ligne) = rien à annoncer.** Une annonce ratée coûte moins cher
+  qu'une fenêtre qui se rouvre à chaque démarrage parce que le réseau a mal répondu. Un
+  miroir `localStorage` sert uniquement à absorber un `POST` qui n'est pas passé ;
+- **les boutons se révèlent seulement si le rôle a quelque chose à lire.** Le compte
+  `etablissement` (la tablette partagée du bar) n'est visé par aucune entrée : son bouton
+  reste masqué, sans test de rôle en dur. ⚠️ Le jour où une entrée le visera, son repère de
+  lecture sera de fait **partagé** entre tous ceux qui touchent la tablette.
+
+⚠️ **Une entrée se date du jour de son déploiement, jamais du passé.** Le repère n'a que la
+granularité du jour : une entrée ajoutée l'après-midi avec la date du matin serait comptée
+comme lue par qui a ouvert la fenêtre le matin. Deux livraisons annonçables le même jour ?
+La seconde prend la date du lendemain.
+
+**La règle d'écriture est le vrai livrable — aucun mécanisme ne produit de la clarté.**
+Une entrée = UN changement *visible* ; un rôle qui ne voit rien changer n'a pas d'entrée.
+Trois champs imposés : `titre` (ce que la personne obtient), `quoi` (le **symptôme**, jamais
+la cause), `ou` (le chemin réel, avec les libellés exacts affichés à l'écran). Ni nom de
+champ, ni numéro de ticket. La note client reste la version longue ; l'entrée in-app en est
+le résumé de trois lignes, **écrit dans le même geste** — c'est la seule parade au vrai
+risque ici, une liste que plus personne ne met à jour et qui ment au bout de deux mois.
+
+Couverture : `tests/nouveautes.test.js` (18 tests). Les règles de ciblage sont isolées dans
+une fonction pure `filtrer(liste, role, seen, now)`, exportée par le wrapper UMD (le même que
+`week.js` / `dispo-template.js`) : c'est la partie qui se trompe sans bruit — une entrée
+invisible ne produit aucun rapport de bug, seulement un silence — donc c'est elle qui devait
+devenir testable sous Node. Verrouillé : le repère par compte, un rôle mal orthographié, les
+entrées datées dans le futur, et le passage à l'heure LOCALE (cf. ci-dessous). **Le rendu de
+la fenêtre n'a toujours pas de test** : pas de DOM headless dans le dépôt, et en ajouter un
+pour ça seul ne se justifie pas.
+
+⚠️ **Corrigé à la relecture : la première version calculait les dates en UTC** —
+`new Date().toISOString().slice(0, 10)` et `seen.slice(0, 10)`, précisément l'anti-patron
+que `docs/architecture.md` §3.1 nomme `// INTERDIT`. Entre minuit et 2 h l'été à Paris, les
+deux découpages renvoyaient la veille : une entrée datée du jour n'était pas visible (donc
+aucun bouton, la révélation dépendant de `visibles.length`), et un repère posé cette nuit-là
+laissait repasser pour neuf ce qu'on venait de lire. Une panne nocturne de deux heures — la
+même famille que celle qu'une des entrées de la liste annonce corrigée. Passé à
+`Week.toDateStr`, ce qui a demandé de charger `/lib/week.js` sur `pointage.html` (déjà dans
+le `STATIC` du SW, rien à précharger de plus). Deux tests le verrouillent, et ils échouent
+bien si l'on remet le découpage UTC — vérifié.
+
+Autres reprises de la même passe : le script `test` de `package.json` énumérait les fichiers
+à la main, ce qui laissait un nouveau fichier de test ne **jamais** tourner avec une CI verte
+— remplacé par `node --test "tests/*.test.js"` (glob résolu par Node, pas par le shell, donc
+identique sous Windows et sous la CI Linux) ; `news_seen_at` stocké en `Date` BSON comme les
+~30 autres horodatages du serveur, une chaîne ne se comparant pas à une date ; le bloc ESLint
+dédié supprimé, le wrapper UMD rendant `Nouveautes` déclarable une seule fois à côté de ses
+trois voisins ; et l'aller-retour réseau supprimé quand le rôle n'a rien à lire ou quand la
+fenêtre est rouverte pour relire.
+
 #### Calendrier congés — lisibilité (2026-08-27)
 
 La grille de mois est déclarée `min-width: 620px` dans une modale de 720 px `max-width:95vw`.

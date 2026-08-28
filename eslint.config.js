@@ -53,6 +53,7 @@ module.exports = [
                 Week: 'readonly',          // public/lib/week.js (UMD)
                 ShiftHours: 'readonly',    // public/lib/shift-hours.js (UMD)
                 DispoTemplate: 'readonly', // public/lib/dispo-template.js (UMD)
+                Nouveautes: 'readonly',    // public/lib/nouveautes.js (UMD)
                 XLSX: 'readonly',          // vendor/xlsx
                 jspdf: 'readonly',         // vendor/jspdf
                 jsPDF: 'readonly',

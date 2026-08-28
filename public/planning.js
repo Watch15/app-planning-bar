@@ -184,6 +184,8 @@ async function init() {
     const av = document.getElementById('staff-avatar');
     if (av) av.textContent = (user.name || user.email || '?').charAt(0).toUpperCase();
 
+    Nouveautes.init(user.role, { autoOuvrir: true });
+
     initTabs();
     initStatsToggle();
     initCalSync();

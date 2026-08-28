@@ -7,6 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <title>Pointage — Templyo</title>
+    <link rel="stylesheet" href="/lib/nouveautes.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -420,6 +421,7 @@
     </div>
     <div style="display:flex;align-items:center;gap:8px">
         <a href="/planning.html" class="btn-back" id="btn-back" style="display:none">← Planning</a>
+        <button class="btn-logout" type="button" title="Ce qui a changé dans l'application" data-nv-open data-nv-dot style="display:none">Du neuf</button>
         <button class="btn-logout" onclick="logout()">⎋ Sortir</button>
     </div>
 </header>
@@ -480,6 +482,8 @@
 
 <script src="/lib/auth-guard.js"></script>
 <script src="/lib/shift-hours.js"></script>
+<script src="/lib/week.js"></script>
+<script src="/lib/nouveautes.js"></script>
 <script src="/pointage.js"></script>
 <script src="/sw-register.js"></script>
 </body>

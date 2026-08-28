@@ -428,6 +428,7 @@ async function init() {
     if (me.role === 'observateur') document.body.classList.add('observateur');
     renderUserBadge(me);
     renderDateDisplay();
+    Nouveautes.init(me.role, { autoOuvrir: true });
 
     initDropZone();
     initTimelineBodyTap();

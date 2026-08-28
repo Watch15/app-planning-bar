@@ -26,6 +26,8 @@ const STATIC = [
     '/lib/shift-hours.js',
     '/lib/week.js',
     '/lib/dispo-template.js',
+    '/lib/nouveautes.js',
+    '/lib/nouveautes.css',
     '/style.css',
     '/manifest.json',
     '/vendor/html2canvas.min.js',

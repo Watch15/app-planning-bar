@@ -12,6 +12,7 @@
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <title>Templyo</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/lib/nouveautes.css">
     <style>
         .shift-real-badge {
             font-size: 9px;
@@ -906,12 +907,13 @@
             </button>
             <!-- Avatar + dropdown déconnexion -->
             <div class="user-menu-wrap" id="user-menu-wrap">
-                <button class="user-menu-trigger" id="user-menu-trigger" title="Mon compte">
+                <button class="user-menu-trigger" id="user-menu-trigger" title="Mon compte" data-nv-dot>
                     <div class="user-avatar" id="user-avatar">?</div>
                     <span class="user-badge" id="user-badge"></span>
                     <span class="user-menu-arrow">▾</span>
                 </button>
                 <div class="user-menu-dropdown" id="user-menu-dropdown">
+                    <button class="user-menu-item" type="button" data-nv-open style="display:none">Du neuf</button>
                     <button class="user-menu-item" id="menu-mes-absences" style="display:none" onclick="openManagerOffModal()">Mes absences</button>
                     <button class="user-menu-item" id="menu-mes-dispos" style="display:none" onclick="openManagerDisposModal()">Mes disponibilités</button>
                     <button class="user-menu-item user-menu-logout" onclick="logout()">Déconnexion</button>
@@ -1498,6 +1500,7 @@
 <script src="/lib/shift-hours.js"></script>
 <script src="/lib/week.js"></script>
 <script src="/lib/dispo-template.js"></script>
+<script src="/lib/nouveautes.js"></script>
 <script src="script.js"></script>
 <script src="/sw-register.js"></script>
 <script src="/index-init.js"></script>

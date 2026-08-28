@@ -6432,6 +6432,43 @@ app.patch('/api/notifications/mine/read', checkDB, requireAuth, async (req, res)
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
+// ── Nouveautés (journal des évolutions) ───────────────────────────────────────
+// Le repère de lecture vit sur le COMPTE et non dans le navigateur : une personne
+// qui a un téléphone et un poste au bar ne doit pas relire deux fois la même
+// annonce. Un seul champ daté suffit — tout ce qui le précède est lu — là où une
+// liste d'identifiants grossirait à chaque livraison sans jamais être purgée.
+//
+// Pas de TTL ici, contrairement à `notifications` / `staff_notifications` (30 jours) :
+// une nouveauté n'est pas un message périssable. Quelqu'un qui revient après six
+// semaines d'absence doit encore pouvoir lire ce qui a changé pendant ce temps.
+function nouveautesUserId(id) {
+    return isValidObjectId(id) ? new ObjectId(id) : id;
+}
+
+app.get('/api/nouveautes/vues', checkDB, requireAuth, async (req, res) => {
+    try {
+        const u = await db.collection('users').findOne(
+            { _id: nouveautesUserId(req.session.user._id) },
+            { projection: { news_seen_at: 1 } }
+        );
+        res.json({ seen_at: u?.news_seen_at || null });
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+app.post('/api/nouveautes/vues', checkDB, requireAuth, async (req, res) => {
+    try {
+        await db.collection('users').updateOne(
+            { _id: nouveautesUserId(req.session.user._id) },
+            // Une Date BSON, comme tous les horodatages du fichier : `res.json()` la
+            // sérialise dans la même chaîne ISO côté client, mais une chaîne ne se
+            // compare pas à une date côté serveur (BSON trie par type d'abord) — un
+            // futur « qui n'a rien lu depuis la dernière livraison » ne matcherait rien.
+            { $set: { news_seen_at: new Date() } }
+        );
+        res.json({ ok: true });
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
 // GET timestamp dernière modification (polling auto-refresh clients)
 app.get('/api/last-updated', checkDB, requireAuth, async (req, res) => {
     try {

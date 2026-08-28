@@ -5,8 +5,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1787598761.0615487,
-    "ast_hash": "7e2bd1f22fb6ec7c648f289b5127ad3a",
+    "mtime": 1787906101.1705759,
+    "ast_hash": "f9ba44f1d1214c1f8e46863c5a4c5537",
     "semantic_hash": ""
   },
   "public/lib/shift-hours.js": {
@@ -25,23 +25,23 @@
     "semantic_hash": "ff84def9ff25b1b84207ad1d15571fba"
   },
   "public/planning.js": {
-    "mtime": 1787679818.7593803,
-    "ast_hash": "9d4f0f4b6f9d0d995bb00e1cb79359fc",
+    "mtime": 1787904490.9283414,
+    "ast_hash": "c752ad45ed8ae7e6bb2dd8593c0be9ff",
     "semantic_hash": ""
   },
   "public/pointage.js": {
-    "mtime": 1786628857.0416157,
-    "ast_hash": "e26c33580bb5bace6deecae4fd30f8b2",
+    "mtime": 1787904490.930343,
+    "ast_hash": "9e2de9d1c320651426b606c33d7abd3c",
     "semantic_hash": ""
   },
   "public/script.js": {
-    "mtime": 1787836654.948811,
-    "ast_hash": "a1c8c62ca02c4d8c51f4078ac5702ef1",
+    "mtime": 1787904490.924807,
+    "ast_hash": "36066257ba0cf1a52fda7f3204d0dfab",
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1787599638.9474907,
-    "ast_hash": "529ba3a1f7434fdc9ecdfb6f908ede6d",
+    "mtime": 1787904490.9171774,
+    "ast_hash": "03529bd665b62b80c8f75a9e6f36ca55",
     "semantic_hash": ""
   },
   "public/vendor/html2canvas.min.js": {
@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "server.js": {
-    "mtime": 1787825632.9080868,
-    "ast_hash": "b7bfecf7edea9809480dc0d1e3f8d473",
+    "mtime": 1787905945.5470507,
+    "ast_hash": "f54dd58d0e6fca70441ce2f942ec9b0a",
     "semantic_hash": ""
   },
   "tests/routes.test.js": {
@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "docs/backlog.md": {
-    "mtime": 1787836704.56765,
-    "ast_hash": "1d6832afa72c7427dc762abe74d0c9d0",
+    "mtime": 1787906144.8938644,
+    "ast_hash": "f2bb080b7cfafdc761063c70918ce684",
     "semantic_hash": ""
   },
   "docs/prd.md": {
@@ -125,8 +125,8 @@
     "semantic_hash": "b08e527857ae0b58a84a24cdd1f2fd8a"
   },
   "public/index.html": {
-    "mtime": 1787835758.6907392,
-    "ast_hash": "14c0a78eb06ce26c0ccc7bece7575a57",
+    "mtime": 1787905377.342156,
+    "ast_hash": "87f4a6cb22a4632d2e1271a7fdbdbfc2",
     "semantic_hash": ""
   },
   "public/login.html": {
@@ -140,13 +140,13 @@
     "semantic_hash": ""
   },
   "public/planning.html": {
-    "mtime": 1787599638.8885198,
-    "ast_hash": "88d4b0322767aea6b4cd1be6efb9180c",
+    "mtime": 1787905945.542539,
+    "ast_hash": "bca199bd8f4c7f1794bf62227470f0ba",
     "semantic_hash": ""
   },
   "public/pointage.html": {
-    "mtime": 1786354559.9388163,
-    "ast_hash": "bc79855900cba3b63fac5a3c847c8a77",
+    "mtime": 1787905945.5395381,
+    "ast_hash": "a9d19fcfaab7bad8eb09a57fe3a23b8c",
     "semantic_hash": ""
   },
   "public/politique-confidentialite.html": {
@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "eslint.config.js": {
-    "mtime": 1787599759.0380197,
-    "ast_hash": "eed36c7c21c0d80b5b1243345ddde852",
+    "mtime": 1787905945.543538,
+    "ast_hash": "c2ffabc4616cdd5e1a3b096207aad94e",
     "semantic_hash": ""
   },
   "docs/methodologie-et-cicd.md": {
@@ -352,6 +352,16 @@
   "public/lib/dispo-template.js": {
     "mtime": 1787599508.9682686,
     "ast_hash": "9dc5670cc98d18a1b4e277a95dca424b",
+    "semantic_hash": ""
+  },
+  "public/lib/nouveautes.js": {
+    "mtime": 1787906054.6955266,
+    "ast_hash": "1b07f35d4576e3054ddba89fa60068c0",
+    "semantic_hash": ""
+  },
+  "tests/nouveautes.test.js": {
+    "mtime": 1787906029.4484951,
+    "ast_hash": "1a76fcc921fe608c645eaa57a983abdb",
     "semantic_hash": ""
   }
 }
