@@ -16,7 +16,7 @@ const { test, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const { makeDb } = require('./helpers/fake-db');
 const { startApp, stopApp, req, app } = require('./helpers/harness');
-const { NOUVEAUTES, filtrer } = require('../public/lib/nouveautes');
+const { NOUVEAUTES, filtrer, grouperParSemaine } = require('../public/lib/nouveautes');
 
 const PATRON = { _id: '0123456789abcdef01230001', role: 'patron',        name: 'Paul' };
 const DIR    = { _id: '0123456789abcdef01230002', role: 'directeur',     name: 'Diane' };
@@ -137,6 +137,42 @@ test('filtrer : « aujourd\'hui » se lit en heure locale, pas en UTC', () => {
     assert.deepEqual(ids(filtrer(liste, 'patron', null, justeApresMinuit).visibles), ['x']);
 });
 
+// ── Le regroupement d'affichage ──────────────────────────────────────────────
+// Les mises à jour partent chez le client semaine par semaine : c'est la maille à
+// laquelle il les reçoit. Deux dates voisines d'une même livraison ne doivent pas lui
+// apparaître comme deux livraisons distinctes.
+
+test('grouperParSemaine : deux jours de la même semaine tiennent sous un seul titre', () => {
+    // Lundi 24 et vendredi 28 août 2026 → même semaine, un seul groupe.
+    const liste = [
+        { id: 'ven', date: '2026-08-28', roles: ['patron'], titre: 'V', quoi: 'v', ou: 'v' },
+        { id: 'lun', date: '2026-08-24', roles: ['patron'], titre: 'L', quoi: 'l', ou: 'l' },
+    ];
+    const g = grouperParSemaine(liste);
+    assert.equal(g.length, 1);
+    assert.deepEqual(g[0][0], '2026-08-24', 'le titre porte le LUNDI de la semaine');
+    assert.deepEqual(ids(g[0][1]), ['ven', 'lun']);
+});
+
+test('grouperParSemaine : le dimanche appartient à la semaine qui s\'achève', () => {
+    // Dimanche 23 août : lundi-dimanche, donc semaine du 17 — pas celle du 24. C'est la
+    // convention de tout le reste de l'app (Week.weekStart), et six entrées livrées en
+    // portent la date.
+    const liste = [
+        { id: 'lun24', date: '2026-08-24', roles: ['patron'], titre: 'A', quoi: 'a', ou: 'a' },
+        { id: 'dim23', date: '2026-08-23', roles: ['patron'], titre: 'B', quoi: 'b', ou: 'b' },
+    ];
+    assert.deepEqual(grouperParSemaine(liste).map(([lundi]) => lundi),
+        ['2026-08-24', '2026-08-17']);
+});
+
+test('grouperParSemaine : l\'ordre des semaines suit celui des entrées', () => {
+    const v = filtrer(NOUVEAUTES, 'patron', null, new Date(2026, 7, 28, 12)).visibles;
+    const semaines = grouperParSemaine(v).map(([lundi]) => lundi);
+    assert.deepEqual(semaines, [...semaines].sort().reverse(),
+        'la semaine la plus récente doit arriver en tête');
+});
+
 // ── La liste livrée ──────────────────────────────────────────────────────────
 
 test('chaque identifiant est unique — c\'est lui qui survit à une reformulation', () => {
@@ -159,6 +195,21 @@ test('chaque entrée porte une date au format jour et les trois champs de lectur
         assert.ok(!Number.isNaN(Date.parse(n.date + 'T12:00:00')), n.id + ' : date inexistante');
         for (const champ of ['titre', 'quoi', 'ou']) {
             assert.ok(n[champ] && n[champ].trim().length > 0, n.id + ' : champ « ' + champ + ' » vide');
+        }
+    }
+});
+
+// Erreur commise trois fois en écrivant la liste : une entrée visant `staff` dont le
+// champ `ou` renvoie vers un écran réservé au patron. Le staff n'a pas ces écrans — on
+// lui promet donc un chemin introuvable, exactement le travers que le ciblage par rôle
+// existe pour éviter. Trois libellés suffisent à couvrir les trois cas rencontrés ;
+// quand un même changement se voit à deux endroits, la réponse est DEUX entrées.
+test('aucune entrée destinée au staff ne le renvoie vers un écran du patron', () => {
+    const ECRANS_PATRON = ['Paramètres dispos', 'Gestion du staff', 'Récap mensuel'];
+    for (const n of NOUVEAUTES.filter(e => e.roles.includes('staff'))) {
+        for (const ecran of ECRANS_PATRON) {
+            assert.ok(!n.ou.includes(ecran),
+                n.id + ' : renvoie le staff vers « ' + ecran +' », qu\'il ne peut pas ouvrir');
         }
     }
 });

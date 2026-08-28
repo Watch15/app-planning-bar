@@ -36,6 +36,12 @@
 // lecture n'a que la granularité du jour : une entrée ajoutée l'après-midi avec la
 // date du matin serait comptée comme déjà lue par qui a ouvert la fenêtre le matin.
 // Deux livraisons annonçables le même jour ? La seconde prend la date du lendemain.
+// L'unique exception est le REMPLISSAGE INITIAL ci-dessous, qui remonte trois semaines
+// de livraisons : personne n'avait encore de repère de lecture, donc rien ne pouvait
+// être compté comme lu à tort. Cette porte se referme au premier déploiement.
+//
+// L'AFFICHAGE, lui, regroupe par SEMAINE (cf. `grouperParSemaine`) : c'est la maille à
+// laquelle les mises à jour partent chez le client. La donnée reste au jour.
 //
 // Le libellé affiché est « Du neuf », plus court que « Nouveautés » dans un en-tête
 // déjà serré. Le vocabulaire INTERNE (fichier, routes, `news_seen_at`) garde le mot
@@ -58,6 +64,58 @@
 
     const NOUVEAUTES = [
         {
+            id: 'du-neuf', date: '2026-08-28',
+            roles: ['patron', 'directeur', 'observateur', 'staff'],
+            titre: 'Cette fenêtre',
+            quoi: 'Ce qui change dans l\'application est désormais écrit ici, semaine par '
+                + 'semaine, et chacun ne voit que ce qui le concerne. Une pastille apparaît '
+                + 'quand il y a du neuf ; tout reste consultable ensuite, même une fois lu.',
+            ou: 'Le bouton « Du neuf » — dans votre menu de profil, ou dans le bandeau du haut'
+        },
+        {
+            id: 'verrou-semaine-publiee', date: '2026-08-27',
+            roles: ['patron', 'directeur'],
+            titre: 'Une semaine publiée ne se modifie plus par accident',
+            quoi: 'Sur téléphone et tablette, un planning déjà envoyé à l\'équipe est '
+                + 'verrouillé : un doigt qui glisse ne déplace plus un créneau, n\'en supprime '
+                + 'plus un, et ne vide plus la journée de quelqu\'un. Pour corriger, on passe '
+                + 'd\'abord en mode éditeur — un geste volontaire, pas un réflexe. Rien n\'est '
+                + 'interdit, tout est simplement rendu délibéré.',
+            ou: 'Ouvrir une journée d\'une semaine publiée → le cadenas en haut'
+        },
+        {
+            id: 'entete-jour-mobile', date: '2026-08-27',
+            roles: ['patron', 'directeur'],
+            titre: 'L\'en-tête d\'une journée ne rogne plus ses boutons sur téléphone',
+            quoi: 'Les libellés trop longs poussaient le cadenas et la croix de fermeture hors '
+                + 'de l\'écran, sans rien indiquer : les commandes disparaissaient purement et '
+                + 'simplement. Les deux libellés les plus larges ont été raccourcis, tout tient.',
+            ou: 'Ouvrir une journée depuis le planning, sur téléphone'
+        },
+        {
+            id: 'semaine-type-staff', date: '2026-08-25',
+            roles: ['staff'],
+            titre: 'Enregistrez vos horaires habituels une fois pour toutes',
+            quoi: 'Vous pouvez garder une semaine comme modèle. Si vous n\'avez rien envoyé au '
+                + 'moment de la deadline, c\'est ce modèle qui part à votre place — pas de '
+                + 'semaine vide parce qu\'on a oublié. Ce sont des disponibilités comme les '
+                + 'autres : votre patron les valide normalement, et vous pouvez toujours les '
+                + 'modifier avant la deadline.',
+            ou: 'Dispos & congés → carte « Ma semaine type »'
+        },
+        {
+            id: 'semaine-type-patron', date: '2026-08-25',
+            roles: ['patron', 'directeur'],
+            titre: 'La semaine-type ne concerne plus seulement les directeurs',
+            quoi: 'Chaque membre de l\'équipe peut désormais enregistrer ses horaires habituels '
+                + 'comme modèle. À la deadline, ceux qui n\'ont rien envoyé voient leur modèle '
+                + 'partir à leur place : vous recevez donc plus de disponibilités à valider, et '
+                + 'moins de semaines vides à relancer. Rien ne contourne vos décisions — un '
+                + 'modèle n\'est jamais envoyé si vous avez fermé la saisie ou retiré à '
+                + 'quelqu\'un le droit d\'envoyer des dispos.',
+            ou: 'Disponibilités → onglet « En attente »'
+        },
+        {
             id: 'conges-lisible', date: '2026-08-28',
             roles: ['patron', 'directeur', 'observateur'],
             titre: 'Les congés se lisent maintenant en liste',
@@ -69,7 +127,7 @@
         },
         {
             id: 'conge-retire-dispos', date: '2026-08-23',
-            roles: ['patron', 'directeur', 'staff'],
+            roles: ['patron', 'directeur'],
             titre: 'Un congé validé retire les disponibilités de la période',
             quoi: 'Avant, une personne en congé restait affichée comme disponible sur les jours '
                 + 'qu\'on venait pourtant de lui accorder, et il fallait qu\'elle renvoie ses '
@@ -78,6 +136,16 @@
                 + 'troue jamais un planning que l\'équipe a déjà reçu, elle le signale pour que '
                 + 'quelqu\'un décide qui remplace.',
             ou: 'Congés → à la validation'
+        },
+        {
+            id: 'conge-retire-dispos-staff', date: '2026-08-23',
+            roles: ['staff'],
+            titre: 'Un congé accordé efface vos disponibilités de la période',
+            quoi: 'Vous n\'avez plus à repasser sur vos disponibilités après un congé validé : '
+                + 'celles qui tombent pendant la période sont retirées toutes seules. Vos '
+                + 'créneaux déjà planifiés, eux, restent affichés — c\'est à votre responsable '
+                + 'de décider qui vous remplace.',
+            ou: 'Dispos & congés'
         },
         {
             id: 'historique-dispos-filtres', date: '2026-08-23',
@@ -98,26 +166,37 @@
                 + 'semaines suivantes sans que rien ne le signale — et éteignait au passage les '
                 + 'rappels automatiques. Elle vaut maintenant pour la semaine en cours de '
                 + 'collecte, et pour elle seule.',
-            ou: 'Disponibilités → Réglages → « Ignorer deadline (urgence) »'
+            ou: '« Paramètres dispos » → « Ignorer deadline (urgence) »'
         },
         {
-            id: 'fiches-personnel-mobile', date: '2026-08-23',
+            id: 'fiches-personnel-mobile', date: '2026-08-14',
             roles: ['patron', 'directeur'],
             titre: 'Fiches du personnel lisibles sur téléphone',
             quoi: 'Les fenêtres d\'ajout et de modification d\'un membre de l\'équipe débordaient '
                 + 'de l\'écran en mode portrait sur certains téléphones. Corrigé.',
-            ou: 'Personnel → ajouter ou modifier une fiche'
+            ou: 'Staff → « Gestion du staff » → ajouter ou modifier une fiche'
         },
         {
             id: 'semaine-bascule-9h', date: '2026-08-23',
-            roles: ['patron', 'directeur', 'staff'],
+            roles: ['patron', 'directeur'],
             titre: 'La semaine de l\'équipe bascule à l\'heure du pointage',
-            quoi: 'Le lundi matin jusqu\'à 9 h, les employés voient encore la semaine qui '
-                + 's\'achève en haut de leur planning ; la semaine neuve est juste en dessous, à '
-                + 'portée de défilement. Rien n\'est caché, seul l\'ordre change, et seulement '
-                + 'pendant ces trois heures. Un responsable qui pointe le service du dimanche à '
-                + '7 h du matin retrouve enfin la journée qu\'il est en train de pointer.',
-            ou: 'Disponibilités → Réglages → « Fenêtre de saisie pointage »'
+            quoi: 'L\'heure de fin de la fenêtre de pointage (9 h par défaut) décide désormais '
+                + 'aussi du moment où le planning de vos employés passe à la semaine suivante — '
+                + 'auparavant 6 h. Un responsable qui pointe le service du dimanche à 7 h du '
+                + 'matin retrouve enfin la journée qu\'il est en train de pointer. Ce réglage '
+                + 'est commun à tous vos établissements ; votre propre planning n\'est pas '
+                + 'concerné, il reste calé sur la semaine calendaire.',
+            ou: '« Paramètres dispos » → « Fenêtre de saisie pointage »'
+        },
+        {
+            id: 'semaine-bascule-9h-staff', date: '2026-08-23',
+            roles: ['staff'],
+            titre: 'Le lundi matin, votre semaine qui s\'achève reste en haut',
+            quoi: 'Jusqu\'à 9 h le lundi, la semaine qui se termine reste affichée en premier ; '
+                + 'la semaine neuve est juste en dessous, à portée de défilement. Rien n\'est '
+                + 'caché, seul l\'ordre change, et seulement pendant ces trois heures — celles '
+                + 'où l\'on sort de service et où on regarde son téléphone.',
+            ou: 'Onglet « Mon planning »'
         },
         {
             id: 'planning-liste-continue', date: '2026-08-23',
@@ -136,6 +215,50 @@
                 + 'était introuvable, puis réapparaissait toute seule à 6 h — pile à l\'heure où '
                 + 'on sort de service et où on regarde son téléphone. C\'est réparé.',
             ou: 'Onglet « Mon planning »'
+        },
+        {
+            id: 'planning-brouillon-invisible', date: '2026-08-13',
+            roles: ['patron', 'directeur'],
+            titre: 'Un planning non publié reste invisible pour l\'équipe',
+            quoi: 'Une semaine en cours de construction n\'était pas censée être lisible par '
+                + 'les employés, et ne l\'était effectivement pas à l\'écran — mais trois '
+                + 'chemins la laissaient encore passer. Ils sont fermés. Vous pouvez monter une '
+                + 'semaine à l\'avance sans que personne ne voie le brouillon, et une semaine '
+                + 'publiée loin dans le futur est enfin réellement consultable par l\'équipe.',
+            ou: 'Planning → bouton « Publier »'
+        },
+        {
+            id: 'journal-dispos', date: '2026-08-13',
+            roles: ['patron', 'directeur', 'observateur'],
+            titre: 'Un journal garde la trace de chaque disponibilité',
+            quoi: 'Qui a saisi quoi, quand, et ce que valait la version d\'avant : tout '
+                + 'mouvement de disponibilité est consigné, y compris les suppressions '
+                + 'automatiques. Le jour où quelqu\'un dit « j\'avais mis dispo », la réponse '
+                + 'est écrite. Lecture seule, aucun bouton — c\'est ce qui lui donne sa valeur '
+                + 'de preuve. Conservé trois ans.',
+            ou: 'Disponibilités → onglet « Historique »'
+        },
+        {
+            id: 'reouverture-nominative', date: '2026-08-13',
+            roles: ['patron', 'directeur'],
+            titre: 'Rouvrir la saisie pour une seule personne, sur une seule semaine',
+            quoi: 'Un retardataire n\'oblige plus à rouvrir la deadline pour tout le monde. La '
+                + 'réouverture vaut pour la personne ET la semaine choisies : elle ne déborde '
+                + 'pas sur les semaines suivantes, et enregistrer une autre semaine ne la '
+                + 'consomme plus par erreur. Une pastille « Rouvert » signale l\'état.',
+            ou: 'Disponibilités → onglet « Sans dispo » → « Rouvrir »'
+        },
+        {
+            id: 'archiver-staff', date: '2026-08-12',
+            roles: ['patron', 'directeur'],
+            titre: 'Archiver quelqu\'un qui part, sans effacer ses heures',
+            quoi: 'Un départ ne se règle plus en supprimant le profil — donc en perdant tout '
+                + 'son historique. La personne sort de la vie courante : plus proposée à la '
+                + 'planification, plus dans les copies de semaine, plus de notifications sur '
+                + 'son téléphone. Mais son passé reste intact dans les récapitulatifs, et '
+                + 'l\'archivage se défait si elle revient. Ses créneaux déjà placés ne sont pas '
+                + 'effacés : ils repassent en Joker, à réattribuer.',
+            ou: 'Staff → « Gestion du staff » → bouton « Archiver »'
         },
     ];
 
@@ -156,6 +279,25 @@
         // exactement la panne nocturne qu'une des entrées ci-dessus annonce corrigée.
         const repere = seen ? toDateStr(new Date(seen)) : '';
         return { visibles, neuves: visibles.filter(n => n.date > repere) };
+    }
+
+    // Regroupe pour l'AFFICHAGE par semaine, pas par jour. Les mises à jour partent chez
+    // le client semaine par semaine : « Semaine du 24 août » est la maille à laquelle il
+    // les reçoit, alors qu'un jour précis ne lui dit rien — deux dates voisines lui
+    // paraîtraient deux livraisons distinctes alors qu'il n'en a vu qu'une.
+    // La donnée, elle, reste au JOUR : c'est la granularité du repère de lecture, et
+    // l'arrondir à la semaine ferait passer pour lue une entrée publiée le jeudi par qui
+    // a ouvert la fenêtre le lundi.
+    // `liste` doit arriver triée (c'est le cas de `visibles`) : une Map garde l'ordre
+    // d'insertion, donc les semaines sortent dans le même sens que les entrées.
+    function grouperParSemaine(liste) {
+        const groupes = new Map();
+        for (const n of liste) {
+            const lundi = toDateStr(Week.weekStart(new Date(n.date + 'T12:00:00')));
+            if (!groupes.has(lundi)) groupes.set(lundi, []);
+            groupes.get(lundi).push(n);
+        }
+        return [...groupes];
     }
 
     // ── Mécanique d'affichage ────────────────────────────────────────────────
@@ -188,9 +330,9 @@
         _neuves   = _connu ? r.neuves : [];
     }
 
-    function dateFr(ds) {
-        return new Date(ds + 'T12:00:00').toLocaleDateString('fr-FR',
-            { day: 'numeric', month: 'long', year: 'numeric' });
+    function semaineFr(lundi) {
+        return 'Semaine du ' + new Date(lundi + 'T12:00:00')
+            .toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
     }
 
     function majPastille() {
@@ -252,19 +394,10 @@
         fermer();
         const neuves = new Set(_neuves.map(n => n.id));
 
-        // Regroupement par date : sept entrées livrées le même jour se lisent comme une
-        // mise à jour, pas comme sept événements distincts. `_visibles` est déjà trié par
-        // date décroissante et une Map garde l'ordre d'insertion, d'où le groupement en
-        // une passe — sans balises ouvertes à refermer douze lignes plus bas.
-        const parDate = new Map();
-        for (const n of _visibles) {
-            if (!parDate.has(n.date)) parDate.set(n.date, []);
-            parDate.get(n.date).push(n);
-        }
         const corps = _visibles.length
-            ? [...parDate].map(([date, items]) =>
+            ? grouperParSemaine(_visibles).map(([lundi, items]) =>
                 '<div class="nv-groupe">'
-                + '<div class="nv-date">' + esc(dateFr(date)) + '</div>'
+                + '<div class="nv-date">' + esc(semaineFr(lundi)) + '</div>'
                 + items.map(n => carte(n, neuves)).join('')
                 + '</div>').join('')
             : '<p class="nv-vide">Rien de neuf pour l\'instant. Les évolutions qui vous '
@@ -317,5 +450,5 @@
         if (opts && opts.autoOuvrir && _seen && _neuves.length) ouvrir();
     }
 
-    return { init, filtrer, NOUVEAUTES };
+    return { init, filtrer, grouperParSemaine, NOUVEAUTES };
 });

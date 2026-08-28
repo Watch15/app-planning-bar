@@ -2027,6 +2027,34 @@ leur icône sous 768 px. Le vocabulaire interne (fichier, routes, `news_seen_at`
 mot du domaine : renommer une route pour suivre un libellé d'écran ferait bouger un contrat
 serveur à chaque retouche de formulation.
 
+**Affichage groupé par SEMAINE, donnée gardée au JOUR (2026-08-28).** Les mises à jour partent
+chez le client semaine par semaine : « Semaine du 24 août » est la maille à laquelle il les
+reçoit, alors qu'une date précise ne lui dit rien — deux dates voisines d'une même livraison
+lui paraîtraient deux livraisons distinctes. Le champ `date` reste au jour parce que c'est la
+granularité du repère de lecture ; l'arrondir à la semaine ferait passer pour lue une entrée
+publiée le jeudi par qui a ouvert la fenêtre le lundi. Seul `grouperParSemaine` (pur, exporté,
+testé) fait la conversion, via `Week.weekStart` — donc le dimanche appartient à la semaine qui
+s'achève, comme partout ailleurs dans l'app.
+
+**Remplissage initial : 19 entrées couvrant trois semaines de livraisons** (semaines du 10, du
+17 et du 24 août), reconstituées depuis `git log` puis **vérifiées dans ce backlog** plutôt que
+déduites des messages de commit. Répartition : 14 pour le patron et le directeur, 6 pour le
+staff, 4 pour l'observateur ; le staff n'a rien sur la semaine du 10, où tout ce qui a bougé
+était côté patron — un rôle sans entrée sur une semaine est un résultat normal, pas un oubli.
+⚠️ Ces entrées sont datées **dans le passé**, ce que la règle interdit : l'exception tient
+parce que personne n'avait encore de repère de lecture, donc rien ne pouvait être compté comme
+lu à tort. La porte se referme au premier déploiement.
+
+⚠️ **Un `ou` par entrée, donc une entrée par ENDROIT.** Erreur commise trois fois en rédigeant
+la liste : une entrée visant `staff` dont le `ou` renvoyait vers « Paramètres dispos »,
+« Gestion du staff » ou « Récap mensuel » — des écrans qu'un staff ne peut pas ouvrir. Quand un
+même changement se voit à deux endroits selon le rôle, la réponse est **deux entrées**
+(`semaine-bascule-9h` / `-staff`, `conge-retire-dispos` / `-staff`), et non un champ `ou` par
+rôle qui alourdirait une liste tenue à la main. Un test verrouille les trois libellés concernés.
+Tous les `ou` ont par ailleurs été relus contre les libellés **réellement affichés** :
+« Réglages » n'existe pas (c'est « Paramètres dispos »), « Personnel » non plus (c'est « Staff »
+→ « Gestion du staff »), et la carte du staff s'appelle « Ma semaine type », sans trait d'union.
+
 **Points d'entrée** (déclaratifs, `[data-nv-open]` / `[data-nv-dot]`, aucun code par page) :
 
 | Écran | Entrée | Pastille | Ouverture auto |
