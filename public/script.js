@@ -1826,20 +1826,25 @@ async function loadEstablishments() {
             // Ouvrir automatiquement le jour courant
             await loadDayDetail(toDateStr(new Date()));
         }
-    } catch {
-        const fallback = [
-            { id: 'Josy_pub',          name: 'Josy',   type: 'pub' },
-            { id: 'Poni_restaurant',   name: 'Poni',   type: 'restaurant' },
-            { id: 'FanFan_restaurant', name: 'FanFan', type: 'restaurant' },
-            { id: 'Caval_restaurant',  name: 'Caval',  type: 'restaurant' },
-        ];
-        allEstablishments = fallback;
-        renderTabs(fallback);
-        currentVenueId = fallback[0].id;
-        applyVenueHours(fallback[0].id);
+    } catch (e) {
+        // AUCUN établissement de repli, volontairement. Il y avait ici une liste de
+        // quatre établissements codés en dur — qui portaient les noms réels d'un
+        // CLIENT, dans un fichier livré à toutes les instances. Deux problèmes, pas un :
+        //
+        //   1. confidentialité — sur une démo ou chez un autre client, la moindre
+        //      coupure réseau affichait les enseignes de quelqu'un d'autre ;
+        //   2. correction — le repli posait `currentVenueId` sur un établissement
+        //      ABSENT de l'instance, puis chargeait la semaine. Tout ce que
+        //      l'utilisateur planifiait ensuite partait sur un id fantôme, sans
+        //      qu'aucun écran ne signale quoi que ce soit.
+        //
+        // Un écran vide et un message valent mieux qu'un planning qui écrit à côté.
+        console.error('[loadEstablishments]', e);
+        allEstablishments = [];
+        currentVenueId    = null;
+        renderTabs([]);
         renderWeekLabel();
-        await refreshWeek();
-        await loadDayDetail(toDateStr(new Date()));
+        showToast('Impossible de charger les établissements. Recharge la page.', true);
     }
 }
 
@@ -1850,7 +1855,7 @@ function renderTabs(list) {
         const btn = document.createElement('button');
         btn.className  = 'venue-tab' + (i === 0 ? ' active' : '');
         btn.dataset.id = v.id;
-        btn.innerHTML  = `${escapeHtml(v.name)} <span class="badge">${v.type === 'pub' ? 'Pub' : 'Resto'}</span>`;
+        btn.innerHTML  = `${escapeHtml(v.name)} <span class="badge">${v.type === 'restaurant' ? 'Resto' : 'Bar'}</span>`;
         btn.addEventListener('click', async () => {
             document.querySelectorAll('.venue-tab').forEach(t => t.classList.remove('active'));
             btn.classList.add('active');
@@ -4630,7 +4635,7 @@ async function renderEstablishmentsList() {
         estabs.forEach(e => {
             const row = document.createElement('div');
             row.className = 'staff-manage-row';
-            const typeLabel = e.type === 'bar' ? 'Bar' : 'Restaurant';
+            const typeLabel = e.type === 'restaurant' ? 'Restaurant' : 'Bar';
             const hours = (e.open_time && e.close_time)
                 ? e.open_time + ' – ' + e.close_time
                 : (e.open_time || e.close_time || '—');
@@ -5228,7 +5233,7 @@ function openAssignBarsModal(user) {
         const checked = assigned.includes(estabId) ? 'checked' : '';
         return '<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#333;padding:6px 0;cursor:pointer">' +
             '<input type="checkbox" value="' + estabId + '" ' + checked + ' style="width:15px;height:15px;cursor:pointer">' +
-            e.name + (e.type ? ' <span style="font-size:11px;color:#aaa">(' + (e.type === 'pub' ? 'Pub' : 'Resto') + ')</span>' : '') +
+            e.name + (e.type ? ' <span style="font-size:11px;color:#aaa">(' + (e.type === 'restaurant' ? 'Resto' : 'Bar') + ')</span>' : '') +
             '</label>';
     }).join('');
 
@@ -7719,7 +7724,7 @@ function buildEstablishmentSelect(staffId) {
     const makeOpt = (e, star) => {
         const opt = document.createElement('option');
         opt.value       = e.id;
-        opt.textContent = (star ? '★ ' : '') + e.name + (e.type ? ' (' + (e.type === 'pub' ? 'Pub' : 'Resto') + ')' : '');
+        opt.textContent = (star ? '★ ' : '') + e.name + (e.type ? ' (' + (e.type === 'restaurant' ? 'Resto' : 'Bar') + ')' : '');
         return opt;
     };
     preferred.forEach(e => select.appendChild(makeOpt(e, true)));

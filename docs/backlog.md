@@ -1989,6 +1989,70 @@ Deux réductions, ~230 px récupérés :
   pictogramme nu : l'action recopie une semaine ENTIÈRE par-dessus une autre, et la flèche
   est ce qui dit « vers ». Une icône seule se serait confondue avec « copier ce jour ».
 
+#### Jeu de démo refondu à l'échelle d'une vraie exploitation (2026-08-31)
+
+Demandé avant un rendez-vous client : **1 bar + 1 restaurant, 25 employés, 2 mois**,
+dispos saisies par l'équipe sur 2 semaines. L'ancien jeu (3 établissements, 13 personnes)
+ne ressemblait pas à ce que gère le prospect qu'on va voir.
+
+**Confidentialité.** Aucune donnée ne vient d'une base client — ni lecture, ni extraction.
+Seule la *forme* de l'exploitation s'en inspire (un bar, un resto, une vingtaine de
+personnes, une mise à jour hebdo) ; les 26 personnes, les enseignes, les taux et les
+téléphones sont inventés. Une forme ne se dés-anonymise pas. Numéros pris dans la plage
+`06 39 98 XX XX`, réservée par l'ARCEP à la fiction.
+
+**Horizon ramené de 4 à 2 semaines.** Sur 4, la file de dispos s'étalait et devenait
+clairsemée (10 personnes en N+1, 2 en N+4) ; sur 2 elle est PLEINE — 156 en attente. Plus
+crédible, et bien plus vendeur : le prospect voit la charge de travail que l'outil lui
+retire. L'horizon reste un réglage, le montrer à 2 n'empêche pas de dire qu'il monte à 4.
+
+**Trois choses que la montée en taille a révélées, et qui n'étaient pas des choix de jeu
+de données mais de vrais défauts :**
+
+| | Symptôme | Cause |
+|---|---|---|
+| Horaires morts | Tout établissement de démo tombait sur la grille par défaut 10 h → 26 h — sept heures vides chaque matin sur un bar qui ouvre à 17 h — et la fiche affichait « — » | Le seed écrivait `hours: {open, close}`, que **rien** dans le produit ne lit. `applyVenueHours` (script.js:21) lit `open_time`/`close_time` en `HH:MM`, la forme que pose `POST /api/establishments` |
+| Un bar étiqueté « Resto » | Onglets, cases à cocher et sélecteur d'établissement appelaient « Resto » un établissement de type `bar` — pendant que sa propre fiche l'appelait « Bar » | 3 sites testaient encore `type === 'pub'`, valeur que l'API ne produit plus (elle n'accepte que `bar`\|`restaurant`), et un 4e appelait « Restaurant » tout ce qui n'est pas exactement `bar`. Nouveau test sur `'restaurant'` : classe correctement `bar`, `restaurant` **et** le `pub` legacy des bases anciennes |
+| Noms d'un client codés en dur | Le repli de `loadEstablishments` fabriquait 4 établissements portant les **enseignes réelles d'un client**, dans un fichier livré à toutes les instances | Sur une démo, la moindre coupure réseau affichait les enseignes de quelqu'un d'autre. Et le repli posait `currentVenueId` sur un établissement **absent de l'instance** puis chargeait la semaine : tout ce qui était planifié ensuite partait sur un id fantôme, sans qu'aucun écran ne le signale. Remplacé par un écran vide + message |
+
+Les deux derniers touchent **toutes** les instances, pas seulement la démo.
+
+**La leçon sur les jeux de données de vente.** Deux fois dans cette passe, le jeu a menti
+d'une façon qu'aucun test n'attrape parce qu'elle est *plausible* :
+
+1. `hours` était écrit, relu par personne. Un champ que le seed pose et que le produit
+   ignore ne lève rien : il se voit uniquement en regardant l'écran. D'où l'assertion
+   ajoutée (tout créneau doit tenir dans les horaires de son établissement) et le
+   `venueHours()` **dérivé** des chaînes plutôt que saisi à côté — deux champs à tenir
+   d'accord finissent toujours par diverger.
+2. La règle « le moins chargé l'emporte » donnait à tout le monde le même volume : chef de
+   cuisine, plongeur et extra sortaient tous à ~20 h/semaine. Le récap mensuel alignait
+   25 personnes sur le même total — la signature d'une donnée fabriquée, sur un des écrans
+   que le prospect regarde le plus longtemps. Corrigé par un volume contractuel (`vol`) et
+   une comparaison de **taux** de remplissage (`hours/vol`) et non de cumuls bruts.
+   Éventail obtenu : 7,5 h → 31,2 h.
+
+   ⚠️ Élargir le bruit de ±3 % à ±15 % ne déplace **aucun** total : la règle gloutonne est
+   auto-correctrice, elle reconverge sur le contrat. Vérifié plutôt que supposé — le
+   commentaire affirmait d'abord le contraire. Sans conséquence ici : le produit ne stocke
+   aucun contrat, donc aucun écran ne compare les heures planifiées à `vol`.
+
+**Ce que le jeu couvre maintenant et ne couvrait pas** : jours de repos (`rest_days`),
+surnoms, modes de congé par personne (`conge_modes`), quelqu'un qui ne saisit pas de dispos
+(`can_submit_dispos: false`), une demande de congé **refusée**, une note de créneau, deux
+notes de semaine, et surtout **6 semaines-types réparties dans l'équipe** — la collection
+`manager_dispo_templates` est ouverte à tout le staff depuis le 2026-08-24, mais le seed
+n'en posait qu'une, sur le compte directeur : il laissait croire au privilège que la
+feature a justement supprimé.
+
+**F-05 (échange de shifts) reste non semé** : les routes sont commentées en attente de
+validation client. Semer `shift_swaps` produirait des données qu'aucun écran ne sait lire.
+
+**Contrôles d'intégrité passés** (script jetable, hors dépôt) : aucune dispo en double sur
+`(staff_id, date)`, les 1143 shifts tiennent dans la grille, aucun shift sur un jour de
+repos, aucun double service, tous les créneaux `resp` tenus par un porteur du rôle,
+`venues` de la directrice aligné sur `assigned_establishments`. 445 tests verts, lint 0 erreur.
+
 #### 🔴 CI rouge sur Node 20 — le glob de `node --test` n'existe qu'à partir de Node 21 (2026-08-28)
 
 Trouvé en promouvant le lot : `main` poussé, CI **en échec**, `deploy` sauté (`needs: test`),
