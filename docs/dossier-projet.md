@@ -88,10 +88,69 @@ entier.
 | Recette | `Dev` (env. Dev) | `app-planning-bar` / **dev** | `vab3u2w` | `templyo_dev` | development |
 | Pré-production | `Dev` (env. Prod) | `app-planning-bar` / **main** | `vab3u2w` | `templyo_main` | production |
 | **Production client** | `Castaniu Family` | **`app-planning-bar-castaniu-family`** / main | `gqfynu8` | `gestion_bar` | production |
+| **Démonstration** | *(service dédié, créé le 2026-08-31)* | `app-planning-bar` / **main** | `vab3u2w` | `templyo_demo` | production |
 
 > ⚠️ **Le service de pré-production s'appelle aussi « Dev ».** Deux services portent ce nom
 > dans deux environnements différents. Se fier au nom seul mène à l'erreur ; se fier au
 > couple (environnement, service).
+
+### Le service de DÉMONSTRATION (2026-08-31)
+
+Quatrième service Railway, dédié aux rendez-vous prospects. Il sert le jeu de
+`scripts/seed-demo.js` (cf. backlog) : 1 bar + 1 restaurant, 26 personnes, ~2 mois
+d'historique pointé.
+
+**⚠️ Le piège numéro un : les deux garde-fous valent `true` par DÉFAUT.**
+
+```js
+const OUTBOUND_ENABLED = process.env.OUTBOUND_ENABLED !== 'false';   // server.js:117
+const CRON_ENABLED     = process.env.CRON_ENABLED     !== 'false';   // server.js:132
+```
+
+Un service fraîchement créé qui ne les pose pas **peut joindre de vraies personnes** :
+les clés Twilio / Resend / VAPID sont partagées entre les environnements (A-02), elles
+sont donc actives dès le premier démarrage. Une invitation envoyée devant un prospect,
+ou un rappel de dispos déclenché par le cron, part **pour de vrai**. C'est la même
+classe de problème qu'A-03 sur `dev`, mais sur une instance dont on va justement
+cliquer partout en direct.
+
+**Variables à poser sur le service de démo**
+
+| Variable | Valeur | Pourquoi celle-là |
+|---|---|---|
+| `MONGO_URI` | cluster `vab3u2w` | même cluster que dev/main, base séparée |
+| `MONGO_DB` | `templyo_demo` | **LA ligne qui protège les données.** Absente, le défaut est `gestion_bar` — la base client |
+| `NODE_ENV` | `production` | Railway sert en HTTPS : il faut `cookie.secure` + `trust proxy`. C'est la seule différence avec `.env.demo`, qui vise `development` parce que localhost est en http |
+| `OUTBOUND_ENABLED` | `false` | **obligatoire** — cf. ci-dessus |
+| `CRON_ENABLED` | `false` | `cleanupPastDispos` supprime, et `materializeAllDispoTemplates` créerait des dispos au passage de la deadline : le jeu de démo se déformerait tout seul entre deux rendez-vous |
+| `SESSION_SECRET` | **propre au service** | ne pas recopier celui de `dev` (A-02) : une instance à comptes publics ne doit pas partager sa clé de signature |
+| `SEED_PASSWORD` | **pas `Demo2026!`** | le défaut du script. Sur une instance publique, 27 comptes derrière un mot de passe deviné = accès libre. À changer, et à repasser au seed |
+| `APP_URL` | domaine Railway de la démo | liens d'invitation et URL de calendrier |
+| `TZ` | `Europe/Paris` | comme les autres services |
+
+**Ne PAS poser** : `ALLOW_TEST_AUTH` (le serveur refuse de démarrer hors `NODE_ENV=test`,
+`server.js:161` — c'est voulu), et `PATRON_EMAIL` / `PATRON_PASSWORD` (code mort, A-04).
+
+**Trois points de câblage à ne pas rater**
+
+1. **Commande de démarrage : `npm start`, pas `node server.js`.** `npm start` substitue
+   `%%BUILD_TIME%%` dans `public/sw.js` ; sans lui le service worker garde un marqueur
+   littéral et la mise à jour automatique de la PWA ne se déclenche jamais.
+2. **Laisser le déploiement auto Railway ACTIF sur ce service.** CD-01
+   (`.github/workflows/ci.yml`) ne déploie qu'**un seul** service, celui nommé dans
+   `vars.RAILWAY_SERVICE` ; il ne connaît pas la démo. Corollaire assumé : la démo se
+   déploie sans attendre que la CI soit verte — c'est acceptable ici, ça ne le serait
+   pas en prod.
+3. **Le seed se lance depuis le poste**, pas depuis Railway : `npm run demo:seed` écrit
+   dans `templyo_demo` sur Atlas, la même base que lit le service. Rien à installer
+   côté Railway. À relancer avant chaque rendez-vous — le jeu est calculé relativement
+   à *aujourd'hui*, il se décale d'un jour par jour.
+
+**Ce qui reste à arbitrer** : le service de démo partage le cluster `vab3u2w` avec la
+recette ET la pré-production. Si l'utilisateur Mongo est le même, compromettre
+l'instance publique donne accès à `templyo_main`. Un utilisateur Atlas dédié, restreint
+à la seule base `templyo_demo`, fermerait la question — 5 minutes, et c'est le seul
+service des quatre qui soit à la fois public et peuplé de comptes à mot de passe connu.
 
 ### Le fait structurant : le client est sur un dépôt séparé
 

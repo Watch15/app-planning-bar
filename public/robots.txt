@@ -1,0 +1,6 @@
+# Templyo est un outil de planning derrière authentification : il n'y a rien à indexer,
+# sur AUCUNE instance. Posé ici plutôt que par instance parce que la réponse est la même
+# partout — et parce que l'instance qui en a le plus besoin est celle de DÉMONSTRATION,
+# publique et peuplée de comptes au mot de passe commun.
+User-agent: *
+Disallow: /
