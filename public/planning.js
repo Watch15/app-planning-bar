@@ -1037,7 +1037,7 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
              String(sw.to_shift_id)   === String(firstShift._id)));
         const isSwapMine  = !!pendingSwap && String(pendingSwap.from_staff_id) === String(firstShift.staff_id);
         const canSwap     = !isPast && !pendingSwap && firstShift.staff_id !== '__joker__';
-        const swapBadge   = pendingSwap ? ' <span class="badge badge--warning">⇄ en attente</span>' : '';
+        const swapBadge   = pendingSwap ? ' <span class="badge badge--warning">en attente</span>' : '';
         dayDetail.swap = { shift: firstShift, pending: pendingSwap || null, isSwapMine, canSwap };
 
         // En-tête
@@ -1292,9 +1292,9 @@ function openDaySheet(detail) {
     // je n'ai qu'à attendre le patron.
     const sw = detail.swap || null;
     const swapHtml =
-        (sw && sw.canSwap)                 ? '<div class="dayx-act"><button type="button" class="dayx-swap">⇄ Proposer un échange</button></div>' :
-        (sw && sw.pending && sw.isSwapMine) ? '<div class="dayx-act"><button type="button" class="dayx-swap dayx-swap--cancel">⇄ Annuler ma demande</button></div>' :
-        (sw && sw.pending)                  ? '<div class="dayx-act"><div class="dayx-swap-wait">⇄ Échange proposé — en attente du patron</div></div>' : '';
+        (sw && sw.canSwap)                 ? '<div class="dayx-act"><button type="button" class="dayx-swap">Proposer un échange</button></div>' :
+        (sw && sw.pending && sw.isSwapMine) ? '<div class="dayx-act"><button type="button" class="dayx-swap dayx-swap--cancel">Annuler ma demande</button></div>' :
+        (sw && sw.pending)                  ? '<div class="dayx-act"><div class="dayx-swap-wait">Échange proposé — en attente du patron</div></div>' : '';
 
     const { sheet, close } = openBottomSheet('day-sheet',
         '<div class="dayx-panel" style="--dayx-tick:' + (2 / RANGE * 100).toFixed(2) + '%">' +

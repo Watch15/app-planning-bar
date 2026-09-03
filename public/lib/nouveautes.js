@@ -72,7 +72,7 @@
                 + 'responsable valide ou refuse : rien ne bouge tant qu\'il n\'a pas tranché, '
                 + 'et vous pouvez retirer votre demande avant sa réponse. Seules les semaines '
                 + 'déjà publiées sont concernées.',
-            ou: 'Planning → toucher la journée → « ⇄ Proposer un échange »'
+            ou: 'Planning → toucher la journée → « Proposer un échange »'
         },
         {
             id: 'echange-shifts-patron', date: '2026-09-03',
@@ -83,7 +83,7 @@
                 + 'côte et le motif : vous approuvez, et les deux plannings sont permutés d\'un '
                 + 'coup ; vous refusez, et rien ne change. Une pastille compte les demandes en '
                 + 'attente.',
-            ou: 'Bouton « ⇄ Échanges » dans le bandeau du haut'
+            ou: 'Bouton « Échanges » dans le bandeau du haut'
         },
         {
             id: 'du-neuf', date: '2026-08-28',

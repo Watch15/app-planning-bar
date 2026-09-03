@@ -701,7 +701,7 @@ async function run() {
 
         // ── Échanges de shifts (F-05) ─────────────────────────────────────────
         // Deux personnes veulent permuter leur service, le patron tranche. C'est la
-        // file « ⇄ Échanges » de son écran, et le badge qui va avec.
+        // file « Échanges » de son écran, et le badge qui va avec.
         //
         // La fenêtre utilisable est étroite, et c'est le produit qui la fixe, pas le
         // jeu : la route n'accepte que des shifts FUTURS (`date >= aujourd'hui`) et de

@@ -6005,12 +6005,6 @@ function _renderSwapCard(swap) {
     };
 
     row.appendChild(makeSide('Proposé par', swap.from_staff_name, swap.from_date, swap.from_start_time, swap.from_end_time, swap.from_establishment_id));
-
-    const arrow = document.createElement('div');
-    arrow.style.cssText = 'display:flex;align-items:center;justify-content:center;font-size:20px;color:#534AB7;padding:0 4px';
-    arrow.textContent = '⇄';
-    row.appendChild(arrow);
-
     row.appendChild(makeSide('Contre', swap.to_staff_name, swap.to_date, swap.to_start_time, swap.to_end_time, swap.to_establishment_id));
     card.appendChild(row);
 
