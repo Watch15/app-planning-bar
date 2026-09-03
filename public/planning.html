@@ -591,7 +591,9 @@
 
         /* ── Mini planning de la journée (feuille au tap sur un jour) ─────── */
         .day-card.has-shift { cursor: pointer; }
-        .dayx-sheet {
+        /* Coquille commune à toutes les feuilles qui montent du bas (cf. `openBottomSheet`) :
+           contact d'un coéquipier, mini planning d'une journée. */
+        .bottom-sheet {
             position: fixed; inset: 0; z-index: 9998;
             display: flex; align-items: flex-end; justify-content: center;
             background: rgba(0,0,0,0); transition: background .18s ease;
@@ -643,7 +645,7 @@
         .dayx-track {
             position: relative; height: 24px; border-radius: 6px;
             background: repeating-linear-gradient(to right,
-                var(--light-border) 0 1px, transparent 1px var(--dayx-tick, 12.5%));
+                var(--light-border) 0 1px, transparent 1px var(--dayx-tick, 100%));
         }
         .dayx-bar {
             position: absolute; top: 0; height: 100%; border-radius: 6px;

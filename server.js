@@ -2501,7 +2501,15 @@ app.get('/api/my-shifts', checkDB, requireAuth, async (req, res) => {
         const myEstablishments = [...new Set(myRawShifts.map(s => s.establishment_id))];
         const myDates          = [...new Set(myRawShifts.map(s => s.date))];
 
-        const jokers = myEstablishments.length ? (await db.collection('shifts').find({
+        // `light=1` : l'appelant ne veut QUE ses propres shifts. C'est le cas du récap
+        // mensuel de l'historique, qui couvre plusieurs mois d'un coup et n'affiche ni
+        // collègue ni Joker — il jette les uns et les autres au premier filtre. Sans
+        // cette porte, une fenêtre de six mois déclenchait DEUX requêtes Mongo dont
+        // chaque `$in` porte sur toutes les dates travaillées (une centaine, quatre
+        // cents sur deux ans), pour un résultat entièrement écarté à l'arrivée.
+        const light = req.query.light === '1';
+
+        const jokers = (myEstablishments.length && !light) ? (await db.collection('shifts').find({
             is_joker: true,
             establishment_id: { $in: myEstablishments },
             date: { $in: myDates }
@@ -2532,15 +2540,14 @@ app.get('/api/my-shifts', checkDB, requireAuth, async (req, res) => {
         // où l'un des deux se dérive autrement, la requête des collègues raterait
         // silencieusement le changement.
         //
-        // `light=1` : l'appelant ne veut QUE ses propres shifts (récap mensuel de
-        // l'historique, qui couvre plusieurs mois d'un coup). Sans cette porte, une
-        // plage de six mois ramenait un document de collègue par personne et par
-        // soirée travaillée — plusieurs centaines de lignes projetées pour une somme
-        // d'heures qui n'en lit aucune.
+        // En mode `light`, la clé est ABSENTE de la réponse plutôt que remplie de
+        // tableaux vides : un `{}` par date travaillée ne dirait pas « aucun collègue »,
+        // il dirait « on n'a pas cherché » — et l'appelant ne pourrait pas distinguer
+        // les deux.
         const colleagueMap = {};
-        for (const date of myDates) colleagueMap[date] = [];
+        if (!light) for (const date of myDates) colleagueMap[date] = [];
 
-        if (myDates.length && req.query.light !== '1') {
+        if (myDates.length && !light) {
             // La requête croise TOUTES mes dates avec TOUS mes établissements ; ce Set
             // referme le produit cartésien sur les couples réellement travaillés.
             const worked = new Set(myShifts.map(s => s.date + '|' + s.establishment_id));
@@ -2565,7 +2572,7 @@ app.get('/api/my-shifts', checkDB, requireAuth, async (req, res) => {
                 if (worked.has(r.date + '|' + r.establishment_id)) colleagueMap[r.date].push(r);
             }
         }
-        res.json({ shifts: myShifts, colleagues: colleagueMap });
+        res.json(light ? { shifts: myShifts } : { shifts: myShifts, colleagues: colleagueMap });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 

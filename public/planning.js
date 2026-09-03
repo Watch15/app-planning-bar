@@ -2,8 +2,8 @@
 
 const DAY_NAMES  = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 const MONTH_NAMES = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
-const DAY_NAMES_LONG_HIST   = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-const MONTH_NAMES_LONG_HIST = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const DAY_NAMES_LONG   = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const MONTH_NAMES_LONG = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 
 // Saisie des dispos désactivée pour ce staff → l'onglet « Dispos & congés » n'affiche
 // que la sous-vue Congés (cf. /api/dispo-settings staffCanSubmit).
@@ -796,7 +796,7 @@ function applyStatsPeriod() {
         return;
     }
     const now = new Date();
-    if (sub) sub.textContent = 'Récap de ' + MONTH_NAMES_LONG_HIST[now.getMonth()] + ' ' + now.getFullYear();
+    if (sub) sub.textContent = 'Récap de ' + MONTH_NAMES_LONG[now.getMonth()] + ' ' + now.getFullYear();
     if (_lastMonthData) {
         renderMonthStats(_lastMonthData.shifts);
     } else {
@@ -811,14 +811,10 @@ async function loadMonthRecap() {
     if (!el) return;
     el.innerHTML = '<div class="state-msg" style="grid-column:1/-1">Chargement…</div>';
 
-    const now    = new Date();
-    const y      = now.getFullYear();
-    const m      = now.getMonth();
-    const first  = new Date(y, m, 1);
-    const last   = new Date(y, m + 1, 0);
-
-    const monthFrom = toDateStr(first);
-    const monthTo   = toDateStr(last);
+    // MÊME calcul de bornes que l'historique mensuel (`histRange`, une fenêtre d'un
+    // mois). L'égalité des deux totaux pour le mois courant est promise à l'écran ; elle
+    // ne tenait jusqu'ici qu'à la coïncidence de deux calculs recopiés.
+    const { from: monthFrom, to: monthTo } = histRange(1);
 
     try {
         const res = await fetch('/api/my-shifts?from=' + monthFrom + '&to=' + monthTo, { credentials: 'include' });
@@ -983,15 +979,18 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
         card.className = 'day-card has-shift' + (isToday ? ' today' : '');
         if (!isToday) card.style.borderLeftColor = staffColor;
 
-        // La journée entière est mémorisée ici pour le mini planning (cf. `openDaySheet`) :
-        // la carte a déjà toute la donnée sous la main, la redemander à l'ouverture
-        // ferait attendre pour ce qui vient d'être affiché.
-        _dayDetails[date] = {
+        // La journée entière voyage SUR la carte, pour le mini planning
+        // (cf. `openDaySheet`) : la carte a déjà toute la donnée sous la main, la
+        // redemander à l'ouverture ferait attendre pour ce qui vient d'être affiché.
+        // Portée par l'élément et non par un index global : le détail vit et meurt avec
+        // la carte, sans clé à tenir des deux côtés ni entrées orphelines laissées
+        // derrière par les rendus successifs.
+        card._dayDetail = {
+            date,
             mine:       dayShifts,
             colleagues: colleagues[date] || [],
             jokers:     jokers.filter(j => j.date === date),
         };
-        card.dataset.dayDate = date;
 
         // F-05 échanges désactivé
         // const pendingSwap = (window._myPendingSwaps || []).find(sw =>
@@ -1046,7 +1045,7 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
                         const ns       = nc ? ' style="color:' + nc + '"' : '';
                         const needsBg  = nc && textColorFor(nc) === '#1a1a2e';
                         const pillBg   = needsBg ? ' style="background:' + dotColor + 'BF;cursor:pointer"' : ' style="cursor:pointer"';
-                        const _cn      = c.is_joker ? 'Joker' : (sm2 && sm2.nickname ? sm2.nickname : (c.staff_name || '').split(' ')[0]);
+                        const _cn      = c.is_joker ? 'Joker' : _shortColleagueName(c);
                         const fullName = c.is_joker ? 'Joker (créneau ouvert)' : (c.staff_name || _cn);
                         const dataAttr = ' data-pill-name="' + _esc(fullName) +
                                          '" data-pill-start="' + (c.start_time != null ? c.start_time : '') +
@@ -1106,11 +1105,10 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
 // d'y voir qui recouvre son propre créneau ni jusqu'à quelle heure l'équipe tient.
 //
 // Aucune requête : tout vient de la réponse `/api/my-shifts` déjà utilisée pour rendre
-// la carte (mes shifts, mes collègues du jour, les Jokers), mémorisée par
+// la carte (mes shifts, mes collègues du jour, les Jokers), posée sur la carte par
 // `renderDaysInto`. Les collègues n'ont que leurs heures PLANIFIÉES (c'est tout ce que
 // le serveur projette) ; mes propres heures suivent la règle habituelle du réel dès que
 // le pointage est complet.
-const _dayDetails = {};
 
 // Taper un jour ouvre la journée ; taper une pastille collègue garde son mini-toast.
 // Les deux écoutes vivent sur `document` : sans ce garde-fou, la pastille ouvrirait la
@@ -1118,24 +1116,22 @@ const _dayDetails = {};
 document.addEventListener('click', (ev) => {
     if (!ev.target.closest) return;
     if (ev.target.closest('[data-pill-name]')) return;
-    const card = ev.target.closest('.day-card[data-day-date]');
-    if (!card) return;
-    openDaySheet(card.dataset.dayDate);
+    const card = ev.target.closest('.day-card.has-shift');
+    if (!card || !card._dayDetail) return;
+    openDaySheet(card._dayDetail);
 });
 
-// Le nom court d'un collègue, avec la même règle que les pastilles de la carte du jour
-// (surnom s'il existe, sinon prénom) — deux vocabulaires pour la même personne d'une
-// vue à l'autre obligeraient à la reconnaître deux fois.
+// Le nom court d'un collègue : surnom s'il existe, sinon prénom. LA règle, appelée par
+// les pastilles de la carte du jour comme par les lignes du mini planning — deux
+// vocabulaires pour la même personne d'une vue à l'autre obligeraient à la reconnaître
+// deux fois.
 function _shortColleagueName(c) {
     const sm = (allStaff || []).find(s => String(s._id) === String(c.staff_id));
     if (sm && sm.nickname) return sm.nickname;
     return (c.staff_name || '').trim().split(/\s+/)[0] || 'Collègue';
 }
 
-function openDaySheet(date) {
-    const detail = _dayDetails[date];
-    if (!detail) return;
-
+function openDaySheet(detail) {
     // Une ligne par personne et par établissement, les créneaux coupés (18h-22h puis
     // 23h-3h) fusionnés sur la MÊME ligne : deux lignes pour une personne se lisent
     // comme deux personnes.
@@ -1159,19 +1155,20 @@ function openDaySheet(date) {
         addSlot(s.establishment_id, '__moi__',
             { name: 'Moi', color: (sm && sm.color) || s.color || '#534AB7', isMe: true }, start, end);
     });
-    detail.colleagues.forEach(c => {
-        addSlot(c.establishment_id, isJoker(c) ? 'joker-' + (c._id || c.start_time) : 'staff-' + c.staff_id,
-            { name: isJoker(c) ? 'Joker' : _shortColleagueName(c),
-              color: isJoker(c) ? '#95a5a6' : (c.color || '#888'), isJoker: isJoker(c) },
-            c.start_time, c.end_time);
-    });
     // Les Jokers arrivent par DEUX chemins (la liste des collègues du jour et celle des
-    // créneaux ouverts) : sans cette clé partagée, le même créneau posait deux barres
-    // superposées et se comptait deux fois.
-    detail.jokers.forEach(j => {
-        addSlot(j.establishment_id, 'joker-' + (j._id || j.start_time),
-            { name: 'Joker', color: '#95a5a6', isJoker: true }, j.start_time, j.end_time);
-    });
+    // créneaux ouverts) — d'où UNE seule fonction pour les deux passes : la clé, le nom
+    // et la couleur du Joker s'écrivent au même endroit, et c'est cette clé partagée qui
+    // fait que le même créneau ne pose pas deux barres superposées.
+    const addPerson = (p, estJoker) => {
+        const jk = estJoker || isJoker(p);
+        addSlot(p.establishment_id,
+            jk ? 'joker-' + (p._id || p.start_time) : 'staff-' + p.staff_id,
+            { name:  jk ? 'Joker' : _shortColleagueName(p),
+              color: jk ? '#95a5a6' : (p.color || '#888'), isJoker: jk },
+            p.start_time, p.end_time);
+    };
+    detail.colleagues.forEach(c => addPerson(c, false));
+    detail.jokers.forEach(j    => addPerson(j, true));
 
     // Bornes de l'axe : l'amplitude réelle de la soirée, arrondie à l'heure. Pas de
     // marge décorative — sur un téléphone, chaque heure vide mange la lisibilité des
@@ -1188,17 +1185,18 @@ function openDaySheet(date) {
     const pctLeft  = h      => ((h - OPEN_H) / RANGE * 100).toFixed(2) + '%';
     const pctWidth = (s, e) => (Math.max(e - s, 0) / RANGE * 100).toFixed(2) + '%';
 
-    const d        = parseDate(date);
-    const dayLabel = DAY_NAMES_LONG_HIST[d.getDay()] + ' ' + d.getDate() + ' ' + MONTH_NAMES_LONG_HIST[d.getMonth()];
+    const d        = parseDate(detail.date);
+    const dayLabel = DAY_NAMES_LONG[d.getDay()] + ' ' + d.getDate() + ' ' + MONTH_NAMES_LONG[d.getMonth()];
 
-    // Mon service d'abord : c'est la ligne pour laquelle on ouvre la feuille.
-    const mesHeures = detail.mine.reduce((a, s) => a + ShiftHours.shiftDurationHours(s), 0);
-    const monResume = detail.mine.length
-        ? detail.mine.map(s => {
-              const { start, end } = shiftEffectiveHours(s);
-              return fmtHour(start) + ' → ' + fmtHour(end);
-          }).join(', ') + ' · ' + fmtDuration(mesHeures)
-        : '';
+    // Mon service d'abord : c'est la ligne pour laquelle on ouvre la feuille. Une seule
+    // passe pour les horaires ET le cumul — deux parcours appelaient deux fois
+    // `shiftEffectiveHours` sur chaque shift, par deux chemins différents du module.
+    let mesHeures = 0;
+    const monResume = detail.mine.map(s => {
+        const { start, end } = shiftEffectiveHours(s);
+        mesHeures += (start != null && end != null) ? end - start : 0;
+        return fmtHour(start) + ' → ' + fmtHour(end);
+    }).join(', ');
 
     // L'établissement où JE travaille en tête : les autres ne sont là que par débordement
     // d'une double vacation.
@@ -1207,16 +1205,18 @@ function openDaySheet(date) {
         (mesEstabs.has(b) ? 1 : 0) - (mesEstabs.has(a) ? 1 : 0));
     const multiEstab = estabIds.length > 1;
 
-    const axisHtml = () => {
-        let ticks = '';
-        // Une graduation toutes les 2 h. Sur une amplitude impaire, la dernière heure
-        // n'est pas graduée : collée à la précédente, elle rendait les deux illisibles —
-        // et l'amplitude exacte est écrite en toutes lettres au pied de la feuille.
-        for (let h = OPEN_H; h <= CLOSE_H; h += 2) {
-            ticks += '<span class="dayx-tick" style="left:' + pctLeft(h) + '">' + fmtHour(h) + '</span>';
-        }
-        return '<div class="dayx-axis"><span></span><div class="dayx-axis-track">' + ticks + '</div></div>';
-    };
+    // Une graduation toutes les 2 h. Sur une amplitude impaire, la dernière heure n'est
+    // pas graduée : collée à la précédente, elle rendait les deux illisibles — et
+    // l'amplitude exacte est écrite en toutes lettres au pied de la feuille.
+    //
+    // Chaîne et non fonction : les bornes sont celles de TOUTE la soirée, établissements
+    // confondus. Un axe recalculé par établissement laisserait croire qu'il en dépend,
+    // alors que c'est justement l'invariant qui rend deux blocs comparables du regard.
+    let ticks = '';
+    for (let h = OPEN_H; h <= CLOSE_H; h += 2) {
+        ticks += '<span class="dayx-tick" style="left:' + pctLeft(h) + '">' + fmtHour(h) + '</span>';
+    }
+    const axisHtml = '<div class="dayx-axis"><span></span><div class="dayx-axis-track">' + ticks + '</div></div>';
 
     let nbPersonnes = 0;
     let body = '';
@@ -1226,22 +1226,25 @@ function openDaySheet(date) {
             return Math.min(...a.slots.map(s => s.st)) - Math.min(...b.slots.map(s => s.st));
         });
         if (multiEstab) body += '<div class="dayx-estab">' + _esc(formatEstablishment(estabId)) + '</div>';
-        body += axisHtml() + '<div class="dayx-rows">';
+        body += axisHtml + '<div class="dayx-rows">';
         rows.forEach(r => {
             if (!r.isJoker) nbPersonnes++;
             r.slots.sort((a, b) => a.st - b.st);
-            const debut = r.slots[0].st;
-            const fin   = r.slots[r.slots.length - 1].en;
-            const bars  = r.slots.map(s =>
+            const creneaux = r.slots.map(s => fmtHour(s.st) + ' → ' + fmtHour(s.en));
+            const bars = r.slots.map((s, i) =>
                 '<span class="dayx-bar' + (r.isJoker ? ' dayx-bar--joker' : '') + '" style="left:' + pctLeft(s.st) +
                     ';width:' + pctWidth(s.st, s.en) + ';background:' + _esc(r.color) +
                     ';color:' + textColorFor(r.color) + '">' +
-                    fmtHour(s.st) + ' → ' + fmtHour(s.en) +
+                    creneaux[i] +
                 '</span>').join('');
+            // `pill-hours` porte les créneaux TELS QUE DESSINÉS. Le toast ne sait afficher
+            // qu'une plage continue : sur une coupure, il aurait annoncé « 18h → 03h » à
+            // dix pixels de deux barres séparées — la seule vue qui montre les coupures
+            // aurait été la seule à les nier au tap.
             body +=
                 '<div class="dayx-row' + (r.isMe ? ' dayx-row--me' : '') + '"' +
                     ' data-pill-name="' + _esc(r.isMe ? 'Moi' : r.name) + '"' +
-                    ' data-pill-start="' + debut + '" data-pill-end="' + fin + '"' +
+                    ' data-pill-hours="' + _esc(creneaux.join(', ')) + '"' +
                     ' data-pill-color="' + _esc(r.color) + '">' +
                     '<span class="dayx-name">' + _esc(r.name) + '</span>' +
                     '<div class="dayx-track">' + bars + '</div>' +
@@ -1250,19 +1253,13 @@ function openDaySheet(date) {
         body += '</div>';
     });
 
-    const existing = document.getElementById('day-sheet');
-    if (existing) existing.remove();
-
-    const sheet = document.createElement('div');
-    sheet.id = 'day-sheet';
-    sheet.className = 'dayx-sheet';
-    sheet.innerHTML =
+    const { sheet, close } = openBottomSheet('day-sheet',
         '<div class="dayx-panel" style="--dayx-tick:' + (2 / RANGE * 100).toFixed(2) + '%">' +
             '<div class="dayx-grip"></div>' +
             '<div class="dayx-head">' +
                 '<div style="min-width:0">' +
                     '<div class="dayx-title">' + dayLabel + '</div>' +
-                    (monResume ? '<div class="dayx-sub">Mon service ' + monResume + '</div>' : '') +
+                    (monResume ? '<div class="dayx-sub">Mon service ' + monResume + ' · ' + fmtDuration(mesHeures) + '</div>' : '') +
                 '</div>' +
                 '<button type="button" class="dayx-close" aria-label="Fermer">&times;</button>' +
             '</div>' +
@@ -1271,21 +1268,9 @@ function openDaySheet(date) {
                 nbPersonnes + ' personne' + (nbPersonnes > 1 ? 's' : '') + ' sur la journée' +
                 ' · amplitude ' + fmtHour(minH) + ' → ' + fmtHour(maxH) +
             '</div>' +
-        '</div>';
+        '</div>');
 
-    const panel = sheet.querySelector('.dayx-panel');
-    const close = () => {
-        sheet.style.background = 'rgba(0,0,0,0)';
-        panel.style.transform  = 'translateY(100%)';
-        setTimeout(() => sheet.remove(), 220);
-    };
-    sheet.addEventListener('click', ev => { if (ev.target === sheet) close(); });
     sheet.querySelector('.dayx-close').addEventListener('click', close);
-    document.body.appendChild(sheet);
-    requestAnimationFrame(() => {
-        sheet.style.background = 'rgba(0,0,0,0.45)';
-        panel.style.transform  = 'translateY(0)';
-    });
 }
 
 
@@ -1660,16 +1645,47 @@ function renderResponsableDashboard(days, container, monday) {
     container.appendChild(wrap);
 }
 
-function openContactSheet(name, phone) {
-    const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
-        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const existing = document.getElementById('resp-contact-sheet');
+// La coquille des feuilles qui montent du bas (contact d'un coéquipier, mini planning
+// d'une journée) : l'overlay, le fondu du fond, la translation du panneau, la fermeture
+// au tap à côté, et le remplacement d'une feuille déjà ouverte. C'est le GESTE qui est
+// partagé ; le contenu et l'habillage restent à l'appelant.
+//
+// Les deux copies avaient déjà divergé sur le z-index, la largeur et l'ombre — et la
+// prochaine correction de feuille (fermeture au clavier, blocage du défilement de fond)
+// aurait été faite d'un côté seulement.
+//
+// Rend { sheet, panel, close } : l'appelant branche ses propres boutons sur `close`.
+// Le panneau est le premier enfant du HTML fourni, et c'est lui qui porte la
+// transition d'entrée (`transform: translateY(100%)` au repos, cf. CSS).
+function openBottomSheet(id, panelHtml) {
+    const existing = document.getElementById(id);
     if (existing) existing.remove();
 
     const sheet = document.createElement('div');
-    sheet.id = 'resp-contact-sheet';
-    sheet.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0);transition:background 0.18s ease';
-    sheet.innerHTML =
+    sheet.id        = id;
+    sheet.className = 'bottom-sheet';
+    sheet.innerHTML = panelHtml;
+
+    const panel = sheet.firstElementChild;
+    const close = () => {
+        sheet.style.background = 'rgba(0,0,0,0)';
+        panel.style.transform  = 'translateY(100%)';
+        setTimeout(() => sheet.remove(), 220);
+    };
+    sheet.addEventListener('click', ev => { if (ev.target === sheet) close(); });
+
+    document.body.appendChild(sheet);
+    requestAnimationFrame(() => {
+        sheet.style.background = 'rgba(0,0,0,0.45)';
+        panel.style.transform  = 'translateY(0)';
+    });
+    return { sheet, panel, close };
+}
+
+function openContactSheet(name, phone) {
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const { sheet, close } = openBottomSheet('resp-contact-sheet',
         '<div class="resp-contact-panel" style="background:#fff;width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:16px 18px 20px;box-shadow:0 -4px 24px rgba(0,0,0,0.13);transform:translateY(100%);transition:transform 0.22s cubic-bezier(0.32,0.72,0,1)">' +
             '<div style="width:36px;height:4px;background:#d0d0d0;border-radius:2px;margin:0 auto 14px"></div>' +
             '<div style="font-weight:700;font-size:15px;color:#1a1a2e;text-align:center;margin-bottom:2px">' + esc(name) + '</div>' +
@@ -1679,22 +1695,10 @@ function openContactSheet(name, phone) {
                 '<a href="sms:' + esc(phone) + '" class="resp-contact-act" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:#f4f5f8;color:#1a1a2e;border-radius:12px;text-decoration:none;font-weight:600;font-size:14px;min-height:48px">💬 Envoyer un SMS</a>' +
                 '<button type="button" class="resp-contact-cancel" style="padding:12px;background:transparent;color:#8892a4;border:none;border-radius:12px;font-weight:600;font-size:13px;min-height:44px;cursor:pointer">Annuler</button>' +
             '</div>' +
-        '</div>';
+        '</div>');
 
-    const panel = sheet.querySelector('.resp-contact-panel');
-    const close = () => {
-        sheet.style.background = 'rgba(0,0,0,0)';
-        panel.style.transform = 'translateY(100%)';
-        setTimeout(() => sheet.remove(), 220);
-    };
-    sheet.addEventListener('click', (ev) => { if (ev.target === sheet) close(); });
     sheet.querySelector('.resp-contact-cancel').addEventListener('click', close);
     sheet.querySelectorAll('.resp-contact-act').forEach(el => el.addEventListener('click', () => setTimeout(close, 100)));
-    document.body.appendChild(sheet);
-    requestAnimationFrame(() => {
-        sheet.style.background = 'rgba(0,0,0,0.45)';
-        panel.style.transform   = 'translateY(0)';
-    });
 }
 
 // ── Navigation onglets ───────────────────────────────────────────────────────
@@ -1812,7 +1816,6 @@ const HIST_MONTHS_STEP = 6;    // fenêtre initiale, et pas du bouton « voir pl
 const HIST_MONTHS_MAX  = 24;   // au-delà, la donnée n'est plus consultée que par le patron
 
 let _histMonths = HIST_MONTHS_STEP;
-const _histCache = {};         // clé = nombre de mois demandés
 
 // Les bornes de la fenêtre : du 1er du mois le plus ancien au dernier jour du mois
 // courant. `new Date(y, m - k, 1)` gère seul le passage d'année.
@@ -1830,13 +1833,13 @@ async function loadHistorique() {
 
     const months = _histMonths;
     navEl.innerHTML =
-        '<div class="histm-head">' +
-            '<div class="histm-head-title">Mes heures par mois</div>' +
-            '<div class="histm-head-sub">Les ' + months + ' derniers mois</div>' +
-        '</div>';
+        '<div class="histm-head-title">Mes heures par mois</div>' +
+        '<div class="histm-head-sub">Les ' + months + ' derniers mois</div>';
 
-    if (_histCache[months]) { renderHistoriqueMois(wrap, _histCache[months]); return; }
-
+    // Pas de mémo : chaque ouverture de l'onglet redemande la fenêtre. C'est une requête
+    // légère (mes seuls shifts, sans collègue ni Joker) et un geste explicite — alors
+    // qu'un mémo figerait pour la session le mois marqué « en cours », celui-là même
+    // qu'un pointage validé fait bouger.
     wrap.innerHTML = '<div class="hist-loading">Chargement…</div>';
 
     const { from, to } = histRange(months);
@@ -1848,9 +1851,7 @@ async function loadHistorique() {
         return;
     }
 
-    const shifts = (data.shifts || []).filter(s => !isJoker(s));
-    _histCache[months] = shifts;
-    renderHistoriqueMois(wrap, shifts);
+    renderHistoriqueMois(wrap, (data.shifts || []).filter(s => !isJoker(s)));
 }
 
 function renderHistoriqueMois(wrap, shifts) {
@@ -1868,8 +1869,8 @@ function renderHistoriqueMois(wrap, shifts) {
     let html = '<div class="histm-list">';
     mois.forEach(m => {
         const [y, mo]  = m.month.split('-').map(Number);
-        const label    = MONTH_NAMES_LONG_HIST[mo - 1].charAt(0).toUpperCase() +
-                         MONTH_NAMES_LONG_HIST[mo - 1].slice(1) + ' ' + y;
+        const nom      = MONTH_NAMES_LONG[mo - 1];
+        const label    = nom.charAt(0).toUpperCase() + nom.slice(1) + ' ' + y;
         const estabIds = Object.keys(m.byEstab);
         html +=
             '<div class="histm-row' + (m.month === moisCourant ? ' histm-row--current' : '') + '">' +
@@ -1961,10 +1962,10 @@ async function loadDisposTab() {
     const formEl   = document.getElementById('dispos-form');
     const btnSubmit = document.getElementById('btn-submit-dispos');
 
-    // Deadline. `fmtDate` = celle du CYCLE COURANT (index 0), la seule qui verrouille
-    // quoi que ce soit ; `fmtDateSemaine` = celle de la semaine AFFICHÉE. Les deux
-    // coïncident tant qu'on est sur la première semaine de l'horizon.
-    const fmtDate       = deadlineLabel();
+    // La deadline de la semaine AFFICHÉE — une seule notion pour tout ce qui suit. Sauf
+    // la branche « saisie fermée » juste en dessous, atteignable quel que soit l'index et
+    // qui nomme donc sa source (`deadlineLabel()`, le cycle courant), tout le reste du
+    // corps est gardé par `dispoWeekIndex === 0`, où les deux coïncident par construction.
     const fmtDateSemaine = deadlineLabelForWeek(dispoWeekIndex);
 
     // Saisie fermée : la semaine-type n'a plus rien à proposer non plus — le serveur ne
@@ -1983,7 +1984,7 @@ async function loadDisposTab() {
 
     if (saisieFermee) {
         statusEl.textContent   = dispoSettings.deadlinePassed
-            ? 'Deadline dépassée le ' + fmtDate + '.'
+            ? 'Deadline dépassée le ' + deadlineLabel() + '.'
             : 'Saisie fermée par le responsable.';
         statusEl.style.color   = '#e74c3c';
         formEl.innerHTML       = '<div style="padding:20px 0;text-align:center;color:#ccc;font-size:14px">La saisie des disponibilités n\'est pas disponible pour le moment.</div>';
@@ -2007,14 +2008,14 @@ async function loadDisposTab() {
         statusEl.textContent = 'Deadline : ' + fmtDateSemaine + ' (pour cette semaine)';
         statusEl.style.color = '#aaa';
     } else {
-        statusEl.textContent = late  ? 'Deadline dépassée le ' + fmtDate + ' — saisie encore ouverte pour toi.'
+        statusEl.textContent = late  ? 'Deadline dépassée le ' + fmtDateSemaine + ' — saisie encore ouverte pour toi.'
             : dispoSettings.force_open ? '🔓 Saisie ouverte en urgence par le responsable'
             // Depuis que la deadline ne provoque plus le retour anticipé ci-dessus, ce cas
             // arrive jusqu'ici : sans cette branche l'en-tête annonçait « Deadline : … » au
             // futur, juste au-dessus de l'encadré rouge « cette semaine est figée ».
-            : dispoSettings.deadlinePassed ? 'Deadline dépassée le ' + fmtDate + '.'
-            : multiWeek ? 'Deadline : ' + fmtDate + ' (pour la semaine prochaine seulement)'
-            : 'Deadline : ' + fmtDate;
+            : dispoSettings.deadlinePassed ? 'Deadline dépassée le ' + fmtDateSemaine + '.'
+            : multiWeek ? 'Deadline : ' + fmtDateSemaine + ' (pour la semaine prochaine seulement)'
+            : 'Deadline : ' + fmtDateSemaine;
         statusEl.style.color = (late || dispoSettings.force_open) ? '#27ae60'
             : dispoSettings.deadlinePassed ? '#e74c3c' : '#aaa';
     }
@@ -2151,7 +2152,7 @@ async function loadDisposTab() {
     if (currentDispoWeekLocked()) {
         const locked = document.createElement('div');
         locked.style.cssText = 'background:#fdf3f3;border:1px solid #f5c6c6;border-radius:10px;padding:14px 16px;font-size:13px;color:#b03a3a;line-height:1.5';
-        locked.textContent = 'Cette semaine est figée depuis la deadline du ' + fmtDate +
+        locked.textContent = 'Cette semaine est figée depuis la deadline du ' + fmtDateSemaine +
             ' — le planning est en cours de préparation.' +
             (dispoMondays.length > 1 ? ' Les semaines suivantes restent ouvertes à la saisie.' : '');
         formEl.appendChild(locked);
@@ -2473,19 +2474,12 @@ async function loadDispoTemplate() {
 // qu'il y en a deux.
 function deadlineLabel() { return deadlineLabelForWeek(0); }
 
-// La deadline de la semaine d'index `i` de l'horizon (0 = semaine en cours de
-// collecte). Le rendez-vous est HEBDOMADAIRE : `dispoSettings.deadline` est celui qui
-// verrouille l'index 0 ; celui de la semaine suivante tombe exactement sept jours plus
-// tard, et ainsi de suite. Le serveur n'en envoie qu'un — sans ce décalage, la semaine 2
-// affichait la deadline (souvent déjà dépassée) de la semaine 1.
-//
-// `setDate(+7)` conserve l'heure LOCALE : de part et d'autre d'un changement d'heure,
-// la deadline reste annoncée à l'heure du cycle et non décalée d'une heure.
+// La deadline de la semaine d'index `i` de l'horizon (0 = semaine en cours de collecte).
+// La règle — le rendez-vous est hebdomadaire, le serveur n'envoie que celui du cycle
+// courant — vit dans `public/lib/week.js`, avec les autres règles de dates de l'horizon
+// et ses tests (tests/week.test.js). Ici, seule la lecture du réglage.
 function deadlineForWeek(i) {
-    if (!dispoSettings || !dispoSettings.deadline) return null;
-    const d = new Date(dispoSettings.deadline);
-    d.setDate(d.getDate() + 7 * i);
-    return d;
+    return Week.disposDeadlineForWeek(dispoSettings && dispoSettings.deadline, i);
 }
 
 function deadlineLabelForWeek(i) {
@@ -2517,14 +2511,14 @@ function setTplFeedback(msg, type) {
 // Le jour du modèle tel qu'il partira : nom du jour ET horaires. N'afficher que le nom
 // laissait le staff deviner ce qui allait être envoyé en son nom — c'est exactement ce
 // qu'une semaine-type doit rendre vérifiable d'un coup d'œil.
-// DAY_NAMES_LONG_HIST est indexé sur getDay() (0 = dimanche) ; le modèle sur lundi = 0.
+// DAY_NAMES_LONG est indexé sur getDay() (0 = dimanche) ; le modèle sur lundi = 0.
 function templateDayLine(i) {
     const cell = (dispoTemplate || {})[i] || {};
     const cfg  = DISPO_TYPES[cell.type] || DISPO_TYPES.custom;
     const h = (cell.start_time == null || cell.end_time == null)
         ? '—' : fmtHour(cell.start_time) + ' → ' + fmtHour(cell.end_time);
     return '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:3px 0">'
-         +     '<span>' + DAY_NAMES_LONG_HIST[(i + 1) % 7] + '</span>'
+         +     '<span>' + DAY_NAMES_LONG[(i + 1) % 7] + '</span>'
          +     '<span style="display:inline-flex;align-items:baseline;gap:8px">'
          +         '<span style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;'
          +             'padding:1px 6px;border-radius:5px;background:var(--light-border,#e6e6ef);color:var(--text-primary)">'
@@ -2904,7 +2898,10 @@ document.addEventListener('click', (ev) => {
     const st    = parseFloat(pill.dataset.pillStart);
     const en    = parseFloat(pill.dataset.pillEnd);
     const color = pill.dataset.pillColor || '#888';
-    const hours = (!Number.isNaN(st) && !Number.isNaN(en)) ? (fmtHour(st) + ' → ' + fmtHour(en)) : '';
+    // `pill-hours` l'emporte quand il est là : une personne en coupure a DEUX créneaux,
+    // qu'un début et une fin ne peuvent pas dire sans les recoller en un seul.
+    const hours = pill.dataset.pillHours
+        || ((!Number.isNaN(st) && !Number.isNaN(en)) ? (fmtHour(st) + ' → ' + fmtHour(en)) : '');
     _showColleagueToast(name, hours, color);
 });
 

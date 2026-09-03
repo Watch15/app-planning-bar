@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert');
 const {
     weekStart, currentWeekStart, WEEK_CUTOFF_HOUR, toDateStr,
-    disposHorizonMondays, upcomingWeekMondays, upcomingWeekRange,
+    disposHorizonMondays, disposDeadlineForWeek, upcomingWeekMondays, upcomingWeekRange,
 } = require('../public/lib/week.js');
 
 // Suite canonique du module isomorphe public/lib/week.js (R-01).
@@ -243,4 +243,51 @@ test('upcomingWeekRange propage le cutoff comme upcomingWeekMondays', () => {
         lastSunday.setDate(lastSunday.getDate() + 6);
         assert.strictEqual(range.to, toDateStr(lastSunday), 'cutoff ' + cutoff);
     }
+});
+
+// ── Deadline de la semaine i de l'horizon ─────────────────────────────────────
+//
+// Le serveur n'envoie que la deadline du cycle courant (`computeEffectiveDeadline`) :
+// c'est cette projection qui donne celle des semaines suivantes de l'horizon.
+
+test('disposDeadlineForWeek : index 0 = la deadline du cycle, telle quelle', () => {
+    const d = disposDeadlineForWeek('2026-09-04T13:00:00', 0);
+    assert.deepStrictEqual(ymd(d), [2026, 9, 4]);
+    assert.strictEqual(d.getHours(), 13);
+});
+
+test('disposDeadlineForWeek : une semaine par index, même jour, même heure', () => {
+    const base = '2026-09-04T13:00:00';           // vendredi 13h
+    [1, 2, 3].forEach(i => {
+        const d = disposDeadlineForWeek(base, i);
+        assert.strictEqual(d.getDay(), 5, 'reste un vendredi à l’index ' + i);
+        assert.strictEqual(d.getHours(), 13);
+        assert.strictEqual(d.getDate(), 4 + 7 * i);
+    });
+});
+
+test('disposDeadlineForWeek : passage de mois et d’année', () => {
+    assert.deepStrictEqual(ymd(disposDeadlineForWeek('2026-09-25T13:00:00', 2)), [2026, 10, 9]);
+    assert.deepStrictEqual(ymd(disposDeadlineForWeek('2026-12-25T13:00:00', 2)), [2027, 1, 8]);
+});
+
+test('disposDeadlineForWeek : l’heure survit au changement d’heure', () => {
+    // Bascule d'hiver 2026 : dimanche 25 octobre. Une deadline du vendredi 23 octobre
+    // projetée au-delà doit rester à 13h — pas 12h ni 14h.
+    const d = disposDeadlineForWeek('2026-10-23T13:00:00', 2);
+    assert.deepStrictEqual(ymd(d), [2026, 11, 6]);
+    assert.strictEqual(d.getHours(), 13);
+});
+
+test('disposDeadlineForWeek : réglage absent ou illisible → null, jamais une date fausse', () => {
+    assert.strictEqual(disposDeadlineForWeek(null, 1), null);
+    assert.strictEqual(disposDeadlineForWeek(undefined, 0), null);
+    assert.strictEqual(disposDeadlineForWeek('', 2), null);
+    assert.strictEqual(disposDeadlineForWeek('pas une date', 1), null);
+});
+
+test('disposDeadlineForWeek : n’altère pas l’argument reçu', () => {
+    const base = new Date(2026, 8, 4, 13, 0, 0);
+    disposDeadlineForWeek(base, 3);
+    assert.deepStrictEqual(ymd(base), [2026, 9, 4]);
 });

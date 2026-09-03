@@ -119,6 +119,33 @@
         return mondaysFrom(disposWeekStart(now), clampHorizonWeeks(weeks));
     }
 
+    // La deadline qui gardera la semaine d'index `i` de l'horizon de saisie (0 = semaine
+    // EN COURS DE COLLECTE, la seule que la deadline verrouille — règle A).
+    //
+    // Le rendez-vous est HEBDOMADAIRE : le serveur ne calcule et n'envoie que celui du
+    // cycle courant (`computeEffectiveDeadline`, un jour de semaine + une heure projetés
+    // sur la semaine en cours). Quand la semaine `i` deviendra à son tour la semaine de
+    // collecte, ce même calcul rendra le même jour et la même heure, `i` semaines plus
+    // loin. C'est cette projection-là, et rien d'autre, qu'on écrit ici.
+    //
+    // Ici plutôt que dans `planning.js` : c'est une règle de dates, jumelle de
+    // `disposHorizonMondays` — les deux décrivent la MÊME file de semaines, l'une par ses
+    // lundis, l'autre par ses échéances. Laissée dans la couche d'affichage, elle était
+    // la seule règle de son commit sans test, et rien n'aurait signalé sa dérive le jour
+    // où le serveur cesserait de projeter un motif strictement hebdomadaire.
+    //
+    // `setDate(+7i)` conserve l'heure LOCALE de la machine qui calcule : la deadline
+    // reste annoncée à l'heure du cycle de part et d'autre d'un changement d'heure. Elle
+    // suppose en revanche que cette machine soit dans le fuseau de l'établissement —
+    // même hypothèse que la chaîne locale envoyée par le serveur, dont elle part.
+    function disposDeadlineForWeek(deadline, i) {
+        if (!deadline) return null;
+        const d = new Date(deadline);
+        if (isNaN(d.getTime())) return null;
+        d.setDate(d.getDate() + 7 * i);
+        return d;
+    }
+
     // ── Horizon de CONSULTATION du planning (≠ horizon de saisie des dispos) ──────
     //
     // Le lundi de la première semaine qu'un staff peut consulter EN PLUS de celle qu'il
@@ -154,7 +181,7 @@
 
     return {
         weekStart, currentWeekStart, WEEK_CUTOFF_HOUR, toDateStr,
-        disposWeekStart, disposHorizonRange, disposHorizonMondays,
+        disposWeekStart, disposHorizonRange, disposHorizonMondays, disposDeadlineForWeek,
         upcomingWeekStart, upcomingWeekRange, upcomingWeekMondays,
         clampHorizonWeeks, DISPO_HORIZON_MAX,
     };
