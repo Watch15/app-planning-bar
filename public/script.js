@@ -1811,21 +1811,22 @@ function renderGroupFilter() {
 }
 
 async function loadEstablishments() {
+    let normalized;
+    // ⚠️ Le `try` ne couvre QUE la récupération de la liste. Il enveloppait aussi le
+    // chargement de la semaine et l'ouverture du jour : n'importe quelle erreur de rendu
+    // à l'intérieur (un `/api/shifts` en échec, un accès à vide dans la timeline)
+    // tombait dans le repli ci-dessous et vidait `allEstablishments` — donc effaçait une
+    // liste pourtant reçue et déjà affichée. Le patron voyait son écran entier se vider
+    // sur une panne qui ne concernait qu'une journée, et `loadEstablishments` est aussi
+    // rappelée en cours de session (après suppression d'un groupe) : la même erreur
+    // passagère blanchissait l'application en plein travail.
     try {
         const res  = await fetch('/api/establishments', { credentials: 'include' });
         const list = await res.json();
         // Normaliser : garantir que chaque établissement a un champ .id utilisable
-        const normalized = list.map(e => ({ ...e, id: e.id || String(e._id) }));
+        normalized = list.map(e => ({ ...e, id: e.id || String(e._id) }));
         allEstablishments = normalized;
         renderTabs(normalized);
-        if (normalized.length > 0) {
-            currentVenueId = normalized[0].id;
-            applyVenueHours(normalized[0].id);
-            renderWeekLabel();
-            await refreshWeek();
-            // Ouvrir automatiquement le jour courant
-            await loadDayDetail(toDateStr(new Date()));
-        }
     } catch (e) {
         // AUCUN établissement de repli, volontairement. Il y avait ici une liste de
         // quatre établissements codés en dur — qui portaient les noms réels d'un
@@ -1845,6 +1846,26 @@ async function loadEstablishments() {
         renderTabs([]);
         renderWeekLabel();
         showToast('Impossible de charger les établissements. Recharge la page.', true);
+        return;
+    }
+
+    // Reprise SÉPARÉE : une semaine qui ne se charge pas est une panne de la semaine,
+    // pas de la liste des établissements. Les onglets restent en place et l'utilisateur
+    // peut changer de maison ou de semaine. Elle reste attrapée ici, et non laissée
+    // remonter, parce que les appelants (l'init, la suppression d'un groupe) enchaînent
+    // derrière : une exception y interromprait la suite du démarrage.
+    if (normalized.length > 0) {
+        try {
+            currentVenueId = normalized[0].id;
+            applyVenueHours(normalized[0].id);
+            renderWeekLabel();
+            await refreshWeek();
+            // Ouvrir automatiquement le jour courant
+            await loadDayDetail(toDateStr(new Date()));
+        } catch (e) {
+            console.error('[loadEstablishments/semaine]', e);
+            showToast('Impossible de charger la semaine. Réessaie ou change de semaine.', true);
+        }
     }
 }
 

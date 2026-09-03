@@ -985,12 +985,40 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
         // Portée par l'élément et non par un index global : le détail vit et meurt avec
         // la carte, sans clé à tenir des deux côtés ni entrées orphelines laissées
         // derrière par les rendus successifs.
-        card._dayDetail = {
+        //
+        // ⚠️ Les Jokers se filtrent sur la date ET l'établissement, comme le fait le
+        // rendu de la carte quelques lignes plus bas. Ce second filtre porte : la
+        // requête Jokers du serveur croise TOUS mes établissements avec TOUTES mes
+        // dates (`/api/my-shifts`) sans refermer le produit sur les couples réellement
+        // travaillés — contrairement à celle des collègues. Sur la seule date, la
+        // soirée d'une autre maison entrait dans la feuille : un bloc en trop, et
+        // surtout un axe étiré jusqu'à son ouverture, qui écrasait mes propres barres.
+        const dayEstabs = new Set(dayShifts.map(s => s.establishment_id));
+        const dayDetail = {
             date,
             mine:       dayShifts,
             colleagues: colleagues[date] || [],
-            jokers:     jokers.filter(j => j.date === date),
+            jokers:     jokers.filter(j => j.date === date && dayEstabs.has(j.establishment_id)),
         };
+
+        // La feuille n'a rien à montrer si AUCUN créneau du jour ne porte d'horaire :
+        // `openDaySheet` sortirait sans rien dire. On ne pose alors ni le détail ni
+        // l'affordance — un tap mort sous un curseur « cliquable » est pire que pas de
+        // tap du tout. C'est la MÊME décision qui arme les deux, elles ne peuvent pas
+        // se désaccorder.
+        // Mes shifts par `shiftEffectiveHours`, les autres par leurs heures planifiées :
+        // exactement ce que la feuille utilisera pour poser ses barres.
+        const aDesHoraires =
+            dayDetail.mine.some(s => {
+                const { start, end } = shiftEffectiveHours(s);
+                return start != null && end != null;
+            }) ||
+            [...dayDetail.colleagues, ...dayDetail.jokers]
+                .some(s => s.start_time != null && s.end_time != null);
+        if (aDesHoraires) {
+            card._dayDetail = dayDetail;
+            card.classList.add('day-card--tappable');
+        }
 
         // F-05 échanges désactivé
         // const pendingSwap = (window._myPendingSwaps || []).find(sw =>
@@ -1116,7 +1144,7 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
 document.addEventListener('click', (ev) => {
     if (!ev.target.closest) return;
     if (ev.target.closest('[data-pill-name]')) return;
-    const card = ev.target.closest('.day-card.has-shift');
+    const card = ev.target.closest('.day-card--tappable');
     if (!card || !card._dayDetail) return;
     openDaySheet(card._dayDetail);
 });
@@ -1140,7 +1168,7 @@ function openDaySheet(detail) {
         if (st == null || en == null) return;
         if (!groups.has(estabId)) groups.set(estabId, new Map());
         const g = groups.get(estabId);
-        if (!g.has(key)) g.set(key, Object.assign({ slots: [] }, base));
+        if (!g.has(key)) g.set(key, Object.assign({ slots: [], key }, base));
         const row = g.get(key);
         // Un créneau déjà posé n'est pas une coupure : les Jokers arrivent par DEUX
         // chemins (collègues du jour et créneaux ouverts), et le même créneau dessinait
@@ -1218,7 +1246,10 @@ function openDaySheet(detail) {
     }
     const axisHtml = '<div class="dayx-axis"><span></span><div class="dayx-axis-track">' + ticks + '</div></div>';
 
-    let nbPersonnes = 0;
+    // Un ensemble et non un compteur : les lignes sont rangées PAR ÉTABLISSEMENT, donc
+    // quelqu'un qui enchaîne les deux maisons le même jour (moi le premier) a une ligne
+    // dans chaque groupe. Compter les lignes annonçait « 5 personnes » pour quatre.
+    const personnes = new Set();
     let body = '';
     estabIds.forEach(estabId => {
         const rows = [...groups.get(estabId).values()].sort((a, b) => {
@@ -1228,7 +1259,7 @@ function openDaySheet(detail) {
         if (multiEstab) body += '<div class="dayx-estab">' + _esc(formatEstablishment(estabId)) + '</div>';
         body += axisHtml + '<div class="dayx-rows">';
         rows.forEach(r => {
-            if (!r.isJoker) nbPersonnes++;
+            if (!r.isJoker) personnes.add(r.key);
             r.slots.sort((a, b) => a.st - b.st);
             const creneaux = r.slots.map(s => fmtHour(s.st) + ' → ' + fmtHour(s.en));
             const bars = r.slots.map((s, i) =>
@@ -1265,7 +1296,7 @@ function openDaySheet(detail) {
             '</div>' +
             '<div class="dayx-body">' + body + '</div>' +
             '<div class="dayx-foot">' +
-                nbPersonnes + ' personne' + (nbPersonnes > 1 ? 's' : '') + ' sur la journée' +
+                personnes.size + ' personne' + (personnes.size > 1 ? 's' : '') + ' sur la journée' +
                 ' · amplitude ' + fmtHour(minH) + ' → ' + fmtHour(maxH) +
             '</div>' +
         '</div>');
@@ -2911,11 +2942,22 @@ function _showColleagueToast(name, hours, color) {
     if (existing) existing.remove();
     if (_colleagueToastTimer) { clearTimeout(_colleagueToastTimer); _colleagueToastTimer = null; }
 
+    // Une feuille ouverte occupe tout le bas de l'écran : le toast s'y poserait sur son
+    // pied — et sur sa dernière ligne quand elle est courte — alors qu'il vient justement
+    // d'être déclenché depuis l'une de ses lignes. Dans ce cas, et dans ce cas seul, il
+    // s'ancre en haut. `dehors` porte aussi le SENS de l'animation : le toast entre et
+    // ressort toujours par le bord dont il est le plus proche.
+    const surFeuille = !!document.querySelector('.bottom-sheet');
+    const ancrage    = surFeuille
+        ? 'top:calc(16px + env(safe-area-inset-top));'
+        : 'bottom:calc(20px + env(safe-area-inset-bottom));';
+    const dehors = surFeuille ? 'translate(-50%,-20px)' : 'translate(-50%,20px)';
+
     const toast = document.createElement('div');
     toast.id = 'colleague-toast';
     toast.style.cssText =
-        'position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));' +
-        'transform:translate(-50%,20px);' +
+        'position:fixed;left:50%;' + ancrage +
+        'transform:' + dehors + ';' +
         'background:#1a1a2e;color:#fff;padding:10px 14px;border-radius:12px;' +
         'font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;' +
         'box-shadow:0 6px 20px rgba(0,0,0,0.25);max-width:calc(100% - 32px);' +
@@ -2932,7 +2974,7 @@ function _showColleagueToast(name, hours, color) {
     });
     _colleagueToastTimer = setTimeout(() => {
         toast.style.opacity   = '0';
-        toast.style.transform = 'translate(-50%,20px)';
+        toast.style.transform = dehors;
         setTimeout(() => toast.remove(), 220);
     }, 2400);
 }

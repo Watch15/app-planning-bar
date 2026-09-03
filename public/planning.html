@@ -590,7 +590,9 @@
         .histm-more:hover { border-color: var(--accent); color: var(--accent-soft); }
 
         /* ── Mini planning de la journée (feuille au tap sur un jour) ─────── */
-        .day-card.has-shift { cursor: pointer; }
+        /* Posée par `renderDaysInto` avec le détail du jour, et seulement avec lui : le
+           curseur ne promet un tap que là où la feuille a quelque chose à montrer. */
+        .day-card--tappable { cursor: pointer; }
         /* Coquille commune à toutes les feuilles qui montent du bas (cf. `openBottomSheet`) :
            contact d'un coéquipier, mini planning d'une journée. */
         .bottom-sheet {
