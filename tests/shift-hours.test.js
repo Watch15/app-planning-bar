@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
-const { shiftEffectiveHours, shiftDurationHours, fmtHourOfDay, fmtClock, fmtDurationH } = require('../public/lib/shift-hours.js');
+const { shiftEffectiveHours, shiftDurationHours, monthlyTotals, fmtHourOfDay, fmtClock, fmtDurationH } = require('../public/lib/shift-hours.js');
 
 test('pointage complet → heures réelles utilisées', () => {
     const s = { start_time: 18, end_time: 24, real_start: 18.5, real_end: 26 };
@@ -89,4 +89,50 @@ test('fmtDurationH : écart négatif avec signe et texte null personnalisés', (
 test('fmtDurationH : padMinutes force "HHhMM" (export CSV)', () => {
     assert.strictEqual(fmtDurationH(8, { padMinutes: true }), '8h00');
     assert.strictEqual(fmtDurationH(-0.5, { padMinutes: true }), '-0h30');
+});
+
+// ── Cumul par mois (historique staff) ─────────────────────────────────────────
+
+test('monthlyTotals : un cumul par mois, du plus récent au plus ancien', () => {
+    const r = monthlyTotals([
+        { date: '2026-07-31', start_time: 18, end_time: 24, establishment_id: 'bar' },
+        { date: '2026-08-01', start_time: 18, end_time: 26, establishment_id: 'bar' },
+        { date: '2026-08-01', start_time: 10, end_time: 14, establishment_id: 'bar' },
+        { date: '2026-08-02', start_time: 18, end_time: 24, establishment_id: 'bar' },
+    ]);
+    assert.deepStrictEqual(r.map(m => m.month), ['2026-08', '2026-07']);
+    const aout = r[0];
+    assert.strictEqual(aout.totalH, 18);      // 8 + 4 + 6
+    assert.strictEqual(aout.nbShifts, 3);
+    assert.strictEqual(aout.nbDays, 2);       // deux shifts le 1er = un seul jour
+    assert.strictEqual(r[1].totalH, 6);
+});
+
+test('monthlyTotals : heures réelles dès que le pointage est complet', () => {
+    const [m] = monthlyTotals([
+        { date: '2026-08-01', start_time: 18, end_time: 24, real_start: 18, real_end: 26, establishment_id: 'bar' },
+        { date: '2026-08-02', start_time: 18, end_time: 24, real_start: 18, real_end: null, establishment_id: 'bar' },
+    ]);
+    assert.strictEqual(m.totalH, 14);         // 8 (réel) + 6 (planifié, pointage incomplet)
+});
+
+test('monthlyTotals : le mois se lit sur la chaîne, sans passer par un fuseau', () => {
+    // Le 1er du mois à minuit UTC bascule au mois précédent dans les fuseaux négatifs —
+    // c'est exactement ce qu'un `new Date(s.date)` réintroduirait ici.
+    const r = monthlyTotals([{ date: '2026-03-01', start_time: 10, end_time: 12, establishment_id: 'bar' }]);
+    assert.strictEqual(r[0].month, '2026-03');
+});
+
+test('monthlyTotals : répartition par établissement dans le mois', () => {
+    const [m] = monthlyTotals([
+        { date: '2026-08-01', start_time: 18, end_time: 24, establishment_id: 'bar' },
+        { date: '2026-08-02', start_time: 10, end_time: 14, establishment_id: 'resto' },
+    ]);
+    assert.deepStrictEqual(m.byEstab, { bar: 6, resto: 4 });
+});
+
+test('monthlyTotals : liste vide ou shifts sans date → aucun mois', () => {
+    assert.deepStrictEqual(monthlyTotals([]), []);
+    assert.deepStrictEqual(monthlyTotals(null), []);
+    assert.deepStrictEqual(monthlyTotals([{ start_time: 18, end_time: 24 }]), []);
 });

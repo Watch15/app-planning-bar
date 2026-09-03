@@ -2,6 +2,8 @@
 
 const DAY_NAMES  = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 const MONTH_NAMES = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
+const DAY_NAMES_LONG_HIST   = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const MONTH_NAMES_LONG_HIST = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 
 // Saisie des dispos désactivée pour ce staff → l'onglet « Dispos & congés » n'affiche
 // que la sous-vue Congés (cf. /api/dispo-settings staffCanSubmit).
@@ -76,6 +78,11 @@ function fmtDuration(h) {
     return mins > 0 ? hrs + 'h' + String(mins).padStart(2, '0') : hrs + 'h';
 }
 
+// Heures effectives d'un shift (réel si pointage complet, sinon planifié).
+// Logique extraite et testée : public/lib/shift-hours.js + tests/shift-hours.test.js
+// (module chargé via <script src="/lib/shift-hours.js"> avant celui-ci).
+function shiftEffectiveHours(s) { return ShiftHours.shiftEffectiveHours(s); }
+
 // Une date 'YYYY-MM-DD' → Date locale à MIDI. Midi et pas minuit : insensible au
 // changement d'heure, idiome déjà partout dans le fichier.
 function parseDate(str) { return new Date(str + 'T12:00:00'); }
@@ -102,9 +109,13 @@ function isJoker(s) { return !!s.is_joker || s.staff_id === '__joker__'; }
 // (HTML au lieu de JSON → redirection login) vaille pour TOUS les appelants : la liste
 // des semaines à venir se contentait sinon de rester vide en silence pendant que la
 // semaine en cours, elle, redirigeait. Rend `null` si la donnée n'est pas exploitable.
-async function fetchMyShifts(from, to) {
+// `opts.light` : ne demander QUE ses propres shifts, sans les collègues. Réservé aux
+// appelants qui n'en affichent aucun (le récap mensuel de l'historique, qui couvre
+// plusieurs mois d'un coup) — la vue planning, elle, en a besoin.
+async function fetchMyShifts(from, to, opts) {
     try {
-        const res = await fetch('/api/my-shifts?from=' + from + '&to=' + to, { credentials: 'include' });
+        const url = '/api/my-shifts?from=' + from + '&to=' + to + ((opts && opts.light) ? '&light=1' : '');
+        const res = await fetch(url, { credentials: 'include' });
         const ct  = res.headers.get('content-type') || '';
         if (!ct.includes('application/json')) {
             if (res.status === 401) { window.location.href = '/login.html'; return null; }
@@ -209,7 +220,7 @@ async function init() {
     });
 
     document.querySelector('[data-tab="historique"]').addEventListener('click', () => {
-        loadHistoriqueWeek();
+        loadHistorique();
     });
 
     // Sous-onglets Dispos | Congés à l'intérieur de l'onglet « Dispos & congés »
@@ -972,6 +983,16 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
         card.className = 'day-card has-shift' + (isToday ? ' today' : '');
         if (!isToday) card.style.borderLeftColor = staffColor;
 
+        // La journée entière est mémorisée ici pour le mini planning (cf. `openDaySheet`) :
+        // la carte a déjà toute la donnée sous la main, la redemander à l'ouverture
+        // ferait attendre pour ce qui vient d'être affiché.
+        _dayDetails[date] = {
+            mine:       dayShifts,
+            colleagues: colleagues[date] || [],
+            jokers:     jokers.filter(j => j.date === date),
+        };
+        card.dataset.dayDate = date;
+
         // F-05 échanges désactivé
         // const pendingSwap = (window._myPendingSwaps || []).find(sw =>
         //     sw.status === 'pending' && (sw.from_shift_id === firstShift._id || sw.to_shift_id === firstShift._id));
@@ -1076,6 +1097,197 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
         list.appendChild(card);
     }
 }
+
+// ── Mini planning de la journée ───────────────────────────────────────────────
+//
+// Taper un jour travaillé ouvre la soirée en barres, comme le tableau de bord du
+// patron : qui est là, de quand à quand, qui ouvre et qui ferme. La carte du jour
+// donnait la liste des prénoms présents, mais pas la FORME de la soirée — impossible
+// d'y voir qui recouvre son propre créneau ni jusqu'à quelle heure l'équipe tient.
+//
+// Aucune requête : tout vient de la réponse `/api/my-shifts` déjà utilisée pour rendre
+// la carte (mes shifts, mes collègues du jour, les Jokers), mémorisée par
+// `renderDaysInto`. Les collègues n'ont que leurs heures PLANIFIÉES (c'est tout ce que
+// le serveur projette) ; mes propres heures suivent la règle habituelle du réel dès que
+// le pointage est complet.
+const _dayDetails = {};
+
+// Taper un jour ouvre la journée ; taper une pastille collègue garde son mini-toast.
+// Les deux écoutes vivent sur `document` : sans ce garde-fou, la pastille ouvrirait la
+// feuille par-dessus son propre toast.
+document.addEventListener('click', (ev) => {
+    if (!ev.target.closest) return;
+    if (ev.target.closest('[data-pill-name]')) return;
+    const card = ev.target.closest('.day-card[data-day-date]');
+    if (!card) return;
+    openDaySheet(card.dataset.dayDate);
+});
+
+// Le nom court d'un collègue, avec la même règle que les pastilles de la carte du jour
+// (surnom s'il existe, sinon prénom) — deux vocabulaires pour la même personne d'une
+// vue à l'autre obligeraient à la reconnaître deux fois.
+function _shortColleagueName(c) {
+    const sm = (allStaff || []).find(s => String(s._id) === String(c.staff_id));
+    if (sm && sm.nickname) return sm.nickname;
+    return (c.staff_name || '').trim().split(/\s+/)[0] || 'Collègue';
+}
+
+function openDaySheet(date) {
+    const detail = _dayDetails[date];
+    if (!detail) return;
+
+    // Une ligne par personne et par établissement, les créneaux coupés (18h-22h puis
+    // 23h-3h) fusionnés sur la MÊME ligne : deux lignes pour une personne se lisent
+    // comme deux personnes.
+    const groups = new Map();   // establishment_id → Map(clé → ligne)
+    const addSlot = (estabId, key, base, st, en) => {
+        if (st == null || en == null) return;
+        if (!groups.has(estabId)) groups.set(estabId, new Map());
+        const g = groups.get(estabId);
+        if (!g.has(key)) g.set(key, Object.assign({ slots: [] }, base));
+        const row = g.get(key);
+        // Un créneau déjà posé n'est pas une coupure : les Jokers arrivent par DEUX
+        // chemins (collègues du jour et créneaux ouverts), et le même créneau dessinait
+        // alors deux barres superposées.
+        if (row.slots.some(s => s.st === st && s.en === en)) return;
+        row.slots.push({ st, en });
+    };
+
+    detail.mine.forEach(s => {
+        const { start, end } = shiftEffectiveHours(s);
+        const sm = (allStaff || []).find(x => String(x._id) === String(s.staff_id));
+        addSlot(s.establishment_id, '__moi__',
+            { name: 'Moi', color: (sm && sm.color) || s.color || '#534AB7', isMe: true }, start, end);
+    });
+    detail.colleagues.forEach(c => {
+        addSlot(c.establishment_id, isJoker(c) ? 'joker-' + (c._id || c.start_time) : 'staff-' + c.staff_id,
+            { name: isJoker(c) ? 'Joker' : _shortColleagueName(c),
+              color: isJoker(c) ? '#95a5a6' : (c.color || '#888'), isJoker: isJoker(c) },
+            c.start_time, c.end_time);
+    });
+    // Les Jokers arrivent par DEUX chemins (la liste des collègues du jour et celle des
+    // créneaux ouverts) : sans cette clé partagée, le même créneau posait deux barres
+    // superposées et se comptait deux fois.
+    detail.jokers.forEach(j => {
+        addSlot(j.establishment_id, 'joker-' + (j._id || j.start_time),
+            { name: 'Joker', color: '#95a5a6', isJoker: true }, j.start_time, j.end_time);
+    });
+
+    // Bornes de l'axe : l'amplitude réelle de la soirée, arrondie à l'heure. Pas de
+    // marge décorative — sur un téléphone, chaque heure vide mange la lisibilité des
+    // barres. Même construction que le Gantt patron (`renderWeekGantt`).
+    let minH = Infinity, maxH = -Infinity;
+    groups.forEach(g => g.forEach(r => r.slots.forEach(s => {
+        minH = Math.min(minH, s.st);
+        maxH = Math.max(maxH, s.en);
+    })));
+    if (!isFinite(minH) || !isFinite(maxH)) return;
+    const OPEN_H  = Math.floor(minH);
+    const CLOSE_H = Math.ceil(maxH);
+    const RANGE   = (CLOSE_H - OPEN_H) || 1;
+    const pctLeft  = h      => ((h - OPEN_H) / RANGE * 100).toFixed(2) + '%';
+    const pctWidth = (s, e) => (Math.max(e - s, 0) / RANGE * 100).toFixed(2) + '%';
+
+    const d        = parseDate(date);
+    const dayLabel = DAY_NAMES_LONG_HIST[d.getDay()] + ' ' + d.getDate() + ' ' + MONTH_NAMES_LONG_HIST[d.getMonth()];
+
+    // Mon service d'abord : c'est la ligne pour laquelle on ouvre la feuille.
+    const mesHeures = detail.mine.reduce((a, s) => a + ShiftHours.shiftDurationHours(s), 0);
+    const monResume = detail.mine.length
+        ? detail.mine.map(s => {
+              const { start, end } = shiftEffectiveHours(s);
+              return fmtHour(start) + ' → ' + fmtHour(end);
+          }).join(', ') + ' · ' + fmtDuration(mesHeures)
+        : '';
+
+    // L'établissement où JE travaille en tête : les autres ne sont là que par débordement
+    // d'une double vacation.
+    const mesEstabs = new Set(detail.mine.map(s => s.establishment_id));
+    const estabIds  = [...groups.keys()].sort((a, b) =>
+        (mesEstabs.has(b) ? 1 : 0) - (mesEstabs.has(a) ? 1 : 0));
+    const multiEstab = estabIds.length > 1;
+
+    const axisHtml = () => {
+        let ticks = '';
+        // Une graduation toutes les 2 h. Sur une amplitude impaire, la dernière heure
+        // n'est pas graduée : collée à la précédente, elle rendait les deux illisibles —
+        // et l'amplitude exacte est écrite en toutes lettres au pied de la feuille.
+        for (let h = OPEN_H; h <= CLOSE_H; h += 2) {
+            ticks += '<span class="dayx-tick" style="left:' + pctLeft(h) + '">' + fmtHour(h) + '</span>';
+        }
+        return '<div class="dayx-axis"><span></span><div class="dayx-axis-track">' + ticks + '</div></div>';
+    };
+
+    let nbPersonnes = 0;
+    let body = '';
+    estabIds.forEach(estabId => {
+        const rows = [...groups.get(estabId).values()].sort((a, b) => {
+            if (a.isMe !== b.isMe) return a.isMe ? -1 : 1;          // moi en tête
+            return Math.min(...a.slots.map(s => s.st)) - Math.min(...b.slots.map(s => s.st));
+        });
+        if (multiEstab) body += '<div class="dayx-estab">' + _esc(formatEstablishment(estabId)) + '</div>';
+        body += axisHtml() + '<div class="dayx-rows">';
+        rows.forEach(r => {
+            if (!r.isJoker) nbPersonnes++;
+            r.slots.sort((a, b) => a.st - b.st);
+            const debut = r.slots[0].st;
+            const fin   = r.slots[r.slots.length - 1].en;
+            const bars  = r.slots.map(s =>
+                '<span class="dayx-bar' + (r.isJoker ? ' dayx-bar--joker' : '') + '" style="left:' + pctLeft(s.st) +
+                    ';width:' + pctWidth(s.st, s.en) + ';background:' + _esc(r.color) +
+                    ';color:' + textColorFor(r.color) + '">' +
+                    fmtHour(s.st) + ' → ' + fmtHour(s.en) +
+                '</span>').join('');
+            body +=
+                '<div class="dayx-row' + (r.isMe ? ' dayx-row--me' : '') + '"' +
+                    ' data-pill-name="' + _esc(r.isMe ? 'Moi' : r.name) + '"' +
+                    ' data-pill-start="' + debut + '" data-pill-end="' + fin + '"' +
+                    ' data-pill-color="' + _esc(r.color) + '">' +
+                    '<span class="dayx-name">' + _esc(r.name) + '</span>' +
+                    '<div class="dayx-track">' + bars + '</div>' +
+                '</div>';
+        });
+        body += '</div>';
+    });
+
+    const existing = document.getElementById('day-sheet');
+    if (existing) existing.remove();
+
+    const sheet = document.createElement('div');
+    sheet.id = 'day-sheet';
+    sheet.className = 'dayx-sheet';
+    sheet.innerHTML =
+        '<div class="dayx-panel" style="--dayx-tick:' + (2 / RANGE * 100).toFixed(2) + '%">' +
+            '<div class="dayx-grip"></div>' +
+            '<div class="dayx-head">' +
+                '<div style="min-width:0">' +
+                    '<div class="dayx-title">' + dayLabel + '</div>' +
+                    (monResume ? '<div class="dayx-sub">Mon service ' + monResume + '</div>' : '') +
+                '</div>' +
+                '<button type="button" class="dayx-close" aria-label="Fermer">&times;</button>' +
+            '</div>' +
+            '<div class="dayx-body">' + body + '</div>' +
+            '<div class="dayx-foot">' +
+                nbPersonnes + ' personne' + (nbPersonnes > 1 ? 's' : '') + ' sur la journée' +
+                ' · amplitude ' + fmtHour(minH) + ' → ' + fmtHour(maxH) +
+            '</div>' +
+        '</div>';
+
+    const panel = sheet.querySelector('.dayx-panel');
+    const close = () => {
+        sheet.style.background = 'rgba(0,0,0,0)';
+        panel.style.transform  = 'translateY(100%)';
+        setTimeout(() => sheet.remove(), 220);
+    };
+    sheet.addEventListener('click', ev => { if (ev.target === sheet) close(); });
+    sheet.querySelector('.dayx-close').addEventListener('click', close);
+    document.body.appendChild(sheet);
+    requestAnimationFrame(() => {
+        sheet.style.background = 'rgba(0,0,0,0.45)';
+        panel.style.transform  = 'translateY(0)';
+    });
+}
+
 
 // ── Formatage nom établissement ───────────────────────────────────────────────
 
@@ -1584,168 +1796,124 @@ function initCalSync() {
     });
 }
 
-// ── Historique shifts passés ──────────────────────────────────────────────────
+// ── Historique — heures par mois ──────────────────────────────────────────────
+//
+// Vue de CUMUL, sans le détail jour par jour. Ce qu'on vient chercher dans
+// l'historique, c'est « combien d'heures ce mois-ci » — pas le rappel d'une soirée
+// précise, que le planning de la semaine donne déjà. La navigation semaine par
+// semaine ne pouvait pas répondre à cette question : elle demandait cinq
+// allers-retours et une addition mentale pour reconstituer un mois.
+//
+// Le mois courant est compté ENTIER (1er → dernier jour), comme le bascule « Mois »
+// du planning : deux totaux différents pour le même mois d'un écran à l'autre, c'est
+// le genre d'écart qu'on vient vérifier ici justement.
 
-const DAY_NAMES_LONG_HIST = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-const MONTH_NAMES_LONG_HIST = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const HIST_MONTHS_STEP = 6;    // fenêtre initiale, et pas du bouton « voir plus »
+const HIST_MONTHS_MAX  = 24;   // au-delà, la donnée n'est plus consultée que par le patron
 
-let _histOffset = 1;   // 1 = semaine -1, 5 = semaine -5 (max)
-const _histCache = {};
+let _histMonths = HIST_MONTHS_STEP;
+const _histCache = {};         // clé = nombre de mois demandés
 
-async function loadHistoriqueWeek() {
+// Les bornes de la fenêtre : du 1er du mois le plus ancien au dernier jour du mois
+// courant. `new Date(y, m - k, 1)` gère seul le passage d'année.
+function histRange(months) {
+    const now   = new Date();
+    const first = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+    const last  = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    return { from: toDateStr(first), to: toDateStr(last) };
+}
+
+async function loadHistorique() {
     const navEl = document.getElementById('hist-nav');
     const wrap  = document.getElementById('hist-content');
     if (!navEl || !wrap) return;
 
-    const todayMonday = currentMonday();
-    const weekMonday  = addDays(todayMonday, -7 * _histOffset);
-    const weekSunday  = addDays(weekMonday, 6);
-    const weekKey     = toDateStr(weekMonday);
-
-    const fmtD = d => d.getDate() + ' ' + MONTH_NAMES_LONG_HIST[d.getMonth()];
-
+    const months = _histMonths;
     navEl.innerHTML =
-        '<button class="hist-nav-btn" id="hist-btn-prev"' + (_histOffset >= 5 ? ' disabled' : '') + '>← Précédente</button>' +
-        '<span class="hist-nav-week">Semaine du ' + fmtD(weekMonday) + '<br>au ' + fmtD(weekSunday) + ' ' + weekSunday.getFullYear() + '</span>' +
-        '<button class="hist-nav-btn" id="hist-btn-next"' + (_histOffset <= 1 ? ' disabled' : '') + '>Suivante →</button>';
+        '<div class="histm-head">' +
+            '<div class="histm-head-title">Mes heures par mois</div>' +
+            '<div class="histm-head-sub">Les ' + months + ' derniers mois</div>' +
+        '</div>';
 
-    document.getElementById('hist-btn-prev').addEventListener('click', () => { _histOffset++; loadHistoriqueWeek(); });
-    document.getElementById('hist-btn-next').addEventListener('click', () => { _histOffset--; loadHistoriqueWeek(); });
-
-    if (_histCache[weekKey]) { renderHistoriqueWeek(wrap, _histCache[weekKey].data); return; }
+    if (_histCache[months]) { renderHistoriqueMois(wrap, _histCache[months]); return; }
 
     wrap.innerHTML = '<div class="hist-loading">Chargement…</div>';
 
-    try {
-        const r = await fetch('/api/my-shifts?from=' + weekKey + '&to=' + toDateStr(weekSunday), { credentials: 'include' });
-        const data = r.ok ? await r.json() : { shifts: [] };
-
-        _histCache[weekKey] = { data };
-        renderHistoriqueWeek(wrap, data);
-    } catch {
+    const { from, to } = histRange(months);
+    // `light=1` : cette vue n'affiche aucun collègue. Sans ce drapeau, six mois de
+    // dates ramenaient plusieurs centaines de lignes de collègues pour une somme.
+    const data = await fetchMyShifts(from, to, { light: true });
+    if (!data || data.error) {
         wrap.innerHTML = '<div class="hist-loading">Erreur de chargement.</div>';
-    }
-}
-
-// Heures effectives d'un shift (réel si pointage complet, sinon planifié).
-// Logique extraite et testée : public/lib/shift-hours.js + tests/shift-hours.test.js
-// (module chargé via <script src="/lib/shift-hours.js"> juste avant ce bloc).
-function shiftEffectiveHours(s) { return ShiftHours.shiftEffectiveHours(s); }
-
-function buildHistStatsHtml(shifts) {
-    const nbShifts = shifts.length;
-    const totalH = shifts.reduce((a, s) => {
-        const { start, end } = shiftEffectiveHours(s);
-        return a + (end - start);
-    }, 0);
-    const nbJours = new Set(shifts.map(s => s.date)).size;
-
-    let html = '<div class="week-stats" style="padding:12px 0 4px">' +
-        statCard(nbJours,             'Jours',  '') +
-        statCard(nbShifts,            'Shifts', '') +
-        statCard(fmtDuration(totalH), 'Heures', '') +
-    '</div>';
-
-    // Répartition par établissement (si > 1)
-    const byEstab = {};
-    shifts.forEach(s => {
-        const { start, end } = shiftEffectiveHours(s);
-        if (!byEstab[s.establishment_id]) byEstab[s.establishment_id] = { total: 0 };
-        byEstab[s.establishment_id].total += (end - start);
-    });
-    const estabIds = Object.keys(byEstab);
-    if (estabIds.length > 1) {
-        html += '<div class="estab-hours-bar" style="padding:0 0 12px">';
-        estabIds.forEach(id => {
-            const { total } = byEstab[id];
-            html +=
-                '<div class="estab-hours-chip">' +
-                    '<span>' + formatEstablishment(id) + '</span>' +
-                    '<span style="font-weight:700;color:var(--text-primary);margin-left:4px">' + fmtDuration(total) + '</span>' +
-                '</div>';
-        });
-        html += '</div>';
-    }
-    return html;
-}
-
-function renderHistoriqueWeek(wrap, data) {
-    const shifts = (data.shifts || [])
-        .filter(s => !s.is_joker && s.staff_id !== '__joker__')
-        .slice().sort((a, b) =>
-            a.date < b.date ? -1 : a.date > b.date ? 1 : (a.start_time || 0) - (b.start_time || 0)
-        );
-    wrap.innerHTML = buildHistStatsHtml(shifts);
-
-    if (shifts.length === 0) {
-        wrap.insertAdjacentHTML('beforeend', '<div class="hist-empty">Aucun shift cette semaine.</div>');
         return;
     }
 
-    // Grouper par date
-    const byDate = new Map();
-    shifts.forEach(s => {
-        if (!byDate.has(s.date)) byDate.set(s.date, []);
-        byDate.get(s.date).push(s);
-    });
-
-    const shiftDur = s => {
-        const { start, end } = shiftEffectiveHours(s);
-        const dur = end - start;
-        const dh = Math.floor(dur), dm = Math.round((dur - dh) * 60);
-        return dh + 'h' + (dm > 0 ? String(dm).padStart(2, '0') : '');
-    };
-
-    const list = document.createElement('div');
-    list.className = 'hist-list';
-
-    byDate.forEach((dayShifts, dateStr) => {
-        const first = dayShifts[0];
-        const [sy, sm, sd] = dateStr.split('-').map(Number);
-        const d = new Date(sy, sm - 1, sd);
-        const color = first.color || '#534AB7';
-
-        const card = document.createElement('div');
-        card.className = 'hist-card';
-        card.style.borderLeftColor = color;
-
-        const firstHours = shiftEffectiveHours(first);
-
-        // Premier shift — en-tête de la carte
-        let html =
-            '<div class="hist-card-header">' +
-                '<div class="hist-date-block">' +
-                    '<div class="hist-weekday">' + DAY_NAMES_LONG_HIST[d.getDay()].slice(0, 3).toUpperCase() + '</div>' +
-                    '<div class="hist-day-num">' + d.getDate() + '</div>' +
-                '</div>' +
-                '<div class="hist-vdivider"></div>' +
-                '<div class="hist-card-info">' +
-                    '<div class="hist-card-estab">' + formatEstablishment(first.establishment_id) + '</div>' +
-                    '<div class="hist-card-sub">' + shiftDur(first) + '</div>' +
-                '</div>' +
-                '<span class="hist-hours-badge">' + fmtHour(firstHours.start) + ' – ' + fmtHour(firstHours.end) + '</span>' +
-            '</div>';
-
-        // Shifts supplémentaires du même jour
-        for (let i = 1; i < dayShifts.length; i++) {
-            const s = dayShifts[i];
-            const c = s.color || '#534AB7';
-            const sHours = shiftEffectiveHours(s);
-            html +=
-                '<div class="hist-extra-row">' +
-                    '<span class="hist-extra-dot" style="background:' + c + '"></span>' +
-                    '<span class="hist-extra-estab">' + formatEstablishment(s.establishment_id) + '</span>' +
-                    '<span class="hist-extra-dur">' + shiftDur(s) + '</span>' +
-                    '<span class="hist-hours-badge hist-hours-badge--sm">' + fmtHour(sHours.start) + ' – ' + fmtHour(sHours.end) + '</span>' +
-                '</div>';
-        }
-
-        card.innerHTML = html;
-        list.appendChild(card);
-    });
-
-    wrap.appendChild(list);
+    const shifts = (data.shifts || []).filter(s => !isJoker(s));
+    _histCache[months] = shifts;
+    renderHistoriqueMois(wrap, shifts);
 }
+
+function renderHistoriqueMois(wrap, shifts) {
+    const mois = ShiftHours.monthlyTotals(shifts);
+
+    if (mois.length === 0) {
+        wrap.innerHTML = '<div class="hist-empty">Aucun shift sur cette période.</div>';
+        appendHistMoreBtn(wrap);
+        return;
+    }
+
+    const moisCourant = toDateStr(new Date()).slice(0, 7);
+    const totalH      = mois.reduce((a, m) => a + m.totalH, 0);
+
+    let html = '<div class="histm-list">';
+    mois.forEach(m => {
+        const [y, mo]  = m.month.split('-').map(Number);
+        const label    = MONTH_NAMES_LONG_HIST[mo - 1].charAt(0).toUpperCase() +
+                         MONTH_NAMES_LONG_HIST[mo - 1].slice(1) + ' ' + y;
+        const estabIds = Object.keys(m.byEstab);
+        html +=
+            '<div class="histm-row' + (m.month === moisCourant ? ' histm-row--current' : '') + '">' +
+                '<div class="histm-main">' +
+                    '<div class="histm-month">' + label +
+                        (m.month === moisCourant ? '<span class="histm-chip">en cours</span>' : '') +
+                    '</div>' +
+                    '<div class="histm-meta">' + m.nbDays + ' jour' + (m.nbDays > 1 ? 's' : '') +
+                        ' · ' + m.nbShifts + ' shift' + (m.nbShifts > 1 ? 's' : '') + '</div>' +
+                '</div>' +
+                '<div class="histm-hours">' + fmtDuration(m.totalH) + '</div>' +
+            '</div>' +
+            (estabIds.length > 1
+                ? '<div class="histm-estabs">' + estabIds.map(id =>
+                      '<span class="estab-hours-chip"><span>' + formatEstablishment(id) + '</span>' +
+                      '<span style="font-weight:700;color:var(--text-primary);margin-left:4px">' +
+                      fmtDuration(m.byEstab[id]) + '</span></span>').join('') + '</div>'
+                : '');
+    });
+    html += '</div>' +
+        '<div class="histm-total">' +
+            '<span>Total sur la période</span>' +
+            '<span class="histm-total-value">' + fmtDuration(totalH) + '</span>' +
+        '</div>';
+
+    wrap.innerHTML = html;
+    appendHistMoreBtn(wrap);
+}
+
+// « Voir plus » plutôt qu'une fenêtre fixe : six mois couvrent la question courante,
+// et remonter plus loin reste possible sans imposer la requête longue à tout le monde.
+function appendHistMoreBtn(wrap) {
+    if (_histMonths >= HIST_MONTHS_MAX) return;
+    const btn = document.createElement('button');
+    btn.type      = 'button';
+    btn.className = 'histm-more';
+    btn.textContent = 'Voir ' + HIST_MONTHS_STEP + ' mois de plus';
+    btn.addEventListener('click', () => {
+        _histMonths = Math.min(_histMonths + HIST_MONTHS_STEP, HIST_MONTHS_MAX);
+        loadHistorique();
+    });
+    wrap.appendChild(btn);
+}
+
 
 // ── Disponibilités ────────────────────────────────────────────────────────────
 
@@ -1793,8 +1961,11 @@ async function loadDisposTab() {
     const formEl   = document.getElementById('dispos-form');
     const btnSubmit = document.getElementById('btn-submit-dispos');
 
-    // Deadline
-    const fmtDate = deadlineLabel();
+    // Deadline. `fmtDate` = celle du CYCLE COURANT (index 0), la seule qui verrouille
+    // quoi que ce soit ; `fmtDateSemaine` = celle de la semaine AFFICHÉE. Les deux
+    // coïncident tant qu'on est sur la première semaine de l'horizon.
+    const fmtDate       = deadlineLabel();
+    const fmtDateSemaine = deadlineLabelForWeek(dispoWeekIndex);
 
     // Saisie fermée : la semaine-type n'a plus rien à proposer non plus — le serveur ne
     // la matérialise pas pour un établissement fermé ou un staff sans droit d'envoi
@@ -1827,16 +1998,34 @@ async function loadDisposTab() {
     // B2 règle A — sur un horizon élargi, la deadline ne concerne QUE la semaine
     // prochaine. L'annoncer sans le dire ferait croire que toute la saisie ferme.
     const multiWeek = dispoMondays.length > 1;
-    statusEl.textContent = late  ? 'Deadline dépassée le ' + fmtDate + ' — saisie encore ouverte pour toi.'
-        : dispoSettings.force_open ? '🔓 Saisie ouverte en urgence par le responsable'
-        // Depuis que la deadline ne provoque plus le retour anticipé ci-dessus, ce cas
-        // arrive jusqu'ici : sans cette branche l'en-tête annonçait « Deadline : … » au
-        // futur, juste au-dessus de l'encadré rouge « cette semaine est figée ».
-        : dispoSettings.deadlinePassed ? 'Deadline dépassée le ' + fmtDate + '.'
-        : multiWeek ? 'Deadline : ' + fmtDate + ' (pour la semaine prochaine seulement)'
-        : 'Deadline : ' + fmtDate;
-    statusEl.style.color = (late || dispoSettings.force_open) ? '#27ae60'
-        : dispoSettings.deadlinePassed ? '#e74c3c' : '#aaa';
+    // Sur une semaine AUTRE que celle en cours de collecte, l'état du cycle courant
+    // (dépassé, réouvert, forcé) ne dit rien : cette semaine-là a son propre rendez-vous,
+    // sept jours plus loin par index, et il est nécessairement à venir. Afficher ici
+    // « Deadline dépassée le … », ou la date du cycle courant, revenait à annoncer la
+    // deadline d'une autre semaine que celle qu'on est en train de remplir.
+    if (dispoWeekIndex > 0) {
+        statusEl.textContent = 'Deadline : ' + fmtDateSemaine + ' (pour cette semaine)';
+        statusEl.style.color = '#aaa';
+    } else {
+        statusEl.textContent = late  ? 'Deadline dépassée le ' + fmtDate + ' — saisie encore ouverte pour toi.'
+            : dispoSettings.force_open ? '🔓 Saisie ouverte en urgence par le responsable'
+            // Depuis que la deadline ne provoque plus le retour anticipé ci-dessus, ce cas
+            // arrive jusqu'ici : sans cette branche l'en-tête annonçait « Deadline : … » au
+            // futur, juste au-dessus de l'encadré rouge « cette semaine est figée ».
+            : dispoSettings.deadlinePassed ? 'Deadline dépassée le ' + fmtDate + '.'
+            : multiWeek ? 'Deadline : ' + fmtDate + ' (pour la semaine prochaine seulement)'
+            : 'Deadline : ' + fmtDate;
+        statusEl.style.color = (late || dispoSettings.force_open) ? '#27ae60'
+            : dispoSettings.deadlinePassed ? '#e74c3c' : '#aaa';
+    }
+
+    // Le titre annonçait « semaine prochaine » quelle que soit la semaine affichée.
+    const titleEl = document.getElementById('dispos-title');
+    if (titleEl) {
+        titleEl.textContent = dispoWeekIndex === 0
+            ? 'Mes dispos — semaine prochaine'
+            : 'Mes dispos — ' + weekRangeLabel(dispoMondays[dispoWeekIndex]).toLowerCase();
+    }
 
     // Semaine affichée, dans l'horizon autorisé
     const nextMonday = currentDispoMonday();
@@ -1940,7 +2129,8 @@ async function loadDisposTab() {
                 (dispoWeekIndex === 0 ? ';opacity:.3;cursor:default' : '') + '">‹</button>' +
             '<div style="text-align:center;line-height:1.3">' +
                 '<div style="font-size:13px;font-weight:700">' + label + '</div>' +
-                '<div style="font-size:11px;color:var(--text-muted,#999)">Semaine ' + (dispoWeekIndex + 1) + ' sur ' + dispoMondays.length + '</div>' +
+                '<div style="font-size:11px;color:var(--text-muted,#999)">Semaine ' + (dispoWeekIndex + 1) + ' sur ' + dispoMondays.length +
+                    ' · deadline ' + deadlineShortLabelForWeek(dispoWeekIndex) + '</div>' +
             '</div>' +
             '<button type="button" id="dispo-week-next" class="dispo-week-arrow" ' +
                 (dispoWeekIndex >= dispoMondays.length - 1 ? 'disabled ' : '') +
@@ -1989,7 +2179,9 @@ async function loadDisposTab() {
     if (alreadySubmitted) {
         const notice = document.createElement('div');
         notice.style.cssText = 'background:#eef2ff;border:1px solid #c5beff;border-radius:10px;padding:12px 16px;font-size:13px;color:#3730a3;margin-bottom:4px;line-height:1.5;';
-        notice.textContent = '✏️ Tes disponibilités ont été envoyées. Tu peux encore les modifier jusqu’au ' + fmtDate + '.';
+        // La deadline de LA semaine affichée : sur la semaine 2, annoncer celle de la
+        // semaine 1 donnait une date déjà passée sous un formulaire encore modifiable.
+        notice.textContent = '✏️ Tes disponibilités ont été envoyées. Tu peux encore les modifier jusqu’au ' + fmtDateSemaine + '.';
         formEl.insertBefore(notice, formEl.firstChild);
         btnSubmit.textContent = 'Mettre à jour mes dispos';
     }
@@ -2279,10 +2471,36 @@ async function loadDispoTemplate() {
 // Une seule mise en forme de la deadline pour toute la page : l'en-tête et la carte
 // semaine-type parlent de la MÊME échéance, deux formats donneraient l'impression
 // qu'il y en a deux.
-function deadlineLabel() {
-    if (!dispoSettings || !dispoSettings.deadline) return '';
-    return new Date(dispoSettings.deadline).toLocaleDateString('fr-FR',
-        { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+function deadlineLabel() { return deadlineLabelForWeek(0); }
+
+// La deadline de la semaine d'index `i` de l'horizon (0 = semaine en cours de
+// collecte). Le rendez-vous est HEBDOMADAIRE : `dispoSettings.deadline` est celui qui
+// verrouille l'index 0 ; celui de la semaine suivante tombe exactement sept jours plus
+// tard, et ainsi de suite. Le serveur n'en envoie qu'un — sans ce décalage, la semaine 2
+// affichait la deadline (souvent déjà dépassée) de la semaine 1.
+//
+// `setDate(+7)` conserve l'heure LOCALE : de part et d'autre d'un changement d'heure,
+// la deadline reste annoncée à l'heure du cycle et non décalée d'une heure.
+function deadlineForWeek(i) {
+    if (!dispoSettings || !dispoSettings.deadline) return null;
+    const d = new Date(dispoSettings.deadline);
+    d.setDate(d.getDate() + 7 * i);
+    return d;
+}
+
+function deadlineLabelForWeek(i) {
+    const d = deadlineForWeek(i);
+    return d ? d.toLocaleDateString('fr-FR',
+        { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : '';
+}
+
+// Format court pour la barre de navigation, où la place manque : « ven. 12 sept. 13h ».
+function deadlineShortLabelForWeek(i) {
+    const d = deadlineForWeek(i);
+    if (!d) return '';
+    const jour = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+    const min  = d.getMinutes();
+    return jour + ' ' + d.getHours() + 'h' + (min ? String(min).padStart(2, '0') : '');
 }
 
 function setTplFeedback(msg, type) {
@@ -2675,8 +2893,12 @@ function _esc(str) {
 // P-01 : taper une pastille collègue révèle nom complet + horaires en mini-toast
 // (sur mobile, le `title` HTML est inopérant ; sur desktop il reste utilisable
 // au hover et le tap fonctionne aussi).
+//
+// Sélecteur sur le SEUL `data-pill-name` : les lignes du mini planning de la journée
+// (`openDaySheet`) portent les mêmes attributs et méritent le même toast — un nom y est
+// tronqué de la même façon, pour la même raison.
 document.addEventListener('click', (ev) => {
-    const pill = ev.target.closest && ev.target.closest('.colleague-pill[data-pill-name]');
+    const pill = ev.target.closest && ev.target.closest('[data-pill-name]');
     if (!pill) return;
     const name  = pill.dataset.pillName  || '';
     const st    = parseFloat(pill.dataset.pillStart);

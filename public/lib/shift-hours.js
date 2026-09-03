@@ -34,6 +34,40 @@
         return end - start;
     }
 
+    // ── Cumul par mois civil ──────────────────────────────────────────────────
+    //
+    // L'historique du staff ne montre plus le détail jour par jour mais des CUMULS
+    // MENSUELS. Le mois se lit sur la chaîne `date` ("YYYY-MM-DD" → "YYYY-MM") et
+    // JAMAIS via un `new Date(...)` : le mois d'un shift est une date calendaire, pas
+    // un instant, et le passer par le fuseau du navigateur ferait basculer le 1er du
+    // mois dans le mois précédent (convention architecture.md §3.1).
+    //
+    // Les heures sont les heures EFFECTIVES — donc le réel dès que le pointage est
+    // complet, exactement comme les stats de la semaine. Un mois affiché ici et le
+    // même mois vu depuis le bascule « Mois » du planning doivent donner le même total.
+    //
+    // Rend les mois du PLUS RÉCENT au plus ancien ; les mois sans shift sont absents.
+    function monthlyTotals(shifts) {
+        const map = new Map();
+        for (const s of (shifts || [])) {
+            if (!s || !s.date) continue;
+            const key = String(s.date).slice(0, 7);
+            if (!map.has(key)) {
+                map.set(key, { month: key, totalH: 0, nbShifts: 0, days: new Set(), byEstab: {} });
+            }
+            const m = map.get(key);
+            const h = shiftDurationHours(s);
+            m.totalH  += h;
+            m.nbShifts += 1;
+            m.days.add(s.date);
+            m.byEstab[s.establishment_id] = (m.byEstab[s.establishment_id] || 0) + h;
+        }
+        return [...map.values()]
+            .map(m => ({ month: m.month, totalH: m.totalH, nbShifts: m.nbShifts,
+                         nbDays: m.days.size, byEstab: m.byEstab }))
+            .sort((a, b) => a.month < b.month ? 1 : a.month > b.month ? -1 : 0);
+    }
+
     // ── Formatage des heures ──────────────────────────────────────────────────
     // Ces helpers étaient dupliqués (~8 copies) dans script.js / planning.js /
     // pointage.js. Trois familles distinctes, à ne PAS confondre :
@@ -76,5 +110,5 @@
         return sign + body;
     }
 
-    return { shiftEffectiveHours, shiftDurationHours, fmtHourOfDay, fmtClock, fmtDurationH };
+    return { shiftEffectiveHours, shiftDurationHours, monthlyTotals, fmtHourOfDay, fmtClock, fmtDurationH };
 });

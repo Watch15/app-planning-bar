@@ -2531,10 +2531,16 @@ app.get('/api/my-shifts', checkDB, requireAuth, async (req, res) => {
         // les élargir. Les recalculer donnerait deux noms au même concept — et le jour
         // où l'un des deux se dérive autrement, la requête des collègues raterait
         // silencieusement le changement.
+        //
+        // `light=1` : l'appelant ne veut QUE ses propres shifts (récap mensuel de
+        // l'historique, qui couvre plusieurs mois d'un coup). Sans cette porte, une
+        // plage de six mois ramenait un document de collègue par personne et par
+        // soirée travaillée — plusieurs centaines de lignes projetées pour une somme
+        // d'heures qui n'en lit aucune.
         const colleagueMap = {};
         for (const date of myDates) colleagueMap[date] = [];
 
-        if (myDates.length) {
+        if (myDates.length && req.query.light !== '1') {
             // La requête croise TOUTES mes dates avec TOUS mes établissements ; ce Set
             // referme le produit cartésien sur les couples réellement travaillés.
             const worked = new Set(myShifts.map(s => s.date + '|' + s.establishment_id));
