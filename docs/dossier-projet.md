@@ -307,15 +307,17 @@ qui la réintroduisaient auparavant dans les écrans de planification.
 | **E-21 — environnement de démonstration** | Réflexion faite, **aucun code**. Recommandation : démo pilotée en visio d'abord, bac à sable qui se réinitialise seul, et un drapeau `DEMO_MODE` qui coupe **tout** envoi sortant (SMS, push, e-mail). Le vrai travail est le jeu de données, pas l'infrastructure |
 | **E-08 — multi-tenant** | Non commencé. Aujourd'hui, un client = une instance + une base. Conditionné à un volume de 20-25 clients |
 
-**Deux fonctionnalités sont livrées mais volontairement éteintes** — les rencontrer dans le
-code ne signifie pas qu'elles existent pour l'utilisateur :
+**Une fonctionnalité est livrée mais volontairement éteinte** — la rencontrer dans le code
+ne signifie pas qu'elle existe pour l'utilisateur :
 
-- **F-05 — échange de shifts entre employés.** Code conservé, routes et interface
-  commentées, en attente d'une décision client. Maquetter ou annoncer cette fonctionnalité
-  créerait une attente que le code ne tient pas.
 - **F-09 — abonnement agenda iCal.** Livré puis désactivé (`CALENDAR_ENABLED=false`) : la
   synchronisation n'est pas temps réel, ce qui la rendait trompeuse. À roder sur `dev` avant
   toute réactivation.
+
+**F-05 — échange de shifts entre employés** a quitté cette liste le **2026-09-03** : elle est
+**active sur `dev` et sur l'instance de démonstration**, pour être montrée au client. Elle
+n'est **pas** livrée en production client — c'est justement la démonstration qui doit décider
+si elle l'est.
 
 ---
 

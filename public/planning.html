@@ -662,6 +662,21 @@
             font-size: 12px; color: var(--text-muted); text-align: center;
             font-variant-numeric: tabular-nums;
         }
+        /* F-05 — l'action d'échange, sous le pied de la feuille du jour. */
+        .dayx-act { padding: 0 18px 16px; }
+        .dayx-swap {
+            width: 100%; min-height: 46px; border: none; border-radius: 12px;
+            background: var(--accent, #6C63FF); color: #fff;
+            font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+        }
+        .dayx-swap--cancel {
+            background: transparent; color: #c0392b; border: 1.5px solid #f0b7b2;
+        }
+        .dayx-swap-wait {
+            min-height: 46px; display: flex; align-items: center; justify-content: center;
+            border-radius: 12px; background: #fff8e1; border: 1px solid #f3d9a4;
+            color: #8a6d1f; font-size: 13px; font-weight: 600; text-align: center;
+        }
 
         /* ── Synchro agenda (abonnement iCal) ─────────────────────────────── */
         .cal-sync-card { margin: 8px 20px 24px; background: var(--light-card); border: 1px solid var(--light-border); border-radius: 14px; overflow: hidden; }
@@ -850,8 +865,7 @@
     <div style="height:40px"></div>
 </div>
 
-<!-- F-05 échanges désactivé
-<div id="swap-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:flex-end;justify-content:center">
+<div id="swap-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:flex-end;justify-content:center">
     <div style="background:#fff;width:100%;max-width:560px;border-radius:20px 20px 0 0;max-height:88vh;overflow-y:auto;padding:18px 16px 28px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
             <div style="font-weight:700;font-size:16px;color:#1a1a2e">Proposer un échange</div>
@@ -864,8 +878,7 @@
         <button id="swap-submit" disabled style="width:100%;background:#534AB7;color:white;border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;opacity:0.5">Envoyer la demande</button>
     </div>
 </div>
-<div id="swap-toast" style="display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:white;padding:10px 16px;border-radius:10px;font-size:13px;z-index:2000;box-shadow:0 4px 16px rgba(0,0,0,0.2)"></div>
--->
+<div id="swap-toast" style="display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:white;padding:10px 16px;border-radius:10px;font-size:13px;z-index:10000;box-shadow:0 4px 16px rgba(0,0,0,0.2)"></div>
 
 <!-- Logique partagée extraite + testée (tests/shift-hours.test.js, tests/week.test.js) -->
 <script src="/lib/auth-guard.js"></script>

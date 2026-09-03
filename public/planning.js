@@ -526,7 +526,7 @@ async function loadPlanning(from, to, user) {
 
     const myShifts = (data.shifts || []).filter(s => !isJoker(s));
     const jokers   = (data.shifts || []).filter(isJoker);
-    // await loadMyPendingSwaps(); // F-05 désactivé
+    await loadMyPendingSwaps();
     _lastWeekData = { shifts: myShifts };
     if (_statsPeriod === 'week') {
         renderStats(myShifts);
@@ -1020,21 +1020,29 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
             card.classList.add('day-card--tappable');
         }
 
-        // F-05 échanges désactivé
-        // const pendingSwap = (window._myPendingSwaps || []).find(sw =>
-        //     sw.status === 'pending' && (sw.from_shift_id === firstShift._id || sw.to_shift_id === firstShift._id));
-        // const isSwapMine  = pendingSwap && pendingSwap.from_staff_id === String(firstShift.staff_id);
-        // const canSwap     = !isPast && !pendingSwap && firstShift.staff_id !== '__joker__';
-        // const swapBadge   = pendingSwap ? ' <span class="badge badge--warning">⇄ en attente</span>' : '';
-        const pendingSwap = null;
-        const isSwapMine  = false;
-        const canSwap     = false;
-        const swapBadge   = '';
+        // F-05 — la carte affiche l'ÉTAT de l'échange, la feuille du jour porte
+        // l'ACTION. Taper la carte ouvre déjà le mini planning (`day-card--tappable`,
+        // écoute déléguée sur `document`) : un second geste sur l'en-tête se serait
+        // battu avec lui pour le même clic. Le badge dit qu'il se passe quelque chose,
+        // le détail dit quoi et permet d'agir — c'est le même partage que partout
+        // ailleurs sur cet écran.
+        //
+        // Comparaison en `String()` des deux côtés : `_id` arrive du serveur en
+        // chaîne, mais la demande, elle, est relue d'une collection distincte — se
+        // fier au type de l'un pour l'autre est exactement le genre d'accord tacite
+        // qui casse en silence le jour où une route change sa sérialisation.
+        const pendingSwap = (window._myPendingSwaps || []).find(sw =>
+            sw.status === 'pending' &&
+            (String(sw.from_shift_id) === String(firstShift._id) ||
+             String(sw.to_shift_id)   === String(firstShift._id)));
+        const isSwapMine  = !!pendingSwap && String(pendingSwap.from_staff_id) === String(firstShift.staff_id);
+        const canSwap     = !isPast && !pendingSwap && firstShift.staff_id !== '__joker__';
+        const swapBadge   = pendingSwap ? ' <span class="badge badge--warning">⇄ en attente</span>' : '';
+        dayDetail.swap = { shift: firstShift, pending: pendingSwap || null, isSwapMine, canSwap };
 
         // En-tête
         const header = document.createElement('div');
         header.className = 'day-header';
-        if (canSwap) header.style.cursor = 'pointer';
         header.innerHTML =
             '<div class="day-date-block">' +
                 '<div class="day-weekday">' + DAY_NAMES[d.getDay()] + '</div>' +
@@ -1047,12 +1055,6 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
             '</div>' +
             (isToday ? '<span class="today-chip">Aujourd hui</span>' : '') +
             '<span class="shift-hours-badge">' + fmtHour(dispStart) + ' → ' + fmtHour(dispEnd) + realBadge + '</span>';
-        if (canSwap) {
-            header.addEventListener('click', () => openSwapModal(firstShift));
-        } else if (isSwapMine) {
-            header.style.cursor = 'pointer';
-            header.addEventListener('click', () => cancelMySwap(pendingSwap._id));
-        }
         card.appendChild(header);
 
         // Collègues du 1er shift + shifts supplémentaires
@@ -1284,6 +1286,16 @@ function openDaySheet(detail) {
         body += '</div>';
     });
 
+    // F-05 — le pied de la feuille porte l'action sur MON service de ce jour-là.
+    // Trois états, jamais deux à la fois : je peux proposer, j'ai une demande en
+    // cours que je peux annuler, ou c'est un collègue qui a proposé sur ce shift et
+    // je n'ai qu'à attendre le patron.
+    const sw = detail.swap || null;
+    const swapHtml =
+        (sw && sw.canSwap)                 ? '<div class="dayx-act"><button type="button" class="dayx-swap">⇄ Proposer un échange</button></div>' :
+        (sw && sw.pending && sw.isSwapMine) ? '<div class="dayx-act"><button type="button" class="dayx-swap dayx-swap--cancel">⇄ Annuler ma demande</button></div>' :
+        (sw && sw.pending)                  ? '<div class="dayx-act"><div class="dayx-swap-wait">⇄ Échange proposé — en attente du patron</div></div>' : '';
+
     const { sheet, close } = openBottomSheet('day-sheet',
         '<div class="dayx-panel" style="--dayx-tick:' + (2 / RANGE * 100).toFixed(2) + '%">' +
             '<div class="dayx-grip"></div>' +
@@ -1299,9 +1311,19 @@ function openDaySheet(detail) {
                 personnes.size + ' personne' + (personnes.size > 1 ? 's' : '') + ' sur la journée' +
                 ' · amplitude ' + fmtHour(minH) + ' → ' + fmtHour(maxH) +
             '</div>' +
+            swapHtml +
         '</div>');
 
     sheet.querySelector('.dayx-close').addEventListener('click', close);
+
+    // La feuille se referme AVANT d'ouvrir la modale : elle est en `z-index` 9998 et
+    // la laisser derrière ferait cliquer dans le vide sur son fond noir.
+    const btnSwap = sheet.querySelector('.dayx-swap');
+    if (btnSwap) btnSwap.addEventListener('click', () => {
+        close();
+        if (sw.canSwap) openSwapModal(sw.shift);
+        else            cancelMySwap(sw.pending._id);
+    });
 }
 
 
@@ -3142,7 +3164,7 @@ async function startStaffAutoRefresh(from, to, user) {
     }, 30000);
 }
 
-/* ── Échanges de shifts (F-05) — DÉSACTIVÉ ───────────────────────────────────
+// ── Échanges de shifts (F-05) ────────────────────────────────────────────────
 
 window._myPendingSwaps = [];
 
@@ -3293,8 +3315,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const overlay = document.getElementById('swap-modal');
     if (overlay) overlay.addEventListener('click', e => { if (e.target === overlay) closeSwapModal(); });
 });
-
-─────────────────────────────────────────────────────────────────────────── */
 
 // ── Démarrage ─────────────────────────────────────────────────────────────────
 

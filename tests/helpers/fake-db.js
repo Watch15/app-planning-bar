@@ -2,7 +2,8 @@
 // Mini base Mongo en mémoire pour les tests d'intégration de routes (CD-05).
 // Implémente UNIQUEMENT ce que les routes testées utilisent : findOne, find().toArray(),
 // insertOne, insertMany, deleteMany, updateOne (avec upsert/$set/$pull), bulkWrite
-// (updateOne+upsert), countDocuments — et les opérateurs $ne/$lte/$gte/$lt/$gt/$in
+// (updateOne+upsert), countDocuments, deleteOne, distinct, sort/limit/project — et les
+// opérateurs $ne/$lte/$gte/$lt/$gt/$in
 // /$nin/$exists/$regex (+$options).
 // Le 2e argument de find() (projection) est ignoré. Pas un clone fidèle de
 // Mongo : juste assez pour piloter la logique métier sans serveur réel.
@@ -172,6 +173,14 @@ function makeCollection(initialDocs) {
                     return this;
                 },
                 limit(n) { if (typeof n === 'number' && n >= 0) res = res.slice(0, n); return this; },
+                // 11e lacune (2026-09-03) : `cursor.project()` n'existait pas, alors que
+                // deux requêtes de F-05 s'en servent. Sous ce faux driver elles levaient
+                // un TypeError — la feature était intestable, pas seulement non testée.
+                // Comme le 2e argument de `find()`, la projection est IGNORÉE : elle ne
+                // choisit que les champs RENDUS, jamais les documents, donc l'ignorer ne
+                // peut pas faire passer un test qui devrait échouer. Elle rend juste des
+                // documents plus complets que Mongo — l'écart est sûr dans ce sens-là.
+                project() { return this; },
                 async toArray() { return res.slice(); },
             };
         },

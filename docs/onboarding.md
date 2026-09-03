@@ -157,7 +157,7 @@ Base `gestion_bar`. Détail des champs dans `architecture.md` §5 — résumé :
 | `staff_notifications` | notifs in-app staff | max 20 non lues retournées |
 | `push_subscriptions` | abonnements Web Push | périmés (410/404) supprimés auto |
 | `sessions` | sessions Express | gérées par `CustomMongoStore` |
-| `shift_swaps` | échanges de shifts | **F-05 désactivée** |
+| `shift_swaps` | échanges de shifts | F-05 active (dev + démo) |
 
 > 🔑 **Pièges de données** :
 > - `PATCH /api/staff/:id` force l'autre champ de rémunération à `null` dès qu'on en définit un (invariant « un seul mode actif ») — **même si l'appelant n'a envoyé qu'un champ**. L'import « 💶 taux » bascule donc silencieusement en mode horaire.

@@ -64,6 +64,28 @@
 
     const NOUVEAUTES = [
         {
+            id: 'echange-shifts-staff', date: '2026-09-03',
+            roles: ['staff'],
+            titre: 'Proposer un échange de service à un collègue',
+            quoi: 'Vous ne pouvez pas assurer un service ? Ouvrez la journée concernée dans '
+                + 'votre planning et proposez-la à un collègue en échange de la sienne. Votre '
+                + 'responsable valide ou refuse : rien ne bouge tant qu\'il n\'a pas tranché, '
+                + 'et vous pouvez retirer votre demande avant sa réponse. Seules les semaines '
+                + 'déjà publiées sont concernées.',
+            ou: 'Planning → toucher la journée → « ⇄ Proposer un échange »'
+        },
+        {
+            id: 'echange-shifts-patron', date: '2026-09-03',
+            roles: ['patron', 'directeur'],
+            titre: 'Les échanges de services passent par vous',
+            quoi: 'Vos équipes peuvent désormais se proposer un échange de service entre elles. '
+                + 'Chaque demande arrive dans une file dédiée, avec les deux créneaux côte à '
+                + 'côte et le motif : vous approuvez, et les deux plannings sont permutés d\'un '
+                + 'coup ; vous refusez, et rien ne change. Une pastille compte les demandes en '
+                + 'attente.',
+            ou: 'Bouton « ⇄ Échanges » dans le bandeau du haut'
+        },
+        {
             id: 'du-neuf', date: '2026-08-28',
             roles: ['patron', 'directeur', 'observateur', 'staff'],
             titre: 'Cette fenêtre',

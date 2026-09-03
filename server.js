@@ -4932,7 +4932,7 @@ app.patch('/api/conges/:id/decision', checkDB, requirePatron, async (req, res) =
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-/* ── Échanges de shifts (F-05) — DÉSACTIVÉ ───────────────────────────────────
+// ── Échanges de shifts (F-05) ────────────────────────────────────────────────
 //
 // Collection `shift_swaps` : { from_shift_id, to_shift_id, from_staff_id,
 //   to_staff_id, from_establishment_id, to_establishment_id, status, note,
@@ -4970,6 +4970,14 @@ app.post('/api/shift-swaps', checkDB, requireAuth, async (req, res) => {
         // Pas de Joker
         if (fromShift.is_joker || toShift.is_joker || toShift.staff_id === '__joker__' || fromShift.staff_id === '__joker__') {
             return res.status(400).json({ error: 'Échange impossible avec un Joker' });
+        }
+        // B2-b — un shift de semaine NON PUBLIÉE appartient à un brouillon du patron.
+        // Le proposer à l'échange le rendrait négociable avant d'être annoncé. La garde
+        // tient ICI, au point d'écriture : `shifts-for-swap` alimente l'écran, il ne
+        // protège pas la route.
+        const isVisible = await publishedShiftFilter();
+        if (!isVisible(fromShift) || !isVisible(toShift)) {
+            return res.status(403).json({ error: 'Ce planning n\'est pas encore publié' });
         }
         // Shifts futurs uniquement (date >= aujourd'hui)
         const today = new Date();
@@ -5168,7 +5176,6 @@ app.patch('/api/shift-swaps/:id/reject', checkDB, requirePatron, async (req, res
         })();
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
-*/
 
 // ── Joker ouvert — système de candidature ────────────────────────────────────
 
@@ -5260,7 +5267,7 @@ app.post('/api/shifts/:id/joker-candidature', checkDB, requireAuth, async (req, 
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-/* ── Suite du bloc échanges de shifts (F-05) — DÉSACTIVÉ ─────────────────────
+// ── Échanges de shifts (F-05) — suite ────────────────────────────────────────
 
 // GET — staff : liste des shifts futurs échangeables (autres staff, ses établissements)
 app.get('/api/shifts-for-swap', checkDB, requireAuth, async (req, res) => {
@@ -5274,8 +5281,11 @@ app.get('/api/shifts-for-swap', checkDB, requireAuth, async (req, res) => {
         const own = await db.collection('shifts').find({
             staff_id: String(staffId),
             date: { $gte: from, $lte: to },
-        }).project({ establishment_id: 1 }).toArray();
-        const estabIds = [...new Set(own.map(s => s.establishment_id))];
+        }).toArray();
+        // Même garde que le POST : un brouillon ne désigne pas un établissement
+        // échangeable, et ne se propose pas comme cible.
+        const isVisible = await publishedShiftFilter();
+        const estabIds = [...new Set(own.filter(isVisible).map(s => s.establishment_id))];
         if (estabIds.length === 0) return res.json([]);
 
         // Shifts futurs des autres staff dans ces établissements
@@ -5285,15 +5295,16 @@ app.get('/api/shifts-for-swap', checkDB, requireAuth, async (req, res) => {
             staff_id: { $nin: [String(staffId), '__joker__'] },
             is_joker: { $ne: true },
         }).sort({ date: 1, start_time: 1 }).toArray();
+        const visibles = shifts.filter(isVisible);
 
         // Exclure les shifts ayant déjà une demande d'échange pending
         const pendingSwaps = await db.collection('shift_swaps').find({
             status: 'pending',
-        }).project({ from_shift_id: 1, to_shift_id: 1 }).toArray();
+        }).toArray();
         const blockedIds = new Set();
         pendingSwaps.forEach(sw => { blockedIds.add(sw.from_shift_id); blockedIds.add(sw.to_shift_id); });
 
-        const out = shifts
+        const out = visibles
             .filter(s => !blockedIds.has(String(s._id)))
             .map(s => ({
                 _id:              String(s._id),
@@ -5324,7 +5335,6 @@ app.delete('/api/shift-swaps/:id', checkDB, requireAuth, async (req, res) => {
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-─────────────────────────────────────────────────────────────────────────── */
 
 // ── Publication du planning ───────────────────────────────────────────────────
 

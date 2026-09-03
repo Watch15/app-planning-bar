@@ -303,7 +303,7 @@ Synthèse mensuelle des heures par membre du staff, accessible depuis le bouton 
 | `push_subscriptions` | Endpoints d'abonnements Web Push par utilisateur |
 | `notifications` | Notifications in-app pour patron/directeur |
 | `staff_notifications` | Notifications in-app pour staff (planning.html) |
-| `shift_swaps` | Demandes d'échange entre shifts (feature F-05 — **désactivée en attente validation client**, code conservé dans `server.js`) |
+| `shift_swaps` | Demandes d'échange entre shifts (feature F-05 — **active depuis le 2026-09-03** sur `dev` et sur la démo ; pas encore livrée au client) |
 | `daily_revenue` | CA quotidien saisi par établissement (`{ establishment_id, date, revenue }`) — module Performance |
 
 ---

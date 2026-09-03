@@ -693,7 +693,63 @@ async function run() {
             is_joker: true, joker_open: true, joker_candidates: [], note: 'Service du samedi soir',
         });
 
-        writes.push(db.collection('shifts').insertMany(shifts));
+        // Seule insertion de shifts qui soit attendue plutôt que mise au lot : une
+        // demande d'échange référence ses deux shifts par leur `_id`, et Mongo ne le
+        // donne qu'à l'écriture. Un aller-retour Atlas payé pour la seule chose qu'on
+        // ne peut pas connaître d'avance.
+        const shiftIns = await db.collection('shifts').insertMany(shifts);
+
+        // ── Échanges de shifts (F-05) ─────────────────────────────────────────
+        // Deux personnes veulent permuter leur service, le patron tranche. C'est la
+        // file « ⇄ Échanges » de son écran, et le badge qui va avec.
+        //
+        // La fenêtre utilisable est étroite, et c'est le produit qui la fixe, pas le
+        // jeu : la route n'accepte que des shifts FUTURS (`date >= aujourd'hui`) et de
+        // semaine PUBLIÉE (B2-b) — donc uniquement ce qui reste de la semaine courante,
+        // la suivante étant volontairement en brouillon. Semé un dimanche soir, il ne
+        // reste rien : on ne pose alors AUCUNE demande, plutôt qu'une demande que le
+        // patron refuserait d'approuver sous les yeux du prospect.
+        const finSemaineCourante = toDateStr(addDays(thisMon, 6));
+        const echangeables = shifts
+            .map((s, i) => ({ s, id: String(shiftIns.insertedIds[i]) }))
+            .filter(({ s }) => s.staff_id !== '__joker__'
+                && s.date > today && s.date <= finSemaineCourante);
+        // Au Zinc de préférence : c'est le seul établissement de la directrice, donc
+        // le seul endroit où la demande apparaît AUSSI sur un compte non-patron — le
+        // filtre de périmètre est une partie de ce qu'on montre.
+        const source = echangeables.find(({ s }) => s.establishment_id === Z) || echangeables[0];
+        const cible  = source && echangeables.find(({ s }) => s.staff_id !== source.s.staff_id);
+
+        if (cible) {
+            writes.push(db.collection('shift_swaps').insertOne({
+                from_shift_id: source.id,             to_shift_id:   cible.id,
+                from_staff_id: source.s.staff_id,     from_staff_name: source.s.staff_name,
+                to_staff_id:   cible.s.staff_id,      to_staff_name:   cible.s.staff_name,
+                from_establishment_id: source.s.establishment_id,
+                to_establishment_id:   cible.s.establishment_id,
+                from_date: source.s.date, from_start_time: source.s.start_time, from_end_time: source.s.end_time,
+                to_date:   cible.s.date,  to_start_time:   cible.s.start_time,  to_end_time:   cible.s.end_time,
+                note: 'Je suis pris ce soir-là — ' + cible.s.staff_name.split(' ')[0] + ' est d\'accord.',
+                status: 'pending', created_at: addDays(now, -1),
+                decided_at: null, decided_by: null,
+            }));
+            // Mêmes destinataires que `createNotifForPatrons` : patron toujours,
+            // directeur seulement sur son périmètre, observateur jamais. Recopier la
+            // règle serait la faire diverger ; on la relit ici en toutes lettres pour
+            // que le jeu montre exactement ce que produit un vrai envoi.
+            const destinataires = accounts
+                .map((a, i) => ({ a, id: String(userIns.insertedIds[i]) }))
+                .filter(({ a }) => a.role === 'patron'
+                    || (a.role === 'directeur' && a.estabs.includes(source.s.establishment_id)));
+            writes.push(db.collection('notifications').insertMany(destinataires.map(({ id }) => ({
+                user_id: id,
+                type: 'shift_swap_request',
+                message: source.s.staff_name + ' propose un échange : son service du '
+                    + source.s.date + ' contre celui de ' + cible.s.staff_name + ' le ' + cible.s.date,
+                establishment_id: source.s.establishment_id,
+                read: false, created_at: addDays(now, -1),
+            }))));
+        }
 
         // ── CA quotidien ──────────────────────────────────────────────────────
         // Rétro-calculé depuis la masse salariale : CA = masse chargée / coefficient visé.
@@ -996,6 +1052,9 @@ async function run() {
         const valid = disposHorizonRange(now, VALIDATION_WEEKS);
         const enAttente = dispos.filter(d => d.status === 'pending'
             && d.date >= valid.from && d.date <= valid.to).length;
+        console.log('│  ' + (cible
+            ? '1 échange de shifts en attente (' + source.s.staff_name + ' ⇄ ' + cible.s.staff_name + ')'
+            : 'aucun échange semé — plus aucun jour publié à venir cette semaine'));
         console.log('│  ' + enAttente + ' dispos en attente sur ' + horizon.from + ' → ' + horizon.to
             + '   (' + oublis.length + ' non-envois : ' + (oublis.join(', ') || 'aucun') + ')');
         console.log('│');

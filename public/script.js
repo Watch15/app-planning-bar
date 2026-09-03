@@ -439,9 +439,9 @@ async function init() {
     loadDisposBadge();
     loadCongesBadge();
     loadDisposKpi();
-    // loadSwapsBadge(); // F-05 désactivé
+    loadSwapsBadge();
     loadNotifBadge();
-    _notifPollTimer = setInterval(() => { loadNotifBadge(); /* loadSwapsBadge(); */ }, 30000);
+    _notifPollTimer = setInterval(() => { loadNotifBadge(); loadSwapsBadge(); }, 30000);
     startAutoRefresh();
     initNotifListeners();
     loadDispoControl();
@@ -473,13 +473,12 @@ async function init() {
         });
     });
 
-    // F-05 échanges désactivé
-    // const btnSwaps = document.getElementById('btn-swaps');
-    // if (btnSwaps) btnSwaps.addEventListener('click', openSwapsPanel);
-    // const swapsClose = document.getElementById('swaps-modal-close');
-    // if (swapsClose) swapsClose.addEventListener('click', () => {
-    //     document.getElementById('swaps-modal').style.display = 'none';
-    // });
+    const btnSwaps = document.getElementById('btn-swaps');
+    if (btnSwaps) btnSwaps.addEventListener('click', openSwapsPanel);
+    const swapsClose = document.getElementById('swaps-modal-close');
+    if (swapsClose) swapsClose.addEventListener('click', () => {
+        document.getElementById('swaps-modal').style.display = 'none';
+    });
 
     // Onglets dans la modale dispos
     const disposTabList     = document.getElementById('dispos-tab-btn-list');
@@ -5916,7 +5915,7 @@ function exportRecapXlsx() {
     XLSX.writeFile(wb, 'recap-' + (month || 'mois') + '-' + safeEstab + '.xlsx');
 }
 
-/* ── Échanges de shifts — côté patron (F-05) — DÉSACTIVÉ ────────────────────
+// ── Échanges de shifts — côté patron (F-05) ──────────────────────────────────
 
 async function loadSwapsBadge() {
     try {
@@ -6070,8 +6069,6 @@ async function _decideSwap(swapId, action, card) {
         showToast(e.message || 'Erreur', true);
     }
 }
-
-─────────────────────────────────────────────────────────────────────────── */
 
 // ── Disponibilités — côté patron ──────────────────────────────────────────────
 

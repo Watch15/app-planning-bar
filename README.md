@@ -307,7 +307,7 @@ travail de dev (253 shifts). Les scripts destructifs la refusent — ne pas cont
 | `push_subscriptions` | Endpoints VAPID par utilisateur |
 | `notifications` | Notifications in-app patron/directeur |
 | `staff_notifications` | Notifications in-app staff (max 20 dernières non lues) |
-| `shift_swaps` | Demandes d'échange de shifts *(routes désactivées en attente validation client — collection conservée)* |
+| `shift_swaps` | Demandes d'échange de shifts entre employés, validées par le patron (F-05, réactivée le 2026-09-03) |
 | `daily_revenue` | CA quotidien saisi pour le module Performance |
 
 ---

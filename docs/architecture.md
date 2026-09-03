@@ -309,7 +309,7 @@ Collection polymorphe (clé `key` discriminante) :
 - `{ key: 'publish_<YYYY-MM-DD>', published: true }` — une entrée par semaine publiée par le patron (clé = lundi de la semaine)
 - `{ key: 'lock_dispos_<YYYY-MM-DD>' }` — verrouillage de la saisie dispos pour une semaine
 
-### `shift_swaps` *(feature F-05 — code livré mais désactivée en attente validation client)*
+### `shift_swaps` *(feature F-05 — réactivée le 2026-09-03)*
 ```json
 {
   "_id": ObjectId,
@@ -326,7 +326,9 @@ Collection polymorphe (clé `key` discriminante) :
   "decided_by": "string"
 }
 ```
-> ⚠️ Toutes les routes `/api/shift-swaps/*` sont commentées via deux blocs `/* */` dans `server.js` (actuellement lignes 2488→2724 et 2811→2875 — repérer par le marqueur `F-05 — DÉSACTIVÉ`, les n° bougent quand le fichier grossit). **Ne jamais insérer de nouvelles routes à l'intérieur de ces blocs** — c'est un piège qui a déjà coûté un debug long (les routes Joker s'y étaient retrouvées par erreur, ne se chargeaient pas, 404 silencieux).
+Les routes `/api/shift-swaps/*` et `/api/shifts-for-swap` sont **actives** depuis le 2026-09-03. Les deux blocs `/* */` qui les neutralisaient dans `server.js` — et le piège associé, des routes Joker écrites par erreur à l'intérieur, invisibles à Express en 404 silencieux (D-47) — n'existent plus.
+
+> ⚠️ **Un échange n'est possible que sur une semaine PUBLIÉE** (B2-b) et sur des shifts futurs. La garde vit au point d'écriture (`POST /api/shift-swaps`), pas seulement dans la liste `/api/shifts-for-swap` qui alimente l'écran : un brouillon du patron ne doit pas devenir négociable par une route en écriture.
 
 ---
 

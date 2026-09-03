@@ -78,14 +78,6 @@ module.exports = [
         files: ['public/index-init.js'],
         languageOptions: { globals: { showToast: 'readonly', loadDisposBadge: 'readonly' } },
     },
-    {
-        // F-05 (échanges de shifts) DÉSACTIVÉ : ces fcts sont définies dans le bloc
-        // commenté de planning.js, réactivées à son décommentage. Les call sites
-        // (branches mortes canSwap/isSwapMine) restent inertes au runtime.
-        files: ['public/planning.js'],
-        languageOptions: { globals: { openSwapModal: 'readonly', cancelMySwap: 'readonly' } },
-    },
-
     // ── Service Worker ────────────────────────────────────────────────────────
     {
         files: ['public/sw.js'],
