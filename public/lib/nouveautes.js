@@ -91,6 +91,48 @@
             ou: 'Bouton « Échanges » dans le bandeau du haut ; la case « Autoriser les échanges entre établissements différents » est en tête de cette fenêtre'
         },
         {
+            id: 'detail-journee-staff', date: '2026-09-04',
+            roles: ['staff'],
+            titre: 'Voir qui travaille avec vous, heure par heure',
+            quoi: "Touchez une journée de votre planning : elle s'ouvre sur la frise de la "
+                + "journée — votre service, ceux de vos collègues et les créneaux encore à "
+                + "pourvoir, chacun sur sa barre, avec l'amplitude et le nombre de personnes "
+                + "présentes. Plus besoin de deviner à qui vous succédez ni qui reste après "
+                + "vous. C'est aussi de là que se proposent les échanges de service.",
+            ou: 'Planning → toucher une journée'
+        },
+        {
+            id: 'historique-mois-staff', date: '2026-09-04',
+            roles: ['staff'],
+            titre: 'Vos heures, mois par mois',
+            quoi: "L'historique ne se feuillette plus semaine par semaine : il additionne. "
+                + "Chaque mois affiche son total d'heures, son nombre de jours et de services, "
+                + "et la répartition par établissement si vous en faites plusieurs. Six mois "
+                + "s'affichent d'emblée et « Voir 6 mois de plus » remonte jusqu'à deux ans. "
+                + "Le mois en cours est marqué « en cours » — son total bouge encore.",
+            ou: 'Onglet « Historique »'
+        },
+        {
+            id: 'heures-reelles-staff', date: '2026-09-04',
+            roles: ['staff'],
+            titre: 'Vos heures réellement faites apparaissent sur la journée',
+            quoi: "Une fois le pointage validé, la journée n'affiche plus l'horaire prévu mais "
+                + "celui réellement fait, signalé par « réel ». Une journée passée qui n'a pas "
+                + "été pointée porte « non pointé » : vous voyez ce qui manque avant que la "
+                + "paie soit faite, au lieu de le découvrir après.",
+            ou: 'Planning → la journée concernée'
+        },
+        {
+            id: 'dispos-deadline-par-semaine', date: '2026-09-04',
+            roles: ['staff'],
+            titre: 'Chaque semaine de saisie annonce sa propre date limite',
+            quoi: "Quand plusieurs semaines sont ouvertes à la saisie, chacune affiche SA date "
+                + "limite sous son titre, et non celle de la première. Une semaine dont la date "
+                + "est passée vous le dit et se ferme seule : les suivantes restent ouvertes, "
+                + "vous pouvez continuer à remplir plus loin.",
+            ou: 'Onglet « Dispos » → flèches ‹ › au-dessus du formulaire'
+        },
+        {
             id: 'du-neuf', date: '2026-08-28',
             roles: ['patron', 'directeur', 'observateur', 'staff'],
             titre: 'Cette fenêtre',
