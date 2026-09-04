@@ -1,16 +1,16 @@
 # Graph Report - app-planning-bar  (2026-09-04)
 
 ## Corpus Check
-- 64 files · ~299,931 words
+- 64 files · ~300,545 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1591 nodes · 2628 edges · 103 communities (91 shown, 12 thin omitted)
+- 1591 nodes · 2628 edges · 102 communities (90 shown, 12 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 94 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `40beb1fc`
+- Built from commit: `5330e2dd`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -116,7 +116,6 @@
 - [[_COMMUNITY_Community 99|Community 99]]
 - [[_COMMUNITY_Community 100|Community 100]]
 - [[_COMMUNITY_Community 101|Community 101]]
-- [[_COMMUNITY_Community 102|Community 102]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `Tests & sécurité — ouvert (revue du 2026-08-04/05)` - 38 edges
@@ -150,7 +149,7 @@
 - **Sûreté timezone via toDateStr** — architecture_timezone_rule, architecture_todatestr, architecture_push_past_shift_guard [EXTRACTED 0.85]
 - **Cycle de vie feature iCal (livrée puis désactivée)** — backlog_f09_ical, architecture_ical_feed, architecture_calendar_enabled_flag [EXTRACTED 0.90]
 
-## Communities (103 total, 12 thin omitted)
+## Communities (102 total, 12 thin omitted)
 
 ### Community 0 - "Planning Board UI"
 Cohesion: 0.07
@@ -200,8 +199,8 @@ Nodes (20): makeCollection(), makeDb(), dispoMateriallyDiffers(), { app, startAp
 }, { makeDb }, PATRON (+12 more)
 
 ### Community 11 - "Shared Utils & Validation"
-Cohesion: 0.13
-Nodes (13): chargeMultiplier(), computeActiveDate(), dispoDeadlineWaived(), forceOpenActive(), hashToken(), normalizePhone(), resolvePerfSettings(), loadPerfSettings() (+5 more)
+Cohesion: 0.11
+Nodes (17): chargeMultiplier(), computeActiveDate(), dispoDeadlineWaived(), forceOpenActive(), hashToken(), normalizePhone(), normalizePublishDoc(), resolvePerfSettings() (+9 more)
 
 ### Community 12 - "Community 12"
 Cohesion: 0.12
@@ -510,10 +509,6 @@ Nodes (5): APPLY, main(), { normName: norm }, { ObjectId }, { openDb }
 ### Community 101 - "Community 101"
 Cohesion: 0.40
 Nodes (5): openBottomSheet(), openContactSheet(), openDaySheet(), parseDate(), weekRangeLabel()
-
-### Community 102 - "Community 102"
-Cohesion: 0.50
-Nodes (4): normalizePublishDoc(), fetchPublishedWeeks(), publishedShiftFilter(), releaseShiftsOnDispoChange()
 
 ## Knowledge Gaps
 - **632 isolated node(s):** `js`, `globals`, `sharedRules`, `crypto`, `{

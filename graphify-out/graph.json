@@ -173,7 +173,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "lib_utils_normalizepublishdoc",
-      "community": 102,
+      "community": 11,
       "norm_label": "normalizepublishdoc()"
     },
     {
@@ -8140,7 +8140,7 @@
       "label": "run()",
       "file_type": "code",
       "source_file": "scripts/seed-dev.js",
-      "source_location": "L286",
+      "source_location": "L352",
       "_origin": "ast",
       "id": "scripts_seed_dev_run",
       "community": 78,
@@ -8633,7 +8633,7 @@
       "source_location": "L575",
       "_origin": "ast",
       "id": "server_publishedshiftfilter",
-      "community": 102,
+      "community": 11,
       "norm_label": "publishedshiftfilter()"
     },
     {
@@ -8673,7 +8673,7 @@
       "source_location": "L677",
       "_origin": "ast",
       "id": "server_fetchpublishedweeks",
-      "community": 102,
+      "community": 11,
       "norm_label": "fetchpublishedweeks()"
     },
     {
@@ -9023,7 +9023,7 @@
       "source_location": "L3596",
       "_origin": "ast",
       "id": "server_releaseshiftsondispochange",
-      "community": 102,
+      "community": 11,
       "norm_label": "releaseshiftsondispochange()"
     },
     {
@@ -21097,9 +21097,9 @@
       "source_file": "public/planning.js",
       "source_location": "L3331",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_respondtoswap",
-      "confidence_score": 1.0
+      "target": "public_planning_respondtoswap"
     },
     {
       "relation": "contains",
@@ -22224,9 +22224,9 @@
       "source_file": "public/planning.js",
       "source_location": "L3344",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_respondtoswap",
-      "target": "public_planning_loadplanning",
-      "confidence_score": 1.0
+      "target": "public_planning_loadplanning"
     },
     {
       "relation": "calls",
@@ -22433,9 +22433,9 @@
       "source_file": "public/planning.js",
       "source_location": "L1304",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_opendaysheet",
-      "target": "public_planning_esc",
-      "confidence_score": 1.0
+      "target": "public_planning_esc"
     },
     {
       "relation": "calls",
@@ -23038,9 +23038,9 @@
       "source_file": "public/planning.js",
       "source_location": "L3341",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_respondtoswap",
-      "target": "public_planning_showswaptoast",
-      "confidence_score": 1.0
+      "target": "public_planning_showswaptoast"
     },
     {
       "relation": "calls",
@@ -23071,9 +23071,9 @@
       "source_file": "public/planning.js",
       "source_location": "L3342",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_respondtoswap",
-      "target": "public_planning_loadmypendingswaps",
-      "confidence_score": 1.0
+      "target": "public_planning_loadmypendingswaps"
     },
     {
       "relation": "calls",
@@ -39095,9 +39095,9 @@
       "source_file": "tests/shift-swaps.test.js",
       "source_location": "L170",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_shift_swaps_test",
-      "target": "tests_shift_swaps_test_proposed",
-      "confidence_score": 1.0
+      "target": "tests_shift_swaps_test_proposed"
     },
     {
       "relation": "contains",
@@ -39105,9 +39105,9 @@
       "source_file": "tests/shift-swaps.test.js",
       "source_location": "L166",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_shift_swaps_test",
-      "target": "tests_shift_swaps_test_respond",
-      "confidence_score": 1.0
+      "target": "tests_shift_swaps_test_respond"
     },
     {
       "relation": "contains",
@@ -39220,9 +39220,9 @@
       "source_file": "tests/shift-swaps.test.js",
       "source_location": "L172",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_shift_swaps_test_proposed",
-      "target": "tests_shift_swaps_test_propose",
-      "confidence_score": 1.0
+      "target": "tests_shift_swaps_test_propose"
     },
     {
       "relation": "contains",
@@ -43557,5 +43557,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "40beb1fc7f1bc771578b224b1be0b538cddac711"
+  "built_at_commit": "5330e2dd6e8ef3610546d95242518a1e5c9f9766"
 }

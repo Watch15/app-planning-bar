@@ -625,7 +625,15 @@ async function _loadUpcomingWeeks() {
     // et court-circuiter au passage l'écrêtage de `clampHorizonWeeks`.
     const { from, to } = upcomingRange(UPCOMING_WEEKS);
 
-    const [data, openJokers] = await Promise.all([fetchMyShifts(from, to), fetchOpenJokers()]);
+    // ⚠️ `loadMyPendingSwaps` ICI et pas seulement dans `loadPlanning` : les deux rendus
+    // partent en PARALLÈLE (l'init lance celui-ci en premier, exprès, pour la latence) et
+    // `renderDaysInto` lit `window._myPendingSwaps` au moment où il dessine. Un échange ne
+    // porte que sur des shifts FUTURS — il tombe donc presque toujours dans un bloc rendu
+    // ici. S'en remettre à l'ordre d'exécution de l'autre fonction, c'était n'afficher
+    // « à confirmer » et ses boutons nulle part.
+    const [data, openJokers] = await Promise.all([
+        fetchMyShifts(from, to), fetchOpenJokers(), loadMyPendingSwaps(),
+    ]);
     // Silencieux en cas d'échec : la semaine en cours, elle, reste lisible — mieux vaut
     // une liste absente qu'un message d'erreur sous un planning qui s'affiche bien.
     if (!data || data.error) return;
@@ -3199,12 +3207,21 @@ function showSwapToast(msg, isError) {
     window._swapToastT = setTimeout(() => { el.style.display = 'none'; }, 3200);
 }
 
-async function loadMyPendingSwaps() {
-    try {
-        const res = await fetch('/api/shift-swaps/mine', { credentials: 'include' });
-        if (!res.ok) { window._myPendingSwaps = []; return; }
-        window._myPendingSwaps = await res.json();
-    } catch { window._myPendingSwaps = []; }
+// Les DEUX rendus de jours en dépendent (`loadPlanning` pour la semaine en cours,
+// `_loadUpcomingWeeks` pour les suivantes) et ils partent en parallèle : sans cette
+// garde, l'init tirerait deux fois la même liste. En vol seulement — un appel APRÈS
+// une action doit bien refaire la requête, sinon l'écran garde l'état d'avant.
+let _pendingSwapsInFlight = null;
+
+function loadMyPendingSwaps() {
+    if (_pendingSwapsInFlight) return _pendingSwapsInFlight;
+    _pendingSwapsInFlight = (async () => {
+        try {
+            const res = await fetch('/api/shift-swaps/mine', { credentials: 'include' });
+            window._myPendingSwaps = res.ok ? await res.json() : [];
+        } catch { window._myPendingSwaps = []; }
+    })().finally(() => { _pendingSwapsInFlight = null; });
+    return _pendingSwapsInFlight;
 }
 
 let _swapSource = null;
@@ -3299,9 +3316,14 @@ async function submitSwap() {
         if (!res.ok) throw new Error(data.error || 'Erreur');
         showSwapToast(data.message || 'Demande envoyée à votre collègue');
         closeSwapModal();
-        await loadMyPendingSwaps();
+        // Les DEUX vues. Un échange ne porte que sur des shifts FUTURS : il vit donc
+        // dans un bloc « semaine à venir », que `loadPlanning` ne redessine pas.
+        // Chacune des deux recharge `_myPendingSwaps` (requête dédoublonnée en vol).
         const p = window._currentPlan;
-        if (p) await loadPlanning(p.from, p.to, p.user);
+        await Promise.all([
+            p ? loadPlanning(p.from, p.to, p.user) : loadMyPendingSwaps(),
+            loadUpcomingWeeks(),
+        ]);
     } catch (e) {
         showSwapToast(e.message || 'Erreur', true);
         btn.disabled = false;
@@ -3317,9 +3339,14 @@ async function cancelMySwap(swapId) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Erreur');
         showSwapToast('Demande annulée');
-        await loadMyPendingSwaps();
+        // Les DEUX vues. Un échange ne porte que sur des shifts FUTURS : il vit donc
+        // dans un bloc « semaine à venir », que `loadPlanning` ne redessine pas.
+        // Chacune des deux recharge `_myPendingSwaps` (requête dédoublonnée en vol).
         const p = window._currentPlan;
-        if (p) await loadPlanning(p.from, p.to, p.user);
+        await Promise.all([
+            p ? loadPlanning(p.from, p.to, p.user) : loadMyPendingSwaps(),
+            loadUpcomingWeeks(),
+        ]);
     } catch (e) {
         showSwapToast(e.message || 'Erreur', true);
     }
@@ -3339,9 +3366,14 @@ async function respondToSwap(swapId, action) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Erreur');
         showSwapToast(action === 'accept' ? 'Accepté — en attente du patron' : 'Proposition refusée');
-        await loadMyPendingSwaps();
+        // Les DEUX vues. Un échange ne porte que sur des shifts FUTURS : il vit donc
+        // dans un bloc « semaine à venir », que `loadPlanning` ne redessine pas.
+        // Chacune des deux recharge `_myPendingSwaps` (requête dédoublonnée en vol).
         const p = window._currentPlan;
-        if (p) await loadPlanning(p.from, p.to, p.user);
+        await Promise.all([
+            p ? loadPlanning(p.from, p.to, p.user) : loadMyPendingSwaps(),
+            loadUpcomingWeeks(),
+        ]);
     } catch (e) {
         showSwapToast(e.message || 'Erreur', true);
     }

@@ -250,6 +250,79 @@ const FEATURES = [
     });
 } },
 
+{ id: 'echanges', label: "Échanges de services (F-05) — double validation + inter-établissements",
+  howToTest: "3e semaine à venir (publiée, la seule où le staff a des services échangeables). 1) ÉTAPE 1 — bruno@ : son JEUDI, et LUI SEUL, porte « à confirmer » → toucher la journée → Accepter / Refuser (Alice a proposé son mardi). Bruno n'est mêlé à aucune autre demande, sinon l'écran d'acceptation se confond avec un « en attente du patron ». 2) ÉTAPE 2 — patron@ : bouton « Échanges » = 2 demandes, chacune marquée « Accepté par … » ; directeur@ n'en voit qu'UNE (Josy). Celle d'Alice→Bruno n'apparaît chez PERSONNE tant que Bruno n'a pas répondu. 3) INTER-ÉTABLISSEMENTS — bruno@ : toucher son LUNDI (Josy) → « Proposer un échange » liste Diane (Josy) ET Chloé (Poni) ; le patron décoche « Autoriser les échanges entre établissements différents » en tête de la modale « Échanges » → Chloé disparaît de la liste.",
+  async seed(ctx) {
+    // Une semaine FUTURE ENTIÈRE et publiée : la route n'accepte que des shifts futurs
+    // (`date >= aujourd'hui`) et de semaine publiée (B2-b). Semé un vendredi, la semaine
+    // courante n'a plus assez de jours devant elle — le jeu périmerait selon l'heure du
+    // seed, le travers qu'on paie déjà sur la deadline de recette.
+    // ⚠️ nextMon+14 et PAS nextMon+7 : `scripts/smoke.js` s'est réservé nextMon+7 (`D(7)`)
+    // pour le bloc B2-b, qui s'y crée son propre shift et COMPTE ce que le staff y voit.
+    // Y semer quoi que ce soit fait échouer « une fois publiée, le staff la voit ».
+    const futureMon = new Date(ctx.nextMon.getTime() + 14 * 864e5);
+    const d = n => ctx.day(futureMon, n);
+
+    // ⚠️ BRUNO N'EST CIBLE QUE DE LA DEMANDE 1. Première version du jeu : il était aussi
+    // la cible de la demande semée en `pending` — donc « déjà acceptée par lui ». En
+    // ouvrant son planning il tombait sur un jour « en attente du patron » signé de sa
+    // propre main et concluait que l'écran d'acceptation n'existait pas. Le porteur de
+    // l'étape 1 ne doit être mêlé à AUCUNE demande déjà acceptée.
+    const shifts = [
+        // Les 6 services engagés dans les 3 demandes ci-dessous.
+        ctx.shift('Josy_pub',        'Alice', d(1), 18, 26),   // 0 · swap 1 — proposé
+        ctx.shift('Josy_pub',        'Bruno', d(3), 18, 24),   // 1 · swap 1 — convoité (LE jour de Bruno)
+        ctx.shift('Josy_pub',        'Alice', d(6), 18, 26),   // 2 · swap 2 — proposé
+        ctx.shift('Josy_pub',        'Diane', d(5), 17, 24),   // 3 · swap 2 — convoité
+        ctx.shift('Poni_restaurant', 'Chloé', d(2), 12, 20),   // 4 · swap 3 — proposé
+        ctx.shift('Poni_restaurant', 'David', d(4), 12, 20),   // 5 · swap 3 — convoité (renfort, Poni est « Cuisine » comme lui)
+        // Les 4 services LIBRES. Sans les deux services de Bruno, `shifts-for-swap` ne
+        // lui ouvre qu'un seul bar — et le réglage inter-établissements devient
+        // intestable, faute de cible dans l'autre.
+        ctx.shift('Josy_pub',        'Bruno', d(0), 18, 24),   // 6 · le sien, Josy
+        ctx.shift('Poni_restaurant', 'Bruno', d(2), 12, 20),   // 7 · le sien, Poni
+        ctx.shift('Josy_pub',        'Diane', d(1), 17, 23),   // 8 · cible libre, MÊME bar
+        ctx.shift('Poni_restaurant', 'Chloé', d(5), 12, 20),   // 9 · cible libre, AUTRE bar
+    ];
+    const ins = await ctx.db.collection('shifts').insertMany(shifts);
+    const id = i => String(ins.insertedIds[i]);
+
+    await ctx.db.collection('settings').insertOne({
+        key: 'publish_' + toDateStr(futureMon), establishments: 'ALL', published_at: new Date(),
+    });
+
+    // Le doc d'échange est recopié à la main (le serveur le construit dans la route) :
+    // garder les MÊMES champs, sinon l'écran patron affiche des créneaux vides.
+    const swap = (fromI, toI, status, note) => {
+        const f = shifts[fromI], t = shifts[toI];
+        return {
+            from_shift_id: id(fromI),      to_shift_id:   id(toI),
+            from_staff_id: f.staff_id,     from_staff_name: f.staff_name,
+            to_staff_id:   t.staff_id,     to_staff_name:   t.staff_name,
+            from_establishment_id: f.establishment_id,
+            to_establishment_id:   t.establishment_id,
+            from_date: f.date, from_start_time: f.start_time, from_end_time: f.end_time,
+            to_date:   t.date, to_start_time:   t.start_time, to_end_time:   t.end_time,
+            note, status,
+            created_at: new Date(Date.now() - 864e5),
+            // `pending` = le collègue a DÉJÀ accepté (étape 1). C'est la seule façon
+            // d'avoir quelque chose d'arbitrable dans la file du patron sans passer
+            // par l'écran staff — et l'étape 1 reste testable sur la demande 1.
+            staff_accepted_at: status === 'pending' ? new Date(Date.now() - 3600e3) : null,
+            decided_at: null, decided_by: null, rejected_by: null,
+        };
+    };
+
+    await ctx.db.collection('shift_swaps').insertMany([
+        // 1 — chez le COLLÈGUE : invisible du patron tant que Bruno n'a pas répondu.
+        swap(0, 1, 'pending_staff', "Je suis pris ce soir-là, tu peux prendre mon mardi ?"),
+        // 2 — chez le PATRON, sur Josy : celle-là, la directrice la voit.
+        swap(2, 3, 'pending', ""),
+        // 3 — chez le PATRON, sur Poni : la directrice (Josy) ne doit PAS la voir.
+        swap(4, 5, 'pending', "Rendez-vous médical le mercredi."),
+    ]);
+} },
+
 { id: 'reglages', label: 'Réglages dispos + performance (S-02/S-03, §9.1)',
   howToTest: 'La deadline est VOLONTAIREMENT dépassée : la directrice peut quand même envoyer ses dispos (§9.1), un staff non. Réglages perf : la directrice ne voit que Josy, l\'observateur lit mais n\'écrit pas.',
   async seed(ctx) {
