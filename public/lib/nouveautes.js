@@ -64,49 +64,31 @@
 
     const NOUVEAUTES = [
         {
-            id: 'echange-double-validation-staff', date: '2026-09-04',
+            id: 'echange-shifts-staff', date: '2026-09-04',
             roles: ['staff'],
-            titre: "Un échange demande maintenant l'accord du collègue",
-            quoi: "Une proposition d'échange part d'abord chez le collègue dont le service "
-                + "vous intéresse : c'est lui qui accepte ou refuse en premier. S'il accepte, "
-                + "la demande passe à votre responsable, qui tranche. S'il refuse, elle "
-                + "s'arrête là et votre planning ne change pas. Quand un collègue vous "
-                + "propose un échange, la journée porte la mention « à confirmer » et la "
-                + "feuille du jour vous offre « Accepter » ou « Refuser ».",
-            ou: 'Planning → toucher la journée concernée'
+            titre: 'Échanger un service avec un collègue',
+            quoi: "Vous ne pouvez pas assurer un service ? Ouvrez la journée dans votre "
+                + "planning et proposez-la à un collègue en échange de la sienne. C'est LUI "
+                + "qui répond en premier : s'il accepte, votre responsable tranche ensuite ; "
+                + "s'il refuse, tout s'arrête là. Quand c'est vous qu'on sollicite, la "
+                + "journée porte « à confirmer » et vous ouvre « Accepter » ou « Refuser ». "
+                + "Rien ne bouge dans le planning tant que le responsable n'a pas validé, et "
+                + "vous pouvez retirer votre demande jusque-là. Seules les semaines déjà "
+                + "publiées sont concernées.",
+            ou: 'Planning → toucher la journée → « Proposer un échange », « Accepter » ou « Refuser »'
         },
         {
-            id: 'echange-double-validation-patron', date: '2026-09-04',
-            roles: ['patron', 'directeur'],
-            titre: "Les échanges arrivent déjà acceptés par les deux salariés",
-            quoi: "Une demande d'échange ne vous parvient plus qu'une fois le collègue "
-                + "concerné d'accord : la file « Échanges » ne contient donc que des "
-                + "demandes réellement arbitrables, et chaque carte indique qui a accepté "
-                + "et quand. En multi-établissement, vous décidez aussi si un échange peut "
-                + "traverser deux établissements ou doit rester dans le même.",
-            ou: 'Bouton « Échanges » dans le bandeau du haut'
-        },
-        {
-            id: 'echange-shifts-staff', date: '2026-09-03',
-            roles: ['staff'],
-            titre: 'Proposer un échange de service à un collègue',
-            quoi: 'Vous ne pouvez pas assurer un service ? Ouvrez la journée concernée dans '
-                + 'votre planning et proposez-la à un collègue en échange de la sienne. Votre '
-                + 'responsable valide ou refuse : rien ne bouge tant qu\'il n\'a pas tranché, '
-                + 'et vous pouvez retirer votre demande avant sa réponse. Seules les semaines '
-                + 'déjà publiées sont concernées.',
-            ou: 'Planning → toucher la journée → « Proposer un échange »'
-        },
-        {
-            id: 'echange-shifts-patron', date: '2026-09-03',
+            id: 'echange-shifts-patron', date: '2026-09-04',
             roles: ['patron', 'directeur'],
             titre: 'Les échanges de services passent par vous',
-            quoi: 'Vos équipes peuvent désormais se proposer un échange de service entre elles. '
-                + 'Chaque demande arrive dans une file dédiée, avec les deux créneaux côte à '
-                + 'côte et le motif : vous approuvez, et les deux plannings sont permutés d\'un '
-                + 'coup ; vous refusez, et rien ne change. Une pastille compte les demandes en '
-                + 'attente.',
-            ou: 'Bouton « Échanges » dans le bandeau du haut'
+            quoi: "Vos équipes peuvent se proposer un échange de service entre elles. Une "
+                + "demande ne vous parvient qu'une fois le collègue concerné d'accord : votre "
+                + "file ne contient donc que des demandes réellement arbitrables, chacune "
+                + "indiquant qui a accepté et quand. Vous approuvez, et les deux plannings "
+                + "sont permutés d'un coup ; vous refusez, et rien ne change. Une pastille "
+                + "compte ce qui attend. Si vous avez plusieurs établissements, vous décidez "
+                + "aussi si un échange peut passer de l'un à l'autre ou doit rester dans le même.",
+            ou: 'Bouton « Échanges » dans le bandeau du haut ; la case « Autoriser les échanges entre établissements différents » est en tête de cette fenêtre'
         },
         {
             id: 'du-neuf', date: '2026-08-28',
