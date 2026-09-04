@@ -545,14 +545,79 @@
                                line-height: 1; cursor: pointer; padding: 0 2px; }
         .notif-toast-close:hover { opacity: 1; }
 
-        /* ── Historique — cumuls mensuels ────────────────────────────────── */
+        /* ── Historique — deux lectures d'une même donnée ─────────────────
+           « Par mois » répond à « combien d'heures ce mois-ci », « Par semaine »
+           à « qu'est-ce que j'ai fait exactement, ce jour-là ». Aucune des deux ne
+           remplace l'autre : la seconde a été retirée le 03/09, on la remet. */
         .hist-nav {
             padding: 12px 16px;
             background: var(--dark-surface); border-bottom: 1px solid var(--dark-border);
             position: sticky; top: 52px; z-index: 9;
         }
+        .hist-mode { display: flex; gap: 6px; margin-bottom: 10px; }
+        .hist-mode button {
+            background: none; border: 1px solid var(--dark-border);
+            color: rgba(255,255,255,0.55);
+            font-size: 12px; font-weight: 600;
+            padding: 5px 12px; border-radius: 8px;
+            cursor: pointer; font-family: var(--font); transition: all .15s;
+        }
+        .hist-mode button:hover:not(.active) { color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.28); }
+        .hist-mode button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
         .histm-head-title { font-size: 14px; font-weight: 700; color: #fff; }
         .histm-head-sub   { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+
+        /* Navigation semaine par semaine (vue « Par semaine ») */
+        .hist-weeknav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .hist-nav-week {
+            font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.75);
+            text-align: center; flex: 1; line-height: 1.4;
+        }
+        .hist-nav-btn {
+            background: none; border: 1px solid var(--dark-border);
+            color: rgba(255,255,255,0.45); border-radius: 8px;
+            padding: 6px 11px; font-size: 12px; cursor: pointer;
+            font-family: var(--font); white-space: nowrap; flex-shrink: 0;
+            transition: all .15s;
+        }
+        .hist-nav-btn:hover:not(:disabled) {
+            color: rgba(255,255,255,.80); border-color: rgba(255,255,255,.28);
+            background: rgba(255,255,255,.06);
+        }
+        .hist-nav-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+        /* Le détail jour par jour */
+        .hist-list { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+        .hist-card {
+            background: var(--light-card); border: 1px solid var(--light-border);
+            border-radius: 14px; overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border-left: 3px solid var(--accent);
+        }
+        .hist-card-header { display: flex; align-items: center; padding: 12px 16px; gap: 14px; }
+        .hist-date-block  { min-width: 36px; }
+        .hist-weekday     { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+        .hist-day-num     { font-size: 20px; font-weight: 700; color: var(--text-primary); line-height: 1.1; }
+        .hist-vdivider    { width: 1px; height: 32px; background: var(--light-border); flex-shrink: 0; }
+        .hist-card-info   { flex: 1; min-width: 0; }
+        .hist-card-estab  { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+        .hist-card-sub    { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+        .hist-hours-badge {
+            background: var(--light-bg); color: var(--text-primary);
+            font-size: 12px; font-weight: 600; padding: 5px 10px;
+            border-radius: 8px; white-space: nowrap; flex-shrink: 0;
+            border: 1px solid var(--light-border);
+        }
+        .hist-extra-row {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 14px 8px 54px;
+            border-top: 1px solid var(--light-border);
+            font-size: 13px;
+        }
+        .hist-extra-dot   { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .hist-extra-estab { flex: 1; font-weight: 600; color: var(--text-primary); }
+        .hist-extra-dur   { color: var(--text-muted); font-size: 12px; white-space: nowrap; }
+        .hist-hours-badge--sm { font-size: 11px; padding: 3px 7px; }
         .hist-empty   { padding: 48px 20px; font-size: 14px; color: var(--text-muted); text-align: center; }
         .hist-loading { padding: 48px 20px; font-size: 14px; color: var(--text-muted); text-align: center; }
         .histm-list   { padding: 16px 20px 4px; display: flex; flex-direction: column; gap: 10px; }

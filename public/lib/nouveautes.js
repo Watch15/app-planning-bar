@@ -104,12 +104,14 @@
         {
             id: 'historique-mois-staff', date: '2026-09-04',
             roles: ['staff'],
-            titre: 'Vos heures, mois par mois',
-            quoi: "L'historique ne se feuillette plus semaine par semaine : il additionne. "
-                + "Chaque mois affiche son total d'heures, son nombre de jours et de services, "
-                + "et la répartition par établissement si vous en faites plusieurs. Six mois "
-                + "s'affichent d'emblée et « Voir 6 mois de plus » remonte jusqu'à deux ans. "
-                + "Le mois en cours est marqué « en cours » — son total bouge encore.",
+            titre: 'Vos heures par mois, sans perdre le détail des semaines',
+            quoi: "L'historique offre deux lectures. « Par mois » additionne : total "
+                + "d'heures, nombre de jours et de services, répartition par établissement "
+                + "si vous en faites plusieurs — six mois d'emblée, « Voir 6 mois de plus » "
+                + "jusqu'à deux ans, le mois en cours étant signalé « en cours ». « Par "
+                + "semaine » garde le détail exact jour par jour sur les 5 dernières "
+                + "semaines : chaque soirée, sa maison et ses horaires. Le sélecteur en haut "
+                + "passe de l'une à l'autre.",
             ou: 'Onglet « Historique »'
         },
         {

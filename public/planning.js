@@ -1882,13 +1882,21 @@ function initCalSync() {
     });
 }
 
-// ── Historique — heures par mois ──────────────────────────────────────────────
+// ── Historique — deux lectures d'une même donnée ──────────────────────────────
 //
-// Vue de CUMUL, sans le détail jour par jour. Ce qu'on vient chercher dans
-// l'historique, c'est « combien d'heures ce mois-ci » — pas le rappel d'une soirée
-// précise, que le planning de la semaine donne déjà. La navigation semaine par
-// semaine ne pouvait pas répondre à cette question : elle demandait cinq
-// allers-retours et une addition mentale pour reconstituer un mois.
+// « Par mois » est une vue de CUMUL : « combien d'heures ce mois-ci ». La navigation
+// semaine par semaine ne pouvait pas y répondre — cinq allers-retours et une addition
+// mentale pour reconstituer un mois.
+//
+// « Par semaine » est le DÉTAIL exact, jour par jour, sur les 5 semaines écoulées :
+// « qu'est-ce que j'ai fait ce soir-là, dans quelle maison, de quelle heure à quelle
+// heure ». Un cumul mensuel ne le dit pas, et c'est ce qu'on regarde pour vérifier une
+// paie ligne à ligne ou retrouver une soirée précise.
+//
+// ⚠️ Les deux ont été mises en concurrence le 2026-09-03 : le cumul a REMPLACÉ le
+// détail. C'était une perte — aucune des deux ne répond à la question de l'autre. Elles
+// coexistent, le sélecteur choisit ; ne pas en retirer une au prétexte qu'elle fait
+// doublon, elles n'en font pas.
 //
 // Le mois courant est compté ENTIER (1er → dernier jour), comme le bascule « Mois »
 // du planning : deux totaux différents pour le même mois d'un écran à l'autre, c'est
@@ -1896,8 +1904,33 @@ function initCalSync() {
 
 const HIST_MONTHS_STEP = 6;    // fenêtre initiale, et pas du bouton « voir plus »
 const HIST_MONTHS_MAX  = 24;   // au-delà, la donnée n'est plus consultée que par le patron
+const HIST_WEEKS_BACK  = 5;    // profondeur du détail jour par jour
 
 let _histMonths = HIST_MONTHS_STEP;
+let _histMode   = 'mois';      // 'mois' (cumuls) | 'semaine' (détail jour par jour)
+let _histOffset = 1;           // 1 = semaine dernière … HIST_WEEKS_BACK = la plus ancienne
+
+// Le sélecteur vit dans l'en-tête collant, au-dessus de ce que le mode courant affiche.
+// Reconstruit à chaque passage : il n'a pas d'état propre, `_histMode` le porte.
+function renderHistModeToggle(navEl) {
+    const btn = (mode, label) =>
+        '<button type="button" data-hist-mode="' + mode + '"' +
+        (_histMode === mode ? ' class="active"' : '') + '>' + label + '</button>';
+    navEl.innerHTML =
+        '<div class="hist-mode">' + btn('mois', 'Par mois') + btn('semaine', 'Par semaine') + '</div>';
+    navEl.querySelectorAll('[data-hist-mode]').forEach(b => {
+        b.addEventListener('click', () => {
+            if (b.dataset.histMode === _histMode) return;
+            _histMode = b.dataset.histMode;
+            loadHistorique();
+        });
+    });
+}
+
+// Point d'entrée de l'onglet — il ne fait que router vers la vue choisie.
+function loadHistorique() {
+    return _histMode === 'semaine' ? loadHistoriqueSemaine() : loadHistoriqueMois();
+}
 
 // Les bornes de la fenêtre : du 1er du mois le plus ancien au dernier jour du mois
 // courant. `new Date(y, m - k, 1)` gère seul le passage d'année.
@@ -1908,15 +1941,16 @@ function histRange(months) {
     return { from: toDateStr(first), to: toDateStr(last) };
 }
 
-async function loadHistorique() {
+async function loadHistoriqueMois() {
     const navEl = document.getElementById('hist-nav');
     const wrap  = document.getElementById('hist-content');
     if (!navEl || !wrap) return;
 
     const months = _histMonths;
-    navEl.innerHTML =
+    renderHistModeToggle(navEl);
+    navEl.insertAdjacentHTML('beforeend',
         '<div class="histm-head-title">Mes heures par mois</div>' +
-        '<div class="histm-head-sub">Les ' + months + ' derniers mois</div>';
+        '<div class="histm-head-sub">Les ' + months + ' derniers mois</div>');
 
     // Pas de mémo : chaque ouverture de l'onglet redemande la fenêtre. C'est une requête
     // légère (mes seuls shifts, sans collègue ni Joker) et un geste explicite — alors
@@ -1992,9 +2026,168 @@ function appendHistMoreBtn(wrap) {
     btn.textContent = 'Voir ' + HIST_MONTHS_STEP + ' mois de plus';
     btn.addEventListener('click', () => {
         _histMonths = Math.min(_histMonths + HIST_MONTHS_STEP, HIST_MONTHS_MAX);
-        loadHistorique();
+        loadHistoriqueMois();
     });
     wrap.appendChild(btn);
+}
+
+
+// ── Historique « Par semaine » — le détail exact, jour par jour ───────────────
+//
+// Restauré le 2026-09-04 : la vue de cumuls mensuels l'avait remplacé le 03/09, alors
+// qu'elle ne répond pas à la même question. Cinq semaines en arrière, pas plus — au-delà
+// on ne cherche plus une soirée, on cherche un total, et c'est « Par mois ».
+
+async function loadHistoriqueSemaine() {
+    const navEl = document.getElementById('hist-nav');
+    const wrap  = document.getElementById('hist-content');
+    if (!navEl || !wrap) return;
+
+    const todayMonday = currentMonday();
+    const weekMonday  = addDays(todayMonday, -7 * _histOffset);
+    const weekSunday  = addDays(weekMonday, 6);
+    const fmtD = d => d.getDate() + ' ' + MONTH_NAMES_LONG[d.getMonth()];
+
+    renderHistModeToggle(navEl);
+    navEl.insertAdjacentHTML('beforeend',
+        '<div class="hist-weeknav">' +
+            '<button class="hist-nav-btn" id="hist-btn-prev"' + (_histOffset >= HIST_WEEKS_BACK ? ' disabled' : '') + '>← Précédente</button>' +
+            '<span class="hist-nav-week">Semaine du ' + fmtD(weekMonday) + '<br>au ' + fmtD(weekSunday) + ' ' + weekSunday.getFullYear() + '</span>' +
+            '<button class="hist-nav-btn" id="hist-btn-next"' + (_histOffset <= 1 ? ' disabled' : '') + '>Suivante →</button>' +
+        '</div>');
+
+    navEl.querySelector('#hist-btn-prev').addEventListener('click', () => { _histOffset++; loadHistoriqueSemaine(); });
+    navEl.querySelector('#hist-btn-next').addEventListener('click', () => { _histOffset--; loadHistoriqueSemaine(); });
+
+    // Pas de mémo par semaine — il y en avait un avant le 03/09. Une semaine écoulée
+    // n'est pas figée pour autant : un pointage validé en retard change ses heures, et
+    // le total mensuel juste à côté, lui, se recalcule à chaque ouverture. Deux chiffres
+    // différents pour la même soirée d'un onglet à l'autre, c'est exactement l'écart
+    // qu'on vient vérifier ici.
+    wrap.innerHTML = '<div class="hist-loading">Chargement…</div>';
+
+    // light : cette vue n'affiche aucun collègue, comme « Par mois ».
+    const data = await fetchMyShifts(toDateStr(weekMonday), toDateStr(weekSunday), { light: true });
+    if (!data || data.error) {
+        wrap.innerHTML = '<div class="hist-loading">Erreur de chargement.</div>';
+        return;
+    }
+    renderHistoriqueSemaine(wrap, data);
+}
+
+function buildHistStatsHtml(shifts) {
+    const nbShifts = shifts.length;
+    const totalH = shifts.reduce((a, s) => {
+        const { start, end } = shiftEffectiveHours(s);
+        return a + (end - start);
+    }, 0);
+    const nbJours = new Set(shifts.map(s => s.date)).size;
+
+    let html = '<div class="week-stats" style="padding:12px 0 4px">' +
+        statCard(nbJours,             'Jours',  '') +
+        statCard(nbShifts,            'Shifts', '') +
+        statCard(fmtDuration(totalH), 'Heures', '') +
+    '</div>';
+
+    // Répartition par établissement (si > 1)
+    const byEstab = {};
+    shifts.forEach(s => {
+        const { start, end } = shiftEffectiveHours(s);
+        if (!byEstab[s.establishment_id]) byEstab[s.establishment_id] = { total: 0 };
+        byEstab[s.establishment_id].total += (end - start);
+    });
+    const estabIds = Object.keys(byEstab);
+    if (estabIds.length > 1) {
+        html += '<div class="estab-hours-bar" style="padding:0 0 12px">';
+        estabIds.forEach(id => {
+            const { total } = byEstab[id];
+            html +=
+                '<div class="estab-hours-chip">' +
+                    '<span>' + formatEstablishment(id) + '</span>' +
+                    '<span style="font-weight:700;color:var(--text-primary);margin-left:4px">' + fmtDuration(total) + '</span>' +
+                '</div>';
+        });
+        html += '</div>';
+    }
+    return html;
+}
+
+function renderHistoriqueSemaine(wrap, data) {
+    const shifts = (data.shifts || [])
+        .filter(s => !isJoker(s))
+        .slice().sort((a, b) =>
+            a.date < b.date ? -1 : a.date > b.date ? 1 : (a.start_time || 0) - (b.start_time || 0)
+        );
+    wrap.innerHTML = buildHistStatsHtml(shifts);
+
+    if (shifts.length === 0) {
+        wrap.insertAdjacentHTML('beforeend', '<div class="hist-empty">Aucun shift cette semaine.</div>');
+        return;
+    }
+
+    // Grouper par date
+    const byDate = new Map();
+    shifts.forEach(s => {
+        if (!byDate.has(s.date)) byDate.set(s.date, []);
+        byDate.get(s.date).push(s);
+    });
+
+    const shiftDur = s => {
+        const { start, end } = shiftEffectiveHours(s);
+        const dur = end - start;
+        const dh = Math.floor(dur), dm = Math.round((dur - dh) * 60);
+        return dh + 'h' + (dm > 0 ? String(dm).padStart(2, '0') : '');
+    };
+
+    const list = document.createElement('div');
+    list.className = 'hist-list';
+
+    byDate.forEach((dayShifts, dateStr) => {
+        const first = dayShifts[0];
+        const [sy, sm, sd] = dateStr.split('-').map(Number);
+        const d = new Date(sy, sm - 1, sd);
+        const color = first.color || '#534AB7';
+
+        const card = document.createElement('div');
+        card.className = 'hist-card';
+        card.style.borderLeftColor = color;
+
+        const firstHours = shiftEffectiveHours(first);
+
+        // Premier shift — en-tête de la carte
+        let html =
+            '<div class="hist-card-header">' +
+                '<div class="hist-date-block">' +
+                    '<div class="hist-weekday">' + DAY_NAMES_LONG[d.getDay()].slice(0, 3).toUpperCase() + '</div>' +
+                    '<div class="hist-day-num">' + d.getDate() + '</div>' +
+                '</div>' +
+                '<div class="hist-vdivider"></div>' +
+                '<div class="hist-card-info">' +
+                    '<div class="hist-card-estab">' + formatEstablishment(first.establishment_id) + '</div>' +
+                    '<div class="hist-card-sub">' + shiftDur(first) + '</div>' +
+                '</div>' +
+                '<span class="hist-hours-badge">' + fmtHour(firstHours.start) + ' – ' + fmtHour(firstHours.end) + '</span>' +
+            '</div>';
+
+        // Shifts supplémentaires du même jour
+        for (let i = 1; i < dayShifts.length; i++) {
+            const s = dayShifts[i];
+            const c = s.color || '#534AB7';
+            const sHours = shiftEffectiveHours(s);
+            html +=
+                '<div class="hist-extra-row">' +
+                    '<span class="hist-extra-dot" style="background:' + c + '"></span>' +
+                    '<span class="hist-extra-estab">' + formatEstablishment(s.establishment_id) + '</span>' +
+                    '<span class="hist-extra-dur">' + shiftDur(s) + '</span>' +
+                    '<span class="hist-hours-badge hist-hours-badge--sm">' + fmtHour(sHours.start) + ' – ' + fmtHour(sHours.end) + '</span>' +
+                '</div>';
+        }
+
+        card.innerHTML = html;
+        list.appendChild(card);
+    });
+
+    wrap.appendChild(list);
 }
 
 
