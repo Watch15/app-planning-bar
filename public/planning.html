@@ -677,6 +677,17 @@
             border-radius: 12px; background: #fff8e1; border: 1px solid #f3d9a4;
             color: #8a6d1f; font-size: 13px; font-weight: 600; text-align: center;
         }
+        /* Étape 1 : la réponse du collègue. Deux boutons côte à côte, le refus en
+           retrait — accepter n'échange rien, c'est le patron qui tranche ensuite. */
+        .dayx-act--duo { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .dayx-act--duo .dayx-swap-ask {
+            grid-column: 1 / -1; font-size: 13px; color: var(--text-primary);
+            background: #fff8e1; border: 1px solid #f3d9a4; border-radius: 12px;
+            padding: 10px 12px; line-height: 1.35;
+        }
+        .dayx-swap-note { display: block; margin-top: 4px; font-style: italic; color: #8a6d1f; }
+        .dayx-swap--decline { background: transparent; color: #c0392b; border: 1.5px solid #f0b7b2; }
+        .dayx-swap--accept  { background: var(--success, #27ae60); }
 
         /* ── Synchro agenda (abonnement iCal) ─────────────────────────────── */
         .cal-sync-card { margin: 8px 20px 24px; background: var(--light-card); border: 1px solid var(--light-border); border-radius: 14px; overflow: hidden; }

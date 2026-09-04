@@ -1032,13 +1032,17 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
         // fier au type de l'un pour l'autre est exactement le genre d'accord tacite
         // qui casse en silence le jour où une route change sa sérialisation.
         const pendingSwap = (window._myPendingSwaps || []).find(sw =>
-            sw.status === 'pending' &&
+            (sw.status === 'pending_staff' || sw.status === 'pending') &&
             (String(sw.from_shift_id) === String(firstShift._id) ||
              String(sw.to_shift_id)   === String(firstShift._id)));
         const isSwapMine  = !!pendingSwap && String(pendingSwap.from_staff_id) === String(firstShift.staff_id);
+        // `pending_staff` et je ne suis pas le proposeur → la balle est dans MON camp.
+        // Le badge doit le dire : « en attente » laisserait croire qu'il n'y a rien à faire.
+        const swapForMe   = !!pendingSwap && !isSwapMine && pendingSwap.status === 'pending_staff';
         const canSwap     = !isPast && !pendingSwap && firstShift.staff_id !== '__joker__';
-        const swapBadge   = pendingSwap ? ' <span class="badge badge--warning">en attente</span>' : '';
-        dayDetail.swap = { shift: firstShift, pending: pendingSwap || null, isSwapMine, canSwap };
+        const swapBadge   = swapForMe  ? ' <span class="badge badge--warning">à confirmer</span>'
+                          : pendingSwap ? ' <span class="badge badge--warning">en attente</span>' : '';
+        dayDetail.swap = { shift: firstShift, pending: pendingSwap || null, isSwapMine, swapForMe, canSwap };
 
         // En-tête
         const header = document.createElement('div');
@@ -1291,10 +1295,20 @@ function openDaySheet(detail) {
     // cours que je peux annuler, ou c'est un collègue qui a proposé sur ce shift et
     // je n'ai qu'à attendre le patron.
     const sw = detail.swap || null;
+    const _waitLabel = sw && sw.pending && sw.pending.status === 'pending_staff'
+        ? 'Échange proposé — en attente de votre collègue'
+        : 'Échange proposé — en attente du patron';
     const swapHtml =
-        (sw && sw.canSwap)                 ? '<div class="dayx-act"><button type="button" class="dayx-swap">Proposer un échange</button></div>' :
+        (sw && sw.canSwap)                  ? '<div class="dayx-act"><button type="button" class="dayx-swap">Proposer un échange</button></div>' :
+        (sw && sw.swapForMe)                ? '<div class="dayx-act dayx-act--duo">' +
+                                                  '<div class="dayx-swap-ask">' + _esc(sw.pending.from_staff_name || 'Un collègue') + ' propose d' + String.fromCharCode(39) + 'échanger avec ce service' +
+                                                      (sw.pending.note ? '<span class="dayx-swap-note">« ' + _esc(sw.pending.note) + ' »</span>' : '') +
+                                                  '</div>' +
+                                                  '<button type="button" class="dayx-swap dayx-swap--decline">Refuser</button>' +
+                                                  '<button type="button" class="dayx-swap dayx-swap--accept">Accepter</button>' +
+                                              '</div>' :
         (sw && sw.pending && sw.isSwapMine) ? '<div class="dayx-act"><button type="button" class="dayx-swap dayx-swap--cancel">Annuler ma demande</button></div>' :
-        (sw && sw.pending)                  ? '<div class="dayx-act"><div class="dayx-swap-wait">Échange proposé — en attente du patron</div></div>' : '';
+        (sw && sw.pending)                  ? '<div class="dayx-act"><div class="dayx-swap-wait">' + _waitLabel + '</div></div>' : '';
 
     const { sheet, close } = openBottomSheet('day-sheet',
         '<div class="dayx-panel" style="--dayx-tick:' + (2 / RANGE * 100).toFixed(2) + '%">' +
@@ -1318,12 +1332,19 @@ function openDaySheet(detail) {
 
     // La feuille se referme AVANT d'ouvrir la modale : elle est en `z-index` 9998 et
     // la laisser derrière ferait cliquer dans le vide sur son fond noir.
-    const btnSwap = sheet.querySelector('.dayx-swap');
-    if (btnSwap) btnSwap.addEventListener('click', () => {
-        close();
-        if (sw.canSwap) openSwapModal(sw.shift);
-        else            cancelMySwap(sw.pending._id);
-    });
+    const btnAccept  = sheet.querySelector('.dayx-swap--accept');
+    const btnDecline = sheet.querySelector('.dayx-swap--decline');
+    if (btnAccept || btnDecline) {
+        if (btnAccept)  btnAccept.addEventListener('click',  () => { close(); respondToSwap(sw.pending._id, 'accept'); });
+        if (btnDecline) btnDecline.addEventListener('click', () => { close(); respondToSwap(sw.pending._id, 'decline'); });
+    } else {
+        const btnSwap = sheet.querySelector('.dayx-swap');
+        if (btnSwap) btnSwap.addEventListener('click', () => {
+            close();
+            if (sw.canSwap) openSwapModal(sw.shift);
+            else            cancelMySwap(sw.pending._id);
+        });
+    }
 }
 
 
@@ -3212,7 +3233,11 @@ async function openSwapModal(shift) {
         const today = new Date();
         const from = toDateStr(today);
         const to   = toDateStr(addDays(today, 28));
-        const res  = await fetch('/api/shifts-for-swap?from=' + from + '&to=' + to, { credentials: 'include' });
+        // `establishment_id` = celui du shift proposé : quand le patron a coupé les
+        // échanges inter-établissements, le serveur s'en sert pour ne renvoyer que
+        // des cibles du même établissement.
+        const res  = await fetch('/api/shifts-for-swap?from=' + from + '&to=' + to +
+            '&establishment_id=' + encodeURIComponent(shift.establishment_id || ''), { credentials: 'include' });
         const list = await res.json();
         if (!res.ok) throw new Error(list.error || 'Erreur');
         // Exclure le shift source
@@ -3272,7 +3297,7 @@ async function submitSwap() {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Erreur');
-        showSwapToast('Demande envoyée au patron');
+        showSwapToast(data.message || 'Demande envoyée à votre collègue');
         closeSwapModal();
         await loadMyPendingSwaps();
         const p = window._currentPlan;
@@ -3292,6 +3317,28 @@ async function cancelMySwap(swapId) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Erreur');
         showSwapToast('Demande annulée');
+        await loadMyPendingSwaps();
+        const p = window._currentPlan;
+        if (p) await loadPlanning(p.from, p.to, p.user);
+    } catch (e) {
+        showSwapToast(e.message || 'Erreur', true);
+    }
+}
+
+// Étape 1 de la validation : la réponse du collègue dont le service est convoité.
+// « Accepter » n'échange rien — le patron tranche ensuite. Le dire dans le toast,
+// sinon le collègue croit que c'est fait et découvre son ancien service au planning.
+async function respondToSwap(swapId, action) {
+    if (action === 'decline' && !confirm('Refuser cette proposition d\'échange ?')) return;
+    try {
+        const res = await fetch('/api/shift-swaps/' + swapId + '/staff-' + action, {
+            method: 'PATCH', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        showSwapToast(action === 'accept' ? 'Accepté — en attente du patron' : 'Proposition refusée');
         await loadMyPendingSwaps();
         const p = window._currentPlan;
         if (p) await loadPlanning(p.from, p.to, p.user);

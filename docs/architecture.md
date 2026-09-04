@@ -306,6 +306,7 @@ Collection polymorphe (clé `key` discriminante) :
 - `{ key: 'dispo', open_day, custom_deadline, force_open, force_open_staff[], notif_sent_open_week, notif_sent_j2, notif_sent_j1 }` — paramétrage des dispos + état des rappels push envoyés. `force_open_staff` = tableau de `staff_id` autorisés à (re)soumettre malgré la deadline (réouverture individuelle E-15) ; chaque `staff_id` est retiré automatiquement à sa prochaine soumission réussie
 - `{ key: 'performance', target_gross, target_charged, charge_rate }` — objectifs coefficient + taux de charges patronales appliqué dans `/api/performance` (remplace l'ancienne valeur 1.45 codée en dur)
 - `{ key: 'pointage', cutoff_hour }` — heure de bascule du jour pour `pointage.html` (défaut 9h)
+- `{ key: 'swaps', cross_establishment }` — le patron autorise ou non un échange entre DEUX établissements différents (F-05). Réglage **global** — un échange est une paire, il ne se règle pas par établissement. **Doc absent = autorisé** : c'est le comportement livré et accepté par le client
 - `{ key: 'publish_<YYYY-MM-DD>', published: true }` — une entrée par semaine publiée par le patron (clé = lundi de la semaine)
 - `{ key: 'lock_dispos_<YYYY-MM-DD>' }` — verrouillage de la saisie dispos pour une semaine
 
@@ -319,14 +320,26 @@ Collection polymorphe (clé `key` discriminante) :
   "to_staff_id": "string",
   "from_establishment_id": "string",
   "to_establishment_id": "string",
-  "status": "pending | approved | rejected",
+  "status": "pending_staff | pending | approved | rejected",
   "note": "string",
   "created_at": ISODate,
+  "staff_accepted_at": ISODate,
   "decided_at": ISODate,
-  "decided_by": "string"
+  "decided_by": "string",
+  "rejected_by": "staff | system | null"
 }
 ```
-Les routes `/api/shift-swaps/*` et `/api/shifts-for-swap` sont **actives** depuis le 2026-09-03. Les deux blocs `/* */` qui les neutralisaient dans `server.js` — et le piège associé, des routes Joker écrites par erreur à l'intérieur, invisibles à Express en 404 silencieux (D-47) — n'existent plus.
+
+**Deux validations, dans cet ordre** — `pending_staff` → `pending` → `approved` :
+1. le **collègue** dont le service est convoité accepte (`PATCH /api/shift-swaps/:id/staff-accept`) ou refuse (`.../staff-decline`, → `rejected` + `rejected_by: 'staff'`). Route réservée à `to_staff_id` : ni le proposeur, ni le patron ;
+2. le **patron** tranche ensuite (`/approve`, `/reject`) et lui seul déplace les shifts.
+
+Le patron ne voit que le statut `pending` — `/pending`, `/count`, `/approve` et `/reject` filtrent déjà dessus, une demande encore chez le collègue lui est donc invisible sans qu'elles aient à le savoir. À l'acceptation, les shifts sont **relus** : si le planning a changé (shift supprimé ou réattribué), la demande est close (`410`, `rejected_by: 'system'`) plutôt que remontée périmée au patron. Le proposeur peut annuler aux **deux** étapes.
+Les routes `/api/shift-swaps/*` et `/api/shifts-for-swap` sont **actives** depuis le 2026-09-03.
+
+`GET/PATCH /api/swap-settings` porte le réglage `cross_establishment` (PATCH réservé au **patron strict**). La garde tient au point d'écriture (`POST /api/shift-swaps` → 403) ; `shifts-for-swap` accepte un `establishment_id` (celui du shift proposé) pour n'afficher que des cibles réellement échangeables, mais ne protège rien.
+
+Les deux blocs `/* */` qui les neutralisaient dans `server.js` — et le piège associé, des routes Joker écrites par erreur à l'intérieur, invisibles à Express en 404 silencieux (D-47) — n'existent plus.
 
 > ⚠️ **Un échange n'est possible que sur une semaine PUBLIÉE** (B2-b) et sur des shifts futurs. La garde vit au point d'écriture (`POST /api/shift-swaps`), pas seulement dans la liste `/api/shifts-for-swap` qui alimente l'écran : un brouillon du patron ne doit pas devenir négociable par une route en écriture.
 

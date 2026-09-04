@@ -54,7 +54,11 @@ const duo = () => [
     shift(SH_BOB,   BOB_STAFF,   'Bob',   day(N1, 2)),
 ];
 
-function seed({ shifts = duo(), swaps = [], published = true, users = [] } = {}) {
+// `crossSwaps` : laissé à `undefined`, AUCUN doc `swaps` n'est écrit — c'est le cas qui
+// compte, celui du client déjà livré, où le réglage n'existe pas encore en base.
+function seed({ shifts = duo(), swaps = [], published = true, users = [], crossSwaps } = {}) {
+    const settings = published ? [{ key: 'publish_' + N1, establishments: 'ALL' }] : [];
+    if (crossSwaps !== undefined) settings.push({ key: 'swaps', cross_establishment: crossSwaps });
     return makeDb({
         shifts,
         shift_swaps: swaps,
@@ -64,7 +68,7 @@ function seed({ shifts = duo(), swaps = [], published = true, users = [] } = {})
             { _id: BOB_STAFF,   name: 'Bob',   color: '#27ae60' },
         ],
         establishments: [{ id: 'bar1', name: 'Bar 1' }, { id: 'bar2', name: 'Bar 2' }],
-        settings: published ? [{ key: 'publish_' + N1, establishments: 'ALL' }] : [],
+        settings,
     });
 }
 
@@ -83,12 +87,28 @@ test('le chemin normal : la demande part et attend le patron', async () => {
     assert.ok(body.swap_id);
 
     const [swap] = db.collection('shift_swaps')._docs;
-    assert.equal(swap.status, 'pending');
+    assert.equal(swap.status, 'pending_staff', 'la demande attend le collègue, pas le patron');
     assert.equal(swap.from_staff_id, ALICE_STAFF);
     assert.equal(swap.to_staff_id, BOB_STAFF);
     assert.equal(swap.note, 'mariage');
     // Rien n'a bougé côté planning : c'est l'approbation qui déplace, pas la demande.
     assert.equal(db.collection('shifts')._docs.find(s => s._id === SH_ALICE).staff_id, ALICE_STAFF);
+});
+
+test("tant que le collègue n'a pas répondu, le patron ne voit rien", async () => {
+    // C'est TOUT l'objet de la première validation : le patron n'arbitre que ce sur quoi
+    // les deux salariés sont déjà d'accord. Sans cette garde, la double validation ne
+    // serait qu'un écran de plus, pas une règle.
+    const db = seed();
+    app.locals.setTestDb(db);
+    await propose(ALICE, { from_shift_id: SH_ALICE, to_shift_id: SH_BOB });
+
+    assert.deepEqual(await (await req('/api/shift-swaps/pending', PATRON)).json(), []);
+    assert.equal((await (await req('/api/shift-swaps/count', PATRON)).json()).count, 0);
+
+    // ... et il ne peut pas non plus l'approuver en la devinant.
+    const id = String(db.collection('shift_swaps')._docs[0]._id);
+    assert.equal((await decide(PATRON, id, 'approve')).status, 409);
 });
 
 test('proposer le shift d\'un autre est refusé', async () => {
@@ -137,10 +157,159 @@ test('un shift déjà engagé dans une demande n\'en accepte pas une seconde', a
     assert.equal(res.status, 409);
 });
 
+// ── Étape 1 : la réponse du collègue ─────────────────────────────────────────
+//
+// Ajoutée après acceptation de F-05 : le salarié dont on convoite le service décide
+// AVANT le patron. Les cas qui comptent sont ceux où quelqu'un répond à la place d'un
+// autre, et celui où le planning bouge pendant que le collègue réfléchit.
+
+const respond = (user, id, action, body = {}) =>
+    req('/api/shift-swaps/' + id + '/staff-' + action, user, { method: 'PATCH', body: JSON.stringify(body) });
+
+// Pose une demande par le chemin normal et rend son id.
+async function proposed(db) {
+    app.locals.setTestDb(db);
+    await propose(ALICE, { from_shift_id: SH_ALICE, to_shift_id: SH_BOB });
+    return String(db.collection('shift_swaps')._docs[0]._id);
+}
+
+test("le collègue accepte : la demande passe alors chez le patron", async () => {
+    const db = seed();
+    const id = await proposed(db);
+
+    const res = await respond(BOB, id, 'accept');
+    assert.equal(res.status, 200);
+
+    const swap = db.collection('shift_swaps')._docs[0];
+    assert.equal(swap.status, 'pending');
+    assert.ok(swap.staff_accepted_at, "la date d'accord est tracée : le patron l'affiche");
+    // Accepter ne déplace RIEN : c'est le patron qui permute.
+    assert.equal(db.collection('shifts')._docs.find(s => s._id === SH_ALICE).staff_id, ALICE_STAFF);
+
+    const pending = await (await req('/api/shift-swaps/pending', PATRON)).json();
+    assert.equal(pending.length, 1);
+});
+
+test("le collègue refuse : la demande est close et le patron ne la verra jamais", async () => {
+    const db = seed();
+    const id = await proposed(db);
+
+    const res = await respond(BOB, id, 'decline', { reason: 'je bosse ce soir-là' });
+    assert.equal(res.status, 200);
+
+    const swap = db.collection('shift_swaps')._docs[0];
+    assert.equal(swap.status, 'rejected');
+    assert.equal(swap.rejected_by, 'staff', "distinguer un refus collègue d'un refus patron");
+    assert.equal(swap.reject_reason, 'je bosse ce soir-là');
+    assert.deepEqual(await (await req('/api/shift-swaps/pending', PATRON)).json(), []);
+});
+
+test("personne ne répond à la place du collègue visé", async () => {
+    const db = seed();
+    const id = await proposed(db);
+
+    // Le proposeur signerait des deux mains — c'est le cas qui viderait la règle.
+    assert.equal((await respond(ALICE, id, 'accept')).status, 403);
+    // Le patron non plus : il a ses propres routes, il ne parle pas au nom du staff.
+    assert.equal((await respond(PATRON, id, 'accept')).status, 403);
+    assert.equal(db.collection('shift_swaps')._docs[0].status, 'pending_staff');
+});
+
+test("une réponse déjà donnée ne se redonne pas", async () => {
+    const db = seed();
+    const id = await proposed(db);
+    assert.equal((await respond(BOB, id, 'accept')).status, 200);
+    assert.equal((await respond(BOB, id, 'decline')).status, 409);
+    assert.equal((await respond(BOB, id, 'accept')).status, 409);
+});
+
+test("si le planning a bougé pendant que le collègue réfléchit, la demande se clôt", async () => {
+    // Le patron peut remanier son planning entre la proposition et la réponse. Faire
+    // remonter la demande telle quelle enverrait le patron valider un échange qui ne
+    // correspond plus à ce que les deux salariés ont accepté.
+    const db = seed();
+    const id = await proposed(db);
+    db.collection('shifts')._docs.find(s => s._id === SH_BOB).staff_id = '0123456789abcdef0000000c';
+
+    const res = await respond(BOB, id, 'accept');
+    assert.equal(res.status, 410);
+    assert.equal(db.collection('shift_swaps')._docs[0].status, 'rejected');
+    assert.deepEqual(await (await req('/api/shift-swaps/pending', PATRON)).json(), []);
+});
+
+test("le proposeur peut retirer sa demande pendant que le collègue réfléchit", async () => {
+    const db = seed();
+    const id = await proposed(db);
+    const res = await req('/api/shift-swaps/' + id, ALICE, { method: 'DELETE' });
+    assert.equal(res.status, 200);
+    assert.equal(db.collection('shift_swaps')._docs.length, 0);
+});
+
+test("une demande chez le collègue engage déjà les deux shifts", async () => {
+    // Sinon un même service part dans deux échanges à la fois, et le second arrive
+    // chez le patron sur un shift déjà promis.
+    const db = seed();
+    await proposed(db);
+    const res = await propose(ALICE, { from_shift_id: SH_ALICE, to_shift_id: SH_BOB });
+    assert.equal(res.status, 409);
+    assert.deepEqual(await targets(ALICE, N1, day(N1, 6)), [], 'ni dans la liste des cibles');
+});
+
+// ── Réglage patron : échanges inter-établissements ───────────────────────────
+//
+// Demandé après acceptation de F-05 par le client. L'enjeu n'est pas le réglage lui-même
+// mais son DÉFAUT : la feature est déjà livrée avec l'inter-établissement ouvert, donc une
+// base sans doc `swaps` doit continuer à se comporter exactement comme avant.
+
+// Le même duo, mais Bob travaille dans l'autre bar.
+const duoCross = () => [
+    shift(SH_ALICE, ALICE_STAFF, 'Alice', day(N1, 1), 'bar1'),
+    shift(SH_BOB,   BOB_STAFF,   'Bob',   day(N1, 2), 'bar2'),
+];
+
+test("sans réglage en base, l'échange inter-établissements passe comme avant", async () => {
+    app.locals.setTestDb(seed({ shifts: duoCross() }));
+    const res = await propose(ALICE, { from_shift_id: SH_ALICE, to_shift_id: SH_BOB });
+    assert.equal(res.status, 201);
+});
+
+test("réglage coupé : l'échange entre deux bars est refusé", async () => {
+    app.locals.setTestDb(seed({ shifts: duoCross(), crossSwaps: false }));
+    const res = await propose(ALICE, { from_shift_id: SH_ALICE, to_shift_id: SH_BOB });
+    assert.equal(res.status, 403);
+    assert.match((await res.json()).error, /entre établissements/);
+});
+
+test("réglage coupé : l'échange DANS le même bar reste possible", async () => {
+    // Sinon le réglage ne coupe pas l'inter-établissement, il coupe la feature.
+    app.locals.setTestDb(seed({ crossSwaps: false }));
+    const res = await propose(ALICE, { from_shift_id: SH_ALICE, to_shift_id: SH_BOB });
+    assert.equal(res.status, 201);
+});
+
+test('seul le patron touche au réglage', async () => {
+    const db = seed();
+    app.locals.setTestDb(db);
+    const patch = (user, body) => req('/api/swap-settings', user, { method: 'PATCH', body: JSON.stringify(body) });
+
+    // Réglage GLOBAL : le directeur ne voit qu'une partie des établissements concernés.
+    assert.equal((await patch(DIR_BAR2, { cross_establishment: false })).status, 403);
+    assert.equal((await patch(PATRON,   { cross_establishment: 'non' })).status, 400);
+
+    assert.equal((await patch(PATRON, { cross_establishment: false })).status, 200);
+    assert.equal(db.collection('settings')._docs.find(d => d.key === 'swaps').cross_establishment, false);
+
+    const read = await (await req('/api/swap-settings', ALICE)).json();
+    assert.equal(read.cross_establishment, false, 'le staff lit le réglage pour filtrer son écran');
+});
+
 // ── La liste des cibles proposées ────────────────────────────────────────────
 
 const targets = async (user, from, to) =>
     (await (await req('/api/shifts-for-swap?from=' + from + '&to=' + to, user)).json());
+
+const targetsFrom = async (user, from, to, estab) =>
+    (await (await req('/api/shifts-for-swap?from=' + from + '&to=' + to + '&establishment_id=' + estab, user)).json());
 
 test('la liste ne propose que les collègues des bars où je travaille', async () => {
     app.locals.setTestDb(seed({ shifts: [
@@ -156,6 +325,29 @@ test('la liste ne propose que les collègues des bars où je travaille', async (
 test('la liste tait les semaines non publiées', async () => {
     app.locals.setTestDb(seed({ published: false }));
     assert.deepEqual(await targets(ALICE, N1, day(N1, 6)), []);
+});
+
+test('réglage coupé : la liste se limite au bar du shift proposé', async () => {
+    // Alice travaille dans les deux bars — sans le réglage, les deux lui sont proposés.
+    const shifts = [
+        shift(SH_ALICE, ALICE_STAFF, 'Alice', day(N1, 1), 'bar1'),
+        shift('0123456789abcdef000000a2', ALICE_STAFF, 'Alice', day(N1, 4), 'bar2'),
+        shift(SH_BOB, BOB_STAFF, 'Bob', day(N1, 2), 'bar1'),
+        shift('0123456789abcdef000000b2', BOB_STAFF, 'Bob', day(N1, 3), 'bar2'),
+    ];
+    app.locals.setTestDb(seed({ shifts }));
+    assert.deepEqual(
+        (await targetsFrom(ALICE, N1, day(N1, 6), 'bar1')).map(s => s._id).sort(),
+        [SH_BOB, '0123456789abcdef000000b2'].sort(),
+        'réglage ouvert : le paramètre ne filtre rien');
+
+    app.locals.setTestDb(seed({ shifts, crossSwaps: false }));
+    assert.deepEqual(
+        (await targetsFrom(ALICE, N1, day(N1, 6), 'bar1')).map(s => s._id),
+        [SH_BOB]);
+    assert.deepEqual(
+        (await targetsFrom(ALICE, N1, day(N1, 6), 'bar2')).map(s => s._id),
+        ['0123456789abcdef000000b2']);
 });
 
 test('un shift déjà engagé disparaît de la liste', async () => {

@@ -4936,8 +4936,54 @@ app.patch('/api/conges/:id/decision', checkDB, requirePatron, async (req, res) =
 //
 // Collection `shift_swaps` : { from_shift_id, to_shift_id, from_staff_id,
 //   to_staff_id, from_establishment_id, to_establishment_id, status, note,
-//   created_at, decided_at, decided_by }
-// Échange autorisé entre établissements différents. Validation patron requise.
+//   created_at, staff_accepted_at, decided_at, decided_by, rejected_by }
+//
+// DEUX validations, dans cet ordre — `pending_staff` → `pending` → `approved` :
+//   1. le COLLÈGUE dont le shift est convoité accepte ou refuse (il est le premier
+//      concerné : sans son accord, la demande n'a rien à faire chez le patron) ;
+//   2. le PATRON tranche ensuite, et lui seul déplace les shifts.
+// Un refus à l'étape 1 clôt la demande (`rejected`, `rejected_by: 'staff'`).
+// Le patron ne voit QUE le statut `pending` : ses routes (`/pending`, `/count`,
+// `/approve`, `/reject`) filtrent déjà là-dessus, une demande encore chez le
+// collègue lui reste donc invisible sans qu'elles aient à le savoir.
+// Échange autorisé entre établissements différents SI le patron le permet
+// (`settings.swaps.cross_establishment`). Validation patron requise dans tous les cas.
+
+// Réglage patron : un échange peut-il traverser deux établissements ?
+// Défaut `true` — c'est le comportement livré et accepté par le client, un réglage
+// absent ne doit donc rien changer. Le réglage est GLOBAL : un échange est une PAIRE,
+// l'autoriser d'un côté et l'interdire de l'autre ne veut rien dire.
+async function swapsAllowCross() {
+    const s = await db.collection('settings').findOne({ key: 'swaps' });
+    return s?.cross_establishment !== false;
+}
+
+// GET — lisible par tout le monde : l'écran d'échange du staff s'en sert pour ne
+// proposer que des cibles réellement échangeables.
+app.get('/api/swap-settings', checkDB, requireAuth, async (req, res) => {
+    try {
+        res.json({ cross_establishment: await swapsAllowCross() });
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+// PATCH — patron strict : c'est une règle d'organisation globale, pas un réglage de
+// périmètre. Le directeur ne voit qu'une partie des établissements concernés, et
+// l'observateur est en lecture seule.
+app.patch('/api/swap-settings', checkDB, requirePatronOnly, async (req, res) => {
+    const { cross_establishment } = req.body;
+    if (typeof cross_establishment !== 'boolean') {
+        return res.status(400).json({ error: 'cross_establishment booléen requis' });
+    }
+    try {
+        await db.collection('settings').updateOne(
+            { key: 'swaps' },
+            { $set: { key: 'swaps', cross_establishment } },
+            { upsert: true }
+        );
+        res.json({ message: 'Paramètres échanges mis à jour' });
+        touchLastUpdated();
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
 
 // POST — un staff propose un échange (son shift contre celui d'un collègue)
 app.post('/api/shift-swaps', checkDB, requireAuth, async (req, res) => {
@@ -4971,6 +5017,11 @@ app.post('/api/shift-swaps', checkDB, requireAuth, async (req, res) => {
         if (fromShift.is_joker || toShift.is_joker || toShift.staff_id === '__joker__' || fromShift.staff_id === '__joker__') {
             return res.status(400).json({ error: 'Échange impossible avec un Joker' });
         }
+        // Réglage patron. La garde tient ICI, au point d'écriture : `shifts-for-swap`
+        // ne fait que peupler l'écran, il ne protège pas la route.
+        if (fromShift.establishment_id !== toShift.establishment_id && !(await swapsAllowCross())) {
+            return res.status(403).json({ error: 'Les échanges entre établissements sont désactivés' });
+        }
         // B2-b — un shift de semaine NON PUBLIÉE appartient à un brouillon du patron.
         // Le proposer à l'échange le rendrait négociable avant d'être annoncé. La garde
         // tient ICI, au point d'écriture : `shifts-for-swap` alimente l'écran, il ne
@@ -4987,7 +5038,8 @@ app.post('/api/shift-swaps', checkDB, requireAuth, async (req, res) => {
         }
         // Pas de demande pending déjà existante sur l'un des deux shifts
         const existing = await db.collection('shift_swaps').findOne({
-            status: 'pending',
+            // Les DEUX étapes bloquent : une demande chez le collègue engage déjà le shift.
+            status: { $in: ['pending_staff', 'pending'] },
             $or: [
                 { from_shift_id: String(fromShift._id) },
                 { to_shift_id:   String(fromShift._id) },
@@ -5013,25 +5065,136 @@ app.post('/api/shift-swaps', checkDB, requireAuth, async (req, res) => {
             to_start_time:         toShift.start_time,
             to_end_time:           toShift.end_time,
             note:                  (note || '').toString().slice(0, 280),
-            status:                'pending',
+            status:                'pending_staff',
             created_at:            new Date(),
+            staff_accepted_at:     null,
             decided_at:            null,
             decided_by:            null,
+            rejected_by:           null,
         };
         const result = await db.collection('shift_swaps').insertOne(swap);
 
-        // Notif in-app patrons des deux établissements
-        const message = (user.name || 'Un staff') + ' propose un échange : ' +
-            formatDateFR(fromShift.date) + ' ' + formatShiftTime(fromShift.start_time) + '→' + formatShiftTime(fromShift.end_time) +
-            ' contre ' + (toShift.staff_name || 'collègue') + ' le ' +
-            formatDateFR(toShift.date) + ' ' + formatShiftTime(toShift.start_time) + '→' + formatShiftTime(toShift.end_time);
-        await createNotifForPatrons(fromShift.establishment_id, 'shift_swap_request', message, { swap_id: String(result.insertedId) });
-        if (toShift.establishment_id !== fromShift.establishment_id) {
-            await createNotifForPatrons(toShift.establishment_id, 'shift_swap_request', message, { swap_id: String(result.insertedId) });
+        // Étape 1 : c'est le COLLÈGUE qu'on prévient, pas le patron. Tant qu'il n'a pas
+        // répondu, la demande n'existe pas pour le patron — c'est `/staff-accept` qui
+        // pose la notification in-app patron, avec le même message qu'avant.
+        res.status(201).json({
+            message:  'Demande envoyée à ' + (toShift.staff_name || 'votre collègue'),
+            swap_id:  String(result.insertedId),
+        });
+        touchLastUpdated();
+
+        (async () => {
+            try {
+                await sendPushToStaff([String(toShift.staff_id)], {
+                    title:   'Proposition d\'échange',
+                    body:    (user.name || 'Un collègue') + ' voudrait échanger son service du ' +
+                             formatDateFR(fromShift.date) + ' contre le vôtre du ' + formatDateFR(toShift.date) + '.',
+                    tag:     'shift-echange',
+                    url:     '/planning.html',
+                    actions: [{ action: 'voir', title: 'Répondre' }],
+                });
+            } catch {}
+        })();
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+// PATCH — étape 1 : le COLLÈGUE visé accepte. La demande passe alors chez le patron.
+// Route réservée à `to_staff_id` : ni le proposeur (il signerait des deux mains), ni
+// un tiers, ni le patron (qui a ses propres routes et ne parle pas au nom du staff).
+app.patch('/api/shift-swaps/:id/staff-accept', checkDB, requireAuth, async (req, res) => {
+    if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
+    const staffId = req.session.user.staff_id;
+    if (!staffId) return res.status(403).json({ error: 'Action réservée au staff' });
+    try {
+        const swap = await db.collection('shift_swaps').findOne({ _id: new ObjectId(req.params.id) });
+        if (!swap) return res.status(404).json({ error: 'Demande introuvable' });
+        if (swap.status !== 'pending_staff') return res.status(409).json({ error: 'Demande déjà traitée' });
+        if (String(swap.to_staff_id) !== String(staffId)) {
+            return res.status(403).json({ error: 'Seul le collègue concerné peut répondre' });
         }
 
-        res.status(201).json({ message: 'Demande d\'échange envoyée', swap_id: String(result.insertedId) });
+        // Le temps que le collègue réponde, le patron a pu retoucher le planning. Faire
+        // remonter la demande sur des shifts périmés enverrait le patron valider un
+        // échange qui ne correspond plus à rien — mieux vaut la clore ici.
+        const [fromShift, toShift] = await Promise.all([
+            db.collection('shifts').findOne({ _id: new ObjectId(swap.from_shift_id) }),
+            db.collection('shifts').findOne({ _id: new ObjectId(swap.to_shift_id) }),
+        ]);
+        const stale = !fromShift || !toShift
+            || String(fromShift.staff_id) !== String(swap.from_staff_id)
+            || String(toShift.staff_id)   !== String(swap.to_staff_id);
+        if (stale) {
+            await db.collection('shift_swaps').updateOne({ _id: swap._id }, { $set: {
+                status: 'rejected', rejected_by: 'system', decided_at: new Date(),
+                reject_reason: 'Le planning a changé depuis la demande',
+            }});
+            return res.status(410).json({ error: 'Le planning a changé depuis la demande, elle est annulée' });
+        }
+
+        await db.collection('shift_swaps').updateOne({ _id: swap._id }, { $set: {
+            status: 'pending', staff_accepted_at: new Date(),
+        }});
+
+        res.json({ message: 'Échange accepté — en attente du patron' });
         touchLastUpdated();
+
+        // Notif in-app patrons des deux établissements : elle vivait au POST, elle vit
+        // maintenant ICI. Un patron ne doit être dérangé que pour ce qu'il peut trancher.
+        const message = (swap.from_staff_name || 'Un staff') + ' propose un échange : ' +
+            formatDateFR(fromShift.date) + ' ' + formatShiftTime(fromShift.start_time) + '→' + formatShiftTime(fromShift.end_time) +
+            ' contre ' + (toShift.staff_name || 'collègue') + ' le ' +
+            formatDateFR(toShift.date) + ' ' + formatShiftTime(toShift.start_time) + '→' + formatShiftTime(toShift.end_time) +
+            ' (accepté par ' + (toShift.staff_name || 'le collègue') + ')';
+        await createNotifForPatrons(fromShift.establishment_id, 'shift_swap_request', message, { swap_id: String(swap._id) });
+        if (toShift.establishment_id !== fromShift.establishment_id) {
+            await createNotifForPatrons(toShift.establishment_id, 'shift_swap_request', message, { swap_id: String(swap._id) });
+        }
+
+        (async () => {
+            try {
+                await sendPushToStaff([String(swap.from_staff_id)], {
+                    title:   'Échange accepté par votre collègue',
+                    body:    (swap.to_staff_name || 'Votre collègue') + ' a accepté. En attente de la validation du patron.',
+                    tag:     'shift-echange',
+                    url:     '/planning.html',
+                });
+            } catch {}
+        })();
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+// PATCH — étape 1 : le collègue refuse. La demande est close, le patron ne la verra jamais.
+app.patch('/api/shift-swaps/:id/staff-decline', checkDB, requireAuth, async (req, res) => {
+    if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
+    const staffId = req.session.user.staff_id;
+    if (!staffId) return res.status(403).json({ error: 'Action réservée au staff' });
+    const reason = (req.body?.reason || '').toString().slice(0, 280);
+    try {
+        const swap = await db.collection('shift_swaps').findOne({ _id: new ObjectId(req.params.id) });
+        if (!swap) return res.status(404).json({ error: 'Demande introuvable' });
+        if (swap.status !== 'pending_staff') return res.status(409).json({ error: 'Demande déjà traitée' });
+        if (String(swap.to_staff_id) !== String(staffId)) {
+            return res.status(403).json({ error: 'Seul le collègue concerné peut répondre' });
+        }
+
+        await db.collection('shift_swaps').updateOne({ _id: swap._id }, { $set: {
+            status: 'rejected', rejected_by: 'staff', decided_at: new Date(),
+            decided_by: String(req.session.user._id), reject_reason: reason || null,
+        }});
+
+        res.json({ message: 'Demande refusée' });
+        touchLastUpdated();
+
+        (async () => {
+            try {
+                await sendPushToStaff([String(swap.from_staff_id)], {
+                    title:   'Échange refusé',
+                    body:    (swap.to_staff_name || 'Votre collègue') + ' ne peut pas échanger' + (reason ? ' : ' + reason : '.'),
+                    tag:     'shift-echange',
+                    url:     '/planning.html',
+                });
+            } catch {}
+        })();
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
@@ -5285,7 +5448,13 @@ app.get('/api/shifts-for-swap', checkDB, requireAuth, async (req, res) => {
         // Même garde que le POST : un brouillon ne désigne pas un établissement
         // échangeable, et ne se propose pas comme cible.
         const isVisible = await publishedShiftFilter();
-        const estabIds = [...new Set(own.filter(isVisible).map(s => s.establishment_id))];
+        let estabIds = [...new Set(own.filter(isVisible).map(s => s.establishment_id))];
+        // Réglage patron : sans échange inter-établissements, les cibles se limitent à
+        // l'établissement du shift proposé, que le client passe en `establishment_id`.
+        // Sans ce paramètre on ne restreint pas — le refus reste garanti par le POST.
+        if (req.query.establishment_id && !(await swapsAllowCross())) {
+            estabIds = estabIds.filter(id => id === req.query.establishment_id);
+        }
         if (estabIds.length === 0) return res.json([]);
 
         // Shifts futurs des autres staff dans ces établissements
@@ -5297,9 +5466,9 @@ app.get('/api/shifts-for-swap', checkDB, requireAuth, async (req, res) => {
         }).sort({ date: 1, start_time: 1 }).toArray();
         const visibles = shifts.filter(isVisible);
 
-        // Exclure les shifts ayant déjà une demande d'échange pending
+        // Exclure les shifts déjà engagés — chez le collègue comme chez le patron.
         const pendingSwaps = await db.collection('shift_swaps').find({
-            status: 'pending',
+            status: { $in: ['pending_staff', 'pending'] },
         }).toArray();
         const blockedIds = new Set();
         pendingSwaps.forEach(sw => { blockedIds.add(sw.from_shift_id); blockedIds.add(sw.to_shift_id); });
@@ -5327,7 +5496,9 @@ app.delete('/api/shift-swaps/:id', checkDB, requireAuth, async (req, res) => {
     try {
         const swap = await db.collection('shift_swaps').findOne({ _id: new ObjectId(req.params.id) });
         if (!swap) return res.status(404).json({ error: 'Demande introuvable' });
-        if (swap.status !== 'pending') return res.status(409).json({ error: 'Demande déjà traitée' });
+        // Annulable aux DEUX étapes : tant que le patron n'a pas tranché, le proposeur
+        // reste maître de sa demande — y compris pendant que le collègue réfléchit.
+        if (swap.status !== 'pending_staff' && swap.status !== 'pending') return res.status(409).json({ error: 'Demande déjà traitée' });
         if (String(swap.from_staff_id) !== String(staffId)) return res.status(403).json({ error: 'Seul le proposeur peut annuler' });
         await db.collection('shift_swaps').deleteOne({ _id: swap._id });
         res.json({ message: 'Demande annulée' });

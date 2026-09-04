@@ -700,8 +700,9 @@ async function run() {
         const shiftIns = await db.collection('shifts').insertMany(shifts);
 
         // ── Échanges de shifts (F-05) ─────────────────────────────────────────
-        // Deux personnes veulent permuter leur service, le patron tranche. C'est la
-        // file « Échanges » de son écran, et le badge qui va avec.
+        // Deux personnes veulent permuter leur service : le collègue visé accepte
+        // d'abord, PUIS le patron tranche. C'est la file « Échanges » de son écran,
+        // et le badge qui va avec.
         //
         // La fenêtre utilisable est étroite, et c'est le produit qui la fixe, pas le
         // jeu : la route n'accepte que des shifts FUTURS (`date >= aujourd'hui`) et de
@@ -730,8 +731,12 @@ async function run() {
                 from_date: source.s.date, from_start_time: source.s.start_time, from_end_time: source.s.end_time,
                 to_date:   cible.s.date,  to_start_time:   cible.s.start_time,  to_end_time:   cible.s.end_time,
                 note: 'Je suis pris ce soir-là — ' + cible.s.staff_name.split(' ')[0] + ' est d\'accord.',
-                status: 'pending', created_at: addDays(now, -1),
-                decided_at: null, decided_by: null,
+                // `pending` = le collègue a DÉJÀ accepté (étape 1) et la demande attend le
+                // patron. C'est l'état qu'on montre : la file « Échanges » ne contient
+                // que des demandes arbitrables, et la carte affiche qui a accepté.
+                status: 'pending', created_at: addDays(now, -2),
+                staff_accepted_at: addDays(now, -1),
+                decided_at: null, decided_by: null, rejected_by: null,
             }));
             // Mêmes destinataires que `createNotifForPatrons` : patron toujours,
             // directeur seulement sur son périmètre, observateur jamais. Recopier la

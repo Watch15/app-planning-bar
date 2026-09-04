@@ -5936,7 +5936,48 @@ async function openSwapsPanel() {
     const modal = document.getElementById('swaps-modal');
     if (!modal) return;
     modal.style.display = 'flex';
-    await loadSwapsList();
+    await Promise.all([loadSwapPolicy(), loadSwapsList()]);
+}
+
+// Réglage patron : autoriser ou non les échanges entre deux établissements.
+// Réglage GLOBAL (un échange est une paire) → réservé au patron ; le directeur et
+// l'observateur voient la modale mais pas le réglage. Sans multi-établissement, la
+// question ne se pose pas : on n'affiche rien.
+async function loadSwapPolicy() {
+    const box = document.getElementById('swaps-policy');
+    if (!box) return;
+    const isPatron = !!currentUser && currentUser.role === 'patron';
+    if (!isPatron || allEstablishments.length < 2) { box.style.display = 'none'; return; }
+    let cross = true;
+    try {
+        const res = await fetch('/api/swap-settings', { credentials: 'include' });
+        if (res.ok) cross = (await res.json()).cross_establishment !== false;
+    } catch { return; }
+    box.style.display = '';
+    box.innerHTML =
+        '<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--color-text-primary,#333);cursor:pointer">' +
+            '<input type="checkbox" id="swap-cross-toggle"' + (cross ? ' checked' : '') + ' style="cursor:pointer;accent-color:#6C63FF">' +
+            'Autoriser les échanges entre établissements différents' +
+        '</label>' +
+        '<div style="font-size:11px;color:#aaa;margin-top:4px;margin-left:24px">Décoché : un staff ne peut échanger qu\'avec un collègue du même établissement. Les demandes déjà en attente ne sont pas annulées.</div>';
+    document.getElementById('swap-cross-toggle').addEventListener('change', async (e) => {
+        const on = e.target.checked;
+        e.target.disabled = true;
+        try {
+            const res = await fetch('/api/swap-settings', {
+                credentials: 'include', method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cross_establishment: on }),
+            });
+            if (!res.ok) throw new Error((await res.json()).error || 'Erreur');
+            showToast(on ? 'Échanges inter-établissements autorisés' : 'Échanges limités au même établissement');
+        } catch (err) {
+            e.target.checked = !on;   // l'écran ne ment pas sur ce qui est enregistré
+            showToast(err.message || 'Erreur', true);
+        } finally {
+            e.target.disabled = false;
+        }
+    });
 }
 
 function _fmtSwapTime(h) {
@@ -5989,6 +6030,14 @@ function _renderSwapCard(swap) {
     const when = swap.created_at ? new Date(swap.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
     header.textContent = 'Demandé le ' + when;
     card.appendChild(header);
+
+    // Le collègue a déjà dit oui — c'est la condition pour que la demande arrive ici.
+    // L'écrire évite au patron de se demander s'il doit encore aller le lui demander.
+    const ok = document.createElement('div');
+    ok.style.cssText = 'font-size:12px;color:#27ae60;font-weight:600;margin:-4px 0 8px';
+    ok.textContent = 'Accepté par ' + (swap.to_staff_name || 'le collègue') +
+        (swap.staff_accepted_at ? ' le ' + new Date(swap.staff_accepted_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '');
+    card.appendChild(ok);
 
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;gap:10px;align-items:stretch;flex-wrap:wrap';

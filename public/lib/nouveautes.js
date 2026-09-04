@@ -64,6 +64,29 @@
 
     const NOUVEAUTES = [
         {
+            id: 'echange-double-validation-staff', date: '2026-09-04',
+            roles: ['staff'],
+            titre: "Un échange demande maintenant l'accord du collègue",
+            quoi: "Une proposition d'échange part d'abord chez le collègue dont le service "
+                + "vous intéresse : c'est lui qui accepte ou refuse en premier. S'il accepte, "
+                + "la demande passe à votre responsable, qui tranche. S'il refuse, elle "
+                + "s'arrête là et votre planning ne change pas. Quand un collègue vous "
+                + "propose un échange, la journée porte la mention « à confirmer » et la "
+                + "feuille du jour vous offre « Accepter » ou « Refuser ».",
+            ou: 'Planning → toucher la journée concernée'
+        },
+        {
+            id: 'echange-double-validation-patron', date: '2026-09-04',
+            roles: ['patron', 'directeur'],
+            titre: "Les échanges arrivent déjà acceptés par les deux salariés",
+            quoi: "Une demande d'échange ne vous parvient plus qu'une fois le collègue "
+                + "concerné d'accord : la file « Échanges » ne contient donc que des "
+                + "demandes réellement arbitrables, et chaque carte indique qui a accepté "
+                + "et quand. En multi-établissement, vous décidez aussi si un échange peut "
+                + "traverser deux établissements ou doit rester dans le même.",
+            ou: 'Bouton « Échanges » dans le bandeau du haut'
+        },
+        {
             id: 'echange-shifts-staff', date: '2026-09-03',
             roles: ['staff'],
             titre: 'Proposer un échange de service à un collègue',
