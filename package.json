@@ -19,6 +19,10 @@
     "test": "node --test",
     "smoke:dev": "node scripts/smoke.js https://dev.templyo.fr --expect origin/dev",
     "smoke:main": "node scripts/smoke.js https://app-planning-bar-production.up.railway.app --expect origin/main",
+    "smoke:prod": "node scripts/smoke-prod.js",
+    "smoke:prod:dev": "node scripts/smoke-prod.js https://dev.templyo.fr --expect origin/dev",
+    "smoke:prod:main": "node scripts/smoke-prod.js https://app-planning-bar-production.up.railway.app --expect origin/main",
+    "smoke:prod:client": "node scripts/smoke-prod.js https://castaniu-family.templyo.fr --expect castanui/main",
     "db:uri:dev": "node scripts/db-uri.js .env.dev",
     "db:uri:main": "node scripts/db-uri.js .env.main",
     "link-directors": "node scripts/link-director-staff.js"

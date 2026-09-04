@@ -449,7 +449,7 @@ d'index, cron, tout. Le merge sera un fast-forward (`main` est un ancêtre direc
 |---|---|---|---|
 | 1 · `dev` | `dev.templyo.fr` (`app-planning-bar`/dev) | la feature marche | `npm test` + `SMOKE_URL=https://dev.templyo.fr npm run smoke` |
 | 2 · `main` | `…-production.up.railway.app` (`app-planning-bar`/main) | elle marche **en conditions de prod** (`NODE_ENV=production`, cookies `secure`, CORS strict) | smoke sur l'URL de main |
-| 3 · client | `castaniu-family.templyo.fr` (**dépôt `app-planning-bar-castaniu-family`**/main) | — | accord explicite du user, cf. mémoire `no-merge-to-client` |
+| 3 · client | `castaniu-family.templyo.fr` (**dépôt `app-planning-bar-castaniu-family`**/main) | — | accord explicite du user, cf. mémoire `no-merge-to-client` | · **lecture seule** : `npm run smoke:prod:client` (aucune écriture, aucune connexion — `smoke.js` ne doit JAMAIS viser un client)
 
 **La propagation est techniquement triviale** : le remote `castanui` est déjà configuré et
 `castanui/main` est un **ancêtre strict** de `origin/dev` (`0 20` — aucun commit propre côté
