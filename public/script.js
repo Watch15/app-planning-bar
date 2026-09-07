@@ -2196,62 +2196,78 @@ function createShiftEl(shift) {
 
 function openMobileShiftEditModal(shift) {
     const fmt = h => h == null ? '' : String(Math.floor(h % 24)).padStart(2, '0') + ':' + String(Math.round((h % 1) * 60)).padStart(2, '0');
+    const name = escapeHtml(displayName(shift.staff_id, shift.staff_name));
 
-    // Désignation responsable de soirée (uniquement si le staff a un rôle responsable)
     const _staffMember  = allStaff.find(s => String(s._id) === String(shift.staff_id));
     const _staffRoleIds = (_staffMember && _staffMember.roles) || [];
     const _isResp       = allRoles.some(r => r.type === 'responsable' && _staffRoleIds.includes(String(r._id)));
 
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+    overlay.className = 'ms-overlay';
 
-    const inp = 'width:100%;padding:10px 12px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:18px;font-weight:600;outline:none;color:#1a1a2e;background:#fafbfc;font-family:inherit';
-    const lbl = 'font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px';
-    const grp = 'flex:1;min-width:0';
-    const row = 'display:flex;gap:10px';
-    const iconBtn = 'width:36px;height:36px;border-radius:9px;border:1px solid #e0e0e0;background:white;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0;font-family:inherit';
-    const respRowHtml = _isResp
-        ? ('<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid ' + (shift.pointage_resp ? '#f0c040' : '#e0e0e0') + ';border-radius:12px;margin-bottom:14px;background:' + (shift.pointage_resp ? '#fff8e0' : 'white') + '">' +
-              '<span style="font-size:18px;line-height:1">👑</span>' +
-              '<span style="font-size:13px;font-weight:600;color:#1a1a2e;flex:1">Responsable de la soirée</span>' +
-              '<button id="_ms-resp-toggle" type="button" style="padding:7px 16px;border-radius:20px;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;min-width:64px;background:' + (shift.pointage_resp ? '#f0c040' : '#e0e0e0') + ';color:' + (shift.pointage_resp ? '#1a1a2e' : '#666') + '">' + (shift.pointage_resp ? 'Oui' : 'Non') + '</button>' +
-          '</div>')
+    const respHtml = _isResp
+        ? ('<div class="ms-resp' + (shift.pointage_resp ? ' on' : '') + '">' +
+              '<span>👑</span>' +
+              '<span class="ms-resp-lbl">Responsable de la soirée</span>' +
+              '<button id="_ms-resp-toggle" type="button">' + (shift.pointage_resp ? 'Oui' : 'Non') + '</button>' +
+           '</div>')
         : '';
+
+    const transferBtn = allEstablishments.length > 1
+        ? '<button type="button" id="_ms-copy">Transférer</button>'
+        : '';
+
     overlay.innerHTML =
-        '<div style="background:white;border-radius:18px 18px 0 0;padding:14px 16px max(16px,env(safe-area-inset-bottom));width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,0.18);max-height:88vh;overflow-y:auto">' +
-            '<div style="width:36px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 14px"></div>' +
-            // Header avec actions icônes
-            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">' +
-                '<span style="width:11px;height:11px;border-radius:50%;background:' + (shift.color || '#888') + ';flex-shrink:0;display:inline-block"></span>' +
-                '<span style="font-size:15px;font-weight:700;color:#1a1a2e;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + shift.staff_name + '</span>' +
-                '<button id="_ms-replace" title="Remplacer" style="' + iconBtn + ';color:#27ae60;border-color:#a7e0c0">↔</button>' +
-                '<button id="_ms-copy"    title="Transférer" style="' + iconBtn + ';color:#6C63FF;border-color:#c5beff">→</button>' +
-                '<button id="_ms-delete"  title="Supprimer"  style="' + iconBtn + ';color:#e74c3c;border-color:#f5c6c6">🗑</button>' +
-            '</div>' +
-            // Section planifié
-            '<div style="' + lbl + '">Horaires planifiés</div>' +
-            '<div style="' + row + ';margin-bottom:16px">' +
-                '<div style="' + grp + '"><div style="font-size:10px;color:#aaa;font-weight:600;margin-bottom:4px">Début</div><input id="_ms-start" type="time" value="' + fmt(shift.start_time) + '" style="' + inp + '"></div>' +
-                '<div style="' + grp + '"><div style="font-size:10px;color:#aaa;font-weight:600;margin-bottom:4px">Fin</div><input id="_ms-end" type="time" value="' + fmt(shift.end_time) + '" style="' + inp + '"></div>' +
-            '</div>' +
-            // Section réelles (mise en valeur)
-            '<div style="background:#f8f9ff;border:1px solid #e5e3ff;border-radius:12px;padding:12px;margin-bottom:18px">' +
-                '<div style="' + lbl + ';color:#6C63FF">⏱ Heures réelles</div>' +
-                '<div style="' + row + '">' +
-                    '<div style="' + grp + '"><div style="font-size:10px;color:#888;font-weight:600;margin-bottom:4px">Début réel</div><input id="_ms-real-start" type="time" value="' + fmt(shift.real_start) + '" style="' + inp + ';background:white"></div>' +
-                    '<div style="' + grp + '"><div style="font-size:10px;color:#888;font-weight:600;margin-bottom:4px">Fin réelle</div><input id="_ms-real-end" type="time" value="' + fmt(shift.real_end) + '" style="' + inp + ';background:white"></div>' +
+        '<div class="ms-sheet" role="dialog" aria-modal="true" aria-label="Modifier le shift">' +
+            '<div class="ms-handle" aria-hidden="true"></div>' +
+            '<div class="ms-body">' +
+                '<div class="ms-title">' +
+                    '<span class="ms-dot" style="background:' + escapeHtml(shift.color || '#888') + '"></span>' +
+                    '<span class="ms-name">' + name + '</span>' +
                 '</div>' +
+                '<div class="ms-actions">' +
+                    '<button type="button" id="_ms-replace">Remplacer</button>' +
+                    transferBtn +
+                    '<button type="button" id="_ms-delete" class="ms-act-del">Supprimer</button>' +
+                '</div>' +
+                '<div class="ms-sec-label">Horaires planifiés</div>' +
+                '<div class="ms-time-grid">' +
+                    '<div class="ms-field"><label for="_ms-start">Début</label>' +
+                        '<input id="_ms-start" type="time" value="' + fmt(shift.start_time) + '"></div>' +
+                    '<div class="ms-field"><label for="_ms-end">Fin</label>' +
+                        '<input id="_ms-end" type="time" value="' + fmt(shift.end_time) + '"></div>' +
+                '</div>' +
+                '<div class="ms-real-box">' +
+                    '<div class="ms-sec-label">Heures réelles</div>' +
+                    '<div class="ms-time-grid">' +
+                        '<div class="ms-field"><label for="_ms-real-start">Début réel</label>' +
+                            '<input id="_ms-real-start" type="time" value="' + fmt(shift.real_start) + '"></div>' +
+                        '<div class="ms-field"><label for="_ms-real-end">Fin réelle</label>' +
+                            '<input id="_ms-real-end" type="time" value="' + fmt(shift.real_end) + '"></div>' +
+                    '</div>' +
+                '</div>' +
+                respHtml +
             '</div>' +
-            respRowHtml +
-            // Actions principales
-            '<div style="display:flex;gap:10px">' +
-                '<button id="_ms-cancel" style="padding:13px 16px;border-radius:10px;border:1px solid #e0e0e0;background:white;font-size:14px;cursor:pointer;color:#555;flex:1;font-family:inherit">Annuler</button>' +
-                '<button id="_ms-save"   style="padding:13px 16px;border-radius:10px;border:none;background:#6C63FF;color:white;font-size:14px;font-weight:600;cursor:pointer;flex:1.4;font-family:inherit;box-shadow:0 2px 8px rgba(108,99,255,0.30)">Enregistrer</button>' +
+            '<div class="ms-footer">' +
+                '<button type="button" id="_ms-cancel" class="ms-cancel">Annuler</button>' +
+                '<button type="button" id="_ms-save" class="ms-save">Enregistrer</button>' +
             '</div>' +
         '</div>';
 
+    // Si un seul établissement : grille 2 colonnes (Remplacer | Supprimer)
+    if (allEstablishments.length <= 1) {
+        const actions = overlay.querySelector('.ms-actions');
+        if (actions) actions.style.gridTemplateColumns = '1fr 1fr';
+    }
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     document.body.appendChild(overlay);
-    const close = () => document.body.removeChild(overlay);
+
+    const close = () => {
+        document.body.style.overflow = prevOverflow;
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    };
 
     overlay.querySelector('#_ms-cancel').addEventListener('click', close);
     overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
@@ -2264,10 +2280,8 @@ function openMobileShiftEditModal(shift) {
     overlay.querySelector('#_ms-replace').addEventListener('click', () => { close(); openReplaceStaffModal(shift); });
 
     const msCopyBtn = overlay.querySelector('#_ms-copy');
-    if (allEstablishments.length <= 1) msCopyBtn.style.display = 'none';
-    msCopyBtn.addEventListener('click', () => { close(); openTransferShiftModal(shift); });
+    if (msCopyBtn) msCopyBtn.addEventListener('click', () => { close(); openTransferShiftModal(shift); });
 
-    // Toggle responsable de la soirée (PATCH immédiat, indépendant du bouton Enregistrer)
     const respToggleBtn = overlay.querySelector('#_ms-resp-toggle');
     if (respToggleBtn) {
         respToggleBtn.addEventListener('click', async () => {
@@ -2282,16 +2296,9 @@ function openMobileShiftEditModal(shift) {
                 const d = await r.json();
                 if (!r.ok) throw new Error(d.error);
                 shift.pointage_resp = newVal;
-                // MAJ visuelle du toggle et de son conteneur
                 respToggleBtn.textContent = newVal ? 'Oui' : 'Non';
-                respToggleBtn.style.background = newVal ? '#f0c040' : '#e0e0e0';
-                respToggleBtn.style.color      = newVal ? '#1a1a2e' : '#666';
-                const wrap = respToggleBtn.parentElement;
-                if (wrap) {
-                    wrap.style.background    = newVal ? '#fff8e0' : 'white';
-                    wrap.style.borderColor   = newVal ? '#f0c040' : '#e0e0e0';
-                }
-                // MAJ couronne sur la barre du shift sans recharger
+                const wrap = respToggleBtn.closest('.ms-resp');
+                if (wrap) wrap.classList.toggle('on', newVal);
                 const shiftEl = document.querySelector('.shift[data-id="' + shift._id + '"] .shift-resp-btn');
                 if (shiftEl) shiftEl.classList.toggle('active', newVal);
                 showToast(newVal ? shift.staff_name + ' — responsable pointage 👑' : 'Désignation retirée');
@@ -2351,7 +2358,6 @@ function openMobileShiftEditModal(shift) {
                 shift.real_end   = re;
             }
 
-            // Mettre à jour en mémoire
             const idx = currentShifts.findIndex(s => String(s._id) === String(shift._id));
             if (idx !== -1) {
                 currentShifts[idx].start_time = newStart;
