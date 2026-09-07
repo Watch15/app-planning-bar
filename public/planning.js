@@ -1137,7 +1137,11 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
             }
 
             // OTP début/fin : CTA sur la carte du jour de service (pas de bandeau top)
-            if (date === serviceDate && !shift.heure_validee_code && !shift.heure_validee_finale) {
+            const canCta = date === serviceDate && !shift.heure_validee_code && !shift.heure_validee_finale;
+            // #region agent log
+            fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'cta-pre',hypothesisId:'A',location:'planning.js:renderDaysInto',message:'CTA eligibility',data:{date,serviceDate,dateMatch:date===serviceDate,hasDebut:!!shift.debut_valide_code,hasFinCode:!!shift.heure_validee_code,hasFinFinale:!!shift.heure_validee_finale,canCta,shiftId:String(shift._id||'')},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
+            if (canCta) {
                 card.appendChild(buildClotureCta(shift));
             }
         });
@@ -1165,7 +1169,14 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
 document.addEventListener('click', (ev) => {
     if (!ev.target.closest) return;
     if (ev.target.closest('[data-pill-name]')) return;
+    const onCta = !!ev.target.closest('.cloture-cta');
     const card = ev.target.closest('.day-card--tappable');
+    // #region agent log
+    if (onCta || (card && ev.target.closest('.cloture-cta-btn'))) {
+        fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'cta-pre',hypothesisId:'B',location:'planning.js:docClick',message:'click near CTA / card',data:{onCta,hasCard:!!card,tag:ev.target.tagName,cls:String(ev.target.className||'').slice(0,80),willOpenSheet:!!(card&&card._dayDetail&&!onCta)},timestamp:Date.now()})}).catch(()=>{});
+    }
+    // #endregion
+    if (onCta) return;
     if (!card || !card._dayDetail) return;
     openDaySheet(card._dayDetail);
 });
@@ -3620,7 +3631,7 @@ function buildClotureCta(shift) {
     const phase = shift.debut_valide_code ? 'fin' : 'debut';
     const wrap = document.createElement('div');
     wrap.className = 'cloture-cta';
-    wrap.addEventListener('click', e => e.stopPropagation());
+    wrap.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); });
 
     const info = document.createElement('div');
     info.className = 'cloture-cta-info';
@@ -3638,9 +3649,16 @@ function buildClotureCta(shift) {
     btn.textContent = phase === 'debut' ? 'Pointer mon arrivée' : 'Clôturer mon service';
     btn.addEventListener('click', e => {
         e.stopPropagation();
+        e.preventDefault();
+        // #region agent log
+        fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'cta-pre',hypothesisId:'B',location:'planning.js:ctaBtnClick',message:'CTA button clicked',data:{phase,shiftId:String(shift._id||'')},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         openClotureCodeModal(shift, phase);
     });
     wrap.appendChild(btn);
+    // #region agent log
+    fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'cta-pre',hypothesisId:'A',location:'planning.js:buildClotureCta',message:'CTA built',data:{phase,shiftId:String(shift._id||'')},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     return wrap;
 }
 
@@ -3652,6 +3670,9 @@ function openClotureCodeModal(shift, phase) {
     const label = document.getElementById('cloture-code-shift-label');
     const input = document.getElementById('cloture-code-input');
     const err = document.getElementById('cloture-code-err');
+    // #region agent log
+    fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'cta-pre',hypothesisId:'C',location:'planning.js:openClotureCodeModal',message:'open modal',data:{phase:_cloturePendingPhase,hasModal:!!modal,modalParent:modal&&modal.parentElement?modal.parentElement.tagName:null},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if (title) {
         title.textContent = _cloturePendingPhase === 'debut'
             ? 'Pointer mon arrivée'
