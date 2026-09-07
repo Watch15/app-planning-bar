@@ -291,13 +291,15 @@ async function main() {
         return 'modified=' + r.data.modified;
     });
 
-    // ── 10. Plus d'ajustement après validation ───────────────────────────────
-    await check('ajustement refusé après validation récap', async () => {
+    // ── 10. Ajustement encore possible après validation ──────────────────────
+    await check('ajustement OK après validation récap', async () => {
         const r = await req('pat', '/api/shifts/' + shiftId + '/ajuster-heure', {
             method: 'PATCH',
-            body: { heure_validee_finale: '22:00' },
+            body: { heure_validee_finale: '22:00', motif: 'smoke correction post-récap' },
         });
-        return eq(r.status, 409, 'status');
+        eq(r.status, 200, 'status');
+        eq(r.data.heure_validee_finale, '22:00', 'finale');
+        return 'corrigé après récap';
     });
 
     // ── 11. Clôture manuelle forcée (début+fin) ───────────────────────────────

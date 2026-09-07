@@ -30,8 +30,8 @@
     "semantic_hash": ""
   },
   "public/pointage.js": {
-    "mtime": 1788786019.362991,
-    "ast_hash": "e5e2c16c466fcc5700a7c3b976d63fbf",
+    "mtime": 1788787042.8108208,
+    "ast_hash": "6c492bafb197a021e7bc94d8a668c945",
     "semantic_hash": ""
   },
   "public/script.js": {
@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "server.js": {
-    "mtime": 1788785870.7427585,
-    "ast_hash": "5097be15c5ac2981f914a185c048a220",
+    "mtime": 1788787084.9374888,
+    "ast_hash": "926361fed8fe057ca09ee8f9199aa1d7",
     "semantic_hash": ""
   },
   "tests/routes.test.js": {
@@ -145,8 +145,8 @@
     "semantic_hash": ""
   },
   "public/pointage.html": {
-    "mtime": 1788785947.3694782,
-    "ast_hash": "bbedf14fe415efa901935b021e4af007",
+    "mtime": 1788787010.8516707,
+    "ast_hash": "1b5245a1cd0c2954cc5f130af470c3e8",
     "semantic_hash": ""
   },
   "public/politique-confidentialite.html": {
@@ -380,13 +380,13 @@
     "semantic_hash": ""
   },
   "tests/cloture-otp.test.js": {
-    "mtime": 1788786018.6620154,
-    "ast_hash": "a090265a11fe446dbc6fe2e9c651cb13",
+    "mtime": 1788787047.1377625,
+    "ast_hash": "8daa7675cc26f560ae2c9fd8e2dae88e",
     "semantic_hash": ""
   },
   "scripts/smoke-cloture.js": {
-    "mtime": 1788785877.8486917,
-    "ast_hash": "817d3891d77efb54620f5b936b4b12a9",
+    "mtime": 1788787047.4763286,
+    "ast_hash": "6a24a9231d74d2c4e499d8616865cc10",
     "semantic_hash": ""
   }
 }

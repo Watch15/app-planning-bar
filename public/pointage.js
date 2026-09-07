@@ -814,11 +814,16 @@ function initExtraForm() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
 
-            // Ajouter la carte du nouveau shift
-            document.getElementById('shifts-list').appendChild(buildShiftCard(data));
-            if (window._visibleShifts) {
-                window._visibleShifts.push(data);
-                renderTotalFooter(window._visibleShifts);
+            if (canUseClotureUi()) {
+                renderCloturesList();
+            } else {
+                // Ajouter la carte du nouveau shift (vue tablette)
+                const list = document.getElementById('shifts-list');
+                if (list) list.appendChild(buildShiftCard(data));
+                if (window._visibleShifts) {
+                    window._visibleShifts.push(data);
+                    renderTotalFooter(window._visibleShifts);
+                }
             }
 
             // Reset form
@@ -996,7 +1001,7 @@ async function renderCloturesList() {
                     btn.textContent = 'Fin manuelle';
                     btn.addEventListener('click', () => clotureManuelle(s, 'fin'));
                     actions.appendChild(btn);
-                } else if (closed && !s.patron_valide) {
+                } else if (closed) {
                     const btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = 'btn-adjust';

@@ -3390,7 +3390,7 @@
       "label": "CLOTURE_ROLES",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L842",
+      "source_location": "L847",
       "_origin": "ast",
       "id": "public_pointage_cloture_roles",
       "community": 8,
@@ -3400,7 +3400,7 @@
       "label": "canUseClotureUi()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L849",
+      "source_location": "L854",
       "_origin": "ast",
       "id": "public_pointage_canuseclotureui",
       "community": 8,
@@ -3410,7 +3410,7 @@
       "label": "setLegacyPointageVisible()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L853",
+      "source_location": "L858",
       "_origin": "ast",
       "id": "public_pointage_setlegacypointagevisible",
       "community": 8,
@@ -3420,7 +3420,7 @@
       "label": "escapeHtml()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L858",
+      "source_location": "L863",
       "_origin": "ast",
       "id": "public_pointage_escapehtml",
       "community": 8,
@@ -3430,7 +3430,7 @@
       "label": "addDaysLocal()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L864",
+      "source_location": "L869",
       "_origin": "ast",
       "id": "public_pointage_adddayslocal",
       "community": 8,
@@ -3440,7 +3440,7 @@
       "label": "formatDateFr()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L870",
+      "source_location": "L875",
       "_origin": "ast",
       "id": "public_pointage_formatdatefr",
       "community": 8,
@@ -3450,7 +3450,7 @@
       "label": "stopCodeClotureTimers()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L879",
+      "source_location": "L884",
       "_origin": "ast",
       "id": "public_pointage_stopcodecloturetimers",
       "community": 8,
@@ -3460,7 +3460,7 @@
       "label": "updateCodeClotureCountdown()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L884",
+      "source_location": "L889",
       "_origin": "ast",
       "id": "public_pointage_updatecodecloturecountdown",
       "community": 8,
@@ -3470,7 +3470,7 @@
       "label": "refreshCodeCloture()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L894",
+      "source_location": "L899",
       "_origin": "ast",
       "id": "public_pointage_refreshcodecloture",
       "community": 8,
@@ -3480,7 +3480,7 @@
       "label": "renderCloturesList()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L916",
+      "source_location": "L921",
       "_origin": "ast",
       "id": "public_pointage_renderclotureslist",
       "community": 8,
@@ -3490,7 +3490,7 @@
       "label": "clotureManuelle()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1014",
+      "source_location": "L1019",
       "_origin": "ast",
       "id": "public_pointage_cloturemanuelle",
       "community": 8,
@@ -3500,7 +3500,7 @@
       "label": "ajusterHeureCloture()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1050",
+      "source_location": "L1055",
       "_origin": "ast",
       "id": "public_pointage_ajusterheurecloture",
       "community": 8,
@@ -3510,7 +3510,7 @@
       "label": "validateCloturesWeek()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1076",
+      "source_location": "L1081",
       "_origin": "ast",
       "id": "public_pointage_validatecloturesweek",
       "community": 8,
@@ -3520,7 +3520,7 @@
       "label": "initCloturePanel()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1093",
+      "source_location": "L1098",
       "_origin": "ast",
       "id": "public_pointage_initcloturepanel",
       "community": 8,
@@ -3563,7 +3563,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "public_script_applyvenuehours",
-      "community": 57,
+      "community": 6,
       "norm_label": "applyvenuehours()"
     },
     {
@@ -3883,7 +3883,7 @@
       "source_location": "L237",
       "_origin": "ast",
       "id": "public_script_editmodeon",
-      "community": 87,
+      "community": 28,
       "norm_label": "editmodeon()"
     },
     {
@@ -3923,7 +3923,7 @@
       "source_location": "L277",
       "_origin": "ast",
       "id": "public_script_hideeditlockbanner",
-      "community": 87,
+      "community": 28,
       "norm_label": "hideeditlockbanner()"
     },
     {
@@ -3933,7 +3933,7 @@
       "source_location": "L282",
       "_origin": "ast",
       "id": "public_script_seteditmode",
-      "community": 87,
+      "community": 28,
       "norm_label": "seteditmode()"
     },
     {
@@ -3943,7 +3943,7 @@
       "source_location": "L293",
       "_origin": "ast",
       "id": "public_script_refresheditlockui",
-      "community": 87,
+      "community": 28,
       "norm_label": "refresheditlockui()"
     },
     {
@@ -4013,7 +4013,7 @@
       "source_location": "L412",
       "_origin": "ast",
       "id": "public_script_parsedate",
-      "community": 87,
+      "community": 28,
       "norm_label": "parsedate()"
     },
     {
@@ -4383,7 +4383,7 @@
       "source_location": "L1132",
       "_origin": "ast",
       "id": "public_script_renderweeklabel",
-      "community": 57,
+      "community": 6,
       "norm_label": "renderweeklabel()"
     },
     {
@@ -4393,7 +4393,7 @@
       "source_location": "L1140",
       "_origin": "ast",
       "id": "public_script_refreshweek",
-      "community": 57,
+      "community": 6,
       "norm_label": "refreshweek()"
     },
     {
@@ -4403,7 +4403,7 @@
       "source_location": "L1160",
       "_origin": "ast",
       "id": "public_script_loadweekfulldata",
-      "community": 57,
+      "community": 6,
       "norm_label": "loadweekfulldata()"
     },
     {
@@ -4413,7 +4413,7 @@
       "source_location": "L1190",
       "_origin": "ast",
       "id": "public_script_loadweeksummary",
-      "community": 57,
+      "community": 6,
       "norm_label": "loadweeksummary()"
     },
     {
@@ -4443,7 +4443,7 @@
       "source_location": "L1319",
       "_origin": "ast",
       "id": "public_script_loadpublishbutton",
-      "community": 87,
+      "community": 28,
       "norm_label": "loadpublishbutton()"
     },
     {
@@ -4453,7 +4453,7 @@
       "source_location": "L1353",
       "_origin": "ast",
       "id": "public_script_publishestabs",
-      "community": 87,
+      "community": 28,
       "norm_label": "_publishestabs()"
     },
     {
@@ -4463,7 +4463,7 @@
       "source_location": "L1359",
       "_origin": "ast",
       "id": "public_script_renderpublishcontrol",
-      "community": 87,
+      "community": 28,
       "norm_label": "renderpublishcontrol()"
     },
     {
@@ -4473,7 +4473,7 @@
       "source_location": "L1379",
       "_origin": "ast",
       "id": "public_script_updatepublishbtnlabel",
-      "community": 87,
+      "community": 28,
       "norm_label": "updatepublishbtnlabel()"
     },
     {
@@ -4493,7 +4493,7 @@
       "source_location": "L1471",
       "_origin": "ast",
       "id": "public_script_patchpublish",
-      "community": 87,
+      "community": 28,
       "norm_label": "patchpublish()"
     },
     {
@@ -4573,7 +4573,7 @@
       "source_location": "L1849",
       "_origin": "ast",
       "id": "public_script_loadestablishments",
-      "community": 57,
+      "community": 6,
       "norm_label": "loadestablishments()"
     },
     {
@@ -4993,7 +4993,7 @@
       "source_location": "L3734",
       "_origin": "ast",
       "id": "public_script_tapselectstaff",
-      "community": 28,
+      "community": 4,
       "norm_label": "tapselectstaff()"
     },
     {
@@ -5003,7 +5003,7 @@
       "source_location": "L3763",
       "_origin": "ast",
       "id": "public_script_cleartapselection",
-      "community": 28,
+      "community": 4,
       "norm_label": "cleartapselection()"
     },
     {
@@ -5013,7 +5013,7 @@
       "source_location": "L3769",
       "_origin": "ast",
       "id": "public_script_showtapbanner",
-      "community": 28,
+      "community": 4,
       "norm_label": "showtapbanner()"
     },
     {
@@ -5023,7 +5023,7 @@
       "source_location": "L3784",
       "_origin": "ast",
       "id": "public_script_hidetapbanner",
-      "community": 28,
+      "community": 4,
       "norm_label": "hidetapbanner()"
     },
     {
@@ -5503,7 +5503,7 @@
       "source_location": "L6232",
       "_origin": "ast",
       "id": "public_script_kpiprogressbar",
-      "community": 57,
+      "community": 6,
       "norm_label": "_kpiprogressbar()"
     },
     {
@@ -5523,7 +5523,7 @@
       "source_location": "L6247",
       "_origin": "ast",
       "id": "public_script_loaddisposkpi",
-      "community": 57,
+      "community": 6,
       "norm_label": "loaddisposkpi()"
     },
     {
@@ -5533,7 +5533,7 @@
       "source_location": "L6265",
       "_origin": "ast",
       "id": "public_script_kpiestabrow",
-      "community": 57,
+      "community": 6,
       "norm_label": "_kpiestabrow()"
     },
     {
@@ -5543,7 +5543,7 @@
       "source_location": "L6289",
       "_origin": "ast",
       "id": "public_script_renderdisposkpicard",
-      "community": 57,
+      "community": 6,
       "norm_label": "renderdisposkpicard()"
     },
     {
@@ -9810,7 +9810,7 @@
       "label": "localDateParts()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6491",
+      "source_location": "L6521",
       "_origin": "ast",
       "id": "server_localdateparts",
       "community": 5,
@@ -9820,7 +9820,7 @@
       "label": "fmtClockHHMM()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6502",
+      "source_location": "L6532",
       "_origin": "ast",
       "id": "server_fmtclockhhmm",
       "community": 5,
@@ -9830,7 +9830,7 @@
       "label": "fmtHourFloatToHHMM()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6507",
+      "source_location": "L6537",
       "_origin": "ast",
       "id": "server_fmthourfloattohhmm",
       "community": 5,
@@ -9840,7 +9840,7 @@
       "label": "genCode4()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6516",
+      "source_location": "L6546",
       "_origin": "ast",
       "id": "server_gencode4",
       "community": 5,
@@ -9850,7 +9850,7 @@
       "label": "isValidHHMM()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6520",
+      "source_location": "L6550",
       "_origin": "ast",
       "id": "server_isvalidhhmm",
       "community": 5,
@@ -9860,7 +9860,7 @@
       "label": "hhmmToHourFloat()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6525",
+      "source_location": "L6555",
       "_origin": "ast",
       "id": "server_hhmmtohourfloat",
       "community": 5,
@@ -9870,7 +9870,7 @@
       "label": "roundQuarter()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6532",
+      "source_location": "L6562",
       "_origin": "ast",
       "id": "server_roundquarter",
       "community": 5,
@@ -9880,7 +9880,7 @@
       "label": "syncRealHoursFromCloture()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6541",
+      "source_location": "L6571",
       "_origin": "ast",
       "id": "server_syncrealhoursfromcloture",
       "community": 5,
@@ -9890,7 +9890,7 @@
       "label": "weekDateStrings()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6591",
+      "source_location": "L6621",
       "_origin": "ast",
       "id": "server_weekdatestrings",
       "community": 5,
@@ -9900,7 +9900,7 @@
       "label": "regenerateCodeCloture()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6602",
+      "source_location": "L6632",
       "_origin": "ast",
       "id": "server_regeneratecodecloture",
       "community": 5,
@@ -9910,7 +9910,7 @@
       "label": "ensureCodeCloture()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6624",
+      "source_location": "L6654",
       "_origin": "ast",
       "id": "server_ensurecodecloture",
       "community": 5,
@@ -9920,7 +9920,7 @@
       "label": "insertTimeValidation()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6632",
+      "source_location": "L6662",
       "_origin": "ast",
       "id": "server_inserttimevalidation",
       "community": 5,
@@ -9930,7 +9930,7 @@
       "label": "classifyCodeRefuse()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6637",
+      "source_location": "L6667",
       "_origin": "ast",
       "id": "server_classifycoderefuse",
       "community": 5,
@@ -9940,7 +9940,7 @@
       "label": "formatShiftTime()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7170",
+      "source_location": "L7199",
       "_origin": "ast",
       "id": "server_formatshifttime",
       "community": 5,
@@ -9950,7 +9950,7 @@
       "label": "formatDateFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7177",
+      "source_location": "L7206",
       "_origin": "ast",
       "id": "server_formatdatefr",
       "community": 5,
@@ -9960,7 +9960,7 @@
       "label": "formatDateShortFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7183",
+      "source_location": "L7212",
       "_origin": "ast",
       "id": "server_formatdateshortfr",
       "community": 5,
@@ -9970,7 +9970,7 @@
       "label": "formatWeekFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7189",
+      "source_location": "L7218",
       "_origin": "ast",
       "id": "server_formatweekfr",
       "community": 5,
@@ -9980,7 +9980,7 @@
       "label": "touchLastUpdated()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7197",
+      "source_location": "L7226",
       "_origin": "ast",
       "id": "server_touchlastupdated",
       "community": 5,
@@ -9990,7 +9990,7 @@
       "label": "nouveautesUserId()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7268",
+      "source_location": "L7297",
       "_origin": "ast",
       "id": "server_nouveautesuserid",
       "community": 5,
@@ -10000,7 +10000,7 @@
       "label": "DEPLOYED_COMMIT",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7321",
+      "source_location": "L7350",
       "_origin": "ast",
       "id": "server_deployed_commit",
       "community": 5,
@@ -17594,9 +17594,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture",
-      "target": "lib_utils",
-      "confidence_score": 1.0
+      "target": "lib_utils"
     },
     {
       "relation": "imports_from",
@@ -18879,9 +18879,9 @@
       "source_file": "package.json",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "package_scripts",
-      "target": "package_scripts_smoke_cloture",
-      "confidence_score": 1.0
+      "target": "package_scripts_smoke_cloture"
     },
     {
       "relation": "contains",
@@ -18889,9 +18889,9 @@
       "source_file": "package.json",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "package_scripts",
-      "target": "package_scripts_smoke_cloture_dev",
-      "confidence_score": 1.0
+      "target": "package_scripts_smoke_cloture_dev"
     },
     {
       "relation": "contains",
@@ -21271,9 +21271,9 @@
       "source_file": "public/planning.js",
       "source_location": "L3630",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_buildcloturecta",
-      "confidence_score": 1.0
+      "target": "public_planning_buildcloturecta"
     },
     {
       "relation": "contains",
@@ -23670,9 +23670,9 @@
       "source_file": "public/planning.js",
       "source_location": "L898",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_renderdaysinto",
-      "target": "public_planning_activeservicedatestr",
-      "confidence_score": 1.0
+      "target": "public_planning_activeservicedatestr"
     },
     {
       "relation": "calls",
@@ -24526,9 +24526,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L864",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_adddayslocal",
-      "confidence_score": 1.0
+      "target": "public_pointage_adddayslocal"
     },
     {
       "relation": "contains",
@@ -24536,9 +24536,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1050",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_ajusterheurecloture",
-      "confidence_score": 1.0
+      "target": "public_pointage_ajusterheurecloture"
     },
     {
       "relation": "contains",
@@ -24566,9 +24566,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L849",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_canuseclotureui",
-      "confidence_score": 1.0
+      "target": "public_pointage_canuseclotureui"
     },
     {
       "relation": "contains",
@@ -24586,9 +24586,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L842",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_cloture_roles",
-      "confidence_score": 1.0
+      "target": "public_pointage_cloture_roles"
     },
     {
       "relation": "contains",
@@ -24596,9 +24596,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1014",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_cloturemanuelle",
-      "confidence_score": 1.0
+      "target": "public_pointage_cloturemanuelle"
     },
     {
       "relation": "contains",
@@ -24616,9 +24616,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L858",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_escapehtml",
-      "confidence_score": 1.0
+      "target": "public_pointage_escapehtml"
     },
     {
       "relation": "contains",
@@ -24636,9 +24636,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L870",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_formatdatefr",
-      "confidence_score": 1.0
+      "target": "public_pointage_formatdatefr"
     },
     {
       "relation": "contains",
@@ -24666,9 +24666,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1093",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_initcloturepanel",
-      "confidence_score": 1.0
+      "target": "public_pointage_initcloturepanel"
     },
     {
       "relation": "contains",
@@ -24766,9 +24766,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L894",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_refreshcodecloture",
-      "confidence_score": 1.0
+      "target": "public_pointage_refreshcodecloture"
     },
     {
       "relation": "contains",
@@ -24786,9 +24786,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L916",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_renderclotureslist",
-      "confidence_score": 1.0
+      "target": "public_pointage_renderclotureslist"
     },
     {
       "relation": "contains",
@@ -24826,9 +24826,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L853",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_setlegacypointagevisible",
-      "confidence_score": 1.0
+      "target": "public_pointage_setlegacypointagevisible"
     },
     {
       "relation": "contains",
@@ -24866,9 +24866,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L879",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_stopcodecloturetimers",
-      "confidence_score": 1.0
+      "target": "public_pointage_stopcodecloturetimers"
     },
     {
       "relation": "contains",
@@ -24886,9 +24886,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L884",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_updatecodecloturecountdown",
-      "confidence_score": 1.0
+      "target": "public_pointage_updatecodecloturecountdown"
     },
     {
       "relation": "contains",
@@ -24896,9 +24896,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1076",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_validatecloturesweek",
-      "confidence_score": 1.0
+      "target": "public_pointage_validatecloturesweek"
     },
     {
       "relation": "calls",
@@ -24951,9 +24951,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L920",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_renderclotureslist",
-      "target": "public_pointage_todatestr",
-      "confidence_score": 1.0
+      "target": "public_pointage_todatestr"
     },
     {
       "relation": "calls",
@@ -24962,9 +24962,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1078",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_validatecloturesweek",
-      "target": "public_pointage_todatestr",
-      "confidence_score": 1.0
+      "target": "public_pointage_todatestr"
     },
     {
       "relation": "calls",
@@ -25094,9 +25094,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1056",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_ajusterheurecloture",
-      "target": "public_pointage_showtoast",
-      "confidence_score": 1.0
+      "target": "public_pointage_showtoast"
     },
     {
       "relation": "calls",
@@ -25105,9 +25105,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1032",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_cloturemanuelle",
-      "target": "public_pointage_showtoast",
-      "confidence_score": 1.0
+      "target": "public_pointage_showtoast"
     },
     {
       "relation": "calls",
@@ -25116,9 +25116,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L901",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_refreshcodecloture",
-      "target": "public_pointage_showtoast",
-      "confidence_score": 1.0
+      "target": "public_pointage_showtoast"
     },
     {
       "relation": "calls",
@@ -25127,9 +25127,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1088",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_validatecloturesweek",
-      "target": "public_pointage_showtoast",
-      "confidence_score": 1.0
+      "target": "public_pointage_showtoast"
     },
     {
       "relation": "calls",
@@ -25182,9 +25182,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L312",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_init",
-      "target": "public_pointage_initcloturepanel",
-      "confidence_score": 1.0
+      "target": "public_pointage_initcloturepanel"
     },
     {
       "relation": "calls",
@@ -25248,9 +25248,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1096",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_initcloturepanel",
-      "target": "public_pointage_canuseclotureui",
-      "confidence_score": 1.0
+      "target": "public_pointage_canuseclotureui"
     },
     {
       "relation": "calls",
@@ -25259,9 +25259,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L895",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_refreshcodecloture",
-      "target": "public_pointage_canuseclotureui",
-      "confidence_score": 1.0
+      "target": "public_pointage_canuseclotureui"
     },
     {
       "relation": "calls",
@@ -25270,9 +25270,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1099",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_initcloturepanel",
-      "target": "public_pointage_setlegacypointagevisible",
-      "confidence_score": 1.0
+      "target": "public_pointage_setlegacypointagevisible"
     },
     {
       "relation": "calls",
@@ -25281,9 +25281,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1010",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_renderclotureslist",
-      "target": "public_pointage_escapehtml",
-      "confidence_score": 1.0
+      "target": "public_pointage_escapehtml"
     },
     {
       "relation": "calls",
@@ -25292,9 +25292,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L923",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_renderclotureslist",
-      "target": "public_pointage_formatdatefr",
-      "confidence_score": 1.0
+      "target": "public_pointage_formatdatefr"
     },
     {
       "relation": "calls",
@@ -25303,9 +25303,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1098",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_initcloturepanel",
-      "target": "public_pointage_stopcodecloturetimers",
-      "confidence_score": 1.0
+      "target": "public_pointage_stopcodecloturetimers"
     },
     {
       "relation": "calls",
@@ -25314,9 +25314,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L908",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_refreshcodecloture",
-      "target": "public_pointage_updatecodecloturecountdown",
-      "confidence_score": 1.0
+      "target": "public_pointage_updatecodecloturecountdown"
     },
     {
       "relation": "calls",
@@ -25325,9 +25325,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1046",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_cloturemanuelle",
-      "target": "public_pointage_refreshcodecloture",
-      "confidence_score": 1.0
+      "target": "public_pointage_refreshcodecloture"
     },
     {
       "relation": "calls",
@@ -25336,9 +25336,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1120",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_initcloturepanel",
-      "target": "public_pointage_refreshcodecloture",
-      "confidence_score": 1.0
+      "target": "public_pointage_refreshcodecloture"
     },
     {
       "relation": "calls",
@@ -25347,9 +25347,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1072",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_ajusterheurecloture",
-      "target": "public_pointage_renderclotureslist",
-      "confidence_score": 1.0
+      "target": "public_pointage_renderclotureslist"
     },
     {
       "relation": "calls",
@@ -25358,9 +25358,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1045",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_cloturemanuelle",
-      "target": "public_pointage_renderclotureslist",
-      "confidence_score": 1.0
+      "target": "public_pointage_renderclotureslist"
     },
     {
       "relation": "calls",
@@ -25369,9 +25369,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1121",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_initcloturepanel",
-      "target": "public_pointage_renderclotureslist",
-      "confidence_score": 1.0
+      "target": "public_pointage_renderclotureslist"
     },
     {
       "relation": "calls",
@@ -25380,9 +25380,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1089",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_validatecloturesweek",
-      "target": "public_pointage_renderclotureslist",
-      "confidence_score": 1.0
+      "target": "public_pointage_renderclotureslist"
     },
     {
       "relation": "calls",
@@ -36022,9 +36022,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L19",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture",
-      "target": "scripts_smoke_cloture_base",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_cloture_base"
     },
     {
       "relation": "contains",
@@ -36032,9 +36032,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L46",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture",
-      "target": "scripts_smoke_cloture_check",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_cloture_check"
     },
     {
       "relation": "contains",
@@ -36042,9 +36042,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L56",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture",
-      "target": "scripts_smoke_cloture_eq",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_cloture_eq"
     },
     {
       "relation": "contains",
@@ -36052,9 +36052,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L25",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture",
-      "target": "scripts_smoke_cloture_jar",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_cloture_jar"
     },
     {
       "relation": "contains",
@@ -36062,9 +36062,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L41",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture",
-      "target": "scripts_smoke_cloture_login",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_cloture_login"
     },
     {
       "relation": "contains",
@@ -36072,9 +36072,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L72",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture",
-      "target": "scripts_smoke_cloture_main",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_cloture_main"
     },
     {
       "relation": "contains",
@@ -36082,9 +36082,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L68",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture",
-      "target": "scripts_smoke_cloture_mondaystr",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_cloture_mondaystr"
     },
     {
       "relation": "contains",
@@ -36092,9 +36092,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L60",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture",
-      "target": "scripts_smoke_cloture_ok",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_cloture_ok"
     },
     {
       "relation": "contains",
@@ -36102,9 +36102,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L26",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture",
-      "target": "scripts_smoke_cloture_req",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_cloture_req"
     },
     {
       "relation": "contains",
@@ -36112,9 +36112,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L44",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture",
-      "target": "scripts_smoke_cloture_results",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_cloture_results"
     },
     {
       "relation": "contains",
@@ -36122,9 +36122,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L64",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture",
-      "target": "scripts_smoke_cloture_todaystr",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_cloture_todaystr"
     },
     {
       "relation": "contains",
@@ -36132,9 +36132,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture",
-      "target": "scripts_smoke_cloture_weekstart_todatestr",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_cloture_weekstart_todatestr"
     },
     {
       "relation": "calls",
@@ -36143,9 +36143,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L41",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture_login",
-      "target": "scripts_smoke_cloture_req",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_cloture_req"
     },
     {
       "relation": "calls",
@@ -36154,9 +36154,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L106",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture_main",
-      "target": "scripts_smoke_cloture_req",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_cloture_req"
     },
     {
       "relation": "calls",
@@ -36165,9 +36165,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L96",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture_main",
-      "target": "scripts_smoke_cloture_login",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_cloture_login"
     },
     {
       "relation": "calls",
@@ -36176,9 +36176,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L114",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture_main",
-      "target": "scripts_smoke_cloture_check",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_cloture_check"
     },
     {
       "relation": "calls",
@@ -36187,9 +36187,9 @@
       "source_file": "scripts/smoke-cloture.js",
       "source_location": "L108",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_cloture_main",
-      "target": "scripts_smoke_cloture_ok",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_cloture_ok"
     },
     {
       "relation": "contains",
@@ -37175,9 +37175,9 @@
       "source_file": "server.js",
       "source_location": "L6525",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "server_hhmmtohourfloat",
-      "confidence_score": 1.0
+      "target": "server_hhmmtohourfloat"
     },
     {
       "relation": "contains",
@@ -37575,9 +37575,9 @@
       "source_file": "server.js",
       "source_location": "L6532",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "server_roundquarter",
-      "confidence_score": 1.0
+      "target": "server_roundquarter"
     },
     {
       "relation": "contains",
@@ -37695,9 +37695,9 @@
       "source_file": "server.js",
       "source_location": "L6541",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "server_syncrealhoursfromcloture",
-      "confidence_score": 1.0
+      "target": "server_syncrealhoursfromcloture"
     },
     {
       "relation": "contains",
@@ -38096,9 +38096,9 @@
       "source_file": "server.js",
       "source_location": "L6579",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server_syncrealhoursfromcloture",
-      "target": "server_localdateparts",
-      "confidence_score": 1.0
+      "target": "server_localdateparts"
     },
     {
       "relation": "calls",
@@ -38129,9 +38129,9 @@
       "source_file": "server.js",
       "source_location": "L6526",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server_hhmmtohourfloat",
-      "target": "server_isvalidhhmm",
-      "confidence_score": 1.0
+      "target": "server_isvalidhhmm"
     },
     {
       "relation": "calls",
@@ -38140,9 +38140,9 @@
       "source_file": "server.js",
       "source_location": "L6548",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server_syncrealhoursfromcloture",
-      "target": "server_hhmmtohourfloat",
-      "confidence_score": 1.0
+      "target": "server_hhmmtohourfloat"
     },
     {
       "relation": "calls",
@@ -38151,9 +38151,9 @@
       "source_file": "server.js",
       "source_location": "L6548",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server_syncrealhoursfromcloture",
-      "target": "server_roundquarter",
-      "confidence_score": 1.0
+      "target": "server_roundquarter"
     },
     {
       "relation": "calls",
@@ -38162,9 +38162,9 @@
       "source_file": "server.js",
       "source_location": "L6571",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server_syncrealhoursfromcloture",
-      "target": "server_inserttimevalidation",
-      "confidence_score": 1.0
+      "target": "server_inserttimevalidation"
     },
     {
       "relation": "calls",
@@ -38330,9 +38330,9 @@
       "source_file": "tests/cloture-otp.test.js",
       "source_location": "L90",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_cloture_otp_test",
-      "target": "tests_cloture_otp_test_currentcode",
-      "confidence_score": 1.0
+      "target": "tests_cloture_otp_test_currentcode"
     },
     {
       "relation": "contains",
@@ -38390,9 +38390,9 @@
       "source_file": "tests/cloture-otp.test.js",
       "source_location": "L96",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_cloture_otp_test",
-      "target": "tests_cloture_otp_test_pointerdebut",
-      "confidence_score": 1.0
+      "target": "tests_cloture_otp_test_pointerdebut"
     },
     {
       "relation": "contains",
@@ -38400,9 +38400,9 @@
       "source_file": "tests/cloture-otp.test.js",
       "source_location": "L102",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_cloture_otp_test",
-      "target": "tests_cloture_otp_test_pointerfin",
-      "confidence_score": 1.0
+      "target": "tests_cloture_otp_test_pointerfin"
     },
     {
       "relation": "contains",
@@ -46374,5 +46374,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "ae4dfb5c01c0c540152334a214e76a36cb999978"
+  "built_at_commit": "c87f37c512aff9366457a0d98fdf8c282110d497"
 }

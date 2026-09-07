@@ -1,16 +1,16 @@
 # Graph Report - app-planning-bar  (2026-09-07)
 
 ## Corpus Check
-- 67 files · ~313,922 words
+- 67 files · ~314,044 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1680 nodes · 2811 edges · 97 communities (85 shown, 12 thin omitted)
+- 1680 nodes · 2811 edges · 96 communities (84 shown, 12 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 99 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ae4dfb5c`
+- Built from commit: `c87f37c5`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -101,7 +101,6 @@
 - [[_COMMUNITY_Community 84|Community 84]]
 - [[_COMMUNITY_Community 85|Community 85]]
 - [[_COMMUNITY_Community 86|Community 86]]
-- [[_COMMUNITY_Community 87|Community 87]]
 - [[_COMMUNITY_Community 88|Community 88]]
 - [[_COMMUNITY_Community 89|Community 89]]
 - [[_COMMUNITY_Community 90|Community 90]]
@@ -144,7 +143,7 @@
 - **Sûreté timezone via toDateStr** — architecture_timezone_rule, architecture_todatestr, architecture_push_past_shift_guard [EXTRACTED 0.85]
 - **Cycle de vie feature iCal (livrée puis désactivée)** — backlog_f09_ical, architecture_ical_feed, architecture_calendar_enabled_flag [EXTRACTED 0.90]
 
-## Communities (97 total, 12 thin omitted)
+## Communities (96 total, 12 thin omitted)
 
 ### Community 0 - "Planning Board UI"
 Cohesion: 0.07
@@ -164,15 +163,15 @@ Nodes (34): Ae(), mr(), QB(), re(), se(), w(), _(), a() (+26 more)
 
 ### Community 4 - "Main Planning Script (State)"
 Cohesion: 0.02
-Nodes (70): addManagerOff(), allEstablishments, allGroups, allRoles, allStaff, AUTO_COLORS, _autoScroll, _btnCopyWeek (+62 more)
+Nodes (74): addManagerOff(), allEstablishments, allGroups, allRoles, allStaff, AUTO_COLORS, _autoScroll, _btnCopyWeek (+66 more)
 
 ### Community 5 - "Express Server & API"
 Cohesion: 0.03
 Nodes (46): isFullRangeOnConge(), isValidObjectId(), app, archivedStaff(), bcrypt, canAccessEstablishment(), client, cors (+38 more)
 
 ### Community 6 - "Week Data Loading"
-Cohesion: 0.10
-Nodes (38): addDays(), applyViewMode(), disposScopeQS(), exportWeekCSV(), formatDateShort(), generatePrintGantt(), getMondayOf(), isToday() (+30 more)
+Cohesion: 0.08
+Nodes (48): addDays(), applyVenueHours(), applyViewMode(), disposScopeQS(), exportWeekCSV(), formatDateShort(), generatePrintGantt(), getMondayOf() (+40 more)
 
 ### Community 7 - "NPM Dependencies"
 Cohesion: 0.04
@@ -262,8 +261,8 @@ Cohesion: 0.15
 Nodes (19): BASE, check(), D(), expectIdx, FROM, git(), jar, login() (+11 more)
 
 ### Community 28 - "Community 28"
-Cohesion: 0.12
-Nodes (17): clearTapSelection(), deleteAccount(), editLockApplies(), hideTapBanner(), isMobileDevice(), isPhone(), isTablet(), isTouchDevice() (+9 more)
+Cohesion: 0.11
+Nodes (23): deleteAccount(), editLockApplies(), editModeOn(), hideEditLockBanner(), isMobileDevice(), isPhone(), isTablet(), isTouchDevice() (+15 more)
 
 ### Community 29 - "html2canvas Internals B"
 Cohesion: 0.09
@@ -334,8 +333,8 @@ Cohesion: 0.22
 Nodes (8): 1. Un planning publié ne se modifie plus d'un doigt qui glisse, 2. L'en-tête d'une journée ne perd plus ses boutons sur téléphone, 3. La semaine-type s'ouvre à toute votre équipe, 4. Le calendrier des congés se lit en liste, 5. « Du neuf » — l'application vous dit ce qui change, 6. Petits ajustements, Ce qui ne change pas, Templyo — ce qui change à la prochaine mise à jour
 
 ### Community 57 - "Community 57"
-Cohesion: 0.14
-Nodes (16): addEstablishment(), applyVenueHours(), _kpiEstabRow(), _kpiProgressBar(), loadDisposKpi(), loadEstablishments(), loadGroups(), loadWeekFullData() (+8 more)
+Cohesion: 0.33
+Nodes (6): addEstablishment(), loadGroups(), openEstablishmentsModal(), renderEstablishmentsList(), renderGroupFilter(), renderTabs()
 
 ### Community 58 - "Community 58"
 Cohesion: 0.18
@@ -452,10 +451,6 @@ Nodes (6): cancelConge(), loadCongesTab(), renderCongesList(), setCongeStatus(),
 ### Community 86 - "Community 86"
 Cohesion: 0.40
 Nodes (5): cn(), on(), Qn(), SUPPORT_WORD_BREAKING(), g()
-
-### Community 87 - "Community 87"
-Cohesion: 0.31
-Nodes (10): editModeOn(), hideEditLockBanner(), loadPublishButton(), parseDate(), patchPublish(), _publishEstabs(), refreshEditLockUI(), renderPublishControl() (+2 more)
 
 ### Community 88 - "Community 88"
 Cohesion: 0.33

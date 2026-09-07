@@ -360,9 +360,15 @@ test('valider-recap pose patron_valide sur les shifts clôturés de la semaine',
 
     const adj = await req('/api/shifts/' + SHIFT + '/ajuster-heure', PATRON, {
         method: 'PATCH',
-        body: JSON.stringify({ heure_validee_finale: '22:00' }),
+        body: JSON.stringify({ heure_validee_finale: '22:00', motif: 'Correction après récap' }),
     });
-    assert.equal(adj.status, 409);
+    assert.equal(adj.status, 200);
+    const adjData = await adj.json();
+    assert.equal(adjData.heure_validee_finale, '22:00');
+    const after = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT);
+    assert.equal(after.patron_valide, true);
+    assert.equal(after.heure_validee_finale, '22:00');
+    assert.equal(after.real_end, 22);
 });
 
 test('time_validations : aucune update/delete dans le flux (append-only)', async () => {

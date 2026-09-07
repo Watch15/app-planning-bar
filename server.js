@@ -6464,27 +6464,57 @@ app.post('/api/shifts/extra', checkDB, requireAuth, async (req, res) => {
         const color           = staffDoc?.color || '#95a5a6';
         const resolvedName    = staffDoc?.name  || staff_name || 'Inconnu';
         const resolvedStaffId = staffDoc ? String(staffDoc._id) : (staff_id || null);
+        const rs = parseFloat(real_start);
+        const re = parseFloat(real_end);
+        const debutHHMM = fmtHourFloatToHHMM(rs);
+        const finHHMM   = fmtHourFloatToHHMM(re);
         const shift = {
             staff_id:         resolvedStaffId,
             staff_name:       resolvedName,
             establishment_id: estabId,
             date,
-            start_time:       parseFloat(real_start),
-            end_time:         parseFloat(real_end),
-            real_start:       parseFloat(real_start),
-            real_end:         parseFloat(real_end),
+            start_time:       rs,
+            end_time:         re,
+            real_start:       rs,
+            real_end:         re,
             color,
             extra:            true,
+            debut_valide_code:   debutHHMM,
+            debut_valide_finale: debutHHMM,
+            debut_source:        'manuelle',
+            heure_validee_code:   finHHMM,
+            heure_validee_finale: finHHMM,
+            cloture_source:       'manuelle',
             created_at:       new Date(),
         };
         const result = await db.collection('shifts').insertOne(shift);
-        res.status(201).json({ ...shift, _id: result.insertedId });
+        const actorId = user.staff_id || user._id;
+        await insertTimeValidation({
+            etablissement_id: estabId,
+            shift_id:         String(result.insertedId),
+            staff_id:         String(actorId),
+            acteur_role:      user.role || null,
+            action:           'manuel_fin',
+            source:           'manuelle',
+            code_saisi:       'EXTRA',
+            heure_saisie:     localDateParts(),
+            resultat:         'accepte',
+            phase:            'fin',
+        });
+        await syncRealHoursFromCloture(result.insertedId, {
+            staff_id: actorId,
+            role: user.role,
+            action: 'manuel_fin',
+            source: 'manuelle',
+            code_saisi: 'EXTRA',
+        });
+        const saved = await db.collection('shifts').findOne({ _id: result.insertedId });
+        res.status(201).json(saved || { ...shift, _id: result.insertedId });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-// ── Clôture de service par code OTP (piste légale parallèle au pointage) ───────
-// Pas une signature eIDAS : session + horodatage + enregistrements d'origine non mutés.
-// Ne touche PAS real_start / real_end (ShiftHours / paie inchangés).
+// ── Clôture de service par code OTP ───────────────────────────────────────────
+// Preuve métier (codes / retenues) + sync real_start/real_end quand la paire est complète.
 
 const CLOTURE_CODE_TTL_MS = 15 * 60 * 1000;
 
@@ -7014,8 +7044,7 @@ app.patch('/api/shifts/:id/ajuster-heure',
             if (!shift) return res.status(404).json({ error: 'Shift introuvable' });
             if (!canAccessEstablishment(req.session.user, shift.establishment_id))
                 return res.status(403).json({ error: 'Accès refusé' });
-            if (shift.patron_valide)
-                return res.status(409).json({ error: 'Récap déjà validé — ajustement impossible' });
+            // Patron peut corriger même après validation du récap (litige / erreur).
             if (hasFin && !shift.heure_validee_code)
                 return res.status(409).json({ error: 'Fin non clôturée — rien à ajuster' });
             if (hasDebut && !shift.debut_valide_code)
