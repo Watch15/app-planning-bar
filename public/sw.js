@@ -4,6 +4,10 @@
 // si le token disparaît, l'id de cache se fige et les clients gardent une version
 // périmée. En local, utiliser `npm run dev` (qui ne substitue pas).
 const CACHE = 'templyo-' + '%%BUILD_TIME%%';
+// En local, `npm run dev` ne substitue pas le token → l'id de cache est figé.
+// Cache-First servirait alors un JS/CSS périmé indéfiniment (ex. panneau clôture
+// absent après un merge). Network-First tant que le token n'est pas remplacé.
+const DEV_UNVERSIONED = CACHE.indexOf('%%BUILD_TIME%%') !== -1;
 const STATIC = [
     '/login.html',
     '/set-password.html',
@@ -97,22 +101,30 @@ self.addEventListener('fetch', e => {
         return;
     }
 
-    // Assets statiques (JS/CSS/vendor) — Cache First avec fallback réseau
+    // Assets statiques (JS/CSS/vendor) —
+    // Prod (cache versionné) : Cache First. Local (token non substitué) : Network First.
     e.respondWith(
-        caches.match(e.request).then(cached => {
-            if (cached) return cached;
-            return fetch(e.request).then(res => {
+        DEV_UNVERSIONED
+            ? fetch(e.request).then(res => {
                 if (res.ok) {
                     const clone = res.clone();
                     caches.open(CACHE).then(cache => cache.put(e.request, clone));
                 }
                 return res;
-            });
-        // Même précaution : un asset absent du cache ne doit pas résoudre `undefined`.
-        // (Servir `/login.html` pour un .js est douteux, mais c'est le comportement
-        // existant — on se contente de garantir une réponse.)
-        }).catch(async () => await caches.match('/login.html')
-            || new Response('', { status: 504, statusText: 'Hors ligne' }))
+            }).catch(async () => await caches.match(e.request)
+                || await caches.match('/login.html')
+                || new Response('', { status: 504, statusText: 'Hors ligne' }))
+            : caches.match(e.request).then(cached => {
+                if (cached) return cached;
+                return fetch(e.request).then(res => {
+                    if (res.ok) {
+                        const clone = res.clone();
+                        caches.open(CACHE).then(cache => cache.put(e.request, clone));
+                    }
+                    return res;
+                });
+            }).catch(async () => await caches.match('/login.html')
+                || new Response('', { status: 504, statusText: 'Hors ligne' }))
     );
 });
 
