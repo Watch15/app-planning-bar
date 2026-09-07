@@ -72,10 +72,10 @@ function mondayStr() {
 async function main() {
     console.log('\n🔥 Smoke clôture OTP → ' + BASE + '\n');
 
-    // Santé
+    // Santé — GET /health (comme scripts/smoke.js), pas /api/health
     let health;
     try {
-        health = await fetch(BASE + '/api/health').then(r => r.json());
+        health = await fetch(BASE + '/health').then(r => r.json());
     } catch (e) {
         console.error('❌ Instance injoignable : ' + e.message);
         console.error('   Démarre `npm run dev:server` ou passe l\'URL en argument.\n');
