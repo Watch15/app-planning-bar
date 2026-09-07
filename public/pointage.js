@@ -917,12 +917,18 @@ async function renderCloturesList() {
             .sort((a, b) => (a.date === b.date ? String(a.staff_name || '').localeCompare(String(b.staff_name || ''), 'fr') : (a.date < b.date ? -1 : 1)))
             .forEach(s => {
                 const row = document.createElement('div');
+                const hasDebut = !!s.debut_valide_code;
                 const closed = !!s.heure_validee_finale;
+                const inService = hasDebut && !closed;
                 row.className = 'cloture-row' + (closed ? ' closed' : '');
-                const srcBadge = closed
-                    ? '<span class="cloture-badge ' + (s.cloture_source === 'manuelle' ? 'manuelle' : 'code') + '">' +
-                      (s.cloture_source === 'manuelle' ? 'Manuelle' : 'Code') + '</span>'
-                    : '<span class="cloture-badge wait">Non clôturé</span>';
+                let statusBadge;
+                if (closed) {
+                    statusBadge = '<span class="cloture-badge ' + (s.cloture_source === 'manuelle' ? 'manuelle' : 'code') + '">Clôturé</span>';
+                } else if (inService) {
+                    statusBadge = '<span class="cloture-badge code">En service</span>';
+                } else {
+                    statusBadge = '<span class="cloture-badge wait">Non commencé</span>';
+                }
                 const validBadge = s.patron_valide
                     ? '<span class="cloture-badge ok">Récap validé</span>'
                     : '';
@@ -932,23 +938,33 @@ async function renderCloturesList() {
                         '<div class="cloture-row-name">' + escapeHtml(s.staff_name || '—') +
                         (s.is_joker ? ' <span class="joker">(Joker)</span>' : '') + '</div>' +
                         '<div class="cloture-row-meta">' + escapeHtml(s.date) +
-                        ' · planifié ' + fmtPlan(s.start_time) + '–' + fmtPlan(s.end_time) + '</div>' +
+                        ' · planifié ' + fmtPlan(s.start_time) + '–' + fmtPlan(s.end_time) +
+                        ' · ' + statusBadge + ' ' + validBadge + '</div>' +
                         '<div class="cloture-row-hours">' +
-                            '<span>Origine : <strong>' + escapeHtml(s.heure_validee_code || '—') + '</strong></span>' +
-                            '<span>Retenue : <strong>' + escapeHtml(s.heure_validee_finale || '—') + '</strong></span>' +
-                            srcBadge + validBadge +
+                            '<span>Début origine : <strong>' + escapeHtml(s.debut_valide_code || '—') + '</strong></span>' +
+                            '<span>Début retenu : <strong>' + escapeHtml(s.debut_valide_finale || '—') + '</strong></span>' +
+                        '</div>' +
+                        '<div class="cloture-row-hours">' +
+                            '<span>Fin origine : <strong>' + escapeHtml(s.heure_validee_code || '—') + '</strong></span>' +
+                            '<span>Fin retenue : <strong>' + escapeHtml(s.heure_validee_finale || '—') + '</strong></span>' +
                         '</div>' +
                         (s.motif_modification ? '<div class="cloture-row-motif">' + escapeHtml(s.motif_modification) + '</div>' : '') +
                     '</div>' +
                     '<div class="cloture-row-actions"></div>';
                 const actions = row.querySelector('.cloture-row-actions');
-                if (!closed) {
+                if (!hasDebut && !closed) {
                     const btn = document.createElement('button');
                     btn.type = 'button';
-                    btn.textContent = 'Clôture manuelle';
-                    btn.addEventListener('click', () => clotureManuelle(s));
+                    btn.textContent = 'Début manuel';
+                    btn.addEventListener('click', () => clotureManuelle(s, 'debut'));
                     actions.appendChild(btn);
-                } else if (!s.patron_valide) {
+                } else if (hasDebut && !closed) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.textContent = 'Fin manuelle';
+                    btn.addEventListener('click', () => clotureManuelle(s, 'fin'));
+                    actions.appendChild(btn);
+                } else if (closed && !s.patron_valide) {
                     const btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = 'btn-adjust';
@@ -963,12 +979,29 @@ async function renderCloturesList() {
     }
 }
 
-async function clotureManuelle(shift) {
-    const heure = prompt('Heure de clôture (HH:MM) — laisse vide pour utiliser la fin planifiée', shift.heure_validee_finale || '');
+async function clotureManuelle(shift, phase) {
+    const isDebut = phase === 'debut';
+    const label = isDebut
+        ? 'Heure de début (HH:MM) — laisse vide pour utiliser le début planifié'
+        : 'Heure de fin (HH:MM) — laisse vide pour utiliser la fin planifiée';
+    const def = isDebut
+        ? (shift.debut_valide_finale || '')
+        : (shift.heure_validee_finale || '');
+    const heure = prompt(label, def);
     if (heure === null) return;
     try {
-        const body = {};
+        const body = { phase: isDebut ? 'debut' : 'fin' };
         if (heure.trim()) body.heure = heure.trim();
+        // Fin sans début : forcer les deux si le patron le souhaite
+        if (!isDebut && !shift.debut_valide_code) {
+            const heureDebut = prompt('Début manquant — heure de début (HH:MM) pour forcer les deux', '');
+            if (heureDebut === null) return;
+            if (!heureDebut.trim()) {
+                showToast('Heure de début requise pour forcer la clôture', true);
+                return;
+            }
+            body.heure_debut = heureDebut.trim();
+        }
         const res = await fetch('/api/shifts/' + shift._id + '/cloturer-manuel', {
             method: 'POST', credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -976,25 +1009,34 @@ async function clotureManuelle(shift) {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Erreur');
-        showToast('Clôture manuelle enregistrée');
+        showToast(isDebut ? 'Début manuel enregistré' : 'Fin manuelle enregistrée');
         renderCloturesList();
         refreshCodeCloture(true);
     } catch (e) { showToast(e.message, true); }
 }
 
 async function ajusterHeureCloture(shift) {
-    const heure = prompt('Nouvelle heure retenue (HH:MM)', shift.heure_validee_finale || '');
-    if (heure === null || !heure.trim()) return;
+    const debut = prompt('Début retenu (HH:MM) — vide = inchangé', shift.debut_valide_finale || '');
+    if (debut === null) return;
+    const fin = prompt('Fin retenue (HH:MM) — vide = inchangé', shift.heure_validee_finale || '');
+    if (fin === null) return;
+    if (!debut.trim() && !fin.trim()) {
+        showToast('Aucune modification', true);
+        return;
+    }
     const motif = prompt('Motif (optionnel)', shift.motif_modification || '') || '';
     try {
+        const body = { motif: motif.trim() || undefined };
+        if (debut.trim()) body.debut_valide_finale = debut.trim();
+        if (fin.trim()) body.heure_validee_finale = fin.trim();
         const res = await fetch('/api/shifts/' + shift._id + '/ajuster-heure', {
             method: 'PATCH', credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ heure_validee_finale: heure.trim(), motif: motif.trim() || undefined }),
+            body: JSON.stringify(body),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Erreur');
-        showToast('Heure ajustée (origine conservée : ' + data.heure_validee_code + ')');
+        showToast('Heures ajustées (origines conservées)');
         renderCloturesList();
     } catch (e) { showToast(e.message, true); }
 }

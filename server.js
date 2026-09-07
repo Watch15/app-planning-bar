@@ -6612,29 +6612,34 @@ app.get('/api/etablissements/:id/clotures-semaine',
                 type: { $ne: 'week_note' },
             }).toArray();
             res.json(shifts.map(s => ({
-                _id:                 s._id,
-                staff_id:            s.staff_id,
-                staff_name:          s.staff_name,
-                date:                s.date,
-                start_time:          s.start_time,
-                end_time:            s.end_time,
-                heure_validee_code:  s.heure_validee_code  ?? null,
-                heure_validee_finale:s.heure_validee_finale ?? null,
-                cloture_source:      s.cloture_source ?? null,
-                motif_modification:  s.motif_modification ?? null,
-                patron_valide:       !!s.patron_valide,
-                patron_valide_le:    s.patron_valide_le ?? null,
-                is_joker:            !!(s.is_joker || s.staff_id === '__joker__'),
+                _id:                  s._id,
+                staff_id:             s.staff_id,
+                staff_name:           s.staff_name,
+                date:                 s.date,
+                start_time:           s.start_time,
+                end_time:             s.end_time,
+                debut_valide_code:    s.debut_valide_code    ?? null,
+                debut_valide_finale:  s.debut_valide_finale  ?? null,
+                debut_source:         s.debut_source         ?? null,
+                heure_validee_code:   s.heure_validee_code   ?? null,
+                heure_validee_finale: s.heure_validee_finale ?? null,
+                cloture_source:       s.cloture_source       ?? null,
+                motif_modification:   s.motif_modification  ?? null,
+                patron_valide:        !!s.patron_valide,
+                patron_valide_le:     s.patron_valide_le     ?? null,
+                is_joker:             !!(s.is_joker || s.staff_id === '__joker__'),
             })));
         } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
     }
 );
 
-// POST clôturer un shift via code OTP (staff)
+// POST pointer début ou fin via code OTP (staff) — body { code, phase: 'debut'|'fin' }
+// phase défaut 'fin' (rétrocompat) ; la fin exige un début déjà pointé.
 app.post('/api/shifts/:id/cloturer-par-code', checkDB, requireAuth, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const code = String(req.body?.code || '').trim();
     if (!/^\d{4}$/.test(code)) return res.status(400).json({ error: 'Code à 4 chiffres requis' });
+    const phase = req.body?.phase === 'debut' ? 'debut' : 'fin';
     const user = req.session.user;
     if (!user.staff_id && user.role === 'staff')
         return res.status(403).json({ error: 'Aucun profil staff lié' });
@@ -6661,8 +6666,17 @@ app.post('/api/shifts/:id/cloturer-par-code', checkDB, requireAuth, async (req, 
             return res.status(403).json({ error: 'Tu ne peux clôturer que ton propre shift' });
         }
 
-        if (shift.heure_validee_code)
-            return res.status(409).json({ error: 'Ce shift est déjà clôturé' });
+        if (phase === 'debut') {
+            if (shift.debut_valide_code)
+                return res.status(409).json({ error: 'Début déjà pointé' });
+            if (shift.heure_validee_code)
+                return res.status(409).json({ error: 'Ce shift est déjà clôturé' });
+        } else {
+            if (!shift.debut_valide_code)
+                return res.status(409).json({ error: 'Pointe d\'abord le début de service' });
+            if (shift.heure_validee_code)
+                return res.status(409).json({ error: 'Ce shift est déjà clôturé' });
+        }
 
         const now = new Date();
         const heureSaisie = localDateParts(now);
@@ -6694,6 +6708,7 @@ app.post('/api/shifts/:id/cloturer-par-code', checkDB, requireAuth, async (req, 
                 code_saisi:       code,
                 heure_saisie:     heureSaisie,
                 resultat,
+                phase,
             });
             const msg = resultat === 'refuse_code_deja_utilise'
                 ? 'Code déjà utilisé — redemande un code au responsable'
@@ -6711,7 +6726,29 @@ app.post('/api/shifts/:id/cloturer-par-code', checkDB, requireAuth, async (req, 
             code_saisi:       code,
             heure_saisie:     heureSaisie,
             resultat:         'accepte',
+            phase,
         });
+
+        if (phase === 'debut') {
+            await db.collection('shifts').updateOne(
+                { _id: shift._id },
+                {
+                    $set: {
+                        debut_valide_code:   heure,
+                        debut_valide_finale: heure,
+                        debut_source:        'code',
+                    },
+                }
+            );
+            await regenerateCodeCloture(shift.establishment_id);
+            return res.json({
+                message: 'Début de service pointé',
+                phase: 'debut',
+                debut_valide_code: heure,
+                debut_valide_finale: heure,
+            });
+        }
+
         await db.collection('shifts').updateOne(
             { _id: shift._id },
             {
@@ -6723,20 +6760,73 @@ app.post('/api/shifts/:id/cloturer-par-code', checkDB, requireAuth, async (req, 
             }
         );
         await regenerateCodeCloture(shift.establishment_id);
-        res.json({ message: 'Service clôturé', heure_validee_code: heure, heure_validee_finale: heure });
+        res.json({
+            message: 'Service clôturé',
+            phase: 'fin',
+            heure_validee_code: heure,
+            heure_validee_finale: heure,
+        });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-// POST clôture manuelle (manager) — preuve moindre, trace explicite
+// POST clôture manuelle (manager) — body { phase: 'debut'|'fin', heure?, heure_debut? }
+// Fin sans début : autorisée seulement si heure_debut fournie (force les deux).
 app.post('/api/shifts/:id/cloturer-manuel',
     checkDB, requirePatron, denyObservateurEdit,
     async (req, res) => {
         if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
+        const phase = req.body?.phase === 'debut' ? 'debut' : 'fin';
         try {
             const shift = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
             if (!shift) return res.status(404).json({ error: 'Shift introuvable' });
             if (!canAccessEstablishment(req.session.user, shift.establishment_id))
                 return res.status(403).json({ error: 'Accès refusé' });
+
+            const now = new Date();
+            const heureSaisie = localDateParts(now);
+            const actorId = req.session.user.staff_id || req.session.user._id;
+
+            if (phase === 'debut') {
+                if (shift.debut_valide_code)
+                    return res.status(409).json({ error: 'Début déjà pointé' });
+                if (shift.heure_validee_code)
+                    return res.status(409).json({ error: 'Ce shift est déjà clôturé' });
+
+                let heure = req.body?.heure;
+                if (heure != null && heure !== '') {
+                    if (!isValidHHMM(heure)) return res.status(400).json({ error: 'heure au format HH:MM requise' });
+                } else {
+                    heure = fmtHourFloatToHHMM(shift.start_time);
+                }
+
+                await insertTimeValidation({
+                    etablissement_id: shift.establishment_id,
+                    shift_id:         String(shift._id),
+                    staff_id:         String(actorId),
+                    code_saisi:       'MANUEL',
+                    heure_saisie:     heureSaisie,
+                    resultat:         'accepte',
+                    phase:            'debut',
+                });
+                await db.collection('shifts').updateOne(
+                    { _id: shift._id },
+                    {
+                        $set: {
+                            debut_valide_code:   heure,
+                            debut_valide_finale: heure,
+                            debut_source:        'manuelle',
+                        },
+                    }
+                );
+                return res.json({
+                    message: 'Début manuel enregistré',
+                    phase: 'debut',
+                    debut_valide_code: heure,
+                    debut_valide_finale: heure,
+                });
+            }
+
+            // phase fin
             if (shift.heure_validee_code)
                 return res.status(409).json({ error: 'Ce shift est déjà clôturé' });
 
@@ -6747,9 +6837,35 @@ app.post('/api/shifts/:id/cloturer-manuel',
                 heure = fmtHourFloatToHHMM(shift.end_time);
             }
 
-            const now = new Date();
-            const heureSaisie = localDateParts(now);
-            const actorId = req.session.user.staff_id || req.session.user._id;
+            const setFields = {
+                heure_validee_code:   heure,
+                heure_validee_finale: heure,
+                cloture_source:       'manuelle',
+            };
+
+            if (!shift.debut_valide_code) {
+                let heureDebut = req.body?.heure_debut;
+                if (heureDebut != null && heureDebut !== '') {
+                    if (!isValidHHMM(heureDebut))
+                        return res.status(400).json({ error: 'heure_debut au format HH:MM requise' });
+                } else {
+                    return res.status(409).json({
+                        error: 'Pointe d\'abord le début (ou fournis heure_debut pour forcer les deux)',
+                    });
+                }
+                setFields.debut_valide_code = heureDebut;
+                setFields.debut_valide_finale = heureDebut;
+                setFields.debut_source = 'manuelle';
+                await insertTimeValidation({
+                    etablissement_id: shift.establishment_id,
+                    shift_id:         String(shift._id),
+                    staff_id:         String(actorId),
+                    code_saisi:       'MANUEL',
+                    heure_saisie:     heureSaisie,
+                    resultat:         'accepte',
+                    phase:            'debut',
+                });
+            }
 
             await insertTimeValidation({
                 etablissement_id: shift.establishment_id,
@@ -6758,56 +6874,68 @@ app.post('/api/shifts/:id/cloturer-manuel',
                 code_saisi:       'MANUEL',
                 heure_saisie:     heureSaisie,
                 resultat:         'accepte',
+                phase:            'fin',
             });
             await db.collection('shifts').updateOne(
                 { _id: shift._id },
-                {
-                    $set: {
-                        heure_validee_code:   heure,
-                        heure_validee_finale: heure,
-                        cloture_source:       'manuelle',
-                    },
-                }
+                { $set: setFields }
             );
-            res.json({ message: 'Clôture manuelle enregistrée', heure_validee_code: heure, heure_validee_finale: heure });
+            res.json({
+                message: 'Clôture manuelle enregistrée',
+                phase: 'fin',
+                heure_validee_code: heure,
+                heure_validee_finale: heure,
+                debut_valide_code: setFields.debut_valide_code || shift.debut_valide_code,
+                debut_valide_finale: setFields.debut_valide_finale || shift.debut_valide_finale,
+            });
         } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
     }
 );
 
-// PATCH ajuster heure_validee_finale sans toucher heure_validee_code
+// PATCH ajuster debut_valide_finale et/ou heure_validee_finale (sans toucher *_code)
 app.patch('/api/shifts/:id/ajuster-heure',
     checkDB, requirePatron, denyObservateurEdit,
     async (req, res) => {
         if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
-        const finale = req.body?.heure_validee_finale;
-        if (!isValidHHMM(finale)) return res.status(400).json({ error: 'heure_validee_finale au format HH:MM requise' });
+        const finFinale = req.body?.heure_validee_finale;
+        const debutFinale = req.body?.debut_valide_finale;
+        const hasFin = finFinale != null && finFinale !== '';
+        const hasDebut = debutFinale != null && debutFinale !== '';
+        if (!hasFin && !hasDebut)
+            return res.status(400).json({ error: 'heure_validee_finale ou debut_valide_finale requise' });
+        if (hasFin && !isValidHHMM(finFinale))
+            return res.status(400).json({ error: 'heure_validee_finale au format HH:MM requise' });
+        if (hasDebut && !isValidHHMM(debutFinale))
+            return res.status(400).json({ error: 'debut_valide_finale au format HH:MM requise' });
         const motif = typeof req.body?.motif === 'string' ? req.body.motif.trim().slice(0, 500) : null;
         try {
             const shift = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
             if (!shift) return res.status(404).json({ error: 'Shift introuvable' });
             if (!canAccessEstablishment(req.session.user, shift.establishment_id))
                 return res.status(403).json({ error: 'Accès refusé' });
-            if (!shift.heure_validee_code)
-                return res.status(409).json({ error: 'Shift non clôturé — rien à ajuster' });
             if (shift.patron_valide)
                 return res.status(409).json({ error: 'Récap déjà validé — ajustement impossible' });
+            if (hasFin && !shift.heure_validee_code)
+                return res.status(409).json({ error: 'Fin non clôturée — rien à ajuster' });
+            if (hasDebut && !shift.debut_valide_code)
+                return res.status(409).json({ error: 'Début non pointé — rien à ajuster' });
 
             const actorId = req.session.user.staff_id || req.session.user._id;
-            await db.collection('shifts').updateOne(
-                { _id: shift._id },
-                {
-                    $set: {
-                        heure_validee_finale: finale,
-                        modifie_par_patron:   String(actorId),
-                        modifie_le:           localDateParts(),
-                        motif_modification:   motif || null,
-                    },
-                }
-            );
+            const $set = {
+                modifie_par_patron: String(actorId),
+                modifie_le:         localDateParts(),
+                motif_modification: motif || null,
+            };
+            if (hasFin) $set.heure_validee_finale = finFinale;
+            if (hasDebut) $set.debut_valide_finale = debutFinale;
+
+            await db.collection('shifts').updateOne({ _id: shift._id }, { $set });
             res.json({
                 message: 'Heure ajustée',
-                heure_validee_code: shift.heure_validee_code,
-                heure_validee_finale: finale,
+                debut_valide_code: shift.debut_valide_code ?? null,
+                debut_valide_finale: hasDebut ? debutFinale : (shift.debut_valide_finale ?? null),
+                heure_validee_code: shift.heure_validee_code ?? null,
+                heure_validee_finale: hasFin ? finFinale : (shift.heure_validee_finale ?? null),
             });
         } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
     }

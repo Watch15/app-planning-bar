@@ -127,19 +127,19 @@ async function main() {
     });
 
     // ── 3. Shift Alice aujourd'hui (réutilise le seed si présent, sinon crée) ─
-    await check('shift Alice aujourd\'hui prêt à clôturer', async () => {
+    await check('shift Alice aujourd\'hui prêt à pointer', async () => {
         const list = await req('pat', '/api/shifts/' + ESTAB + '/' + todayStr());
         eq(list.status, 200, 'status liste');
         const open = (list.data || []).find(s =>
             String(s.staff_id) === String(aliceStaffId)
             && !s.heure_validee_code
+            && !s.debut_valide_code
             && !s.is_joker
         );
         if (open) {
             shiftId = String(open._id);
             return 'réutilisé seed shift=' + shiftId;
         }
-        // Créneau matin pour éviter le conflit 18–24 du seed
         const r = await req('pat', '/api/shifts', {
             method: 'POST',
             body: {
@@ -158,30 +158,57 @@ async function main() {
         return 'créé shift=' + shiftId + ' date=' + todayStr();
     });
 
-    // ── 4. Bruno ne peut pas clôturer le shift d'Alice ────────────────────────
-    await check('bruno : clôture shift Alice refusée', async () => {
+    // ── 4. Bruno ne peut pas pointer le shift d'Alice ─────────────────────────
+    await check('bruno : début shift Alice refusé', async () => {
         if (!shiftId || !code) throw new Error('prérequis manquant');
         const r = await req('bru', '/api/shifts/' + shiftId + '/cloturer-par-code', {
-            method: 'POST', body: { code },
+            method: 'POST', body: { code, phase: 'debut' },
         });
         return eq(r.status, 403, 'status');
     });
 
-    // ── 5. Alice clôture avec le bon code ─────────────────────────────────────
-    await check('alice : clôture par code acceptée', async () => {
+    await check('alice : fin sans début refusée', async () => {
         if (!shiftId || !code) throw new Error('prérequis manquant');
         const r = await req('ali', '/api/shifts/' + shiftId + '/cloturer-par-code', {
-            method: 'POST', body: { code },
+            method: 'POST', body: { code, phase: 'fin' },
+        });
+        return eq(r.status, 409, 'status');
+    });
+
+    // ── 5. Alice pointe le début ─────────────────────────────────────────────
+    await check('alice : début par code accepté', async () => {
+        if (!shiftId || !code) throw new Error('prérequis manquant');
+        const r = await req('ali', '/api/shifts/' + shiftId + '/cloturer-par-code', {
+            method: 'POST', body: { code, phase: 'debut' },
+        });
+        eq(r.status, 200, 'status');
+        ok(/^\d{2}:\d{2}$/.test(r.data.debut_valide_code), 'debut_valide_code');
+        eq(r.data.debut_valide_code, r.data.debut_valide_finale, 'origine=finale début');
+        return 'debut=' + r.data.debut_valide_finale;
+    });
+
+    let codeFin = null;
+    await check('patron : code pour la fin', async () => {
+        const r = await req('pat', '/api/etablissements/' + ESTAB + '/code-cloture');
+        eq(r.status, 200, 'status');
+        ok(r.data.code !== code, 'code régénéré après début');
+        codeFin = r.data.code;
+        return 'codeFin=' + codeFin;
+    });
+
+    await check('alice : fin par code acceptée', async () => {
+        if (!shiftId || !codeFin) throw new Error('prérequis manquant');
+        const r = await req('ali', '/api/shifts/' + shiftId + '/cloturer-par-code', {
+            method: 'POST', body: { code: codeFin, phase: 'fin' },
         });
         eq(r.status, 200, 'status');
         ok(/^\d{2}:\d{2}$/.test(r.data.heure_validee_code), 'heure_validee_code');
-        eq(r.data.heure_validee_code, r.data.heure_validee_finale, 'origine=finale');
-        return 'heure=' + r.data.heure_validee_finale;
+        eq(r.data.heure_validee_code, r.data.heure_validee_finale, 'origine=finale fin');
+        return 'fin=' + r.data.heure_validee_finale;
     });
 
-    // ── 6. Réutilisation du même code → refus ─────────────────────────────────
-    await check('réutilisation du code → déjà utilisé / invalide', async () => {
-        // Créer un 2e shift Bruno aujourd'hui pour retenter le vieux code
+    // ── 6. Réutilisation du code de début → refus ────────────────────────────
+    await check('réutilisation du code début → déjà utilisé / invalide', async () => {
         const create = await req('pat', '/api/shifts', {
             method: 'POST',
             body: {
@@ -197,23 +224,22 @@ async function main() {
         ok(create.status === 201 || create.status === 200, 'création shift Bruno');
         const sid2 = String(create.data._id);
         const r = await req('bru', '/api/shifts/' + sid2 + '/cloturer-par-code', {
-            method: 'POST', body: { code },
+            method: 'POST', body: { code, phase: 'debut' },
         });
         eq(r.status, 400, 'status');
         ok(r.data.resultat && String(r.data.resultat).startsWith('refuse_'),
             'resultat refuse_*, obtenu ' + r.data.resultat);
-        // Nettoyage soft : clôture manuelle pour ne pas laisser un orphelin non clôturé
         await req('pat', '/api/shifts/' + sid2 + '/cloturer-manuel', {
-            method: 'POST', body: { heure: '23:00' },
+            method: 'POST', body: { phase: 'fin', heure: '23:00', heure_debut: '18:00' },
         });
         return r.data.resultat;
     });
 
-    // ── 7. Nouveau code après usage ──────────────────────────────────────────
-    await check('patron : nouveau code après usage', async () => {
+    // ── 7. Nouveau code après usage fin ──────────────────────────────────────
+    await check('patron : nouveau code après fin', async () => {
         const r = await req('pat', '/api/etablissements/' + ESTAB + '/code-cloture');
         eq(r.status, 200, 'status');
-        ok(r.data.code !== code, 'code régénéré (était ' + code + ', obtenu ' + r.data.code + ')');
+        ok(r.data.code !== codeFin, 'code régénéré (était ' + codeFin + ', obtenu ' + r.data.code + ')');
         return 'nouveau=' + r.data.code;
     });
 
@@ -226,6 +252,7 @@ async function main() {
         eq(before.status, 200, 'status liste');
         const row = (before.data || []).find(s => String(s._id) === shiftId);
         ok(row, 'shift dans clotures-semaine');
+        ok(row.debut_valide_code, 'debut_valide_code exposé');
         origine = row.heure_validee_code;
 
         const r = await req('pat', '/api/shifts/' + shiftId + '/ajuster-heure', {
@@ -258,8 +285,8 @@ async function main() {
         return eq(r.status, 409, 'status');
     });
 
-    // ── 11. Clôture manuelle sur un shift frais ───────────────────────────────
-    await check('patron : clôture manuelle', async () => {
+    // ── 11. Clôture manuelle forcée (début+fin) ───────────────────────────────
+    await check('patron : clôture manuelle forcée début+fin', async () => {
         const create = await req('pat', '/api/shifts', {
             method: 'POST',
             body: {
@@ -275,7 +302,7 @@ async function main() {
         ok(create.status === 201 || create.status === 200, 'création');
         const sid = String(create.data._id);
         const r = await req('pat', '/api/shifts/' + sid + '/cloturer-manuel', {
-            method: 'POST', body: { heure: '16:05' },
+            method: 'POST', body: { phase: 'fin', heure: '16:05', heure_debut: '14:00' },
         });
         eq(r.status, 200, 'status');
         eq(r.data.heure_validee_finale, '16:05', 'heure');
@@ -295,9 +322,9 @@ async function main() {
     }
     console.log('Smoke clôture OK.\n');
     console.log('Check-list manuelle (UI) :');
-    console.log('  1. patron@ → Josy → widget « Code de clôture » visible + countdown');
-    console.log('  2. alice@  → bannière « Clôturer ton service » si shift du jour ouvert');
-    console.log('  3. patron@ → bouton Clôtures → origine vs retenue + badge Validé\n');
+    console.log('  1. patron@ → Pointage → widget code + liste début/fin');
+    console.log('  2. alice@  → bannière « Pointer mon arrivée » puis « Clôturer mon service »');
+    console.log('  3. Après début et après fin, le code régénère\n');
 }
 
 main().catch(e => {

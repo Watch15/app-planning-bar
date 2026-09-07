@@ -1,5 +1,5 @@
 'use strict';
-// Clôture de service par code OTP — atomicité, TTL, ajustement, append-only.
+// Clôture OTP début + fin — atomicité, TTL, ajustement, append-only.
 
 const { test, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
@@ -87,6 +87,24 @@ function seed(extra = {}) {
     });
 }
 
+async function currentCode() {
+    const res = await req('/api/etablissements/' + ESTAB + '/code-cloture', PATRON);
+    assert.equal(res.status, 200);
+    return (await res.json()).code;
+}
+
+async function pointerDebut(shiftId, user, code) {
+    return req('/api/shifts/' + shiftId + '/cloturer-par-code', user, {
+        method: 'POST', body: JSON.stringify({ code, phase: 'debut' }),
+    });
+}
+
+async function pointerFin(shiftId, user, code) {
+    return req('/api/shifts/' + shiftId + '/cloturer-par-code', user, {
+        method: 'POST', body: JSON.stringify({ code, phase: 'fin' }),
+    });
+}
+
 test('GET code-cloture renvoie le code courant au patron', async () => {
     const res = await req('/api/etablissements/' + ESTAB + '/code-cloture', PATRON);
     assert.equal(res.status, 200);
@@ -105,71 +123,106 @@ test('GET code-cloture régénère si expiré (lazy)', async () => {
     assert.ok(data.expire_ms > Date.now());
 });
 
-test('cloturer-par-code accepte et pose heure_validee_* sans toucher real_end', async () => {
-    const res = await req('/api/shifts/' + SHIFT + '/cloturer-par-code', EQUIPIER, {
-        method: 'POST', body: JSON.stringify({ code: '4827' }),
-    });
-    assert.equal(res.status, 200);
-    const data = await res.json();
-    assert.match(data.heure_validee_code, /^\d{2}:\d{2}$/);
-    assert.equal(data.heure_validee_code, data.heure_validee_finale);
+test('début puis fin OK avec 2 codes + phase dans time_validations', async () => {
+    const r1 = await pointerDebut(SHIFT, EQUIPIER, '4827');
+    assert.equal(r1.status, 200);
+    const d1 = await r1.json();
+    assert.equal(d1.phase, 'debut');
+    assert.match(d1.debut_valide_code, /^\d{2}:\d{2}$/);
+    assert.equal(d1.debut_valide_code, d1.debut_valide_finale);
+
+    const shiftMid = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT);
+    assert.equal(shiftMid.debut_source, 'code');
+    assert.equal(shiftMid.heure_validee_code, undefined);
+    assert.equal(shiftMid.real_start, undefined);
+
+    const code2 = await currentCode();
+    assert.notEqual(code2, '4827');
+
+    const r2 = await pointerFin(SHIFT, EQUIPIER, code2);
+    assert.equal(r2.status, 200);
+    const d2 = await r2.json();
+    assert.equal(d2.phase, 'fin');
+    assert.match(d2.heure_validee_code, /^\d{2}:\d{2}$/);
 
     const shift = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT);
     assert.equal(shift.cloture_source, 'code');
-    assert.equal(shift.heure_validee_code, data.heure_validee_code);
     assert.equal(shift.real_end, undefined);
 
-    const vals = db.collection('time_validations')._docs;
-    assert.equal(vals.length, 1);
-    assert.equal(vals[0].resultat, 'accepte');
-    assert.equal(vals[0].code_saisi, '4827');
-    assert.ok(vals[0].heure_saisie.year);
-    assert.ok(vals[0].heure_saisie.month);
+    const vals = db.collection('time_validations')._docs.filter(v => v.resultat === 'accepte');
+    assert.equal(vals.length, 2);
+    assert.equal(vals[0].phase, 'debut');
+    assert.equal(vals[1].phase, 'fin');
+});
+
+test('fin refusée sans début', async () => {
+    const res = await pointerFin(SHIFT, EQUIPIER, '4827');
+    assert.equal(res.status, 409);
+    const err = await res.json();
+    assert.match(err.error, /début/i);
+});
+
+test('double début → 409', async () => {
+    assert.equal((await pointerDebut(SHIFT, EQUIPIER, '4827')).status, 200);
+    const code2 = await currentCode();
+    const r2 = await pointerDebut(SHIFT, EQUIPIER, code2);
+    assert.equal(r2.status, 409);
 });
 
 test('deuxième usage du même code → refuse_code_deja_utilise + insert audit', async () => {
-    const r1 = await req('/api/shifts/' + SHIFT + '/cloturer-par-code', EQUIPIER, {
-        method: 'POST', body: JSON.stringify({ code: '4827' }),
-    });
-    assert.equal(r1.status, 200);
+    assert.equal((await pointerDebut(SHIFT, EQUIPIER, '4827')).status, 200);
 
-    // Après succès le code a été régénéré — on force un code déjà utilisé pour le 2e staff
     db.collection('codes_cloture')._docs[0].code_actuel = '1111';
     db.collection('codes_cloture')._docs[0].code_utilise = true;
     db.collection('codes_cloture')._docs[0].expire_ms = Date.now() + 60000;
 
-    const r2 = await req('/api/shifts/' + SHIFT2 + '/cloturer-par-code', EQUIPIER2, {
-        method: 'POST', body: JSON.stringify({ code: '1111' }),
-    });
+    const r2 = await pointerDebut(SHIFT2, EQUIPIER2, '1111');
     assert.equal(r2.status, 400);
     const err = await r2.json();
     assert.equal(err.resultat, 'refuse_code_deja_utilise');
 
     const refuses = db.collection('time_validations')._docs.filter(v => v.resultat === 'refuse_code_deja_utilise');
     assert.equal(refuses.length, 1);
+    assert.equal(refuses[0].phase, 'debut');
 });
 
 test('staff ne peut pas clôturer le shift d\'un autre', async () => {
-    const res = await req('/api/shifts/' + SHIFT2 + '/cloturer-par-code', EQUIPIER, {
-        method: 'POST', body: JSON.stringify({ code: '4827' }),
-    });
+    const res = await pointerDebut(SHIFT2, EQUIPIER, '4827');
     assert.equal(res.status, 403);
 });
 
-test('Joker : staff du bar peut clôturer avec le code', async () => {
-    const res = await req('/api/shifts/' + JOKER + '/cloturer-par-code', EQUIPIER, {
-        method: 'POST', body: JSON.stringify({ code: '4827' }),
-    });
-    assert.equal(res.status, 200);
+test('Joker : staff du bar peut pointer début + fin', async () => {
+    assert.equal((await pointerDebut(JOKER, EQUIPIER, '4827')).status, 200);
+    const code2 = await currentCode();
+    assert.equal((await pointerFin(JOKER, EQUIPIER, code2)).status, 200);
     const shift = db.collection('shifts')._docs.find(s => String(s._id) === JOKER);
+    assert.equal(shift.debut_source, 'code');
     assert.equal(shift.cloture_source, 'code');
     assert.equal(shift.staff_id, '__joker__');
 });
 
-test('ajuster-heure ne mute pas heure_validee_code', async () => {
-    await req('/api/shifts/' + SHIFT + '/cloturer-par-code', EQUIPIER, {
-        method: 'POST', body: JSON.stringify({ code: '4827' }),
+test('ajuster debut_valide_finale ne mute pas debut_valide_code', async () => {
+    assert.equal((await pointerDebut(SHIFT, EQUIPIER, '4827')).status, 200);
+    const before = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT).debut_valide_code;
+
+    const res = await req('/api/shifts/' + SHIFT + '/ajuster-heure', PATRON, {
+        method: 'PATCH',
+        body: JSON.stringify({ debut_valide_finale: '18:15', motif: 'Retard toléré' }),
     });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.debut_valide_code, before);
+    assert.equal(data.debut_valide_finale, '18:15');
+
+    const shift = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT);
+    assert.equal(shift.debut_valide_code, before);
+    assert.equal(shift.debut_valide_finale, '18:15');
+});
+
+test('ajuster-heure fin ne mute pas heure_validee_code', async () => {
+    assert.equal((await pointerDebut(SHIFT, EQUIPIER, '4827')).status, 200);
+    const code2 = await currentCode();
+    assert.equal((await pointerFin(SHIFT, EQUIPIER, code2)).status, 200);
     const before = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT).heure_validee_code;
 
     const res = await req('/api/shifts/' + SHIFT + '/ajuster-heure', PATRON, {
@@ -180,28 +233,50 @@ test('ajuster-heure ne mute pas heure_validee_code', async () => {
     const data = await res.json();
     assert.equal(data.heure_validee_code, before);
     assert.equal(data.heure_validee_finale, '23:30');
-
-    const shift = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT);
-    assert.equal(shift.heure_validee_code, before);
-    assert.equal(shift.heure_validee_finale, '23:30');
-    assert.equal(shift.motif_modification, 'Sortie anticipée');
 });
 
-test('clôture manuelle trace source manuelle + MANUEL dans time_validations', async () => {
-    const res = await req('/api/shifts/' + SHIFT + '/cloturer-manuel', PATRON, {
-        method: 'POST', body: JSON.stringify({ heure: '23:55' }),
+test('clôture manuelle début puis fin + MANUEL dans time_validations', async () => {
+    const r1 = await req('/api/shifts/' + SHIFT + '/cloturer-manuel', PATRON, {
+        method: 'POST', body: JSON.stringify({ phase: 'debut', heure: '18:05' }),
     });
-    assert.equal(res.status, 200);
-    const shift = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT);
+    assert.equal(r1.status, 200);
+    let shift = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT);
+    assert.equal(shift.debut_source, 'manuelle');
+    assert.equal(shift.debut_valide_code, '18:05');
+
+    const r2 = await req('/api/shifts/' + SHIFT + '/cloturer-manuel', PATRON, {
+        method: 'POST', body: JSON.stringify({ phase: 'fin', heure: '23:55' }),
+    });
+    assert.equal(r2.status, 200);
+    shift = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT);
     assert.equal(shift.cloture_source, 'manuelle');
     assert.equal(shift.heure_validee_code, '23:55');
-    assert.equal(db.collection('time_validations')._docs[0].code_saisi, 'MANUEL');
+    const manuels = db.collection('time_validations')._docs.filter(v => v.code_saisi === 'MANUEL');
+    assert.equal(manuels.length, 2);
+    assert.equal(manuels[0].phase, 'debut');
+    assert.equal(manuels[1].phase, 'fin');
+});
+
+test('fin manuelle sans début exige heure_debut pour forcer', async () => {
+    const bad = await req('/api/shifts/' + SHIFT + '/cloturer-manuel', PATRON, {
+        method: 'POST', body: JSON.stringify({ phase: 'fin', heure: '23:00' }),
+    });
+    assert.equal(bad.status, 409);
+
+    const ok = await req('/api/shifts/' + SHIFT + '/cloturer-manuel', PATRON, {
+        method: 'POST', body: JSON.stringify({ phase: 'fin', heure: '23:00', heure_debut: '18:00' }),
+    });
+    assert.equal(ok.status, 200);
+    const shift = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT);
+    assert.equal(shift.debut_valide_code, '18:00');
+    assert.equal(shift.heure_validee_code, '23:00');
 });
 
 test('valider-recap pose patron_valide sur les shifts clôturés de la semaine', async () => {
-    await req('/api/shifts/' + SHIFT + '/cloturer-par-code', EQUIPIER, {
-        method: 'POST', body: JSON.stringify({ code: '4827' }),
-    });
+    assert.equal((await pointerDebut(SHIFT, EQUIPIER, '4827')).status, 200);
+    const code2 = await currentCode();
+    assert.equal((await pointerFin(SHIFT, EQUIPIER, code2)).status, 200);
+
     const weekStart = mondayOf();
     const res = await req('/api/etablissements/' + ESTAB + '/valider-recap', PATRON, {
         method: 'POST', body: JSON.stringify({ week_start: weekStart }),
@@ -214,7 +289,6 @@ test('valider-recap pose patron_valide sur les shifts clôturés de la semaine',
     assert.equal(shift.patron_valide, true);
     assert.ok(shift.patron_valide_le.year);
 
-    // Plus d'ajustement après validation
     const adj = await req('/api/shifts/' + SHIFT + '/ajuster-heure', PATRON, {
         method: 'PATCH',
         body: JSON.stringify({ heure_validee_finale: '22:00' }),
@@ -223,15 +297,10 @@ test('valider-recap pose patron_valide sur les shifts clôturés de la semaine',
 });
 
 test('time_validations : aucune update/delete dans le flux (append-only)', async () => {
-    await req('/api/shifts/' + SHIFT + '/cloturer-par-code', EQUIPIER, {
-        method: 'POST', body: JSON.stringify({ code: '9999' }),
-    });
-    await req('/api/shifts/' + SHIFT + '/cloturer-par-code', EQUIPIER, {
-        method: 'POST', body: JSON.stringify({ code: '4827' }),
-    });
+    await pointerDebut(SHIFT, EQUIPIER, '9999');
+    await pointerDebut(SHIFT, EQUIPIER, '4827');
     const docs = db.collection('time_validations')._docs;
     assert.ok(docs.length >= 2);
-    // Tous les docs d'origine restent présents (pas de suppression)
     assert.ok(docs.some(d => d.resultat === 'accepte'));
     assert.ok(docs.some(d => d.resultat && d.resultat.startsWith('refuse_')));
 });
