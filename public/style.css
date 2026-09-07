@@ -1477,8 +1477,7 @@ body.observateur #staff-bar-overlay {
 .code-cloture-widget .cc-hint {
   flex: 1 1 180px; font-size: 11px; color: #64748b; line-height: 1.35;
 }
-body.observateur .code-cloture-widget,
-body.observateur #btn-clotures { display: none !important; }
+body.observateur .code-cloture-widget { display: none !important; }
 .cloture-row {
   display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;
   padding: 10px 12px; border-bottom: 1px solid var(--light-border);

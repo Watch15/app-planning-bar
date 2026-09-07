@@ -269,6 +269,7 @@ async function init() {
                 document.getElementById('header-title').textContent = 'Pointage — ' + (chosen ? chosen.name : sel.value);
                 loadShifts();
                 loadRevenue();
+                initCloturePanel();
             });
         }
     }
@@ -300,6 +301,7 @@ async function init() {
     initExtraForm();
     initRevenueForm();
     await loadRevenue();
+    initCloturePanel();
 }
 
 // ── CA de la soirée ───────────────────────────────────────────────────────────
@@ -825,6 +827,233 @@ function initExtraForm() {
             btn.disabled = false;
         }
     });
+}
+
+// ── Clôture OTP + récap semaine (fusionnée dans Pointage) ─────────────────────
+
+const CLOTURE_ROLES = ['patron', 'directeur'];
+let _codeCloturePoll = null;
+let _codeClotureExpireMs = null;
+let _codeClotureTick = null;
+let _cloturesWeekStart = null;
+let _clotureBound = false;
+
+function canUseClotureUi() {
+    return currentUser && CLOTURE_ROLES.includes(currentUser.role);
+}
+
+function escapeHtml(str) {
+    return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function addDaysLocal(d, n) {
+    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    x.setDate(x.getDate() + n);
+    return x;
+}
+
+function stopCodeClotureTimers() {
+    if (_codeCloturePoll) { clearInterval(_codeCloturePoll); _codeCloturePoll = null; }
+    if (_codeClotureTick) { clearInterval(_codeClotureTick); _codeClotureTick = null; }
+}
+
+function updateCodeClotureCountdown() {
+    const el = document.getElementById('cc-countdown');
+    if (!el || !_codeClotureExpireMs) { if (el) el.textContent = '—'; return; }
+    const left = Math.max(0, _codeClotureExpireMs - Date.now());
+    const m = Math.floor(left / 60000);
+    const s = Math.floor((left % 60000) / 1000);
+    el.textContent = left <= 0 ? 'Expiré — actualise' : ('expire dans ' + m + ' min ' + String(s).padStart(2, '0') + ' s');
+    if (left <= 0) refreshCodeCloture(true);
+}
+
+async function refreshCodeCloture(force) {
+    if (!canUseClotureUi() || !currentEstabId) return;
+    try {
+        const res = await fetch('/api/etablissements/' + encodeURIComponent(currentEstabId) + '/code-cloture', {
+            credentials: 'include',
+        });
+        // #region agent log
+        fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'merge-cloture',hypothesisId:'A',location:'pointage.js:refreshCodeCloture',message:'code-cloture response',data:{status:res.status,estab:currentEstabId,role:currentUser&&currentUser.role,force:!!force},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+        if (!res.ok) {
+            if (force) showToast('Impossible de charger le code', true);
+            return;
+        }
+        const data = await res.json();
+        const codeEl = document.getElementById('cc-code');
+        if (codeEl) codeEl.textContent = data.code || '····';
+        _codeClotureExpireMs = data.expire_ms || null;
+        updateCodeClotureCountdown();
+        if (!_codeClotureTick) _codeClotureTick = setInterval(updateCodeClotureCountdown, 1000);
+        if (!_codeCloturePoll) _codeCloturePoll = setInterval(() => refreshCodeCloture(false), 20000);
+    } catch (e) {
+        // #region agent log
+        fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'merge-cloture',hypothesisId:'A',location:'pointage.js:refreshCodeCloture:catch',message:'code-cloture failed',data:{error:String(e&&e.message||e)},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+        if (force) showToast('Impossible de charger le code', true);
+    }
+}
+
+async function renderCloturesList() {
+    const list = document.getElementById('clotures-list');
+    const label = document.getElementById('clotures-week-label');
+    if (!list || !_cloturesWeekStart || !currentEstabId) return;
+    const monday = toDateStr(_cloturesWeekStart);
+    const sunday = toDateStr(addDaysLocal(_cloturesWeekStart, 6));
+    if (label) label.textContent = monday + ' → ' + sunday;
+
+    list.innerHTML = '<div style="padding:12px;text-align:center;color:rgba(255,255,255,0.4);font-size:13px">Chargement…</div>';
+    try {
+        const res = await fetch(
+            '/api/etablissements/' + encodeURIComponent(currentEstabId) + '/clotures-semaine?week_start=' + monday,
+            { credentials: 'include' }
+        );
+        const shifts = await res.json();
+        // #region agent log
+        fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'merge-cloture',hypothesisId:'B',location:'pointage.js:renderCloturesList',message:'clotures-semaine response',data:{status:res.status,count:Array.isArray(shifts)?shifts.length:null,monday,estab:currentEstabId,err:shifts&&shifts.error},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+        if (!res.ok) throw new Error(shifts.error || 'Erreur');
+        if (!shifts.length) {
+            list.innerHTML = '<div style="padding:16px;text-align:center;color:rgba(255,255,255,0.4);font-size:13px">Aucun shift cette semaine</div>';
+            return;
+        }
+        list.innerHTML = '';
+        shifts
+            .slice()
+            .sort((a, b) => (a.date === b.date ? String(a.staff_name || '').localeCompare(String(b.staff_name || ''), 'fr') : (a.date < b.date ? -1 : 1)))
+            .forEach(s => {
+                const row = document.createElement('div');
+                row.className = 'cloture-row';
+                const closed = !!s.heure_validee_finale;
+                const srcBadge = closed
+                    ? '<span class="cloture-badge ' + (s.cloture_source === 'manuelle' ? 'manuelle' : 'code') + '">' +
+                      (s.cloture_source === 'manuelle' ? 'Manuelle' : 'Code') + '</span>'
+                    : '<span class="cloture-badge wait">Non clôturé</span>';
+                const validBadge = s.patron_valide
+                    ? '<span class="cloture-badge ok">Récap validé</span>'
+                    : '';
+                const fmtPlan = h => (h != null && window.ShiftHours ? ShiftHours.fmtHourOfDay(h) : (h != null ? fmtH(h) : '—'));
+                row.innerHTML =
+                    '<div class="cloture-row-main">' +
+                        '<div style="font-size:13px;font-weight:600">' + escapeHtml(s.staff_name || '—') +
+                        (s.is_joker ? ' <span style="opacity:.5;font-weight:500">(Joker)</span>' : '') + '</div>' +
+                        '<div style="font-size:12px;opacity:.55;margin-top:2px">' + escapeHtml(s.date) +
+                        ' · planifié ' + fmtPlan(s.start_time) + '–' + fmtPlan(s.end_time) + '</div>' +
+                        '<div style="font-size:12px;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap">' +
+                            '<span>Origine : <strong>' + escapeHtml(s.heure_validee_code || '—') + '</strong></span>' +
+                            '<span>Retenue : <strong>' + escapeHtml(s.heure_validee_finale || '—') + '</strong></span>' +
+                            srcBadge + validBadge +
+                        '</div>' +
+                        (s.motif_modification ? '<div style="font-size:11px;opacity:.5;margin-top:3px;font-style:italic">' + escapeHtml(s.motif_modification) + '</div>' : '') +
+                    '</div>' +
+                    '<div class="cloture-row-actions"></div>';
+                const actions = row.querySelector('.cloture-row-actions');
+                if (!closed) {
+                    const btn = document.createElement('button');
+                    btn.textContent = 'Clôture manuelle';
+                    btn.addEventListener('click', () => clotureManuelle(s));
+                    actions.appendChild(btn);
+                } else if (!s.patron_valide) {
+                    const btn = document.createElement('button');
+                    btn.style.cssText = 'border-color:rgba(245,158,11,.45);color:#fcd34d';
+                    btn.textContent = 'Ajuster';
+                    btn.addEventListener('click', () => ajusterHeureCloture(s));
+                    actions.appendChild(btn);
+                }
+                list.appendChild(row);
+            });
+    } catch (e) {
+        list.innerHTML = '<div style="padding:12px;color:#f87171;font-size:13px">' + escapeHtml(e.message || 'Erreur') + '</div>';
+    }
+}
+
+async function clotureManuelle(shift) {
+    const heure = prompt('Heure de clôture (HH:MM) — laisse vide pour utiliser la fin planifiée', shift.heure_validee_finale || '');
+    if (heure === null) return;
+    try {
+        const body = {};
+        if (heure.trim()) body.heure = heure.trim();
+        const res = await fetch('/api/shifts/' + shift._id + '/cloturer-manuel', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        showToast('Clôture manuelle enregistrée');
+        renderCloturesList();
+        refreshCodeCloture(true);
+    } catch (e) { showToast(e.message, true); }
+}
+
+async function ajusterHeureCloture(shift) {
+    const heure = prompt('Nouvelle heure retenue (HH:MM)', shift.heure_validee_finale || '');
+    if (heure === null || !heure.trim()) return;
+    const motif = prompt('Motif (optionnel)', shift.motif_modification || '') || '';
+    try {
+        const res = await fetch('/api/shifts/' + shift._id + '/ajuster-heure', {
+            method: 'PATCH', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ heure_validee_finale: heure.trim(), motif: motif.trim() || undefined }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        showToast('Heure ajustée (origine conservée : ' + data.heure_validee_code + ')');
+        renderCloturesList();
+    } catch (e) { showToast(e.message, true); }
+}
+
+async function validateCloturesWeek() {
+    if (!currentEstabId || !_cloturesWeekStart) return;
+    const monday = toDateStr(_cloturesWeekStart);
+    if (!confirm('Valider le récap de la semaine du ' + monday + ' pour cet établissement ?\nLes shifts déjà clôturés seront marqués validés.')) return;
+    try {
+        const res = await fetch('/api/etablissements/' + encodeURIComponent(currentEstabId) + '/valider-recap', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ week_start: monday }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        showToast((data.modified || 0) + ' shift(s) validé(s)');
+        renderCloturesList();
+    } catch (e) { showToast(e.message, true); }
+}
+
+function initCloturePanel() {
+    const panel = document.getElementById('cloture-panel');
+    if (!panel) return;
+    // #region agent log
+    fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'merge-cloture',hypothesisId:'C',location:'pointage.js:initCloturePanel',message:'init cloture panel',data:{role:currentUser&&currentUser.role,canUse:canUseClotureUi(),estab:currentEstabId,hasWeek:!!(window.Week&&Week.weekStart)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    if (!canUseClotureUi() || !currentEstabId) {
+        panel.classList.remove('visible');
+        stopCodeClotureTimers();
+        return;
+    }
+    panel.classList.add('visible');
+    if (!_cloturesWeekStart) {
+        const base = today ? new Date(today + 'T12:00:00') : new Date();
+        _cloturesWeekStart = Week.weekStart(base);
+    }
+    if (!_clotureBound) {
+        _clotureBound = true;
+        document.getElementById('cc-refresh')?.addEventListener('click', () => refreshCodeCloture(true));
+        document.getElementById('clotures-prev-week')?.addEventListener('click', () => {
+            _cloturesWeekStart = addDaysLocal(_cloturesWeekStart, -7);
+            renderCloturesList();
+        });
+        document.getElementById('clotures-next-week')?.addEventListener('click', () => {
+            _cloturesWeekStart = addDaysLocal(_cloturesWeekStart, 7);
+            renderCloturesList();
+        });
+        document.getElementById('clotures-validate-week')?.addEventListener('click', validateCloturesWeek);
+    }
+    refreshCodeCloture(true);
+    renderCloturesList();
 }
 
 init();

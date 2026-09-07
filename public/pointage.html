@@ -377,6 +377,78 @@
         }
         .btn-back:hover { background: rgba(255,255,255,0.08); color: white; }
 
+        /* ── Clôture OTP (fusionnée dans Pointage) ── */
+        .cloture-panel {
+            display: none;
+            margin-bottom: 18px;
+            background: var(--dark-surface);
+            border: 1px solid var(--dark-border);
+            border-radius: 14px;
+            padding: 14px 16px;
+        }
+        .cloture-panel.visible { display: block; }
+        .cloture-panel-title {
+            font-size: 11px; font-weight: 700; letter-spacing: .4px;
+            text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 10px;
+        }
+        .code-cloture-widget {
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+            padding: 12px 14px; margin-bottom: 14px;
+            background: rgba(14,165,233,0.12); border: 1px solid rgba(14,165,233,0.35);
+            border-radius: 12px;
+        }
+        .code-cloture-widget .cc-label {
+            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+            color: #7dd3fc;
+        }
+        .code-cloture-widget .cc-code {
+            font-size: 28px; font-weight: 800; letter-spacing: .18em; color: #e0f2fe;
+            font-variant-numeric: tabular-nums; line-height: 1;
+        }
+        .code-cloture-widget .cc-meta {
+            display: flex; align-items: center; gap: 8px; font-size: 12px; color: #7dd3fc;
+        }
+        .code-cloture-widget .cc-refresh {
+            border: 1px solid rgba(125,211,252,0.5); background: rgba(0,0,0,0.2);
+            border-radius: 8px; width: 32px; height: 32px; cursor: pointer;
+            font-size: 14px; color: #7dd3fc;
+        }
+        .code-cloture-widget .cc-hint {
+            flex: 1 1 160px; font-size: 11px; color: rgba(255,255,255,0.45); line-height: 1.35;
+        }
+        .cloture-week-bar {
+            display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px;
+        }
+        .cloture-week-bar .week-arrow {
+            padding: 6px 12px; border-radius: 8px; border: 1px solid var(--dark-border);
+            background: transparent; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 14px;
+        }
+        .cloture-week-label { font-size: 13px; font-weight: 700; flex: 1; text-align: center; color: #fff; }
+        .btn-validate-cloture {
+            padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.45);
+            background: rgba(16,185,129,0.15); color: #6ee7b7; font-size: 12px; font-weight: 600;
+            cursor: pointer; font-family: var(--font);
+        }
+        .cloture-row {
+            display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;
+            padding: 10px 0; border-bottom: 1px solid var(--dark-border);
+        }
+        .cloture-row:last-child { border-bottom: none; }
+        .cloture-row-main { flex: 1; min-width: 140px; color: rgba(255,255,255,0.9); }
+        .cloture-row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .cloture-row-actions button {
+            padding: 7px 10px; border-radius: 8px; border: 1px solid var(--dark-border);
+            background: rgba(255,255,255,0.06); color: #fff; font-size: 12px; cursor: pointer;
+            font-family: var(--font);
+        }
+        .cloture-badge {
+            font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 6px;
+        }
+        .cloture-badge.code { background: rgba(14,165,233,0.25); color: #7dd3fc; }
+        .cloture-badge.manuelle { background: rgba(245,158,11,0.25); color: #fcd34d; }
+        .cloture-badge.ok { background: rgba(16,185,129,0.25); color: #6ee7b7; }
+        .cloture-badge.wait { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.45); }
+
         /* ── Mobile ── */
         @media (max-width: 600px) {
             .header { padding: 0 14px; height: 52px; }
@@ -436,6 +508,27 @@
 </div>
 
 <div class="container">
+    <!-- Clôture OTP + récap semaine (patron / directeur) -->
+    <div id="cloture-panel" class="cloture-panel" aria-live="polite">
+        <div class="cloture-panel-title">Code &amp; clôtures</div>
+        <div id="code-cloture-widget" class="code-cloture-widget">
+            <div class="cc-label">Code de clôture</div>
+            <div class="cc-code" id="cc-code">····</div>
+            <div class="cc-meta">
+                <span id="cc-countdown">—</span>
+                <button type="button" id="cc-refresh" class="cc-refresh" title="Actualiser">⟳</button>
+            </div>
+            <div class="cc-hint">Dicte ce code au salarié en fin de service (usage unique, 15 min).</div>
+        </div>
+        <div class="cloture-week-bar">
+            <button type="button" id="clotures-prev-week" class="week-arrow">←</button>
+            <span id="clotures-week-label" class="cloture-week-label"></span>
+            <button type="button" id="clotures-next-week" class="week-arrow">→</button>
+            <button type="button" id="clotures-validate-week" class="btn-validate-cloture">Valider le récap semaine</button>
+        </div>
+        <div id="clotures-list"></div>
+    </div>
+
     <div id="shifts-list"></div>
 
     <!-- Service non planifié -->
@@ -480,6 +573,7 @@
 
 <script src="/lib/auth-guard.js"></script>
 <script src="/lib/shift-hours.js"></script>
+<script src="/lib/week.js"></script>
 <script src="/pointage.js"></script>
 <script src="/sw-register.js"></script>
 </body>
