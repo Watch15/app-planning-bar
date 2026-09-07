@@ -875,9 +875,6 @@ async function refreshCodeCloture(force) {
         const res = await fetch('/api/etablissements/' + encodeURIComponent(currentEstabId) + '/code-cloture', {
             credentials: 'include',
         });
-        // #region agent log
-        fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'merge-cloture',hypothesisId:'A',location:'pointage.js:refreshCodeCloture',message:'code-cloture response',data:{status:res.status,estab:currentEstabId,role:currentUser&&currentUser.role,force:!!force},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         if (!res.ok) {
             if (force) showToast('Impossible de charger le code', true);
             return;
@@ -889,10 +886,7 @@ async function refreshCodeCloture(force) {
         updateCodeClotureCountdown();
         if (!_codeClotureTick) _codeClotureTick = setInterval(updateCodeClotureCountdown, 1000);
         if (!_codeCloturePoll) _codeCloturePoll = setInterval(() => refreshCodeCloture(false), 20000);
-    } catch (e) {
-        // #region agent log
-        fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'merge-cloture',hypothesisId:'A',location:'pointage.js:refreshCodeCloture:catch',message:'code-cloture failed',data:{error:String(e&&e.message||e)},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
+    } catch {
         if (force) showToast('Impossible de charger le code', true);
     }
 }
@@ -905,19 +899,16 @@ async function renderCloturesList() {
     const sunday = toDateStr(addDaysLocal(_cloturesWeekStart, 6));
     if (label) label.textContent = monday + ' → ' + sunday;
 
-    list.innerHTML = '<div style="padding:12px;text-align:center;color:rgba(255,255,255,0.4);font-size:13px">Chargement…</div>';
+    list.innerHTML = '<div class="cloture-loading">Chargement…</div>';
     try {
         const res = await fetch(
             '/api/etablissements/' + encodeURIComponent(currentEstabId) + '/clotures-semaine?week_start=' + monday,
             { credentials: 'include' }
         );
         const shifts = await res.json();
-        // #region agent log
-        fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'merge-cloture',hypothesisId:'B',location:'pointage.js:renderCloturesList',message:'clotures-semaine response',data:{status:res.status,count:Array.isArray(shifts)?shifts.length:null,monday,estab:currentEstabId,err:shifts&&shifts.error},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         if (!res.ok) throw new Error(shifts.error || 'Erreur');
         if (!shifts.length) {
-            list.innerHTML = '<div style="padding:16px;text-align:center;color:rgba(255,255,255,0.4);font-size:13px">Aucun shift cette semaine</div>';
+            list.innerHTML = '<div class="cloture-empty">Aucun shift cette semaine</div>';
             return;
         }
         list.innerHTML = '';
@@ -926,8 +917,8 @@ async function renderCloturesList() {
             .sort((a, b) => (a.date === b.date ? String(a.staff_name || '').localeCompare(String(b.staff_name || ''), 'fr') : (a.date < b.date ? -1 : 1)))
             .forEach(s => {
                 const row = document.createElement('div');
-                row.className = 'cloture-row';
                 const closed = !!s.heure_validee_finale;
+                row.className = 'cloture-row' + (closed ? ' closed' : '');
                 const srcBadge = closed
                     ? '<span class="cloture-badge ' + (s.cloture_source === 'manuelle' ? 'manuelle' : 'code') + '">' +
                       (s.cloture_source === 'manuelle' ? 'Manuelle' : 'Code') + '</span>'
@@ -938,27 +929,29 @@ async function renderCloturesList() {
                 const fmtPlan = h => (h != null && window.ShiftHours ? ShiftHours.fmtHourOfDay(h) : (h != null ? fmtH(h) : '—'));
                 row.innerHTML =
                     '<div class="cloture-row-main">' +
-                        '<div style="font-size:13px;font-weight:600">' + escapeHtml(s.staff_name || '—') +
-                        (s.is_joker ? ' <span style="opacity:.5;font-weight:500">(Joker)</span>' : '') + '</div>' +
-                        '<div style="font-size:12px;opacity:.55;margin-top:2px">' + escapeHtml(s.date) +
+                        '<div class="cloture-row-name">' + escapeHtml(s.staff_name || '—') +
+                        (s.is_joker ? ' <span class="joker">(Joker)</span>' : '') + '</div>' +
+                        '<div class="cloture-row-meta">' + escapeHtml(s.date) +
                         ' · planifié ' + fmtPlan(s.start_time) + '–' + fmtPlan(s.end_time) + '</div>' +
-                        '<div style="font-size:12px;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap">' +
+                        '<div class="cloture-row-hours">' +
                             '<span>Origine : <strong>' + escapeHtml(s.heure_validee_code || '—') + '</strong></span>' +
                             '<span>Retenue : <strong>' + escapeHtml(s.heure_validee_finale || '—') + '</strong></span>' +
                             srcBadge + validBadge +
                         '</div>' +
-                        (s.motif_modification ? '<div style="font-size:11px;opacity:.5;margin-top:3px;font-style:italic">' + escapeHtml(s.motif_modification) + '</div>' : '') +
+                        (s.motif_modification ? '<div class="cloture-row-motif">' + escapeHtml(s.motif_modification) + '</div>' : '') +
                     '</div>' +
                     '<div class="cloture-row-actions"></div>';
                 const actions = row.querySelector('.cloture-row-actions');
                 if (!closed) {
                     const btn = document.createElement('button');
+                    btn.type = 'button';
                     btn.textContent = 'Clôture manuelle';
                     btn.addEventListener('click', () => clotureManuelle(s));
                     actions.appendChild(btn);
                 } else if (!s.patron_valide) {
                     const btn = document.createElement('button');
-                    btn.style.cssText = 'border-color:rgba(245,158,11,.45);color:#fcd34d';
+                    btn.type = 'button';
+                    btn.className = 'btn-adjust';
                     btn.textContent = 'Ajuster';
                     btn.addEventListener('click', () => ajusterHeureCloture(s));
                     actions.appendChild(btn);
@@ -966,7 +959,7 @@ async function renderCloturesList() {
                 list.appendChild(row);
             });
     } catch (e) {
-        list.innerHTML = '<div style="padding:12px;color:#f87171;font-size:13px">' + escapeHtml(e.message || 'Erreur') + '</div>';
+        list.innerHTML = '<div class="cloture-error">' + escapeHtml(e.message || 'Erreur') + '</div>';
     }
 }
 
@@ -1026,9 +1019,6 @@ async function validateCloturesWeek() {
 function initCloturePanel() {
     const panel = document.getElementById('cloture-panel');
     if (!panel) return;
-    // #region agent log
-    fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'merge-cloture',hypothesisId:'C',location:'pointage.js:initCloturePanel',message:'init cloture panel',data:{role:currentUser&&currentUser.role,canUse:canUseClotureUi(),estab:currentEstabId,hasWeek:!!(window.Week&&Week.weekStart)},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     if (!canUseClotureUi() || !currentEstabId) {
         panel.classList.remove('visible');
         stopCodeClotureTimers();
