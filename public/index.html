@@ -195,7 +195,7 @@
             }
             .staff-row { min-height: 52px !important; }
             .row-rail { min-height: 52px !important; }
-            .resizer { width: 16px !important; min-width: 16px !important; }
+            /* Ne pas forcer 16px : body.device-touch élargit les poignées (28px). */
             .shift {
                 min-height: 44px !important;
                 font-size: 11px !important;
@@ -391,9 +391,12 @@
 
         /* ════════════════════════════════════════════════════════════
            MODE PAYSAGE TÉLÉPHONE — compact et pleinement exploitable
-           Cible : téléphones en paysage (hauteur ≤ 500px, toute largeur)
+           Cible : téléphones en paysage (hauteur ≤ 600px).
+           ⚠️ 500px laissait passer certains Android (barre d'URL / encoche).
+           Le JS pose aussi body.device-phone (min-côté < 600) pour le chrome
+           FAB/drawer quand la largeur dépasse 768 en horizontal.
            ════════════════════════════════════════════════════════════ */
-        @media (orientation: landscape) and (max-height: 500px) {
+        @media (orientation: landscape) and (max-height: 600px) {
 
             /* ── Header : masquer éléments desktop comme en portrait ── */
             .header {
@@ -460,7 +463,7 @@
             .row-label span:not(.row-label-dot):not(.joker-dot) { max-width: 46px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .staff-row  { min-height: 52px !important; }
             .row-rail   { min-height: 52px !important; }
-            .resizer    { width: 16px !important; min-width: 16px !important; }
+            /* Ne pas forcer 16px ici : body.device-touch élargit les poignées (28px). */
             .shift      { min-height: 44px !important; font-size: 11px !important; }
             .shift-name  { font-size: 10px !important; }
             .shift-hours { font-size: 10px !important; }
@@ -609,6 +612,36 @@
             }
             #fab-staff:active { transform: scale(0.93); }
         }
+        /* Téléphone en paysage : width > 768 → le media ci-dessus rate le FAB.
+           body.device-phone est posé par syncDeviceClasses() (min-côté < 600). */
+        body.device-phone #fab-staff {
+            display: flex;
+            position: fixed;
+            bottom: max(20px, calc(env(safe-area-inset-bottom) + 14px));
+            right: max(16px, env(safe-area-inset-right));
+            z-index: 350;
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            background: #1a1a2e;
+            color: white;
+            font-size: 22px;
+            border: none;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+            transition: transform 0.2s;
+        }
+        body.device-phone #fab-staff:active { transform: scale(0.93); }
+        body.device-phone #btn-mobile-menu { display: flex !important; }
+        body.device-phone .header-nav { display: none !important; }
+        body.device-phone .header-left .header-mobile-brand { display: flex !important; }
+        body.device-phone .header-right .date-display,
+        body.device-phone .header-right .btn-logout,
+        body.device-phone .header-right .user-badge { display: none !important; }
+        /* Tablette : barre staff desktop (pas de FAB) — explicite pour ne pas
+           hériter d'un état paysage téléphone si on pivote une grande fenêtre. */
+        body.device-tablet #fab-staff { display: none !important; }
 
         /* ── Drawer overlay (mobile header menu) ── */
         #mobile-drawer-overlay {

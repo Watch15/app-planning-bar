@@ -166,8 +166,47 @@ let _swapTarget = null;      // .shift survolé par un shift glissé (échange/d
 // ── État tap-to-place mobile ──────────────────────────────────────────────────
 let _tapSelectedStaff = null; // staff sélectionné via tap mobile
 
+// ── Détection appareil (téléphone / tablette / tactile) ───────────────────────
+// ⚠️ Ne PAS se fier à `innerWidth < 768` seul : un téléphone en PAYSAGE passe à
+// ~844 px de large et basculait en « desktop » JS (tap-to-place coupé, mauvaise
+// modale) alors que le CSS paysage, lui, s'appliquait encore. La question « est-ce
+// un téléphone ? » se pose sur le PLUS PETIT côté — il reste < 600 en horizontal.
+//
+// Tablette (iPad ~768–820) : chrome desktop + gestes tactiles renforcés.
+// Téléphone portrait OU paysage : chrome téléphone (FAB, drawer, bottom-sheet).
+//
+// « Tactile » = pointeur grossier — distinct du facteur de forme. Un iPad avec
+// souris branchée redevient fin ; un téléphone en paysage reste un téléphone.
+const PHONE_MIN_SIDE = 600;
+const _pointeurGrossier = window.matchMedia ? window.matchMedia('(pointer: coarse)') : null;
+
+function isTouchDevice() {
+    return !!(_pointeurGrossier && _pointeurGrossier.matches);
+}
+
+function isPhone() {
+    return Math.min(window.innerWidth, window.innerHeight) < PHONE_MIN_SIDE;
+}
+
+// Alias historique : tout le code qui voulait « UX téléphone » (FAB, modale mobile,
+// bottom-sheet) doit suivre le téléphone aussi en paysage — pas la largeur seule.
 function isMobileDevice() {
-    return window.innerWidth < 768;
+    return isPhone();
+}
+
+function isTablet() {
+    return isTouchDevice() && !isPhone();
+}
+
+// Publie des classes sur <body> pour le CSS (FAB / chrome téléphone en paysage
+// quand width > 768, poignées resize plus larges au doigt). Recalculé au resize
+// et au changement d'orientation — pas figé au chargement.
+function syncDeviceClasses() {
+    const phone = isPhone();
+    const touch = isTouchDevice();
+    document.body.classList.toggle('device-phone', phone);
+    document.body.classList.toggle('device-tablet', touch && !phone);
+    document.body.classList.toggle('device-touch', touch);
 }
 
 // ── Mode éditeur tactile — garde-fou sur une semaine déjà publiée ─────────────
@@ -178,19 +217,8 @@ function isMobileDevice() {
 //
 // La souris n'est pas concernée : un clic-glissé ne se déclenche pas par accident, et
 // verrouiller le poste de travail du patron n'apporterait que de la friction.
-
-// isMobileDevice() (largeur < 768) ne convient PAS ici : un iPad en portrait fait 768
-// ou 820 px et passerait à travers le garde-fou. C'est le pointeur qu'il faut
-// interroger, pas la largeur — « tactile » et « petit écran » sont deux choses.
-// Le MediaQueryList est VIVANT : `.matches` se réévalue à chaque lecture. Le conserver
-// évite de re-parser la requête à chaque geste SANS figer la réponse — brancher une souris
-// sur une tablette continue de faire basculer la valeur, ce qu'un booléen calculé au
-// chargement aurait manqué.
-const _pointeurGrossier = window.matchMedia ? window.matchMedia('(pointer: coarse)') : null;
-
-function isTouchDevice() {
-    return !!(_pointeurGrossier && _pointeurGrossier.matches);
-}
+// Le MediaQueryList `_pointeurGrossier` est VIVANT : `.matches` se réévalue à chaque
+// lecture. Brancher une souris sur une tablette continue de faire basculer la valeur.
 
 // Vide tant qu'on ne sait pas : une requête en vol ou en échec n'entrave rien. Bloquer sur
 // une incertitude réseau coûterait plus cher au patron que le geste accidentel qu'on prévient.
@@ -284,7 +312,7 @@ let copyShiftsBuffer = []; // shifts modifiables avant confirmation
 // ── Modales utilitaires (remplacent confirm/prompt natifs — bloqués PWA iOS) ──
 
 function showConfirm(message, onConfirm, onCancel) {
-    const mob = window.innerWidth < 768;
+    const mob = isPhone();
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:' + (mob ? 'flex-end' : 'center') + ';justify-content:center;padding:' + (mob ? '0' : '20px');
     overlay.innerHTML =
@@ -308,7 +336,7 @@ const askConfirm = message => new Promise(resolve =>
     showConfirm(message, () => resolve(true), () => resolve(false)));
 
 function showPrompt(message, placeholder, onConfirm) {
-    const mob = window.innerWidth < 768;
+    const mob = isPhone();
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:' + (mob ? 'flex-end' : 'center') + ';justify-content:center;padding:' + (mob ? '0' : '20px');
     overlay.innerHTML =
@@ -331,7 +359,7 @@ function showPrompt(message, placeholder, onConfirm) {
 }
 
 function showTextPrompt(message, placeholder, onConfirm) {
-    const mob = window.innerWidth < 768;
+    const mob = isPhone();
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:' + (mob ? 'flex-end' : 'center') + ';justify-content:center;padding:' + (mob ? '0' : '20px');
     overlay.innerHTML =
@@ -354,7 +382,7 @@ function showTextPrompt(message, placeholder, onConfirm) {
 }
 
 function showNotePrompt(title, defaultVal, onConfirm) {
-    const mob = window.innerWidth < 768;
+    const mob = isPhone();
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:' + (mob ? 'flex-end' : 'center') + ';justify-content:center;padding:' + (mob ? '0' : '20px');
     overlay.innerHTML =
@@ -1604,11 +1632,14 @@ function renderSidebar() {
         });
         card.addEventListener('dragend', () => onSidebarDragEnd(card));
 
-        // ── Tap-to-place (mobile) ─────────────────────────────────────────────
+        // ── Tap-to-place (téléphone + tablette) ───────────────────────────────
+        // Sur tablette le drag HTML5 est irrégulier au doigt ; le tap-to-place
+        // reste le geste fiable. isTouchDevice (pas isPhone) : un iPad n'est pas
+        // un « mobile » au sens chrome, mais il a bien besoin de ce geste.
         card.addEventListener('touchend', e => {
             if (e.target.closest('.color-controls')) return;
             e.preventDefault();
-            if (!isMobileDevice()) return;
+            if (!isTouchDevice()) return;
             tapSelectStaff(staff, card);
         }, { passive: false });
 
@@ -1694,10 +1725,10 @@ function renderSidebar() {
     });
     jokerCard.addEventListener('dragend', () => onSidebarDragEnd(jokerCard));
 
-    // ── Tap-to-place Joker (mobile) ───────────────────────────────────────────
+    // ── Tap-to-place Joker (téléphone + tablette) ─────────────────────────────
     jokerCard.addEventListener('touchend', e => {
         e.preventDefault();
-        if (!isMobileDevice()) return;
+        if (!isTouchDevice()) return;
         tapSelectStaff({ _id: '__joker__', name: 'Joker', color: '#95a5a6', isJoker: true }, jokerCard);
     }, { passive: false });
     list.appendChild(jokerCard);
@@ -2005,9 +2036,9 @@ function createStaffRow(staff) {
         })
         .forEach(shift => rail.appendChild(createShiftEl(shift)));
 
-    // ── Tap-to-place sur le rail (mobile) ─────────────────────────────────────
+    // ── Tap-to-place sur le rail (téléphone + tablette) ───────────────────────
     rail.addEventListener('touchend', async e => {
-        if (!isMobileDevice() || !_tapSelectedStaff) return;
+        if (!isTouchDevice() || !_tapSelectedStaff) return;
         // Ignorer si le tap est sur un shift existant
         if (e.target.closest('.shift')) return;
         e.preventDefault();
@@ -3279,8 +3310,13 @@ async function deleteShift(e, shiftId, staffId) {
 
 async function removeStaffFromDay(rowId) {
     // La croix de la ligne efface TOUS les shifts du staff pour la journée, sans
-    // confirmation : c'est le tap le plus coûteux de l'écran, donc le premier à verrouiller.
+    // confirmation souris : c'est le tap le plus coûteux de l'écran. Au doigt on
+    // exige une confirmation — un appui involontaire ne doit pas vider la journée.
     if (blockedByEditLock()) return;
+    if (isTouchDevice()) {
+        const ok = await askConfirm('Retirer ce staff de toute la journée ?');
+        if (!ok) return;
+    }
     // Pour un Joker, rowId = _id du shift. Pour le staff normal, rowId = staff_id.
     const isJokerRow = displayedStaff.find(s => s._id === rowId && s.isJoker);
     let toDelete;
@@ -3548,8 +3584,11 @@ let _touchActive     = false; // bloque mousedown pendant un drag touch (évite 
 let _touchStartX     = 0;
 let _touchStartY     = 0;
 let _touchIntent     = null; // 'drag' | 'scroll' | null
-const DRAG_THRESHOLD   = 8;  // px horizontal avant déclenchement drag
-const SCROLL_THRESHOLD = 8;  // px vertical avant déclenchement scroll
+// Seuils TACTILES (souris : chemin mousedown, non concernés).
+// 8 px était trop bas au doigt : un tremblement lançait un déplacement et
+// enregistrait le shift — principale source de « casse » sur tablette / téléphone.
+const DRAG_THRESHOLD   = 22; // px horizontal avant déclenchement drag
+const SCROLL_THRESHOLD = 14; // px vertical avant déclenchement scroll
 
 document.addEventListener('touchstart', onTouchStart, { passive: false });
 document.addEventListener('touchmove',  onTouchMove,  { passive: false });
@@ -3718,7 +3757,7 @@ function initTimelineBodyTap() {
     if (!body) return;
 
     body.addEventListener('touchend', async e => {
-        if (!isMobileDevice() || !_tapSelectedStaff) return;
+        if (!isTouchDevice() || !_tapSelectedStaff) return;
         // Ne traiter que si le tap est directement sur le body ou sur .empty-rail (timeline vide)
         // Pas sur un shift existant
         if (e.target.closest('.shift')) return;
@@ -5061,6 +5100,16 @@ function populateStaffSelect() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Classes device-phone / device-tablet / device-touch — le CSS paysage téléphone
+    // (largeur > 768) et les poignées resize s'y accrochent. Sync immédiat + resize
+    // + orientationchange (iOS ne fire pas toujours resize au pivot).
+    syncDeviceClasses();
+    window.addEventListener('resize', syncDeviceClasses);
+    window.addEventListener('orientationchange', () => setTimeout(syncDeviceClasses, 50));
+    if (_pointeurGrossier && _pointeurGrossier.addEventListener) {
+        _pointeurGrossier.addEventListener('change', syncDeviceClasses);
+    }
+
     // Le header peut passer sur 2 lignes quand les boutons ne tiennent pas en
     // largeur (plage desktop 768→~1350px). On publie sa hauteur réelle dans
     // --header-h pour que les barres sticky (day-detail, sous-onglets semaine)

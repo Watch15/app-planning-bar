@@ -365,6 +365,19 @@ a:hover { color: var(--accent-soft); }
 .resizer.left  { left: 4px; }
 .resizer.right { right: 4px; }
 
+/* Au doigt : poignées plus larges — 16 px provoquait resize au passage / scroll. */
+body.device-touch .resizer {
+  width: 28px;
+  min-width: 28px;
+}
+body.device-touch .resizer::after {
+  width: 4px;
+  height: 26px;
+  background: rgba(255,255,255,0.55);
+}
+body.device-touch .resizer.left  { left: 0; }
+body.device-touch .resizer.right { right: 0; }
+
 /* ── Barre staff ─────────────────────────────────────────────────────────────*/
 .staff-bar {
   background: var(--light-card); border-radius: 0;
