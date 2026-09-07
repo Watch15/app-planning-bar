@@ -3751,9 +3751,12 @@ function tapSelectStaff(staff, card) {
 
     // Sur téléphone : fermer la feuille pour laisser place au planning.
     // Sans ça, 60 vh de sheet + bandeau = quasi impossible de viser une ligne.
-    if (typeof isPhone === 'function' && isPhone() && typeof _closeStaffBar === 'function') {
+    // `_closeStaffBar` vit dans index-init.js (global fenêtre), pas dans ce module.
+    if (typeof isPhone === 'function' && isPhone()) {
         const bar = document.getElementById('staff-bar-container');
-        if (bar && bar.classList.contains('open')) _closeStaffBar();
+        if (bar && bar.classList.contains('open') && typeof window._closeStaffBar === 'function') {
+            window._closeStaffBar();
+        }
     }
 }
 

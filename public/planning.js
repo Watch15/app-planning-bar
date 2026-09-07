@@ -3711,8 +3711,7 @@ async function submitClotureCode() {
         const msg = phase === 'debut'
             ? ('Arrivée pointée à ' + (data.debut_valide_finale || ''))
             : ('Service clôturé à ' + (data.heure_validee_finale || ''));
-        if (typeof showToast === 'function') showToast(msg);
-        else if (typeof showSwapToast === 'function') showSwapToast(msg);
+        showSwapToast(msg);
         const p = window._currentPlan;
         if (p) await loadPlanning(p.from, p.to, p.user);
     } catch (e) {
