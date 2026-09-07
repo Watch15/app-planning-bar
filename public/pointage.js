@@ -289,11 +289,19 @@ async function init() {
             setActiveDate(dateInput.value, dateInput.value !== auto);
             loadShifts();
             loadRevenue();
+            if (canUseClotureUi()) {
+                _cloturesDay = new Date(today + 'T12:00:00');
+                renderCloturesList();
+            }
         });
         btnReset.addEventListener('click', () => {
             setActiveDate(getActiveDate(), false);
             loadShifts();
             loadRevenue();
+            if (canUseClotureUi()) {
+                _cloturesDay = new Date(today + 'T12:00:00');
+                renderCloturesList();
+            }
         });
     }
 
@@ -835,11 +843,16 @@ const CLOTURE_ROLES = ['patron', 'directeur'];
 let _codeCloturePoll = null;
 let _codeClotureExpireMs = null;
 let _codeClotureTick = null;
-let _cloturesWeekStart = null;
+let _cloturesDay = null;
 let _clotureBound = false;
 
 function canUseClotureUi() {
     return currentUser && CLOTURE_ROLES.includes(currentUser.role);
+}
+
+function setLegacyPointageVisible(visible) {
+    const block = document.getElementById('legacy-pointage-block');
+    if (block) block.style.display = visible ? '' : 'none';
 }
 
 function escapeHtml(str) {
@@ -852,6 +865,15 @@ function addDaysLocal(d, n) {
     const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
     x.setDate(x.getDate() + n);
     return x;
+}
+
+function formatDateFr(d) {
+    return d.toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
 }
 
 function stopCodeClotureTimers() {
@@ -893,11 +915,14 @@ async function refreshCodeCloture(force) {
 
 async function renderCloturesList() {
     const list = document.getElementById('clotures-list');
-    const label = document.getElementById('clotures-week-label');
-    if (!list || !_cloturesWeekStart || !currentEstabId) return;
-    const monday = toDateStr(_cloturesWeekStart);
-    const sunday = toDateStr(addDaysLocal(_cloturesWeekStart, 6));
-    if (label) label.textContent = monday + ' → ' + sunday;
+    const label = document.getElementById('clotures-day-label');
+    if (!list || !_cloturesDay || !currentEstabId) return;
+    const dayStr = toDateStr(_cloturesDay);
+    const monday = toDateStr(Week.weekStart(_cloturesDay));
+    if (label) {
+        const raw = formatDateFr(_cloturesDay);
+        label.textContent = raw.charAt(0).toUpperCase() + raw.slice(1);
+    }
 
     list.innerHTML = '<div class="cloture-loading">Chargement…</div>';
     try {
@@ -907,14 +932,15 @@ async function renderCloturesList() {
         );
         const shifts = await res.json();
         if (!res.ok) throw new Error(shifts.error || 'Erreur');
-        if (!shifts.length) {
-            list.innerHTML = '<div class="cloture-empty">Aucun shift cette semaine</div>';
+        const dayShifts = (shifts || []).filter(s => s.date === dayStr);
+        if (!dayShifts.length) {
+            list.innerHTML = '<div class="cloture-empty">Aucun shift ce jour</div>';
             return;
         }
         list.innerHTML = '';
-        shifts
+        dayShifts
             .slice()
-            .sort((a, b) => (a.date === b.date ? String(a.staff_name || '').localeCompare(String(b.staff_name || ''), 'fr') : (a.date < b.date ? -1 : 1)))
+            .sort((a, b) => String(a.staff_name || '').localeCompare(String(b.staff_name || ''), 'fr'))
             .forEach(s => {
                 const row = document.createElement('div');
                 const hasDebut = !!s.debut_valide_code;
@@ -933,12 +959,15 @@ async function renderCloturesList() {
                     ? '<span class="cloture-badge ok">Récap validé</span>'
                     : '';
                 const fmtPlan = h => (h != null && window.ShiftHours ? ShiftHours.fmtHourOfDay(h) : (h != null ? fmtH(h) : '—'));
+                const fmtReal = (a, b) => (a != null && b != null && window.ShiftHours)
+                    ? (ShiftHours.fmtHourOfDay(a) + '–' + ShiftHours.fmtHourOfDay(b))
+                    : '—';
                 row.innerHTML =
                     '<div class="cloture-row-main">' +
                         '<div class="cloture-row-name">' + escapeHtml(s.staff_name || '—') +
                         (s.is_joker ? ' <span class="joker">(Joker)</span>' : '') + '</div>' +
-                        '<div class="cloture-row-meta">' + escapeHtml(s.date) +
-                        ' · planifié ' + fmtPlan(s.start_time) + '–' + fmtPlan(s.end_time) +
+                        '<div class="cloture-row-meta">' +
+                        'Planifié ' + fmtPlan(s.start_time) + '–' + fmtPlan(s.end_time) +
                         ' · ' + statusBadge + ' ' + validBadge + '</div>' +
                         '<div class="cloture-row-hours">' +
                             '<span>Début origine : <strong>' + escapeHtml(s.debut_valide_code || '—') + '</strong></span>' +
@@ -947,6 +976,9 @@ async function renderCloturesList() {
                         '<div class="cloture-row-hours">' +
                             '<span>Fin origine : <strong>' + escapeHtml(s.heure_validee_code || '—') + '</strong></span>' +
                             '<span>Fin retenue : <strong>' + escapeHtml(s.heure_validee_finale || '—') + '</strong></span>' +
+                        '</div>' +
+                        '<div class="cloture-row-hours">' +
+                            '<span>Heures réelles : <strong>' + escapeHtml(fmtReal(s.real_start, s.real_end)) + '</strong></span>' +
                         '</div>' +
                         (s.motif_modification ? '<div class="cloture-row-motif">' + escapeHtml(s.motif_modification) + '</div>' : '') +
                     '</div>' +
@@ -1042,8 +1074,8 @@ async function ajusterHeureCloture(shift) {
 }
 
 async function validateCloturesWeek() {
-    if (!currentEstabId || !_cloturesWeekStart) return;
-    const monday = toDateStr(_cloturesWeekStart);
+    if (!currentEstabId || !_cloturesDay) return;
+    const monday = toDateStr(Week.weekStart(_cloturesDay));
     if (!confirm('Valider le récap de la semaine du ' + monday + ' pour cet établissement ?\nLes shifts déjà clôturés seront marqués validés.')) return;
     try {
         const res = await fetch('/api/etablissements/' + encodeURIComponent(currentEstabId) + '/valider-recap', {
@@ -1064,22 +1096,23 @@ function initCloturePanel() {
     if (!canUseClotureUi() || !currentEstabId) {
         panel.classList.remove('visible');
         stopCodeClotureTimers();
+        setLegacyPointageVisible(true);
         return;
     }
     panel.classList.add('visible');
-    if (!_cloturesWeekStart) {
-        const base = today ? new Date(today + 'T12:00:00') : new Date();
-        _cloturesWeekStart = Week.weekStart(base);
+    setLegacyPointageVisible(false);
+    if (!_cloturesDay) {
+        _cloturesDay = today ? new Date(today + 'T12:00:00') : new Date();
     }
     if (!_clotureBound) {
         _clotureBound = true;
         document.getElementById('cc-refresh')?.addEventListener('click', () => refreshCodeCloture(true));
-        document.getElementById('clotures-prev-week')?.addEventListener('click', () => {
-            _cloturesWeekStart = addDaysLocal(_cloturesWeekStart, -7);
+        document.getElementById('clotures-prev-day')?.addEventListener('click', () => {
+            _cloturesDay = addDaysLocal(_cloturesDay, -1);
             renderCloturesList();
         });
-        document.getElementById('clotures-next-week')?.addEventListener('click', () => {
-            _cloturesWeekStart = addDaysLocal(_cloturesWeekStart, 7);
+        document.getElementById('clotures-next-day')?.addEventListener('click', () => {
+            _cloturesDay = addDaysLocal(_cloturesDay, 1);
             renderCloturesList();
         });
         document.getElementById('clotures-validate-week')?.addEventListener('click', validateCloturesWeek);

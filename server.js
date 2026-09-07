@@ -6521,6 +6521,73 @@ function isValidHHMM(s) {
     return typeof s === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
 }
 
+/** HH:MM → float heures (0–24+). */
+function hhmmToHourFloat(hhmm) {
+    if (!isValidHHMM(hhmm)) return null;
+    const [h, m] = hhmm.split(':').map(Number);
+    return h + m / 60;
+}
+
+/** Arrondi au quart d'heure (aligné public/pointage.js). */
+function roundQuarter(h) {
+    if (h == null || Number.isNaN(Number(h))) return null;
+    return Math.round(Number(h) * 4) / 4;
+}
+
+/**
+ * Quand début+fin retenus sont présents, aligne real_start/real_end (quart d'heure)
+ * et fige le snapshot salarial au premier sync. Append-only dans time_validations.
+ */
+async function syncRealHoursFromCloture(shiftId, actor = {}) {
+    const shift = await db.collection('shifts').findOne(
+        typeof shiftId === 'object' && shiftId._id ? { _id: shiftId._id } : { _id: new ObjectId(String(shiftId)) }
+    );
+    if (!shift) return null;
+    if (!shift.debut_valide_finale || !shift.heure_validee_finale) return null;
+
+    let realStart = roundQuarter(hhmmToHourFloat(shift.debut_valide_finale));
+    let realEnd   = roundQuarter(hhmmToHourFloat(shift.heure_validee_finale));
+    if (realStart == null || realEnd == null) return null;
+    if (realEnd < realStart) realEnd += 24;
+
+    const update = { real_start: realStart, real_end: realEnd };
+
+    if (shift.hourly_rate_snapshot === undefined && shift.fixed_rate_snapshot === undefined
+        && shift.staff_id && shift.staff_id !== '__joker__' && isValidObjectId(shift.staff_id)) {
+        const staffDoc = await db.collection('staff').findOne({ _id: new ObjectId(shift.staff_id) });
+        if (staffDoc) {
+            if (staffDoc.fixed_rate != null) {
+                update.fixed_rate_snapshot  = staffDoc.fixed_rate;
+                update.hourly_rate_snapshot = null;
+            } else {
+                update.hourly_rate_snapshot = staffDoc.hourly_rate != null ? staffDoc.hourly_rate : null;
+                update.fixed_rate_snapshot  = null;
+            }
+        }
+    }
+
+    await db.collection('shifts').updateOne({ _id: shift._id }, { $set: update });
+
+    await insertTimeValidation({
+        etablissement_id: shift.establishment_id,
+        shift_id:         String(shift._id),
+        staff_id:         String(actor.staff_id || actor._id || 'system'),
+        acteur_role:      actor.role || null,
+        action:           actor.action || 'sync_real',
+        source:           actor.source || shift.cloture_source || 'code',
+        code_saisi:       actor.code_saisi || 'SYNC',
+        heure_saisie:     localDateParts(),
+        debut_retenue:    shift.debut_valide_finale,
+        fin_retenue:      shift.heure_validee_finale,
+        real_start:       realStart,
+        real_end:         realEnd,
+        resultat:         'sync_real',
+        phase:            'fin',
+    });
+
+    return { real_start: realStart, real_end: realEnd };
+}
+
 function weekDateStrings(weekStartStr) {
     const [y, m, d] = String(weekStartStr).split('-').map(Number);
     if (!y || !m || !d) return null;
@@ -6627,6 +6694,8 @@ app.get('/api/etablissements/:id/clotures-semaine',
                 motif_modification:   s.motif_modification  ?? null,
                 patron_valide:        !!s.patron_valide,
                 patron_valide_le:     s.patron_valide_le     ?? null,
+                real_start:           s.real_start           ?? null,
+                real_end:             s.real_end             ?? null,
                 is_joker:             !!(s.is_joker || s.staff_id === '__joker__'),
             })));
         } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
@@ -6705,6 +6774,8 @@ app.post('/api/shifts/:id/cloturer-par-code', checkDB, requireAuth, async (req, 
                 etablissement_id: shift.establishment_id,
                 shift_id:         String(shift._id),
                 staff_id:         staffId,
+                acteur_role:      user.role || null,
+                action:           phase === 'debut' ? 'pointer_debut' : 'pointer_fin',
                 code_saisi:       code,
                 heure_saisie:     heureSaisie,
                 resultat,
@@ -6723,6 +6794,9 @@ app.post('/api/shifts/:id/cloturer-par-code', checkDB, requireAuth, async (req, 
             etablissement_id: shift.establishment_id,
             shift_id:         String(shift._id),
             staff_id:         staffId,
+            acteur_role:      user.role || null,
+            action:           phase === 'debut' ? 'pointer_debut' : 'pointer_fin',
+            source:           'code',
             code_saisi:       code,
             heure_saisie:     heureSaisie,
             resultat:         'accepte',
@@ -6759,12 +6833,21 @@ app.post('/api/shifts/:id/cloturer-par-code', checkDB, requireAuth, async (req, 
                 },
             }
         );
+        const synced = await syncRealHoursFromCloture(shift._id, {
+            staff_id: staffId,
+            role: user.role,
+            action: 'pointer_fin',
+            source: 'code',
+            code_saisi: code,
+        });
         await regenerateCodeCloture(shift.establishment_id);
         res.json({
             message: 'Service clôturé',
             phase: 'fin',
             heure_validee_code: heure,
             heure_validee_finale: heure,
+            real_start: synced?.real_start ?? null,
+            real_end: synced?.real_end ?? null,
         });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -6803,6 +6886,9 @@ app.post('/api/shifts/:id/cloturer-manuel',
                     etablissement_id: shift.establishment_id,
                     shift_id:         String(shift._id),
                     staff_id:         String(actorId),
+                    acteur_role:      req.session.user.role || null,
+                    action:           'manuel_debut',
+                    source:           'manuelle',
                     code_saisi:       'MANUEL',
                     heure_saisie:     heureSaisie,
                     resultat:         'accepte',
@@ -6860,6 +6946,9 @@ app.post('/api/shifts/:id/cloturer-manuel',
                     etablissement_id: shift.establishment_id,
                     shift_id:         String(shift._id),
                     staff_id:         String(actorId),
+                    acteur_role:      req.session.user.role || null,
+                    action:           'manuel_debut',
+                    source:           'manuelle',
                     code_saisi:       'MANUEL',
                     heure_saisie:     heureSaisie,
                     resultat:         'accepte',
@@ -6871,6 +6960,9 @@ app.post('/api/shifts/:id/cloturer-manuel',
                 etablissement_id: shift.establishment_id,
                 shift_id:         String(shift._id),
                 staff_id:         String(actorId),
+                acteur_role:      req.session.user.role || null,
+                action:           'manuel_fin',
+                source:           'manuelle',
                 code_saisi:       'MANUEL',
                 heure_saisie:     heureSaisie,
                 resultat:         'accepte',
@@ -6880,6 +6972,13 @@ app.post('/api/shifts/:id/cloturer-manuel',
                 { _id: shift._id },
                 { $set: setFields }
             );
+            const synced = await syncRealHoursFromCloture(shift._id, {
+                staff_id: actorId,
+                role: req.session.user.role,
+                action: 'manuel_fin',
+                source: 'manuelle',
+                code_saisi: 'MANUEL',
+            });
             res.json({
                 message: 'Clôture manuelle enregistrée',
                 phase: 'fin',
@@ -6887,6 +6986,8 @@ app.post('/api/shifts/:id/cloturer-manuel',
                 heure_validee_finale: heure,
                 debut_valide_code: setFields.debut_valide_code || shift.debut_valide_code,
                 debut_valide_finale: setFields.debut_valide_finale || shift.debut_valide_finale,
+                real_start: synced?.real_start ?? null,
+                real_end: synced?.real_end ?? null,
             });
         } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
     }
@@ -6930,12 +7031,36 @@ app.patch('/api/shifts/:id/ajuster-heure',
             if (hasDebut) $set.debut_valide_finale = debutFinale;
 
             await db.collection('shifts').updateOne({ _id: shift._id }, { $set });
+            await insertTimeValidation({
+                etablissement_id: shift.establishment_id,
+                shift_id:         String(shift._id),
+                staff_id:         String(actorId),
+                acteur_role:      req.session.user.role || null,
+                action:           'ajuster',
+                source:           'ajustement',
+                code_saisi:       'AJUST',
+                heure_saisie:     localDateParts(),
+                debut_retenue:    hasDebut ? debutFinale : (shift.debut_valide_finale ?? null),
+                fin_retenue:      hasFin ? finFinale : (shift.heure_validee_finale ?? null),
+                motif:            motif || null,
+                resultat:         'accepte',
+                phase:            'ajustement',
+            });
+            const synced = await syncRealHoursFromCloture(shift._id, {
+                staff_id: actorId,
+                role: req.session.user.role,
+                action: 'ajuster',
+                source: 'ajustement',
+                code_saisi: 'AJUST',
+            });
             res.json({
                 message: 'Heure ajustée',
                 debut_valide_code: shift.debut_valide_code ?? null,
                 debut_valide_finale: hasDebut ? debutFinale : (shift.debut_valide_finale ?? null),
                 heure_validee_code: shift.heure_validee_code ?? null,
                 heure_validee_finale: hasFin ? finFinale : (shift.heure_validee_finale ?? null),
+                real_start: synced?.real_start ?? null,
+                real_end: synced?.real_end ?? null,
             });
         } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
     }

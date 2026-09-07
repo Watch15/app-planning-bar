@@ -147,12 +147,77 @@ test('début puis fin OK avec 2 codes + phase dans time_validations', async () =
 
     const shift = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT);
     assert.equal(shift.cloture_source, 'code');
-    assert.equal(shift.real_end, undefined);
+    assert.ok(typeof shift.real_start === 'number');
+    assert.ok(typeof shift.real_end === 'number');
+    assert.equal(shift.real_start, Math.round(shift.real_start * 4) / 4);
+    assert.equal(shift.real_end, Math.round(shift.real_end * 4) / 4);
 
     const vals = db.collection('time_validations')._docs.filter(v => v.resultat === 'accepte');
     assert.equal(vals.length, 2);
     assert.equal(vals[0].phase, 'debut');
     assert.equal(vals[1].phase, 'fin');
+    assert.ok(vals[0].action === 'pointer_debut');
+    assert.ok(vals[1].action === 'pointer_fin');
+
+    const syncs = db.collection('time_validations')._docs.filter(v => v.resultat === 'sync_real');
+    assert.equal(syncs.length, 1);
+    assert.equal(syncs[0].real_start, shift.real_start);
+    assert.equal(syncs[0].real_end, shift.real_end);
+    assert.equal(syncs[0].staff_id, STAFF);
+});
+
+test('real_* absents après début seul ; sync après fin', async () => {
+    assert.equal((await pointerDebut(SHIFT, EQUIPIER, '4827')).status, 200);
+    let shift = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT);
+    assert.equal(shift.real_start, undefined);
+    assert.equal(shift.real_end, undefined);
+    assert.equal(db.collection('time_validations')._docs.filter(v => v.resultat === 'sync_real').length, 0);
+
+    const code2 = await currentCode();
+    assert.equal((await pointerFin(SHIFT, EQUIPIER, code2)).status, 200);
+    shift = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT);
+    assert.ok(shift.real_start != null && shift.real_end != null);
+});
+
+test('ajustement des retenues met à jour real_* ; *_code inchangés', async () => {
+    assert.equal((await pointerDebut(SHIFT, EQUIPIER, '4827')).status, 200);
+    const code2 = await currentCode();
+    assert.equal((await pointerFin(SHIFT, EQUIPIER, code2)).status, 200);
+    const before = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT);
+    const codeDebut = before.debut_valide_code;
+    const codeFin = before.heure_validee_code;
+
+    const res = await req('/api/shifts/' + SHIFT + '/ajuster-heure', PATRON, {
+        method: 'PATCH',
+        body: JSON.stringify({
+            debut_valide_finale: '18:10',
+            heure_validee_finale: '23:45',
+            motif: 'Ajustement smoke test',
+        }),
+    });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.debut_valide_code, codeDebut);
+    assert.equal(data.heure_validee_code, codeFin);
+    assert.equal(data.debut_valide_finale, '18:10');
+    assert.equal(data.heure_validee_finale, '23:45');
+    // 18:10 → 18 + 10/60 = 18.166… → roundQuarter 18.25 ; 23:45 → 23.75
+    assert.equal(data.real_start, 18.25);
+    assert.equal(data.real_end, 23.75);
+
+    const shift = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT);
+    assert.equal(shift.debut_valide_code, codeDebut);
+    assert.equal(shift.heure_validee_code, codeFin);
+    assert.equal(shift.real_start, 18.25);
+    assert.equal(shift.real_end, 23.75);
+
+    const syncs = db.collection('time_validations')._docs.filter(v => v.resultat === 'sync_real');
+    assert.ok(syncs.length >= 2);
+    const last = syncs[syncs.length - 1];
+    assert.equal(last.source, 'ajustement');
+    assert.equal(last.action, 'ajuster');
+    assert.equal(last.real_start, 18.25);
+    assert.equal(last.real_end, 23.75);
 });
 
 test('fin refusée sans début', async () => {
@@ -251,10 +316,14 @@ test('clôture manuelle début puis fin + MANUEL dans time_validations', async (
     shift = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT);
     assert.equal(shift.cloture_source, 'manuelle');
     assert.equal(shift.heure_validee_code, '23:55');
-    const manuels = db.collection('time_validations')._docs.filter(v => v.code_saisi === 'MANUEL');
+    const manuels = db.collection('time_validations')._docs.filter(
+        v => v.code_saisi === 'MANUEL' && v.resultat === 'accepte'
+    );
     assert.equal(manuels.length, 2);
     assert.equal(manuels[0].phase, 'debut');
     assert.equal(manuels[1].phase, 'fin');
+    assert.ok(typeof shift.real_start === 'number');
+    assert.ok(typeof shift.real_end === 'number');
 });
 
 test('fin manuelle sans début exige heure_debut pour forcer', async () => {

@@ -204,7 +204,22 @@ async function main() {
         eq(r.status, 200, 'status');
         ok(/^\d{2}:\d{2}$/.test(r.data.heure_validee_code), 'heure_validee_code');
         eq(r.data.heure_validee_code, r.data.heure_validee_finale, 'origine=finale fin');
-        return 'fin=' + r.data.heure_validee_finale;
+        ok(typeof r.data.real_end === 'number', 'real_end syncé');
+        ok(typeof r.data.real_start === 'number', 'real_start syncé');
+        return 'fin=' + r.data.heure_validee_finale + ' real_end=' + r.data.real_end;
+    });
+
+    // ── 5b. real_* visibles via clotures-semaine ─────────────────────────────
+    await check('Alice : real_end présent après fin (clotures-semaine)', async () => {
+        if (!shiftId) throw new Error('prérequis manquant');
+        const r = await req('pat',
+            '/api/etablissements/' + ESTAB + '/clotures-semaine?week_start=' + mondayStr());
+        eq(r.status, 200, 'status');
+        const row = (r.data || []).find(s => String(s._id) === shiftId);
+        ok(row, 'shift trouvé');
+        ok(typeof row.real_end === 'number', 'real_end');
+        ok(typeof row.real_start === 'number', 'real_start');
+        return 'real=' + row.real_start + '–' + row.real_end;
     });
 
     // ── 6. Réutilisation du code de début → refus ────────────────────────────
