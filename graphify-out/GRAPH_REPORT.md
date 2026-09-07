@@ -1,16 +1,16 @@
 # Graph Report - app-planning-bar  (2026-09-07)
 
 ## Corpus Check
-- 65 files · ~305,200 words
+- 65 files · ~305,019 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1619 nodes · 2692 edges · 100 communities (88 shown, 12 thin omitted)
+- 1619 nodes · 2694 edges · 99 communities (87 shown, 12 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 95 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8f44087e`
+- Built from commit: `21ae16db`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -104,7 +104,6 @@
 - [[_COMMUNITY_Community 88|Community 88]]
 - [[_COMMUNITY_Community 89|Community 89]]
 - [[_COMMUNITY_Community 90|Community 90]]
-- [[_COMMUNITY_Community 91|Community 91]]
 - [[_COMMUNITY_Community 92|Community 92]]
 - [[_COMMUNITY_Community 93|Community 93]]
 - [[_COMMUNITY_Community 94|Community 94]]
@@ -147,15 +146,15 @@
 - **Sûreté timezone via toDateStr** — architecture_timezone_rule, architecture_todatestr, architecture_push_past_shift_guard [EXTRACTED 0.85]
 - **Cycle de vie feature iCal (livrée puis désactivée)** — backlog_f09_ical, architecture_ical_feed, architecture_calendar_enabled_flag [EXTRACTED 0.90]
 
-## Communities (100 total, 12 thin omitted)
+## Communities (99 total, 12 thin omitted)
 
 ### Community 0 - "Planning Board UI"
 Cohesion: 0.07
 Nodes (33): allEstablishments, allStaff, buildTeamDisplayNames(), cancelConge(), _CONGE_STATUS, DAY_NAMES, DAY_NAMES_LONG, DISPO_TYPES (+25 more)
 
 ### Community 1 - "Architecture & Design Rationale"
-Cohesion: 0.20
-Nodes (12): hourly_rate_snapshot / fixed_rate_snapshot, Modèle de données shifts, Modes de rémunération staff (Mutual exclusion Option A), F-06 Joker ouvert au staff (candidatures), Nom staff dénormalisé (source de vérité D-77), pointage.html (compte établissement), Disponibilités staff & patron, Shifts Joker (créneau ouvert) (+4 more)
+Cohesion: 0.18
+Nodes (14): hourly_rate_snapshot / fixed_rate_snapshot, Modèle de données shifts, Modes de rémunération staff (Mutual exclusion Option A), F-06 Joker ouvert au staff (candidatures), Nom staff dénormalisé (source de vérité D-77), performance.html (pilotage économique), pointage.html (compte établissement), Disponibilités staff & patron (+6 more)
 
 ### Community 2 - "html2canvas Render Engine"
 Cohesion: 0.04
@@ -166,12 +165,12 @@ Cohesion: 0.13
 Nodes (36): Ae(), mr(), QB(), re(), se(), SUPPORT_WORD_BREAKING(), w(), _() (+28 more)
 
 ### Community 4 - "Main Planning Script (State)"
-Cohesion: 0.02
+Cohesion: 0.03
 Nodes (69): allEstablishments, allGroups, allRoles, allStaff, AUTO_COLORS, _autoScroll, _btnCopyWeek, buildEstablishmentSelect() (+61 more)
 
 ### Community 5 - "Express Server & API"
 Cohesion: 0.03
-Nodes (39): isFullRangeOnConge(), normalizePublishDoc(), app, bcrypt, canAccessEstablishment(), cleanupOldJokers(), client, connectDB() (+31 more)
+Nodes (36): isFullRangeOnConge(), normalizePublishDoc(), app, appliquerCongeApprouve(), auditActor(), bcrypt, canAccessEstablishment(), client (+28 more)
 
 ### Community 6 - "Week Data Loading"
 Cohesion: 0.10
@@ -186,8 +185,8 @@ Cohesion: 0.14
 Nodes (22): activeStaff, allStaff, buildShiftCard(), checkAuth(), fmtH(), getActiveDate(), init(), initExtraForm() (+14 more)
 
 ### Community 9 - "Dispo Control Init"
-Cohesion: 0.11
-Nodes (22): acknowledgeOffDispo(), buildStaffDisplayNames(), checkAuth(), decideConge(), init(), initDropZone(), initNotifListeners(), initStaffSearch() (+14 more)
+Cohesion: 0.08
+Nodes (28): acknowledgeOffDispo(), addEstablishment(), buildStaffDisplayNames(), checkAuth(), decideConge(), init(), initDropZone(), initNotifListeners() (+20 more)
 
 ### Community 10 - "Shift CRUD & Rendering"
 Cohesion: 0.09
@@ -209,8 +208,8 @@ Cohesion: 0.18
 Nodes (10): background_color, description, display, icons, name, orientation, short_name, shortcuts (+2 more)
 
 ### Community 14 - "Staff Card Styling"
-Cohesion: 0.11
-Nodes (24): activeStaff(), applyCardNameContrast(), _buildCongeRow(), buildRoleFilters(), createShiftEl(), createStaffRow(), displayName(), escapeHtml() (+16 more)
+Cohesion: 0.20
+Nodes (14): applyCardNameContrast(), _buildCongeRow(), createShiftEl(), createStaffRow(), displayName(), escapeHtml(), _fmtCongeDateFr(), openMobileShiftEditModal() (+6 more)
 
 ### Community 15 - "Week Calculation Module"
 Cohesion: 0.06
@@ -221,8 +220,8 @@ Cohesion: 0.33
 Nodes (9): fmtClock(), fmtDurationH(), fmtHourOfDay(), monthlyTotals(), shiftDurationHours(), shiftEffectiveHours(), assert, { shiftEffectiveHours, shiftDurationHours, monthlyTotals, fmtHourOfDay, fmtClock, fmtDurationH } (+1 more)
 
 ### Community 17 - "Account Management UI"
-Cohesion: 0.22
-Nodes (9): loadCongesList(), loadStaffNotesList(), matchesWordPrefix(), normalizeStr(), openStaffModal(), populateStaffManageFilters(), renderCongesListPatron(), renderStaffManageList() (+1 more)
+Cohesion: 0.11
+Nodes (20): activeStaff(), buildRoleFilters(), loadCongesList(), loadStaffNotesList(), matchesWordPrefix(), normalizeStr(), openAccountsModal(), openStaffModal() (+12 more)
 
 ### Community 18 - "Patron Creation Script"
 Cohesion: 0.07
@@ -265,8 +264,8 @@ Cohesion: 0.15
 Nodes (18): BASE, D(), expectIdx, FROM, git(), jar, login(), main() (+10 more)
 
 ### Community 28 - "Community 28"
-Cohesion: 0.22
-Nodes (10): classifyDirectorLinks(), normName(), pickStaffColor(), APPLY, CREATE, main(), { openDb }, { pickStaffColor, classifyDirectorLinks } (+2 more)
+Cohesion: 0.15
+Nodes (14): classifyDirectorLinks(), isValidObjectId(), normName(), pickStaffColor(), APPLY, CREATE, main(), { openDb } (+6 more)
 
 ### Community 29 - "html2canvas Internals B"
 Cohesion: 0.09
@@ -345,8 +344,8 @@ Cohesion: 0.18
 Nodes (9): app, { app, startApp, stopApp, req }, assert, DIRECTEUR, { makeDb }, OBSERVATEUR, PATRON, STAFF (+1 more)
 
 ### Community 59 - "Community 59"
-Cohesion: 0.21
-Nodes (12): Flag CALENDAR_ENABLED (iCal désactivé D-83), Synchronisation agenda — flux iCal (D-72), public/lib/shift-hours.js (heures effectives), Module UMD partagé navigateur/Node, WEEK_CUTOFF_HOUR = 6 (cutoff semaine en cours), public/lib/week.js (weekStart/currentWeekStart), F-09 Abonnement agenda iCal, Refacto incrémentale (modèle D-73) (+4 more)
+Cohesion: 0.24
+Nodes (10): Flag CALENDAR_ENABLED (iCal désactivé D-83), Synchronisation agenda — flux iCal (D-72), public/lib/shift-hours.js (heures effectives), Module UMD partagé navigateur/Node, WEEK_CUTOFF_HOUR = 6 (cutoff semaine en cours), public/lib/week.js (weekStart/currentWeekStart), F-09 Abonnement agenda iCal, Refacto incrémentale (modèle D-73) (+2 more)
 
 ### Community 60 - "Community 60"
 Cohesion: 0.06
@@ -397,8 +396,8 @@ Cohesion: 0.12
 Nodes (21): deleteAccount(), editLockApplies(), editModeOn(), hideEditLockBanner(), isMobileDevice(), isPhone(), isTablet(), isTouchDevice() (+13 more)
 
 ### Community 72 - "Community 72"
-Cohesion: 0.22
-Nodes (10): { buildTemplateDispos }, datesCoveredByPeriods(), dispoEventDelta(), appliquerCongeApprouve(), auditActor(), disposOffPeriods(), managerOffPeriods(), materializeTemplateWeek() (+2 more)
+Cohesion: 0.33
+Nodes (7): { buildTemplateDispos }, datesCoveredByPeriods(), dispoEventDelta(), disposOffPeriods(), managerOffPeriods(), materializeTemplateWeek(), recordDispoEvents()
 
 ### Community 73 - "Community 73"
 Cohesion: 0.11
@@ -437,8 +436,8 @@ Cohesion: 0.33
 Nodes (7): fmtHour(), _fmtSwapDate(), formatEstablishment(), openSwapModal(), renderDays(), renderDaysInto(), templateDayLine()
 
 ### Community 82 - "Community 82"
-Cohesion: 0.20
-Nodes (10): isValidObjectId(), shouldMaterializeTemplate(), archivedIdsAmong(), archivedStaff(), checkDispoRappels(), computeEffectiveDeadline(), materializeAllDispoTemplates(), nouveautesUserId() (+2 more)
+Cohesion: 0.17
+Nodes (12): shouldMaterializeTemplate(), archivedIdsAmong(), checkDispoRappels(), cleanupOldJokers(), computeEffectiveDeadline(), connectDB(), dispoOpenVenues(), materializeAllDispoTemplates() (+4 more)
 
 ### Community 83 - "Community 83"
 Cohesion: 0.18
@@ -467,10 +466,6 @@ Nodes (9): 5. Modèle de données (collections clés), `daily_revenue`, `notific
 ### Community 90 - "Community 90"
 Cohesion: 0.33
 Nodes (6): Cache Service Worker — ne pas toucher `%%BUILD_TIME%%`, Helpers purs → `lib/utils.js`, Règles techniques à ne jamais casser, `script.js` — monolithique, ne pas découper, Sessions MongoDB — promesses uniquement, Timezone — jamais `toISOString()`
-
-### Community 91 - "Community 91"
-Cohesion: 0.33
-Nodes (6): addEstablishment(), loadGroups(), openEstablishmentsModal(), renderEstablishmentsList(), renderGroupFilter(), renderTabs()
 
 ### Community 92 - "Community 92"
 Cohesion: 0.40

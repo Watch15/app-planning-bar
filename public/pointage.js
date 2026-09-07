@@ -191,8 +191,6 @@ async function init() {
         btnBack.style.display = '';
     }
 
-    Nouveautes.init(currentUser.role, { autoOuvrir: false });
-
     // Charger l'heure de bascule
     try {
         const r = await fetch('/api/pointage-settings', { credentials: 'include' });
