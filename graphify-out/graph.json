@@ -113,7 +113,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "lib_utils_isvalidobjectid",
-      "community": 28,
+      "community": 82,
       "norm_label": "isvalidobjectid()"
     },
     {
@@ -1953,7 +1953,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "public_planning_fmtduration",
-      "community": 87,
+      "community": 75,
       "norm_label": "fmtduration()"
     },
     {
@@ -2193,7 +2193,7 @@
       "source_location": "L729",
       "_origin": "ast",
       "id": "public_planning_renderstats",
-      "community": 87,
+      "community": 75,
       "norm_label": "renderstats()"
     },
     {
@@ -2203,7 +2203,7 @@
       "source_location": "L734",
       "_origin": "ast",
       "id": "public_planning_renderstatsinto",
-      "community": 87,
+      "community": 75,
       "norm_label": "renderstatsinto()"
     },
     {
@@ -2213,7 +2213,7 @@
       "source_location": "L775",
       "_origin": "ast",
       "id": "public_planning_statcard",
-      "community": 87,
+      "community": 75,
       "norm_label": "statcard()"
     },
     {
@@ -2233,7 +2233,7 @@
       "source_location": "L799",
       "_origin": "ast",
       "id": "public_planning_applystatsperiod",
-      "community": 87,
+      "community": 75,
       "norm_label": "applystatsperiod()"
     },
     {
@@ -2243,7 +2243,7 @@
       "source_location": "L817",
       "_origin": "ast",
       "id": "public_planning_loadmonthrecap",
-      "community": 87,
+      "community": 75,
       "norm_label": "loadmonthrecap()"
     },
     {
@@ -2253,7 +2253,7 @@
       "source_location": "L844",
       "_origin": "ast",
       "id": "public_planning_rendermonthstats",
-      "community": 87,
+      "community": 75,
       "norm_label": "rendermonthstats()"
     },
     {
@@ -2483,7 +2483,7 @@
       "source_location": "L2078",
       "_origin": "ast",
       "id": "public_planning_buildhiststatshtml",
-      "community": 87,
+      "community": 75,
       "norm_label": "buildhiststatshtml()"
     },
     {
@@ -2493,7 +2493,7 @@
       "source_location": "L2115",
       "_origin": "ast",
       "id": "public_planning_renderhistoriquesemaine",
-      "community": 87,
+      "community": 75,
       "norm_label": "renderhistoriquesemaine()"
     },
     {
@@ -4750,7 +4750,7 @@
       "label": "onTouchMove()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L3627",
+      "source_location": "L3631",
       "_origin": "ast",
       "id": "public_script_ontouchmove",
       "community": 36,
@@ -4760,7 +4760,7 @@
       "label": "onTouchEnd()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L3668",
+      "source_location": "L3672",
       "_origin": "ast",
       "id": "public_script_ontouchend",
       "community": 36,
@@ -4770,7 +4770,7 @@
       "label": "updateShiftText()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L3697",
+      "source_location": "L3701",
       "_origin": "ast",
       "id": "public_script_updateshifttext",
       "community": 36,
@@ -4780,7 +4780,7 @@
       "label": "tapSelectStaff()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L3708",
+      "source_location": "L3722",
       "_origin": "ast",
       "id": "public_script_tapselectstaff",
       "community": 4,
@@ -4790,7 +4790,7 @@
       "label": "clearTapSelection()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L3727",
+      "source_location": "L3741",
       "_origin": "ast",
       "id": "public_script_cleartapselection",
       "community": 4,
@@ -4800,7 +4800,7 @@
       "label": "showTapBanner()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L3733",
+      "source_location": "L3747",
       "_origin": "ast",
       "id": "public_script_showtapbanner",
       "community": 4,
@@ -4810,7 +4810,7 @@
       "label": "hideTapBanner()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L3748",
+      "source_location": "L3762",
       "_origin": "ast",
       "id": "public_script_hidetapbanner",
       "community": 4,
@@ -4820,7 +4820,7 @@
       "label": "initTimelineBodyTap()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L3755",
+      "source_location": "L3769",
       "_origin": "ast",
       "id": "public_script_inittimelinebodytap",
       "community": 9,
@@ -4830,7 +4830,7 @@
       "label": "openCopyModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L3797",
+      "source_location": "L3811",
       "_origin": "ast",
       "id": "public_script_opencopymodal",
       "community": 6,
@@ -4840,7 +4840,7 @@
       "label": "parseTimeInput()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L3889",
+      "source_location": "L3903",
       "_origin": "ast",
       "id": "public_script_parsetimeinput",
       "community": 4,
@@ -4850,7 +4850,7 @@
       "label": "closeCopyModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L3901",
+      "source_location": "L3915",
       "_origin": "ast",
       "id": "public_script_closecopymodal",
       "community": 4,
@@ -4860,7 +4860,7 @@
       "label": "_btnCopyWeek",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L3934",
+      "source_location": "L3948",
       "_origin": "ast",
       "id": "public_script_btncopyweek",
       "community": 4,
@@ -4870,7 +4870,7 @@
       "label": "openCopyWeekModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L3937",
+      "source_location": "L3951",
       "_origin": "ast",
       "id": "public_script_opencopyweekmodal",
       "community": 6,
@@ -4880,7 +4880,7 @@
       "label": "closeCopyWeekModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L3972",
+      "source_location": "L3986",
       "_origin": "ast",
       "id": "public_script_closecopyweekmodal",
       "community": 4,
@@ -4890,7 +4890,7 @@
       "label": "renderWeekFull()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L4002",
+      "source_location": "L4016",
       "_origin": "ast",
       "id": "public_script_renderweekfull",
       "community": 57,
@@ -4900,7 +4900,7 @@
       "label": "renderTeamDashboard()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L4014",
+      "source_location": "L4028",
       "_origin": "ast",
       "id": "public_script_renderteamdashboard",
       "community": 57,
@@ -4910,7 +4910,7 @@
       "label": "renderDashboard()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L4138",
+      "source_location": "L4152",
       "_origin": "ast",
       "id": "public_script_renderdashboard",
       "community": 57,
@@ -4920,7 +4920,7 @@
       "label": "renderAgenda()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L4306",
+      "source_location": "L4320",
       "_origin": "ast",
       "id": "public_script_renderagenda",
       "community": 6,
@@ -4930,7 +4930,7 @@
       "label": "renderWeekGantt()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L4389",
+      "source_location": "L4403",
       "_origin": "ast",
       "id": "public_script_renderweekgantt",
       "community": 57,
@@ -4940,7 +4940,7 @@
       "label": "switchToDayView()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L4566",
+      "source_location": "L4580",
       "_origin": "ast",
       "id": "public_script_switchtodayview",
       "community": 57,
@@ -4950,7 +4950,7 @@
       "label": "openEstablishmentsModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L4579",
+      "source_location": "L4593",
       "_origin": "ast",
       "id": "public_script_openestablishmentsmodal",
       "community": 91,
@@ -4960,7 +4960,7 @@
       "label": "openCompteEtabModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L4594",
+      "source_location": "L4608",
       "_origin": "ast",
       "id": "public_script_opencompteetabmodal",
       "community": 4,
@@ -4970,7 +4970,7 @@
       "label": "renderEstablishmentsList()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L4682",
+      "source_location": "L4696",
       "_origin": "ast",
       "id": "public_script_renderestablishmentslist",
       "community": 91,
@@ -4980,7 +4980,7 @@
       "label": "addEstablishment()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L4809",
+      "source_location": "L4823",
       "_origin": "ast",
       "id": "public_script_addestablishment",
       "community": 91,
@@ -4990,7 +4990,7 @@
       "label": "openAccountsModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L4841",
+      "source_location": "L4855",
       "_origin": "ast",
       "id": "public_script_openaccountsmodal",
       "community": 14,
@@ -5000,7 +5000,7 @@
       "label": "switchAccountsTab()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L4852",
+      "source_location": "L4866",
       "_origin": "ast",
       "id": "public_script_switchaccountstab",
       "community": 14,
@@ -5010,7 +5010,7 @@
       "label": "_updatePendingBadge()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L4874",
+      "source_location": "L4888",
       "_origin": "ast",
       "id": "public_script_updatependingbadge",
       "community": 14,
@@ -5020,7 +5020,7 @@
       "label": "populateBarsCheckboxes()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L4881",
+      "source_location": "L4895",
       "_origin": "ast",
       "id": "public_script_populatebarscheckboxes",
       "community": 14,
@@ -5030,7 +5030,7 @@
       "label": "renderAccountsList()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L4904",
+      "source_location": "L4918",
       "_origin": "ast",
       "id": "public_script_renderaccountslist",
       "community": 14,
@@ -5040,7 +5040,7 @@
       "label": "renderPendingInvites()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L4979",
+      "source_location": "L4993",
       "_origin": "ast",
       "id": "public_script_renderpendinginvites",
       "community": 14,
@@ -5050,7 +5050,7 @@
       "label": "populateStaffSelect()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L5088",
+      "source_location": "L5102",
       "_origin": "ast",
       "id": "public_script_populatestaffselect",
       "community": 14,
@@ -5060,7 +5060,7 @@
       "label": "openChangeRoleModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L5205",
+      "source_location": "L5219",
       "_origin": "ast",
       "id": "public_script_openchangerolemodal",
       "community": 4,
@@ -5070,7 +5070,7 @@
       "label": "openAssignBarsModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L5295",
+      "source_location": "L5309",
       "_origin": "ast",
       "id": "public_script_openassignbarsmodal",
       "community": 4,
@@ -5080,7 +5080,7 @@
       "label": "patronResetPassword()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L5341",
+      "source_location": "L5355",
       "_origin": "ast",
       "id": "public_script_patronresetpassword",
       "community": 71,
@@ -5090,7 +5090,7 @@
       "label": "deleteAccount()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L5358",
+      "source_location": "L5372",
       "_origin": "ast",
       "id": "public_script_deleteaccount",
       "community": 71,
@@ -5100,7 +5100,7 @@
       "label": "openRevenueModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L5374",
+      "source_location": "L5388",
       "_origin": "ast",
       "id": "public_script_openrevenuemodal",
       "community": 4,
@@ -5110,7 +5110,7 @@
       "label": "prefillRevenueModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L5415",
+      "source_location": "L5429",
       "_origin": "ast",
       "id": "public_script_prefillrevenuemodal",
       "community": 4,
@@ -5120,7 +5120,7 @@
       "label": "saveRevenueFromModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L5435",
+      "source_location": "L5449",
       "_origin": "ast",
       "id": "public_script_saverevenuefrommodal",
       "community": 38,
@@ -5130,7 +5130,7 @@
       "label": "openRecapModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L5465",
+      "source_location": "L5479",
       "_origin": "ast",
       "id": "public_script_openrecapmodal",
       "community": 4,
@@ -5140,7 +5140,7 @@
       "label": "showRecapSub()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L5546",
+      "source_location": "L5560",
       "_origin": "ast",
       "id": "public_script_showrecapsub",
       "community": 4,
@@ -5150,7 +5150,7 @@
       "label": "loadCongesCalendar()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L5564",
+      "source_location": "L5578",
       "_origin": "ast",
       "id": "public_script_loadcongescalendar",
       "community": 4,
@@ -5160,7 +5160,7 @@
       "label": "renderCongesCalendar()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L5593",
+      "source_location": "L5607",
       "_origin": "ast",
       "id": "public_script_rendercongescalendar",
       "community": 4,
@@ -5170,7 +5170,7 @@
       "label": "loadRecapData()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L5697",
+      "source_location": "L5711",
       "_origin": "ast",
       "id": "public_script_loadrecapdata",
       "community": 4,
@@ -5180,7 +5180,7 @@
       "label": "exportRecapXlsx()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L5857",
+      "source_location": "L5871",
       "_origin": "ast",
       "id": "public_script_exportrecapxlsx",
       "community": 38,
@@ -5190,7 +5190,7 @@
       "label": "loadSwapsBadge()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L5969",
+      "source_location": "L5983",
       "_origin": "ast",
       "id": "public_script_loadswapsbadge",
       "community": 57,
@@ -5200,7 +5200,7 @@
       "label": "openSwapsPanel()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L5984",
+      "source_location": "L5998",
       "_origin": "ast",
       "id": "public_script_openswapspanel",
       "community": 4,
@@ -5210,7 +5210,7 @@
       "label": "loadSwapPolicy()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L5995",
+      "source_location": "L6009",
       "_origin": "ast",
       "id": "public_script_loadswappolicy",
       "community": 4,
@@ -5220,7 +5220,7 @@
       "label": "_fmtSwapTime()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6032",
+      "source_location": "L6046",
       "_origin": "ast",
       "id": "public_script_fmtswaptime",
       "community": 4,
@@ -5230,7 +5230,7 @@
       "label": "_estabName()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6041",
+      "source_location": "L6055",
       "_origin": "ast",
       "id": "public_script_estabname",
       "community": 4,
@@ -5240,7 +5240,7 @@
       "label": "_fmtSwapDateFR()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6046",
+      "source_location": "L6060",
       "_origin": "ast",
       "id": "public_script_fmtswapdatefr",
       "community": 4,
@@ -5250,7 +5250,7 @@
       "label": "loadSwapsList()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6055",
+      "source_location": "L6069",
       "_origin": "ast",
       "id": "public_script_loadswapslist",
       "community": 4,
@@ -5260,7 +5260,7 @@
       "label": "_renderSwapCard()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6073",
+      "source_location": "L6087",
       "_origin": "ast",
       "id": "public_script_renderswapcard",
       "community": 4,
@@ -5270,7 +5270,7 @@
       "label": "_decideSwap()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6133",
+      "source_location": "L6147",
       "_origin": "ast",
       "id": "public_script_decideswap",
       "community": 57,
@@ -5280,7 +5280,7 @@
       "label": "loadDisposBadge()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6167",
+      "source_location": "L6181",
       "_origin": "ast",
       "id": "public_script_loaddisposbadge",
       "community": 9,
@@ -5290,7 +5290,7 @@
       "label": "_kpiProgressBar()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6186",
+      "source_location": "L6200",
       "_origin": "ast",
       "id": "public_script_kpiprogressbar",
       "community": 57,
@@ -5300,7 +5300,7 @@
       "label": "_kpiEstabOpen",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6199",
+      "source_location": "L6213",
       "_origin": "ast",
       "id": "public_script_kpiestabopen",
       "community": 4,
@@ -5310,7 +5310,7 @@
       "label": "loadDisposKpi()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6201",
+      "source_location": "L6215",
       "_origin": "ast",
       "id": "public_script_loaddisposkpi",
       "community": 57,
@@ -5320,7 +5320,7 @@
       "label": "_kpiEstabRow()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6219",
+      "source_location": "L6233",
       "_origin": "ast",
       "id": "public_script_kpiestabrow",
       "community": 57,
@@ -5330,7 +5330,7 @@
       "label": "renderDisposKpiCard()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6243",
+      "source_location": "L6257",
       "_origin": "ast",
       "id": "public_script_renderdisposkpicard",
       "community": 57,
@@ -5340,7 +5340,7 @@
       "label": "_congesAll",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6292",
+      "source_location": "L6306",
       "_origin": "ast",
       "id": "public_script_congesall",
       "community": 4,
@@ -5350,7 +5350,7 @@
       "label": "_congesCollapsedMonths",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6293",
+      "source_location": "L6307",
       "_origin": "ast",
       "id": "public_script_congescollapsedmonths",
       "community": 4,
@@ -5360,7 +5360,7 @@
       "label": "_CONGE_STATUS_PATRON",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6295",
+      "source_location": "L6309",
       "_origin": "ast",
       "id": "public_script_conge_status_patron",
       "community": 4,
@@ -5370,7 +5370,7 @@
       "label": "_MONTHS_FR",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6302",
+      "source_location": "L6316",
       "_origin": "ast",
       "id": "public_script_months_fr",
       "community": 4,
@@ -5380,7 +5380,7 @@
       "label": "_fmtCongeDateFr()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6304",
+      "source_location": "L6318",
       "_origin": "ast",
       "id": "public_script_fmtcongedatefr",
       "community": 14,
@@ -5390,7 +5390,7 @@
       "label": "loadCongesBadge()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6311",
+      "source_location": "L6325",
       "_origin": "ast",
       "id": "public_script_loadcongesbadge",
       "community": 9,
@@ -5400,7 +5400,7 @@
       "label": "loadCongesList()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6323",
+      "source_location": "L6337",
       "_origin": "ast",
       "id": "public_script_loadcongeslist",
       "community": 17,
@@ -5410,7 +5410,7 @@
       "label": "renderCongesListPatron()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6353",
+      "source_location": "L6367",
       "_origin": "ast",
       "id": "public_script_rendercongeslistpatron",
       "community": 17,
@@ -5420,7 +5420,7 @@
       "label": "_buildCongeRow()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6400",
+      "source_location": "L6414",
       "_origin": "ast",
       "id": "public_script_buildcongerow",
       "community": 14,
@@ -5430,7 +5430,7 @@
       "label": "decideConge()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6439",
+      "source_location": "L6453",
       "_origin": "ast",
       "id": "public_script_decideconge",
       "community": 9,
@@ -5440,7 +5440,7 @@
       "label": "_reassignDateRange()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6461",
+      "source_location": "L6475",
       "_origin": "ast",
       "id": "public_script_reassigndaterange",
       "community": 6,
@@ -5450,7 +5450,7 @@
       "label": "_updateReassignBadge()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6469",
+      "source_location": "L6483",
       "_origin": "ast",
       "id": "public_script_updatereassignbadge",
       "community": 6,
@@ -5460,7 +5460,7 @@
       "label": "loadReassignBadge()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6477",
+      "source_location": "L6491",
       "_origin": "ast",
       "id": "public_script_loadreassignbadge",
       "community": 6,
@@ -5470,7 +5470,7 @@
       "label": "loadNonAffectees()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6487",
+      "source_location": "L6501",
       "_origin": "ast",
       "id": "public_script_loadnonaffectees",
       "community": 6,
@@ -5480,7 +5480,7 @@
       "label": "_nonAffecteesAfterRemove()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6582",
+      "source_location": "L6596",
       "_origin": "ast",
       "id": "public_script_nonaffecteesafterremove",
       "community": 38,
@@ -5490,7 +5490,7 @@
       "label": "_recreateShiftFromDispo()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6599",
+      "source_location": "L6613",
       "_origin": "ast",
       "id": "public_script_recreateshiftfromdispo",
       "community": 38,
@@ -5500,7 +5500,7 @@
       "label": "_ignoreNonAffectee()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6629",
+      "source_location": "L6643",
       "_origin": "ast",
       "id": "public_script_ignorenonaffectee",
       "community": 38,
@@ -5510,7 +5510,7 @@
       "label": "_isWeekPublished()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6639",
+      "source_location": "L6653",
       "_origin": "ast",
       "id": "public_script_isweekpublished",
       "community": 4,
@@ -5520,7 +5520,7 @@
       "label": "_reminderResolveWeek()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6650",
+      "source_location": "L6664",
       "_origin": "ast",
       "id": "public_script_reminderresolveweek",
       "community": 6,
@@ -5530,7 +5530,7 @@
       "label": "_renderReminderWeekLabel()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6654",
+      "source_location": "L6668",
       "_origin": "ast",
       "id": "public_script_renderreminderweeklabel",
       "community": 6,
@@ -5540,7 +5540,7 @@
       "label": "loadReminderBadge()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6663",
+      "source_location": "L6677",
       "_origin": "ast",
       "id": "public_script_loadreminderbadge",
       "community": 6,
@@ -5550,7 +5550,7 @@
       "label": "loadReminderTab()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6678",
+      "source_location": "L6692",
       "_origin": "ast",
       "id": "public_script_loadremindertab",
       "community": 6,
@@ -5560,7 +5560,7 @@
       "label": "_renderModifyWeekLabel()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6761",
+      "source_location": "L6775",
       "_origin": "ast",
       "id": "public_script_rendermodifyweeklabel",
       "community": 6,
@@ -5570,7 +5570,7 @@
       "label": "loadModifyTab()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6770",
+      "source_location": "L6784",
       "_origin": "ast",
       "id": "public_script_loadmodifytab",
       "community": 6,
@@ -5580,7 +5580,7 @@
       "label": "historyEvents",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6875",
+      "source_location": "L6889",
       "_origin": "ast",
       "id": "public_script_historyevents",
       "community": 4,
@@ -5590,7 +5590,7 @@
       "label": "HISTORY_ACTIONS",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6878",
+      "source_location": "L6892",
       "_origin": "ast",
       "id": "public_script_history_actions",
       "community": 4,
@@ -5600,7 +5600,7 @@
       "label": "HISTORY_FAMILIES",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6895",
+      "source_location": "L6909",
       "_origin": "ast",
       "id": "public_script_history_families",
       "community": 4,
@@ -5610,7 +5610,7 @@
       "label": "HISTORY_FAMILY_OF",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6900",
+      "source_location": "L6914",
       "_origin": "ast",
       "id": "public_script_history_family_of",
       "community": 4,
@@ -5620,7 +5620,7 @@
       "label": "_histH()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6908",
+      "source_location": "L6922",
       "_origin": "ast",
       "id": "public_script_histh",
       "community": 4,
@@ -5630,7 +5630,7 @@
       "label": "_histTypes",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6910",
+      "source_location": "L6924",
       "_origin": "ast",
       "id": "public_script_histtypes",
       "community": 4,
@@ -5640,7 +5640,7 @@
       "label": "_histStatus",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6911",
+      "source_location": "L6925",
       "_origin": "ast",
       "id": "public_script_histstatus",
       "community": 4,
@@ -5650,7 +5650,7 @@
       "label": "_histFields()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6915",
+      "source_location": "L6929",
       "_origin": "ast",
       "id": "public_script_histfields",
       "community": 4,
@@ -5660,7 +5660,7 @@
       "label": "loadDisposHistory()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6940",
+      "source_location": "L6954",
       "_origin": "ast",
       "id": "public_script_loaddisposhistory",
       "community": 6,
@@ -5670,7 +5670,7 @@
       "label": "renderHistoryFilters()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L6968",
+      "source_location": "L6982",
       "_origin": "ast",
       "id": "public_script_renderhistoryfilters",
       "community": 4,
@@ -5680,7 +5680,7 @@
       "label": "renderDisposHistory()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7000",
+      "source_location": "L7014",
       "_origin": "ast",
       "id": "public_script_renderdisposhistory",
       "community": 4,
@@ -5690,7 +5690,7 @@
       "label": "switchDisposTab()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7064",
+      "source_location": "L7078",
       "_origin": "ast",
       "id": "public_script_switchdispostab",
       "community": 6,
@@ -5700,7 +5700,7 @@
       "label": "openDisposPanel()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7151",
+      "source_location": "L7165",
       "_origin": "ast",
       "id": "public_script_opendispospanel",
       "community": 6,
@@ -5710,7 +5710,7 @@
       "label": "sendRappelDispos()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7162",
+      "source_location": "L7176",
       "_origin": "ast",
       "id": "public_script_sendrappeldispos",
       "community": 6,
@@ -5720,7 +5720,7 @@
       "label": "disposScopeQS()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7204",
+      "source_location": "L7218",
       "_origin": "ast",
       "id": "public_script_disposscopeqs",
       "community": 6,
@@ -5730,7 +5730,7 @@
       "label": "staffIndex()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7214",
+      "source_location": "L7228",
       "_origin": "ast",
       "id": "public_script_staffindex",
       "community": 6,
@@ -5740,7 +5740,7 @@
       "label": "loadDisposList()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7216",
+      "source_location": "L7230",
       "_origin": "ast",
       "id": "public_script_loaddisposlist",
       "community": 6,
@@ -5750,7 +5750,7 @@
       "label": "patchEachDispo()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7530",
+      "source_location": "L7544",
       "_origin": "ast",
       "id": "public_script_patcheachdispo",
       "community": 4,
@@ -5760,7 +5760,7 @@
       "label": "batchToast()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7561",
+      "source_location": "L7575",
       "_origin": "ast",
       "id": "public_script_batchtoast",
       "community": 38,
@@ -5770,7 +5770,7 @@
       "label": "confirmDisposBatch()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7564",
+      "source_location": "L7578",
       "_origin": "ast",
       "id": "public_script_confirmdisposbatch",
       "community": 4,
@@ -5780,7 +5780,7 @@
       "label": "confirmAllForStaff()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7623",
+      "source_location": "L7637",
       "_origin": "ast",
       "id": "public_script_confirmallforstaff",
       "community": 4,
@@ -5790,7 +5790,7 @@
       "label": "openConfirmDispo()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7637",
+      "source_location": "L7651",
       "_origin": "ast",
       "id": "public_script_openconfirmdispo",
       "community": 4,
@@ -5800,7 +5800,7 @@
       "label": "acknowledgeOffDispo()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7692",
+      "source_location": "L7706",
       "_origin": "ast",
       "id": "public_script_acknowledgeoffdispo",
       "community": 9,
@@ -5810,7 +5810,7 @@
       "label": "renderStaffNotesWeekLabel()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7714",
+      "source_location": "L7728",
       "_origin": "ast",
       "id": "public_script_renderstaffnotesweeklabel",
       "community": 6,
@@ -5820,7 +5820,7 @@
       "label": "_staffNotesData",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7722",
+      "source_location": "L7736",
       "_origin": "ast",
       "id": "public_script_staffnotesdata",
       "community": 4,
@@ -5830,7 +5830,7 @@
       "label": "loadStaffNotesList()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7724",
+      "source_location": "L7738",
       "_origin": "ast",
       "id": "public_script_loadstaffnoteslist",
       "community": 17,
@@ -5840,7 +5840,7 @@
       "label": "renderStaffNotesList()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7740",
+      "source_location": "L7754",
       "_origin": "ast",
       "id": "public_script_renderstaffnoteslist",
       "community": 17,
@@ -5850,7 +5850,7 @@
       "label": "buildEstablishmentSelect()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7816",
+      "source_location": "L7830",
       "_origin": "ast",
       "id": "public_script_buildestablishmentselect",
       "community": 4,
@@ -5860,7 +5860,7 @@
       "label": "loadDispoControl()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L7854",
+      "source_location": "L7868",
       "_origin": "ast",
       "id": "public_script_loaddispocontrol",
       "community": 9,
@@ -5870,7 +5870,7 @@
       "label": "renderRolesList()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8098",
+      "source_location": "L8112",
       "_origin": "ast",
       "id": "public_script_renderroleslist",
       "community": 4,
@@ -5880,7 +5880,7 @@
       "label": "openStaffModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8158",
+      "source_location": "L8172",
       "_origin": "ast",
       "id": "public_script_openstaffmodal",
       "community": 17,
@@ -5890,7 +5890,7 @@
       "label": "renderRestDaysTab()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8190",
+      "source_location": "L8204",
       "_origin": "ast",
       "id": "public_script_renderrestdaystab",
       "community": 14,
@@ -5900,7 +5900,7 @@
       "label": "renderRolesHeader()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8289",
+      "source_location": "L8303",
       "_origin": "ast",
       "id": "public_script_renderrolesheader",
       "community": 4,
@@ -5910,7 +5910,7 @@
       "label": "populateStaffManageFilters()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8378",
+      "source_location": "L8392",
       "_origin": "ast",
       "id": "public_script_populatestaffmanagefilters",
       "community": 17,
@@ -5920,7 +5920,7 @@
       "label": "renderStaffManageList()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8404",
+      "source_location": "L8418",
       "_origin": "ast",
       "id": "public_script_renderstaffmanagelist",
       "community": 17,
@@ -5930,7 +5930,7 @@
       "label": "textColorFor()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8800",
+      "source_location": "L8814",
       "_origin": "ast",
       "id": "public_script_textcolorfor",
       "community": 14,
@@ -5940,7 +5940,7 @@
       "label": "applyCardNameContrast()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8809",
+      "source_location": "L8823",
       "_origin": "ast",
       "id": "public_script_applycardnamecontrast",
       "community": 14,
@@ -5950,7 +5950,7 @@
       "label": "shiftTextColor()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8823",
+      "source_location": "L8837",
       "_origin": "ast",
       "id": "public_script_shifttextcolor",
       "community": 14,
@@ -5960,7 +5960,7 @@
       "label": "AUTO_COLORS",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8831",
+      "source_location": "L8845",
       "_origin": "ast",
       "id": "public_script_auto_colors",
       "community": 4,
@@ -5970,7 +5970,7 @@
       "label": "generateColor()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8837",
+      "source_location": "L8851",
       "_origin": "ast",
       "id": "public_script_generatecolor",
       "community": 4,
@@ -5980,7 +5980,7 @@
       "label": "updateStaffColor()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8843",
+      "source_location": "L8857",
       "_origin": "ast",
       "id": "public_script_updatestaffcolor",
       "community": 14,
@@ -5990,7 +5990,7 @@
       "label": "renderStats()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8876",
+      "source_location": "L8890",
       "_origin": "ast",
       "id": "public_script_renderstats",
       "community": 38,
@@ -6000,7 +6000,7 @@
       "label": "showToast()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8915",
+      "source_location": "L8929",
       "_origin": "ast",
       "id": "public_script_showtoast",
       "community": 38,
@@ -6010,7 +6010,7 @@
       "label": "showConflictAlert()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8923",
+      "source_location": "L8937",
       "_origin": "ast",
       "id": "public_script_showconflictalert",
       "community": 38,
@@ -6020,7 +6020,7 @@
       "label": "logout()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8933",
+      "source_location": "L8947",
       "_origin": "ast",
       "id": "public_script_logout",
       "community": 4,
@@ -6030,7 +6030,7 @@
       "label": "openBulkStaffNamesModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L8952",
+      "source_location": "L8966",
       "_origin": "ast",
       "id": "public_script_openbulkstaffnamesmodal",
       "community": 4,
@@ -6040,7 +6040,7 @@
       "label": "openBulkStaffRatesModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L9036",
+      "source_location": "L9050",
       "_origin": "ast",
       "id": "public_script_openbulkstaffratesmodal",
       "community": 4,
@@ -6050,7 +6050,7 @@
       "label": "openCsvImportModal()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L9183",
+      "source_location": "L9197",
       "_origin": "ast",
       "id": "public_script_opencsvimportmodal",
       "community": 4,
@@ -6060,7 +6060,7 @@
       "label": "startAutoRefresh()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L9418",
+      "source_location": "L9432",
       "_origin": "ast",
       "id": "public_script_startautorefresh",
       "community": 9,
@@ -6070,7 +6070,7 @@
       "label": "refreshIfStale()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L9433",
+      "source_location": "L9447",
       "_origin": "ast",
       "id": "public_script_refreshifstale",
       "community": 9,
@@ -6080,7 +6080,7 @@
       "label": "silentRefresh()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L9445",
+      "source_location": "L9459",
       "_origin": "ast",
       "id": "public_script_silentrefresh",
       "community": 9,
@@ -6090,7 +6090,7 @@
       "label": "loadNotifBadge()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L9458",
+      "source_location": "L9472",
       "_origin": "ast",
       "id": "public_script_loadnotifbadge",
       "community": 9,
@@ -6100,7 +6100,7 @@
       "label": "openNotifPanel()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L9471",
+      "source_location": "L9485",
       "_origin": "ast",
       "id": "public_script_opennotifpanel",
       "community": 14,
@@ -6110,7 +6110,7 @@
       "label": "formatTimeAgo()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L9518",
+      "source_location": "L9532",
       "_origin": "ast",
       "id": "public_script_formattimeago",
       "community": 4,
@@ -6120,7 +6120,7 @@
       "label": "escapeHtml()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L9530",
+      "source_location": "L9544",
       "_origin": "ast",
       "id": "public_script_escapehtml",
       "community": 14,
@@ -6130,7 +6130,7 @@
       "label": "initNotifListeners()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L9542",
+      "source_location": "L9556",
       "_origin": "ast",
       "id": "public_script_initnotiflisteners",
       "community": 9,
@@ -6140,7 +6140,7 @@
       "label": "exportWeekCSV()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L9568",
+      "source_location": "L9582",
       "_origin": "ast",
       "id": "public_script_exportweekcsv",
       "community": 6,
@@ -6150,7 +6150,7 @@
       "label": "saveDashboardPdf()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L9643",
+      "source_location": "L9657",
       "_origin": "ast",
       "id": "public_script_savedashboardpdf",
       "community": 6,
@@ -6160,7 +6160,7 @@
       "label": "generatePrintGantt()",
       "file_type": "code",
       "source_file": "public/script.js",
-      "source_location": "L9814",
+      "source_location": "L9828",
       "_origin": "ast",
       "id": "public_script_generateprintgantt",
       "community": 6,
@@ -8823,7 +8823,7 @@
       "source_location": "L244",
       "_origin": "ast",
       "id": "server_archivedstaff",
-      "community": 28,
+      "community": 82,
       "norm_label": "archivedstaff()"
     },
     {
@@ -8833,7 +8833,7 @@
       "source_location": "L272",
       "_origin": "ast",
       "id": "server_resolvestaffforplanning",
-      "community": 28,
+      "community": 82,
       "norm_label": "resolvestaffforplanning()"
     },
     {
@@ -8853,7 +8853,7 @@
       "source_location": "L309",
       "_origin": "ast",
       "id": "server_connectdb",
-      "community": 82,
+      "community": 5,
       "norm_label": "connectdb()"
     },
     {
@@ -8923,7 +8923,7 @@
       "source_location": "L604",
       "_origin": "ast",
       "id": "server_auditactor",
-      "community": 5,
+      "community": 72,
       "norm_label": "auditactor()"
     },
     {
@@ -8943,7 +8943,7 @@
       "source_location": "L655",
       "_origin": "ast",
       "id": "server_purgedisposavectrace",
-      "community": 5,
+      "community": 72,
       "norm_label": "purgedisposavectrace()"
     },
     {
@@ -8963,7 +8963,7 @@
       "source_location": "L693",
       "_origin": "ast",
       "id": "server_dispoopenvenues",
-      "community": 82,
+      "community": 5,
       "norm_label": "dispoopenvenues()"
     },
     {
@@ -8973,7 +8973,7 @@
       "source_location": "L702",
       "_origin": "ast",
       "id": "server_staffdispoopen",
-      "community": 82,
+      "community": 5,
       "norm_label": "staffdispoopen()"
     },
     {
@@ -8993,7 +8993,7 @@
       "source_location": "L846",
       "_origin": "ast",
       "id": "server_cleanupoldjokers",
-      "community": 82,
+      "community": 5,
       "norm_label": "cleanupoldjokers()"
     },
     {
@@ -9013,7 +9013,7 @@
       "source_location": "L895",
       "_origin": "ast",
       "id": "server_scheduledailyat10",
-      "community": 82,
+      "community": 5,
       "norm_label": "scheduledailyat10()"
     },
     {
@@ -9333,7 +9333,7 @@
       "source_location": "L4357",
       "_origin": "ast",
       "id": "server_appliquercongeapprouve",
-      "community": 5,
+      "community": 72,
       "norm_label": "appliquercongeapprouve()"
     },
     {
@@ -9403,7 +9403,7 @@
       "source_location": "L4676",
       "_origin": "ast",
       "id": "server_templateeligible",
-      "community": 82,
+      "community": 5,
       "norm_label": "templateeligible()"
     },
     {
@@ -9523,7 +9523,7 @@
       "source_location": "L6638",
       "_origin": "ast",
       "id": "server_nouveautesuserid",
-      "community": 28,
+      "community": 82,
       "norm_label": "nouveautesuserid()"
     },
     {
@@ -18267,9 +18267,9 @@
       "source_file": "package.json",
       "source_location": "L22",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "package_scripts",
-      "target": "package_scripts_smoke_prod",
-      "confidence_score": 1.0
+      "target": "package_scripts_smoke_prod"
     },
     {
       "relation": "contains",
@@ -18277,9 +18277,9 @@
       "source_file": "package.json",
       "source_location": "L25",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "package_scripts",
-      "target": "package_scripts_smoke_prod_client",
-      "confidence_score": 1.0
+      "target": "package_scripts_smoke_prod_client"
     },
     {
       "relation": "contains",
@@ -18287,9 +18287,9 @@
       "source_file": "package.json",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "package_scripts",
-      "target": "package_scripts_smoke_prod_dev",
-      "confidence_score": 1.0
+      "target": "package_scripts_smoke_prod_dev"
     },
     {
       "relation": "contains",
@@ -18297,9 +18297,9 @@
       "source_file": "package.json",
       "source_location": "L24",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "package_scripts",
-      "target": "package_scripts_smoke_prod_main",
-      "confidence_score": 1.0
+      "target": "package_scripts_smoke_prod_main"
     },
     {
       "relation": "contains",
@@ -20587,9 +20587,9 @@
       "source_file": "public/planning.js",
       "source_location": "L2078",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_buildhiststatshtml",
-      "confidence_score": 1.0
+      "target": "public_planning_buildhiststatshtml"
     },
     {
       "relation": "contains",
@@ -21067,9 +21067,9 @@
       "source_file": "public/planning.js",
       "source_location": "L1944",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_loadhistoriquemois",
-      "confidence_score": 1.0
+      "target": "public_planning_loadhistoriquemois"
     },
     {
       "relation": "contains",
@@ -21077,9 +21077,9 @@
       "source_file": "public/planning.js",
       "source_location": "L2041",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_loadhistoriquesemaine",
-      "confidence_score": 1.0
+      "target": "public_planning_loadhistoriquesemaine"
     },
     {
       "relation": "contains",
@@ -21347,9 +21347,9 @@
       "source_file": "public/planning.js",
       "source_location": "L1915",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_renderhistmodetoggle",
-      "confidence_score": 1.0
+      "target": "public_planning_renderhistmodetoggle"
     },
     {
       "relation": "contains",
@@ -21367,9 +21367,9 @@
       "source_file": "public/planning.js",
       "source_location": "L2115",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_renderhistoriquesemaine",
-      "confidence_score": 1.0
+      "target": "public_planning_renderhistoriquesemaine"
     },
     {
       "relation": "contains",
@@ -21802,9 +21802,9 @@
       "source_file": "public/planning.js",
       "source_location": "L2070",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_loadhistoriquesemaine",
-      "target": "public_planning_todatestr",
-      "confidence_score": 1.0
+      "target": "public_planning_todatestr"
     },
     {
       "relation": "calls",
@@ -22011,9 +22011,9 @@
       "source_file": "public/planning.js",
       "source_location": "L2046",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_loadhistoriquesemaine",
-      "target": "public_planning_currentmonday",
-      "confidence_score": 1.0
+      "target": "public_planning_currentmonday"
     },
     {
       "relation": "calls",
@@ -22077,9 +22077,9 @@
       "source_file": "public/planning.js",
       "source_location": "L2047",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_loadhistoriquesemaine",
-      "target": "public_planning_adddays",
-      "confidence_score": 1.0
+      "target": "public_planning_adddays"
     },
     {
       "relation": "calls",
@@ -22220,9 +22220,9 @@
       "source_file": "public/planning.js",
       "source_location": "L2089",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_buildhiststatshtml",
-      "target": "public_planning_fmtduration",
-      "confidence_score": 1.0
+      "target": "public_planning_fmtduration"
     },
     {
       "relation": "calls",
@@ -22385,9 +22385,9 @@
       "source_file": "public/planning.js",
       "source_location": "L1964",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_loadhistoriquemois",
-      "target": "public_planning_fetchmyshifts",
-      "confidence_score": 1.0
+      "target": "public_planning_fetchmyshifts"
     },
     {
       "relation": "calls",
@@ -22396,9 +22396,9 @@
       "source_file": "public/planning.js",
       "source_location": "L2070",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_loadhistoriquesemaine",
-      "target": "public_planning_fetchmyshifts",
-      "confidence_score": 1.0
+      "target": "public_planning_fetchmyshifts"
     },
     {
       "relation": "calls",
@@ -22726,9 +22726,9 @@
       "source_file": "public/planning.js",
       "source_location": "L3541",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_cancelmyswap",
-      "target": "public_planning_loadupcomingweeks",
-      "confidence_score": 1.0
+      "target": "public_planning_loadupcomingweeks"
     },
     {
       "relation": "calls",
@@ -22737,9 +22737,9 @@
       "source_file": "public/planning.js",
       "source_location": "L635",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_loadupcomingweeks",
-      "target": "public_planning_loadmypendingswaps",
-      "confidence_score": 1.0
+      "target": "public_planning_loadmypendingswaps"
     },
     {
       "relation": "calls",
@@ -22759,9 +22759,9 @@
       "source_file": "public/planning.js",
       "source_location": "L3568",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_respondtoswap",
-      "target": "public_planning_loadupcomingweeks",
-      "confidence_score": 1.0
+      "target": "public_planning_loadupcomingweeks"
     },
     {
       "relation": "calls",
@@ -22770,9 +22770,9 @@
       "source_file": "public/planning.js",
       "source_location": "L3518",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_submitswap",
-      "target": "public_planning_loadupcomingweeks",
-      "confidence_score": 1.0
+      "target": "public_planning_loadupcomingweeks"
     },
     {
       "relation": "calls",
@@ -22836,9 +22836,9 @@
       "source_file": "public/planning.js",
       "source_location": "L2087",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_buildhiststatshtml",
-      "target": "public_planning_statcard",
-      "confidence_score": 1.0
+      "target": "public_planning_statcard"
     },
     {
       "relation": "calls",
@@ -22990,9 +22990,9 @@
       "source_file": "public/planning.js",
       "source_location": "L1950",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_loadhistoriquemois",
-      "target": "public_planning_renderhistmodetoggle",
-      "confidence_score": 1.0
+      "target": "public_planning_renderhistmodetoggle"
     },
     {
       "relation": "calls",
@@ -23001,9 +23001,9 @@
       "source_file": "public/planning.js",
       "source_location": "L2051",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_loadhistoriquesemaine",
-      "target": "public_planning_renderhistmodetoggle",
-      "confidence_score": 1.0
+      "target": "public_planning_renderhistmodetoggle"
     },
     {
       "relation": "calls",
@@ -23023,9 +23023,9 @@
       "source_file": "public/planning.js",
       "source_location": "L1932",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_loadhistorique",
-      "target": "public_planning_loadhistoriquemois",
-      "confidence_score": 1.0
+      "target": "public_planning_loadhistoriquemois"
     },
     {
       "relation": "calls",
@@ -23034,9 +23034,9 @@
       "source_file": "public/planning.js",
       "source_location": "L1932",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_loadhistorique",
-      "target": "public_planning_loadhistoriquesemaine",
-      "confidence_score": 1.0
+      "target": "public_planning_loadhistoriquesemaine"
     },
     {
       "relation": "calls",
@@ -23056,9 +23056,9 @@
       "source_file": "public/planning.js",
       "source_location": "L1961",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_loadhistoriquemois",
-      "target": "public_planning_histrange",
-      "confidence_score": 1.0
+      "target": "public_planning_histrange"
     },
     {
       "relation": "calls",
@@ -23067,9 +23067,9 @@
       "source_file": "public/planning.js",
       "source_location": "L1970",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_loadhistoriquemois",
-      "target": "public_planning_renderhistoriquemois",
-      "confidence_score": 1.0
+      "target": "public_planning_renderhistoriquemois"
     },
     {
       "relation": "calls",
@@ -23089,9 +23089,9 @@
       "source_file": "public/planning.js",
       "source_location": "L2075",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_loadhistoriquesemaine",
-      "target": "public_planning_renderhistoriquesemaine",
-      "confidence_score": 1.0
+      "target": "public_planning_renderhistoriquesemaine"
     },
     {
       "relation": "calls",
@@ -23100,9 +23100,9 @@
       "source_file": "public/planning.js",
       "source_location": "L2121",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_renderhistoriquesemaine",
-      "target": "public_planning_buildhiststatshtml",
-      "confidence_score": 1.0
+      "target": "public_planning_buildhiststatshtml"
     },
     {
       "relation": "calls",
@@ -25129,9 +25129,9 @@
       "source_file": "public/script.js",
       "source_location": "L187",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script",
-      "target": "public_script_isphone",
-      "confidence_score": 1.0
+      "target": "public_script_isphone"
     },
     {
       "relation": "contains",
@@ -25139,9 +25139,9 @@
       "source_file": "public/script.js",
       "source_location": "L197",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script",
-      "target": "public_script_istablet",
-      "confidence_score": 1.0
+      "target": "public_script_istablet"
     },
     {
       "relation": "contains",
@@ -26939,9 +26939,9 @@
       "source_file": "public/script.js",
       "source_location": "L204",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script",
-      "target": "public_script_syncdeviceclasses",
-      "confidence_score": 1.0
+      "target": "public_script_syncdeviceclasses"
     },
     {
       "relation": "contains",
@@ -27290,9 +27290,9 @@
       "source_file": "public/script.js",
       "source_location": "L198",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_istablet",
-      "target": "public_script_istouchdevice",
-      "confidence_score": 1.0
+      "target": "public_script_istouchdevice"
     },
     {
       "relation": "calls",
@@ -27312,9 +27312,9 @@
       "source_file": "public/script.js",
       "source_location": "L3316",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_removestafffromday",
-      "target": "public_script_istouchdevice",
-      "confidence_score": 1.0
+      "target": "public_script_istouchdevice"
     },
     {
       "relation": "calls",
@@ -27323,9 +27323,9 @@
       "source_file": "public/script.js",
       "source_location": "L206",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_syncdeviceclasses",
-      "target": "public_script_istouchdevice",
-      "confidence_score": 1.0
+      "target": "public_script_istouchdevice"
     },
     {
       "relation": "calls",
@@ -27334,9 +27334,9 @@
       "source_file": "public/script.js",
       "source_location": "L194",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_ismobiledevice",
-      "target": "public_script_isphone",
-      "confidence_score": 1.0
+      "target": "public_script_isphone"
     },
     {
       "relation": "calls",
@@ -27345,9 +27345,9 @@
       "source_file": "public/script.js",
       "source_location": "L198",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_istablet",
-      "target": "public_script_isphone",
-      "confidence_score": 1.0
+      "target": "public_script_isphone"
     },
     {
       "relation": "calls",
@@ -27356,9 +27356,9 @@
       "source_file": "public/script.js",
       "source_location": "L315",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_showconfirm",
-      "target": "public_script_isphone",
-      "confidence_score": 1.0
+      "target": "public_script_isphone"
     },
     {
       "relation": "calls",
@@ -27367,9 +27367,9 @@
       "source_file": "public/script.js",
       "source_location": "L385",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_shownoteprompt",
-      "target": "public_script_isphone",
-      "confidence_score": 1.0
+      "target": "public_script_isphone"
     },
     {
       "relation": "calls",
@@ -27378,9 +27378,9 @@
       "source_file": "public/script.js",
       "source_location": "L339",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_showprompt",
-      "target": "public_script_isphone",
-      "confidence_score": 1.0
+      "target": "public_script_isphone"
     },
     {
       "relation": "calls",
@@ -27389,9 +27389,9 @@
       "source_file": "public/script.js",
       "source_location": "L362",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_showtextprompt",
-      "target": "public_script_isphone",
-      "confidence_score": 1.0
+      "target": "public_script_isphone"
     },
     {
       "relation": "calls",
@@ -27400,9 +27400,9 @@
       "source_file": "public/script.js",
       "source_location": "L205",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_syncdeviceclasses",
-      "target": "public_script_isphone",
-      "confidence_score": 1.0
+      "target": "public_script_isphone"
     },
     {
       "relation": "calls",
@@ -27598,9 +27598,9 @@
       "source_file": "public/script.js",
       "source_location": "L3317",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_removestafffromday",
-      "target": "public_script_askconfirm",
-      "confidence_score": 1.0
+      "target": "public_script_askconfirm"
     },
     {
       "relation": "calls",
@@ -34795,9 +34795,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L30",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod",
-      "target": "scripts_smoke_prod_args",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_args"
     },
     {
       "relation": "contains",
@@ -34805,9 +34805,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L36",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod",
-      "target": "scripts_smoke_prod_base",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_base"
     },
     {
       "relation": "contains",
@@ -34815,9 +34815,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L72",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod",
-      "target": "scripts_smoke_prod_check",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_check"
     },
     {
       "relation": "contains",
@@ -34825,9 +34825,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L28",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod",
-      "target": "scripts_smoke_prod_crypto",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_crypto"
     },
     {
       "relation": "contains",
@@ -34835,9 +34835,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L105",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod",
-      "target": "scripts_smoke_prod_digest",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_digest"
     },
     {
       "relation": "contains",
@@ -34845,9 +34845,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L80",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod",
-      "target": "scripts_smoke_prod_eq",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_eq"
     },
     {
       "relation": "contains",
@@ -34855,9 +34855,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L31",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod",
-      "target": "scripts_smoke_prod_expectidx",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_expectidx"
     },
     {
       "relation": "contains",
@@ -34865,9 +34865,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L88",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod",
-      "target": "scripts_smoke_prod_get",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_get"
     },
     {
       "relation": "contains",
@@ -34875,9 +34875,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L95",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod",
-      "target": "scripts_smoke_prod_git",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_git"
     },
     {
       "relation": "contains",
@@ -34885,9 +34885,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L59",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod",
-      "target": "scripts_smoke_prod_guarded",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_guarded"
     },
     {
       "relation": "contains",
@@ -34895,9 +34895,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L143",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod",
-      "target": "scripts_smoke_prod_main",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_main"
     },
     {
       "relation": "contains",
@@ -34905,9 +34905,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L70",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod",
-      "target": "scripts_smoke_prod_results",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_results"
     },
     {
       "relation": "contains",
@@ -34915,9 +34915,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L44",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod",
-      "target": "scripts_smoke_prod_served_files",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_served_files"
     },
     {
       "relation": "contains",
@@ -34925,9 +34925,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L107",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod",
-      "target": "scripts_smoke_prod_subjectof",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_subjectof"
     },
     {
       "relation": "contains",
@@ -34935,9 +34935,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L116",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod",
-      "target": "scripts_smoke_prod_verifydeployedcommit",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_verifydeployedcommit"
     },
     {
       "relation": "calls",
@@ -34946,9 +34946,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L159",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod_main",
-      "target": "scripts_smoke_prod_check",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_check"
     },
     {
       "relation": "calls",
@@ -34957,9 +34957,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L146",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod_main",
-      "target": "scripts_smoke_prod_get",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_get"
     },
     {
       "relation": "calls",
@@ -34968,9 +34968,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L108",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod_subjectof",
-      "target": "scripts_smoke_prod_git",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_git"
     },
     {
       "relation": "calls",
@@ -34979,9 +34979,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L127",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod_verifydeployedcommit",
-      "target": "scripts_smoke_prod_git",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_git"
     },
     {
       "relation": "calls",
@@ -34990,9 +34990,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L137",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod_verifydeployedcommit",
-      "target": "scripts_smoke_prod_subjectof",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_subjectof"
     },
     {
       "relation": "calls",
@@ -35001,9 +35001,9 @@
       "source_file": "scripts/smoke-prod.js",
       "source_location": "L155",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_smoke_prod_main",
-      "target": "scripts_smoke_prod_verifydeployedcommit",
-      "confidence_score": 1.0
+      "target": "scripts_smoke_prod_verifydeployedcommit"
     },
     {
       "relation": "contains",
@@ -44514,5 +44514,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "cfd16858dcf079e91ff129e5100d39f89ca1c998"
+  "built_at_commit": "8f44087e9c046c78a72989837b2beac099865862"
 }

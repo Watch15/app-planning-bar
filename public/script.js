@@ -3598,6 +3598,10 @@ function onTouchStart(e) {
     const shiftEl = e.target.closest('.shift');
     if (!shiftEl || e.target.closest('.shift-delete')) return;
 
+    // Couper toute sélection de texte iOS dès le contact (sinon le drag « sélectionne »).
+    const sel = window.getSelection && window.getSelection();
+    if (sel && sel.removeAllRanges) sel.removeAllRanges();
+
     _touchActive     = true;
     _shiftWasDragged = false;
     _dragIntent      = null; // tactile ne déclenche jamais 'swap', mais on repart propre
@@ -3697,9 +3701,19 @@ function onTouchEnd() {
 function updateShiftText(el) {
     const display = el.querySelector('.shift-hours');
     if (!display) return;
-    const hStart = START_HOUR + el.offsetLeft / PX_PER_HOUR;
-    const hEnd   = hStart + el.offsetWidth / PX_PER_HOUR;
-    const fmt = h => `${Math.floor(h % 24).toString().padStart(2, '0')}h${String(Math.round((h%1)*60)).padStart(2,'0')}`;
+    // Lire style.left/width (source du drag), pas offsetLeft — sur iOS avec bordures
+    // / sous-pixels, offset* peut diverger d'1–2 px et afficher 18h14 au lieu de 18h15.
+    // Même arrondi quart-d'heure que onUp / snap, pour que le label = ce qui sera sauvé.
+    const snapH = PX_PER_HOUR / 4;
+    const left  = parseFloat(el.style.left);
+    const width = parseFloat(el.style.width);
+    const L = Number.isFinite(left)  ? left  : el.offsetLeft;
+    const W = Number.isFinite(width) ? width : el.offsetWidth;
+    const startQuart = Math.round(L / snapH);
+    const widthQuart = Math.max(1, Math.round(W / snapH));
+    const hStart = START_HOUR + startQuart / 4;
+    const hEnd   = START_HOUR + (startQuart + widthQuart) / 4;
+    const fmt = h => `${Math.floor(h % 24).toString().padStart(2, '0')}h${String(Math.round((h % 1) * 60)).padStart(2, '0')}`;
     display.textContent = `${fmt(hStart)} – ${fmt(hEnd)}`;
 }
 

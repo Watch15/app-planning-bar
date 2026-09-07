@@ -1,16 +1,16 @@
 # Graph Report - app-planning-bar  (2026-09-07)
 
 ## Corpus Check
-- 65 files · ~305,078 words
+- 65 files · ~305,200 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1619 nodes · 2692 edges · 101 communities (89 shown, 12 thin omitted)
+- 1619 nodes · 2692 edges · 100 communities (88 shown, 12 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 95 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `cfd16858`
+- Built from commit: `8f44087e`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -101,7 +101,6 @@
 - [[_COMMUNITY_Community 84|Community 84]]
 - [[_COMMUNITY_Community 85|Community 85]]
 - [[_COMMUNITY_Community 86|Community 86]]
-- [[_COMMUNITY_Community 87|Community 87]]
 - [[_COMMUNITY_Community 88|Community 88]]
 - [[_COMMUNITY_Community 89|Community 89]]
 - [[_COMMUNITY_Community 90|Community 90]]
@@ -148,7 +147,7 @@
 - **Sûreté timezone via toDateStr** — architecture_timezone_rule, architecture_todatestr, architecture_push_past_shift_guard [EXTRACTED 0.85]
 - **Cycle de vie feature iCal (livrée puis désactivée)** — backlog_f09_ical, architecture_ical_feed, architecture_calendar_enabled_flag [EXTRACTED 0.90]
 
-## Communities (101 total, 12 thin omitted)
+## Communities (100 total, 12 thin omitted)
 
 ### Community 0 - "Planning Board UI"
 Cohesion: 0.07
@@ -172,7 +171,7 @@ Nodes (69): allEstablishments, allGroups, allRoles, allStaff, AUTO_COLORS, _auto
 
 ### Community 5 - "Express Server & API"
 Cohesion: 0.03
-Nodes (36): isFullRangeOnConge(), normalizePublishDoc(), app, appliquerCongeApprouve(), auditActor(), bcrypt, canAccessEstablishment(), client (+28 more)
+Nodes (39): isFullRangeOnConge(), normalizePublishDoc(), app, bcrypt, canAccessEstablishment(), cleanupOldJokers(), client, connectDB() (+31 more)
 
 ### Community 6 - "Week Data Loading"
 Cohesion: 0.10
@@ -266,8 +265,8 @@ Cohesion: 0.15
 Nodes (18): BASE, D(), expectIdx, FROM, git(), jar, login(), main() (+10 more)
 
 ### Community 28 - "Community 28"
-Cohesion: 0.15
-Nodes (14): classifyDirectorLinks(), isValidObjectId(), normName(), pickStaffColor(), APPLY, CREATE, main(), { openDb } (+6 more)
+Cohesion: 0.22
+Nodes (10): classifyDirectorLinks(), normName(), pickStaffColor(), APPLY, CREATE, main(), { openDb }, { pickStaffColor, classifyDirectorLinks } (+2 more)
 
 ### Community 29 - "html2canvas Internals B"
 Cohesion: 0.09
@@ -398,8 +397,8 @@ Cohesion: 0.12
 Nodes (21): deleteAccount(), editLockApplies(), editModeOn(), hideEditLockBanner(), isMobileDevice(), isPhone(), isTablet(), isTouchDevice() (+13 more)
 
 ### Community 72 - "Community 72"
-Cohesion: 0.33
-Nodes (7): { buildTemplateDispos }, datesCoveredByPeriods(), dispoEventDelta(), disposOffPeriods(), managerOffPeriods(), materializeTemplateWeek(), recordDispoEvents()
+Cohesion: 0.22
+Nodes (10): { buildTemplateDispos }, datesCoveredByPeriods(), dispoEventDelta(), appliquerCongeApprouve(), auditActor(), disposOffPeriods(), managerOffPeriods(), materializeTemplateWeek() (+2 more)
 
 ### Community 73 - "Community 73"
 Cohesion: 0.11
@@ -410,8 +409,8 @@ Cohesion: 0.25
 Nodes (8): Calendrier congés — lisibilité (2026-08-27), 🔴 CI rouge sur Node 20 — le glob de `node --test` n'existe qu'à partir de Node 21 (2026-08-28), En-tête du jour saturé sur téléphone (2026-08-27), Jeu de démo refondu à l'échelle d'une vraie exploitation (2026-08-31), Journal des nouveautés par rôle (2026-08-28), Mode éditeur tactile sur une semaine publiée (2026-08-27), Revue `/simplify` du mode éditeur (2026-08-27) — une porte encore ouverte, Seconde revue `/simplify` (2026-08-27) — la première avait introduit une régression
 
 ### Community 75 - "Community 75"
-Cohesion: 0.42
-Nodes (9): appendHistMoreBtn(), fetchMyShifts(), histRange(), loadHistorique(), loadHistoriqueMois(), loadHistoriqueSemaine(), renderHistModeToggle(), renderHistoriqueMois() (+1 more)
+Cohesion: 0.20
+Nodes (18): appendHistMoreBtn(), applyStatsPeriod(), buildHistStatsHtml(), fetchMyShifts(), fmtDuration(), histRange(), loadHistorique(), loadHistoriqueMois() (+10 more)
 
 ### Community 76 - "Community 76"
 Cohesion: 0.12
@@ -438,8 +437,8 @@ Cohesion: 0.33
 Nodes (7): fmtHour(), _fmtSwapDate(), formatEstablishment(), openSwapModal(), renderDays(), renderDaysInto(), templateDayLine()
 
 ### Community 82 - "Community 82"
-Cohesion: 0.17
-Nodes (12): shouldMaterializeTemplate(), archivedIdsAmong(), checkDispoRappels(), cleanupOldJokers(), computeEffectiveDeadline(), connectDB(), dispoOpenVenues(), materializeAllDispoTemplates() (+4 more)
+Cohesion: 0.20
+Nodes (10): isValidObjectId(), shouldMaterializeTemplate(), archivedIdsAmong(), archivedStaff(), checkDispoRappels(), computeEffectiveDeadline(), materializeAllDispoTemplates(), nouveautesUserId() (+2 more)
 
 ### Community 83 - "Community 83"
 Cohesion: 0.18
@@ -456,10 +455,6 @@ Nodes (10): 3.1 Fuseau horaire — NE JAMAIS utiliser `toISOString()`, 3.2 Sessi
 ### Community 86 - "Community 86"
 Cohesion: 0.25
 Nodes (8): Authentification, Fonctionnalités, Performance (`performance.html`), Pointage (`pointage.html`), PWA, Vue patron (`index.html`), Vue staff (`planning.html`), Web Push
-
-### Community 87 - "Community 87"
-Cohesion: 0.33
-Nodes (9): applyStatsPeriod(), buildHistStatsHtml(), fmtDuration(), loadMonthRecap(), renderHistoriqueSemaine(), renderMonthStats(), renderStats(), renderStatsInto() (+1 more)
 
 ### Community 88 - "Community 88"
 Cohesion: 0.33
