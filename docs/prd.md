@@ -270,13 +270,25 @@ Page dédiée au patron / directeur pour suivre la masse salariale vs CA par soi
 - **Effet de bord côté API** : `PATCH /api/staff/:id` force automatiquement l'autre champ à `null` quand on définit `hourly_rate` ou `fixed_rate` à une valeur non-null — voir `architecture.md` §5 (Mutual exclusion Option A)
 
 ### 3.17 Pointage avancé (`pointage.html`)
-- Saisie des heures réelles (`real_start` / `real_end`) — patron/directeur peuvent ré-éditer, compte établissement verrouillé après enregistrement
-- Badge « ✓ Validé » sur les shifts pointés (carte `validated-card`)
-- Écart planifié vs réel coloré : `.pos` (vert, dépassement), `.neg` (orange, sous-réalisation), `.zero` (gris)
-- Footer total soirée : réel / planifié + nombre de shifts pointés
-- Heure de bascule du jour configurable (`pointage_settings.cutoff_hour`, défaut 9h00) — bandeau si date active = veille
-- Ajout shift extra (non planifié) avec saisie directe nom + horaires. Le sélecteur de nom suit la même convention d'affichage que le reste de l'app (surnom sinon prénom)
-- **Suppression d'un shift non pointé** : bouton « Supprimer » à 2 clics (Supprimer → Confirmer) sur les cartes non encore pointées (`DELETE /api/shifts/:id/pointage`). Refusée (409) dès qu'un `real_start`/`real_end` est saisi. Accessible à toute personne ayant accès à la page (établissement, patron/directeur, responsable de soirée)
+- **Deux modes selon le rôle** :
+  - **Patron / directeur** — UI **clôture OTP** (code 4 chiffres + liste « Clôture du jour ») ; l'ancien formulaire cartes heures est masqué. Restent visibles : CA du soir + **ajout d'un service non planifié**.
+  - **Compte établissement / responsable** — saisie tablette classique des heures réelles (`real_start` / `real_end`) — établissement verrouillé après enregistrement, patron/directeur pouvaient déjà ré-éditer via l'ancien flux
+- Badge « ✓ Validé » / cartes `validated-card` sur les shifts pointés (tablette)
+- Écart planifié vs réel coloré : `.pos` (vert), `.neg` (orange), `.zero` (gris)
+- Footer total soirée (vue tablette) : réel / planifié + nombre de shifts pointés
+- Heure de bascule du jour configurable (`pointage_settings.cutoff_hour`, défaut 9h00)
+- Ajout shift extra (non planifié) : nom + horaires → `POST /api/shifts/extra` (pose aussi les champs clôture manuels pour le flux OTP)
+- **Suppression d'un shift non pointé** (vue tablette) : `DELETE /api/shifts/:id/pointage` (2 clics)
+
+### 3.17bis Clôture de service par code OTP (début + fin)
+Preuve métier parallèle puis **alignée** sur les heures opérationnelles (`real_*`).
+
+- **Staff** (`planning.html`) : CTA sur la carte du jour → saisie du code 4 chiffres dicté par le responsable ; phases `debut` puis `fin` (la fin exige un début)
+- **Manager** (`pointage.html`) : affiche le code courant (TTL 15 min, usage unique, régénération auto) ; liste **Clôture du jour** (navigation ±1 jour, date en français) ; début/fin manuels de secours ; ajustement des heures **retenues** sans toucher les origines `*_code`
+- **Sync `real_*`** : dès que `debut_valide_finale` + `heure_validee_finale` sont présents → `real_start` / `real_end` (floats, arrondi quart d'heure) + snapshot salarial au premier sync. Pas de sync sur début seul (D-71 / `shiftEffectiveHours`)
+- **Audit** : collection append-only `time_validations` (`accepte`, `refuse_*`, `sync_real`) avec acteur, rôle, action
+- **Récap hebdo** : `POST .../valider-recap` pose `patron_valide` ; le patron **peut toujours ajuster** ensuite (correction litige)
+- **Tests** : `tests/cloture-otp.test.js` · smoke `npm run smoke:cloture` / `scripts/smoke-cloture.js`
 
 ### 3.18 Récap mensuel patron (modale Récap — `index.html`)
 Synthèse mensuelle des heures par membre du staff, accessible depuis le bouton « Récap » de la barre d'actions.
@@ -305,6 +317,8 @@ Synthèse mensuelle des heures par membre du staff, accessible depuis le bouton 
 | `staff_notifications` | Notifications in-app pour staff (planning.html) |
 | `shift_swaps` | Demandes d'échange entre shifts (feature F-05 — **active depuis le 2026-09-03** sur `dev` et sur la démo ; pas encore livrée au client) |
 | `daily_revenue` | CA quotidien saisi par établissement (`{ establishment_id, date, revenue }`) — module Performance |
+| `codes_cloture` | Code OTP 4 chiffres par établissement (TTL 15 min, usage unique) — clôture de service |
+| `time_validations` | Audit append-only des tentatives / acceptations / sync `real_*` (clôture OTP) |
 
 ---
 

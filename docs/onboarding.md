@@ -147,11 +147,13 @@ Base `gestion_bar`. Détail des champs dans `architecture.md` §5 — résumé :
 |---|---|---|
 | `users` | comptes (patron/directeur/observateur/staff/établissement) | mdp bcrypt 12 rounds, `calendar_token` (iCal) |
 | `staff` | fiches staff + **rémunération** | `hourly_rate` **XOR** `fixed_rate` (mutual exclusion forcée serveur) |
-| `shifts` | créneaux planifiés | `start/end_time` = **heures décimales** (`end_time ≥ 24` = shift de nuit), Jokers (`is_joker`/`joker_open`/`joker_candidates`), pointage (`real_start/end`, `*_rate_snapshot`) |
+| `shifts` | créneaux planifiés | `start/end_time` = **heures décimales** (`end_time ≥ 24` = shift de nuit), Jokers (`is_joker`/`joker_open`/`joker_candidates`), pointage (`real_start/end`, `*_rate_snapshot`), **clôture OTP** (`debut_valide_*`, `heure_validee_*`, `patron_valide`) |
 | `availabilities` | disponibilités du staff | `status: pending/approved/...`, 1 doc par `(staff_id, date)`, `type:'week_note'` à part |
 | `time_off` | congés du **staff** déclarés/validés | `mode: info` (déclaration, auto-`approved`) ou `request` (demande à valider) ; `status: pending/approved/rejected` |
 | `manager_time_off` | absences des **directeurs** (E-19) | keyé sur `user_id` — **raison historique, pas structurelle** : depuis E-22, un directeur A un `staff_id` (corrigé le 2026-08-05). Période `start/end_date`, `type:'off'`, pas de validation. La **collection** reste distincte de `time_off`, mais elle est **jointe** au filtre congés de `POST /api/dispos` (`managerOffPeriods`) — le directeur n'est plus hors pipeline |
 | `daily_revenue` | CA quotidien par établissement | dénominateur du coefficient masse salariale |
+| `codes_cloture` | code OTP établissement | TTL 15 min, usage unique, 1 doc / établissement |
+| `time_validations` | audit clôture / pointage | **append-only** (`accepte`, `refuse_*`, `sync_real`) |
 | `settings` | **polymorphe** (clé `key`) | `dispo`, `performance`, `pointage`, `publish_<weekStart>`, `lock_dispos_<weekStart>` |
 | `notifications` | notifs in-app patron/directeur | |
 | `staff_notifications` | notifs in-app staff | max 20 non lues retournées |
@@ -161,7 +163,9 @@ Base `gestion_bar`. Détail des champs dans `architecture.md` §5 — résumé :
 
 > 🔑 **Pièges de données** :
 > - `PATCH /api/staff/:id` force l'autre champ de rémunération à `null` dès qu'on en définit un (invariant « un seul mode actif ») — **même si l'appelant n'a envoyé qu'un champ**. L'import « 💶 taux » bascule donc silencieusement en mode horaire.
-> - Le `*_rate_snapshot` fige le taux au **premier pointage** → stabilise la Performance historique même si le taux du staff change ensuite.
+> - Le `*_rate_snapshot` fige le taux au **premier pointage ou premier sync clôture OTP** → stabilise la Performance historique même si le taux du staff change ensuite.
+> - `debut_valide_code` / `heure_validee_code` sont **immutables** ; seules les `*_finale` s'ajustent. `real_*` se synchronisent quand la **paire** de retenues est complète (pas sur début seul — D-71).
+> - `time_validations` : jamais d'update/delete.
 
 ---
 
@@ -219,8 +223,18 @@ Le sous-onglet **Congés** patron (`loadCongesList`) et le calendrier récap (`l
 
 ### Pointage & rémunération
 `GET/PATCH /api/pointage-settings` · `GET /api/pointage/:date` ·
-`PATCH /api/shifts/:id/pointage` (heures réelles) · `DELETE .../pointage` ·
-`PATCH /api/shifts/:id/pointage-resp` · `POST /api/shifts/extra` (shift créé en soirée).
+`PATCH /api/shifts/:id/pointage` (heures réelles tablette) · `DELETE .../pointage` ·
+`PATCH /api/shifts/:id/pointage-resp` · `POST /api/shifts/extra` (extra + champs clôture manuels).
+
+### Clôture OTP (début + fin → sync `real_*`)
+`GET /api/etablissements/:id/code-cloture` (manager) ·
+`GET /api/etablissements/:id/clotures-semaine?week_start=` ·
+`POST /api/shifts/:id/cloturer-par-code` `{ code, phase: 'debut'|'fin' }` (staff) ·
+`POST /api/shifts/:id/cloturer-manuel` (manager, `heure_debut` pour forcer les deux) ·
+`PATCH /api/shifts/:id/ajuster-heure` (retenues uniquement ; OK après `patron_valide`) ·
+`POST /api/etablissements/:id/valider-recap` `{ week_start }` ·
+Helpers : `hhmmToHourFloat`, `roundQuarter`, `syncRealHoursFromCloture` · audit `time_validations`.
+Tests : `tests/cloture-otp.test.js` · smoke `scripts/smoke-cloture.js`.
 
 ### Performance (pilotage éco)
 `POST /api/revenue` · `GET /api/revenue/:establishmentId/:date` ·
@@ -266,14 +280,18 @@ Organisé en blocs fonctionnels. Repères principaux (n° de ligne indicatifs) :
 `init` → `loadPlanning` → `renderDays`. Domaines : **planning perso** (`renderStats`,
 `renderDaysInto`, `renderResponsableDashboard`), **disponibilités** (`loadDisposTab`,
 `createDispoCard`, `submitDispos`), **congés** (`initCongesForm`, `submitConge`,
-`loadCongesTab`), **Jokers ouverts** (`renderOpenJokers`), **push** (`initPushButton`,
-`togglePushSubscription`), **notifs staff** (`loadStaffNotifs`), **historique**
-(`loadHistoriqueWeek`). Le bloc swaps (`openSwapModal`…) suit F-05 (désactivé côté UI).
+`loadCongesTab`), **Jokers ouverts** (`renderOpenJokers`), **clôture OTP** (CTA carte du jour +
+modale code, phases début/fin — hors bannière top pour éviter le doublon avec « Créneaux
+disponibles »), **push** (`initPushButton`, `togglePushSubscription`), **notifs staff**
+(`loadStaffNotifs`), **historique** (`loadHistoriqueWeek`). Le bloc swaps (`openSwapModal`…)
+suit F-05.
 
-### `pointage.js` — Pointage établissement (830 l.)
-`init` → `loadShifts` → `buildShiftCard`. Saisie des heures réelles (`parseTimeInput`,
-`roundQuarter`, `ecartLabel`), CA du soir (`loadRevenue`, `initRevenueForm`), shifts
-extra (`initExtraForm`), bascule du jour (`getActiveDate`/`setActiveDate`, cutoff 9h).
+### `pointage.js` — Pointage / clôture
+- **Tablette** (`etablissement`) : `loadShifts` → `buildShiftCard`, saisie `real_*`
+  (`roundQuarter`, `ecartLabel`), CA du soir, shifts extra (`initExtraForm`), cutoff jour.
+- **Patron / directeur** : panneau clôture OTP (`initCloturePanel`) — code + **Clôture du jour**
+  (dates FR) ; bloc cartes legacy masqué (`legacy-pointage-block`) ; extra + CA conservés ;
+  `clotureManuelle`, `ajusterHeureCloture`, `validateCloturesWeek`.
 
 ### `performance.js` — Pilotage éco (594 l.)
 `init` → `loadData` → `renderKpis` + `renderTable` + `renderDetail`. Coefficient de

@@ -228,23 +228,73 @@ Rate limiter en mémoire basé sur `Map` (aucune dépendance externe). Login : 1
       "submitted_at": "ISODate"
     }
   ],
-  "real_start": "number (pointage)",
-  "real_end": "number (pointage)",
-  "hourly_rate_snapshot": "number | null (€/h figé au pointage si mode horaire)",
-  "fixed_rate_snapshot":  "number | null (forfait € figé au pointage si mode forfait)",
+  "real_start": "number (pointage OU sync clôture OTP)",
+  "real_end": "number (pointage OU sync clôture OTP)",
+  "hourly_rate_snapshot": "number | null (€/h figé au premier pointage / sync clôture si mode horaire)",
+  "fixed_rate_snapshot":  "number | null (forfait € figé au premier pointage / sync clôture si mode forfait)",
   "pointage_resp": true,
-  "extra": true
+  "extra": true,
+  "debut_valide_code": "HH:MM | null (origine début OTP/manuel — immutable)",
+  "debut_valide_finale": "HH:MM | null (début retenu, ajustable patron)",
+  "debut_source": "code | manuelle | null",
+  "heure_validee_code": "HH:MM | null (origine fin OTP/manuel — immutable)",
+  "heure_validee_finale": "HH:MM | null (fin retenue, ajustable patron)",
+  "cloture_source": "code | manuelle | null",
+  "motif_modification": "string | null",
+  "modifie_par_patron": "string | null",
+  "modifie_le": "{ year, month, day, hour, minute, second } | null",
+  "patron_valide": false,
+  "patron_valide_le": "{ year, month, day, hour, minute, second } | null"
 }
 ```
 - `is_joker: true` ou `staff_id: '__joker__'` = créneau ouvert (pas de détection de conflit, visible par le staff de l'établissement)
 - `joker_open: true` = le patron a ouvert ce Joker aux candidatures staff (notif push envoyée, bloc « Créneau disponible » visible côté staff)
 - `joker_candidates[]` = liste horodatée des staff ayant cliqué « Je suis disponible » — vidée à l'assignation ou la fermeture
 - `note` = note libre saisie par le patron sur un Joker (visible aussi par le staff assigné après conversion)
-- `real_start` / `real_end` = heures réelles saisies au pointage
-- `hourly_rate_snapshot` / `fixed_rate_snapshot` = copie du taux (mode horaire OU forfait, mutuellement exclusifs) figée au premier pointage — stabilise les calculs Performance historiques même si le mode/taux du staff change ensuite. Exactement un des deux est non-null pour un shift pointé d'un staff rémunéré.
+- `real_start` / `real_end` = heures réelles (floats, quart d'heure). **Sources** : (1) saisie tablette `PATCH .../pointage`, (2) **sync automatique** dès que `debut_valide_finale` **et** `heure_validee_finale` sont présents (`syncRealHoursFromCloture` — arrondi `roundQuarter`, passage minuit si fin < début → +24). Règle D-71 : `shiftEffectiveHours` n'utilise `real_*` que si la **paire** est complète — pas de sync sur début seul.
+- `debut_valide_code` / `heure_validee_code` = **preuve d'origine** (OTP ou manuel) — **jamais mutés** après écriture
+- `debut_valide_finale` / `heure_validee_finale` = heures **retenues** (ajustables via `PATCH .../ajuster-heure`, y compris après `patron_valide`)
+- `patron_valide` = récap hebdo verrouillé côté intention métier ; **n'empêche plus** l'ajustement patron (correction litige)
+- `hourly_rate_snapshot` / `fixed_rate_snapshot` = copie du taux figée au **premier** pointage **ou** premier sync clôture — stabilise Performance
 - `pointage_resp: true` = ce shift désigne un responsable de soirée pour l'établissement/date (plusieurs possibles, ex : 1 responsable matin + 1 responsable soir)
-- `extra: true` = shift créé directement au pointage (non planifié à l'avance)
+- `extra: true` = shift créé directement au pointage / clôture (non planifié). `POST /api/shifts/extra` pose aussi les champs OTP manuels + `real_*` pour apparaître dans la clôture du jour
 
+### `codes_cloture` — code OTP établissement (TTL 15 min, usage unique)
+```json
+{
+  "etablissement_id": "string",
+  "code_actuel": "4827",
+  "genere_le": "{ year, month, day, hour, minute, second }",
+  "expire_le": "{ ... }",
+  "expire_ms": 0,
+  "code_utilise": false,
+  "utilise_par": "staff_id | null",
+  "utilise_le": "{ ... } | null"
+}
+```
+Un document par établissement. Régénéré après usage réussi ou à l'expiration (lazy au `GET`).
+
+### `time_validations` — audit append-only des pointages / clôtures
+```json
+{
+  "etablissement_id": "string",
+  "shift_id": "string",
+  "staff_id": "string (acteur)",
+  "acteur_role": "staff | patron | directeur | …",
+  "action": "pointer_debut | pointer_fin | manuel_debut | manuel_fin | ajuster | sync_real",
+  "source": "code | manuelle | ajustement",
+  "code_saisi": "4827 | MANUEL | AJUST | EXTRA | SYNC",
+  "heure_saisie": "{ year, month, day, hour, minute, second }",
+  "phase": "debut | fin | ajustement",
+  "resultat": "accepte | refuse_code_invalide | refuse_code_deja_utilise | refuse_code_expire | sync_real",
+  "debut_retenue": "HH:MM | null",
+  "fin_retenue": "HH:MM | null",
+  "real_start": "number | null",
+  "real_end": "number | null",
+  "motif": "string | null"
+}
+```
+**Jamais** d'update/delete sur cette collection. Les litiges se reconstituent en requêtant par `shift_id`.
 ### `staff` — champs de rémunération
 - `hourly_rate: number | null` — taux horaire en €/h brut
 - `fixed_rate: number | null` — forfait fixe en € brut **par shift** (pas par soirée : si le staff fait 2 shifts dans la même soirée sur 2 établissements, le forfait s'applique 2×)

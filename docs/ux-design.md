@@ -85,6 +85,8 @@ Inter uniquement. Échelle : 11px (labels caps) → 13px (corps) → 14–15px (
 | ~~PT-06~~ | ~~Heure de bascule (9h) non indiquée — date "hier" inexpliquée~~ | Moyen | ✅ Done — bandeau `session-banner` quand date active = veille |
 | ~~PT-07~~ | ~~`.btn-save` utilise `var(--dark-surface)` au lieu de `var(--accent)`~~ | Moyen | ✅ Done (U-01) — bg accent + hover accent-soft |
 | ~~PT-08~~ | ~~`.validated-badge` couleurs en dur (`#6EE7B7`, `#d1fae5`, `#065f46`)~~ | Faible | ✅ Done (U-02) — migré vers tokens success/validated/gap-under |
+| ~~PT-09~~ | ~~Clôture OTP fusionnée dans Pointage (manager) + CTA staff sur carte du jour~~ | Haut | ✅ Done (D-91) — code OTP, Clôture du jour (dates FR), sync `real_*`, extra conservé |
+| ~~PT-10~~ | ~~Ajustement impossible après validation du récap~~ | Moyen | ✅ Done (D-91) — `ajuster-heure` OK même si `patron_valide` |
 
 ### 2.6 performance.html (Patron / Directeur — pilotage économique)
 | # | Problème | Sévérité | Statut |

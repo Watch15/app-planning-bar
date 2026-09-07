@@ -255,18 +255,14 @@ travail de dev (253 shifts). Les scripts destructifs la refusent — ne pas cont
 - **Synchro agenda** : abonnement iCal (Google / Apple / Outlook), synchro auto sans login après un réglage unique (semaines publiées)
 - Mes dispos : Soir / Midi / Personnalisé / Indisponible + note par jour
 - Onglet Pointage : saisie heures réelles pour les responsables de soirée
+- **Clôture OTP** : sur la carte du jour, pointer début / fin avec le code dicté par le responsable
 - Bouton Web Push — activation/désactivation des notifications
 
 ### Pointage (`pointage.html`)
-- Interface dédiée au compte établissement
-- Saisie et modification des heures réelles (real_start / real_end)
-- Champs préremplis aux heures planifiées + saisie restreinte au quart d'heure
-- Ré-édition possible par patron/directeur (établissement = verrouillé après enregistrement)
-- Badge « ✓ Validé » + carte verte sur les shifts pointés
-- Écart planifié vs réel coloré (vert/orange/gris)
-- Footer total soirée : heures réelles vs planifiées + nb shifts pointés
-- Ajout de staff non planifié (shift extra)
-- Heure de bascule du jour configurable (`cutoff_hour`, défaut 9h) — bandeau si date active = veille
+- **Patron / directeur** : clôture de service par **code OTP** (4 chiffres, 15 min, usage unique) + liste **Clôture du jour** (dates en français) ; début/fin manuels ; ajustement des heures retenues (y compris après validation du récap) ; ajout d'une personne non prévue ; CA du soir
+- **Compte établissement** : saisie tablette des heures réelles (`real_start` / `real_end`), quart d'heure, badge « ✓ Validé », écart coloré, footer total, extra
+- Dès qu'un début **et** une fin sont retenus (OTP ou manuel), les heures réelles `real_*` sont synchronisées automatiquement (planning, récap, paie)
+- Heure de bascule du jour configurable (`cutoff_hour`, défaut 9h)
 
 ### Performance (`performance.html`)
 - Saisie CA quotidien depuis le calendrier (modale CA)
@@ -296,12 +292,14 @@ travail de dev (253 shifts). Les scripts destructifs la refusent — ne pas cont
 |---|---|
 | `establishments` | Bars/restaurants avec horaires |
 | `staff` | Membres (couleur, email, téléphone, venues préférentiels, rôles) |
-| `shifts` | Shifts planifiés (inclut `is_joker`, `real_start`, `real_end`, `note`) |
+| `shifts` | Shifts planifiés (inclut `is_joker`, `real_start`/`real_end`, champs clôture OTP, `note`) |
 | `users` | Comptes de connexion |
 | `sessions` | Sessions actives (TTL 30 jours glissant) |
 | `availabilities` | Disponibilités soumises par le staff |
 | `time_off` | Congés du staff (déclaration `info` ou demande `request` à valider) |
 | `manager_time_off` | Absences des directeurs (E-19) — keyé sur `user_id`. **Collection** distincte de `time_off`, mais **jointe** au filtre congés de `POST /api/dispos` : depuis E-22 le directeur passe par le pipeline staff standard |
+| `codes_cloture` | Code OTP 4 chiffres par établissement (TTL 15 min, usage unique) |
+| `time_validations` | Audit append-only des clôtures / refus / sync `real_*` |
 | `roles` | Rôles créés par le patron (responsable / informatif) |
 | `settings` | Paramètres polymorphes (clé `key`) : `dispo`, `performance`, `pointage`, `publish_<weekStart>`, `lock_dispos_<weekStart>` |
 | `push_subscriptions` | Endpoints VAPID par utilisateur |
@@ -357,7 +355,16 @@ travail de dev (253 shifts). Les scripts destructifs la refusent — ne pas cont
 | POST | `/api/copy-week` | Patron — copie une semaine entière (mode `staff` = garde les affectations, `jokers` = créneaux vides) |
 | GET | `/api/pointage/:date` | Authentifié |
 | PATCH | `/api/shifts/:id/pointage-resp` | Patron — désigner responsable de soirée |
+| PATCH | `/api/shifts/:id/pointage` | Heures réelles (tablette) |
+| DELETE | `/api/shifts/:id/pointage` | Supprimer un shift non pointé |
+| POST | `/api/shifts/extra` | Service non planifié (+ champs clôture) |
 | GET/PATCH | `/api/pointage-settings` | Authentifié / Admin — `cutoff_hour` |
+| GET | `/api/etablissements/:id/code-cloture` | Manager — code OTP courant |
+| GET | `/api/etablissements/:id/clotures-semaine` | Manager — shifts + champs clôture |
+| POST | `/api/shifts/:id/cloturer-par-code` | Staff — pointer début/fin via OTP |
+| POST | `/api/shifts/:id/cloturer-manuel` | Manager — clôture manuelle |
+| PATCH | `/api/shifts/:id/ajuster-heure` | Manager — ajuster retenues (OK après récap) |
+| POST | `/api/etablissements/:id/valider-recap` | Manager — verrouiller le récap semaine |
 | GET | `/api/recap-mensuel` | Patron |
 | GET | `/api/calendar-url` | Authentifié — URL d'abonnement iCal du staff (génère le token) |
 | GET | `/api/calendar/:token.ics` | **Public** (token = auth) — flux iCal lecture seule, semaines publiées |

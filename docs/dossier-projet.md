@@ -25,8 +25,12 @@ Le cycle métier qu'elle outille, dans l'ordre :
 3. **Le patron valide** les disponibilités et **construit le planning** en glissant les
    personnes sur une timeline horaire, établissement par établissement.
 4. **Il publie la semaine.** Tant qu'elle n'est pas publiée, l'équipe ne la voit pas.
-5. **Le soir même, les heures réelles sont pointées** — soit par un compte dédié à
-   l'établissement, soit par le responsable de la soirée depuis son propre téléphone.
+5. **Le soir même, les heures réelles sont pointées** — soit par **code OTP** (le responsable
+   dicte un code 4 chiffres ; l'employé pointe début puis fin depuis son téléphone ; les
+   heures retenues alimentent automatiquement `real_*` pour le récap et la paie), soit par
+   le compte tablette de l'établissement / le responsable de soirée (saisie manuelle
+   classique). Le patron peut ajouter une personne non prévue et corriger même après
+   validation du récap hebdo.
 6. **Le patron pilote l'économie** : chiffre d'affaires quotidien, masse salariale,
    coefficient brut et chargé, récapitulatif mensuel exportable.
 
