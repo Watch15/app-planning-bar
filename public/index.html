@@ -938,6 +938,7 @@
             <a href="/performance.html" class="btn-manage-staff" id="btn-performance" style="background:rgba(108,99,255,0.12);border-color:#6C63FF;color:#6C63FF;text-decoration:none;display:inline-flex;align-items:center" title="Pilotage économique (CA + masse salariale)">Performance</a>
             <button id="btn-revenue" style="display:none" aria-hidden="true"></button>
             <a href="/pointage.html" class="btn-manage-staff" id="btn-pointage" style="background:rgba(245,158,11,0.12);border-color:#f59e0b;color:#f59e0b;text-decoration:none;display:inline-flex;align-items:center" title="Saisie heures réelles (pointage)">Pointage</a>
+            <button class="btn-manage-staff" id="btn-clotures" style="background:rgba(14,165,233,0.12);border-color:#0ea5e9;color:#0ea5e9" title="Clôtures de service (code + validation)">Clôtures</button>
             <div class="header-sep"></div>
             <!-- Groupe 3 : toggle dispos + paramètres -->
             <div style="position:relative;display:flex;align-items:center;gap:6px">
@@ -998,6 +999,17 @@
 
     <!-- ── Carte KPI complétion des dispos (semaine prochaine) ── -->
     <div id="dispos-kpi-card" style="display:none"></div>
+
+    <!-- ── Widget code de clôture (manager, hors observateur) ── -->
+    <div id="code-cloture-widget" class="code-cloture-widget" style="display:none" aria-live="polite">
+        <div class="cc-label">Code de clôture</div>
+        <div class="cc-code" id="cc-code">····</div>
+        <div class="cc-meta">
+            <span id="cc-countdown">—</span>
+            <button type="button" id="cc-refresh" class="cc-refresh" title="Actualiser">⟳</button>
+        </div>
+        <div class="cc-hint">Dicte ce code au salarié en fin de service (usage unique, 15 min).</div>
+    </div>
 
     <!-- ── Vue semaine mini (cards 7 jours) ── -->
     <div class="week-grid" id="week-grid"></div>
@@ -1495,6 +1507,26 @@
     </div>
 </div>
 
+<!-- Modale clôtures hebdomadaires (code OTP + validation) -->
+<div class="modal-overlay" id="clotures-modal" style="display:none">
+    <div class="modal" style="width:720px;max-width:95vw">
+        <div class="modal-header">
+            <span class="modal-title">Clôtures de service</span>
+            <button class="modal-close" id="clotures-modal-close">&times;</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px;line-height:1.4">
+            Heure issue du code (origine, non modifiable) vs heure retenue. Validation du récap après contrôle.
+        </p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+            <button type="button" id="clotures-prev-week" class="week-arrow" style="padding:4px 12px;border-radius:8px;border:1.5px solid var(--light-border);background:transparent;cursor:pointer">←</button>
+            <span id="clotures-week-label" style="font-size:13px;font-weight:700;flex:1;text-align:center"></span>
+            <button type="button" id="clotures-next-week" class="week-arrow" style="padding:4px 12px;border-radius:8px;border:1.5px solid var(--light-border);background:transparent;cursor:pointer">→</button>
+            <button type="button" id="clotures-validate-week" class="btn-add-staff" style="padding:7px 14px;font-size:12px">Valider le récap semaine</button>
+        </div>
+        <div id="clotures-list" style="max-height:55vh;overflow-y:auto"></div>
+    </div>
+</div>
+
 <!-- Modale notifications patron -->
 <div class="modal-overlay" id="notif-modal" style="display:none">
     <div class="modal" style="width:480px;max-width:95vw">
@@ -1532,6 +1564,7 @@
     </button>
     <a class="drawer-btn drawer-btn-pointage" href="/pointage.html" onclick="closeMobileDrawer()">Pointage</a>
     <a class="drawer-btn" href="/performance.html" onclick="closeMobileDrawer()">Performance</a>
+    <button class="drawer-btn" onclick="closeMobileDrawer();document.getElementById('btn-clotures').click()">Clôtures</button>
     <button class="drawer-btn" onclick="closeMobileDrawer();document.getElementById('btn-recap').click()">Récap mensuel</button>
     <div class="drawer-section-label">Disponibilités</div>
     <div class="drawer-btn" id="drawer-dispo-row" style="justify-content:space-between;cursor:default">

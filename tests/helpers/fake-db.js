@@ -259,6 +259,30 @@ function makeCollection(initialDocs) {
             }
             return { matchedCount: 0, modifiedCount: 0, upsertedCount: 0 };
         },
+        // Aligné sur le driver Mongo 6 : renvoie le document (avant/après) ou null.
+        // Requis pour la clôture OTP (`codes_cloture` usage unique atomique).
+        async findOneAndUpdate(query, update, opts) {
+            const idx = docs.findIndex(d => matchDoc(d, query));
+            if (idx < 0) {
+                if (opts && opts.upsert) {
+                    const created = { ...plainEq(query), ...(update.$setOnInsert || {}), ...(update.$set || {}), _id: nextObjectIdHex() };
+                    docs.push(created);
+                    return created;
+                }
+                return null;
+            }
+            const before = { ...docs[idx] };
+            if (update.$set) Object.assign(docs[idx], update.$set);
+            if (update.$unset) for (const k of Object.keys(update.$unset)) delete docs[idx][k];
+            if (update.$push) {
+                for (const [k, v] of Object.entries(update.$push)) {
+                    if (!Array.isArray(docs[idx][k])) docs[idx][k] = [];
+                    docs[idx][k].push(v);
+                }
+            }
+            const after = docs[idx];
+            return (opts && opts.returnDocument === 'before') ? before : after;
+        },
         async bulkWrite(ops) {
             let upsertedCount = 0, modifiedCount = 0, matchedCount = 0;
             for (const op of ops) {

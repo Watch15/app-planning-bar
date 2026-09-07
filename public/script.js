@@ -566,6 +566,23 @@ async function init() {
     const btnRecap = document.getElementById('btn-recap');
     if (btnRecap) btnRecap.addEventListener('click', openRecapModal);
 
+    const btnClotures = document.getElementById('btn-clotures');
+    if (btnClotures) btnClotures.addEventListener('click', openCloturesModal);
+    const cloturesClose = document.getElementById('clotures-modal-close');
+    if (cloturesClose) cloturesClose.addEventListener('click', () => {
+        document.getElementById('clotures-modal').style.display = 'none';
+    });
+    document.getElementById('clotures-prev-week')?.addEventListener('click', () => {
+        _cloturesWeekStart = addDays(_cloturesWeekStart, -7);
+        renderCloturesModal();
+    });
+    document.getElementById('clotures-next-week')?.addEventListener('click', () => {
+        _cloturesWeekStart = addDays(_cloturesWeekStart, 7);
+        renderCloturesModal();
+    });
+    document.getElementById('clotures-validate-week')?.addEventListener('click', validateCloturesWeek);
+    document.getElementById('cc-refresh')?.addEventListener('click', () => refreshCodeClotureWidget(true));
+
     const btnRevenue = document.getElementById('btn-revenue');
     if (btnRevenue) btnRevenue.addEventListener('click', openRevenueModal);
     const revenueClose = document.getElementById('revenue-modal-close');
@@ -1305,6 +1322,7 @@ async function loadDayDetail(dateStr) {
     renderTimelineHeader();
     renderBody();
     renderStats();
+    refreshCodeClotureWidget();
 
     // Bouton refresh : visible uniquement si le jour est aujourd'hui ou passé
     const btnRefresh = document.getElementById('btn-refresh-day');
@@ -9968,4 +9986,194 @@ function generatePrintGantt() {
     if (!w) { showToast('Autorise les popups pour imprimer', true); return; }
     w.document.write(html);
     w.document.close();
+}
+
+// ── Clôture de service (code OTP + validation patron) ─────────────────────────
+
+let _codeCloturePoll = null;
+let _codeClotureExpireMs = null;
+let _codeClotureTick = null;
+let _cloturesWeekStart = null;
+
+function canUseClotureUi() {
+    return currentUser && (currentUser.role === 'patron' || currentUser.role === 'directeur');
+}
+
+function stopCodeClotureTimers() {
+    if (_codeCloturePoll) { clearInterval(_codeCloturePoll); _codeCloturePoll = null; }
+    if (_codeClotureTick) { clearInterval(_codeClotureTick); _codeClotureTick = null; }
+}
+
+function updateCodeClotureCountdown() {
+    const el = document.getElementById('cc-countdown');
+    if (!el || !_codeClotureExpireMs) { if (el) el.textContent = '—'; return; }
+    const left = Math.max(0, _codeClotureExpireMs - Date.now());
+    const m = Math.floor(left / 60000);
+    const s = Math.floor((left % 60000) / 1000);
+    el.textContent = left <= 0 ? 'Expiré — actualise' : ('expire dans ' + m + ' min ' + String(s).padStart(2, '0') + ' s');
+    if (left <= 0) refreshCodeClotureWidget(true);
+}
+
+async function refreshCodeClotureWidget(force) {
+    const widget = document.getElementById('code-cloture-widget');
+    if (!widget) return;
+    if (!canUseClotureUi() || !currentVenueId) {
+        widget.style.display = 'none';
+        stopCodeClotureTimers();
+        return;
+    }
+    widget.style.display = 'flex';
+    try {
+        const res = await fetch('/api/etablissements/' + encodeURIComponent(currentVenueId) + '/code-cloture', {
+            credentials: 'include',
+        });
+        if (!res.ok) {
+            widget.style.display = 'none';
+            return;
+        }
+        const data = await res.json();
+        const codeEl = document.getElementById('cc-code');
+        if (codeEl) codeEl.textContent = data.code || '····';
+        _codeClotureExpireMs = data.expire_ms || null;
+        updateCodeClotureCountdown();
+        if (!_codeClotureTick) _codeClotureTick = setInterval(updateCodeClotureCountdown, 1000);
+        if (!_codeCloturePoll) _codeCloturePoll = setInterval(() => refreshCodeClotureWidget(false), 20000);
+    } catch {
+        if (force) showToast('Impossible de charger le code', true);
+    }
+}
+
+function openCloturesModal() {
+    if (!canUseClotureUi()) return;
+    if (!currentVenueId) { showToast('Sélectionne un établissement', true); return; }
+    const base = currentWeekStart instanceof Date ? currentWeekStart : parseDate(toDateStr(currentWeekStart));
+    _cloturesWeekStart = Week.weekStart(base);
+    document.getElementById('clotures-modal').style.display = 'flex';
+    renderCloturesModal();
+}
+
+async function renderCloturesModal() {
+    const list = document.getElementById('clotures-list');
+    const label = document.getElementById('clotures-week-label');
+    if (!list || !_cloturesWeekStart) return;
+    const monday = toDateStr(_cloturesWeekStart);
+    const sunday = toDateStr(addDays(_cloturesWeekStart, 6));
+    if (label) label.textContent = monday + ' → ' + sunday;
+
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:#ccc;font-size:13px">Chargement…</div>';
+    try {
+        const res = await fetch(
+            '/api/etablissements/' + encodeURIComponent(currentVenueId) + '/clotures-semaine?week_start=' + monday,
+            { credentials: 'include' }
+        );
+        const shifts = await res.json();
+        if (!res.ok) throw new Error(shifts.error || 'Erreur');
+        if (!shifts.length) {
+            list.innerHTML = '<div style="padding:24px;text-align:center;color:#aaa;font-size:13px">Aucun shift cette semaine</div>';
+            return;
+        }
+        list.innerHTML = '';
+        shifts
+            .slice()
+            .sort((a, b) => (a.date === b.date ? String(a.staff_name || '').localeCompare(String(b.staff_name || ''), 'fr') : (a.date < b.date ? -1 : 1)))
+            .forEach(s => {
+                const row = document.createElement('div');
+                row.className = 'cloture-row';
+                const closed = !!s.heure_validee_finale;
+                const srcBadge = closed
+                    ? '<span class="cloture-badge ' + (s.cloture_source === 'manuelle' ? 'manuelle' : 'code') + '">' +
+                      (s.cloture_source === 'manuelle' ? 'Manuelle' : 'Code') + '</span>'
+                    : '<span class="cloture-badge wait">Non clôturé</span>';
+                const validBadge = s.patron_valide
+                    ? '<span class="cloture-badge ok">Récap validé</span>'
+                    : '';
+                row.innerHTML =
+                    '<div class="cloture-row-main">' +
+                        '<div style="font-size:13px;font-weight:600">' + escapeHtml(s.staff_name || '—') +
+                        (s.is_joker ? ' <span style="color:#888;font-weight:500">(Joker)</span>' : '') + '</div>' +
+                        '<div style="font-size:12px;color:#888;margin-top:2px">' + escapeHtml(s.date) +
+                        ' · planifié ' + (s.start_time != null ? ShiftHours.fmtHourOfDay(s.start_time) : '—') +
+                        '–' + (s.end_time != null ? ShiftHours.fmtHourOfDay(s.end_time) : '—') + '</div>' +
+                        '<div style="font-size:12px;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap">' +
+                            '<span>Origine : <strong>' + escapeHtml(s.heure_validee_code || '—') + '</strong></span>' +
+                            '<span>Retenue : <strong>' + escapeHtml(s.heure_validee_finale || '—') + '</strong></span>' +
+                            srcBadge + validBadge +
+                        '</div>' +
+                        (s.motif_modification ? '<div style="font-size:11px;color:#888;margin-top:3px;font-style:italic">' + escapeHtml(s.motif_modification) + '</div>' : '') +
+                    '</div>' +
+                    '<div class="cloture-row-actions"></div>';
+                const actions = row.querySelector('.cloture-row-actions');
+                if (!closed) {
+                    const btn = document.createElement('button');
+                    btn.className = 'staff-manage-save';
+                    btn.textContent = 'Clôture manuelle';
+                    btn.addEventListener('click', () => clotureManuelle(s));
+                    actions.appendChild(btn);
+                } else if (!s.patron_valide) {
+                    const btn = document.createElement('button');
+                    btn.className = 'staff-manage-save';
+                    btn.style.cssText = 'background:#fff9e6;border-color:#f39c12;color:#d68910';
+                    btn.textContent = 'Ajuster';
+                    btn.addEventListener('click', () => ajusterHeureCloture(s));
+                    actions.appendChild(btn);
+                }
+                list.appendChild(row);
+            });
+    } catch (e) {
+        list.innerHTML = '<div style="padding:16px;color:#e74c3c;font-size:13px">' + escapeHtml(e.message || 'Erreur') + '</div>';
+    }
+}
+
+async function clotureManuelle(shift) {
+    const heure = prompt('Heure de clôture (HH:MM) — laisse vide pour utiliser la fin planifiée', shift.heure_validee_finale || '');
+    if (heure === null) return;
+    try {
+        const body = {};
+        if (heure.trim()) body.heure = heure.trim();
+        const res = await fetch('/api/shifts/' + shift._id + '/cloturer-manuel', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        showToast('Clôture manuelle enregistrée');
+        renderCloturesModal();
+        refreshCodeClotureWidget(true);
+    } catch (e) { showToast(e.message, true); }
+}
+
+async function ajusterHeureCloture(shift) {
+    const heure = prompt('Nouvelle heure retenue (HH:MM)', shift.heure_validee_finale || '');
+    if (heure === null || !heure.trim()) return;
+    const motif = prompt('Motif (optionnel)', shift.motif_modification || '') || '';
+    try {
+        const res = await fetch('/api/shifts/' + shift._id + '/ajuster-heure', {
+            method: 'PATCH', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ heure_validee_finale: heure.trim(), motif: motif.trim() || undefined }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        showToast('Heure ajustée (origine conservée : ' + data.heure_validee_code + ')');
+        renderCloturesModal();
+    } catch (e) { showToast(e.message, true); }
+}
+
+async function validateCloturesWeek() {
+    if (!currentVenueId || !_cloturesWeekStart) return;
+    const monday = toDateStr(_cloturesWeekStart);
+    showConfirm('Valider le récap de la semaine du <strong>' + monday + '</strong> pour cet établissement&nbsp;?<br><span style="font-size:12px;color:#888">Les shifts déjà clôturés seront marqués validés.</span>', async () => {
+        try {
+            const res = await fetch('/api/etablissements/' + encodeURIComponent(currentVenueId) + '/valider-recap', {
+                method: 'POST', credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ week_start: monday }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Erreur');
+            showToast((data.modified || 0) + ' shift(s) validé(s)');
+            renderCloturesModal();
+        } catch (e) { showToast(e.message, true); }
+    });
 }

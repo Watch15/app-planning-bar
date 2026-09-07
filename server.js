@@ -362,6 +362,16 @@ async function connectDB() {
         db.collection('dispo_events').createIndex(
             { staff_id: 1, date: 1, at: -1 }
         ).catch(e => console.warn('⚠️ Index dispo_events.staff_id+date:', e.message));
+        // Clôture OTP — un code courant par établissement ; journal append-only.
+        db.collection('codes_cloture').createIndex(
+            { etablissement_id: 1 }, { unique: true }
+        ).catch(e => console.warn('⚠️ Index codes_cloture.etablissement_id:', e.message));
+        db.collection('time_validations').createIndex(
+            { shift_id: 1, 'heure_saisie.year': -1 }
+        ).catch(e => console.warn('⚠️ Index time_validations.shift_id:', e.message));
+        db.collection('time_validations').createIndex(
+            { etablissement_id: 1 }
+        ).catch(e => console.warn('⚠️ Index time_validations.etablissement_id:', e.message));
         // Une seule instance par base doit porter le cron (cf. CRON_ENABLED).
         if (CRON_ENABLED) {
             scheduleDailyAt10();
@@ -6471,6 +6481,373 @@ app.post('/api/shifts/extra', checkDB, requireAuth, async (req, res) => {
         res.status(201).json({ ...shift, _id: result.insertedId });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
+
+// ── Clôture de service par code OTP (piste légale parallèle au pointage) ───────
+// Pas une signature eIDAS : session + horodatage + enregistrements d'origine non mutés.
+// Ne touche PAS real_start / real_end (ShiftHours / paie inchangés).
+
+const CLOTURE_CODE_TTL_MS = 15 * 60 * 1000;
+
+function localDateParts(d = new Date()) {
+    return {
+        year:   d.getFullYear(),
+        month:  d.getMonth() + 1,
+        day:    d.getDate(),
+        hour:   d.getHours(),
+        minute: d.getMinutes(),
+        second: d.getSeconds(),
+    };
+}
+
+function fmtClockHHMM(d = new Date()) {
+    const pad = n => String(n).padStart(2, '0');
+    return pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+function fmtHourFloatToHHMM(h) {
+    if (h == null || Number.isNaN(Number(h))) return fmtClockHHMM();
+    const n = Number(h);
+    const hour = Math.floor(n) % 24;
+    const min  = Math.round((n % 1) * 60) % 60;
+    const pad = v => String(v).padStart(2, '0');
+    return pad(hour) + ':' + pad(min);
+}
+
+function genCode4() {
+    return String(1000 + crypto.randomInt(9000));
+}
+
+function isValidHHMM(s) {
+    return typeof s === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
+}
+
+function weekDateStrings(weekStartStr) {
+    const [y, m, d] = String(weekStartStr).split('-').map(Number);
+    if (!y || !m || !d) return null;
+    const out = [];
+    for (let i = 0; i < 7; i++) {
+        const dt = new Date(y, m - 1, d + i);
+        out.push(toDateStr(dt));
+    }
+    return out;
+}
+
+async function regenerateCodeCloture(estabId) {
+    const now = new Date();
+    const expireMs = now.getTime() + CLOTURE_CODE_TTL_MS;
+    const expireDate = new Date(expireMs);
+    const doc = {
+        etablissement_id: estabId,
+        code_actuel:      genCode4(),
+        genere_le:        localDateParts(now),
+        expire_le:        localDateParts(expireDate),
+        expire_ms:        expireMs,
+        code_utilise:     false,
+        utilise_par:      null,
+        utilise_le:       null,
+    };
+    await db.collection('codes_cloture').updateOne(
+        { etablissement_id: estabId },
+        { $set: doc },
+        { upsert: true }
+    );
+    return doc;
+}
+
+async function ensureCodeCloture(estabId) {
+    const doc = await db.collection('codes_cloture').findOne({ etablissement_id: estabId });
+    if (!doc || doc.code_utilise || !doc.expire_ms || doc.expire_ms < Date.now()) {
+        return regenerateCodeCloture(estabId);
+    }
+    return doc;
+}
+
+async function insertTimeValidation(payload) {
+    // Append-only : jamais d'update/delete sur time_validations.
+    await db.collection('time_validations').insertOne(payload);
+}
+
+async function classifyCodeRefuse(estabId, code) {
+    const doc = await db.collection('codes_cloture').findOne({ etablissement_id: estabId });
+    if (!doc) return 'refuse_code_invalide';
+    if (String(doc.code_actuel) === String(code) && doc.code_utilise) return 'refuse_code_deja_utilise';
+    if (String(doc.code_actuel) === String(code) && doc.expire_ms != null && doc.expire_ms < Date.now())
+        return 'refuse_code_expire';
+    if (doc.expire_ms != null && doc.expire_ms < Date.now() && String(doc.code_actuel) === String(code))
+        return 'refuse_code_expire';
+    return 'refuse_code_invalide';
+}
+
+// GET code de clôture courant (manager)
+app.get('/api/etablissements/:id/code-cloture',
+    checkDB, requirePatron, denyObservateurEdit,
+    requireEstablishmentAccess(r => r.params.id),
+    async (req, res) => {
+        try {
+            const doc = await ensureCodeCloture(req.params.id);
+            res.json({
+                code:         doc.code_actuel,
+                expire_le:    doc.expire_le,
+                expire_ms:    doc.expire_ms,
+                code_utilise: !!doc.code_utilise,
+            });
+        } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+    }
+);
+
+// GET shifts + champs clôture pour une semaine (manager)
+app.get('/api/etablissements/:id/clotures-semaine',
+    checkDB, requirePatron, denyObservateurEdit,
+    requireEstablishmentAccess(r => r.params.id),
+    async (req, res) => {
+        const weekStart = req.query.week_start;
+        if (!weekStart || !/^\d{4}-\d{2}-\d{2}$/.test(weekStart))
+            return res.status(400).json({ error: 'week_start (YYYY-MM-DD) requis' });
+        const dates = weekDateStrings(weekStart);
+        if (!dates) return res.status(400).json({ error: 'week_start invalide' });
+        try {
+            const shifts = await db.collection('shifts').find({
+                establishment_id: req.params.id,
+                date: { $in: dates },
+                type: { $ne: 'week_note' },
+            }).toArray();
+            res.json(shifts.map(s => ({
+                _id:                 s._id,
+                staff_id:            s.staff_id,
+                staff_name:          s.staff_name,
+                date:                s.date,
+                start_time:          s.start_time,
+                end_time:            s.end_time,
+                heure_validee_code:  s.heure_validee_code  ?? null,
+                heure_validee_finale:s.heure_validee_finale ?? null,
+                cloture_source:      s.cloture_source ?? null,
+                motif_modification:  s.motif_modification ?? null,
+                patron_valide:       !!s.patron_valide,
+                patron_valide_le:    s.patron_valide_le ?? null,
+                is_joker:            !!(s.is_joker || s.staff_id === '__joker__'),
+            })));
+        } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+    }
+);
+
+// POST clôturer un shift via code OTP (staff)
+app.post('/api/shifts/:id/cloturer-par-code', checkDB, requireAuth, async (req, res) => {
+    if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
+    const code = String(req.body?.code || '').trim();
+    if (!/^\d{4}$/.test(code)) return res.status(400).json({ error: 'Code à 4 chiffres requis' });
+    const user = req.session.user;
+    if (!user.staff_id && user.role === 'staff')
+        return res.status(403).json({ error: 'Aucun profil staff lié' });
+    try {
+        const shift = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
+        if (!shift) return res.status(404).json({ error: 'Shift introuvable' });
+
+        const isJoker = !!(shift.is_joker || shift.staff_id === '__joker__');
+        if (!user.staff_id)
+            return res.status(403).json({ error: 'Profil staff requis pour clôturer' });
+
+        if (isJoker) {
+            if (user.role === 'staff') {
+                const staffDoc = isValidObjectId(user.staff_id)
+                    ? await db.collection('staff').findOne({ _id: new ObjectId(user.staff_id) })
+                    : null;
+                const venues = staffDoc?.venues || [];
+                if (!venues.includes(shift.establishment_id))
+                    return res.status(403).json({ error: 'Accès refusé à cet établissement' });
+            } else if (!canAccessEstablishment(user, shift.establishment_id)) {
+                return res.status(403).json({ error: 'Accès refusé' });
+            }
+        } else if (String(shift.staff_id) !== String(user.staff_id)) {
+            return res.status(403).json({ error: 'Tu ne peux clôturer que ton propre shift' });
+        }
+
+        if (shift.heure_validee_code)
+            return res.status(409).json({ error: 'Ce shift est déjà clôturé' });
+
+        const now = new Date();
+        const heureSaisie = localDateParts(now);
+        const staffId = String(user.staff_id);
+
+        const consumed = await db.collection('codes_cloture').findOneAndUpdate(
+            {
+                etablissement_id: shift.establishment_id,
+                code_actuel:      code,
+                code_utilise:     false,
+                expire_ms:        { $gt: Date.now() },
+            },
+            {
+                $set: {
+                    code_utilise: true,
+                    utilise_par:  staffId,
+                    utilise_le:   heureSaisie,
+                },
+            },
+            { returnDocument: 'after' }
+        );
+
+        if (!consumed) {
+            const resultat = await classifyCodeRefuse(shift.establishment_id, code);
+            await insertTimeValidation({
+                etablissement_id: shift.establishment_id,
+                shift_id:         String(shift._id),
+                staff_id:         staffId,
+                code_saisi:       code,
+                heure_saisie:     heureSaisie,
+                resultat,
+            });
+            const msg = resultat === 'refuse_code_deja_utilise'
+                ? 'Code déjà utilisé — redemande un code au responsable'
+                : resultat === 'refuse_code_expire'
+                    ? 'Code expiré — redemande un code au responsable'
+                    : 'Code invalide — redemande un code au responsable';
+            return res.status(400).json({ error: msg, resultat });
+        }
+
+        const heure = fmtClockHHMM(now);
+        await insertTimeValidation({
+            etablissement_id: shift.establishment_id,
+            shift_id:         String(shift._id),
+            staff_id:         staffId,
+            code_saisi:       code,
+            heure_saisie:     heureSaisie,
+            resultat:         'accepte',
+        });
+        await db.collection('shifts').updateOne(
+            { _id: shift._id },
+            {
+                $set: {
+                    heure_validee_code:   heure,
+                    heure_validee_finale: heure,
+                    cloture_source:       'code',
+                },
+            }
+        );
+        await regenerateCodeCloture(shift.establishment_id);
+        res.json({ message: 'Service clôturé', heure_validee_code: heure, heure_validee_finale: heure });
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+// POST clôture manuelle (manager) — preuve moindre, trace explicite
+app.post('/api/shifts/:id/cloturer-manuel',
+    checkDB, requirePatron, denyObservateurEdit,
+    async (req, res) => {
+        if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
+        try {
+            const shift = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
+            if (!shift) return res.status(404).json({ error: 'Shift introuvable' });
+            if (!canAccessEstablishment(req.session.user, shift.establishment_id))
+                return res.status(403).json({ error: 'Accès refusé' });
+            if (shift.heure_validee_code)
+                return res.status(409).json({ error: 'Ce shift est déjà clôturé' });
+
+            let heure = req.body?.heure;
+            if (heure != null && heure !== '') {
+                if (!isValidHHMM(heure)) return res.status(400).json({ error: 'heure au format HH:MM requise' });
+            } else {
+                heure = fmtHourFloatToHHMM(shift.end_time);
+            }
+
+            const now = new Date();
+            const heureSaisie = localDateParts(now);
+            const actorId = req.session.user.staff_id || req.session.user._id;
+
+            await insertTimeValidation({
+                etablissement_id: shift.establishment_id,
+                shift_id:         String(shift._id),
+                staff_id:         String(actorId),
+                code_saisi:       'MANUEL',
+                heure_saisie:     heureSaisie,
+                resultat:         'accepte',
+            });
+            await db.collection('shifts').updateOne(
+                { _id: shift._id },
+                {
+                    $set: {
+                        heure_validee_code:   heure,
+                        heure_validee_finale: heure,
+                        cloture_source:       'manuelle',
+                    },
+                }
+            );
+            res.json({ message: 'Clôture manuelle enregistrée', heure_validee_code: heure, heure_validee_finale: heure });
+        } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+    }
+);
+
+// PATCH ajuster heure_validee_finale sans toucher heure_validee_code
+app.patch('/api/shifts/:id/ajuster-heure',
+    checkDB, requirePatron, denyObservateurEdit,
+    async (req, res) => {
+        if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
+        const finale = req.body?.heure_validee_finale;
+        if (!isValidHHMM(finale)) return res.status(400).json({ error: 'heure_validee_finale au format HH:MM requise' });
+        const motif = typeof req.body?.motif === 'string' ? req.body.motif.trim().slice(0, 500) : null;
+        try {
+            const shift = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
+            if (!shift) return res.status(404).json({ error: 'Shift introuvable' });
+            if (!canAccessEstablishment(req.session.user, shift.establishment_id))
+                return res.status(403).json({ error: 'Accès refusé' });
+            if (!shift.heure_validee_code)
+                return res.status(409).json({ error: 'Shift non clôturé — rien à ajuster' });
+            if (shift.patron_valide)
+                return res.status(409).json({ error: 'Récap déjà validé — ajustement impossible' });
+
+            const actorId = req.session.user.staff_id || req.session.user._id;
+            await db.collection('shifts').updateOne(
+                { _id: shift._id },
+                {
+                    $set: {
+                        heure_validee_finale: finale,
+                        modifie_par_patron:   String(actorId),
+                        modifie_le:           localDateParts(),
+                        motif_modification:   motif || null,
+                    },
+                }
+            );
+            res.json({
+                message: 'Heure ajustée',
+                heure_validee_code: shift.heure_validee_code,
+                heure_validee_finale: finale,
+            });
+        } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+    }
+);
+
+// POST valider le récap hebdo (marque patron_valide sur les shifts clôturés)
+app.post('/api/etablissements/:id/valider-recap',
+    checkDB, requirePatron, denyObservateurEdit,
+    requireEstablishmentAccess(r => r.params.id),
+    async (req, res) => {
+        const weekStart = req.body?.week_start;
+        if (!weekStart || !/^\d{4}-\d{2}-\d{2}$/.test(weekStart))
+            return res.status(400).json({ error: 'week_start (YYYY-MM-DD) requis' });
+        const dates = weekDateStrings(weekStart);
+        if (!dates) return res.status(400).json({ error: 'week_start invalide' });
+        try {
+            const valideLe = localDateParts();
+            const result = await db.collection('shifts').updateMany(
+                {
+                    establishment_id: req.params.id,
+                    date: { $in: dates },
+                    heure_validee_finale: { $ne: null, $exists: true },
+                    patron_valide: { $ne: true },
+                    type: { $ne: 'week_note' },
+                },
+                {
+                    $set: {
+                        patron_valide:    true,
+                        patron_valide_le: valideLe,
+                    },
+                }
+            );
+            res.json({
+                message: 'Récap validé',
+                modified: result.modifiedCount,
+                matched:  result.matchedCount,
+            });
+        } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+    }
+);
 
 // ── Web Push — abonnement ─────────────────────────────────────────────────────
 

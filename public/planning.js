@@ -536,6 +536,7 @@ async function loadPlanning(from, to, user) {
     }
     renderDays(from, myShifts, data.colleagues, jokers);
     renderOpenJokers(from, to, 'open-jokers-section');
+    renderClotureBanner(myShifts);
 }
 
 // ── Semaines à venir — empilées sous la semaine en cours ─────────────────────
@@ -3586,7 +3587,134 @@ document.addEventListener('DOMContentLoaded', () => {
     if (submit) submit.addEventListener('click', submitSwap);
     const overlay = document.getElementById('swap-modal');
     if (overlay) overlay.addEventListener('click', e => { if (e.target === overlay) closeSwapModal(); });
+
+    document.getElementById('cloture-code-cancel')?.addEventListener('click', closeClotureCodeModal);
+    document.getElementById('cloture-code-submit')?.addEventListener('click', submitClotureCode);
+    document.getElementById('cloture-code-modal')?.addEventListener('click', e => {
+        if (e.target.id === 'cloture-code-modal') closeClotureCodeModal();
+    });
+    document.getElementById('cloture-code-input')?.addEventListener('input', e => {
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+    });
 });
+
+// ── Clôture de service par code OTP ───────────────────────────────────────────
+
+let _cloturePendingShift = null;
+
+function activeServiceDateStr() {
+    const now = new Date();
+    const ref = new Date(now);
+    if (typeof cutoffH === 'number' && now.getHours() < cutoffH) ref.setDate(now.getDate() - 1);
+    return toDateStr(ref);
+}
+
+function renderClotureBanner(shifts) {
+    const banner = document.getElementById('cloture-banner');
+    if (!banner) return;
+    const today = activeServiceDateStr();
+    const pending = (shifts || []).filter(s =>
+        s.date === today && !s.heure_validee_finale && !s.heure_validee_code
+    );
+    if (!pending.length) {
+        banner.style.display = 'none';
+        banner.innerHTML = '';
+        return;
+    }
+    banner.style.display = 'block';
+    banner.innerHTML = '';
+    const title = document.createElement('div');
+    title.className = 'cloture-banner-title';
+    title.textContent = 'Clôturer ton service';
+    banner.appendChild(title);
+    pending.forEach(s => {
+        const row = document.createElement('div');
+        row.className = 'cloture-shift-row';
+        const info = document.createElement('div');
+        info.className = 'cloture-shift-info';
+        const estab = typeof formatEstablishment === 'function'
+            ? formatEstablishment(s.establishment_id)
+            : (s.establishment_id || '');
+        const strong = document.createElement('strong');
+        strong.textContent = estab;
+        info.appendChild(strong);
+        info.appendChild(document.createElement('br'));
+        info.appendChild(document.createTextNode(
+            (s.start_time != null ? fmtHour(s.start_time) : '—') + ' → ' +
+            (s.end_time != null ? fmtHour(s.end_time) : '—')
+        ));
+        row.appendChild(info);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'cloture-shift-btn';
+        btn.textContent = 'Saisir le code';
+        btn.addEventListener('click', () => openClotureCodeModal(s));
+        row.appendChild(btn);
+        banner.appendChild(row);
+    });
+}
+
+function openClotureCodeModal(shift) {
+    _cloturePendingShift = shift;
+    const modal = document.getElementById('cloture-code-modal');
+    const label = document.getElementById('cloture-code-shift-label');
+    const input = document.getElementById('cloture-code-input');
+    const err = document.getElementById('cloture-code-err');
+    if (label) {
+        const estab = typeof formatEstablishment === 'function'
+            ? formatEstablishment(shift.establishment_id) : shift.establishment_id;
+        label.textContent = (estab || '') + ' · ' +
+            (shift.start_time != null ? fmtHour(shift.start_time) : '—') + ' → ' +
+            (shift.end_time != null ? fmtHour(shift.end_time) : '—');
+    }
+    if (input) input.value = '';
+    if (err) err.textContent = '';
+    if (modal) {
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+    setTimeout(() => input && input.focus(), 50);
+}
+
+function closeClotureCodeModal() {
+    _cloturePendingShift = null;
+    const modal = document.getElementById('cloture-code-modal');
+    if (modal) {
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+}
+
+async function submitClotureCode() {
+    if (!_cloturePendingShift) return;
+    const input = document.getElementById('cloture-code-input');
+    const err = document.getElementById('cloture-code-err');
+    const code = (input && input.value || '').trim();
+    if (!/^\d{4}$/.test(code)) {
+        if (err) err.textContent = 'Saisis les 4 chiffres du code';
+        return;
+    }
+    const btn = document.getElementById('cloture-code-submit');
+    if (btn) btn.disabled = true;
+    try {
+        const res = await fetch('/api/shifts/' + _cloturePendingShift._id + '/cloturer-par-code', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Code refusé');
+        closeClotureCodeModal();
+        if (typeof showToast === 'function') showToast('Service clôturé à ' + (data.heure_validee_finale || ''));
+        else if (typeof showSwapToast === 'function') showSwapToast('Service clôturé à ' + (data.heure_validee_finale || ''));
+        const p = window._currentPlan;
+        if (p) await loadPlanning(p.from, p.to, p.user);
+    } catch (e) {
+        if (err) err.textContent = (e.message || 'Erreur') + ' — redemande un code au responsable.';
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
 
 // ── Démarrage ─────────────────────────────────────────────────────────────────
 
