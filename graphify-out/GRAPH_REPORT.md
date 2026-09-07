@@ -1,7 +1,7 @@
 # Graph Report - app-planning-bar  (2026-09-07)
 
 ## Corpus Check
-- 65 files · ~305,019 words
+- 65 files · ~305,066 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `21ae16db`
+- Built from commit: `ea2fa2cf`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

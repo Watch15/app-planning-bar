@@ -4966,18 +4966,25 @@ async function renderAccountsList() {
             row.innerHTML =
                 '<span class="staff-manage-dot" style="background:' + escapeHtml(color) + '"></span>' +
                 '<div class="staff-manage-info" style="flex:1">' +
-                    '<div style="font-size:13px;font-weight:600;color:#333">' + escapeHtml(user.name || '—') + '</div>' +
+                    '<div class="accounts-row-head">' +
+                        '<div style="font-size:13px;font-weight:600;color:#333">' + escapeHtml(user.name || '—') + '</div>' +
+                        '<span class="staff-login-badge ' + statusBadge + '">' + escapeHtml(statusLabel) + '</span>' +
+                    '</div>' +
                     '<div style="font-size:12px;color:#999">' + coordsHtml + '</div>' +
                 '</div>' +
-                '<span class="staff-login-badge ' + statusBadge + '" style="margin-right:8px">' + escapeHtml(statusLabel) + '</span>' +
-                (currentUser.role === 'patron' && String(user._id) !== currentUser._id
-                    ? '<button class="staff-manage-save" data-action="change-role" style="background:#fff9e6;border-color:#f39c12;color:#d68910">Rôle</button>'
-                    : '') +
-                (isP && currentUser.role === 'patron'
-                    ? '<button class="staff-manage-save" data-action="assign-bars" style="background:#f0effe;border-color:#7F77DD;color:#534AB7">Bars</button>'
-                    : '') +
-                '<button class="staff-manage-save" data-action="reset">Reset mdp</button>' +
-                '<button class="staff-manage-delete" data-action="delete">×</button>';
+                '<div class="staff-manage-actions">' +
+                    (currentUser.role === 'patron' && String(user._id) !== currentUser._id
+                        ? '<button type="button" class="staff-manage-save" data-action="change-role" style="background:#fff9e6;border-color:#f39c12;color:#d68910">Rôle</button>'
+                        : '') +
+                    (isP && currentUser.role === 'patron'
+                        ? '<button type="button" class="staff-manage-save" data-action="assign-bars" style="background:#f0effe;border-color:#7F77DD;color:#534AB7">Bars</button>'
+                        : '') +
+                    '<button type="button" class="staff-manage-save" data-action="reset">' +
+                        '<span class="sm-label-long">Reset mdp</span>' +
+                        '<span class="sm-label-short" aria-hidden="true">Mdp</span>' +
+                    '</button>' +
+                    '<button type="button" class="staff-manage-delete" data-action="delete" title="Supprimer" aria-label="Supprimer">×</button>' +
+                '</div>';
             row.querySelector('[data-action="reset"]').addEventListener('click',  () => patronResetPassword(user._id, user.name || user.email));
             row.querySelector('[data-action="delete"]').addEventListener('click', () => deleteAccount(user._id, user.name || user.email));
             if (currentUser.role === 'patron' && String(user._id) !== currentUser._id) {
@@ -5037,39 +5044,42 @@ async function renderPendingInvites() {
             })();
 
             const row = document.createElement('div');
-            row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--light-border);flex-wrap:wrap';
-
-            const dot = '<span style="width:10px;height:10px;border-radius:50%;background:' + escapeHtml(color) + ';flex-shrink:0;display:inline-block"></span>';
+            row.className = 'staff-manage-row accounts-pending-row';
 
             const nameBlock =
-                '<div style="flex:1;min-width:140px">' +
-                    '<div style="font-size:13px;font-weight:600;color:var(--text-primary)">' + escapeHtml(user.name || '—') + '</div>' +
-                    (createdLabel ? '<div style="font-size:11px;color:#aaa;margin-top:2px">' + createdLabel + '</div>' : '') +
+                '<div class="staff-manage-info">' +
+                    '<div class="accounts-row-head">' +
+                        '<div style="font-size:13px;font-weight:600;color:var(--text-primary)">' + escapeHtml(user.name || '—') + '</div>' +
+                        (createdLabel ? '<span style="font-size:11px;color:#aaa">' + createdLabel + '</span>' : '') +
+                    '</div>' +
+                    '<div style="display:flex;flex-direction:column;gap:3px;margin-top:4px">' +
+                        (user.email
+                            ? '<div style="display:flex;align-items:center;gap:4px">' +
+                              '<span style="font-size:12px;color:var(--text-secondary)">📧 ' + escapeHtml(user.email) + '</span>' +
+                              '<button type="button" class="btn-copy-email" title="Copier l\'email" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text-secondary);font-size:13px">📋</button>' +
+                              '</div>'
+                            : '') +
+                        (phoneDisplay
+                            ? '<div style="display:flex;align-items:center;gap:4px">' +
+                              '<span style="font-size:12px;color:var(--text-secondary)">📱 ' + escapeHtml(phoneDisplay) + '</span>' +
+                              '<button type="button" class="btn-copy-phone" title="Copier le numéro" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text-secondary);font-size:13px">📋</button>' +
+                              '</div>'
+                            : '') +
+                        (!user.email && !phoneDisplay
+                            ? '<span style="font-size:11px;color:#ccc;font-style:italic">pas de contact</span>'
+                            : '') +
+                    '</div>' +
                 '</div>';
 
-            const contactBits = [];
-            if (user.email) {
-                contactBits.push(
-                    '<div style="display:flex;align-items:center;gap:4px">' +
-                    '<span style="font-size:12px;color:var(--text-secondary)">📧 ' + escapeHtml(user.email) + '</span>' +
-                    '<button class="btn-copy-email" title="Copier l\'email" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text-secondary);font-size:13px">📋</button>' +
-                    '</div>'
-                );
-            }
-            if (phoneDisplay) {
-                contactBits.push(
-                    '<div style="display:flex;align-items:center;gap:4px">' +
-                    '<span style="font-size:12px;color:var(--text-secondary)">📱 ' + escapeHtml(phoneDisplay) + '</span>' +
-                    '<button class="btn-copy-phone" title="Copier le numéro" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text-secondary);font-size:13px">📋</button>' +
-                    '</div>'
-                );
-            }
-            const contactBlock = '<div style="display:flex;flex-direction:column;gap:3px;min-width:0">' + (contactBits.join('') || '<span style="font-size:11px;color:#ccc;font-style:italic">pas de contact</span>') + '</div>';
-
-            const linkBtn =
-                '<button class="btn-copy-invite-link" style="padding:6px 12px;border-radius:6px;border:1.5px solid var(--accent);background:#f0effe;color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0;white-space:nowrap">🔗 Copier le lien</button>';
-
-            row.innerHTML = dot + nameBlock + contactBlock + linkBtn;
+            row.innerHTML =
+                '<span class="staff-manage-dot" style="background:' + escapeHtml(color) + '"></span>' +
+                nameBlock +
+                '<div class="staff-manage-actions">' +
+                    '<button type="button" class="staff-manage-save btn-copy-invite-link" style="background:#f0effe;border-color:var(--accent);color:var(--accent)">' +
+                        '<span class="sm-label-long">Copier le lien</span>' +
+                        '<span class="sm-label-short" aria-hidden="true">Lien</span>' +
+                    '</button>' +
+                '</div>';
 
             const emailBtn = row.querySelector('.btn-copy-email');
             if (emailBtn) emailBtn.addEventListener('click', () => {
@@ -5082,7 +5092,7 @@ async function renderPendingInvites() {
             const linkBtnEl = row.querySelector('.btn-copy-invite-link');
             linkBtnEl.addEventListener('click', async () => {
                 linkBtnEl.disabled    = true;
-                const original        = linkBtnEl.textContent;
+                const original        = linkBtnEl.innerHTML;
                 linkBtnEl.textContent = '…';
                 try {
                     const r = await fetch('/api/users/' + user._id + '/invite-link', { method: 'POST', credentials: 'include' });
@@ -5093,8 +5103,8 @@ async function renderPendingInvites() {
                 } catch (err) {
                     showToast(err.message || 'Erreur', true);
                 } finally {
-                    linkBtnEl.disabled    = false;
-                    linkBtnEl.textContent = original;
+                    linkBtnEl.disabled = false;
+                    linkBtnEl.innerHTML = original;
                 }
             });
 
@@ -8584,11 +8594,20 @@ function renderStaffManageList() {
                     '</select>' +
                 '</div>' +
             '</div>' +
-            '<button class="staff-manage-save">Enregistrer</button>' +
-            '<button class="staff-manage-archive" title="' +
-                (staff.archived ? 'Réactiver — la personne revient dans les plannings' : 'Archiver — la personne sort des plannings, son historique reste') +
-                '">' + (staff.archived ? 'Réactiver' : 'Archiver') + '</button>' +
-            '<button class="staff-manage-delete" title="Supprimer">×</button>';
+            '<div class="staff-manage-actions">' +
+                '<button type="button" class="staff-manage-save">' +
+                    '<span class="sm-label-long">Enregistrer</span>' +
+                    '<span class="sm-label-short" aria-hidden="true">Sauver</span>' +
+                '</button>' +
+                '<button type="button" class="staff-manage-archive" title="' +
+                    (staff.archived ? 'Réactiver — la personne revient dans les plannings' : 'Archiver — la personne sort des plannings, son historique reste') +
+                    '">' +
+                    (staff.archived
+                        ? '<span class="sm-label-long">Réactiver</span><span class="sm-label-short" aria-hidden="true">Réact.</span>'
+                        : '<span class="sm-label-long">Archiver</span><span class="sm-label-short" aria-hidden="true">Archiv.</span>') +
+                '</button>' +
+                '<button type="button" class="staff-manage-delete" title="Supprimer" aria-label="Supprimer">×</button>' +
+            '</div>';
 
         if (staff.archived) row.classList.add('is-archived');
 

@@ -654,6 +654,9 @@ label[for], select, .tab-btn, .staff-card, .shift-card {
 .staff-manage-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; cursor: pointer; border: 2px solid transparent; transition: border-color var(--transition); }
 .staff-manage-dot:hover { border-color: rgba(0,0,0,0.15); }
 .staff-manage-info { flex: 1; min-width: 0; }
+.accounts-row-head {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 2px;
+}
 .staff-manage-name-input,
 .staff-manage-nickname-input,
 .staff-manage-email-input {
@@ -669,32 +672,94 @@ label[for], select, .tab-btn, .staff-card, .shift-card {
 .staff-manage-color { width: 28px; height: 28px; border-radius: 50%; border: none; padding: 0; cursor: pointer; overflow: hidden; flex-shrink: 0; align-self: flex-start; margin-top: 2px; }
 .staff-manage-color::-webkit-color-swatch-wrapper { padding: 0; }
 .staff-manage-color::-webkit-color-swatch { border: none; border-radius: 50%; }
+/* Colonne d'actions à droite (desktop) — évite Enregistrer | Archiver | × en file horizontale. */
+.staff-manage-actions {
+  display: flex; flex-direction: column; gap: 6px;
+  flex-shrink: 0; align-self: flex-start; min-width: 0;
+}
+.sm-label-short { display: none; }
 .staff-manage-save {
   padding: 5px 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--success);
   background: var(--success-bg); color: var(--success-text);
   font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap;
-  transition: all var(--transition); font-family: var(--font); flex-shrink: 0; align-self: center;
+  transition: all var(--transition); font-family: var(--font); flex-shrink: 0;
 }
 .staff-manage-save:hover { background: var(--success); color: white; }
 .staff-manage-delete {
   width: 28px; height: 28px; border-radius: var(--radius); border: 1px solid var(--light-border);
   background: var(--light-card); color: var(--text-muted); font-size: 16px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: all var(--transition); flex-shrink: 0; line-height: 1; font-family: var(--font); align-self: center;
+  transition: all var(--transition); flex-shrink: 0; line-height: 1; font-family: var(--font);
+  align-self: center;
 }
 .staff-manage-delete:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-bg); }
-/* F-13 — voisin immédiat des deux boutons ci-dessus : mêmes tokens, même `align-self`,
-   même `:hover`. En styles inline il ne suivait ni le thème ni la règle responsive
-   `.staff-manage-row { flex-wrap: wrap }`, pensée pour un nombre de boutons connu. */
+.staff-manage-actions .staff-manage-delete {
+  width: 100%; height: auto; min-height: 28px; padding: 4px 0; align-self: stretch;
+}
+/* F-13 — voisin immédiat des boutons ci-dessus : mêmes tokens / thème. */
 .staff-manage-archive {
   padding: 5px 10px; border-radius: var(--radius-sm); border: 1px solid var(--light-border);
   background: var(--light-card); color: var(--text-muted);
   font-size: 11px; cursor: pointer; white-space: nowrap;
-  transition: all var(--transition); font-family: var(--font); flex-shrink: 0; align-self: center;
+  transition: all var(--transition); font-family: var(--font); flex-shrink: 0;
 }
 .staff-manage-archive:hover { border-color: var(--accent); color: var(--accent); }
 /* La ligne reste lisible, mais visiblement hors service. */
 .staff-manage-row.is-archived { opacity: 0.55; background: var(--light-bg, #fafafa); }
+
+/* Téléphone (portrait + paysage) : actions en barre pleine largeur, libellés courts. */
+body.device-phone .staff-manage-row {
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+}
+body.device-phone .staff-manage-info {
+  flex: 1 1 calc(100% - 40px);
+}
+body.device-phone .staff-manage-actions {
+  flex: 1 1 100%;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 6px;
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px solid var(--light-border);
+}
+body.device-phone .staff-manage-actions .staff-manage-save,
+body.device-phone .staff-manage-actions .staff-manage-archive {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 6px;
+  font-size: 12px;
+  text-align: center;
+}
+body.device-phone .staff-manage-actions .staff-manage-delete {
+  flex: 0 0 40px;
+  width: 40px;
+  height: auto;
+  min-height: 40px;
+  align-self: stretch;
+}
+body.device-phone .sm-label-long { display: none; }
+body.device-phone .sm-label-short { display: inline; }
+body.device-phone #accounts-list .staff-manage-row,
+body.device-phone #accounts-pending-list .staff-manage-row {
+  align-items: flex-start;
+}
+body.device-phone .staff-add-form .staff-add-fields {
+  flex-direction: column;
+  align-items: stretch;
+}
+body.device-phone .staff-add-form .staff-add-fields > * {
+  width: 100%;
+  max-width: 100%;
+}
+body.device-phone .staff-modal-tab {
+  min-height: 40px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
 
 /* Formulaire ajout */
 .staff-add-form { border-top: 1px solid var(--light-border); padding-top: 16px; }
