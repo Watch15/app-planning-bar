@@ -163,6 +163,9 @@ const FEATURES = [
         { establishment_id: 'Josy_pub', staff_id: '__joker__', staff_name: 'Joker', color: '#888',
           date: ctx.day(ctx.thisMon, 5), start_time: 19, end_time: 26,
           is_joker: true, joker_open: true, joker_candidates: [], note: 'Renfort samedi soir' },
+        // Shift « aujourd'hui » pour la clôture OTP (bannière staff + widget patron).
+        // Si aujourd'hui tombe hors semaine courante (rare en lundi tôt), on le pose quand même.
+        ctx.shift('Josy_pub', 'Alice', toDateStr(new Date()), 18, 24, { note: 'smoke-cloture' }),
     ]);
     await ctx.db.collection('settings').insertOne({
         // Forme COURANTE : `establishments` ('ALL' ou liste d'ids). `published: true`
@@ -170,6 +173,11 @@ const FEATURES = [
         key: 'publish_' + toDateStr(ctx.thisMon), establishments: 'ALL', published_at: new Date(),
     });
 } },
+
+{ id: 'cloture-otp', label: 'Clôture OTP (code de fin de service)',
+  howToTest: '1) patron@ → Josy → widget « Code de clôture » (4 chiffres + countdown). 2) Dicte le code à alice@. 3) alice@ → bannière « Clôturer ton service » → saisir le code. 4) patron@ → Clôtures → origine vs retenue, ajuster, Valider le récap. Auto : npm run smoke:cloture (local) ou npm run smoke:cloture:dev.',
+  async seed() { /* le shift du jour est posé dans planning-courant ; collections OTP créées à la 1re API */ }
+},
 
 { id: 'dispos', label: 'File de validation + périmètre directeur (S-04)',
   howToTest: 'Modale Dispos, semaine prochaine. Le patron voit 7 dispos, la directrice 4 (ses bars seulement) et le bouton « Voir tout le staff » lui rend les 7. Le bouton « Tout confirmer (N) » valide le lot affiché.',
@@ -392,7 +400,8 @@ async function run() {
             console.log('  ' + String(i + 1).padStart(2) + '. ' + f.label);
             console.log('      ' + f.howToTest);
         });
-        console.log('\n  Validation automatique : npm run smoke\n');
+        console.log('\n  Validation automatique : npm run smoke');
+        console.log('  Clôture OTP seule     : npm run smoke:cloture   (ou smoke:cloture:dev)\n');
     } catch (e) {
         console.error('❌', e);
         process.exitCode = 1;

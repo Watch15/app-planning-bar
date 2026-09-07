@@ -24,6 +24,7 @@ const APP_COLLECTIONS = [
     'dispo_events', 'time_off', 'manager_time_off', 'manager_dispo_templates',
     'roles', 'settings', 'daily_revenue', 'notifications', 'staff_notifications',
     'push_subscriptions', 'shift_swaps',
+    'codes_cloture', 'time_validations',
 ];
 
 function loadEnv() {

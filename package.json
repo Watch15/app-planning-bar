@@ -14,6 +14,8 @@
     "demo:server": "node scripts/dev-run.js --env .env.demo server.js",
     "dev:server": "node scripts/dev-run.js server.js",
     "smoke": "node scripts/smoke.js",
+    "smoke:cloture": "node scripts/smoke-cloture.js",
+    "smoke:cloture:dev": "node scripts/smoke-cloture.js https://dev.templyo.fr",
     "create-patron": "node scripts/create-patron.js",
     "lint": "eslint .",
     "test": "node --test",
