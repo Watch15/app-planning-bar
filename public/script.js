@@ -1613,11 +1613,15 @@ function renderSidebar() {
         card.innerHTML =
             (isPref ? '<span class="staff-pref-dot" title="Affecté à cet établissement">★</span>' : '') +
             '<span class="staff-dot" style="background:' + staff.color + '"></span>' +
-            '<span class="staff-info-name"' + (staff.name_color ? ' style="color:' + staff.name_color + '"' : '') + '>' + displayName(staff._id, staff.name) + '</span>' +
-            (onLeave ? '<span class="staff-leave-badge" title="En congé ce jour">Congé</span>' : '') +
-            (firstRole
-                ? '<span class="staff-role-badge ' + firstRole.type + '">' + firstRole.name + '</span>'
-                : '') +
+            '<span class="staff-card-body">' +
+                '<span class="staff-info-name"' + (staff.name_color ? ' style="color:' + staff.name_color + '"' : '') + '>' + displayName(staff._id, staff.name) + '</span>' +
+                (firstRole || onLeave
+                    ? '<span class="staff-card-meta">' +
+                        (onLeave ? '<span class="staff-leave-badge" title="En congé ce jour">Congé</span>' : '') +
+                        (firstRole ? '<span class="staff-role-badge ' + firstRole.type + '">' + firstRole.name + '</span>' : '') +
+                      '</span>'
+                    : '') +
+            '</span>' +
             '<div class="color-controls">' +
                 '<input type="color" class="color-picker" value="' + staff.color + '" title="Couleur du shift">' +
                 '<input type="color" class="color-picker font-color-picker" value="' + (staff.name_color || staff.color) + '" title="Couleur du texte" style="opacity:0.65">' +
@@ -1711,8 +1715,10 @@ function renderSidebar() {
     jokerCard.title = 'Joker : créneau ouvert sans staff désigné. Glisse-le sur la timeline pour créer un créneau à pourvoir (motif rayé). Tu pourras ensuite l’ouvrir aux candidatures du staff.';
     jokerCard.innerHTML =
         '<span class="joker-icon">?</span>' +
-        '<span class="staff-info-name">Joker</span>' +
-        '<span class="staff-role-badge joker">Non désigné</span>';
+        '<span class="staff-card-body">' +
+            '<span class="staff-info-name">Joker</span>' +
+            '<span class="staff-card-meta"><span class="staff-role-badge joker">Créneau ouvert</span></span>' +
+        '</span>';
 
     jokerCard.addEventListener('dragstart', e => {
         const joker = {
@@ -3742,6 +3748,13 @@ function tapSelectStaff(staff, card) {
 
     // Afficher le bandeau
     showTapBanner(staff.name, staff.color);
+
+    // Sur téléphone : fermer la feuille pour laisser place au planning.
+    // Sans ça, 60 vh de sheet + bandeau = quasi impossible de viser une ligne.
+    if (typeof isPhone === 'function' && isPhone() && typeof _closeStaffBar === 'function') {
+        const bar = document.getElementById('staff-bar-container');
+        if (bar && bar.classList.contains('open')) _closeStaffBar();
+    }
 }
 
 function clearTapSelection() {
@@ -3759,8 +3772,8 @@ function showTapBanner(name, color) {
     }
     banner.innerHTML =
         '<span style="width:10px;height:10px;border-radius:50%;background:' + (color || '#888') + ';flex-shrink:0;display:inline-block"></span>' +
-        '<span style="flex:1"><strong>' + name + '</strong> — Tape sur une ligne pour placer</span>' +
-        '<button id="tap-place-cancel" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;flex-shrink:0">✕</button>';
+        '<span style="flex:1;min-width:0;line-height:1.35"><strong>' + escapeHtml(name) + '</strong> — tape sur une ligne du planning</span>' +
+        '<button type="button" id="tap-place-cancel" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:6px;padding:8px 12px;font-size:12px;cursor:pointer;flex-shrink:0;min-height:36px">Annuler</button>';
     banner.style.display = 'flex';
     banner.querySelector('#tap-place-cancel').addEventListener('click', clearTapSelection);
 }

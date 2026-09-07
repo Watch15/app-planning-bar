@@ -388,6 +388,7 @@ body.device-touch .resizer.right { right: 0; }
   border-top: 1px solid var(--light-border); display: flex; flex-direction: column; gap: 8px;
 }
 .staff-bar-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.staff-bar-title-row { display: none; }
 .staff-search-input {
   flex: 1; min-width: 140px; max-width: 220px;
   padding: 6px 10px; border-radius: var(--radius);
@@ -415,6 +416,12 @@ body.device-touch .resizer.right { right: 0; }
   border: 1px solid var(--light-border); background: var(--light-card);
   cursor: grab; transition: box-shadow var(--transition), border-color var(--transition), transform 0.1s;
   user-select: none; white-space: nowrap;
+}
+.staff-card-body {
+  display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1;
+}
+.staff-card-meta {
+  display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;
 }
 .staff-card:hover { border-color: #c8ccd6; box-shadow: var(--shadow-sm); }
 .staff-card.dragging { opacity: 0.45; transform: scale(0.97); }
@@ -444,6 +451,71 @@ body.device-touch .resizer.right { right: 0; }
   cursor: pointer; transition: border-color var(--transition), color var(--transition); line-height: 1; white-space: nowrap; font-family: var(--font);
 }
 .btn-auto-color:hover { border-color: #aaa; color: var(--text-primary); }
+
+/* Tactile : pas de hover → les pickers invisibles prenaient quand même de la place. */
+body.device-touch .staff-bar .color-controls { display: none !important; }
+body.device-touch .staff-bar-hint { display: none; }
+
+/* Téléphone : feuille de sélection (complété par media queries index.html) */
+body.device-phone .staff-bar-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 0 4px 2px;
+}
+body.device-phone .staff-bar-title-block { min-width: 0; flex: 1; }
+body.device-phone .staff-bar-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+}
+body.device-phone .staff-bar-subtitle {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+body.device-phone .staff-bar-close {
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  border: none; border-radius: 10px;
+  background: var(--light-bg);
+  color: var(--text-secondary);
+  font-size: 15px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+body.device-phone .staff-bar-close:active { background: var(--light-border); }
+body.device-phone .staff-card {
+  white-space: normal;
+  border-radius: 12px;
+  padding: 10px 12px;
+  min-height: 48px;
+  cursor: pointer;
+}
+body.device-phone .staff-card-body {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+body.device-phone .staff-info-name {
+  font-size: 13px;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+body.device-phone .staff-dot {
+  width: 10px; height: 10px;
+}
+body.device-phone .staff-card.staff-tap-selected {
+  border-color: var(--accent);
+  background: rgba(108,99,255,0.08);
+}
 
 /* ── Stats ───────────────────────────────────────────────────────────────────*/
 .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; padding: 16px 20px; background: var(--light-bg); }

@@ -217,10 +217,9 @@
                 padding: 0 0 max(8px,env(safe-area-inset-bottom)) !important;
                 display: flex !important;
                 flex-direction: column;
-                max-height: 60vh;
+                max-height: 62vh;
                 gap: 0 !important;
             }
-            /* Poignée de drag */
             .staff-bar::before {
                 content: '';
                 display: block;
@@ -230,50 +229,60 @@
                 margin: 10px auto 6px;
                 flex-shrink: 0;
             }
-            .staff-bar.open {
-                transform: translateY(0);
-            }
-            /* Recherche + filtres : zone fixe en haut */
+            .staff-bar.open { transform: translateY(0); }
             .staff-bar .staff-bar-top {
                 flex-shrink: 0;
+                flex-direction: column !important;
+                align-items: stretch !important;
                 flex-wrap: nowrap !important;
-                gap: 6px !important;
-                padding: 0 12px 6px !important;
+                gap: 8px !important;
+                padding: 0 12px 10px !important;
                 border-bottom: 1px solid #f0f0f0;
             }
             .staff-bar .staff-search-input {
                 min-width: 0 !important;
                 max-width: none !important;
-                height: 34px;
-                font-size: 13px !important;
+                width: 100%;
+                height: 40px;
+                font-size: 16px !important; /* évite le zoom iOS */
+                border-radius: 10px;
+                padding: 0 12px;
             }
             .staff-bar .staff-role-filters {
                 flex-wrap: nowrap;
                 overflow-x: auto;
-                gap: 4px !important;
+                -webkit-overflow-scrolling: touch;
+                gap: 6px !important;
+                padding-bottom: 2px;
+                scrollbar-width: none;
             }
-            /* Liste : grille 2 colonnes scrollable verticalement */
+            .staff-bar .staff-role-filters::-webkit-scrollbar { display: none; }
+            .staff-bar .role-filter-btn {
+                min-height: 32px;
+                padding: 6px 12px;
+                font-size: 12px;
+            }
             .staff-bar .staff-list {
                 display: grid !important;
-                grid-template-columns: repeat(2, 1fr) !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
                 overflow-x: hidden !important;
                 overflow-y: auto !important;
                 -webkit-overflow-scrolling: touch;
-                gap: 6px !important;
-                padding: 10px 12px !important;
+                gap: 8px !important;
+                padding: 10px 12px 12px !important;
                 flex: 1;
                 min-height: 0;
             }
             .staff-bar .staff-card {
                 flex-shrink: unset;
                 width: 100% !important;
-                padding: 8px 10px !important;
-                font-size: 13px !important;
-                min-height: 44px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
+                max-width: 100%;
+                box-sizing: border-box;
             }
+            .staff-bar .staff-card-joker {
+                grid-column: 1 / -1;
+            }
+            .staff-bar .color-controls { display: none !important; }
             .staff-bar-hint { display: none !important; }
 
             /* FAB remonte au-dessus de la barre */
@@ -477,7 +486,7 @@
             #btn-publish-week  { font-size: 10px !important; padding: 4px 8px !important; white-space: nowrap; flex-shrink: 0; }
             .day-detail-close  { flex-shrink: 0 !important; }
 
-            /* ── Staff bar → bottom sheet 45vh ── */
+            /* ── Staff bar → bottom sheet paysage ── */
             .staff-bar {
                 position: fixed !important; bottom: 0; left: 0; right: 0;
                 transform: translateY(100%);
@@ -487,23 +496,37 @@
                 box-shadow: 0 -4px 24px rgba(0,0,0,0.13);
                 padding: 0 0 max(8px,env(safe-area-inset-bottom)) !important;
                 display: flex !important; flex-direction: column;
-                max-height: 45vh !important; gap: 0 !important;
+                max-height: 50vh !important; gap: 0 !important;
             }
-            .staff-bar::before { content: ''; display: block; width: 36px; height: 4px; background: #d0d0d0; border-radius: 2px; margin: 10px auto 6px; flex-shrink: 0; }
+            .staff-bar::before { content: ''; display: block; width: 36px; height: 4px; background: #d0d0d0; border-radius: 2px; margin: 8px auto 4px; flex-shrink: 0; }
             .staff-bar.open { transform: translateY(0); }
-            .staff-bar .staff-bar-top { flex-shrink: 0; flex-wrap: nowrap !important; gap: 6px !important; padding: 0 12px 6px !important; border-bottom: 1px solid #f0f0f0; }
-            .staff-bar .staff-search-input { min-width: 0 !important; max-width: none !important; height: 30px; font-size: 13px !important; }
-            .staff-bar .staff-role-filters { flex-wrap: nowrap; overflow-x: auto; gap: 4px !important; }
+            .staff-bar .staff-bar-top {
+                flex-shrink: 0; flex-direction: column !important; align-items: stretch !important;
+                flex-wrap: nowrap !important; gap: 6px !important;
+                padding: 0 12px 8px !important; border-bottom: 1px solid #f0f0f0;
+            }
+            .staff-bar .staff-bar-subtitle { display: none !important; }
+            .staff-bar .staff-search-input {
+                min-width: 0 !important; max-width: none !important; width: 100%;
+                height: 34px; font-size: 16px !important; border-radius: 8px;
+            }
+            .staff-bar .staff-role-filters { flex-wrap: nowrap; overflow-x: auto; gap: 4px !important; scrollbar-width: none; }
+            .staff-bar .staff-role-filters::-webkit-scrollbar { display: none; }
             .staff-bar .staff-list {
                 display: grid !important;
-                grid-template-columns: repeat(3, 1fr) !important;
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
                 overflow-x: hidden !important; overflow-y: auto !important;
                 -webkit-overflow-scrolling: touch;
-                gap: 5px !important; padding: 8px 12px !important; flex: 1; min-height: 0;
+                gap: 6px !important; padding: 8px 12px !important; flex: 1; min-height: 0;
             }
-            .staff-bar .staff-card { flex-shrink: unset; width: 100% !important; padding: 6px 8px !important; font-size: 12px !important; min-height: 38px; }
+            .staff-bar .staff-card {
+                flex-shrink: unset; width: 100% !important; box-sizing: border-box;
+                padding: 8px 10px !important; min-height: 42px;
+            }
+            .staff-bar .staff-card-joker { grid-column: 1 / -1; }
+            .staff-bar .color-controls { display: none !important; }
             .staff-bar-hint { display: none !important; }
-            body:has(.staff-bar.open) #fab-staff { bottom: calc(max(8px, env(safe-area-inset-bottom)) + 46vh) !important; }
+            body:has(.staff-bar.open) #fab-staff { bottom: calc(max(8px, env(safe-area-inset-bottom)) + 52vh) !important; }
 
             /* ── FAB staff (safe area droite pour notch iPhone paysage) ── */
             #fab-staff {
@@ -1027,10 +1050,17 @@
 
     </div>
 
-    <!-- ── Barre staff ── -->
+    <!-- ── Barre staff (sélection pour placer sur le planning) ── -->
     <div class="staff-bar" id="staff-bar-container">
         <div class="staff-bar-top">
-            <input type="text" id="staff-search" class="staff-search-input" placeholder="Rechercher un nom...">
+            <div class="staff-bar-title-row">
+                <div class="staff-bar-title-block">
+                    <span class="staff-bar-title">Placer sur le planning</span>
+                    <span class="staff-bar-subtitle">Touche un nom, puis tape sur une ligne</span>
+                </div>
+                <button type="button" class="staff-bar-close" onclick="toggleStaffBar()" aria-label="Fermer">✕</button>
+            </div>
+            <input type="text" id="staff-search" class="staff-search-input" placeholder="Rechercher un nom…" enterkeyhint="search" autocomplete="off">
             <div class="staff-role-filters" id="staff-role-filters">
                 <button class="role-filter-btn active" data-role="">Tous</button>
             </div>
@@ -1478,7 +1508,7 @@
 </div>
 
 <!-- ── FAB staff mobile ── -->
-<button id="fab-staff" title="Staff" onclick="toggleStaffBar()">＋</button>
+<button id="fab-staff" title="Choisir un staff" onclick="toggleStaffBar()" aria-label="Choisir un staff">＋</button>
 
 <!-- ── Drawer overlay mobile ── -->
 <div id="mobile-drawer-overlay" onclick="closeMobileDrawer()"></div>

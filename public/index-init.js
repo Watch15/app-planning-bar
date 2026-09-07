@@ -75,7 +75,18 @@ function _openStaffBar() {
     const fab = document.getElementById('fab-staff');
     if (!bar) return;
     bar.classList.add('open');
-    fab.textContent = '✕';
+    if (fab) {
+        fab.textContent = '✕';
+        fab.setAttribute('aria-label', 'Fermer la sélection staff');
+        fab.title = 'Fermer';
+    }
+    // Focus recherche après ouverture (pas immédiat : évite le clavier pendant l’anim)
+    setTimeout(() => {
+        const input = document.getElementById('staff-search');
+        if (input && document.activeElement !== input) {
+            /* pas d’autofocus forcé : le clavier mange la hauteur utile */
+        }
+    }, 280);
 }
 
 function _closeStaffBar() {
@@ -83,7 +94,11 @@ function _closeStaffBar() {
     const fab = document.getElementById('fab-staff');
     if (!bar) return;
     bar.classList.remove('open');
-    fab.textContent = '＋';
+    if (fab) {
+        fab.textContent = '＋';
+        fab.setAttribute('aria-label', 'Choisir un staff');
+        fab.title = 'Choisir un staff';
+    }
     const ov = document.getElementById('staff-bar-overlay');
     if (ov) ov.style.display = 'none';
 }
