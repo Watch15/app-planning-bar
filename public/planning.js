@@ -536,7 +536,7 @@ async function loadPlanning(from, to, user) {
     }
     renderDays(from, myShifts, data.colleagues, jokers);
     renderOpenJokers(from, to, 'open-jokers-section');
-    renderClotureBanner(myShifts);
+    // Bannière top retirée : CTA OTP sur la carte du jour (évite le doublon avec Créneaux)
 }
 
 // ── Semaines à venir — empilées sous la semaine en cours ─────────────────────
@@ -895,6 +895,7 @@ function renderDays(from, shifts, colleagues, jokers) {
 function renderDaysInto(from, shifts, colleagues, list, jokers) {
     jokers = jokers || [];
     const today  = toDateStr(new Date());
+    const serviceDate = activeServiceDateStr();
     const [fy, fm, fd] = from.split('-').map(Number);
     const monday = new Date(fy, fm - 1, fd, 0, 0, 0, 0);
 
@@ -1133,6 +1134,11 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
                     '</div>' +
                     (colleaguesHtml ? '<div class="extra-shift-colleagues">' + colleaguesHtml + '</div>' : '');
                 card.appendChild(row);
+            }
+
+            // OTP début/fin : CTA sur la carte du jour de service (pas de bandeau top)
+            if (date === serviceDate && !shift.heure_validee_code && !shift.heure_validee_finale) {
+                card.appendChild(buildClotureCta(shift));
             }
         });
 
@@ -3598,7 +3604,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// ── Pointage début / fin par code OTP ─────────────────────────────────────────
+// ── Pointage début / fin par code OTP (CTA sur la carte du jour) ───────────────
 
 let _cloturePendingShift = null;
 let _cloturePendingPhase = 'fin';
@@ -3606,61 +3612,36 @@ let _cloturePendingPhase = 'fin';
 function activeServiceDateStr() {
     const now = new Date();
     const ref = new Date(now);
-    if (typeof cutoffH === 'number' && now.getHours() < cutoffH) ref.setDate(now.getDate() - 1);
+    if (now.getHours() < _serviceCutoffHour) ref.setDate(now.getDate() - 1);
     return toDateStr(ref);
 }
 
-function renderClotureBanner(shifts) {
-    const banner = document.getElementById('cloture-banner');
-    if (!banner) return;
-    const today = activeServiceDateStr();
-    const actionable = (shifts || []).filter(s =>
-        s.date === today && !s.heure_validee_finale && !s.heure_validee_code
-    );
-    if (!actionable.length) {
-        banner.style.display = 'none';
-        banner.innerHTML = '';
-        return;
+function buildClotureCta(shift) {
+    const phase = shift.debut_valide_code ? 'fin' : 'debut';
+    const wrap = document.createElement('div');
+    wrap.className = 'cloture-cta';
+    wrap.addEventListener('click', e => e.stopPropagation());
+
+    const info = document.createElement('div');
+    info.className = 'cloture-cta-info';
+    if (phase === 'debut') {
+        info.textContent = 'Pointe ton arrivée avec le code du responsable';
+    } else {
+        info.textContent = 'Arrivée ' + (shift.debut_valide_finale || shift.debut_valide_code) +
+            ' — clôture avec un nouveau code';
     }
-    banner.style.display = 'block';
-    banner.innerHTML = '';
-    const title = document.createElement('div');
-    title.className = 'cloture-banner-title';
-    title.textContent = 'Pointer ton service';
-    banner.appendChild(title);
-    actionable.forEach(s => {
-        const phase = s.debut_valide_code ? 'fin' : 'debut';
-        const row = document.createElement('div');
-        row.className = 'cloture-shift-row';
-        const info = document.createElement('div');
-        info.className = 'cloture-shift-info';
-        const estab = typeof formatEstablishment === 'function'
-            ? formatEstablishment(s.establishment_id)
-            : (s.establishment_id || '');
-        const strong = document.createElement('strong');
-        strong.textContent = estab;
-        info.appendChild(strong);
-        info.appendChild(document.createElement('br'));
-        info.appendChild(document.createTextNode(
-            (s.start_time != null ? fmtHour(s.start_time) : '—') + ' → ' +
-            (s.end_time != null ? fmtHour(s.end_time) : '—')
-        ));
-        if (phase === 'fin' && s.debut_valide_finale) {
-            info.appendChild(document.createElement('br'));
-            const arrived = document.createElement('span');
-            arrived.style.cssText = 'font-size:12px;color:#0369a1';
-            arrived.textContent = 'Arrivée pointée : ' + s.debut_valide_finale;
-            info.appendChild(arrived);
-        }
-        row.appendChild(info);
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'cloture-shift-btn';
-        btn.textContent = phase === 'debut' ? 'Pointer mon arrivée' : 'Clôturer mon service';
-        btn.addEventListener('click', () => openClotureCodeModal(s, phase));
-        row.appendChild(btn);
-        banner.appendChild(row);
+    wrap.appendChild(info);
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cloture-cta-btn';
+    btn.textContent = phase === 'debut' ? 'Pointer mon arrivée' : 'Clôturer mon service';
+    btn.addEventListener('click', e => {
+        e.stopPropagation();
+        openClotureCodeModal(shift, phase);
     });
+    wrap.appendChild(btn);
+    return wrap;
 }
 
 function openClotureCodeModal(shift, phase) {
