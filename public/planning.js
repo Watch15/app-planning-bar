@@ -311,7 +311,7 @@ async function init() {
         if (respRes.ok) {
             const resp = await respRes.json();
             // #region agent log
-            fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'post-fix',hypothesisId:'C,D,E',location:'planning.js:responsable-tonight',message:'Pointage tabs injection',data:{todayStr,isResponsable:!!resp.isResponsable,establishments:resp.establishments||[],estabCount:(resp.establishments||[]).length,uniqueCount:new Set(resp.establishments||[]).size,existingPointageTabs:document.querySelectorAll('.btn-pointage-tab').length,tabsBarChildren:document.querySelector('.tabs-bar')?.children?.length},timestamp:Date.now()})}).catch(()=>{});
+            fetch('/api/_debug/agent-log',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'post-fix',hypothesisId:'C,D,E',location:'planning.js:responsable-tonight',message:'Pointage tabs injection',data:{todayStr,isResponsable:!!resp.isResponsable,establishments:resp.establishments||[],estabCount:(resp.establishments||[]).length,uniqueCount:new Set(resp.establishments||[]).size,existingPointageTabs:document.querySelectorAll('.btn-pointage-tab').length,fix:'cloture-resp1'}})}).catch(()=>{});
             // #endregion
             if (resp.isResponsable && resp.establishments && resp.establishments.length > 0) {
                 const tabBar = document.querySelector('.tabs-bar');
@@ -319,13 +319,15 @@ async function init() {
                 const uniqueEstabs = [...new Set(resp.establishments)];
                 uniqueEstabs.forEach(estabId => {
                     const link    = document.createElement('a');
-                    link.href      = '/pointage.html?estab=' + encodeURIComponent(estabId);
+                    link.href      = '/pointage.html?estab=' + encodeURIComponent(estabId) + '&v=cloture-resp1';
                     link.className = 'btn-pointage-tab';
-                    link.textContent = '⏱ Pointage';
+                    link.textContent = uniqueEstabs.length > 1
+                        ? ('⏱ ' + String(estabId).replace(/_/g, ' '))
+                        : '⏱ Pointage';
                     tabBar.appendChild(link);
                 });
                 // #region agent log
-                fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'post-fix',hypothesisId:'C,D',location:'planning.js:after-inject',message:'Tabs after Pointage inject',data:{pointageTabs:document.querySelectorAll('.btn-pointage-tab').length,uniqueEstabs,tabLabels:[...document.querySelectorAll('.btn-pointage-tab')].map(a=>a.textContent),hrefs:[...document.querySelectorAll('.btn-pointage-tab')].map(a=>a.getAttribute('href'))},timestamp:Date.now()})}).catch(()=>{});
+                fetch('/api/_debug/agent-log',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'post-fix',hypothesisId:'C,D',location:'planning.js:after-inject',message:'Tabs after Pointage inject',data:{pointageTabs:document.querySelectorAll('.btn-pointage-tab').length,uniqueEstabs,tabLabels:[...document.querySelectorAll('.btn-pointage-tab')].map(a=>a.textContent),hrefs:[...document.querySelectorAll('.btn-pointage-tab')].map(a=>a.getAttribute('href'))}})}).catch(()=>{});
                 // #endregion
             }
         }

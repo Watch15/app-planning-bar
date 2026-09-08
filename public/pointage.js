@@ -851,6 +851,16 @@ let _codeClotureTick = null;
 let _cloturesDay = null;
 let _clotureBound = false;
 
+// #region agent log
+function agentDbg(hypothesisId, location, message, data) {
+    fetch('/api/_debug/agent-log', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runId: 'post-fix', hypothesisId, location, message, data }),
+    }).catch(() => {});
+}
+// #endregion
+
 function canUseClotureUi() {
     // Patron/directeur : toujours. Staff : seulement s'il est sur pointage.html
     // en tant que responsable de soirée (?estab= déjà vérifié à l'init).
@@ -859,16 +869,21 @@ function canUseClotureUi() {
         || (currentUser.role === 'staff' && currentEstabId)
     ));
     // #region agent log
-    fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'post-fix',hypothesisId:'A',location:'pointage.js:canUseClotureUi',message:'cloture UI gate',data:{role:currentUser&&currentUser.role,ok,clotureRoles:CLOTURE_ROLES,estab:currentEstabId},timestamp:Date.now()})}).catch(()=>{});
+    agentDbg('A', 'pointage.js:canUseClotureUi', 'cloture UI gate', { role: currentUser && currentUser.role, ok, estab: currentEstabId, fix: 'cloture-resp1' });
     // #endregion
     return ok;
 }
 
 function setLegacyPointageVisible(visible) {
     const block = document.getElementById('legacy-pointage-block');
+    const list = document.getElementById('shifts-list');
     if (block) block.style.display = visible ? '' : 'none';
+    // Filet si HTML périmé sans #legacy-pointage-block
+    if (!block && list) list.style.display = visible ? '' : 'none';
+    const footer = document.getElementById('total-footer');
+    if (!visible && footer) footer.remove();
     // #region agent log
-    fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'pre-fix',hypothesisId:'A',location:'pointage.js:setLegacyPointageVisible',message:'legacy visibility',data:{visible,role:currentUser&&currentUser.role},timestamp:Date.now()})}).catch(()=>{});
+    agentDbg('A,L', 'pointage.js:setLegacyPointageVisible', 'legacy visibility', { visible, hasBlock: !!block, hasList: !!list, role: currentUser && currentUser.role });
     // #endregion
 }
 
@@ -916,7 +931,7 @@ async function refreshCodeCloture(force) {
             credentials: 'include',
         });
         // #region agent log
-        fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'post-fix',hypothesisId:'B',location:'pointage.js:refreshCodeCloture',message:'code-cloture response',data:{status:res.status,role:currentUser&&currentUser.role,estab:currentEstabId,date:today},timestamp:Date.now()})}).catch(()=>{});
+        agentDbg('B', 'pointage.js:refreshCodeCloture', 'code-cloture response', { status: res.status, role: currentUser && currentUser.role, estab: currentEstabId, date: today });
         // #endregion
         if (!res.ok) {
             if (force) showToast('Impossible de charger le code', true);
@@ -1116,7 +1131,13 @@ function initCloturePanel() {
     if (!panel) return;
     const gate = canUseClotureUi();
     // #region agent log
-    fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'post-fix',hypothesisId:'A,B',location:'pointage.js:initCloturePanel',message:'init cloture panel branch',data:{gate,role:currentUser&&currentUser.role,currentEstabId,willShowLegacy:!gate||!currentEstabId,legacyVisible:!gate||!currentEstabId},timestamp:Date.now()})}).catch(()=>{});
+    agentDbg('A,B,L', 'pointage.js:initCloturePanel', 'init cloture panel branch', {
+        gate, role: currentUser && currentUser.role, currentEstabId,
+        willShowLegacy: !gate || !currentEstabId,
+        hasPanel: !!panel,
+        hasLegacyBlock: !!document.getElementById('legacy-pointage-block'),
+        fix: 'cloture-resp1',
+    });
     // #endregion
     if (!gate || !currentEstabId) {
         panel.classList.remove('visible');

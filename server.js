@@ -99,6 +99,19 @@ const logInfo = process.env.NODE_ENV === 'test' ? () => {} : (...a) => console.l
 
 app.use(express.json());
 
+// #region agent log
+// Endpoint temporaire debug session — écrit dans debug-7f3ed4.log (same-origin).
+app.post('/api/_debug/agent-log', (req, res) => {
+    try {
+        const fs = require('fs');
+        const path = require('path');
+        const payload = Object.assign({ sessionId: '7f3ed4', timestamp: Date.now() }, req.body || {});
+        fs.appendFileSync(path.join(__dirname, 'debug-7f3ed4.log'), JSON.stringify(payload) + '\n');
+    } catch (_) { /* ignore */ }
+    res.status(204).end();
+});
+// #endregion
+
 // `appUrl()` normalise (préfixe https, retire le slash final). Indispensable ici :
 // le navigateur envoie un `Origin` SANS slash final, et la comparaison du middleware
 // cors est une égalité de chaîne — un `APP_URL` copié depuis une barre d'adresse
