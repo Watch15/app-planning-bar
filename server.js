@@ -1261,6 +1261,21 @@ async function isResponsablePourSoiree(staffId, establishmentId, date) {
     return designated.some(s => String(s.staff_id) === String(staffId));
 }
 
+/** Patron/directeur (accès établissement) OU staff responsable de soirée pour la/les date(s). */
+async function canManageCloture(user, estabId, dateOrDates) {
+    if (!user || !estabId) return false;
+    if (user.role === 'patron' || user.role === 'directeur') {
+        return canAccessEstablishment(user, estabId);
+    }
+    if (user.role === 'staff' && user.staff_id) {
+        const dates = Array.isArray(dateOrDates) ? dateOrDates : [dateOrDates];
+        for (const d of dates) {
+            if (d && await isResponsablePourSoiree(user.staff_id, estabId, d)) return true;
+        }
+    }
+    return false;
+}
+
 // Compte établissement uniquement
 function requireEtablissement(req, res, next) {
     if (!req.session?.user) return res.status(401).json({ error: 'Non authentifié' });
@@ -5993,7 +6008,8 @@ app.get('/api/me/responsable-tonight', checkDB, requireAuth, async (req, res) =>
         const accessibleEstabs = [];
         for (const shift of myShifts) {
             const ok = await isResponsablePourSoiree(user.staff_id, shift.establishment_id, date);
-            if (ok) accessibleEstabs.push(shift.establishment_id);
+            if (ok && !accessibleEstabs.includes(shift.establishment_id))
+                accessibleEstabs.push(shift.establishment_id);
         }
 
         if (accessibleEstabs.length === 0) return res.json({ isResponsable: false });
@@ -6001,7 +6017,7 @@ app.get('/api/me/responsable-tonight', checkDB, requireAuth, async (req, res) =>
         try {
             const fs = require('fs');
             const path = require('path');
-            fs.appendFileSync(path.join(__dirname, 'debug-7f3ed4.log'), JSON.stringify({sessionId:'7f3ed4',runId:'pre-fix',hypothesisId:'C',location:'server.js:responsable-tonight',message:'estab list for staff resp',data:{staffId:String(user.staff_id),date,shiftCount:myShifts.length,shiftEstabs:myShifts.map(s=>s.establishment_id),accessibleEstabs,unique:[...new Set(accessibleEstabs)]},timestamp:Date.now()}) + '\n');
+            fs.appendFileSync(path.join(__dirname, 'debug-7f3ed4.log'), JSON.stringify({sessionId:'7f3ed4',runId:'post-fix',hypothesisId:'C',location:'server.js:responsable-tonight',message:'estab list for staff resp',data:{staffId:String(user.staff_id),date,shiftCount:myShifts.length,shiftEstabs:myShifts.map(s=>s.establishment_id),accessibleEstabs,unique:[...new Set(accessibleEstabs)]},timestamp:Date.now()}) + '\n');
         } catch (_) { /* ignore */ }
         // #endregion
         res.json({ isResponsable: true, establishments: accessibleEstabs });
@@ -6682,12 +6698,16 @@ async function classifyCodeRefuse(estabId, code) {
     return 'refuse_code_invalide';
 }
 
-// GET code de clôture courant (manager)
+// GET code de clôture courant (manager ou responsable de soirée)
 app.get('/api/etablissements/:id/code-cloture',
-    checkDB, requirePatron, denyObservateurEdit,
-    requireEstablishmentAccess(r => r.params.id),
+    checkDB, requireAuth, denyObservateurEdit,
     async (req, res) => {
         try {
+            const date = (req.query.date && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date))
+                ? req.query.date
+                : toDateStr(new Date());
+            if (!(await canManageCloture(req.session.user, req.params.id, date)))
+                return res.status(403).json({ error: 'Accès refusé' });
             const doc = await ensureCodeCloture(req.params.id);
             res.json({
                 code:         doc.code_actuel,
@@ -6699,16 +6719,17 @@ app.get('/api/etablissements/:id/code-cloture',
     }
 );
 
-// GET shifts + champs clôture pour une semaine (manager)
+// GET shifts + champs clôture pour une semaine (manager ou responsable de soirée)
 app.get('/api/etablissements/:id/clotures-semaine',
-    checkDB, requirePatron, denyObservateurEdit,
-    requireEstablishmentAccess(r => r.params.id),
+    checkDB, requireAuth, denyObservateurEdit,
     async (req, res) => {
         const weekStart = req.query.week_start;
         if (!weekStart || !/^\d{4}-\d{2}-\d{2}$/.test(weekStart))
             return res.status(400).json({ error: 'week_start (YYYY-MM-DD) requis' });
         const dates = weekDateStrings(weekStart);
         if (!dates) return res.status(400).json({ error: 'week_start invalide' });
+        if (!(await canManageCloture(req.session.user, req.params.id, dates)))
+            return res.status(403).json({ error: 'Accès refusé' });
         try {
             const shifts = await db.collection('shifts').find({
                 establishment_id: req.params.id,
@@ -6892,14 +6913,14 @@ app.post('/api/shifts/:id/cloturer-par-code', checkDB, requireAuth, async (req, 
 // POST clôture manuelle (manager) — body { phase: 'debut'|'fin', heure?, heure_debut? }
 // Fin sans début : autorisée seulement si heure_debut fournie (force les deux).
 app.post('/api/shifts/:id/cloturer-manuel',
-    checkDB, requirePatron, denyObservateurEdit,
+    checkDB, requireAuth, denyObservateurEdit,
     async (req, res) => {
         if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
         const phase = req.body?.phase === 'debut' ? 'debut' : 'fin';
         try {
             const shift = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
             if (!shift) return res.status(404).json({ error: 'Shift introuvable' });
-            if (!canAccessEstablishment(req.session.user, shift.establishment_id))
+            if (!(await canManageCloture(req.session.user, shift.establishment_id, shift.date)))
                 return res.status(403).json({ error: 'Accès refusé' });
 
             const now = new Date();
@@ -7032,7 +7053,7 @@ app.post('/api/shifts/:id/cloturer-manuel',
 
 // PATCH ajuster debut_valide_finale et/ou heure_validee_finale (sans toucher *_code)
 app.patch('/api/shifts/:id/ajuster-heure',
-    checkDB, requirePatron, denyObservateurEdit,
+    checkDB, requireAuth, denyObservateurEdit,
     async (req, res) => {
         if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
         const finFinale = req.body?.heure_validee_finale;
@@ -7049,9 +7070,9 @@ app.patch('/api/shifts/:id/ajuster-heure',
         try {
             const shift = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
             if (!shift) return res.status(404).json({ error: 'Shift introuvable' });
-            if (!canAccessEstablishment(req.session.user, shift.establishment_id))
+            if (!(await canManageCloture(req.session.user, shift.establishment_id, shift.date)))
                 return res.status(403).json({ error: 'Accès refusé' });
-            // Patron peut corriger même après validation du récap (litige / erreur).
+            // Patron / responsable peut corriger même après validation du récap (litige / erreur).
             if (hasFin && !shift.heure_validee_code)
                 return res.status(409).json({ error: 'Fin non clôturée — rien à ajuster' });
             if (hasDebut && !shift.debut_valide_code)

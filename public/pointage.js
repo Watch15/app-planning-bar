@@ -852,9 +852,14 @@ let _cloturesDay = null;
 let _clotureBound = false;
 
 function canUseClotureUi() {
-    const ok = !!(currentUser && CLOTURE_ROLES.includes(currentUser.role));
+    // Patron/directeur : toujours. Staff : seulement s'il est sur pointage.html
+    // en tant que responsable de soirée (?estab= déjà vérifié à l'init).
+    const ok = !!(currentUser && (
+        CLOTURE_ROLES.includes(currentUser.role)
+        || (currentUser.role === 'staff' && currentEstabId)
+    ));
     // #region agent log
-    fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'pre-fix',hypothesisId:'A',location:'pointage.js:canUseClotureUi',message:'cloture UI gate',data:{role:currentUser&&currentUser.role,ok,clotureRoles:CLOTURE_ROLES,estab:currentEstabId},timestamp:Date.now()})}).catch(()=>{});
+    fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'post-fix',hypothesisId:'A',location:'pointage.js:canUseClotureUi',message:'cloture UI gate',data:{role:currentUser&&currentUser.role,ok,clotureRoles:CLOTURE_ROLES,estab:currentEstabId},timestamp:Date.now()})}).catch(()=>{});
     // #endregion
     return ok;
 }
@@ -906,9 +911,13 @@ function updateCodeClotureCountdown() {
 async function refreshCodeCloture(force) {
     if (!canUseClotureUi() || !currentEstabId) return;
     try {
-        const res = await fetch('/api/etablissements/' + encodeURIComponent(currentEstabId) + '/code-cloture', {
+        const q = today ? ('?date=' + encodeURIComponent(today)) : '';
+        const res = await fetch('/api/etablissements/' + encodeURIComponent(currentEstabId) + '/code-cloture' + q, {
             credentials: 'include',
         });
+        // #region agent log
+        fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'post-fix',hypothesisId:'B',location:'pointage.js:refreshCodeCloture',message:'code-cloture response',data:{status:res.status,role:currentUser&&currentUser.role,estab:currentEstabId,date:today},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         if (!res.ok) {
             if (force) showToast('Impossible de charger le code', true);
             return;
@@ -1107,7 +1116,7 @@ function initCloturePanel() {
     if (!panel) return;
     const gate = canUseClotureUi();
     // #region agent log
-    fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'pre-fix',hypothesisId:'A,B',location:'pointage.js:initCloturePanel',message:'init cloture panel branch',data:{gate,role:currentUser&&currentUser.role,currentEstabId,willShowLegacy:!gate||!currentEstabId},timestamp:Date.now()})}).catch(()=>{});
+    fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'post-fix',hypothesisId:'A,B',location:'pointage.js:initCloturePanel',message:'init cloture panel branch',data:{gate,role:currentUser&&currentUser.role,currentEstabId,willShowLegacy:!gate||!currentEstabId,legacyVisible:!gate||!currentEstabId},timestamp:Date.now()})}).catch(()=>{});
     // #endregion
     if (!gate || !currentEstabId) {
         panel.classList.remove('visible');
@@ -1117,6 +1126,9 @@ function initCloturePanel() {
     }
     panel.classList.add('visible');
     setLegacyPointageVisible(false);
+    // Valider le récap = geste patron uniquement
+    const btnValidate = document.getElementById('clotures-validate-week');
+    if (btnValidate) btnValidate.style.display = CLOTURE_ROLES.includes(currentUser.role) ? '' : 'none';
     if (!_cloturesDay) {
         _cloturesDay = today ? new Date(today + 'T12:00:00') : new Date();
     }
