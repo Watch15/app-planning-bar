@@ -99,19 +99,6 @@ const logInfo = process.env.NODE_ENV === 'test' ? () => {} : (...a) => console.l
 
 app.use(express.json());
 
-// #region agent log
-// Endpoint temporaire debug session — écrit dans debug-7f3ed4.log (same-origin).
-app.post('/api/_debug/agent-log', (req, res) => {
-    try {
-        const fs = require('fs');
-        const path = require('path');
-        const payload = Object.assign({ sessionId: '7f3ed4', timestamp: Date.now() }, req.body || {});
-        fs.appendFileSync(path.join(__dirname, 'debug-7f3ed4.log'), JSON.stringify(payload) + '\n');
-    } catch (_) { /* ignore */ }
-    res.status(204).end();
-});
-// #endregion
-
 // `appUrl()` normalise (préfixe https, retire le slash final). Indispensable ici :
 // le navigateur envoie un `Origin` SANS slash final, et la comparaison du middleware
 // cors est une égalité de chaîne — un `APP_URL` copié depuis une barre d'adresse
@@ -6026,13 +6013,6 @@ app.get('/api/me/responsable-tonight', checkDB, requireAuth, async (req, res) =>
         }
 
         if (accessibleEstabs.length === 0) return res.json({ isResponsable: false });
-        // #region agent log
-        try {
-            const fs = require('fs');
-            const path = require('path');
-            fs.appendFileSync(path.join(__dirname, 'debug-7f3ed4.log'), JSON.stringify({sessionId:'7f3ed4',runId:'post-fix',hypothesisId:'C',location:'server.js:responsable-tonight',message:'estab list for staff resp',data:{staffId:String(user.staff_id),date,shiftCount:myShifts.length,shiftEstabs:myShifts.map(s=>s.establishment_id),accessibleEstabs,unique:[...new Set(accessibleEstabs)]},timestamp:Date.now()}) + '\n');
-        } catch (_) { /* ignore */ }
-        // #endregion
         res.json({ isResponsable: true, establishments: accessibleEstabs });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });

@@ -310,25 +310,19 @@ async function init() {
         const respRes  = await fetch('/api/me/responsable-tonight?date=' + todayStr, { credentials: 'include' });
         if (respRes.ok) {
             const resp = await respRes.json();
-            // #region agent log
-            fetch('/api/_debug/agent-log',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'post-fix',hypothesisId:'C,D,E',location:'planning.js:responsable-tonight',message:'Pointage tabs injection',data:{todayStr,isResponsable:!!resp.isResponsable,establishments:resp.establishments||[],estabCount:(resp.establishments||[]).length,uniqueCount:new Set(resp.establishments||[]).size,existingPointageTabs:document.querySelectorAll('.btn-pointage-tab').length,fix:'cloture-resp1'}})}).catch(()=>{});
-            // #endregion
             if (resp.isResponsable && resp.establishments && resp.establishments.length > 0) {
                 const tabBar = document.querySelector('.tabs-bar');
                 // Un onglet par établissement unique (évite doublon si plusieurs shifts le même jour)
                 const uniqueEstabs = [...new Set(resp.establishments)];
                 uniqueEstabs.forEach(estabId => {
                     const link    = document.createElement('a');
-                    link.href      = '/pointage.html?estab=' + encodeURIComponent(estabId) + '&v=cloture-resp1';
+                    link.href      = '/pointage.html?estab=' + encodeURIComponent(estabId);
                     link.className = 'btn-pointage-tab';
                     link.textContent = uniqueEstabs.length > 1
                         ? ('⏱ ' + String(estabId).replace(/_/g, ' '))
                         : '⏱ Pointage';
                     tabBar.appendChild(link);
                 });
-                // #region agent log
-                fetch('/api/_debug/agent-log',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'post-fix',hypothesisId:'C,D',location:'planning.js:after-inject',message:'Tabs after Pointage inject',data:{pointageTabs:document.querySelectorAll('.btn-pointage-tab').length,uniqueEstabs,tabLabels:[...document.querySelectorAll('.btn-pointage-tab')].map(a=>a.textContent),hrefs:[...document.querySelectorAll('.btn-pointage-tab')].map(a=>a.getAttribute('href'))}})}).catch(()=>{});
-                // #endregion
             }
         }
     } catch { /* silencieux */ }
@@ -1147,9 +1141,6 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
 
             // OTP début/fin : CTA sur la carte du jour de service (pas de bandeau top)
             const canCta = date === serviceDate && !shift.heure_validee_code && !shift.heure_validee_finale;
-            // #region agent log
-            fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'cta-pre',hypothesisId:'A',location:'planning.js:renderDaysInto',message:'CTA eligibility',data:{date,serviceDate,dateMatch:date===serviceDate,hasDebut:!!shift.debut_valide_code,hasFinCode:!!shift.heure_validee_code,hasFinFinale:!!shift.heure_validee_finale,canCta,shiftId:String(shift._id||'')},timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
             if (canCta) {
                 card.appendChild(buildClotureCta(shift));
             }
@@ -1180,11 +1171,6 @@ document.addEventListener('click', (ev) => {
     if (ev.target.closest('[data-pill-name]')) return;
     const onCta = !!ev.target.closest('.cloture-cta');
     const card = ev.target.closest('.day-card--tappable');
-    // #region agent log
-    if (onCta || (card && ev.target.closest('.cloture-cta-btn'))) {
-        fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'cta-pre',hypothesisId:'B',location:'planning.js:docClick',message:'click near CTA / card',data:{onCta,hasCard:!!card,tag:ev.target.tagName,cls:String(ev.target.className||'').slice(0,80),willOpenSheet:!!(card&&card._dayDetail&&!onCta)},timestamp:Date.now()})}).catch(()=>{});
-    }
-    // #endregion
     if (onCta) return;
     if (!card || !card._dayDetail) return;
     openDaySheet(card._dayDetail);
@@ -3659,15 +3645,9 @@ function buildClotureCta(shift) {
     btn.addEventListener('click', e => {
         e.stopPropagation();
         e.preventDefault();
-        // #region agent log
-        fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'cta-pre',hypothesisId:'B',location:'planning.js:ctaBtnClick',message:'CTA button clicked',data:{phase,shiftId:String(shift._id||'')},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         openClotureCodeModal(shift, phase);
     });
     wrap.appendChild(btn);
-    // #region agent log
-    fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'cta-pre',hypothesisId:'A',location:'planning.js:buildClotureCta',message:'CTA built',data:{phase,shiftId:String(shift._id||'')},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     return wrap;
 }
 
@@ -3679,9 +3659,6 @@ function openClotureCodeModal(shift, phase) {
     const label = document.getElementById('cloture-code-shift-label');
     const input = document.getElementById('cloture-code-input');
     const err = document.getElementById('cloture-code-err');
-    // #region agent log
-    fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'cta-pre',hypothesisId:'C',location:'planning.js:openClotureCodeModal',message:'open modal',data:{phase:_cloturePendingPhase,hasModal:!!modal,modalParent:modal&&modal.parentElement?modal.parentElement.tagName:null},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     if (title) {
         title.textContent = _cloturePendingPhase === 'debut'
             ? 'Pointer mon arrivée'
