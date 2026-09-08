@@ -371,6 +371,48 @@ test('valider-recap pose patron_valide sur les shifts clôturés de la semaine',
     assert.equal(after.real_end, 22);
 });
 
+test('responsable staff : ajuster-heure refusé après patron_valide', async () => {
+    const ROLE = '0123456789abcdef0123d101';
+    db = seed({
+        roles: [{ _id: ROLE, type: 'responsable', name: 'Resp' }],
+        staff: [
+            { _id: STAFF, name: 'Alice', venues: [ESTAB], roles: [ROLE] },
+            { _id: STAFF2, name: 'Bob', venues: [ESTAB] },
+        ],
+        shifts: [
+            {
+                _id: SHIFT, staff_id: STAFF2, staff_name: 'Bob',
+                establishment_id: ESTAB, date: todayStr(),
+                start_time: 18, end_time: 23,
+                debut_valide_code: '18:00', debut_valide_finale: '18:00',
+                heure_validee_code: '23:00', heure_validee_finale: '23:00',
+                cloture_source: 'code',
+                patron_valide: true,
+                patron_valide_le: { year: 2026, month: 9, day: 8 },
+                pointage_resp: false,
+            },
+            {
+                _id: SHIFT2, staff_id: STAFF, staff_name: 'Alice',
+                establishment_id: ESTAB, date: todayStr(),
+                start_time: 18, end_time: 24, pointage_resp: true,
+            },
+        ],
+    });
+    app.locals.setTestDb(db);
+
+    const denied = await req('/api/shifts/' + SHIFT + '/ajuster-heure', EQUIPIER, {
+        method: 'PATCH',
+        body: JSON.stringify({ heure_validee_finale: '22:30', motif: 'Tentative resp' }),
+    });
+    assert.equal(denied.status, 403);
+
+    const ok = await req('/api/shifts/' + SHIFT + '/ajuster-heure', PATRON, {
+        method: 'PATCH',
+        body: JSON.stringify({ heure_validee_finale: '22:30', motif: 'Correction patron' }),
+    });
+    assert.equal(ok.status, 200);
+});
+
 test('time_validations : aucune update/delete dans le flux (append-only)', async () => {
     await pointerDebut(SHIFT, EQUIPIER, '9999');
     await pointerDebut(SHIFT, EQUIPIER, '4827');

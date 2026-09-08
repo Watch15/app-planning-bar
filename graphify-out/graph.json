@@ -2313,7 +2313,7 @@
       "source_location": "L1189",
       "_origin": "ast",
       "id": "public_planning_opendaysheet",
-      "community": 90,
+      "community": 0,
       "norm_label": "opendaysheet()"
     },
     {
@@ -2333,7 +2333,7 @@
       "source_location": "L1384",
       "_origin": "ast",
       "id": "public_planning_buildteamdisplaynames",
-      "community": 0,
+      "community": 75,
       "norm_label": "buildteamdisplaynames()"
     },
     {
@@ -2373,7 +2373,7 @@
       "source_location": "L1577",
       "_origin": "ast",
       "id": "public_planning_renderresponsabledashboard",
-      "community": 0,
+      "community": 75,
       "norm_label": "renderresponsabledashboard()"
     },
     {
@@ -2383,7 +2383,7 @@
       "source_location": "L1755",
       "_origin": "ast",
       "id": "public_planning_openbottomsheet",
-      "community": 90,
+      "community": 0,
       "norm_label": "openbottomsheet()"
     },
     {
@@ -2393,7 +2393,7 @@
       "source_location": "L1780",
       "_origin": "ast",
       "id": "public_planning_opencontactsheet",
-      "community": 90,
+      "community": 0,
       "norm_label": "opencontactsheet()"
     },
     {
@@ -2763,7 +2763,7 @@
       "source_location": "L2928",
       "_origin": "ast",
       "id": "public_planning_showdispossub",
-      "community": 0,
+      "community": 86,
       "norm_label": "showdispossub()"
     },
     {
@@ -2783,7 +2783,7 @@
       "source_location": "L2949",
       "_origin": "ast",
       "id": "public_planning_setcongestatus",
-      "community": 0,
+      "community": 86,
       "norm_label": "setcongestatus()"
     },
     {
@@ -2813,7 +2813,7 @@
       "source_location": "L2988",
       "_origin": "ast",
       "id": "public_planning_submitconge",
-      "community": 0,
+      "community": 86,
       "norm_label": "submitconge()"
     },
     {
@@ -2823,7 +2823,7 @@
       "source_location": "L3018",
       "_origin": "ast",
       "id": "public_planning_loadcongestab",
-      "community": 0,
+      "community": 86,
       "norm_label": "loadcongestab()"
     },
     {
@@ -2843,7 +2843,7 @@
       "source_location": "L3037",
       "_origin": "ast",
       "id": "public_planning_rendercongeslist",
-      "community": 0,
+      "community": 86,
       "norm_label": "rendercongeslist()"
     },
     {
@@ -2853,7 +2853,7 @@
       "source_location": "L3070",
       "_origin": "ast",
       "id": "public_planning_cancelconge",
-      "community": 0,
+      "community": 86,
       "norm_label": "cancelconge()"
     },
     {
@@ -3500,7 +3500,7 @@
       "label": "clotureManuelle()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1044",
+      "source_location": "L1046",
       "_origin": "ast",
       "id": "public_pointage_cloturemanuelle",
       "community": 8,
@@ -3510,7 +3510,7 @@
       "label": "ajusterHeureCloture()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1094",
+      "source_location": "L1096",
       "_origin": "ast",
       "id": "public_pointage_ajusterheurecloture",
       "community": 8,
@@ -3520,7 +3520,7 @@
       "label": "closeHeureModal()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1128",
+      "source_location": "L1130",
       "_origin": "ast",
       "id": "public_pointage_closeheuremodal",
       "community": 8,
@@ -3530,7 +3530,7 @@
       "label": "openHeureModal()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1133",
+      "source_location": "L1135",
       "_origin": "ast",
       "id": "public_pointage_openheuremodal",
       "community": 8,
@@ -3540,7 +3540,7 @@
       "label": "normalizeTimeInputValue()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1169",
+      "source_location": "L1171",
       "_origin": "ast",
       "id": "public_pointage_normalizetimeinputvalue",
       "community": 8,
@@ -3550,7 +3550,7 @@
       "label": "submitHeureModal()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1177",
+      "source_location": "L1179",
       "_origin": "ast",
       "id": "public_pointage_submitheuremodal",
       "community": 8,
@@ -3560,7 +3560,7 @@
       "label": "validateCloturesWeek()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1200",
+      "source_location": "L1206",
       "_origin": "ast",
       "id": "public_pointage_validatecloturesweek",
       "community": 8,
@@ -3570,7 +3570,7 @@
       "label": "fmtHeureSaisie()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1217",
+      "source_location": "L1223",
       "_origin": "ast",
       "id": "public_pointage_fmtheuresaisie",
       "community": 8,
@@ -3580,7 +3580,7 @@
       "label": "resultatLabel()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1223",
+      "source_location": "L1229",
       "_origin": "ast",
       "id": "public_pointage_resultatlabel",
       "community": 8,
@@ -3590,7 +3590,7 @@
       "label": "showShiftValidationLogs()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1234",
+      "source_location": "L1240",
       "_origin": "ast",
       "id": "public_pointage_showshiftvalidationlogs",
       "community": 8,
@@ -3600,7 +3600,7 @@
       "label": "initCloturePanel()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1274",
+      "source_location": "L1280",
       "_origin": "ast",
       "id": "public_pointage_initcloturepanel",
       "community": 8,
@@ -6613,7 +6613,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_ua",
-      "community": 2,
+      "community": 111,
       "norm_label": "ua()"
     },
     {
@@ -6623,7 +6623,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_la",
-      "community": 2,
+      "community": 111,
       "norm_label": "la()"
     },
     {
@@ -6643,7 +6643,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_fa",
-      "community": 2,
+      "community": 111,
       "norm_label": "fa()"
     },
     {
@@ -6653,7 +6653,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_ha",
-      "community": 2,
+      "community": 111,
       "norm_label": "ha()"
     },
     {
@@ -6663,7 +6663,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_da",
-      "community": 2,
+      "community": 111,
       "norm_label": "da()"
     },
     {
@@ -6963,7 +6963,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_support_word_breaking",
-      "community": 86,
+      "community": 3,
       "norm_label": "support_word_breaking()"
     },
     {
@@ -7163,7 +7163,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_on",
-      "community": 86,
+      "community": 2,
       "norm_label": "on()"
     },
     {
@@ -7173,7 +7173,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_qn",
-      "community": 86,
+      "community": 2,
       "norm_label": "qn()"
     },
     {
@@ -7183,7 +7183,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_cn",
-      "community": 86,
+      "community": 2,
       "norm_label": "cn()"
     },
     {
@@ -7503,7 +7503,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "vendor_jspdf_umd_min_g",
-      "community": 86,
+      "community": 3,
       "norm_label": "g()"
     },
     {
@@ -10040,7 +10040,7 @@
       "label": "formatShiftTime()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7320",
+      "source_location": "L7322",
       "_origin": "ast",
       "id": "server_formatshifttime",
       "community": 5,
@@ -10050,7 +10050,7 @@
       "label": "formatDateFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7327",
+      "source_location": "L7329",
       "_origin": "ast",
       "id": "server_formatdatefr",
       "community": 5,
@@ -10060,7 +10060,7 @@
       "label": "formatDateShortFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7333",
+      "source_location": "L7335",
       "_origin": "ast",
       "id": "server_formatdateshortfr",
       "community": 5,
@@ -10070,7 +10070,7 @@
       "label": "formatWeekFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7339",
+      "source_location": "L7341",
       "_origin": "ast",
       "id": "server_formatweekfr",
       "community": 5,
@@ -10080,7 +10080,7 @@
       "label": "touchLastUpdated()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7347",
+      "source_location": "L7349",
       "_origin": "ast",
       "id": "server_touchlastupdated",
       "community": 5,
@@ -10090,7 +10090,7 @@
       "label": "nouveautesUserId()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7418",
+      "source_location": "L7420",
       "_origin": "ast",
       "id": "server_nouveautesuserid",
       "community": 94,
@@ -10100,7 +10100,7 @@
       "label": "DEPLOYED_COMMIT",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7471",
+      "source_location": "L7473",
       "_origin": "ast",
       "id": "server_deployed_commit",
       "community": 5,
@@ -24706,9 +24706,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1128",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_closeheuremodal",
-      "confidence_score": 1.0
+      "target": "public_pointage_closeheuremodal"
     },
     {
       "relation": "contains",
@@ -24906,9 +24906,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1169",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_normalizetimeinputvalue",
-      "confidence_score": 1.0
+      "target": "public_pointage_normalizetimeinputvalue"
     },
     {
       "relation": "contains",
@@ -24916,9 +24916,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1133",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_openheuremodal",
-      "confidence_score": 1.0
+      "target": "public_pointage_openheuremodal"
     },
     {
       "relation": "contains",
@@ -25066,9 +25066,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1177",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_submitheuremodal",
-      "confidence_score": 1.0
+      "target": "public_pointage_submitheuremodal"
     },
     {
       "relation": "contains",
@@ -25184,9 +25184,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1048",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_cloturemanuelle",
-      "target": "public_pointage_fmth",
-      "confidence_score": 1.0
+      "target": "public_pointage_fmth"
     },
     {
       "relation": "calls",
@@ -25272,9 +25272,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1155",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_openheuremodal",
-      "target": "public_pointage_snapinputtoquarter",
-      "confidence_score": 1.0
+      "target": "public_pointage_snapinputtoquarter"
     },
     {
       "relation": "calls",
@@ -25294,9 +25294,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1183",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_submitheuremodal",
-      "target": "public_pointage_snapinputtoquarter",
-      "confidence_score": 1.0
+      "target": "public_pointage_snapinputtoquarter"
     },
     {
       "relation": "calls",
@@ -25360,9 +25360,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1194",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_submitheuremodal",
-      "target": "public_pointage_showtoast",
-      "confidence_score": 1.0
+      "target": "public_pointage_showtoast"
     },
     {
       "relation": "calls",
@@ -25668,9 +25668,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1054",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_cloturemanuelle",
-      "target": "public_pointage_openheuremodal",
-      "confidence_score": 1.0
+      "target": "public_pointage_openheuremodal"
     },
     {
       "relation": "calls",
@@ -25679,9 +25679,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1095",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_ajusterheurecloture",
-      "target": "public_pointage_openheuremodal",
-      "confidence_score": 1.0
+      "target": "public_pointage_openheuremodal"
     },
     {
       "relation": "calls",
@@ -25690,9 +25690,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1192",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_submitheuremodal",
-      "target": "public_pointage_closeheuremodal",
-      "confidence_score": 1.0
+      "target": "public_pointage_closeheuremodal"
     },
     {
       "relation": "calls",
@@ -25701,9 +25701,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1154",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_openheuremodal",
-      "target": "public_pointage_normalizetimeinputvalue",
-      "confidence_score": 1.0
+      "target": "public_pointage_normalizetimeinputvalue"
     },
     {
       "relation": "calls",
@@ -46768,5 +46768,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "d50938ccaf265ec777d4b66f2ce19fad81fdb2c4"
+  "built_at_commit": "e92fa582ed5aae8976f4a652bc9eb338b3c177d9"
 }

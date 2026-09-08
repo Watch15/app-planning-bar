@@ -7121,7 +7121,9 @@ app.patch('/api/shifts/:id/ajuster-heure',
             if (!shift) return res.status(404).json({ error: 'Shift introuvable' });
             if (!(await canManageCloture(req.session.user, shift.establishment_id, shift.date)))
                 return res.status(403).json({ error: 'Accès refusé' });
-            // Patron / responsable peut corriger même après validation du récap (litige / erreur).
+            // Après validation du récap patron : seul patron / directeur peut encore ajuster.
+            if (shift.patron_valide && req.session.user.role === 'staff')
+                return res.status(403).json({ error: 'Récap validé — ajustement réservé au patron / directeur' });
             if (hasFin && !shift.heure_validee_code)
                 return res.status(409).json({ error: 'Fin non clôturée — rien à ajuster' });
             if (hasDebut && !shift.debut_valide_code)

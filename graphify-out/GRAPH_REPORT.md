@@ -1,16 +1,16 @@
 # Graph Report - app-planning-bar  (2026-09-08)
 
 ## Corpus Check
-- 67 files · ~316,918 words
+- 67 files · ~317,300 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1692 nodes · 2837 edges · 111 communities (99 shown, 12 thin omitted)
+- 1692 nodes · 2837 edges · 112 communities (100 shown, 12 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 99 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d50938cc`
+- Built from commit: `e92fa582`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -125,6 +125,7 @@
 - [[_COMMUNITY_Community 108|Community 108]]
 - [[_COMMUNITY_Community 109|Community 109]]
 - [[_COMMUNITY_Community 110|Community 110]]
+- [[_COMMUNITY_Community 111|Community 111]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `Tests & sécurité — ouvert (revue du 2026-08-04/05)` - 38 edges
@@ -158,11 +159,11 @@
 - **Sûreté timezone via toDateStr** — architecture_timezone_rule, architecture_todatestr, architecture_push_past_shift_guard [EXTRACTED 0.85]
 - **Cycle de vie feature iCal (livrée puis désactivée)** — backlog_f09_ical, architecture_ical_feed, architecture_calendar_enabled_flag [EXTRACTED 0.90]
 
-## Communities (111 total, 12 thin omitted)
+## Communities (112 total, 12 thin omitted)
 
 ### Community 0 - "Planning Board UI"
-Cohesion: 0.06
-Nodes (36): allEstablishments, allStaff, buildTeamDisplayNames(), cancelConge(), _CONGE_STATUS, createDispoCard(), DAY_NAMES, DAY_NAMES_LONG (+28 more)
+Cohesion: 0.07
+Nodes (31): allEstablishments, allStaff, _CONGE_STATUS, createDispoCard(), DAY_NAMES, DAY_NAMES_LONG, DISPO_TYPES, dispoMondays (+23 more)
 
 ### Community 1 - "Architecture & Design Rationale"
 Cohesion: 0.20
@@ -170,11 +171,11 @@ Nodes (12): hourly_rate_snapshot / fixed_rate_snapshot, Modèle de données shif
 
 ### Community 2 - "html2canvas Render Engine"
 Cohesion: 0.04
-Nodes (19): an(), Be(), Cs(), dA(), E(), FA(), fn(), gs() (+11 more)
+Nodes (17): an(), Be(), cn(), Cs(), E(), fn(), gs(), I() (+9 more)
 
 ### Community 3 - "html2canvas Parser"
-Cohesion: 0.14
-Nodes (34): Ae(), mr(), QB(), re(), se(), w(), _(), a() (+26 more)
+Cohesion: 0.13
+Nodes (36): Ae(), mr(), QB(), re(), se(), SUPPORT_WORD_BREAKING(), w(), _() (+28 more)
 
 ### Community 4 - "Main Planning Script (State)"
 Cohesion: 0.03
@@ -424,8 +425,8 @@ Cohesion: 0.25
 Nodes (8): Calendrier congés — lisibilité (2026-08-27), 🔴 CI rouge sur Node 20 — le glob de `node --test` n'existe qu'à partir de Node 21 (2026-08-28), En-tête du jour saturé sur téléphone (2026-08-27), Jeu de démo refondu à l'échelle d'une vraie exploitation (2026-08-31), Journal des nouveautés par rôle (2026-08-28), Mode éditeur tactile sur une semaine publiée (2026-08-27), Revue `/simplify` du mode éditeur (2026-08-27) — une porte encore ouverte, Seconde revue `/simplify` (2026-08-27) — la première avait introduit une régression
 
 ### Community 75 - "Community 75"
-Cohesion: 0.42
-Nodes (9): appendHistMoreBtn(), fetchMyShifts(), histRange(), loadHistorique(), loadHistoriqueMois(), loadHistoriqueSemaine(), renderHistModeToggle(), renderHistoriqueMois() (+1 more)
+Cohesion: 0.31
+Nodes (11): appendHistMoreBtn(), buildTeamDisplayNames(), fetchMyShifts(), histRange(), loadHistorique(), loadHistoriqueMois(), loadHistoriqueSemaine(), renderHistModeToggle() (+3 more)
 
 ### Community 76 - "Community 76"
 Cohesion: 0.12
@@ -469,7 +470,7 @@ Nodes (15): buildDisplayedStaff(), _decideSwap(), extendDisplayForRealHours(), f
 
 ### Community 86 - "Community 86"
 Cohesion: 0.40
-Nodes (5): cn(), on(), Qn(), SUPPORT_WORD_BREAKING(), g()
+Nodes (6): cancelConge(), loadCongesTab(), renderCongesList(), setCongeStatus(), showDisposSub(), submitConge()
 
 ### Community 87 - "Community 87"
 Cohesion: 0.18
@@ -484,8 +485,8 @@ Cohesion: 0.20
 Nodes (10): 3.1 Fuseau horaire — NE JAMAIS utiliser `toISOString()`, 3.2 Sessions MongoDB — promesses uniquement, 3.3 `script.js` — monolithique, ne pas découper, 3.4 Frontend — aucun outillage de build, 3.5 API / auth contournent toujours le cache du Service Worker, 3.6 Les helpers purs vivent dans `lib/utils.js`, 3.7 En production `SESSION_SECRET` est obligatoire, 3.8 Trust proxy en production (+2 more)
 
 ### Community 90 - "Community 90"
-Cohesion: 0.33
-Nodes (7): openBottomSheet(), openContactSheet(), openDaySheet(), parseDate(), renderUpcomingWeek(), weekEndStr(), weekRangeLabel()
+Cohesion: 0.67
+Nodes (4): parseDate(), renderUpcomingWeek(), weekEndStr(), weekRangeLabel()
 
 ### Community 91 - "Community 91"
 Cohesion: 0.20
@@ -559,6 +560,10 @@ Nodes (5): APPLY, main(), { normName: norm }, { ObjectId }, { openDb }
 Cohesion: 1.00
 Nodes (3): Flag CALENDAR_ENABLED (iCal désactivé D-83), Synchronisation agenda — flux iCal (D-72), F-09 Abonnement agenda iCal
 
+### Community 111 - "Community 111"
+Cohesion: 0.40
+Nodes (5): dA(), FA(), hA(), lA(), UA()
+
 ## Knowledge Gaps
 - **659 isolated node(s):** `js`, `globals`, `sharedRules`, `crypto`, `{
     weekStart, currentWeekStart, WEEK_CUTOFF_HOUR, toDateStr, disposWeekStart,
@@ -582,6 +587,6 @@ _Questions this graph is uniquely positioned to answer:_
 - **What connects `js`, `globals`, `sharedRules` to the rest of the system?**
   _664 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Planning Board UI` be split into smaller, more focused modules?**
-  _Cohesion score 0.06161616161616162 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06666666666666667 - nodes in this community are weakly interconnected._
 - **Should `html2canvas Render Engine` be split into smaller, more focused modules?**
-  _Cohesion score 0.03966155473294553 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.04011299435028248 - nodes in this community are weakly interconnected._

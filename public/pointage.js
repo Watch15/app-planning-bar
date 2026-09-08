@@ -1017,7 +1017,9 @@ async function renderCloturesList() {
                     btn.addEventListener('click', () => clotureManuelle(s, 'fin'));
                     actions.appendChild(btn);
                 } else if (closed) {
-                    if (isClotureManager() || currentUser.role === 'staff') {
+                    const canAdjust = isClotureManager()
+                        || (currentUser.role === 'staff' && !s.patron_valide);
+                    if (canAdjust) {
                         const btn = document.createElement('button');
                         btn.type = 'button';
                         btn.className = 'btn-adjust';
