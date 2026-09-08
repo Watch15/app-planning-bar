@@ -505,21 +505,16 @@ async function main() {
             return eq((await tpl('bru')).data.last_materialized_week, FROM, 'marqueur');
         });
         await check('E-22s', 'le staff rouvert nominativement n\'est PAS neutralisé', async () => {
-            // ⚠️ Le marqueur est PERSISTANT : le lire après le PUT ne dit pas QUI l'a posé.
-            // L'aller-retour plus haut a déjà fait un PUT d'Alice, sous la deadline du jeu
-            // (toujours dépassée) — s'il l'avait posé, cette vérification échouerait sans
-            // que le PUT d'ici y soit pour rien. On sépare donc les deux cas.
+            // ⚠️ Le marqueur est PERSISTANT sur le doc : un PUT antérieur (même run ou
+            // précédent) peut l'avoir laissé collé. Depuis le correctif « waived ⇒ $unset »,
+            // l'aller-retour d'Alice (exemptée) doit l'avoir effacé. On relit AVANT ce PUT
+            // pour séparer « déjà posé / non effacé » de « ce PUT le repose ».
             const avant = (await tpl('ali')).data.last_materialized_week;
             if (avant === FROM) throw new Error('marqueur DÉJÀ posé avant ce PUT — '
-                + 'il vient de l\'aller-retour plus haut : Alice n\'était pas exemptée dès le départ');
+                + 'Alice exemptée aurait dû le perdre à l\'aller-retour (waived ⇒ $unset)');
             await putTpl('ali', MODELE);
             const m = (await tpl('ali')).data.last_materialized_week;
             if (m === FROM) {
-                // Deux causes possibles se ressemblent à l'écran : soit le PUT pose le
-                // marqueur à tort (défaut du code), soit l'appariement session ↔
-                // `force_open_staff` ne prend pas (l'exemption n'existe pas côté serveur).
-                // On demande donc au serveur ce qu'il en pense, sinon le message envoie
-                // chercher au mauvais endroit — même piège que les `stale`.
                 const vu = (await req('ali', '/api/dispo-settings')).data || {};
                 throw new Error('marqueur posé — le serveur annonce deadlineWaived='
                     + vu.deadlineWaived + ' (attendu true)');

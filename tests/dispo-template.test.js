@@ -333,3 +333,26 @@ test('modèle : la réouverture en forme CHAÎNE exempte aussi (jeu de recette)'
     await runCron();
     assert.deepEqual(disposOf(db).map(d => d.date).sort(), [dayOf(0), dayOf(2)]);
 });
+
+test('modèle : waived efface un marqueur stale (sinon le cron ne part plus)', async () => {
+    // Smoke E-22s sur une base déjà touchée : un run précédent avait laissé
+    // `last_materialized_week = N+1` sur Alice. Sans $unset au PUT waived, l'aller-retour
+    // laissait le marqueur collé et la contre-épreuve « pas neutralisé » échouait en
+    // accusant à tort l'exemption.
+    const db = seed({ settings: [{ key: 'dispo', open: true, custom_deadline: DEADLINE_FRANCHIE,
+        force_open_staff: [STAFF_ID] }] });
+    db.collection('manager_dispo_templates')._docs.push({
+        staff_id: STAFF_ID,
+        days: TEMPLATE_DAYS,
+        last_materialized_week: NEXT_MONDAY,
+    });
+    app.locals.setTestDb(db);
+    const res = await putTemplate();
+    assert.equal(res.status, 200);
+    assert.equal(tplOf(db).last_materialized_week, undefined, 'marqueur stale effacé');
+    const body = await res.json();
+    assert.equal(body.last_materialized_week, null);
+
+    await runCron();
+    assert.deepEqual(disposOf(db).map(d => d.date).sort(), [dayOf(0), dayOf(2)]);
+});

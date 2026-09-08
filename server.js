@@ -4953,19 +4953,29 @@ app.put(DISPO_TEMPLATE_PATHS, checkDB, requireAuth, async (req, res) => {
         const collectionWeekStart = disposHorizonRange(now, 1).from;
         const waived = dispoDeadlineWaived(settings, req.session.user.role,
             staffReopenedFor(settings, staffId, collectionWeekStart), collectionWeekStart);
-        if (!waived && now > computeEffectiveDeadline(settings.custom_deadline || null, now))
+        const update = { $set: set };
+        if (!waived && now > computeEffectiveDeadline(settings.custom_deadline || null, now)) {
             set.last_materialized_week = collectionWeekStart;
+        } else if (waived) {
+            // Sans ça, un marqueur posé plus tôt (deadline encore active, ou run de smoke /
+            // cron précédent) reste collé au doc et `shouldMaterializeTemplate` refuse
+            // d'envoyer la semaine — alors que la réouverture nominative / le rôle
+            // directeur disent précisément le contraire. On n'efface QUE si waived :
+            // avant deadline pour un staff normal, le marqueur appartient au cron.
+            update.$unset = { last_materialized_week: '' };
+        }
 
         await db.collection('manager_dispo_templates').updateOne(
-            { staff_id: staffId }, { $set: set }, { upsert: true }
+            { staff_id: staffId }, update, { upsert: true }
         );
         // Le message dit lequel des deux cas s'applique : annoncer « envoi automatique à la
         // deadline » juste après avoir posé le marqueur serait faux d'une semaine entière.
+        const savedMarker = set.last_materialized_week || null;
         res.json({
-            message: set.last_materialized_week
+            message: savedMarker
                 ? 'Semaine-type enregistrée · elle prendra effet à la deadline SUIVANTE'
                 : 'Semaine-type enregistrée · envoi automatique à la deadline',
-            last_materialized_week: set.last_materialized_week || null,
+            last_materialized_week: savedMarker,
         });
         touchLastUpdated();
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
