@@ -159,7 +159,7 @@ PORT=3000
 | `npm run seed:all` | (Re)construit les bases de recette `templyo_dev` **et** `templyo_main` |
 | `npm run dev:seed` | Idem, base de `.env.dev` seulement |
 | `npm run dev:server` | Serveur local sur la base de `.env.dev` |
-| `npm run demo:seed` | (Re)construit le jeu de **démo prospects** dans `templyo_demo` (refuse toute base sans « demo ») |
+| `npm run demo:seed` | (Re)construit le jeu de **démo prospects** dans `templyo_demo` (refuse toute base sans « demo ») — historique pointé, Simulation hybride, échanges, observateur |
 | `npm run demo:server` | Serveur de démo sur la base de `.env.demo` (port 3100) |
 | `npm run smoke` | Vérifications HTTP sur l'instance locale (⊘ sautées si le seed date d'une autre semaine) |
 | `npm run smoke:dev` / `smoke:main` | Idem sur l'environnement déployé |
@@ -187,7 +187,7 @@ Mot de passe commun : la valeur de `SEED_PASSWORD` (`Templyo2026!` par défaut).
 |---|---|---|
 | `patron@templyo.test` | patron | voit tout |
 | `directeur@templyo.test` | directeur | limité à Josy — c'est lui qui montre le périmètre S-04 |
-| `observateur@templyo.test` | observateur | lecture seule |
+| `observateur@templyo.test` | observateur | Planning / Perf / Pointage hors OTP — **pas** Dispos ni Échanges (D-94) |
 | `alice@templyo.test` | staff | responsable de soirée |
 | `bruno@templyo.test` | staff | rattaché à 2 bars |
 | `chloe@templyo.test` | staff | a un congé en attente |

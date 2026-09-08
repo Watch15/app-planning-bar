@@ -100,8 +100,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1788882723.1993473,
-    "ast_hash": "91a74d2a449f45a54b42ad1a7ff0e77d",
+    "mtime": 1788885808.4345224,
+    "ast_hash": "102f19825e5e67615a01c5bc9bf8776a",
     "semantic_hash": ""
   },
   "docs/architecture.md": {
@@ -110,18 +110,18 @@
     "semantic_hash": ""
   },
   "docs/backlog.md": {
-    "mtime": 1788882405.1735246,
-    "ast_hash": "708c0fc1f89e38b1c3e59b6dbb41ecf2",
+    "mtime": 1788885332.0871036,
+    "ast_hash": "b3481b74745e3ab1945faad88918b908",
     "semantic_hash": ""
   },
   "docs/prd.md": {
-    "mtime": 1788882361.293892,
-    "ast_hash": "c0d0e400d1aa3a6c447b8a00840aef58",
+    "mtime": 1788885333.600727,
+    "ast_hash": "fa6971b1513be7a75f6827d911388e1f",
     "semantic_hash": ""
   },
   "docs/ux-design.md": {
-    "mtime": 1788882371.364921,
-    "ast_hash": "812f1cc6e1ebcabbb567c8f5ebcbafab",
+    "mtime": 1788885334.1017754,
+    "ast_hash": "d144a1937243060202be73ca6f04965a",
     "semantic_hash": ""
   },
   "public/index.html": {
@@ -260,8 +260,8 @@
     "semantic_hash": ""
   },
   "scripts/seed-dev.js": {
-    "mtime": 1788779279.3116508,
-    "ast_hash": "e35006d09adf4a8252e687697f40498b",
+    "mtime": 1788885770.0983415,
+    "ast_hash": "afcfc8297785e686e6a8f89e44b9cf73",
     "semantic_hash": ""
   },
   "scripts/smoke.js": {
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "scripts/seed-demo.js": {
-    "mtime": 1788513538.4232862,
-    "ast_hash": "b68fe87828eeec3f2a2c53d7df98ee65",
+    "mtime": 1788885805.5329673,
+    "ast_hash": "579c2511c3ad74c550e585491221d2c7",
     "semantic_hash": ""
   },
   "tests/dispo-template.test.js": {
@@ -400,8 +400,8 @@
     "semantic_hash": ""
   },
   "scripts/smoke-simulate.js": {
-    "mtime": 1788882697.9961324,
-    "ast_hash": "6c437814ca8b206282b94714652caa7d",
+    "mtime": 1788885820.0537784,
+    "ast_hash": "1a5c48dcb1180b6c1982456ab06fa8ff",
     "semantic_hash": ""
   },
   "tests/performance-simulate.test.js": {

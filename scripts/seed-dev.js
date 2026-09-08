@@ -5,6 +5,8 @@
 // ╚══════════════════════════════════════════════════════════════════════════╝
 //
 // OBJECTIF : rendre chaque feature OBSERVABLE en deux clics, pas simuler un vrai bar.
+// Couvre notamment : périmètre directeur, semaine-type, congés, échanges F-05, clôture OTP,
+// observateur D-94, Performance Réel + Simulation D-95 (jour/semaine hybride).
 // D'où des choix délibérés — Alice et Bruno sur Josy (le bar de la directrice), Chloé et
 // David ailleurs : sans cette répartition, le filtre de périmètre S-04 ne se verrait pas.
 //
@@ -42,12 +44,14 @@ const WIPE = APP_COLLECTIONS;
 const FEATURES = [
 
 { id: 'bars', label: 'Établissements',
-  howToTest: 'Barre d\'établissements en haut : Josy · Poni · FanFan.',
+  howToTest: 'Barre d\'établissements en haut : Josy · Poni · FanFan. La grille suit open_time/close_time (pas hours.open).',
   async seed(ctx) {
+    // Forme produit : `open_time` / `close_time` en 'HH:MM' (cf. applyVenueHours).
+    // Les ids `*_pub` / `*_restaurant` restent stables : smoke + scripts les hardcodent.
     await ctx.db.collection('establishments').insertMany([
-        { id: 'Josy_pub',          name: 'Josy',   type: 'pub',        hours: { open: 10, close: 26 } },
-        { id: 'Poni_restaurant',   name: 'Poni',   type: 'restaurant', hours: { open: 10, close: 26 } },
-        { id: 'FanFan_restaurant', name: 'FanFan', type: 'restaurant', hours: { open: 10, close: 26 } },
+        { id: 'Josy_pub',          name: 'Josy',   type: 'bar',        open_time: '10:00', close_time: '02:00' },
+        { id: 'Poni_restaurant',   name: 'Poni',   type: 'restaurant', open_time: '11:00', close_time: '00:30' },
+        { id: 'FanFan_restaurant', name: 'FanFan', type: 'restaurant', open_time: '11:00', close_time: '00:30' },
     ]);
 } },
 
@@ -83,7 +87,11 @@ const FEATURES = [
     const r = await ctx.db.collection('staff').insertMany(defs.map(s => ({
         ...s, email: '', phone: '', can_submit_dispos: true, created_at: new Date(),
     })));
-    defs.forEach((s, i) => { ctx.staff[s.name] = String(r.insertedIds[i]); ctx.color[s.name] = s.color; });
+    defs.forEach((s, i) => {
+        ctx.staff[s.name] = String(r.insertedIds[i]);
+        ctx.color[s.name] = s.color;
+        ctx.rate[s.name] = s.hourly_rate;
+    });
 
     // `venues` DOIT rester aligné sur `assigned_establishments` du compte (R-06),
     // sinon la directrice ne peut plus saisir la moindre dispo.
@@ -92,7 +100,9 @@ const FEATURES = [
         venues: ['Josy_pub'], roles: [], can_submit_dispos: true,
         is_manager: true, hourly_rate: 16, created_at: new Date(),
     });
-    ctx.staff.Diane = String(dir.insertedId); ctx.color.Diane = '#1abc9c';
+    ctx.staff.Diane = String(dir.insertedId);
+    ctx.color.Diane = '#1abc9c';
+    ctx.rate.Diane = 16;
 } },
 
 { id: 'groupes', label: 'Groupes — le niveau GROSSIER (Bar / Cuisine)',
@@ -123,7 +133,8 @@ const FEATURES = [
 } },
 
 { id: 'comptes', label: 'Comptes — les 4 rôles',
-  howToTest: 'Connexion avec chacun. L\'observateur voit tout mais ne peut rien écrire ; la directrice est limitée à Josy.',
+  howToTest: 'Connexion avec chacun. Observateur (D-94) : voit Planning / Performance / Pointage (hors OTP), '
+      + 'mais ni Dispos ni Échanges (header + drawer masqués, APIs refusées). Directrice limitée à Josy.',
   async seed(ctx) {
     const hash = await bcrypt.hash(PASSWORD, 12);
     const defs = [
@@ -152,21 +163,44 @@ const FEATURES = [
     ]);
 } },
 
-{ id: 'planning-courant', label: 'Semaine courante publiée + Joker ouvert',
-  howToTest: 'Vue staff : la semaine est publiée, donc visible. Le samedi porte un Joker ouvert aux candidatures.',
+{ id: 'planning-courant', label: 'Semaine courante publiée + Joker + hybride pointage',
+  howToTest: 'Vue staff : semaine publiée. Samedi = Joker ouvert. Les jours DÉJÀ passés de la semaine '
+      + 'sont pointés (snapshots) ; le reste reste planifié → onglet Simulation montre réel + estimé.',
   async seed(ctx) {
-    await ctx.db.collection('shifts').insertMany([
+    const today = toDateStr(new Date());
+    const shifts = [
         ctx.shift('Josy_pub', 'Alice', ctx.day(ctx.thisMon, 2), 18, 26, { pointage_resp: true }),
         ctx.shift('Josy_pub', 'Diane', ctx.day(ctx.thisMon, 2), 17, 24),
         ctx.shift('Poni_restaurant', 'Bruno', ctx.day(ctx.thisMon, 3), 12, 20),
         ctx.shift('FanFan_restaurant', 'David', ctx.day(ctx.thisMon, 4), 18, 24),
+        // Lundi courant SANS CA (cf. bloc ca) — masse planifiée pour hypo Simulation.
+        ctx.shift('Josy_pub', 'Bruno', ctx.day(ctx.thisMon, 0), 18, 24),
         { establishment_id: 'Josy_pub', staff_id: '__joker__', staff_name: 'Joker', color: '#888',
           date: ctx.day(ctx.thisMon, 5), start_time: 19, end_time: 26,
-          is_joker: true, joker_open: true, joker_candidates: [], note: 'Renfort samedi soir' },
-        // Shift « aujourd'hui » pour la clôture OTP (bannière staff + widget patron).
-        // Si aujourd'hui tombe hors semaine courante (rare en lundi tôt), on le pose quand même.
-        ctx.shift('Josy_pub', 'Alice', toDateStr(new Date()), 18, 24, { note: 'smoke-cloture' }),
-    ]);
+          is_joker: true, joker_open: true,
+          joker_candidates: [
+              { staff_id: ctx.staff.Bruno, staff_name: 'Bruno', staff_color: ctx.color.Bruno,
+                submitted_at: new Date(Date.now() - 864e5) },
+          ],
+          note: 'Renfort samedi soir' },
+    ];
+    // Shift « aujourd'hui » pour la clôture OTP — uniquement s'il n'existe pas déjà
+    // (sinon mercredi = aujourd'hui ⇒ double créneau Alice).
+    if (!shifts.some(s => s.staff_name === 'Alice' && s.date === today && s.establishment_id === 'Josy_pub')) {
+        shifts.push(ctx.shift('Josy_pub', 'Alice', today, 18, 24, { note: 'smoke-cloture' }));
+    } else {
+        const aliceToday = shifts.find(s => s.staff_name === 'Alice' && s.date === today);
+        if (aliceToday) aliceToday.note = 'smoke-cloture';
+    }
+    // Hybride D-95 : dates strictement passées → réel + snapshot ; aujourd'hui / futur → planifié.
+    for (const s of shifts) {
+        if (s.is_joker || s.date >= today) continue;
+        s.real_start = s.start_time;
+        s.real_end = s.end_time + 0.25;
+        const rate = ctx.rate[s.staff_name];
+        if (rate != null) s.hourly_rate_snapshot = rate;
+    }
+    await ctx.db.collection('shifts').insertMany(shifts);
     await ctx.db.collection('settings').insertOne({
         // Forme COURANTE : `establishments` ('ALL' ou liste d'ids). `published: true`
         // marche encore mais c'est la branche LEGACY de `normalizePublishDoc`.
@@ -331,8 +365,9 @@ const FEATURES = [
     ]);
 } },
 
-{ id: 'reglages', label: 'Réglages dispos + performance (S-02/S-03, §9.1)',
-  howToTest: 'La deadline est VOLONTAIREMENT dépassée : la directrice peut quand même envoyer ses dispos (§9.1), un staff non. Réglages perf : la directrice ne voit que Josy, l\'observateur lit mais n\'écrit pas.',
+{ id: 'reglages', label: 'Réglages dispos + performance + échanges (S-02/S-03, §9.1)',
+  howToTest: 'Deadline VOLONTAIREMENT dépassée : la directrice peut quand même envoyer (§9.1), un staff non. '
+      + 'Échanges inter-établissements activés (toggle en tête de la modale). Perf : directrice = Josy seul.',
   async seed(ctx) {
     await ctx.db.collection('settings').insertMany([
         // La deadline de recette est toujours dépassée — pratique pour §9.1, mais elle rend
@@ -345,15 +380,19 @@ const FEATURES = [
           custom_deadline: '2026-01-05T00:00', force_open_staff: [ctx.staff.Alice] }, // lundi 00:00 = toujours passée
         { key: 'performance',          target_charged: 30, charge_rate: 45 },
         { key: 'performance_Josy_pub', target_charged: 28, charge_rate: 42 },
+        // F-05 : défaut produit = true ; posé explicitement pour que la décochage soit testable.
+        { key: 'swaps', cross_establishment: true },
     ]);
 } },
 
 { id: 'ca', label: 'CA quotidien → coefficient masse salariale (E-24)',
-  howToTest: 'Page Performance : le coefficient se calcule, les pastilles se colorent contre l\'objectif du bar sélectionné.',
+  howToTest: 'Page Performance → onglet Réel : le coefficient se calcule, pastilles vs objectif du bar.',
   async seed(ctx) {
     // ⚠️ Le champ est `revenue`, PAS `amount` — c'est ce qu'écrit `POST /api/revenue`
     // (server.js) et ce que lit `GET /api/performance`. Le seed utilisait `amount` : le CA
     // ressortait `undefined`, le coefficient à 0 %, et E-24 était intestable sur la recette.
+    // Volontairement PAS de CA le lundi courant ni le samedi (Joker) : l'onglet Simulation
+    // demande un hypo sur ces jours (smoke:simulate + recette UI).
     await ctx.db.collection('daily_revenue').insertMany([
         { establishment_id: 'Josy_pub',        date: ctx.day(ctx.lastMon, 1), revenue: 2400 },
         { establishment_id: 'Josy_pub',        date: ctx.day(ctx.thisMon, 2), revenue: 2750 },
@@ -361,6 +400,16 @@ const FEATURES = [
     ]);
 } },
 
+{ id: 'simulation', label: 'Simulation Performance (D-95) — jour / semaine hybride',
+  howToTest: 'patron@ → Performance → onglet Simulation. 1) Mode Semaine : CA figé mercredi, hypo '
+      + 'saisissable lundi/samedi ; KPI « dont réalisé / estimé ». 2) Mode Jour : basculer sur samedi '
+      + '(Joker) → taux manuel / moyenne / médiane (filtre Bar + Josy). 3) Double-clic une case CA '
+      + 'semaine → passe en Jour. Auto : npm run smoke:simulate.',
+  async seed() {
+    // Données déjà posées : semaine passée pointée+CA, semaine courante hybride (planning-courant),
+    // CA partiel (bloc ca), Joker non pointé, taux staff Bar pour mean/median.
+  }
+},
 ];
 
 // ── Exécution ────────────────────────────────────────────────────────────────
@@ -375,7 +424,7 @@ async function run() {
 
         const now = new Date();
         const ctx = {
-            db, staff: {}, color: {}, users: {}, roles: {},
+            db, staff: {}, color: {}, users: {}, roles: {}, rate: {},
             thisMon: weekStart(now),
             nextMon: weekStart(new Date(now.getTime() + 7 * 864e5)),
             lastMon: weekStart(new Date(now.getTime() - 7 * 864e5)),
@@ -401,7 +450,9 @@ async function run() {
             console.log('      ' + f.howToTest);
         });
         console.log('\n  Validation automatique : npm run smoke');
-        console.log('  Clôture OTP seule     : npm run smoke:cloture   (ou smoke:cloture:dev)\n');
+        console.log('  Clôture OTP seule     : npm run smoke:cloture   (ou smoke:cloture:dev)');
+        console.log('  Simulation Performance: npm run smoke:simulate (ou smoke:simulate:dev)');
+        console.log('  Dev complet           : npm run smoke:dev:full\n');
     } catch (e) {
         console.error('❌', e);
         process.exitCode = 1;

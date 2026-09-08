@@ -1,7 +1,7 @@
 # Graph Report - app-planning-bar  (2026-09-08)
 
 ## Corpus Check
-- 71 files · ~329,034 words
+- 71 files · ~329,650 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8441aae6`
+- Built from commit: `824a5f56`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -182,15 +182,15 @@ Nodes (36): Ae(), mr(), QB(), re(), se(), SUPPORT_WORD_BREAKING(), w(), _() (+28
 
 ### Community 4 - "Main Planning Script (State)"
 Cohesion: 0.02
-Nodes (84): addManagerOff(), allEstablishments, allGroups, allRoles, allStaff, AUTO_COLORS, _autoScroll, _btnCopyWeek (+76 more)
+Nodes (74): addManagerOff(), allEstablishments, allGroups, allRoles, allStaff, AUTO_COLORS, _autoScroll, _btnCopyWeek (+66 more)
 
 ### Community 5 - "Express Server & API"
 Cohesion: 0.03
 Nodes (51): isFullRangeOnConge(), normalizePublishDoc(), app, bcrypt, canAccessEstablishment(), canManageCloture(), cleanupOldJokers(), client (+43 more)
 
 ### Community 6 - "Week Data Loading"
-Cohesion: 0.10
-Nodes (44): addDays(), applyVenueHours(), disposScopeQS(), exportWeekCSV(), formatDateShort(), getMondayOf(), isToday(), loadCongesList() (+36 more)
+Cohesion: 0.09
+Nodes (48): addDays(), applyVenueHours(), applyViewMode(), disposScopeQS(), exportWeekCSV(), formatDateShort(), getMondayOf(), isToday() (+40 more)
 
 ### Community 7 - "NPM Dependencies"
 Cohesion: 0.07
@@ -280,8 +280,8 @@ Cohesion: 0.15
 Nodes (18): BASE, D(), expectIdx, FROM, git(), jar, login(), main() (+10 more)
 
 ### Community 28 - "Community 28"
-Cohesion: 0.12
-Nodes (23): applyViewMode(), buildDisplayedStaff(), editLockApplies(), editModeOn(), extendDisplayForRealHours(), formatDateLong(), hideEditLockBanner(), isTouchDevice() (+15 more)
+Cohesion: 0.11
+Nodes (23): deleteAccount(), editLockApplies(), editModeOn(), hideEditLockBanner(), isMobileDevice(), isPhone(), isTablet(), isTouchDevice() (+15 more)
 
 ### Community 29 - "html2canvas Internals B"
 Cohesion: 0.09
@@ -320,8 +320,8 @@ Cohesion: 0.50
 Nodes (3): globals, js, sharedRules
 
 ### Community 38 - "Community 38"
-Cohesion: 0.21
-Nodes (21): applyShiftAssignment(), askConfirm(), assignStaffToJoker(), batchToast(), blockedByEditLock(), createShift(), deleteShift(), generatePrintGantt() (+13 more)
+Cohesion: 0.16
+Nodes (27): applyShiftAssignment(), askConfirm(), assignStaffToJoker(), batchToast(), blockedByEditLock(), buildDisplayedStaff(), createShift(), deleteShift() (+19 more)
 
 ### Community 39 - "Community 39"
 Cohesion: 0.11
@@ -589,7 +589,7 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `confirm()` connect `Community 79` to `Time Clock (Pointage)`, `Dispo Control Init`, `Community 12`?**
   _High betweenness centrality (0.219) - this node is a cross-community bridge._
-- **Why does `_decideSwap()` connect `Dispo Control Init` to `Main Planning Script (State)`, `Community 28`, `Community 38`, `Community 79`?**
+- **Why does `_decideSwap()` connect `Dispo Control Init` to `Main Planning Script (State)`, `Community 38`, `Community 79`?**
   _High betweenness centrality (0.143) - this node is a cross-community bridge._
 - **Why does `fn()` connect `Community 113` to `html2canvas Render Engine`, `DB Seed Script`, `Community 85`, `Community 78`?**
   _High betweenness centrality (0.100) - this node is a cross-community bridge._

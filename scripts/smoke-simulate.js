@@ -228,7 +228,7 @@ async function main() {
     console.log('Smoke simulation OK.\n');
     console.log('Check-list manuelle (UI) :');
     console.log('  1. patron@ → Performance → onglet Simulation');
-    console.log('  2. Naviguer la semaine, saisir un CA hypo, choisir moyenne/médiane');
+    console.log('  2. Bascule Semaine / Jour · saisir un CA hypo · moyenne/médiane jokers');
     console.log('  3. Vérifier « dont réalisé / dont estimé » dans les KPI\n');
 }
 

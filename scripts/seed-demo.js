@@ -7,11 +7,11 @@
 // poursuivent des buts opposés :
 //
 //   seed-dev.js  → RECETTE  : le strict minimum pour rendre chaque feature observable.
-//                  8 shifts, 3 jours de CA. Parfait pour tester, catastrophique à
-//                  montrer : un prospect y voit un produit vide.
+//                  Inclut Simulation (jour/semaine), clôture OTP, échanges, observateur D-94.
 //   seed-demo.js → VENTE    : un groupe crédible qui tourne depuis deux mois. Le
 //                  récap mensuel est plein, la courbe de masse salariale existe,
-//                  l'historique de pointage remonte. On montre un outil VIVANT.
+//                  l'historique de pointage remonte, l'onglet Simulation a de la matière
+//                  hybride (passé pointé + futur planifié). On montre un outil VIVANT.
 //
 // ── Ce que le jeu raconte ──────────────────────────────────────────────────────
 //   • UN BAR + UN RESTAURANT, 25 personnes + une directrice, ~2 mois de plannings
@@ -451,6 +451,7 @@ async function run() {
         const accounts = [
             { email: 'patron@' + MAIL_DOMAIN,    role: 'patron',      name: 'Paul Mercier', staff: null,       estabs: [] },
             { email: 'directeur@' + MAIL_DOMAIN, role: 'directeur',   name: DIRECTOR.n,     staff: DIRECTOR.n, estabs: [Z] },
+            // Observateur (D-94) : Performance / Planning / Pointage hors OTP — PAS Dispos ni Échanges.
             { email: 'comptable@' + MAIL_DOMAIN, role: 'observateur', name: 'Odile Bassin', staff: null,       estabs: [] },
             // Les archivés n'ont plus de compte : ils sont partis. Le KPI « Dispos
             // envoyées » les exclut de toute façon (`NOT_ARCHIVED`), mais leur laisser un
@@ -770,7 +771,18 @@ async function run() {
             const revenue = (gross * CHARGE_MULT) / (target / 100);
             return { establishment_id, date, revenue: Math.round(revenue / 10) * 10 };
         });
-        writes.push(db.collection('daily_revenue').insertMany(revenues));
+        // Laisser le jour le plus récent du Zinc SANS CA : l'onglet Simulation (D-95)
+        // propose un hypo alors que la masse du jour est déjà réelle — cas hybride vendeur.
+        // Aujourd'hui et le futur n'ont déjà pas de CA (wageByEstabDate ne couvre que le passé).
+        const zincPast = revenues
+            .filter(r => r.establishment_id === Z)
+            .map(r => r.date)
+            .sort();
+        const simGapDate = zincPast.length ? zincPast[zincPast.length - 1] : null;
+        const revenuesFinal = simGapDate
+            ? revenues.filter(r => !(r.establishment_id === Z && r.date === simGapDate))
+            : revenues;
+        writes.push(db.collection('daily_revenue').insertMany(revenuesFinal));
 
         // ── Disponibilités : la file que le patron traite pendant la démo ──────
         //
@@ -965,6 +977,8 @@ async function run() {
             { key: 'performance',      target_charged: 31, charge_rate: CHARGE_RATE },
             { key: 'performance_' + Z, target_charged: 31, charge_rate: CHARGE_RATE },
             { key: 'performance_' + T, target_charged: 30, charge_rate: CHARGE_RATE },
+            // F-05 : échanges inter-établissements activés (le patron peut les couper en démo).
+            { key: 'swaps', cross_establishment: true },
             // Semaine courante publiée. Forme courante : `establishments` ('ALL' ou
             // une liste d'ids) — `published: true` est la branche legacy.
             { key: 'publish_' + toDateStr(thisMon), establishments: 'ALL', published_at: addDays(now, -5) },
@@ -1015,7 +1029,7 @@ async function run() {
         // dit si les `target_charged` posés plus haut sont encore bien calés. L'annoncer
         // évite de découvrir en démo que toute la page Performance est rouge.
         const coeffs = {};
-        revenues.forEach(r => {
+        revenuesFinal.forEach(r => {
             const gross = wageByEstabDate[r.establishment_id + '|' + r.date];
             (coeffs[r.establishment_id] ||= []).push((gross * CHARGE_MULT) / r.revenue * 100);
         });
@@ -1027,7 +1041,10 @@ async function run() {
         console.log('\n╭─ Base « ' + dbName + ' » prête pour la démo');
         console.log('│  ' + ESTABS.length + ' établissements · ' + staffDefs.length + ' membres ('
             + staffDefs.filter(s => s.leftWeeksAgo).length + ' archivé) · '
-            + shifts.length + ' shifts (' + pointed + ' pointés) · ' + revenues.length + ' jours de CA');
+            + shifts.length + ' shifts (' + pointed + ' pointés) · ' + revenuesFinal.length + ' jours de CA');
+        if (simGapDate) {
+            console.log('│  Simulation : 1 jour Zinc sans CA (' + simGapDate + ') pour hypo hybride');
+        }
         console.log('│  Plannings du ' + toDateStr(histStart) + ' au ' + horizon.to
             + '   — ' + semPassees + ' semaines d\'historique pointé');
         console.log('│    complets jusqu\'au ' + toDateStr(nextSun) + ', ossature à partir du ' + ossatureFrom);
@@ -1099,7 +1116,12 @@ async function run() {
             'Modale Comptes, onglet « Invitations en attente » — Théo Lambert a été invité et n\'a pas encore posé son mot de passe.',
             'Historique d\'une dispo (F-12) — Adrien a saisi, corrigé, puis la directrice a validé : qui a fait quoi, et quand.',
             'Pointage — comparer planifié et réel sur les semaines passées : c\'est là que les heures non facturées apparaissent.',
-            'Performance — CA, masse salariale chargée et coefficient jour par jour, coloré contre l\'objectif propre à chaque établissement.',
+            'Performance → onglet Réel — CA, masse chargée et coefficient jour par jour, coloré contre l\'objectif propre à chaque établissement.',
+            'Performance → onglet Simulation — basculer Semaine / Jour. Sur le Zinc : un jour récent sans CA '
+                + (simGapDate ? '(' + simGapDate + ') ' : '')
+                + 'attend un hypo ; la semaine courante mélange réel (passé pointé) et estimé (futur + Joker). '
+                + 'Montrer moyenne / médiane des taux staff (filtre Bar).',
+            'Observateur (comptable@' + MAIL_DOMAIN + ') — voit Planning et Performance, mais ni Dispos ni Échanges (D-94).',
             'Récap mensuel du mois dernier — heures par personne, écart planifié/réel, ventilation par '
                 + 'établissement, congés validés, et Zoé Marchetti au forfait isolée des salariés à l\'heure.',
             '« Du neuf » — la pastille est allumée sur les trois écrans : aucun compte n\'a encore lu le journal des nouveautés.',
