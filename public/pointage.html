@@ -707,11 +707,33 @@
         }
         .heure-modal-fields {
             display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
+            gap: 12px;
+            flex-wrap: nowrap;
             margin-bottom: 12px;
+            width: 100%;
         }
-        .heure-modal-fields .time-group { flex: 1; min-width: 120px; }
+        .heure-modal-fields .time-group {
+            flex: 1 1 0;
+            min-width: 0;
+            max-width: 100%;
+        }
+        .heure-modal-fields .time-input {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+        /* Téléphone / tablette : empiler pour éviter le chevauchement des type=time natifs */
+        @media (max-width: 900px) {
+            .heure-modal-fields {
+                flex-direction: column;
+            }
+            .heure-modal-fields .time-group {
+                flex: none;
+                width: 100%;
+                min-width: 0 !important; /* override .time-group mobile 50% */
+            }
+        }
         .heure-modal-motif {
             width: 100%;
             border: 1.5px solid var(--light-border);
