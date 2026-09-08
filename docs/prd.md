@@ -14,6 +14,7 @@ Templyo est une application web SaaS de planification du personnel multi-établi
 | `directeur` | Manager limité aux établissements qui lui sont assignés. Peut gérer le planning et le personnel de ses établissements. |
 | `staff` | Employé. Accès en lecture seule à son planning, envoi de disponibilités et déclaration de congés. |
 | `etablissement` | Compte par établissement pour le pointage sur place (`pointage.html`). |
+| `observateur` | Vue patron + admin (staff, comptes, établissements). Pointage OK **sauf code OTP**. **Pas** de construction du planning ; **ne voit ni n’accède** aux files Dispos / Échanges à valider (D-86 / D-93 / D-94). |
 
 ---
 
@@ -79,6 +80,7 @@ Le patron peut choisir, shift par shift, d'**ouvrir un Joker aux candidatures du
   - Liste des candidats horodatée (`HHhMM`), triée par ordre d'arrivée
   - Bouton « Assigner » par candidat → le Joker devient un shift normal, `joker_open` repasse à `false`, candidatures vidées
   - Désactivation manuelle → `joker_open: false`, candidatures vidées, pas de notification
+  - **Date passée** (D-94) : soft-close automatique + retrait de `GET /api/shifts/joker-ouverts` ; nouvelle candidature refusée
   - Polling toutes les 30s sur la modale ouverte pour rafraîchir la liste
 - **Côté staff** (planning.html, vue « Mon planning » — semaine en cours puis semaines à venir empilées):
   - Bloc dédié « 📢 Créneau disponible » au-dessus du planning
@@ -236,6 +238,13 @@ Le patron peut **transférer un shift** vers un autre établissement / une autre
 - Route dédiée `PATCH /api/shifts/:id/transfer` ({ establishment_id, date })
 - Notification push automatique au staff concerné (« 🔄 Shift transféré »)
 - Conserve `staff_id`, `start_time`, `end_time` ; seuls `establishment_id` + `date` changent
+
+### 3.13bis Échange de shifts (F-05 / D-90)
+Demande staff → collègue → patron (deux validations). Actif sur `dev` / démo ; pas encore en prod client.
+
+- Semaine **publiée** + shifts futurs uniquement (garde à l’écriture)
+- File patron « Échanges » ; l’**observateur** ne la voit pas et l’API renvoie 403 (D-94)
+- Recherche de cible côté staff : **nom / surnom / établissement**
 
 ### 3.14 Recherche insensible aux accents
 La barre staff (sidebar patron) et la modale « Notes staff » ignorent désormais les accents et la casse.

@@ -108,7 +108,7 @@ Un **seul fichier**, organisé en sections séquentielles. Ordre approximatif :
 6. **Routes statiques + `/health`** et, tout en bas, `if (require.main === module) { connectDB(); app.listen() }` — `app` est **exporté** pour les tests.
 
 ### ⚠️ Zones piégées dans `server.js`
-- **`shift-swaps` (F-05)** et **iCal calendar (D-72)** : code **désactivé**. Les routes `shift-swaps` sont enfermées dans des blocs `/* */` (marqueur `F-05 — DÉSACTIVÉ`) ; le calendrier dépend du flag `CALENDAR_ENABLED`. **Ne jamais insérer de nouvelle route à l'intérieur d'un bloc commenté** (piège qui a déjà coûté un long debug : 404 silencieux).
+- **`shift-swaps` (F-05 / D-90)** : routes **actives** (plus de blocs `/* F-05 DÉSACTIVÉ */`). **iCal (D-72)** reste derrière `CALENDAR_ENABLED`. Leçon conservée : **ne jamais commenter un bloc de routes** — un flag de config se lit, un `/* */` de 240 lignes non (404 silencieux, piège D-47).
 - Les **numéros de ligne dans la doc bougent** quand le fichier grossit : repérer par marqueur texte, pas par n° de ligne.
 
 ---
@@ -119,7 +119,8 @@ Un **seul fichier**, organisé en sections séquentielles. Ordre approximatif :
 ```
 patron        → super-admin, accès illimité
 directeur     → limité à ses assigned_establishments[], gère le planning
-observateur   → vue patron complète MAIS lecture seule sur le planning (D-86)
+observateur   → vue patron ; pas de construction planning ; pas Dispos/Échanges ;
+                 Pointage OK sauf OTP (D-86 / D-93 / D-94)
 staff         → son planning + envoi de disponibilités
 etablissement → pointage uniquement (pointage.html)
 ```
@@ -132,7 +133,7 @@ etablissement → pointage uniquement (pointage.html)
 | `requireAdmin` | patron **ou** observateur (gestion staff/comptes/établissements) |
 | `requirePatronOnly` | patron strict (actions sensibles : changement de rôle → anti-escalade) |
 | `requireEtablissement` | rôle établissement |
-| `denyObservateurEdit` | **bloque l'observateur** (403) — placé après `requirePatron` sur toutes les écritures planning |
+| `denyObservateurEdit` | **bloque l'observateur** (403) — écritures planning, files Dispos/Échanges/congés, OTP |
 | `canAccessEstablishment(user,id)` | patron + observateur passent ; directeur vérifie `assigned_establishments` |
 
 La session contient : `_id`, `email`, `phone`, `role`, `staff_id`, `assigned_establishments`, `establishment_id`, `name`.
@@ -171,7 +172,7 @@ Base `gestion_bar`. Détail des champs dans `architecture.md` §5 — résumé :
 
 ## 7. Cartographie des routes API (`server.js`)
 
-> ✅ actives · 🚫 désactivées (F-05/iCal). Middlewares clés entre parenthèses.
+> ✅ actives · 🚫 désactivées (iCal si `CALENDAR_ENABLED=false`). Middlewares clés entre parenthèses.
 
 ### Auth
 | Méthode | Route | Note |
@@ -248,8 +249,12 @@ Tests : `tests/cloture-otp.test.js` · smoke `scripts/smoke-cloture.js`.
 ### Système
 `GET /` · `GET /health` (`{ ok, db, uptime }`, 503 si Mongo down).
 
-### 🚫 Désactivées
-`/api/shift-swaps/*` (F-05) · `/api/calendar-url` + `/api/calendar/:token.ics` (iCal, flag `CALENDAR_ENABLED`).
+### Échanges (F-05 / D-90 — actives sur `dev` / démo)
+`/api/shift-swaps/*` · `/api/shifts-for-swap` · `GET/PATCH /api/swap-settings`.
+Pending/count/approve/reject : `denyObservateurEdit`.
+
+### 🚫 Désactivées (flag)
+`/api/calendar-url` + `/api/calendar/:token.ics` (iCal, `CALENDAR_ENABLED`).
 
 ---
 

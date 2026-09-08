@@ -178,9 +178,10 @@ La plupart des fermetures se terminent vers 2h du matin. Un shift de fermeture e
 ```
 patron          → super-admin, accès illimité
 directeur       → limité aux assigned_establishments[], peut gérer le planning
-observateur     → vue patron, accès Staff/Comptes/Récap/Performance/Pointage,
-                  MAIS lecture seule sur le planning (pas de création/modif de
-                  shifts, pas de publication, pas de validation des dispos) (D-86)
+observateur     → vue patron (Staff/Comptes/Récap/Performance/Pointage),
+                  lecture seule sur la **construction** du planning ; hors
+                  Dispos / Échanges à valider (ni UI ni API) ; Pointage OK
+                  sauf code OTP (D-86, D-93, D-94)
 staff           → lecture seule, son planning + envoi de disponibilités
 etablissement   → accès pointage uniquement (pointage.html)
 ```
@@ -190,14 +191,14 @@ Middlewares :
 - `requirePatron` — patron, directeur **ou observateur**
 - `requireAdmin` — patron **ou observateur** (gestion staff/comptes/établissements/pointage)
 - `requirePatronOnly` — patron strict (actions sensibles : changement de rôle d'autrui → anti-escalade)
-- `denyObservateurEdit` — placé **après** `requirePatron` sur les écritures planning (shifts, `copy-day`, `publish`, validation dispos, `dispo-settings`) → 403 pour l'observateur. ⚠️ **Invariant** : toute nouvelle route qui crée/modifie un shift, publie le planning ou valide une dispo doit ajouter ce middleware.
+- `denyObservateurEdit` — placé **après** `requirePatron` (ou `requireAuth` quand la route est large) → 403 pour l'observateur. Couvre les écritures planning (shifts, `copy-day`/`copy-week`, `publish`, Joker ouvert), la **file Dispos** (pending/count/confirm/reject/ignore, KPI, réglages, congés à trancher), les **échanges à valider** (pending/count/approve/reject), et le **code OTP** (`GET .../code-cloture`). ⚠️ **Invariant** : toute nouvelle route d'écriture (ou de file de validation) derrière `requirePatron` doit ajouter ce middleware.
 - `requireEtablissement` — etablissement uniquement
 - `canAccessEstablishment(user, id)` — patron **et observateur** passent outre ; directeur vérifie `assigned_establishments`
 
-**Observateur — détail des permissions (D-86)** :
-- ✅ Peut : consulter tout le planning ; gérer le staff, les comptes (sauf changer le rôle d'autrui et créer des comptes privilégiés patron/directeur/observateur), les rôles, les groupes, les établissements ; saisir le pointage et créer des shifts extra au pointage ; saisir le CA et régler la performance ; consulter le récap.
-- ❌ Ne peut pas : créer/modifier/supprimer/transférer un shift, ouvrir un Joker, copier un jour, publier/dépublier une semaine, valider/refuser/ignorer une dispo, modifier les réglages dispos, changer le rôle d'un autre compte.
-- Front : `body.observateur` masque le bouton « Publier » et la palette staff (création de shifts) ; le serveur reste la barrière de sécurité (403) sur toutes les écritures planning.
+**Observateur — détail des permissions (D-86 → D-94)** :
+- ✅ Peut : consulter le planning ; gérer le staff, les comptes (sauf changer le rôle d'autrui et créer des comptes privilégiés patron/directeur/observateur), les rôles, les groupes, les établissements ; clôture Pointage (manuel, ajuster, valider-récap, CA, extra) ; saisir le CA / performance ; consulter le récap.
+- ❌ Ne peut pas : créer/modifier/supprimer/transférer un shift, ouvrir un Joker, copier un jour/semaine, publier/dépublier ; **voir ni ouvrir** Dispos / Échanges (ni valider congés / échanges) ; modifier les réglages dispos ; afficher le **code OTP** ; changer le rôle d'un autre compte.
+- Front : `body.observateur` masque Publier, palette staff, Dispos, Échanges, toggle/paramètres dispos, KPI dispos ; clic sur un shift = **no-op** (pas de modale / pas de bascule Jour). Le serveur reste la barrière (403).
 
 ### Limitation du débit
 Rate limiter en mémoire basé sur `Map` (aucune dépendance externe). Login : 10 tentatives / 15 min / IP. La Map est nettoyée toutes les heures pour éviter les fuites mémoire.
@@ -384,8 +385,8 @@ Collection polymorphe (clé `key` discriminante) :
 1. le **collègue** dont le service est convoité accepte (`PATCH /api/shift-swaps/:id/staff-accept`) ou refuse (`.../staff-decline`, → `rejected` + `rejected_by: 'staff'`). Route réservée à `to_staff_id` : ni le proposeur, ni le patron ;
 2. le **patron** tranche ensuite (`/approve`, `/reject`) et lui seul déplace les shifts.
 
-Le patron ne voit que le statut `pending` — `/pending`, `/count`, `/approve` et `/reject` filtrent déjà dessus, une demande encore chez le collègue lui est donc invisible sans qu'elles aient à le savoir. À l'acceptation, les shifts sont **relus** : si le planning a changé (shift supprimé ou réattribué), la demande est close (`410`, `rejected_by: 'system'`) plutôt que remontée périmée au patron. Le proposeur peut annuler aux **deux** étapes.
-Les routes `/api/shift-swaps/*` et `/api/shifts-for-swap` sont **actives** depuis le 2026-09-03.
+Le patron ne voit que le statut `pending` — `/pending`, `/count`, `/approve` et `/reject` filtrent déjà dessus, une demande encore chez le collègue lui est donc invisible sans qu'elles aient à le savoir. L’**observateur** n’a accès ni à cette file ni aux boutons UI (D-94, `denyObservateurEdit`). À l'acceptation, les shifts sont **relus** : si le planning a changé (shift supprimé ou réattribué), la demande est close (`410`, `rejected_by: 'system'`) plutôt que remontée périmée au patron. Le proposeur peut annuler aux **deux** étapes.
+Les routes `/api/shift-swaps/*` et `/api/shifts-for-swap` sont **actives** depuis le 2026-09-03 (D-90). Côté staff, la recherche de cible filtre par **nom / surnom / établissement**.
 
 `GET/PATCH /api/swap-settings` porte le réglage `cross_establishment` (PATCH réservé au **patron strict**). La garde tient au point d'écriture (`POST /api/shift-swaps` → 403) ; `shifts-for-swap` accepte un `establishment_id` (celui du shift proposé) pour n'afficher que des cibles réellement échangeables, mais ne protège rien.
 

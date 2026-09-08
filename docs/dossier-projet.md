@@ -56,16 +56,15 @@ Deux notions produit reviennent partout et méritent d'être connues avant tout 
 | **directeur** | `index.html` | Comme le patron, **mais borné aux établissements qui lui sont assignés** |
 | **staff** | `planning.html` | Consulte son planning, envoie ses dispos, pose des congés, se porte candidat aux Jokers |
 | **etablissement** | `pointage.html` | Compte par lieu, sans identité personnelle — saisie des heures réelles et du CA du soir |
-| **observateur** | `index.html` | Administre staff, comptes, établissements et pointage — mais **ne touche pas au planning** |
+| **observateur** | `index.html` | Administre staff, comptes, établissements et Pointage (hors OTP) — **ne construit pas** le planning, **ne voit pas** Dispos / Échanges |
 
 **Trois subtilités qui piègent régulièrement :**
 
 - **« Observateur » ne veut pas dire lecture seule.** Le nom le laisse croire, le code dit
-  autre chose : il a les droits d'administration (staff, comptes, établissements, pointage)
-  et il en est écarté sur deux points précis — les écritures de planning (shifts,
-  publication, validation des disponibilités) et le changement de rôle d'un autre compte,
-  réservé au patron pour éviter une escalade de privilèges. À vérifier avant d'attribuer ce
-  rôle à quelqu'un à qui on ne veut vraiment rien laisser modifier.
+  autre chose : il a les droits d'administration (staff, comptes, établissements, Pointage
+  hors OTP) et il en est écarté sur des points précis — construction du planning (shifts,
+  publication), files **Dispos / Échanges / congés à valider**, code OTP, et changement de
+  rôle d'un autre compte (réservé au patron). À vérifier avant d'attribuer ce rôle.
 
 - **Un directeur est aussi un employé** (décision E-22, juillet 2026). Il a un vrai profil
   `staff`, il pose ses disponibilités **dans le même circuit que l'équipe**, et le patron

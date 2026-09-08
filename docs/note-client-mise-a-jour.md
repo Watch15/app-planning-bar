@@ -1,7 +1,7 @@
 # Templyo — ce qui change à la prochaine mise à jour
 
 *Note à envoyer avant le déploiement. Rédigée pour être lue par le patron, pas par un
-développeur. Version du 2026-09-07.*
+développeur. Version du 2026-09-08.*
 
 > Les notes des mises à jour précédentes restent consultables dans l'historique du dépôt
 > (`git log docs/note-client-mise-a-jour.md`).
@@ -53,7 +53,8 @@ Quand vous validez le récap de la semaine, les heures sont marquées comme vali
 l'origine du code reste intacte, seule l'heure retenue (et donc le réel) change.
 Le **responsable de soirée** ne peut plus ajuster une fois le récap validé.
 L'**observateur** a les mêmes actions de clôture (manuel, ajuster, récap, CA, extra)
-mais **sans accès au code OTP**.
+mais **sans accès au code OTP**. Sur le planning, il **ne voit pas** les boutons
+**Dispos** ni **Échanges** (validation réservée au patron / directeur).
 
 Depuis la page **Pointage**, dans **Clôture du jour**, l'onglet **Journal** montre
 les mouvements du jour (qui a saisi, quand, par **code OTP** ou **saisie manuelle**).

@@ -220,7 +220,7 @@ travail de dev (253 shifts). Les scripts destructifs la refusent — ne pas cont
 | `directeur` | Manager — limité aux établissements assignés |
 | `staff` | Employé — lecture seule de son planning, envoi de disponibilités |
 | `etablissement` | Compte par lieu — accès pointage uniquement (`pointage.html`) |
-| `observateur` | Vue patron + administration (staff, comptes, établissements, pointage). ⚠️ **Pas** « lecture seule » : il est écarté des seules écritures de planning (`denyObservateurEdit` — shifts, publication, validation des dispos) et du changement de rôle d'autrui (`requirePatronOnly`) |
+| `observateur` | Vue patron + administration (staff, comptes, établissements, Pointage hors OTP). ⚠️ **Pas** « lecture seule » globale : écarté des écritures de construction du planning, des files **Dispos / Échanges**, du code OTP (`denyObservateurEdit`), et du changement de rôle d'autrui (`requirePatronOnly`) — cf. D-86 / D-93 / D-94 |
 
 ---
 
@@ -240,7 +240,7 @@ travail de dev (253 shifts). Les scripts destructifs la refusent — ne pas cont
 - Le Joker — shift non attribué avec note, visible du staff
 - Copie d'un jour vers d'autres jours de la semaine
 - Publication / dépublication de la semaine
-- ~~Échange de shifts — demande staff à staff, validation patron avec raison~~ *(code livré mais désactivé en attente validation client — réactivable par retrait des `/* */` dans server.js)*
+- Échange de shifts — demande staff à staff (2 validations), file patron « Échanges » ; **actif** sur `dev` / démo depuis D-90 (pas encore livré en prod client)
 - Gestion staff : couleur, email, téléphone, rôles, établissements préférentiels
 - Import en masse via CSV/tableau (nom + email ou téléphone)
 - Gestion établissements dans l'app (modale CRUD)
@@ -395,15 +395,17 @@ travail de dev (253 shifts). Les scripts destructifs la refusent — ne pas cont
 | GET | `/api/performance` | Patron — agrégats par soirée (CA, masse sal., coeff, breakdown staff) |
 | GET/PATCH | `/api/performance-settings` | Authentifié / Patron — `target_gross`, `target_charged`, `charge_rate` |
 
-### Échanges de shifts *(routes désactivées en attente validation client — code conservé, commenté dans server.js)*
+### Échanges de shifts *(actives depuis D-90 — `dev` / démo ; pas encore en prod client)*
 | Méthode | Route | Accès |
 |---|---|---|
-| POST | `/api/shift-swaps` | Authentifié |
-| GET | `/api/shift-swaps/pending` | Patron |
+| POST | `/api/shift-swaps` | Authentifié (staff) |
+| GET | `/api/shift-swaps/pending` | Patron / directeur (`denyObservateurEdit`) |
+| GET | `/api/shift-swaps/count` | Patron / directeur (`denyObservateurEdit`) |
 | GET | `/api/shift-swaps/mine` | Authentifié |
-| PATCH | `/api/shift-swaps/:id/approve` | Patron |
-| PATCH | `/api/shift-swaps/:id/reject` | Patron |
-| DELETE | `/api/shift-swaps/:id` | Authentifié |
+| PATCH | `/api/shift-swaps/:id/staff-accept` · `/staff-decline` | Collègue cible |
+| PATCH | `/api/shift-swaps/:id/approve` | Patron / directeur (`denyObservateurEdit`) |
+| PATCH | `/api/shift-swaps/:id/reject` | Patron / directeur (`denyObservateurEdit`) |
+| DELETE | `/api/shift-swaps/:id` | Authentifié (proposeur) |
 
 ### Web Push & Notifications
 | Méthode | Route | Accès |

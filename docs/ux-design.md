@@ -59,6 +59,9 @@ Inter uniquement. Échelle : 11px (labels caps) → 13px (corps) → 14–15px (
 | I-12 | ~74 styles inline avec couleurs en dur (`#fff8e1`, `#fde8e8`, `rgba(108,99,255,0.1)`) → maintenance fragmentée | Faible | 🟡 U-06 backlog — refactor lourd à reporter |
 | I-13 | `.resizer` timeline 16 px de large → difficile au doigt | Faible | 🟡 U-09 backlog — risque régression drag/snap |
 | ~~I-14~~ | ~~Dispos « En attente » : un directeur devait chercher ses propres staff dans une liste à plat~~ | Moyen | ✅ Done (D-65) — staff de ses établissements remontés sous l'encadré orange « ★ Staff de mon établissement » (étoile + fond `--warning`), reste sous « Autres » ; pastille rouge « Indispo » pour les jours `off` (D-63) |
+| ~~I-15~~ | ~~Observateur voyait Dispos / Échanges / éditeurs planning~~ | Haut | ✅ Done (D-94) — masqués (`body.observateur`) + API 403 ; clic shift no-op |
+| ~~I-16~~ | ~~Badge header affichait le rôle~~ | Faible | ✅ Done (D-94) — prénom seul |
+| ~~I-17~~ | ~~Tablette : modale shift trop petite~~ | Moyen | ✅ Done (D-94) — feuille d’édition mobile aussi sur tablette |
 
 ### 2.4 planning.html (Staff)
 | # | Problème | Sévérité | Statut |
@@ -73,6 +76,8 @@ Inter uniquement. Échelle : 11px (labels caps) → 13px (corps) → 14–15px (
 | ~~P-08~~ | ~~Pas de rafraîchissement auto côté staff pour détecter de nouveaux Jokers ouverts~~ | Moyen | ✅ Done — `renderOpenJokers` branché sur `visibilitychange` (semaine courante) en plus de l'auto-refresh staff existant |
 | ~~P-09~~ | ~~`.tab-btn` ~24×24 + `.dispo-time-input` 36 px (sous seuil tactile) + risque débordement tabs sans scroll~~ | Haut | ✅ Done (D-49) — tabs min-44 + `overflow-x:auto`, `.dispo-time-input` 44px + font 16 |
 | P-10 | `.dispo-type-btn.selected-off` sur `--light-bg` → état sélectionné peu distinctif | Moyen | 🟠 U-05 backlog |
+| ~~P-11~~ | ~~Échange : recherche cible trop limitée~~ | Moyen | ✅ Done (D-94) — filtre nom / surnom / **établissement** |
+| ~~P-12~~ | ~~Joker ouvert restait visible après la date~~ | Moyen | ✅ Done (D-94) — disparaît si date passée |
 
 ### 2.5 pointage.html
 | # | Problème | Sévérité | Statut |
@@ -86,7 +91,7 @@ Inter uniquement. Échelle : 11px (labels caps) → 13px (corps) → 14–15px (
 | ~~PT-07~~ | ~~`.btn-save` utilise `var(--dark-surface)` au lieu de `var(--accent)`~~ | Moyen | ✅ Done (U-01) — bg accent + hover accent-soft |
 | ~~PT-08~~ | ~~`.validated-badge` couleurs en dur (`#6EE7B7`, `#d1fae5`, `#065f46`)~~ | Faible | ✅ Done (U-02) — migré vers tokens success/validated/gap-under |
 | ~~PT-09~~ | ~~Clôture OTP fusionnée dans Pointage (manager) + CTA staff sur carte du jour~~ | Haut | ✅ Done (D-91) — code OTP, Clôture du jour (dates FR), sync `real_*`, extra conservé |
-| ~~PT-10~~ | ~~Ajustement après validation du récap~~ | Moyen | ✅ Done (D-91 / D-92) — patron/directeur OK ; responsable **bloqué** si `patron_valide` |
+| ~~PT-10~~ | ~~Ajustement après validation du récap~~ | Moyen | ✅ Done (D-91 / D-92 / D-93) — patron/directeur/**observateur** OK ; responsable **bloqué** si `patron_valide` ; OTP interdit à l’observateur |
 | PT-11 | Compte établissement (tablette) encore sur l'ancienne grille cartes | Moyen | 🟠 Ouvert — backlog Pointage |
 | ~~PT-12~~ | ~~Note client : panel vérif + qui ajuste après récap~~ | Faible | ✅ Done (note-client D-93) |
 | ~~PT-16~~ | ~~Panel vérification Pointage (pastille + file + journal)~~ | Haut | ✅ Done (D-93) — fusionné dans **Clôture du jour** ; **observateur** sans code OTP |
