@@ -54,9 +54,12 @@ let currentData   = [];
 let calendarWeekStart = null; // Lundi de la semaine affichée dans le calendrier
 let activePerfTab = 'real';
 let simWeekStart  = null;
+let simDayDate    = null; // Date object for day scope
+let simScope      = 'week'; // 'week' | 'day'
 let simHypoByDate = {}; // saisies CA hypo éphémères
 let simLastResult = null;
 let allGroups     = [];
+let simRealByDate = {}; // cache CA réels de la période affichée
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -122,7 +125,7 @@ async function init() {
             loadData();
             loadCalendarWeek();
         } else {
-            await prepareSimWeek();
+            await prepareSimPeriod();
         }
         fillSimSourceEstabs();
     });
@@ -136,6 +139,8 @@ async function init() {
     // Navigation calendrier
     calendarWeekStart = Week.currentWeekStart(new Date());
     simWeekStart = new Date(calendarWeekStart);
+    simDayDate = new Date();
+    simDayDate.setHours(12, 0, 0, 0);
     const _reloadOnNav = () => {
         const period = document.getElementById('period-select').value;
         if (period === 'week' || period === 'month') return Promise.all([loadCalendarWeek(), loadData()]);
@@ -164,17 +169,18 @@ async function init() {
     // Onglets Réel / Simulation
     document.getElementById('tab-real').addEventListener('click', () => switchPerfTab('real'));
     document.getElementById('tab-sim').addEventListener('click', () => switchPerfTab('sim'));
-    document.getElementById('sim-cal-prev').addEventListener('click', async () => {
-        simWeekStart.setDate(simWeekStart.getDate() - 7);
-        await prepareSimWeek();
-    });
-    document.getElementById('sim-cal-next').addEventListener('click', async () => {
-        simWeekStart.setDate(simWeekStart.getDate() + 7);
-        await prepareSimWeek();
-    });
-    document.getElementById('sim-cal-today').addEventListener('click', async () => {
-        simWeekStart = Week.currentWeekStart(new Date());
-        await prepareSimWeek();
+    document.getElementById('sim-scope-week').addEventListener('click', () => setSimScope('week'));
+    document.getElementById('sim-scope-day').addEventListener('click', () => setSimScope('day'));
+    document.getElementById('sim-cal-prev').addEventListener('click', () => shiftSimPeriod(-1));
+    document.getElementById('sim-cal-next').addEventListener('click', () => shiftSimPeriod(1));
+    document.getElementById('sim-cal-today').addEventListener('click', () => {
+        if (simScope === 'day') {
+            simDayDate = new Date();
+            simDayDate.setHours(12, 0, 0, 0);
+        } else {
+            simWeekStart = Week.currentWeekStart(new Date());
+        }
+        prepareSimPeriod();
     });
     document.getElementById('sim-joker-mode').addEventListener('change', updateSimJokerModeUI);
     document.getElementById('sim-run').addEventListener('click', runSimulation);
@@ -647,12 +653,55 @@ function switchPerfTab(tab) {
         sim.removeAttribute('hidden');
         real.setAttribute('hidden', '');
         document.getElementById('period-filter-group').style.display = 'none';
-        prepareSimWeek();
+        prepareSimPeriod();
     } else {
         real.removeAttribute('hidden');
         sim.setAttribute('hidden', '');
         document.getElementById('period-filter-group').style.display = '';
     }
+}
+
+function setSimScope(scope) {
+    if (scope !== 'week' && scope !== 'day') return;
+    if (simScope === scope) return;
+    const prev = simScope;
+    simScope = scope;
+    document.getElementById('sim-scope-week').classList.toggle('active', scope === 'week');
+    document.getElementById('sim-scope-day').classList.toggle('active', scope === 'day');
+    document.getElementById('sim-scope-week').setAttribute('aria-pressed', scope === 'week' ? 'true' : 'false');
+    document.getElementById('sim-scope-day').setAttribute('aria-pressed', scope === 'day' ? 'true' : 'false');
+    if (scope === 'week' && simDayDate) {
+        simWeekStart = Week.currentWeekStart(simDayDate);
+    } else if (scope === 'day' && prev === 'week' && simWeekStart) {
+        const today = new Date();
+        today.setHours(12, 0, 0, 0);
+        const mon = new Date(simWeekStart);
+        const sun = new Date(mon);
+        sun.setDate(mon.getDate() + 6);
+        if (!simDayDate || simDayDate < mon || simDayDate > sun) {
+            simDayDate = (today >= mon && today <= sun) ? today : new Date(mon);
+            simDayDate.setHours(12, 0, 0, 0);
+        }
+    }
+    simLastResult = null;
+    document.getElementById('sim-kpis').innerHTML = '';
+    document.getElementById('sim-table-wrap').innerHTML =
+        '<div class="empty-msg">Choisissez une période, un CA si besoin, puis calculez.</div>';
+    prepareSimPeriod();
+}
+
+function shiftSimPeriod(dir) {
+    if (simScope === 'day') {
+        if (!simDayDate) {
+            simDayDate = new Date();
+            simDayDate.setHours(12, 0, 0, 0);
+        }
+        simDayDate.setDate(simDayDate.getDate() + dir);
+    } else {
+        if (!simWeekStart) simWeekStart = Week.currentWeekStart(new Date());
+        simWeekStart.setDate(simWeekStart.getDate() + dir * 7);
+    }
+    prepareSimPeriod();
 }
 
 function fillSimSourceEstabs() {
@@ -705,6 +754,15 @@ function _simWeekRange() {
     return { from: toDateStr(monday), to: toDateStr(sunday), monday, sunday };
 }
 
+function _simPeriodRange() {
+    if (simScope === 'day') {
+        const day = new Date(simDayDate);
+        const s = toDateStr(day);
+        return { from: s, to: s, day };
+    }
+    return _simWeekRange();
+}
+
 function _simWeekLabel(monday, sunday) {
     const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
     if (monday.getMonth() === sunday.getMonth()) {
@@ -713,54 +771,108 @@ function _simWeekLabel(monday, sunday) {
     return monday.getDate() + ' ' + months[monday.getMonth()] + ' → ' + sunday.getDate() + ' ' + months[sunday.getMonth()] + ' ' + sunday.getFullYear();
 }
 
-async function prepareSimWeek() {
-    if (!simWeekStart || !currentEstab) return;
-    const { from, to, monday, sunday } = _simWeekRange();
-    document.getElementById('sim-cal-label').textContent = _simWeekLabel(monday, sunday);
+function _simDayLabel(d) {
+    const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+    const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+    return days[d.getDay()] + ' ' + d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+}
 
-    // Précharger les CA réels pour verrouiller les jours déjà saisis
-    let realByDate = {};
+async function _loadSimRealByDate(from, to) {
+    const map = {};
+    if (from === to) {
+        try {
+            const res = await fetch('/api/revenue/' + encodeURIComponent(currentEstab) + '/' + from, { credentials: 'include' });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.revenue != null) map[from] = data.revenue;
+            }
+        } catch { /* ignore */ }
+        return map;
+    }
     try {
         const params = new URLSearchParams({ establishment_id: currentEstab, from, to });
         const res = await fetch('/api/performance?' + params.toString(), { credentials: 'include' });
         const data = res.ok ? await res.json() : [];
-        data.forEach(d => { realByDate[d.date] = d.revenue; });
-    } catch { realByDate = {}; }
+        data.forEach(d => { map[d.date] = d.revenue; });
+    } catch { /* ignore */ }
+    return map;
+}
 
-    // Aussi interroger revenue jour par jour si pas dans performance (pas de shifts pointés)
-    // Fallback: GET revenue for each day without entry — skip for speed; use empty and
-    // rely on simulate response. Better: fetch week shifts isn't needed.
-    // Try loading daily_revenue via performance only covers days WITH revenue that have
-    // been returned - actually GET /api/performance returns only days with revenue. Good.
-
-    const DAY_SHORT = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-    const grid = document.getElementById('sim-ca-grid');
-    grid.innerHTML = '';
-    for (let i = 0; i < 7; i++) {
-        const d = new Date(monday);
-        d.setDate(monday.getDate() + i);
-        const dateStr = toDateStr(d);
-        const hasReal = realByDate[dateStr] != null;
-        const card = document.createElement('div');
-        card.className = 'sim-ca-day' + (hasReal ? ' locked' : '');
-        let html = '<div class="sim-ca-label">' + DAY_SHORT[i] + ' ' + d.getDate() + '</div>';
-        if (hasReal) {
-            html += '<div class="sim-ca-real">CA réel ' + fmtEUR(realByDate[dateStr]) + '</div>';
-            delete simHypoByDate[dateStr];
-        } else {
-            const val = simHypoByDate[dateStr] != null ? simHypoByDate[dateStr] : '';
-            html += '<input type="number" min="0" step="0.01" data-sim-ca="' + dateStr + '" placeholder="CA hypo" value="' + escapeHtml(val) + '">';
-        }
-        card.innerHTML = html;
-        grid.appendChild(card);
-    }
-    grid.querySelectorAll('input[data-sim-ca]').forEach(inp => {
+function _bindSimCaInputs(root) {
+    root.querySelectorAll('input[data-sim-ca]').forEach(inp => {
         inp.addEventListener('change', () => {
             const v = parseFloat(inp.value);
             if (Number.isNaN(v) || v < 0) delete simHypoByDate[inp.dataset.simCa];
             else simHypoByDate[inp.dataset.simCa] = v;
         });
     });
+}
+
+function _renderSimCaCell(dateStr, label, hasReal, realVal, extraClass) {
+    const card = document.createElement('div');
+    card.className = 'sim-ca-day' + (hasReal ? ' locked' : '') + (extraClass ? ' ' + extraClass : '');
+    let html = '<div class="sim-ca-label">' + label + '</div>';
+    if (hasReal) {
+        html += '<div class="sim-ca-real">CA réel ' + fmtEUR(realVal) + '</div>';
+        delete simHypoByDate[dateStr];
+    } else {
+        const val = simHypoByDate[dateStr] != null ? simHypoByDate[dateStr] : '';
+        html += '<input type="number" min="0" step="0.01" data-sim-ca="' + dateStr
+            + '" placeholder="CA hypo" value="' + escapeHtml(val) + '">';
+    }
+    card.innerHTML = html;
+    return card;
+}
+
+async function prepareSimPeriod() {
+    if (!currentEstab) return;
+    if (simScope === 'day') {
+        if (!simDayDate) {
+            simDayDate = new Date();
+            simDayDate.setHours(12, 0, 0, 0);
+        }
+    } else if (!simWeekStart) {
+        simWeekStart = Week.currentWeekStart(new Date());
+    }
+
+    const range = _simPeriodRange();
+    const { from, to } = range;
+    const sub = document.getElementById('sim-ca-sub');
+    const grid = document.getElementById('sim-ca-grid');
+
+    if (simScope === 'day') {
+        document.getElementById('sim-cal-label').textContent = _simDayLabel(range.day);
+        sub.textContent = 'Saisissez un CA hypothétique si aucun CA réel n’est enregistré pour ce jour.';
+        simRealByDate = await _loadSimRealByDate(from, to);
+        const hasReal = simRealByDate[from] != null;
+        grid.className = 'sim-ca-grid sim-ca-single';
+        grid.innerHTML = '';
+        grid.appendChild(_renderSimCaCell(from, 'CA du jour', hasReal, simRealByDate[from], ''));
+        _bindSimCaInputs(grid);
+        return;
+    }
+
+    document.getElementById('sim-cal-label').textContent = _simWeekLabel(range.monday, range.sunday);
+    sub.textContent = 'Saisissez un CA hypothétique sur les jours sans CA réel. Les CA déjà enregistrés restent figés.';
+    simRealByDate = await _loadSimRealByDate(from, to);
+    const DAY_SHORT = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    grid.className = 'sim-ca-grid';
+    grid.innerHTML = '';
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(range.monday);
+        d.setDate(range.monday.getDate() + i);
+        const dateStr = toDateStr(d);
+        const hasReal = simRealByDate[dateStr] != null;
+        const card = _renderSimCaCell(dateStr, DAY_SHORT[i] + ' ' + d.getDate(), hasReal, simRealByDate[dateStr], '');
+        card.dataset.simDate = dateStr;
+        card.title = 'Double-clic pour simuler ce jour';
+        card.addEventListener('dblclick', () => {
+            simDayDate = parseDate(dateStr);
+            setSimScope('day');
+        });
+        grid.appendChild(card);
+    }
+    _bindSimCaInputs(grid);
 }
 
 function _selectedOptions(sel) {
@@ -771,21 +883,25 @@ async function runSimulation() {
     const btn = document.getElementById('sim-run');
     const wrap = document.getElementById('sim-table-wrap');
     const kpis = document.getElementById('sim-kpis');
-    const { from, to } = _simWeekRange();
+    const { from, to } = _simPeriodRange();
     const mode = document.getElementById('sim-joker-mode').value;
 
-    // Sync hypo from inputs
     document.querySelectorAll('input[data-sim-ca]').forEach(inp => {
         const v = parseFloat(inp.value);
         if (Number.isNaN(v) || v < 0) delete simHypoByDate[inp.dataset.simCa];
         else simHypoByDate[inp.dataset.simCa] = v;
     });
 
+    const hypo = {};
+    Object.keys(simHypoByDate).forEach(d => {
+        if (d >= from && d <= to) hypo[d] = simHypoByDate[d];
+    });
+
     const body = {
         establishment_id: currentEstab,
         from,
         to,
-        hypo_revenue_by_date: { ...simHypoByDate },
+        hypo_revenue_by_date: hypo,
         joker_mode: mode,
     };
     if (mode === 'manual_hourly') {
@@ -823,8 +939,7 @@ async function runSimulation() {
         if (data.target_charged != null) targets.target_charged = data.target_charged;
         renderSimKpis(data);
         renderSimTable(data);
-        // Refresh CA grid locks from result
-        await prepareSimWeek();
+        await prepareSimPeriod();
     } catch (e) {
         wrap.innerHTML = '<div class="empty-msg" style="color:var(--danger)">' + escapeHtml(e.message || 'Erreur') + '</div>';
     } finally {
@@ -834,6 +949,7 @@ async function runSimulation() {
 
 function renderSimKpis(data) {
     const t = data.totals || {};
+    const scopeLabel = simScope === 'day' ? 'jour simulé' : 'semaine simulée';
     const rateLine = data.joker_rate_used != null
         ? (data.joker_rate_kind === 'fixed'
             ? ('Forfait joker ' + Number(data.joker_rate_used).toFixed(2).replace('.', ',') + ' €')
@@ -842,7 +958,7 @@ function renderSimKpis(data) {
         : '';
     document.getElementById('sim-kpis').innerHTML =
         '<div class="kpi-card"><div class="kpi-label">CA (réel + hypo)</div><div class="kpi-value num">' + fmtEUR(t.revenue) + '</div>'
-            + '<div class="kpi-sub">semaine simulée</div></div>' +
+            + '<div class="kpi-sub">' + scopeLabel + '</div></div>' +
         '<div class="kpi-card"><div class="kpi-label">Heures</div><div class="kpi-value num">' + fmtHours(t.hours_total) + '</div>'
             + '<div class="kpi-sub">dont ' + fmtHours(t.hours_real) + ' réel · ' + fmtHours(t.hours_sim) + ' estimé</div></div>' +
         '<div class="kpi-card"><div class="kpi-label">Masse sal. chargée</div><div class="kpi-value num">' + fmtEUR(t.wage_bill_charged) + '</div>'
@@ -854,10 +970,40 @@ function renderSimTable(data) {
     const wrap = document.getElementById('sim-table-wrap');
     const days = data.days || [];
     if (days.length === 0) {
-        wrap.innerHTML = '<div class="empty-msg">Aucun shift sur cette semaine</div>';
+        wrap.innerHTML = '<div class="empty-msg">Aucun shift sur '
+            + (simScope === 'day' ? 'ce jour' : 'cette semaine') + '</div>';
         return;
     }
     const target = data.target_charged != null ? data.target_charged : targets.target_charged;
+    const singleDay = simScope === 'day' || days.length === 1;
+
+    if (singleDay && simScope === 'day') {
+        const r = days[0];
+        const okC = r.coeff_charged != null && r.coeff_charged < target;
+        const caBadge = r.revenue_source === 'real'
+            ? '<span class="source-pill real">réel</span> '
+            : (r.revenue > 0 ? '<span class="source-pill sim">hypo</span> ' : '');
+        wrap.innerHTML =
+            '<table class="perf">' +
+                '<thead><tr><th>Résumé</th><th class="num">CA</th><th class="num">Heures</th>' +
+                '<th class="num">Masse sal. brute</th><th class="num">Masse sal. chargée</th><th>Coeff. chargé</th></tr></thead>' +
+                '<tbody><tr>' +
+                    '<td>' + dateLabel(r.date) + '</td>' +
+                    '<td class="num">' + caBadge + fmtEUR(r.revenue) + '</td>' +
+                    '<td class="num">' + (r.hours_total > 0 ? fmtHours(r.hours_total) : '—') + '</td>' +
+                    '<td class="num">' + fmtEUR(r.wage_bill_gross) + '</td>' +
+                    '<td class="num">' + fmtEUR(r.wage_bill_charged) + '</td>' +
+                    '<td>' + (r.coeff_charged != null
+                        ? '<span class="coeff-pill ' + (okC ? 'ok' : 'bad') + '">' + fmtPct(r.coeff_charged) + '</span>'
+                        : '—') + '</td>' +
+                '</tr></tbody></table>' +
+                '<div class="sim-day-detail" id="sim-day-detail"></div>' +
+                '<div class="calc-legend">Dont réalisé : ' + fmtEUR(data.totals.wage_real_charged)
+                    + ' chargé · Dont estimé : ' + fmtEUR(data.totals.wage_sim_charged) + ' chargé.</div>';
+        renderSimDetail(document.getElementById('sim-day-detail'), r);
+        return;
+    }
+
     let rows = days.map((r, idx) => {
         const okC = r.coeff_charged != null && r.coeff_charged < target;
         const caBadge = r.revenue_source === 'real'
@@ -905,7 +1051,7 @@ function renderSimTable(data) {
             const detail = wrap.querySelector('tr.perf-detail[data-sim-detail="' + idx + '"]');
             if (!detail) return;
             const wasOpen = detail.style.display !== 'none';
-            wrap.querySelectorAll('.perf-detail').forEach(t => t.style.display = 'none');
+            wrap.querySelectorAll('.perf-detail').forEach(el => el.style.display = 'none');
             wrap.querySelectorAll('.perf-row').forEach(r => r.classList.remove('expanded'));
             if (!wasOpen) {
                 detail.style.display = '';
