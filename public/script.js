@@ -2155,15 +2155,18 @@ function createShiftEl(shift) {
         el.addEventListener('click', e => {
             if (e.target.closest('.resizer') || e.target.closest('.shift-delete')) return;
             if (_shiftWasDragged) { _shiftWasDragged = false; return; }
+            if (blockedByEditLock()) return;
             openJokerModal(shift, el);
         });
     }
 
-    // Clic → feuille d'édition complète (téléphone + tablette) ; desktop souris → heures réelles
+    // Clic → feuille d'édition (téléphone/tablette) ou heures réelles (desktop).
+    // Semaine publiée verrouillée (hors mode éditeur) : aucun effet — ni modale, ni navigation.
     if (!shift.is_joker && shift.staff_id !== '__joker__') {
         el.addEventListener('click', e => {
             if (e.target.closest('.resizer') || e.target.closest('.shift-delete') || e.target.closest('.shift-resp-btn')) return;
-            if (_shiftWasDragged) { _shiftWasDragged = false; return; } // ignorer le click après un drag/resize
+            if (_shiftWasDragged) { _shiftWasDragged = false; return; }
+            if (blockedByEditLock()) return;
             if (isPhone() || isTablet()) {
                 openMobileShiftEditModal(shift);
             } else {
@@ -2177,6 +2180,7 @@ function createShiftEl(shift) {
         const btn = el.querySelector('.shift-resp-btn');
         btn.addEventListener('click', async e => {
             e.stopPropagation();
+            if (blockedByEditLock()) return;
             const newVal = !(shift.pointage_resp === true);
             try {
                 const r = await fetch('/api/shifts/' + shift._id + '/pointage-resp', {
@@ -3664,11 +3668,8 @@ function onTouchMove(e) {
     if (_touchIntent === 'scroll') return;
 
     if (_touchIntent === 'drag') {
-        // C'est ICI que le verrou se prononce, et pas au premier contact du doigt : un tap
-        // simple n'ouvre qu'une modale de consultation et doit rester libre sur une semaine
-        // publiée. On attend donc de savoir que le geste est un déplacement (ou un
-        // redimensionnement, qui arme _touchIntent dès onTouchStart) pour l'interrompre.
-        // activeEl remis à null : onTouchEnd n'enchaînera pas sur le clic de repli.
+        // Verrou publié : un tap simple ne doit rien faire (pas de modale, pas de navigation).
+        // Le verrou se prononce ici dès qu'on sait que le geste est un déplacement / resize.
         if (blockedByEditLock()) { activeEl = null; activeAction = null; return; }
         e.preventDefault();
         updateAutoScrollPos(touch.clientX, touch.clientY);
@@ -3687,7 +3688,7 @@ function onTouchEnd() {
     if (!activeEl) return;
 
     if (!_shiftWasDragged) {
-        // Simple tap sans mouvement → ouvrir la modale d'édition (le click natif est bloqué par preventDefault)
+        // Simple tap sans mouvement → clic de repli (ouvertures bloquées si verrou publié)
         const el = activeEl;
         activeEl = null;
         activeAction = null;
@@ -4597,8 +4598,14 @@ function renderWeekGantt() {
 }
 
 // ── Switcher vers vue jour sur une date précise ───────────────────────────────
+// Depuis une pastille / ligne semaine : si le planning tactile est verrouillé
+// (publié, hors mode éditeur), le clic ne doit rien faire — ni changer d'onglet.
 
 function switchToDayView(date) {
+    if (editLockApplies() && !editModeOn()) {
+        showEditLockBanner();
+        return;
+    }
     currentView  = 'day';
     selectedDate = date;
 
