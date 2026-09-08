@@ -5997,6 +5997,13 @@ app.get('/api/me/responsable-tonight', checkDB, requireAuth, async (req, res) =>
         }
 
         if (accessibleEstabs.length === 0) return res.json({ isResponsable: false });
+        // #region agent log
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            fs.appendFileSync(path.join(__dirname, 'debug-7f3ed4.log'), JSON.stringify({sessionId:'7f3ed4',runId:'pre-fix',hypothesisId:'C',location:'server.js:responsable-tonight',message:'estab list for staff resp',data:{staffId:String(user.staff_id),date,shiftCount:myShifts.length,shiftEstabs:myShifts.map(s=>s.establishment_id),accessibleEstabs,unique:[...new Set(accessibleEstabs)]},timestamp:Date.now()}) + '\n');
+        } catch (_) { /* ignore */ }
+        // #endregion
         res.json({ isResponsable: true, establishments: accessibleEstabs });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });

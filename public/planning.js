@@ -310,6 +310,9 @@ async function init() {
         const respRes  = await fetch('/api/me/responsable-tonight?date=' + todayStr, { credentials: 'include' });
         if (respRes.ok) {
             const resp = await respRes.json();
+            // #region agent log
+            fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'pre-fix',hypothesisId:'C,D,E',location:'planning.js:responsable-tonight',message:'Pointage tabs injection',data:{todayStr,isResponsable:!!resp.isResponsable,establishments:resp.establishments||[],estabCount:(resp.establishments||[]).length,uniqueCount:new Set(resp.establishments||[]).size,existingPointageTabs:document.querySelectorAll('.btn-pointage-tab').length,tabsBarChildren:document.querySelector('.tabs-bar')?.children?.length},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
             if (resp.isResponsable && resp.establishments && resp.establishments.length > 0) {
                 const tabBar = document.querySelector('.tabs-bar');
                 // Un onglet par établissement (en général 1, mais directeur peut en avoir plusieurs)
@@ -320,6 +323,9 @@ async function init() {
                     link.textContent = '⏱ Pointage';
                     tabBar.appendChild(link);
                 });
+                // #region agent log
+                fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'pre-fix',hypothesisId:'C,D',location:'planning.js:after-inject',message:'Tabs after Pointage inject',data:{pointageTabs:document.querySelectorAll('.btn-pointage-tab').length,tabLabels:[...document.querySelectorAll('.btn-pointage-tab')].map(a=>a.textContent),hrefs:[...document.querySelectorAll('.btn-pointage-tab')].map(a=>a.getAttribute('href'))},timestamp:Date.now()})}).catch(()=>{});
+                // #endregion
             }
         }
     } catch { /* silencieux */ }

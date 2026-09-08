@@ -852,12 +852,19 @@ let _cloturesDay = null;
 let _clotureBound = false;
 
 function canUseClotureUi() {
-    return currentUser && CLOTURE_ROLES.includes(currentUser.role);
+    const ok = !!(currentUser && CLOTURE_ROLES.includes(currentUser.role));
+    // #region agent log
+    fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'pre-fix',hypothesisId:'A',location:'pointage.js:canUseClotureUi',message:'cloture UI gate',data:{role:currentUser&&currentUser.role,ok,clotureRoles:CLOTURE_ROLES,estab:currentEstabId},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    return ok;
 }
 
 function setLegacyPointageVisible(visible) {
     const block = document.getElementById('legacy-pointage-block');
     if (block) block.style.display = visible ? '' : 'none';
+    // #region agent log
+    fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'pre-fix',hypothesisId:'A',location:'pointage.js:setLegacyPointageVisible',message:'legacy visibility',data:{visible,role:currentUser&&currentUser.role},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
 }
 
 function escapeHtml(str) {
@@ -1098,7 +1105,11 @@ async function validateCloturesWeek() {
 function initCloturePanel() {
     const panel = document.getElementById('cloture-panel');
     if (!panel) return;
-    if (!canUseClotureUi() || !currentEstabId) {
+    const gate = canUseClotureUi();
+    // #region agent log
+    fetch('http://127.0.0.1:7713/ingest/5e198955-bd43-409e-98bb-0319e71d3d76',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7f3ed4'},body:JSON.stringify({sessionId:'7f3ed4',runId:'pre-fix',hypothesisId:'A,B',location:'pointage.js:initCloturePanel',message:'init cloture panel branch',data:{gate,role:currentUser&&currentUser.role,currentEstabId,willShowLegacy:!gate||!currentEstabId},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    if (!gate || !currentEstabId) {
         panel.classList.remove('visible');
         stopCodeClotureTimers();
         setLegacyPointageVisible(true);
