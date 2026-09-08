@@ -937,10 +937,7 @@
             <button class="btn-manage-staff" id="btn-recap" style="background:rgba(16,185,129,0.12);border-color:#10b981;color:#10b981">Récap</button>
             <a href="/performance.html" class="btn-manage-staff" id="btn-performance" style="background:rgba(108,99,255,0.12);border-color:#6C63FF;color:#6C63FF;text-decoration:none;display:inline-flex;align-items:center" title="Pilotage économique (CA + masse salariale)">Performance</a>
             <button id="btn-revenue" style="display:none" aria-hidden="true"></button>
-            <div style="position:relative;display:inline-block">
-                <button type="button" class="btn-manage-staff" id="btn-pointage" style="background:rgba(245,158,11,0.12);border-color:#f59e0b;color:#f59e0b" title="Vérifier les clôtures de service">Pointage</button>
-                <span id="pointage-badge" style="display:none;position:absolute;top:-5px;right:-5px;background:var(--danger);color:white;font-size:9px;font-weight:700;width:14px;height:14px;border-radius:50%;align-items:center;justify-content:center;pointer-events:none;z-index:1;border:1.5px solid var(--dark-bg)">0</span>
-            </div>
+            <a href="/pointage.html" class="btn-manage-staff" id="btn-pointage" style="background:rgba(245,158,11,0.12);border-color:#f59e0b;color:#f59e0b;text-decoration:none;display:inline-flex;align-items:center" title="Heures réelles + code &amp; clôtures de service">Pointage</a>
             <div class="header-sep"></div>
             <!-- Groupe 3 : toggle dispos + paramètres -->
             <div style="position:relative;display:flex;align-items:center;gap:6px">
@@ -1516,121 +1513,6 @@
 <!-- ── Drawer overlay mobile ── -->
 <div id="mobile-drawer-overlay" onclick="closeMobileDrawer()"></div>
 
-<!-- Modale vérification Pointage -->
-<div class="modal-overlay" id="pointage-verif-modal" style="display:none">
-    <div class="modal" style="width:620px;max-width:95vw">
-        <div class="modal-header">
-            <span class="modal-title">Vérification Pointage</span>
-            <button class="modal-close" id="pointage-verif-close" type="button">&times;</button>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:0;border-bottom:2px solid var(--light-border);padding:0 12px">
-            <button type="button" id="pv-tab-btn-queue" style="background:none;border:none;border-bottom:2px solid var(--accent);padding:10px 14px;min-height:40px;font-size:13px;font-weight:600;color:var(--accent);cursor:pointer">À vérifier</button>
-            <button type="button" id="pv-tab-btn-journal" style="background:none;border:none;border-bottom:2px solid transparent;padding:10px 14px;min-height:40px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer">Journal</button>
-        </div>
-        <div id="pv-tab-queue">
-            <div style="padding:10px 16px;border-bottom:1px solid var(--light-border);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <button type="button" class="week-arrow" id="pv-week-prev" style="padding:4px 12px;border-radius:8px;border:1.5px solid var(--light-border);background:transparent;cursor:pointer">←</button>
-                <span id="pv-week-label" style="font-size:13px;font-weight:700;flex:1;text-align:center"></span>
-                <button type="button" class="week-arrow" id="pv-week-next" style="padding:4px 12px;border-radius:8px;border:1.5px solid var(--light-border);background:transparent;cursor:pointer">→</button>
-                <button type="button" id="pv-validate-recap" style="padding:7px 12px;border-radius:8px;border:none;background:#10b981;color:#fff;font-size:12px;font-weight:600;cursor:pointer">Valider le récap</button>
-            </div>
-            <div id="pv-queue-list" style="max-height:55vh;overflow-y:auto;padding:8px 12px 16px"></div>
-        </div>
-        <div id="pv-tab-journal" style="display:none">
-            <div style="padding:10px 16px;border-bottom:1px solid var(--light-border);display:flex;align-items:center;gap:8px">
-                <button type="button" class="week-arrow" id="pv-journal-prev" style="padding:4px 12px;border-radius:8px;border:1.5px solid var(--light-border);background:transparent;cursor:pointer">←</button>
-                <span id="pv-journal-label" style="font-size:13px;font-weight:700;flex:1;text-align:center"></span>
-                <button type="button" class="week-arrow" id="pv-journal-next" style="padding:4px 12px;border-radius:8px;border:1.5px solid var(--light-border);background:transparent;cursor:pointer">→</button>
-            </div>
-            <div id="pv-journal-list" style="max-height:55vh;overflow-y:auto;padding:8px 12px 16px"></div>
-        </div>
-        <div style="padding:10px 16px 14px;border-top:1px solid var(--light-border);display:flex;justify-content:flex-end">
-            <a href="/pointage.html" id="pv-open-soir" style="font-size:12px;font-weight:600;color:#b45309;text-decoration:none">Ouvrir le pointage soir →</a>
-        </div>
-    </div>
-</div>
-
-<!-- Sous-modale ajuster / fin manuelle (vérif pointage) -->
-<div class="modal-overlay" id="pv-ajust-modal" style="display:none;z-index:1200">
-    <div class="modal" style="width:360px;max-width:92vw">
-        <div class="modal-header">
-            <span class="modal-title" id="pv-ajust-title">Ajuster</span>
-            <button class="modal-close" id="pv-ajust-close" type="button">&times;</button>
-        </div>
-        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
-            <p id="pv-ajust-hint" style="font-size:12px;color:var(--text-muted);margin:0"></p>
-            <label id="pv-ajust-debut-wrap" style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase">Début
-                <input type="time" step="900" id="pv-ajust-debut" style="display:block;width:100%;margin-top:4px;padding:10px;border:1.5px solid var(--light-border);border-radius:8px;font-size:16px;box-sizing:border-box">
-            </label>
-            <label id="pv-ajust-fin-wrap" style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase">Fin
-                <input type="time" step="900" id="pv-ajust-fin" style="display:block;width:100%;margin-top:4px;padding:10px;border:1.5px solid var(--light-border);border-radius:8px;font-size:16px;box-sizing:border-box">
-            </label>
-            <label id="pv-ajust-motif-wrap" style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase">Motif
-                <textarea id="pv-ajust-motif" rows="2" style="display:block;width:100%;margin-top:4px;padding:8px;border:1.5px solid var(--light-border);border-radius:8px;font-size:13px;box-sizing:border-box;font-family:inherit"></textarea>
-            </label>
-            <button type="button" id="pv-ajust-submit" style="padding:12px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-weight:600;cursor:pointer">Enregistrer</button>
-        </div>
-    </div>
-</div>
-
-</div>
-
-<!-- Modale vérification Pointage -->
-<div class="modal-overlay" id="pointage-verif-modal" style="display:none">
-    <div class="modal" style="width:620px;max-width:95vw">
-        <div class="modal-header">
-            <span class="modal-title">Vérification Pointage</span>
-            <button class="modal-close" id="pointage-verif-close" type="button">&times;</button>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:0;border-bottom:2px solid var(--light-border);padding:0 12px">
-            <button type="button" id="pv-tab-btn-queue" style="background:none;border:none;border-bottom:2px solid var(--accent);padding:10px 14px;min-height:40px;font-size:13px;font-weight:600;color:var(--accent);cursor:pointer">À vérifier</button>
-            <button type="button" id="pv-tab-btn-journal" style="background:none;border:none;border-bottom:2px solid transparent;padding:10px 14px;min-height:40px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer">Journal</button>
-        </div>
-        <div id="pv-tab-queue">
-            <div style="padding:10px 16px;border-bottom:1px solid var(--light-border);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <button type="button" class="week-arrow" id="pv-week-prev" style="padding:4px 12px;border-radius:8px;border:1.5px solid var(--light-border);background:transparent;cursor:pointer">←</button>
-                <span id="pv-week-label" style="font-size:13px;font-weight:700;flex:1;text-align:center"></span>
-                <button type="button" class="week-arrow" id="pv-week-next" style="padding:4px 12px;border-radius:8px;border:1.5px solid var(--light-border);background:transparent;cursor:pointer">→</button>
-                <button type="button" id="pv-validate-recap" style="padding:7px 12px;border-radius:8px;border:none;background:#10b981;color:#fff;font-size:12px;font-weight:600;cursor:pointer">Valider le récap</button>
-            </div>
-            <div id="pv-queue-list" style="max-height:55vh;overflow-y:auto;padding:8px 12px 16px"></div>
-        </div>
-        <div id="pv-tab-journal" style="display:none">
-            <div style="padding:10px 16px;border-bottom:1px solid var(--light-border);display:flex;align-items:center;gap:8px">
-                <button type="button" class="week-arrow" id="pv-journal-prev" style="padding:4px 12px;border-radius:8px;border:1.5px solid var(--light-border);background:transparent;cursor:pointer">←</button>
-                <span id="pv-journal-label" style="font-size:13px;font-weight:700;flex:1;text-align:center"></span>
-                <button type="button" class="week-arrow" id="pv-journal-next" style="padding:4px 12px;border-radius:8px;border:1.5px solid var(--light-border);background:transparent;cursor:pointer">→</button>
-            </div>
-            <div id="pv-journal-list" style="max-height:55vh;overflow-y:auto;padding:8px 12px 16px"></div>
-        </div>
-        <div style="padding:10px 16px 14px;border-top:1px solid var(--light-border);display:flex;justify-content:flex-end">
-            <a href="/pointage.html" id="pv-open-soir" style="font-size:12px;font-weight:600;color:#b45309;text-decoration:none">Ouvrir le pointage soir →</a>
-        </div>
-    </div>
-</div>
-
-<!-- Sous-modale ajuster heures (vérif pointage) -->
-<div class="modal-overlay" id="pv-ajust-modal" style="display:none;z-index:1200">
-    <div class="modal" style="width:360px;max-width:92vw">
-        <div class="modal-header">
-            <span class="modal-title" id="pv-ajust-title">Ajuster</span>
-            <button class="modal-close" id="pv-ajust-close" type="button">&times;</button>
-        </div>
-        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
-            <p id="pv-ajust-hint" style="font-size:12px;color:var(--text-muted);margin:0"></p>
-            <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase">Début
-                <input type="time" step="900" id="pv-ajust-debut" style="display:block;width:100%;margin-top:4px;padding:10px;border:1.5px solid var(--light-border);border-radius:8px;font-size:16px;box-sizing:border-box">
-            </label>
-            <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase">Fin
-                <input type="time" step="900" id="pv-ajust-fin" style="display:block;width:100%;margin-top:4px;padding:10px;border:1.5px solid var(--light-border);border-radius:8px;font-size:16px;box-sizing:border-box">
-            </label>
-            <label id="pv-ajust-motif-wrap" style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase">Motif
-                <textarea id="pv-ajust-motif" rows="2" style="display:block;width:100%;margin-top:4px;padding:8px;border:1.5px solid var(--light-border);border-radius:8px;font-size:13px;box-sizing:border-box;font-family:inherit"></textarea>
-            </label>
-            <button type="button" id="pv-ajust-submit" style="padding:12px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-weight:600;cursor:pointer">Enregistrer</button>
-        </div>
-    </div>
-</div>
 
 <!-- ── Drawer bottom sheet mobile ──
      Règle : le drawer est le miroir mobile du header-left. Tout ce qui disparaît
@@ -1649,10 +1531,7 @@
         Échanges
         <span id="drawer-swaps-badge" style="display:none;background:#e74c3c;color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px">0</span>
     </button>
-    <button class="drawer-btn drawer-btn-pointage" id="drawer-btn-pointage" onclick="closeMobileDrawer();document.getElementById('btn-pointage').click()">
-        Pointage
-        <span id="drawer-pointage-badge" style="display:none;background:#e74c3c;color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px">0</span>
-    </button>
+    <a class="drawer-btn drawer-btn-pointage" href="/pointage.html" onclick="closeMobileDrawer()">Pointage</a>
     <a class="drawer-btn" href="/performance.html" onclick="closeMobileDrawer()">Performance</a>
     <button class="drawer-btn" onclick="closeMobileDrawer();document.getElementById('btn-recap').click()">Récap mensuel</button>
     <div class="drawer-section-label">Disponibilités</div>

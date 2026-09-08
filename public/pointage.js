@@ -270,6 +270,8 @@ async function init() {
                 loadShifts();
                 loadRevenue();
                 initCloturePanel();
+                loadPointageBadge();
+                if (_pvWeekStart) loadPointageVerifQueue();
             });
         }
     }
@@ -310,6 +312,7 @@ async function init() {
     initRevenueForm();
     await loadRevenue();
     initCloturePanel();
+    initPointageVerifPanel();
 }
 
 // ── CA de la soirée ───────────────────────────────────────────────────────────
@@ -1088,6 +1091,7 @@ async function clotureManuelle(shift, phase) {
             showToast(isDebut ? 'Début manuel enregistré' : 'Fin manuelle enregistrée');
             renderCloturesList();
             refreshCodeCloture(true);
+            refreshVerifAfterMutation();
             return true;
         },
     });
@@ -1120,6 +1124,7 @@ async function ajusterHeureCloture(shift) {
             if (!res.ok) throw new Error(data.error || 'Erreur');
             showToast('Heures ajustées (origines conservées)');
             renderCloturesList();
+            refreshVerifAfterMutation();
             return true;
         },
     });
@@ -1329,6 +1334,273 @@ function initCloturePanel() {
     }
     refreshCodeCloture(true);
     renderCloturesList();
+}
+
+// ── Vérification Pointage (patron / directeur / observateur) ─────────────────
+
+function refreshVerifAfterMutation() {
+    if (!canUseVerifPanel()) return;
+    loadPointageBadge();
+    if (_pvWeekStart) loadPointageVerifQueue();
+}
+
+function canUseVerifPanel() {
+    return !!(currentUser && MANAGER_ROLES.includes(currentUser.role));
+}
+
+let _pvWeekStart = null;
+let _pvJournalWeek = null;
+let _pvBound = false;
+
+async function loadPointageBadge() {
+    if (!canUseVerifPanel()) return;
+    try {
+        const res = await fetch('/api/pointage/verif/count', { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const count = data.total || 0;
+        const label = count > 99 ? '99+' : String(count);
+        const badge = document.getElementById('pointage-badge');
+        if (badge) {
+            badge.textContent = label;
+            badge.style.display = count > 0 ? 'inline-flex' : 'none';
+        }
+        const inline = document.getElementById('pv-badge-inline');
+        if (inline) {
+            if (count > 0) {
+                inline.style.display = '';
+                inline.textContent = count + ' à traiter';
+            } else {
+                inline.style.display = 'none';
+            }
+        }
+        if (!_pvWeekStart && data.week_start) {
+            _pvWeekStart = data.week_start;
+            _pvJournalWeek = data.week_start;
+        }
+    } catch { /* silencieux */ }
+}
+
+function _pvFmtH(h) {
+    if (h == null || h === '') return '—';
+    return window.ShiftHours ? ShiftHours.fmtHourOfDay(h) : String(h);
+}
+
+function _pvFmtParts(p) {
+    if (!p || p.year == null) return '—';
+    const pad = n => String(n).padStart(2, '0');
+    return pad(p.day) + '/' + pad(p.month) + '/' + p.year + ' ' + pad(p.hour) + ':' + pad(p.minute);
+}
+
+function _pvSourceBadge(label) {
+    if (!label) return '';
+    const cls = label === 'Code OTP' ? 'otp' : (label === 'Saisie manuelle' ? 'manuel' : 'autre');
+    return '<span class="pv-source-badge ' + cls + '">' + escapeHtml(label) + '</span>';
+}
+
+function _pvAddDays(dateStr, n) {
+    const d = new Date(dateStr + 'T12:00:00');
+    d.setDate(d.getDate() + n);
+    return toDateStr(d);
+}
+
+function _pvWeekLabel(monday) {
+    const sun = _pvAddDays(monday, 6);
+    const fmt = s => {
+        const parts = s.split('-');
+        return parts[2] + '/' + parts[1];
+    };
+    return 'Semaine du ' + fmt(monday) + ' → ' + fmt(sun);
+}
+
+function switchPointageVerifTab(tab) {
+    const queue = document.getElementById('pv-tab-queue');
+    const journal = document.getElementById('pv-tab-journal');
+    const btnQ = document.getElementById('pv-tab-btn-queue');
+    const btnJ = document.getElementById('pv-tab-btn-journal');
+    if (tab === 'journal') {
+        if (queue) queue.style.display = 'none';
+        if (journal) journal.style.display = '';
+        btnQ?.classList.remove('active');
+        btnJ?.classList.add('active');
+        loadPointageVerifJournal();
+    } else {
+        if (queue) queue.style.display = '';
+        if (journal) journal.style.display = 'none';
+        btnJ?.classList.remove('active');
+        btnQ?.classList.add('active');
+        loadPointageVerifQueue();
+    }
+}
+
+function scrollToVerifPanel() {
+    const panel = document.getElementById('pointage-verif-panel');
+    if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function loadPointageVerifQueue() {
+    const list = document.getElementById('pv-queue-list');
+    const label = document.getElementById('pv-week-label');
+    if (!list || !_pvWeekStart) return;
+    if (label) label.textContent = _pvWeekLabel(_pvWeekStart);
+    list.innerHTML = '<div class="empty-msg" style="padding:20px">Chargement…</div>';
+    try {
+        const res = await fetch('/api/pointage/verif/pending?week_start=' + encodeURIComponent(_pvWeekStart), { credentials: 'include' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        const items = data.items || [];
+        const nonClot = items.filter(i => i.statut === 'non_cloture');
+        const aVal = items.filter(i => i.statut === 'a_valider');
+        if (!items.length) {
+            list.innerHTML = '<div class="empty-msg" style="padding:20px">Rien à vérifier pour cette semaine.</div>';
+            return;
+        }
+        let html = '';
+        const section = (title, rows) => {
+            if (!rows.length) return;
+            html += '<div class="extra-title" style="margin:12px 0 8px">' + escapeHtml(title) + ' (' + rows.length + ')</div>';
+            rows.forEach(s => {
+                html += '<div class="cloture-row' + (s.statut === 'a_valider' ? ' closed' : '') + '" data-pv-id="' + escapeHtml(String(s._id)) + '">';
+                html += '<div class="cloture-row-main">';
+                html += '<div class="cloture-row-name">' + escapeHtml(s.staff_name || '—') + '</div>';
+                html += '<div class="cloture-row-meta">' + escapeHtml(s.establishment_name || '') + ' · ' + escapeHtml(s.date || '') + '</div>';
+                html += '<div class="cloture-row-hours">Planifié ' + escapeHtml(_pvFmtH(s.start_time)) + '–' + escapeHtml(_pvFmtH(s.end_time)) + '</div>';
+                html += '<div class="cloture-row-hours">Début : <strong>' + escapeHtml(s.debut_valide_finale || '—') + '</strong>' + _pvSourceBadge(s.debut_source_label) + '</div>';
+                html += '<div class="cloture-row-hours">Fin : <strong>' + escapeHtml(s.heure_validee_finale || '—') + '</strong>' + _pvSourceBadge(s.cloture_source_label) + '</div>';
+                html += '</div><div class="cloture-row-actions"></div></div>';
+            });
+        };
+        section('Non clôturés (soirée active)', nonClot);
+        section('Clôturés à valider', aVal);
+        list.innerHTML = html;
+        list.querySelectorAll('[data-pv-id]').forEach(row => {
+            const id = row.getAttribute('data-pv-id');
+            const item = items.find(x => String(x._id) === id);
+            if (!item) return;
+            const actions = row.querySelector('.cloture-row-actions');
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            if (item.statut === 'non_cloture') {
+                btn.textContent = item.debut_valide_code ? 'Fin manuelle' : 'Clôturer';
+                btn.addEventListener('click', () => clotureManuelle(item, 'fin'));
+            } else {
+                btn.textContent = 'Ajuster';
+                btn.className = 'btn-adjust';
+                btn.addEventListener('click', () => ajusterHeureCloture(item));
+            }
+            actions.appendChild(btn);
+        });
+    } catch (e) {
+        list.innerHTML = '<div class="cloture-error">' + escapeHtml(e.message) + '</div>';
+    }
+}
+
+async function loadPointageVerifJournal() {
+    const list = document.getElementById('pv-journal-list');
+    const label = document.getElementById('pv-journal-label');
+    if (!list || !_pvJournalWeek) return;
+    if (label) label.textContent = _pvWeekLabel(_pvJournalWeek);
+    const from = _pvJournalWeek;
+    const to = _pvAddDays(_pvJournalWeek, 6);
+    list.innerHTML = '<div class="empty-msg" style="padding:20px">Chargement…</div>';
+    try {
+        const res = await fetch('/api/pointage/verif/journal?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to), { credentials: 'include' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        if (!data.length) {
+            list.innerHTML = '<div class="empty-msg" style="padding:20px">Aucun mouvement sur cette semaine.</div>';
+            return;
+        }
+        list.innerHTML = data.map(v => {
+            const acteur = v.acteur_name || v.acteur_id || '—';
+            const role = v.acteur_role ? ' (' + v.acteur_role + ')' : '';
+            return '<div class="cloture-row">'
+                + '<div class="cloture-row-main">'
+                + '<div class="cloture-row-name">' + escapeHtml(v.staff_name || '—') + '</div>'
+                + '<div class="cloture-row-meta">' + escapeHtml(_pvFmtParts(v.heure_saisie)) + '</div>'
+                + '<div class="cloture-row-hours">' + escapeHtml(v.establishment_name || '')
+                + (v.shift_date ? ' · ' + escapeHtml(v.shift_date) : '') + '</div>'
+                + '<div class="cloture-row-hours">Par <strong>' + escapeHtml(acteur) + '</strong>' + escapeHtml(role)
+                + _pvSourceBadge(v.source_label) + '</div>'
+                + '<div class="cloture-row-meta">' + escapeHtml([v.action, v.phase, v.resultat].filter(Boolean).join(' · '))
+                + (v.debut_retenue || v.fin_retenue ? ' · ' + escapeHtml((v.debut_retenue || '—') + '–' + (v.fin_retenue || '—')) : '')
+                + '</div>'
+                + (v.motif ? '<div class="cloture-row-motif">' + escapeHtml(v.motif) + '</div>' : '')
+                + '</div></div>';
+        }).join('');
+    } catch (e) {
+        list.innerHTML = '<div class="cloture-error">' + escapeHtml(e.message) + '</div>';
+    }
+}
+
+async function validatePointageRecapFromPanel() {
+    if (!_pvWeekStart || !currentEstabId) {
+        showToast('Sélectionne un établissement', true);
+        return;
+    }
+    if (!confirm('Valider le récap de la semaine du ' + _pvWeekStart + ' pour cet établissement ?')) return;
+    try {
+        const res = await fetch('/api/etablissements/' + encodeURIComponent(currentEstabId) + '/valider-recap', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ week_start: _pvWeekStart }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        showToast(data.modified ? ('Récap validé (' + data.modified + ')') : 'Rien à valider');
+        loadPointageBadge();
+        loadPointageVerifQueue();
+        renderCloturesList();
+    } catch (e) {
+        showToast(e.message, true);
+    }
+}
+
+function initPointageVerifPanel() {
+    const panel = document.getElementById('pointage-verif-panel');
+    const btnHdr = document.getElementById('btn-verif-pointage');
+    if (!canUseVerifPanel()) {
+        if (panel) panel.style.display = 'none';
+        if (btnHdr) btnHdr.style.display = 'none';
+        return;
+    }
+    if (panel) panel.style.display = '';
+    if (btnHdr) btnHdr.style.display = '';
+    if (!_pvBound) {
+        _pvBound = true;
+        btnHdr?.addEventListener('click', () => {
+            switchPointageVerifTab('queue');
+            scrollToVerifPanel();
+        });
+        document.getElementById('pv-tab-btn-queue')?.addEventListener('click', () => switchPointageVerifTab('queue'));
+        document.getElementById('pv-tab-btn-journal')?.addEventListener('click', () => switchPointageVerifTab('journal'));
+        document.getElementById('pv-week-prev')?.addEventListener('click', () => {
+            _pvWeekStart = _pvAddDays(_pvWeekStart, -7);
+            loadPointageVerifQueue();
+        });
+        document.getElementById('pv-week-next')?.addEventListener('click', () => {
+            _pvWeekStart = _pvAddDays(_pvWeekStart, 7);
+            loadPointageVerifQueue();
+        });
+        document.getElementById('pv-journal-prev')?.addEventListener('click', () => {
+            _pvJournalWeek = _pvAddDays(_pvJournalWeek, -7);
+            loadPointageVerifJournal();
+        });
+        document.getElementById('pv-journal-next')?.addEventListener('click', () => {
+            _pvJournalWeek = _pvAddDays(_pvJournalWeek, 7);
+            loadPointageVerifJournal();
+        });
+        document.getElementById('pv-validate-recap')?.addEventListener('click', validatePointageRecapFromPanel);
+    }
+    loadPointageBadge().then(() => {
+        if (!_pvWeekStart) {
+            const d = today || toDateStr(new Date());
+            const mon = window.Week ? Week.toDateStr(Week.weekStart(new Date(d + 'T12:00:00'))) : d;
+            _pvWeekStart = mon;
+            _pvJournalWeek = mon;
+        }
+        loadPointageVerifQueue();
+    });
 }
 
 init();

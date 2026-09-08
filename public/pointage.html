@@ -674,6 +674,35 @@
             border: 1px solid var(--light-border);
         }
 
+        .pv-tab {
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            padding: 10px 14px;
+            min-height: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: var(--font);
+        }
+        .pv-tab.active {
+            border-bottom-color: var(--accent);
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .pv-source-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 6px;
+            margin-left: 4px;
+        }
+        .pv-source-badge.otp { background: #e0f2fe; color: #0369a1; }
+        .pv-source-badge.manuel { background: #fef3c7; color: #92400e; }
+        .pv-source-badge.autre { background: #f1f5f9; color: #475569; }
+
         /* Historique litiges */
         #litige-modal {
             display: none;
@@ -889,6 +918,10 @@
         </div>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
+        <button type="button" class="btn-back" id="btn-verif-pointage" style="display:none;position:relative">
+            Vérification
+            <span id="pointage-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#e74c3c;color:#fff;font-size:9px;font-weight:700;min-width:14px;height:14px;padding:0 3px;border-radius:8px;align-items:center;justify-content:center;line-height:14px">0</span>
+        </button>
         <a href="/planning.html" class="btn-back" id="btn-back" style="display:none">← Planning</a>
         <button class="btn-logout" onclick="logout()">⎋ Sortir</button>
     </div>
@@ -906,6 +939,35 @@
 </div>
 
 <div class="container">
+    <!-- Vérification (patron / directeur / observateur) -->
+    <div id="pointage-verif-panel" class="cloture-week-section" style="display:none;margin-bottom:16px">
+        <div class="extra-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+            <span>Vérification</span>
+            <span id="pv-badge-inline" style="display:none;background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px"></span>
+        </div>
+        <div style="display:flex;gap:0;border-bottom:2px solid var(--light-border);margin:0 -4px 0">
+            <button type="button" id="pv-tab-btn-queue" class="pv-tab active">À vérifier</button>
+            <button type="button" id="pv-tab-btn-journal" class="pv-tab">Journal</button>
+        </div>
+        <div id="pv-tab-queue">
+            <div class="cloture-week-bar" style="margin-top:10px">
+                <button type="button" id="pv-week-prev" class="week-arrow" aria-label="Semaine précédente">←</button>
+                <span id="pv-week-label" class="cloture-week-label"></span>
+                <button type="button" id="pv-week-next" class="week-arrow" aria-label="Semaine suivante">→</button>
+                <button type="button" id="pv-validate-recap" class="btn-validate-cloture">Valider le récap</button>
+            </div>
+            <div id="pv-queue-list" class="clotures-list"></div>
+        </div>
+        <div id="pv-tab-journal" style="display:none">
+            <div class="cloture-week-bar" style="margin-top:10px">
+                <button type="button" id="pv-journal-prev" class="week-arrow" aria-label="Semaine précédente">←</button>
+                <span id="pv-journal-label" class="cloture-week-label"></span>
+                <button type="button" id="pv-journal-next" class="week-arrow" aria-label="Semaine suivante">→</button>
+            </div>
+            <div id="pv-journal-list" class="clotures-list"></div>
+        </div>
+    </div>
+
     <!-- Clôture OTP + récap semaine (patron / directeur) -->
     <div id="cloture-panel" class="cloture-panel" aria-live="polite">
         <div class="cloture-code-card">

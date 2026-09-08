@@ -53,10 +53,9 @@ Quand vous validez le récap de la semaine, les heures sont marquées comme vali
 l'origine du code reste intacte, seule l'heure retenue (et donc le réel) change.
 Le **responsable de soirée** ne peut plus ajuster une fois le récap validé.
 
-Depuis le tableau de bord, le bouton **Pointage** ouvre maintenant un **panel de
-vérification** (pastille rouge s'il reste des services non clôturés ou non validés) :
-file à traiter + journal de tous les mouvements (qui a saisi, quand, par **code OTP**
-ou **saisie manuelle**). Le code du soir reste sur la page Pointage dédiée.
+Depuis la page **Pointage**, un panneau **Vérification** (pastille rouge s'il reste
+des services non clôturés ou non validés) montre la file à traiter et le journal de
+tous les mouvements (qui a saisi, quand, par **code OTP** ou **saisie manuelle**).
 
 ## 5. Personne non prévue
 
