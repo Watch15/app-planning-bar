@@ -270,8 +270,6 @@ async function init() {
                 loadShifts();
                 loadRevenue();
                 initCloturePanel();
-                loadPointageBadge();
-                if (_pvWeekStart) loadPointageVerifQueue();
             });
         }
     }
@@ -312,7 +310,6 @@ async function init() {
     initRevenueForm();
     await loadRevenue();
     initCloturePanel();
-    initPointageVerifPanel();
 }
 
 // ── CA de la soirée ───────────────────────────────────────────────────────────
@@ -847,15 +844,19 @@ function initExtraForm() {
 
 // ── Clôture OTP + récap semaine (fusionnée dans Pointage) ─────────────────────
 
-const CLOTURE_ROLES = ['patron', 'directeur'];
+const CLOTURE_ROLES = ['patron', 'directeur', 'observateur'];
 let _codeCloturePoll = null;
 let _codeClotureExpireMs = null;
 let _codeClotureTick = null;
 let _cloturesDay = null;
 let _clotureBound = false;
+let _clotureSearch = '';
+let _clotureTab = 'shifts';
+let _clotureDayShiftsCache = [];
+let _clotureJournalCache = [];
 
 function canUseClotureUi() {
-    // Patron/directeur : toujours. Staff : seulement s'il est sur pointage.html
+    // Patron/directeur/observateur : toujours. Staff : seulement s'il est sur pointage.html
     // en tant que responsable de soirée (?estab= déjà vérifié à l'init).
     return !!(currentUser && (
         CLOTURE_ROLES.includes(currentUser.role)
@@ -865,6 +866,11 @@ function canUseClotureUi() {
 
 function isClotureManager() {
     return !!(currentUser && CLOTURE_ROLES.includes(currentUser.role));
+}
+
+function nameMatchesSearch(name, q) {
+    if (!q) return true;
+    return String(name || '').toLowerCase().includes(q);
 }
 
 function setLegacyPointageVisible(visible) {
@@ -955,95 +961,109 @@ async function renderCloturesList() {
         );
         const shifts = await res.json();
         if (!res.ok) throw new Error(shifts.error || 'Erreur');
-        const dayShifts = (shifts || []).filter(s => s.date === dayStr);
-        if (!dayShifts.length) {
-            list.innerHTML = '<div class="cloture-empty">Aucun shift ce jour</div>';
-            return;
-        }
-        list.innerHTML = '';
-        dayShifts
+        _clotureDayShiftsCache = (shifts || [])
+            .filter(s => s.date === dayStr)
             .slice()
-            .sort((a, b) => String(a.staff_name || '').localeCompare(String(b.staff_name || ''), 'fr'))
-            .forEach(s => {
-                const row = document.createElement('div');
-                const hasDebut = !!s.debut_valide_code;
-                const closed = !!s.heure_validee_finale;
-                const inService = hasDebut && !closed;
-                row.className = 'cloture-row' + (closed ? ' closed' : '');
-                let statusBadge;
-                if (closed) {
-                    statusBadge = '<span class="cloture-badge ' + (s.cloture_source === 'manuelle' ? 'manuelle' : 'code') + '">Clôturé</span>';
-                } else if (inService) {
-                    statusBadge = '<span class="cloture-badge code">En service</span>';
-                } else {
-                    statusBadge = '<span class="cloture-badge wait">Non commencé</span>';
-                }
-                const validBadge = s.patron_valide
-                    ? '<span class="cloture-badge ok">Récap validé</span>'
-                    : '';
-                const fmtPlan = h => (h != null && window.ShiftHours ? ShiftHours.fmtHourOfDay(h) : (h != null ? fmtH(h) : '—'));
-                const fmtReal = (a, b) => (a != null && b != null && window.ShiftHours)
-                    ? (ShiftHours.fmtHourOfDay(a) + '–' + ShiftHours.fmtHourOfDay(b))
-                    : '—';
-                row.innerHTML =
-                    '<div class="cloture-row-main">' +
-                        '<div class="cloture-row-name">' + escapeHtml(s.staff_name || '—') +
-                        (s.is_joker ? ' <span class="joker">(Joker)</span>' : '') + '</div>' +
-                        '<div class="cloture-row-meta">' +
-                        'Planifié ' + fmtPlan(s.start_time) + '–' + fmtPlan(s.end_time) +
-                        ' · ' + statusBadge + ' ' + validBadge + '</div>' +
-                        '<div class="cloture-row-hours">' +
-                            '<span>Début origine : <strong>' + escapeHtml(s.debut_valide_code || '—') + '</strong></span>' +
-                            '<span>Début retenu : <strong>' + escapeHtml(s.debut_valide_finale || '—') + '</strong></span>' +
-                        '</div>' +
-                        '<div class="cloture-row-hours">' +
-                            '<span>Fin origine : <strong>' + escapeHtml(s.heure_validee_code || '—') + '</strong></span>' +
-                            '<span>Fin retenue : <strong>' + escapeHtml(s.heure_validee_finale || '—') + '</strong></span>' +
-                        '</div>' +
-                        '<div class="cloture-row-hours">' +
-                            '<span>Heures réelles : <strong>' + escapeHtml(fmtReal(s.real_start, s.real_end)) + '</strong></span>' +
-                        '</div>' +
-                        (s.motif_modification ? '<div class="cloture-row-motif">' + escapeHtml(s.motif_modification) + '</div>' : '') +
-                    '</div>' +
-                    '<div class="cloture-row-actions"></div>';
-                const actions = row.querySelector('.cloture-row-actions');
-                if (!hasDebut && !closed) {
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.textContent = 'Début manuel';
-                    btn.addEventListener('click', () => clotureManuelle(s, 'debut'));
-                    actions.appendChild(btn);
-                } else if (hasDebut && !closed) {
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.textContent = 'Fin manuelle';
-                    btn.addEventListener('click', () => clotureManuelle(s, 'fin'));
-                    actions.appendChild(btn);
-                } else if (closed) {
-                    const canAdjust = isClotureManager()
-                        || (currentUser.role === 'staff' && !s.patron_valide);
-                    if (canAdjust) {
-                        const btn = document.createElement('button');
-                        btn.type = 'button';
-                        btn.className = 'btn-adjust';
-                        btn.textContent = 'Ajuster';
-                        btn.addEventListener('click', () => ajusterHeureCloture(s));
-                        actions.appendChild(btn);
-                    }
-                    if (isClotureManager()) {
-                        const btnLog = document.createElement('button');
-                        btnLog.type = 'button';
-                        btnLog.textContent = 'Historique';
-                        btnLog.title = 'Logs de validation (litige)';
-                        btnLog.addEventListener('click', () => showShiftValidationLogs(s));
-                        actions.appendChild(btnLog);
-                    }
-                }
-                list.appendChild(row);
-            });
+            .sort((a, b) => String(a.staff_name || '').localeCompare(String(b.staff_name || ''), 'fr'));
+        paintCloturesList();
+        if (_clotureTab === 'journal') loadClotureJournal();
     } catch (e) {
+        _clotureDayShiftsCache = [];
         list.innerHTML = '<div class="cloture-error">' + escapeHtml(e.message || 'Erreur') + '</div>';
     }
+}
+
+function paintCloturesList() {
+    const list = document.getElementById('clotures-list');
+    if (!list) return;
+    const q = _clotureSearch.trim().toLowerCase();
+    const dayShifts = _clotureDayShiftsCache.filter(s => nameMatchesSearch(s.staff_name, q));
+    if (!_clotureDayShiftsCache.length) {
+        list.innerHTML = '<div class="cloture-empty">Aucun shift ce jour</div>';
+        return;
+    }
+    if (!dayShifts.length) {
+        list.innerHTML = '<div class="cloture-empty">Aucun résultat pour « ' + escapeHtml(_clotureSearch.trim()) + ' »</div>';
+        return;
+    }
+    list.innerHTML = '';
+    dayShifts.forEach(s => {
+        const row = document.createElement('div');
+        const hasDebut = !!s.debut_valide_code;
+        const closed = !!s.heure_validee_finale;
+        const inService = hasDebut && !closed;
+        row.className = 'cloture-row' + (closed ? ' closed' : '');
+        let statusBadge;
+        if (closed) {
+            statusBadge = '<span class="cloture-badge ' + (s.cloture_source === 'manuelle' ? 'manuelle' : 'code') + '">Clôturé</span>';
+        } else if (inService) {
+            statusBadge = '<span class="cloture-badge code">En service</span>';
+        } else {
+            statusBadge = '<span class="cloture-badge wait">Non commencé</span>';
+        }
+        const validBadge = s.patron_valide
+            ? '<span class="cloture-badge ok">Récap validé</span>'
+            : '';
+        const fmtPlan = h => (h != null && window.ShiftHours ? ShiftHours.fmtHourOfDay(h) : (h != null ? fmtH(h) : '—'));
+        const fmtReal = (a, b) => (a != null && b != null && window.ShiftHours)
+            ? (ShiftHours.fmtHourOfDay(a) + '–' + ShiftHours.fmtHourOfDay(b))
+            : '—';
+        row.innerHTML =
+            '<div class="cloture-row-main">' +
+                '<div class="cloture-row-name">' + escapeHtml(s.staff_name || '—') +
+                (s.is_joker ? ' <span class="joker">(Joker)</span>' : '') + '</div>' +
+                '<div class="cloture-row-meta">' +
+                'Planifié ' + fmtPlan(s.start_time) + '–' + fmtPlan(s.end_time) +
+                ' · ' + statusBadge + ' ' + validBadge + '</div>' +
+                '<div class="cloture-row-hours">' +
+                    '<span>Début origine : <strong>' + escapeHtml(s.debut_valide_code || '—') + '</strong></span>' +
+                    '<span>Début retenu : <strong>' + escapeHtml(s.debut_valide_finale || '—') + '</strong></span>' +
+                '</div>' +
+                '<div class="cloture-row-hours">' +
+                    '<span>Fin origine : <strong>' + escapeHtml(s.heure_validee_code || '—') + '</strong></span>' +
+                    '<span>Fin retenue : <strong>' + escapeHtml(s.heure_validee_finale || '—') + '</strong></span>' +
+                '</div>' +
+                '<div class="cloture-row-hours">' +
+                    '<span>Heures réelles : <strong>' + escapeHtml(fmtReal(s.real_start, s.real_end)) + '</strong></span>' +
+                '</div>' +
+                (s.motif_modification ? '<div class="cloture-row-motif">' + escapeHtml(s.motif_modification) + '</div>' : '') +
+            '</div>' +
+            '<div class="cloture-row-actions"></div>';
+        const actions = row.querySelector('.cloture-row-actions');
+        if (!hasDebut && !closed) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.textContent = 'Début manuel';
+            btn.addEventListener('click', () => clotureManuelle(s, 'debut'));
+            actions.appendChild(btn);
+        } else if (hasDebut && !closed) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.textContent = 'Fin manuelle';
+            btn.addEventListener('click', () => clotureManuelle(s, 'fin'));
+            actions.appendChild(btn);
+        } else if (closed) {
+            const canAdjust = isClotureManager()
+                || (currentUser.role === 'staff' && !s.patron_valide);
+            if (canAdjust) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn-adjust';
+                btn.textContent = 'Ajuster';
+                btn.addEventListener('click', () => ajusterHeureCloture(s));
+                actions.appendChild(btn);
+            }
+            if (isClotureManager()) {
+                const btnLog = document.createElement('button');
+                btnLog.type = 'button';
+                btnLog.textContent = 'Historique';
+                btnLog.title = 'Logs de validation (litige)';
+                btnLog.addEventListener('click', () => showShiftValidationLogs(s));
+                actions.appendChild(btnLog);
+            }
+        }
+        list.appendChild(row);
+    });
 }
 
 async function clotureManuelle(shift, phase) {
@@ -1091,7 +1111,7 @@ async function clotureManuelle(shift, phase) {
             showToast(isDebut ? 'Début manuel enregistré' : 'Fin manuelle enregistrée');
             renderCloturesList();
             refreshCodeCloture(true);
-            refreshVerifAfterMutation();
+            refreshClotureJournalIfNeeded();
             return true;
         },
     });
@@ -1124,7 +1144,7 @@ async function ajusterHeureCloture(shift) {
             if (!res.ok) throw new Error(data.error || 'Erreur');
             showToast('Heures ajustées (origines conservées)');
             renderCloturesList();
-            refreshVerifAfterMutation();
+            refreshClotureJournalIfNeeded();
             return true;
         },
     });
@@ -1222,6 +1242,7 @@ async function validateCloturesWeek() {
         if (!res.ok) throw new Error(data.error || 'Erreur');
         showToast((data.modified || 0) + ' shift(s) validé(s)');
         renderCloturesList();
+        refreshClotureJournalIfNeeded();
     } catch (e) { showToast(e.message, true); }
 }
 
@@ -1294,13 +1315,18 @@ function initCloturePanel() {
     }
     panel.classList.add('visible');
     setLegacyPointageVisible(false);
-    // Valider le récap + nav jours = patron/directeur uniquement
+    // Valider le récap + nav jours = managers (patron/directeur/observateur)
     const btnValidate = document.getElementById('clotures-validate-week');
     if (btnValidate) btnValidate.style.display = isClotureManager() ? '' : 'none';
     const prev = document.getElementById('clotures-prev-day');
     const next = document.getElementById('clotures-next-day');
     if (prev) prev.style.display = isClotureManager() ? '' : 'none';
     if (next) next.style.display = isClotureManager() ? '' : 'none';
+    const btnJournal = document.getElementById('cloture-tab-btn-journal');
+    const tabs = document.getElementById('cloture-tabs');
+    if (tabs) tabs.style.display = isClotureManager() ? 'flex' : 'none';
+    if (btnJournal) btnJournal.style.display = isClotureManager() ? '' : 'none';
+    if (!isClotureManager() && _clotureTab === 'journal') switchClotureTab('shifts');
     // Responsable : verrouillé sur la soirée active (`today`)
     _cloturesDay = today ? new Date(today + 'T12:00:00') : new Date();
     if (!_clotureBound) {
@@ -1317,6 +1343,13 @@ function initCloturePanel() {
             renderCloturesList();
         });
         document.getElementById('clotures-validate-week')?.addEventListener('click', validateCloturesWeek);
+        document.getElementById('cloture-tab-btn-shifts')?.addEventListener('click', () => switchClotureTab('shifts'));
+        document.getElementById('cloture-tab-btn-journal')?.addEventListener('click', () => switchClotureTab('journal'));
+        document.getElementById('clotures-search')?.addEventListener('input', e => {
+            _clotureSearch = e.target.value || '';
+            if (_clotureTab === 'journal') paintClotureJournal();
+            else paintCloturesList();
+        });
         document.getElementById('litige-modal-close')?.addEventListener('click', () => {
             document.getElementById('litige-modal')?.classList.remove('open');
         });
@@ -1336,271 +1369,96 @@ function initCloturePanel() {
     renderCloturesList();
 }
 
-// ── Vérification Pointage (patron / directeur / observateur) ─────────────────
+// ── Journal clôture (jour courant, managers) ─────────────────────────────────
 
-function refreshVerifAfterMutation() {
-    if (!canUseVerifPanel()) return;
-    loadPointageBadge();
-    if (_pvWeekStart) loadPointageVerifQueue();
+function refreshClotureJournalIfNeeded() {
+    if (_clotureTab === 'journal' && isClotureManager()) loadClotureJournal();
 }
 
-function canUseVerifPanel() {
-    return !!(currentUser && MANAGER_ROLES.includes(currentUser.role));
+function switchClotureTab(tab) {
+    _clotureTab = tab === 'journal' ? 'journal' : 'shifts';
+    const panelShifts = document.getElementById('cloture-tab-shifts');
+    const panelJournal = document.getElementById('cloture-tab-journal');
+    const btnShifts = document.getElementById('cloture-tab-btn-shifts');
+    const btnJournal = document.getElementById('cloture-tab-btn-journal');
+    if (_clotureTab === 'journal') {
+        if (panelShifts) panelShifts.style.display = 'none';
+        if (panelJournal) panelJournal.style.display = '';
+        btnShifts?.classList.remove('active');
+        btnJournal?.classList.add('active');
+        loadClotureJournal();
+    } else {
+        if (panelShifts) panelShifts.style.display = '';
+        if (panelJournal) panelJournal.style.display = 'none';
+        btnJournal?.classList.remove('active');
+        btnShifts?.classList.add('active');
+        paintCloturesList();
+    }
 }
 
-let _pvWeekStart = null;
-let _pvJournalWeek = null;
-let _pvBound = false;
-
-async function loadPointageBadge() {
-    if (!canUseVerifPanel()) return;
-    try {
-        const res = await fetch('/api/pointage/verif/count', { credentials: 'include' });
-        if (!res.ok) return;
-        const data = await res.json();
-        const count = data.total || 0;
-        const label = count > 99 ? '99+' : String(count);
-        const badge = document.getElementById('pointage-badge');
-        if (badge) {
-            badge.textContent = label;
-            badge.style.display = count > 0 ? 'inline-flex' : 'none';
-        }
-        const inline = document.getElementById('pv-badge-inline');
-        if (inline) {
-            if (count > 0) {
-                inline.style.display = '';
-                inline.textContent = count + ' à traiter';
-            } else {
-                inline.style.display = 'none';
-            }
-        }
-        if (!_pvWeekStart && data.week_start) {
-            _pvWeekStart = data.week_start;
-            _pvJournalWeek = data.week_start;
-        }
-    } catch { /* silencieux */ }
-}
-
-function _pvFmtH(h) {
-    if (h == null || h === '') return '—';
-    return window.ShiftHours ? ShiftHours.fmtHourOfDay(h) : String(h);
-}
-
-function _pvFmtParts(p) {
+function _clotureFmtParts(p) {
     if (!p || p.year == null) return '—';
     const pad = n => String(n).padStart(2, '0');
     return pad(p.day) + '/' + pad(p.month) + '/' + p.year + ' ' + pad(p.hour) + ':' + pad(p.minute);
 }
 
-function _pvSourceBadge(label) {
+function _clotureSourceBadge(label) {
     if (!label) return '';
     const cls = label === 'Code OTP' ? 'otp' : (label === 'Saisie manuelle' ? 'manuel' : 'autre');
     return '<span class="pv-source-badge ' + cls + '">' + escapeHtml(label) + '</span>';
 }
 
-function _pvAddDays(dateStr, n) {
-    const d = new Date(dateStr + 'T12:00:00');
-    d.setDate(d.getDate() + n);
-    return toDateStr(d);
-}
-
-function _pvWeekLabel(monday) {
-    const sun = _pvAddDays(monday, 6);
-    const fmt = s => {
-        const parts = s.split('-');
-        return parts[2] + '/' + parts[1];
-    };
-    return 'Semaine du ' + fmt(monday) + ' → ' + fmt(sun);
-}
-
-function switchPointageVerifTab(tab) {
-    const queue = document.getElementById('pv-tab-queue');
-    const journal = document.getElementById('pv-tab-journal');
-    const btnQ = document.getElementById('pv-tab-btn-queue');
-    const btnJ = document.getElementById('pv-tab-btn-journal');
-    if (tab === 'journal') {
-        if (queue) queue.style.display = 'none';
-        if (journal) journal.style.display = '';
-        btnQ?.classList.remove('active');
-        btnJ?.classList.add('active');
-        loadPointageVerifJournal();
-    } else {
-        if (queue) queue.style.display = '';
-        if (journal) journal.style.display = 'none';
-        btnJ?.classList.remove('active');
-        btnQ?.classList.add('active');
-        loadPointageVerifQueue();
-    }
-}
-
-function scrollToVerifPanel() {
-    const panel = document.getElementById('pointage-verif-panel');
-    if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-async function loadPointageVerifQueue() {
-    const list = document.getElementById('pv-queue-list');
-    const label = document.getElementById('pv-week-label');
-    if (!list || !_pvWeekStart) return;
-    if (label) label.textContent = _pvWeekLabel(_pvWeekStart);
+async function loadClotureJournal() {
+    const list = document.getElementById('clotures-journal-list');
+    if (!list || !_cloturesDay || !currentEstabId || !isClotureManager()) return;
+    const dayStr = toDateStr(_cloturesDay);
     list.innerHTML = '<div class="empty-msg" style="padding:20px">Chargement…</div>';
     try {
-        const res = await fetch('/api/pointage/verif/pending?week_start=' + encodeURIComponent(_pvWeekStart), { credentials: 'include' });
+        const url = '/api/pointage/verif/journal?from=' + encodeURIComponent(dayStr)
+            + '&to=' + encodeURIComponent(dayStr)
+            + '&establishment_id=' + encodeURIComponent(currentEstabId);
+        const res = await fetch(url, { credentials: 'include' });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Erreur');
-        const items = data.items || [];
-        const nonClot = items.filter(i => i.statut === 'non_cloture');
-        const aVal = items.filter(i => i.statut === 'a_valider');
-        if (!items.length) {
-            list.innerHTML = '<div class="empty-msg" style="padding:20px">Rien à vérifier pour cette semaine.</div>';
-            return;
-        }
-        let html = '';
-        const section = (title, rows) => {
-            if (!rows.length) return;
-            html += '<div class="extra-title" style="margin:12px 0 8px">' + escapeHtml(title) + ' (' + rows.length + ')</div>';
-            rows.forEach(s => {
-                html += '<div class="cloture-row' + (s.statut === 'a_valider' ? ' closed' : '') + '" data-pv-id="' + escapeHtml(String(s._id)) + '">';
-                html += '<div class="cloture-row-main">';
-                html += '<div class="cloture-row-name">' + escapeHtml(s.staff_name || '—') + '</div>';
-                html += '<div class="cloture-row-meta">' + escapeHtml(s.establishment_name || '') + ' · ' + escapeHtml(s.date || '') + '</div>';
-                html += '<div class="cloture-row-hours">Planifié ' + escapeHtml(_pvFmtH(s.start_time)) + '–' + escapeHtml(_pvFmtH(s.end_time)) + '</div>';
-                html += '<div class="cloture-row-hours">Début : <strong>' + escapeHtml(s.debut_valide_finale || '—') + '</strong>' + _pvSourceBadge(s.debut_source_label) + '</div>';
-                html += '<div class="cloture-row-hours">Fin : <strong>' + escapeHtml(s.heure_validee_finale || '—') + '</strong>' + _pvSourceBadge(s.cloture_source_label) + '</div>';
-                html += '</div><div class="cloture-row-actions"></div></div>';
-            });
-        };
-        section('Non clôturés (soirée active)', nonClot);
-        section('Clôturés à valider', aVal);
-        list.innerHTML = html;
-        list.querySelectorAll('[data-pv-id]').forEach(row => {
-            const id = row.getAttribute('data-pv-id');
-            const item = items.find(x => String(x._id) === id);
-            if (!item) return;
-            const actions = row.querySelector('.cloture-row-actions');
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            if (item.statut === 'non_cloture') {
-                btn.textContent = item.debut_valide_code ? 'Fin manuelle' : 'Clôturer';
-                btn.addEventListener('click', () => clotureManuelle(item, 'fin'));
-            } else {
-                btn.textContent = 'Ajuster';
-                btn.className = 'btn-adjust';
-                btn.addEventListener('click', () => ajusterHeureCloture(item));
-            }
-            actions.appendChild(btn);
-        });
+        _clotureJournalCache = Array.isArray(data) ? data : [];
+        paintClotureJournal();
     } catch (e) {
+        _clotureJournalCache = [];
         list.innerHTML = '<div class="cloture-error">' + escapeHtml(e.message) + '</div>';
     }
 }
 
-async function loadPointageVerifJournal() {
-    const list = document.getElementById('pv-journal-list');
-    const label = document.getElementById('pv-journal-label');
-    if (!list || !_pvJournalWeek) return;
-    if (label) label.textContent = _pvWeekLabel(_pvJournalWeek);
-    const from = _pvJournalWeek;
-    const to = _pvAddDays(_pvJournalWeek, 6);
-    list.innerHTML = '<div class="empty-msg" style="padding:20px">Chargement…</div>';
-    try {
-        const res = await fetch('/api/pointage/verif/journal?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to), { credentials: 'include' });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Erreur');
-        if (!data.length) {
-            list.innerHTML = '<div class="empty-msg" style="padding:20px">Aucun mouvement sur cette semaine.</div>';
-            return;
-        }
-        list.innerHTML = data.map(v => {
-            const acteur = v.acteur_name || v.acteur_id || '—';
-            const role = v.acteur_role ? ' (' + v.acteur_role + ')' : '';
-            return '<div class="cloture-row">'
-                + '<div class="cloture-row-main">'
-                + '<div class="cloture-row-name">' + escapeHtml(v.staff_name || '—') + '</div>'
-                + '<div class="cloture-row-meta">' + escapeHtml(_pvFmtParts(v.heure_saisie)) + '</div>'
-                + '<div class="cloture-row-hours">' + escapeHtml(v.establishment_name || '')
-                + (v.shift_date ? ' · ' + escapeHtml(v.shift_date) : '') + '</div>'
-                + '<div class="cloture-row-hours">Par <strong>' + escapeHtml(acteur) + '</strong>' + escapeHtml(role)
-                + _pvSourceBadge(v.source_label) + '</div>'
-                + '<div class="cloture-row-meta">' + escapeHtml([v.action, v.phase, v.resultat].filter(Boolean).join(' · '))
-                + (v.debut_retenue || v.fin_retenue ? ' · ' + escapeHtml((v.debut_retenue || '—') + '–' + (v.fin_retenue || '—')) : '')
-                + '</div>'
-                + (v.motif ? '<div class="cloture-row-motif">' + escapeHtml(v.motif) + '</div>' : '')
-                + '</div></div>';
-        }).join('');
-    } catch (e) {
-        list.innerHTML = '<div class="cloture-error">' + escapeHtml(e.message) + '</div>';
-    }
-}
-
-async function validatePointageRecapFromPanel() {
-    if (!_pvWeekStart || !currentEstabId) {
-        showToast('Sélectionne un établissement', true);
+function paintClotureJournal() {
+    const list = document.getElementById('clotures-journal-list');
+    if (!list) return;
+    const q = _clotureSearch.trim().toLowerCase();
+    const rows = _clotureJournalCache.filter(v =>
+        nameMatchesSearch(v.staff_name, q) || nameMatchesSearch(v.acteur_name, q)
+    );
+    if (!_clotureJournalCache.length) {
+        list.innerHTML = '<div class="empty-msg" style="padding:20px">Aucun mouvement ce jour.</div>';
         return;
     }
-    if (!confirm('Valider le récap de la semaine du ' + _pvWeekStart + ' pour cet établissement ?')) return;
-    try {
-        const res = await fetch('/api/etablissements/' + encodeURIComponent(currentEstabId) + '/valider-recap', {
-            method: 'POST', credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ week_start: _pvWeekStart }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Erreur');
-        showToast(data.modified ? ('Récap validé (' + data.modified + ')') : 'Rien à valider');
-        loadPointageBadge();
-        loadPointageVerifQueue();
-        renderCloturesList();
-    } catch (e) {
-        showToast(e.message, true);
-    }
-}
-
-function initPointageVerifPanel() {
-    const panel = document.getElementById('pointage-verif-panel');
-    const btnHdr = document.getElementById('btn-verif-pointage');
-    if (!canUseVerifPanel()) {
-        if (panel) panel.style.display = 'none';
-        if (btnHdr) btnHdr.style.display = 'none';
+    if (!rows.length) {
+        list.innerHTML = '<div class="empty-msg" style="padding:20px">Aucun résultat pour « '
+            + escapeHtml(_clotureSearch.trim()) + ' »</div>';
         return;
     }
-    if (panel) panel.style.display = '';
-    if (btnHdr) btnHdr.style.display = '';
-    if (!_pvBound) {
-        _pvBound = true;
-        btnHdr?.addEventListener('click', () => {
-            switchPointageVerifTab('queue');
-            scrollToVerifPanel();
-        });
-        document.getElementById('pv-tab-btn-queue')?.addEventListener('click', () => switchPointageVerifTab('queue'));
-        document.getElementById('pv-tab-btn-journal')?.addEventListener('click', () => switchPointageVerifTab('journal'));
-        document.getElementById('pv-week-prev')?.addEventListener('click', () => {
-            _pvWeekStart = _pvAddDays(_pvWeekStart, -7);
-            loadPointageVerifQueue();
-        });
-        document.getElementById('pv-week-next')?.addEventListener('click', () => {
-            _pvWeekStart = _pvAddDays(_pvWeekStart, 7);
-            loadPointageVerifQueue();
-        });
-        document.getElementById('pv-journal-prev')?.addEventListener('click', () => {
-            _pvJournalWeek = _pvAddDays(_pvJournalWeek, -7);
-            loadPointageVerifJournal();
-        });
-        document.getElementById('pv-journal-next')?.addEventListener('click', () => {
-            _pvJournalWeek = _pvAddDays(_pvJournalWeek, 7);
-            loadPointageVerifJournal();
-        });
-        document.getElementById('pv-validate-recap')?.addEventListener('click', validatePointageRecapFromPanel);
-    }
-    loadPointageBadge().then(() => {
-        if (!_pvWeekStart) {
-            const d = today || toDateStr(new Date());
-            const mon = window.Week ? Week.toDateStr(Week.weekStart(new Date(d + 'T12:00:00'))) : d;
-            _pvWeekStart = mon;
-            _pvJournalWeek = mon;
-        }
-        loadPointageVerifQueue();
-    });
+    list.innerHTML = rows.map(v => {
+        const acteur = v.acteur_name || v.acteur_id || '—';
+        const role = v.acteur_role ? ' (' + v.acteur_role + ')' : '';
+        return '<div class="cloture-row">'
+            + '<div class="cloture-row-main">'
+            + '<div class="cloture-row-name">' + escapeHtml(v.staff_name || '—') + '</div>'
+            + '<div class="cloture-row-meta">' + escapeHtml(_clotureFmtParts(v.heure_saisie)) + '</div>'
+            + '<div class="cloture-row-hours">Par <strong>' + escapeHtml(acteur) + '</strong>' + escapeHtml(role)
+            + _clotureSourceBadge(v.source_label) + '</div>'
+            + '<div class="cloture-row-meta">' + escapeHtml([v.action, v.phase, v.resultat].filter(Boolean).join(' · '))
+            + (v.debut_retenue || v.fin_retenue ? ' · ' + escapeHtml((v.debut_retenue || '—') + '–' + (v.fin_retenue || '—')) : '')
+            + '</div>'
+            + (v.motif ? '<div class="cloture-row-motif">' + escapeHtml(v.motif) + '</div>' : '')
+            + '</div></div>';
+    }).join('');
 }
 
 init();

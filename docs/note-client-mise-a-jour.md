@@ -53,9 +53,9 @@ Quand vous validez le récap de la semaine, les heures sont marquées comme vali
 l'origine du code reste intacte, seule l'heure retenue (et donc le réel) change.
 Le **responsable de soirée** ne peut plus ajuster une fois le récap validé.
 
-Depuis la page **Pointage**, un panneau **Vérification** (pastille rouge s'il reste
-des services non clôturés ou non validés) montre la file à traiter et le journal de
-tous les mouvements (qui a saisi, quand, par **code OTP** ou **saisie manuelle**).
+Depuis la page **Pointage**, dans **Clôture du jour**, l'onglet **Journal** montre
+les mouvements du jour (qui a saisi, quand, par **code OTP** ou **saisie manuelle**).
+Vous pouvez aussi **rechercher par nom** dans la liste des shifts ou du journal.
 
 ## 5. Personne non prévue
 

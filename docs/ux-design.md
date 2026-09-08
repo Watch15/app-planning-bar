@@ -89,7 +89,7 @@ Inter uniquement. Échelle : 11px (labels caps) → 13px (corps) → 14–15px (
 | ~~PT-10~~ | ~~Ajustement après validation du récap~~ | Moyen | ✅ Done (D-91 / D-92) — patron/directeur OK ; responsable **bloqué** si `patron_valide` |
 | PT-11 | Compte établissement (tablette) encore sur l'ancienne grille cartes | Moyen | 🟠 Ouvert — backlog Pointage |
 | ~~PT-12~~ | ~~Note client : panel vérif + qui ajuste après récap~~ | Faible | ✅ Done (note-client D-93) |
-| ~~PT-16~~ | ~~Panel vérification Pointage (pastille + file + journal)~~ | Haut | ✅ Done (D-93) — pastille header, file non clôturés / à valider, journal acteur+OTP/manuel, observateur peut valider |
+| ~~PT-16~~ | ~~Panel vérification Pointage (pastille + file + journal)~~ | Haut | ✅ Done (D-93) — fusionné dans **Clôture du jour** (Journal du jour + recherche par nom ; pastille/file retirées) |
 | PT-13 | Écran litiges enrichi (jour / filtre) | Faible | 🟡 Partiel — journal panel D-93 |
 | PT-14 | Tests front `pointage.js` | Faible | 🟡 Ouvert (T-03) |
 | PT-15 | Extraire `matchesWordPrefix` partagé | Cosmétique | 🟡 Ouvert |

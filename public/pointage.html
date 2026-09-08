@@ -674,6 +674,22 @@
             border: 1px solid var(--light-border);
         }
 
+        .clotures-search {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px 12px;
+            border: 1px solid var(--light-border);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: var(--font);
+            background: #fff;
+            color: var(--text);
+            box-sizing: border-box;
+        }
+        .clotures-search:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
         .pv-tab {
             background: none;
             border: none;
@@ -918,10 +934,6 @@
         </div>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
-        <button type="button" class="btn-back" id="btn-verif-pointage" style="display:none;position:relative">
-            Vérification
-            <span id="pointage-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#e74c3c;color:#fff;font-size:9px;font-weight:700;min-width:14px;height:14px;padding:0 3px;border-radius:8px;align-items:center;justify-content:center;line-height:14px">0</span>
-        </button>
         <a href="/planning.html" class="btn-back" id="btn-back" style="display:none">← Planning</a>
         <button class="btn-logout" onclick="logout()">⎋ Sortir</button>
     </div>
@@ -939,34 +951,6 @@
 </div>
 
 <div class="container">
-    <!-- Vérification (patron / directeur / observateur) -->
-    <div id="pointage-verif-panel" class="cloture-week-section" style="display:none;margin-bottom:16px">
-        <div class="extra-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
-            <span>Vérification</span>
-            <span id="pv-badge-inline" style="display:none;background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px"></span>
-        </div>
-        <div style="display:flex;gap:0;border-bottom:2px solid var(--light-border);margin:0 -4px 0">
-            <button type="button" id="pv-tab-btn-queue" class="pv-tab active">À vérifier</button>
-            <button type="button" id="pv-tab-btn-journal" class="pv-tab">Journal</button>
-        </div>
-        <div id="pv-tab-queue">
-            <div class="cloture-week-bar" style="margin-top:10px">
-                <button type="button" id="pv-week-prev" class="week-arrow" aria-label="Semaine précédente">←</button>
-                <span id="pv-week-label" class="cloture-week-label"></span>
-                <button type="button" id="pv-week-next" class="week-arrow" aria-label="Semaine suivante">→</button>
-                <button type="button" id="pv-validate-recap" class="btn-validate-cloture">Valider le récap</button>
-            </div>
-            <div id="pv-queue-list" class="clotures-list"></div>
-        </div>
-        <div id="pv-tab-journal" style="display:none">
-            <div class="cloture-week-bar" style="margin-top:10px">
-                <button type="button" id="pv-journal-prev" class="week-arrow" aria-label="Semaine précédente">←</button>
-                <span id="pv-journal-label" class="cloture-week-label"></span>
-                <button type="button" id="pv-journal-next" class="week-arrow" aria-label="Semaine suivante">→</button>
-            </div>
-            <div id="pv-journal-list" class="clotures-list"></div>
-        </div>
-    </div>
 
     <!-- Clôture OTP + récap semaine (patron / directeur) -->
     <div id="cloture-panel" class="cloture-panel" aria-live="polite">
@@ -995,7 +979,17 @@
                 <button type="button" id="clotures-next-day" class="week-arrow" aria-label="Jour suivant">→</button>
                 <button type="button" id="clotures-validate-week" class="btn-validate-cloture">Valider le récap</button>
             </div>
-            <div id="clotures-list" class="clotures-list"></div>
+            <input type="search" id="clotures-search" class="clotures-search" placeholder="Rechercher par nom…" autocomplete="off">
+            <div id="cloture-tabs" style="display:flex;gap:0;border-bottom:2px solid var(--light-border);margin:8px -4px 0">
+                <button type="button" id="cloture-tab-btn-shifts" class="pv-tab active">Shifts</button>
+                <button type="button" id="cloture-tab-btn-journal" class="pv-tab">Journal</button>
+            </div>
+            <div id="cloture-tab-shifts" style="margin-top:10px">
+                <div id="clotures-list" class="clotures-list"></div>
+            </div>
+            <div id="cloture-tab-journal" style="display:none;margin-top:10px">
+                <div id="clotures-journal-list" class="clotures-list"></div>
+            </div>
         </div>
     </div>
 
