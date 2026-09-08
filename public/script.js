@@ -464,7 +464,7 @@ async function init() {
     initViewTabs();
     await Promise.all([loadEstablishments(), loadAllStaff(), loadRoles(), loadGroups()]);
 
-    loadDisposBadge();
+    loadDisposBadge();
     loadCongesBadge();
     loadDisposKpi();
     loadSwapsBadge();
@@ -473,7 +473,7 @@ async function init() {
     startAutoRefresh();
     initNotifListeners();
     loadDispoControl();
-    initStaffSearch();
+    initStaffSearch();
 
     // R-04 — un directeur arrivant depuis un push « Rappel dispos » est redirigé ici par
     // planning.js avec `#mes-dispos` : on ouvre directement sa modale de saisie, sinon il
@@ -681,12 +681,11 @@ function renderUserBadge(user) {
     const avatar = document.getElementById('user-avatar');
     const fullName  = user.name || user.email || '';
     const firstName = fullName.split(' ')[0];
-    const roleName  = user.role === 'patron' ? 'Patron' : user.role === 'observateur' ? 'Observateur' : 'Directeur';
-    if (badge)  badge.textContent  = firstName + ' · ' + roleName;
+    if (badge)  badge.textContent  = firstName;
     if (avatar) avatar.textContent = firstName.charAt(0).toUpperCase();
-    // Brand mobile (header-left) — affiche le rôle en sous-texte
+    // Brand mobile (header-left) — prénom seulement (sans rôle)
     const mobSub = document.getElementById('mobile-brand-sub');
-    if (mobSub) mobSub.textContent = roleName + ' · ' + firstName;
+    if (mobSub) mobSub.textContent = firstName;
     // Entrées « Mes absences » (E-19) et « Mes disponibilités » (E-22) réservées au directeur
     const mesAbs = document.getElementById('menu-mes-absences');
     if (mesAbs) mesAbs.style.display = user.role === 'directeur' ? '' : 'none';
@@ -2160,12 +2159,12 @@ function createShiftEl(shift) {
         });
     }
 
-    // Clic → modale horaires (mobile : édition planifié | desktop : heures réelles)
+    // Clic → feuille d'édition complète (téléphone + tablette) ; desktop souris → heures réelles
     if (!shift.is_joker && shift.staff_id !== '__joker__') {
         el.addEventListener('click', e => {
             if (e.target.closest('.resizer') || e.target.closest('.shift-delete') || e.target.closest('.shift-resp-btn')) return;
             if (_shiftWasDragged) { _shiftWasDragged = false; return; } // ignorer le click après un drag/resize
-            if (isMobileDevice()) {
+            if (isPhone() || isTablet()) {
                 openMobileShiftEditModal(shift);
             } else {
                 openRealHoursModal(shift, el);
