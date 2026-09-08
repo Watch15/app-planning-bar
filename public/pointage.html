@@ -249,8 +249,34 @@
             box-shadow: 0 0 0 3px var(--accent-glow);
         }
         .extra-form input::placeholder { color: var(--text-muted); }
-        .extra-row { display: flex; gap: 8px; }
-        .extra-row .time-input { flex: 1; }
+        .extra-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: nowrap;
+            width: 100%;
+        }
+        .extra-row .time-group {
+            flex: 1 1 0;
+            min-width: 0;
+            max-width: 100%;
+        }
+        .extra-row .time-input {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+        @media (max-width: 900px) {
+            .extra-row {
+                flex-direction: column;
+                gap: 11px;
+            }
+            .extra-row .time-group {
+                flex: none;
+                width: 100%;
+                min-width: 0 !important;
+            }
+        }
 
         .staff-suggestions {
             position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 50;
@@ -727,6 +753,7 @@
         @media (max-width: 900px) {
             .heure-modal-fields {
                 flex-direction: column;
+                gap: 11px;
             }
             .heure-modal-fields .time-group {
                 flex: none;
