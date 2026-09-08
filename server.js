@@ -1261,17 +1261,27 @@ async function isResponsablePourSoiree(staffId, establishmentId, date) {
     return designated.some(s => String(s.staff_id) === String(staffId));
 }
 
-/** Patron/directeur (accès établissement) OU staff responsable de soirée pour la/les date(s). */
+/** Date de soirée active selon cutoff pointage (ex. avant 9h → veille). */
+async function getActivePointageDateStr(now = new Date()) {
+    const s = await db.collection('settings').findOne({ key: 'pointage' }) || {};
+    const cutoff = s.cutoff_hour != null ? Number(s.cutoff_hour) : 9;
+    const ref = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes(), now.getSeconds());
+    if (ref.getHours() < cutoff) ref.setDate(ref.getDate() - 1);
+    return toDateStr(ref);
+}
+
+/** Patron/directeur (accès établissement) OU staff responsable — soirée active uniquement. */
 async function canManageCloture(user, estabId, dateOrDates) {
     if (!user || !estabId) return false;
     if (user.role === 'patron' || user.role === 'directeur') {
         return canAccessEstablishment(user, estabId);
     }
     if (user.role === 'staff' && user.staff_id) {
+        const active = await getActivePointageDateStr();
         const dates = Array.isArray(dateOrDates) ? dateOrDates : [dateOrDates];
-        for (const d of dates) {
-            if (d && await isResponsablePourSoiree(user.staff_id, estabId, d)) return true;
-        }
+        // Responsable : uniquement la soirée en cours (pas J-1 / J+1)
+        if (!dates.includes(active)) return false;
+        return isResponsablePourSoiree(user.staff_id, estabId, active);
     }
     return false;
 }
@@ -2447,6 +2457,41 @@ app.delete('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
 });
 
 // ── Shifts — lecture ──────────────────────────────────────────────────────────
+
+// Audit litiges (AVANT `/api/shifts/:establishmentId/:date` sinon « time-validations »
+// est capturé comme une date et renvoie []).
+app.get('/api/shifts/:id/time-validations',
+    checkDB, requirePatron, denyObservateurEdit,
+    async (req, res) => {
+        if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
+        try {
+            const shift = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
+            if (!shift) return res.status(404).json({ error: 'Shift introuvable' });
+            if (!canAccessEstablishment(req.session.user, shift.establishment_id))
+                return res.status(403).json({ error: 'Accès refusé' });
+            const docs = await db.collection('time_validations')
+                .find({ shift_id: String(shift._id) })
+                .sort({ _id: 1 })
+                .toArray();
+            res.json(docs.map(v => ({
+                _id:              v._id,
+                staff_id:         v.staff_id ?? null,
+                acteur_role:      v.acteur_role ?? null,
+                action:           v.action ?? null,
+                source:           v.source ?? null,
+                code_saisi:       v.code_saisi ?? null,
+                heure_saisie:     v.heure_saisie ?? null,
+                phase:            v.phase ?? null,
+                resultat:         v.resultat ?? null,
+                debut_retenue:    v.debut_retenue ?? null,
+                fin_retenue:      v.fin_retenue ?? null,
+                real_start:       v.real_start ?? null,
+                real_end:         v.real_end ?? null,
+                motif:            v.motif ?? null,
+            })));
+        } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+    }
+);
 
 // S-06 : `requireAuth` seul laissait n'importe quel compte lire les shifts nominatifs
 // d'un bar où il n'a jamais travaillé (l'id se devine — slug `Nom_bar`).
@@ -6464,6 +6509,9 @@ app.post('/api/shifts/extra', checkDB, requireAuth, async (req, res) => {
     const estabId = user.role === 'etablissement' ? user.establishment_id : establishment_id;
     if (!estabId) return res.status(400).json({ error: 'establishment_id requis' });
     if (!canAccessEstablishment(user, estabId)) {
+        const active = await getActivePointageDateStr();
+        if (date !== active)
+            return res.status(403).json({ error: 'Accès limité à la soirée en cours' });
         const ok = await isResponsablePourSoiree(user.staff_id, estabId, date);
         if (!ok) return res.status(403).json({ error: 'Accès refusé' });
     }
@@ -6724,9 +6772,17 @@ app.get('/api/etablissements/:id/clotures-semaine',
         if (!(await canManageCloture(req.session.user, req.params.id, dates)))
             return res.status(403).json({ error: 'Accès refusé' });
         try {
+            let dateFilter = dates;
+            // Responsable staff : uniquement les shifts de la soirée active
+            if (req.session.user.role === 'staff') {
+                const active = await getActivePointageDateStr();
+                if (!dates.includes(active))
+                    return res.status(403).json({ error: 'Accès limité à la soirée en cours' });
+                dateFilter = [active];
+            }
             const shifts = await db.collection('shifts').find({
                 establishment_id: req.params.id,
-                date: { $in: dates },
+                date: { $in: dateFilter },
                 type: { $ne: 'week_note' },
             }).toArray();
             res.json(shifts.map(s => ({
@@ -7112,6 +7168,50 @@ app.patch('/api/shifts/:id/ajuster-heure',
                 real_start: synced?.real_start ?? null,
                 real_end: synced?.real_end ?? null,
             });
+        } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+    }
+);
+
+// GET audit litiges d'un établissement pour une date — patron / directeur
+app.get('/api/etablissements/:id/time-validations',
+    checkDB, requirePatron, denyObservateurEdit,
+    requireEstablishmentAccess(r => r.params.id),
+    async (req, res) => {
+        const date = req.query.date;
+        if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date))
+            return res.status(400).json({ error: 'date (YYYY-MM-DD) requise' });
+        try {
+            const shifts = await db.collection('shifts').find({
+                establishment_id: req.params.id,
+                date,
+                type: { $ne: 'week_note' },
+            }).toArray();
+            const shiftIds = shifts.map(s => String(s._id));
+            if (shiftIds.length === 0) return res.json([]);
+            const docs = await db.collection('time_validations')
+                .find({ shift_id: { $in: shiftIds } })
+                .sort({ _id: 1 })
+                .toArray();
+            const nameByShift = {};
+            shifts.forEach(s => { nameByShift[String(s._id)] = s.staff_name || '—'; });
+            res.json(docs.map(v => ({
+                _id:              v._id,
+                shift_id:         v.shift_id,
+                staff_name:       nameByShift[v.shift_id] || null,
+                staff_id:         v.staff_id ?? null,
+                acteur_role:      v.acteur_role ?? null,
+                action:           v.action ?? null,
+                source:           v.source ?? null,
+                code_saisi:       v.code_saisi ?? null,
+                heure_saisie:     v.heure_saisie ?? null,
+                phase:            v.phase ?? null,
+                resultat:         v.resultat ?? null,
+                debut_retenue:    v.debut_retenue ?? null,
+                fin_retenue:      v.fin_retenue ?? null,
+                real_start:       v.real_start ?? null,
+                real_end:         v.real_end ?? null,
+                motif:            v.motif ?? null,
+            })));
         } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
     }
 );

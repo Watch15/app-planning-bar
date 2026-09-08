@@ -379,3 +379,73 @@ test('time_validations : aucune update/delete dans le flux (append-only)', async
     assert.ok(docs.some(d => d.resultat === 'accepte'));
     assert.ok(docs.some(d => d.resultat && d.resultat.startsWith('refuse_')));
 });
+
+test('GET time-validations d\'un shift pour le patron (litige)', async () => {
+    assert.equal((await pointerDebut(SHIFT, EQUIPIER, '4827')).status, 200);
+    const code2 = await currentCode();
+    assert.equal((await pointerFin(SHIFT, EQUIPIER, code2)).status, 200);
+
+    const res = await req('/api/shifts/' + SHIFT + '/time-validations', PATRON);
+    assert.equal(res.status, 200);
+    const docs = await res.json();
+    assert.ok(docs.length >= 3); // debut accepte, fin accepte, sync_real
+    assert.ok(docs.some(d => d.resultat === 'accepte' && d.phase === 'debut'));
+    assert.ok(docs.some(d => d.resultat === 'accepte' && d.phase === 'fin'));
+    assert.ok(docs.some(d => d.resultat === 'sync_real'));
+
+    // Staff équipier : pas d'accès litige
+    const denied = await req('/api/shifts/' + SHIFT + '/time-validations', EQUIPIER);
+    assert.equal(denied.status, 403);
+});
+
+test('responsable staff : clotures limitées à la soirée active', async () => {
+    const ROLE = '0123456789abcdef0123d101';
+    db = seed({
+        roles: [{ _id: ROLE, type: 'responsable', name: 'Resp' }],
+        staff: [
+            { _id: STAFF, name: 'Alice', venues: [ESTAB], roles: [ROLE] },
+            { _id: STAFF2, name: 'Bob', venues: [ESTAB] },
+        ],
+        shifts: [
+            {
+                _id: SHIFT, staff_id: STAFF, staff_name: 'Alice',
+                establishment_id: ESTAB, date: todayStr(),
+                start_time: 18, end_time: 24, pointage_resp: true,
+            },
+            {
+                _id: SHIFT2, staff_id: STAFF2, staff_name: 'Bob',
+                establishment_id: ESTAB, date: todayStr(),
+                start_time: 18, end_time: 23,
+            },
+        ],
+    });
+    app.locals.setTestDb(db);
+
+    const weekStart = mondayOf();
+    const ok = await req(
+        '/api/etablissements/' + ESTAB + '/clotures-semaine?week_start=' + weekStart,
+        EQUIPIER
+    );
+    assert.equal(ok.status, 200);
+    const list = await ok.json();
+    assert.ok(list.every(s => s.date === todayStr()));
+
+    const codeOk = await req(
+        '/api/etablissements/' + ESTAB + '/code-cloture?date=' + todayStr(),
+        EQUIPIER
+    );
+    assert.equal(codeOk.status, 200);
+
+    // Date hors soirée active → refus
+    const yesterday = (() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 2);
+        const pad = n => String(n).padStart(2, '0');
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    })();
+    const bad = await req(
+        '/api/etablissements/' + ESTAB + '/code-cloture?date=' + yesterday,
+        EQUIPIER
+    );
+    assert.equal(bad.status, 403);
+});

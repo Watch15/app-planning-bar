@@ -860,6 +860,10 @@ function canUseClotureUi() {
     ));
 }
 
+function isClotureManager() {
+    return !!(currentUser && CLOTURE_ROLES.includes(currentUser.role));
+}
+
 function setLegacyPointageVisible(visible) {
     const block = document.getElementById('legacy-pointage-block');
     const list = document.getElementById('shifts-list');
@@ -1013,12 +1017,22 @@ async function renderCloturesList() {
                     btn.addEventListener('click', () => clotureManuelle(s, 'fin'));
                     actions.appendChild(btn);
                 } else if (closed) {
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.className = 'btn-adjust';
-                    btn.textContent = 'Ajuster';
-                    btn.addEventListener('click', () => ajusterHeureCloture(s));
-                    actions.appendChild(btn);
+                    if (isClotureManager() || currentUser.role === 'staff') {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'btn-adjust';
+                        btn.textContent = 'Ajuster';
+                        btn.addEventListener('click', () => ajusterHeureCloture(s));
+                        actions.appendChild(btn);
+                    }
+                    if (isClotureManager()) {
+                        const btnLog = document.createElement('button');
+                        btnLog.type = 'button';
+                        btnLog.textContent = 'Historique';
+                        btnLog.title = 'Logs de validation (litige)';
+                        btnLog.addEventListener('click', () => showShiftValidationLogs(s));
+                        actions.appendChild(btnLog);
+                    }
                 }
                 list.appendChild(row);
             });
@@ -1090,7 +1104,7 @@ async function ajusterHeureCloture(shift) {
 }
 
 async function validateCloturesWeek() {
-    if (!currentEstabId || !_cloturesDay) return;
+    if (!isClotureManager() || !currentEstabId || !_cloturesDay) return;
     const monday = toDateStr(Week.weekStart(_cloturesDay));
     if (!confirm('Valider le récap de la semaine du ' + monday + ' pour cet établissement ?\nLes shifts déjà clôturés seront marqués validés.')) return;
     try {
@@ -1106,6 +1120,63 @@ async function validateCloturesWeek() {
     } catch (e) { showToast(e.message, true); }
 }
 
+function fmtHeureSaisie(hs) {
+    if (!hs || hs.year == null) return '—';
+    const pad = n => String(n).padStart(2, '0');
+    return pad(hs.day) + '/' + pad(hs.month) + '/' + hs.year + ' ' + pad(hs.hour) + ':' + pad(hs.minute);
+}
+
+function resultatLabel(r) {
+    const map = {
+        accepte: 'Accepté',
+        sync_real: 'Sync heures réelles',
+        refuse_code_invalide: 'Code invalide',
+        refuse_code_deja_utilise: 'Code déjà utilisé',
+        refuse_code_expire: 'Code expiré',
+    };
+    return map[r] || (r || '—');
+}
+
+async function showShiftValidationLogs(shift) {
+    const modal = document.getElementById('litige-modal');
+    const title = document.getElementById('litige-modal-title');
+    const body = document.getElementById('litige-modal-body');
+    if (!modal || !body) return;
+    if (title) title.textContent = 'Historique — ' + (shift.staff_name || 'Shift');
+    body.innerHTML = '<div class="cloture-loading">Chargement…</div>';
+    modal.classList.add('open');
+    try {
+        const res = await fetch('/api/shifts/' + shift._id + '/time-validations', { credentials: 'include' });
+        const docs = await res.json();
+        if (!res.ok) throw new Error(docs.error || 'Erreur');
+        if (!docs.length) {
+            body.innerHTML = '<div class="cloture-empty">Aucun événement enregistré</div>';
+            return;
+        }
+        body.innerHTML = docs.map(v =>
+            '<div class="litige-row">' +
+                '<div class="litige-row-top">' +
+                    '<strong>' + escapeHtml(resultatLabel(v.resultat)) + '</strong>' +
+                    '<span>' + escapeHtml(fmtHeureSaisie(v.heure_saisie)) + '</span>' +
+                '</div>' +
+                '<div class="litige-row-meta">' +
+                    escapeHtml([v.action, v.phase, v.source, v.acteur_role].filter(Boolean).join(' · ')) +
+                    (v.code_saisi ? ' · code ' + escapeHtml(v.code_saisi) : '') +
+                '</div>' +
+                (v.debut_retenue || v.fin_retenue
+                    ? '<div class="litige-row-meta">Retenues ' + escapeHtml(v.debut_retenue || '—') + ' → ' + escapeHtml(v.fin_retenue || '—') + '</div>'
+                    : '') +
+                (v.real_start != null
+                    ? '<div class="litige-row-meta">real ' + escapeHtml(String(v.real_start)) + '–' + escapeHtml(String(v.real_end)) + '</div>'
+                    : '') +
+                (v.motif ? '<div class="litige-row-motif">' + escapeHtml(v.motif) + '</div>' : '') +
+            '</div>'
+        ).join('');
+    } catch (e) {
+        body.innerHTML = '<div class="cloture-error">' + escapeHtml(e.message || 'Erreur') + '</div>';
+    }
+}
+
 function initCloturePanel() {
     const panel = document.getElementById('cloture-panel');
     if (!panel) return;
@@ -1118,24 +1189,35 @@ function initCloturePanel() {
     }
     panel.classList.add('visible');
     setLegacyPointageVisible(false);
-    // Valider le récap = geste patron uniquement
+    // Valider le récap + nav jours = patron/directeur uniquement
     const btnValidate = document.getElementById('clotures-validate-week');
-    if (btnValidate) btnValidate.style.display = CLOTURE_ROLES.includes(currentUser.role) ? '' : 'none';
-    if (!_cloturesDay) {
-        _cloturesDay = today ? new Date(today + 'T12:00:00') : new Date();
-    }
+    if (btnValidate) btnValidate.style.display = isClotureManager() ? '' : 'none';
+    const prev = document.getElementById('clotures-prev-day');
+    const next = document.getElementById('clotures-next-day');
+    if (prev) prev.style.display = isClotureManager() ? '' : 'none';
+    if (next) next.style.display = isClotureManager() ? '' : 'none';
+    // Responsable : verrouillé sur la soirée active (`today`)
+    _cloturesDay = today ? new Date(today + 'T12:00:00') : new Date();
     if (!_clotureBound) {
         _clotureBound = true;
         document.getElementById('cc-refresh')?.addEventListener('click', () => refreshCodeCloture(true));
         document.getElementById('clotures-prev-day')?.addEventListener('click', () => {
+            if (!isClotureManager()) return;
             _cloturesDay = addDaysLocal(_cloturesDay, -1);
             renderCloturesList();
         });
         document.getElementById('clotures-next-day')?.addEventListener('click', () => {
+            if (!isClotureManager()) return;
             _cloturesDay = addDaysLocal(_cloturesDay, 1);
             renderCloturesList();
         });
         document.getElementById('clotures-validate-week')?.addEventListener('click', validateCloturesWeek);
+        document.getElementById('litige-modal-close')?.addEventListener('click', () => {
+            document.getElementById('litige-modal')?.classList.remove('open');
+        });
+        document.getElementById('litige-modal')?.addEventListener('click', e => {
+            if (e.target.id === 'litige-modal') e.currentTarget.classList.remove('open');
+        });
     }
     refreshCodeCloture(true);
     renderCloturesList();

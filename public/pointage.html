@@ -618,6 +618,76 @@
             border: 1px solid var(--light-border);
         }
 
+        /* Historique litiges */
+        #litige-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.45);
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0;
+        }
+        #litige-modal.open { display: flex; }
+        .litige-sheet {
+            width: 100%;
+            max-width: 520px;
+            max-height: 80vh;
+            overflow: auto;
+            background: var(--light-card);
+            border-radius: 16px 16px 0 0;
+            padding: 16px 16px 24px;
+            box-shadow: 0 -8px 32px rgba(0,0,0,.12);
+        }
+        .litige-sheet-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .litige-sheet-head h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .litige-sheet-head button {
+            border: none;
+            background: transparent;
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 4px 8px;
+        }
+        .litige-row {
+            padding: 10px 12px;
+            border: 1px solid var(--light-border);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            background: var(--light-bg);
+        }
+        .litige-row-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+        .litige-row-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .litige-row-motif {
+            font-size: 12px;
+            font-style: italic;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
         /* ── Mobile ── */
         @media (max-width: 600px) {
             .header { padding: 0 14px; height: 52px; }
@@ -756,6 +826,16 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div id="litige-modal" role="dialog" aria-modal="true" aria-labelledby="litige-modal-title">
+    <div class="litige-sheet">
+        <div class="litige-sheet-head">
+            <h3 id="litige-modal-title">Historique</h3>
+            <button type="button" id="litige-modal-close" aria-label="Fermer">×</button>
+        </div>
+        <div id="litige-modal-body"></div>
+    </div>
+</div>
 
 <script src="/lib/auth-guard.js"></script>
 <script src="/lib/shift-hours.js"></script>

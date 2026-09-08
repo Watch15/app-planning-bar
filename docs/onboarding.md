@@ -227,13 +227,13 @@ Le sous-onglet **Congés** patron (`loadCongesList`) et le calendrier récap (`l
 `PATCH /api/shifts/:id/pointage-resp` · `POST /api/shifts/extra` (extra + champs clôture manuels).
 
 ### Clôture OTP (début + fin → sync `real_*`)
-`GET /api/etablissements/:id/code-cloture` (manager) ·
-`GET /api/etablissements/:id/clotures-semaine?week_start=` ·
+`GET /api/etablissements/:id/code-cloture` (manager **ou responsable soirée active**) ·
+`GET /api/etablissements/:id/clotures-semaine?week_start=` (responsable = **soirée active seulement**) ·
 `POST /api/shifts/:id/cloturer-par-code` `{ code, phase: 'debut'|'fin' }` (staff) ·
-`POST /api/shifts/:id/cloturer-manuel` (manager, `heure_debut` pour forcer les deux) ·
-`PATCH /api/shifts/:id/ajuster-heure` (retenues uniquement ; OK après `patron_valide`) ·
-`POST /api/etablissements/:id/valider-recap` `{ week_start }` ·
-Helpers : `hhmmToHourFloat`, `roundQuarter`, `syncRealHoursFromCloture` · audit `time_validations`.
+`POST /api/shifts/:id/cloturer-manuel` · `PATCH /api/shifts/:id/ajuster-heure` ·
+`POST /api/etablissements/:id/valider-recap` `{ week_start }` (patron/directeur) ·
+`GET /api/shifts/:id/time-validations` · `GET /api/etablissements/:id/time-validations?date=` (**litiges**, patron/directeur) ·
+Helpers : `hhmmToHourFloat`, `roundQuarter`, `syncRealHoursFromCloture`, `getActivePointageDateStr` · audit append-only `time_validations`.
 Tests : `tests/cloture-otp.test.js` · smoke `scripts/smoke-cloture.js`.
 
 ### Performance (pilotage éco)
