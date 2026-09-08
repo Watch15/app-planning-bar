@@ -93,7 +93,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_utils",
-      "community": 11,
+      "community": 67,
       "norm_label": "utils.js"
     },
     {
@@ -103,7 +103,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "lib_utils_crypto",
-      "community": 11,
+      "community": 67,
       "norm_label": "crypto"
     },
     {
@@ -153,7 +153,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "lib_utils_weekstart_currentweekstart_week_cutoff_hour_todatestr_disposweekstart_disposhorizonrange_disposhorizonmondays_clamphorizonweeks_dispo_horizon_max_upcomingweekstart_upcomingweekrange_upcomingweekmondays",
-      "community": 11,
+      "community": 67,
       "norm_label": "{\r\n    weekstart, currentweekstart, week_cutoff_hour, todatestr, disposweekstart,\r\n    disposhorizonrange, disposhorizonmondays, clamphorizonweeks, dispo_horizon_max,\r\n    upcomingweekstart, upcomingweekrange, upcomingweekmondays,\r\n}"
     },
     {
@@ -173,7 +173,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "lib_utils_normalizepublishdoc",
-      "community": 5,
+      "community": 80,
       "norm_label": "normalizepublishdoc()"
     },
     {
@@ -193,7 +193,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "lib_utils_datesoverlap",
-      "community": 11,
+      "community": 106,
       "norm_label": "datesoverlap()"
     },
     {
@@ -203,7 +203,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "lib_utils_congecoversdate",
-      "community": 11,
+      "community": 106,
       "norm_label": "congecoversdate()"
     },
     {
@@ -213,7 +213,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "lib_utils_congedaysinrange",
-      "community": 11,
+      "community": 106,
       "norm_label": "congedaysinrange()"
     },
     {
@@ -253,7 +253,7 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "lib_utils_perf_defaults",
-      "community": 11,
+      "community": 67,
       "norm_label": "perf_defaults"
     },
     {
@@ -283,7 +283,7 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "lib_utils_pickstaffcolor",
-      "community": 11,
+      "community": 94,
       "norm_label": "pickstaffcolor()"
     },
     {
@@ -343,7 +343,7 @@
       "source_location": "L299",
       "_origin": "ast",
       "id": "lib_utils_normname",
-      "community": 11,
+      "community": 104,
       "norm_label": "normname()"
     },
     {
@@ -353,7 +353,7 @@
       "source_location": "L316",
       "_origin": "ast",
       "id": "lib_utils_classifydirectorlinks",
-      "community": 11,
+      "community": 104,
       "norm_label": "classifydirectorlinks()"
     },
     {
@@ -383,7 +383,7 @@
       "source_location": "L375",
       "_origin": "ast",
       "id": "lib_utils_dispo_audit_fields",
-      "community": 11,
+      "community": 67,
       "norm_label": "dispo_audit_fields"
     },
     {
@@ -1013,7 +1013,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_dispo_template",
-      "community": 11,
+      "community": 72,
       "norm_label": "dispo-template.js"
     },
     {
@@ -1023,7 +1023,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "lib_dispo_template_buildtemplatedispos",
-      "community": 11,
+      "community": 72,
       "norm_label": "buildtemplatedispos()"
     },
     {
@@ -3510,17 +3510,57 @@
       "label": "ajusterHeureCloture()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1080",
+      "source_location": "L1094",
       "_origin": "ast",
       "id": "public_pointage_ajusterheurecloture",
       "community": 8,
       "norm_label": "ajusterheurecloture()"
     },
     {
+      "label": "closeHeureModal()",
+      "file_type": "code",
+      "source_file": "public/pointage.js",
+      "source_location": "L1128",
+      "_origin": "ast",
+      "id": "public_pointage_closeheuremodal",
+      "community": 8,
+      "norm_label": "closeheuremodal()"
+    },
+    {
+      "label": "openHeureModal()",
+      "file_type": "code",
+      "source_file": "public/pointage.js",
+      "source_location": "L1133",
+      "_origin": "ast",
+      "id": "public_pointage_openheuremodal",
+      "community": 8,
+      "norm_label": "openheuremodal()"
+    },
+    {
+      "label": "normalizeTimeInputValue()",
+      "file_type": "code",
+      "source_file": "public/pointage.js",
+      "source_location": "L1169",
+      "_origin": "ast",
+      "id": "public_pointage_normalizetimeinputvalue",
+      "community": 8,
+      "norm_label": "normalizetimeinputvalue()"
+    },
+    {
+      "label": "submitHeureModal()",
+      "file_type": "code",
+      "source_file": "public/pointage.js",
+      "source_location": "L1177",
+      "_origin": "ast",
+      "id": "public_pointage_submitheuremodal",
+      "community": 8,
+      "norm_label": "submitheuremodal()"
+    },
+    {
       "label": "validateCloturesWeek()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1106",
+      "source_location": "L1200",
       "_origin": "ast",
       "id": "public_pointage_validatecloturesweek",
       "community": 8,
@@ -3530,7 +3570,7 @@
       "label": "fmtHeureSaisie()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1123",
+      "source_location": "L1217",
       "_origin": "ast",
       "id": "public_pointage_fmtheuresaisie",
       "community": 8,
@@ -3540,7 +3580,7 @@
       "label": "resultatLabel()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1129",
+      "source_location": "L1223",
       "_origin": "ast",
       "id": "public_pointage_resultatlabel",
       "community": 8,
@@ -3550,7 +3590,7 @@
       "label": "showShiftValidationLogs()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1140",
+      "source_location": "L1234",
       "_origin": "ast",
       "id": "public_pointage_showshiftvalidationlogs",
       "community": 8,
@@ -3560,7 +3600,7 @@
       "label": "initCloturePanel()",
       "file_type": "code",
       "source_file": "public/pointage.js",
-      "source_location": "L1180",
+      "source_location": "L1274",
       "_origin": "ast",
       "id": "public_pointage_initcloturepanel",
       "community": 8,
@@ -7753,7 +7793,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "scripts_db_app_collections",
-      "community": 18,
+      "community": 105,
       "norm_label": "app_collections"
     },
     {
@@ -7793,7 +7833,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_create_patron",
-      "community": 18,
+      "community": 107,
       "norm_label": "create-patron.js"
     },
     {
@@ -7803,7 +7843,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_create_patron_bcrypt",
-      "community": 18,
+      "community": 107,
       "norm_label": "bcrypt"
     },
     {
@@ -7813,7 +7853,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "scripts_create_patron_readline",
-      "community": 18,
+      "community": 107,
       "norm_label": "readline"
     },
     {
@@ -7823,7 +7863,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "scripts_create_patron_opendb",
-      "community": 18,
+      "community": 107,
       "norm_label": "{ opendb }"
     },
     {
@@ -7833,7 +7873,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "scripts_create_patron_rl",
-      "community": 18,
+      "community": 107,
       "norm_label": "rl"
     },
     {
@@ -7843,7 +7883,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "scripts_create_patron_ask",
-      "community": 18,
+      "community": 107,
       "norm_label": "ask()"
     },
     {
@@ -7853,7 +7893,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "scripts_create_patron_main",
-      "community": 18,
+      "community": 107,
       "norm_label": "main()"
     },
     {
@@ -7863,7 +7903,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_db_uri",
-      "community": 18,
+      "community": 108,
       "norm_label": "db-uri.js"
     },
     {
@@ -7873,7 +7913,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "scripts_db_uri_fs",
-      "community": 18,
+      "community": 108,
       "norm_label": "fs"
     },
     {
@@ -7883,7 +7923,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "scripts_db_uri_prod_db_name",
-      "community": 18,
+      "community": 108,
       "norm_label": "{ prod_db_name }"
     },
     {
@@ -7893,7 +7933,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "scripts_db_uri_path",
-      "community": 18,
+      "community": 108,
       "norm_label": "path"
     },
     {
@@ -7903,7 +7943,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "scripts_db_uri_full",
-      "community": 18,
+      "community": 108,
       "norm_label": "full"
     },
     {
@@ -7913,7 +7953,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "scripts_db_uri_cfg",
-      "community": 18,
+      "community": 108,
       "norm_label": "cfg"
     },
     {
@@ -7923,7 +7963,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "scripts_db_uri_head_query",
-      "community": 18,
+      "community": 108,
       "norm_label": "[head, query]"
     },
     {
@@ -7993,7 +8033,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link",
-      "community": 18,
+      "community": 109,
       "norm_label": "fix-orphan-staff-link.js"
     },
     {
@@ -8003,7 +8043,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_objectid",
-      "community": 18,
+      "community": 109,
       "norm_label": "{ objectid }"
     },
     {
@@ -8013,7 +8053,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_opendb",
-      "community": 18,
+      "community": 109,
       "norm_label": "{ opendb }"
     },
     {
@@ -8023,7 +8063,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_apply",
-      "community": 18,
+      "community": 109,
       "norm_label": "apply"
     },
     {
@@ -8033,7 +8073,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_normname_norm",
-      "community": 18,
+      "community": 109,
       "norm_label": "{ normname: norm }"
     },
     {
@@ -8043,7 +8083,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_main",
-      "community": 18,
+      "community": 109,
       "norm_label": "main()"
     },
     {
@@ -8103,7 +8143,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_link_director_staff",
-      "community": 11,
+      "community": 104,
       "norm_label": "link-director-staff.js"
     },
     {
@@ -8113,7 +8153,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "scripts_link_director_staff_opendb",
-      "community": 11,
+      "community": 104,
       "norm_label": "{ opendb }"
     },
     {
@@ -8123,7 +8163,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "scripts_link_director_staff_pickstaffcolor_classifydirectorlinks",
-      "community": 11,
+      "community": 104,
       "norm_label": "{ pickstaffcolor, classifydirectorlinks }"
     },
     {
@@ -8133,7 +8173,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "scripts_link_director_staff_apply",
-      "community": 11,
+      "community": 104,
       "norm_label": "apply"
     },
     {
@@ -8143,7 +8183,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "scripts_link_director_staff_create",
-      "community": 11,
+      "community": 104,
       "norm_label": "create"
     },
     {
@@ -8153,7 +8193,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "scripts_link_director_staff_main",
-      "community": 11,
+      "community": 104,
       "norm_label": "main()"
     },
     {
@@ -8453,7 +8493,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_seed_dev",
-      "community": 18,
+      "community": 105,
       "norm_label": "seed-dev.js"
     },
     {
@@ -8463,7 +8503,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "scripts_seed_dev_bcrypt",
-      "community": 18,
+      "community": 105,
       "norm_label": "bcrypt"
     },
     {
@@ -8473,7 +8513,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "scripts_seed_dev_objectid",
-      "community": 18,
+      "community": 105,
       "norm_label": "{ objectid }"
     },
     {
@@ -8483,7 +8523,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "scripts_seed_dev_opendb_app_collections",
-      "community": 18,
+      "community": 105,
       "norm_label": "{ opendb, app_collections }"
     },
     {
@@ -8493,7 +8533,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "scripts_seed_dev_todatestr_weekstart",
-      "community": 18,
+      "community": 105,
       "norm_label": "{ todatestr, weekstart }"
     },
     {
@@ -8503,7 +8543,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "scripts_seed_dev_features",
-      "community": 18,
+      "community": 105,
       "norm_label": "features"
     },
     {
@@ -8513,7 +8553,7 @@
       "source_location": "L367",
       "_origin": "ast",
       "id": "scripts_seed_dev_run",
-      "community": 18,
+      "community": 105,
       "norm_label": "run()"
     },
     {
@@ -9293,7 +9333,7 @@
       "source_location": "L585",
       "_origin": "ast",
       "id": "server_publishedshiftfilter",
-      "community": 5,
+      "community": 80,
       "norm_label": "publishedshiftfilter()"
     },
     {
@@ -9333,7 +9373,7 @@
       "source_location": "L687",
       "_origin": "ast",
       "id": "server_fetchpublishedweeks",
-      "community": 5,
+      "community": 80,
       "norm_label": "fetchpublishedweeks()"
     },
     {
@@ -9703,7 +9743,7 @@
       "source_location": "L3666",
       "_origin": "ast",
       "id": "server_releaseshiftsondispochange",
-      "community": 5,
+      "community": 80,
       "norm_label": "releaseshiftsondispochange()"
     },
     {
@@ -10273,7 +10313,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conges_test",
-      "community": 11,
+      "community": 106,
       "norm_label": "conges.test.js"
     },
     {
@@ -10283,7 +10323,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conges_test_test",
-      "community": 11,
+      "community": 106,
       "norm_label": "{ test }"
     },
     {
@@ -10293,7 +10333,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "tests_conges_test_assert",
-      "community": 11,
+      "community": 106,
       "norm_label": "assert"
     },
     {
@@ -10303,7 +10343,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "tests_conges_test_datesoverlap_congecoversdate_congedaysinrange",
-      "community": 11,
+      "community": 106,
       "norm_label": "{ datesoverlap, congecoversdate, congedaysinrange }"
     },
     {
@@ -16335,7 +16375,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 20,
       "norm_label": "github actions ci workflow",
       "id": "ci_ci"
     },
@@ -16348,7 +16388,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 20,
       "norm_label": "ci syntax check (node -c)",
       "id": "ci_syntax_check"
     },
@@ -16361,7 +16401,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 20,
       "norm_label": "node 20/22 test matrix",
       "id": "ci_node_matrix"
     },
@@ -16413,7 +16453,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 20,
       "norm_label": "script.js (logique patron monolithique)",
       "id": "readme_script_js"
     },
@@ -16426,7 +16466,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 20,
       "norm_label": "lib/utils.js (helpers purs)",
       "id": "readme_lib_utils"
     },
@@ -16725,7 +16765,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 110,
       "norm_label": "synchronisation agenda \u2014 flux ical (d-72)",
       "id": "architecture_ical_feed"
     },
@@ -16738,7 +16778,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 110,
       "norm_label": "flag calendar_enabled (ical desactive d-83)",
       "id": "architecture_calendar_enabled_flag"
     },
@@ -16790,7 +16830,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 110,
       "norm_label": "f-09 abonnement agenda ical",
       "id": "backlog_f09_ical"
     },
@@ -16998,7 +17038,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 20,
       "norm_label": "index.html (interface patron/directeur)",
       "id": "index_index_html"
     },
@@ -17024,7 +17064,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 59,
       "norm_label": "performance.html (pilotage economique)",
       "id": "performance_performance_html"
     },
@@ -24664,6 +24704,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public/pointage.js",
+      "source_location": "L1128",
+      "weight": 1.0,
+      "source": "public_pointage",
+      "target": "public_pointage_closeheuremodal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public/pointage.js",
       "source_location": "L842",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -24716,9 +24766,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1123",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_fmtheuresaisie",
-      "confidence_score": 1.0
+      "target": "public_pointage_fmtheuresaisie"
     },
     {
       "relation": "contains",
@@ -24786,9 +24836,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L863",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_iscloturemanager",
-      "confidence_score": 1.0
+      "target": "public_pointage_iscloturemanager"
     },
     {
       "relation": "contains",
@@ -24854,6 +24904,26 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public/pointage.js",
+      "source_location": "L1169",
+      "weight": 1.0,
+      "source": "public_pointage",
+      "target": "public_pointage_normalizetimeinputvalue",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public/pointage.js",
+      "source_location": "L1133",
+      "weight": 1.0,
+      "source": "public_pointage",
+      "target": "public_pointage_openheuremodal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public/pointage.js",
       "source_location": "L42",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -24906,9 +24976,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1129",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_resultatlabel",
-      "confidence_score": 1.0
+      "target": "public_pointage_resultatlabel"
     },
     {
       "relation": "contains",
@@ -24946,9 +25016,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1140",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_showshiftvalidationlogs",
-      "confidence_score": 1.0
+      "target": "public_pointage_showshiftvalidationlogs"
     },
     {
       "relation": "contains",
@@ -24989,6 +25059,16 @@
       "confidence_score": 1.0,
       "source": "public_pointage",
       "target": "public_pointage_stopcodecloturetimers"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public/pointage.js",
+      "source_location": "L1177",
+      "weight": 1.0,
+      "source": "public_pointage",
+      "target": "public_pointage_submitheuremodal",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -25102,6 +25182,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "public/pointage.js",
+      "source_location": "L1048",
+      "weight": 1.0,
+      "source": "public_pointage_cloturemanuelle",
+      "target": "public_pointage_fmth",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/pointage.js",
       "source_location": "L26",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -25179,11 +25270,33 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "public/pointage.js",
+      "source_location": "L1155",
+      "weight": 1.0,
+      "source": "public_pointage_openheuremodal",
+      "target": "public_pointage_snapinputtoquarter",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/pointage.js",
       "source_location": "L24",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "public_pointage_snapinputtoquarter",
       "target": "public_pointage_parsetimeinput"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/pointage.js",
+      "source_location": "L1183",
+      "weight": 1.0,
+      "source": "public_pointage_submitheuremodal",
+      "target": "public_pointage_snapinputtoquarter",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -25239,6 +25352,17 @@
       "confidence_score": 1.0,
       "source": "public_pointage_refreshcodecloture",
       "target": "public_pointage_showtoast"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/pointage.js",
+      "source_location": "L1194",
+      "weight": 1.0,
+      "source": "public_pointage_submitheuremodal",
+      "target": "public_pointage_showtoast",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -25390,9 +25514,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1194",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_initcloturepanel",
-      "target": "public_pointage_iscloturemanager",
-      "confidence_score": 1.0
+      "target": "public_pointage_iscloturemanager"
     },
     {
       "relation": "calls",
@@ -25401,9 +25525,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1107",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_validatecloturesweek",
-      "target": "public_pointage_iscloturemanager",
-      "confidence_score": 1.0
+      "target": "public_pointage_iscloturemanager"
     },
     {
       "relation": "calls",
@@ -25434,9 +25558,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L1176",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_showshiftvalidationlogs",
-      "target": "public_pointage_escapehtml",
-      "confidence_score": 1.0
+      "target": "public_pointage_escapehtml"
     },
     {
       "relation": "calls",
@@ -25536,6 +25660,50 @@
       "confidence_score": 1.0,
       "source": "public_pointage_validatecloturesweek",
       "target": "public_pointage_renderclotureslist"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/pointage.js",
+      "source_location": "L1054",
+      "weight": 1.0,
+      "source": "public_pointage_cloturemanuelle",
+      "target": "public_pointage_openheuremodal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/pointage.js",
+      "source_location": "L1095",
+      "weight": 1.0,
+      "source": "public_pointage_ajusterheurecloture",
+      "target": "public_pointage_openheuremodal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/pointage.js",
+      "source_location": "L1192",
+      "weight": 1.0,
+      "source": "public_pointage_submitheuremodal",
+      "target": "public_pointage_closeheuremodal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/pointage.js",
+      "source_location": "L1154",
+      "weight": 1.0,
+      "source": "public_pointage_openheuremodal",
+      "target": "public_pointage_normalizetimeinputvalue",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -36998,9 +37166,9 @@
       "source_file": "server.js",
       "source_location": "L1274",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "server_canmanagecloture",
-      "confidence_score": 1.0
+      "target": "server_canmanagecloture"
     },
     {
       "relation": "contains",
@@ -37328,9 +37496,9 @@
       "source_file": "server.js",
       "source_location": "L1265",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "server_getactivepointagedatestr",
-      "confidence_score": 1.0
+      "target": "server_getactivepointagedatestr"
     },
     {
       "relation": "contains",
@@ -38170,9 +38338,9 @@
       "source_file": "server.js",
       "source_location": "L1277",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server_canmanagecloture",
-      "target": "server_canaccessestablishment",
-      "confidence_score": 1.0
+      "target": "server_canaccessestablishment"
     },
     {
       "relation": "calls",
@@ -38181,9 +38349,9 @@
       "source_file": "server.js",
       "source_location": "L1284",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server_canmanagecloture",
-      "target": "server_isresponsablepoursoiree",
-      "confidence_score": 1.0
+      "target": "server_isresponsablepoursoiree"
     },
     {
       "relation": "calls",
@@ -38192,9 +38360,9 @@
       "source_file": "server.js",
       "source_location": "L1280",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server_canmanagecloture",
-      "target": "server_getactivepointagedatestr",
-      "confidence_score": 1.0
+      "target": "server_getactivepointagedatestr"
     },
     {
       "relation": "calls",
@@ -43283,9 +43451,9 @@
       "source_file": "docs/architecture.md",
       "source_location": "L262",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_architecture_5_mod\u00e8le_de_donn\u00e9es_collections_cl\u00e9s",
-      "target": "docs_architecture_codes_cloture_code_otp_\u00e9tablissement_ttl_15_min_usage_unique",
-      "confidence_score": 1.0
+      "target": "docs_architecture_codes_cloture_code_otp_\u00e9tablissement_ttl_15_min_usage_unique"
     },
     {
       "relation": "contains",
@@ -43373,9 +43541,9 @@
       "source_file": "docs/architecture.md",
       "source_location": "L277",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_architecture_5_mod\u00e8le_de_donn\u00e9es_collections_cl\u00e9s",
-      "target": "docs_architecture_time_validations_audit_append_only_des_pointages_cl\u00f4tures",
-      "confidence_score": 1.0
+      "target": "docs_architecture_time_validations_audit_append_only_des_pointages_cl\u00f4tures"
     },
     {
       "relation": "contains",
@@ -45073,9 +45241,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "target": "docs_note_client_mise_a_jour_1_un_code_pour_pointer_le_d\u00e9but_et_la_fin_de_service",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_1_un_code_pour_pointer_le_d\u00e9but_et_la_fin_de_service"
     },
     {
       "relation": "contains",
@@ -45083,9 +45251,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L30",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "target": "docs_note_client_mise_a_jour_2_les_heures_r\u00e9elles_suivent_automatiquement",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_2_les_heures_r\u00e9elles_suivent_automatiquement"
     },
     {
       "relation": "contains",
@@ -45093,9 +45261,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L37",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "target": "docs_note_client_mise_a_jour_3_votre_\u00e9cran_pointage_simplifi\u00e9_pour_le_soir",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_3_votre_\u00e9cran_pointage_simplifi\u00e9_pour_le_soir"
     },
     {
       "relation": "contains",
@@ -45103,9 +45271,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L49",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "target": "docs_note_client_mise_a_jour_4_vous_pouvez_toujours_corriger_m\u00eame_apr\u00e8s_le_r\u00e9cap",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_4_vous_pouvez_toujours_corriger_m\u00eame_apr\u00e8s_le_r\u00e9cap"
     },
     {
       "relation": "contains",
@@ -45113,9 +45281,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L55",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "target": "docs_note_client_mise_a_jour_5_personne_non_pr\u00e9vue",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_5_personne_non_pr\u00e9vue"
     },
     {
       "relation": "contains",
@@ -45333,9 +45501,9 @@
       "source_file": "docs/onboarding.md",
       "source_location": "L229",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_onboarding_7_cartographie_des_routes_api_server_js",
-      "target": "docs_onboarding_cl\u00f4ture_otp_d\u00e9but_fin_sync_real",
-      "confidence_score": 1.0
+      "target": "docs_onboarding_cl\u00f4ture_otp_d\u00e9but_fin_sync_real"
     },
     {
       "relation": "contains",
@@ -45473,9 +45641,9 @@
       "source_file": "docs/onboarding.md",
       "source_location": "L289",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_onboarding_8_le_frontend_fichier_par_fichier",
-      "target": "docs_onboarding_pointage_js_pointage_cl\u00f4ture",
-      "confidence_score": 1.0
+      "target": "docs_onboarding_pointage_js_pointage_cl\u00f4ture"
     },
     {
       "relation": "contains",
@@ -45643,9 +45811,9 @@
       "source_file": "docs/prd.md",
       "source_location": "L283",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_prd_3_fonctionnalit\u00e9s_principales",
-      "target": "docs_prd_3_17bis_cl\u00f4ture_de_service_par_code_otp_d\u00e9but_fin",
-      "confidence_score": 1.0
+      "target": "docs_prd_3_17bis_cl\u00f4ture_de_service_par_code_otp_d\u00e9but_fin"
     },
     {
       "relation": "contains",
@@ -46600,5 +46768,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "eaf16066c91fa433fe23a2fa6425ff8726fa8b49"
+  "built_at_commit": "d50938ccaf265ec777d4b66f2ce19fad81fdb2c4"
 }

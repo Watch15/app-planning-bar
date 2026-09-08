@@ -1043,64 +1043,162 @@ async function renderCloturesList() {
 
 async function clotureManuelle(shift, phase) {
     const isDebut = phase === 'debut';
-    const label = isDebut
-        ? 'Heure de début (HH:MM) — laisse vide pour utiliser le début planifié'
-        : 'Heure de fin (HH:MM) — laisse vide pour utiliser la fin planifiée';
-    const def = isDebut
-        ? (shift.debut_valide_finale || '')
-        : (shift.heure_validee_finale || '');
-    const heure = prompt(label, def);
-    if (heure === null) return;
-    try {
-        const body = { phase: isDebut ? 'debut' : 'fin' };
-        if (heure.trim()) body.heure = heure.trim();
-        // Fin sans début : forcer les deux si le patron le souhaite
-        if (!isDebut && !shift.debut_valide_code) {
-            const heureDebut = prompt('Début manquant — heure de début (HH:MM) pour forcer les deux', '');
-            if (heureDebut === null) return;
-            if (!heureDebut.trim()) {
-                showToast('Heure de début requise pour forcer la clôture', true);
-                return;
+    const forceBoth = !isDebut && !shift.debut_valide_code;
+    const plannedDebut = shift.start_time != null
+        ? (window.ShiftHours ? ShiftHours.fmtHourOfDay(shift.start_time) : fmtH(shift.start_time))
+        : '';
+    const plannedFin = shift.end_time != null
+        ? (window.ShiftHours ? ShiftHours.fmtHourOfDay(shift.end_time) : fmtH(shift.end_time))
+        : '';
+
+    openHeureModal({
+        title: isDebut ? 'Début manuel — ' + (shift.staff_name || '') : 'Fin manuelle — ' + (shift.staff_name || ''),
+        hint: forceBoth
+            ? 'Début non pointé : saisis début et fin (préremplis aux heures planifiées).'
+            : (isDebut
+                ? 'Laisse vide pour utiliser le début planifié (' + (plannedDebut || '—') + ').'
+                : 'Laisse vide pour utiliser la fin planifiée (' + (plannedFin || '—') + ').'),
+        showDebut: isDebut || forceBoth,
+        showFin: !isDebut || forceBoth,
+        showMotif: false,
+        debutValue: isDebut
+            ? (shift.debut_valide_finale || plannedDebut || '')
+            : (plannedDebut || ''),
+        finValue: plannedFin || '',
+        onSubmit: async ({ debut, fin }) => {
+            const body = { phase: isDebut ? 'debut' : 'fin' };
+            if (forceBoth) {
+                if (!debut) { showToast('Heure de début requise', true); return false; }
+                body.heure_debut = debut;
+                if (fin) body.heure = fin;
+            } else if (isDebut) {
+                if (debut) body.heure = debut;
+            } else if (fin) {
+                body.heure = fin;
             }
-            body.heure_debut = heureDebut.trim();
-        }
-        const res = await fetch('/api/shifts/' + shift._id + '/cloturer-manuel', {
-            method: 'POST', credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Erreur');
-        showToast(isDebut ? 'Début manuel enregistré' : 'Fin manuelle enregistrée');
-        renderCloturesList();
-        refreshCodeCloture(true);
-    } catch (e) { showToast(e.message, true); }
+            const res = await fetch('/api/shifts/' + shift._id + '/cloturer-manuel', {
+                method: 'POST', credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Erreur');
+            showToast(isDebut ? 'Début manuel enregistré' : 'Fin manuelle enregistrée');
+            renderCloturesList();
+            refreshCodeCloture(true);
+            return true;
+        },
+    });
 }
 
 async function ajusterHeureCloture(shift) {
-    const debut = prompt('Début retenu (HH:MM) — vide = inchangé', shift.debut_valide_finale || '');
-    if (debut === null) return;
-    const fin = prompt('Fin retenue (HH:MM) — vide = inchangé', shift.heure_validee_finale || '');
-    if (fin === null) return;
-    if (!debut.trim() && !fin.trim()) {
-        showToast('Aucune modification', true);
-        return;
+    openHeureModal({
+        title: 'Ajuster — ' + (shift.staff_name || ''),
+        hint: 'Les heures d\'origine (code) restent inchangées. Seules les heures retenues sont modifiées.',
+        showDebut: true,
+        showFin: true,
+        showMotif: true,
+        debutValue: shift.debut_valide_finale || '',
+        finValue: shift.heure_validee_finale || '',
+        motifValue: shift.motif_modification || '',
+        onSubmit: async ({ debut, fin, motif }) => {
+            if (!debut && !fin) {
+                showToast('Indique au moins une heure', true);
+                return false;
+            }
+            const body = { motif: motif || undefined };
+            if (debut) body.debut_valide_finale = debut;
+            if (fin) body.heure_validee_finale = fin;
+            const res = await fetch('/api/shifts/' + shift._id + '/ajuster-heure', {
+                method: 'PATCH', credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Erreur');
+            showToast('Heures ajustées (origines conservées)');
+            renderCloturesList();
+            return true;
+        },
+    });
+}
+
+let _heureModalSubmit = null;
+
+function closeHeureModal() {
+    document.getElementById('heure-modal')?.classList.remove('open');
+    _heureModalSubmit = null;
+}
+
+function openHeureModal(opts) {
+    const modal = document.getElementById('heure-modal');
+    if (!modal) return;
+    const title = document.getElementById('heure-modal-title');
+    const hint = document.getElementById('heure-modal-hint');
+    const gDebut = document.getElementById('heure-group-debut');
+    const gFin = document.getElementById('heure-group-fin');
+    const inDebut = document.getElementById('heure-modal-debut');
+    const inFin = document.getElementById('heure-modal-fin');
+    const motif = document.getElementById('heure-modal-motif');
+    const btn = document.getElementById('heure-modal-submit');
+
+    if (title) title.textContent = opts.title || 'Saisie';
+    if (hint) hint.textContent = opts.hint || '';
+    if (gDebut) gDebut.style.display = opts.showDebut ? '' : 'none';
+    if (gFin) gFin.style.display = opts.showFin ? '' : 'none';
+    if (motif) {
+        motif.style.display = opts.showMotif ? '' : 'none';
+        motif.value = opts.motifValue || '';
     }
-    const motif = prompt('Motif (optionnel)', shift.motif_modification || '') || '';
+    if (inDebut) {
+        inDebut.value = normalizeTimeInputValue(opts.debutValue);
+        snapInputToQuarter(inDebut);
+    }
+    if (inFin) {
+        inFin.value = normalizeTimeInputValue(opts.finValue);
+        snapInputToQuarter(inFin);
+    }
+    if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer'; }
+    _heureModalSubmit = opts.onSubmit || null;
+    modal.classList.add('open');
+    const focusEl = opts.showDebut ? inDebut : inFin;
+    setTimeout(() => focusEl?.focus(), 50);
+}
+
+/** Accepte "HH:MM" ou "HHhMM" → valeur pour <input type="time">. */
+function normalizeTimeInputValue(v) {
+    if (!v) return '';
+    const s = String(v).trim().replace('h', ':');
+    const m = s.match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) return '';
+    return String(m[1]).padStart(2, '0') + ':' + m[2];
+}
+
+async function submitHeureModal() {
+    if (!_heureModalSubmit) return;
+    const gDebut = document.getElementById('heure-group-debut');
+    const gFin = document.getElementById('heure-group-fin');
+    const inDebut = document.getElementById('heure-modal-debut');
+    const inFin = document.getElementById('heure-modal-fin');
+    const motif = document.getElementById('heure-modal-motif');
+    const btn = document.getElementById('heure-modal-submit');
+    if (inDebut) snapInputToQuarter(inDebut);
+    if (inFin) snapInputToQuarter(inFin);
+    if (btn) btn.disabled = true;
     try {
-        const body = { motif: motif.trim() || undefined };
-        if (debut.trim()) body.debut_valide_finale = debut.trim();
-        if (fin.trim()) body.heure_validee_finale = fin.trim();
-        const res = await fetch('/api/shifts/' + shift._id + '/ajuster-heure', {
-            method: 'PATCH', credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
+        const debutVisible = gDebut && gDebut.style.display !== 'none';
+        const finVisible = gFin && gFin.style.display !== 'none';
+        const ok = await _heureModalSubmit({
+            debut: debutVisible ? (inDebut?.value || '').trim() : '',
+            fin: finVisible ? (inFin?.value || '').trim() : '',
+            motif: (motif && motif.style.display !== 'none') ? motif.value.trim() : '',
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Erreur');
-        showToast('Heures ajustées (origines conservées)');
-        renderCloturesList();
-    } catch (e) { showToast(e.message, true); }
+        if (ok !== false) closeHeureModal();
+    } catch (e) {
+        showToast(e.message, true);
+    } finally {
+        if (btn) btn.disabled = false;
+    }
 }
 
 async function validateCloturesWeek() {
@@ -1218,6 +1316,14 @@ function initCloturePanel() {
         document.getElementById('litige-modal')?.addEventListener('click', e => {
             if (e.target.id === 'litige-modal') e.currentTarget.classList.remove('open');
         });
+        document.getElementById('heure-modal-close')?.addEventListener('click', closeHeureModal);
+        document.getElementById('heure-modal-cancel')?.addEventListener('click', closeHeureModal);
+        document.getElementById('heure-modal-submit')?.addEventListener('click', submitHeureModal);
+        document.getElementById('heure-modal')?.addEventListener('click', e => {
+            if (e.target.id === 'heure-modal') closeHeureModal();
+        });
+        document.getElementById('heure-modal-debut')?.addEventListener('change', e => snapInputToQuarter(e.target));
+        document.getElementById('heure-modal-fin')?.addEventListener('change', e => snapInputToQuarter(e.target));
     }
     refreshCodeCloture(true);
     renderCloturesList();

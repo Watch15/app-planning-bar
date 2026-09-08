@@ -688,6 +688,69 @@
             margin-top: 4px;
         }
 
+        /* Modale saisie heures (manuel / ajuster) — même langage que l'ancien pointage */
+        #heure-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.45);
+            align-items: flex-end;
+            justify-content: center;
+        }
+        #heure-modal.open { display: flex; }
+        .heure-modal-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin: 0 0 12px;
+            line-height: 1.4;
+        }
+        .heure-modal-fields {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .heure-modal-fields .time-group { flex: 1; min-width: 120px; }
+        .heure-modal-motif {
+            width: 100%;
+            border: 1.5px solid var(--light-border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 14px;
+            font-family: var(--font);
+            color: var(--text-primary);
+            background: var(--light-bg);
+            margin-bottom: 14px;
+            outline: none;
+            resize: vertical;
+            min-height: 44px;
+        }
+        .heure-modal-motif:focus {
+            border-color: var(--accent);
+            background: #fff;
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .heure-modal-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        .heure-modal-actions .btn-cancel-heure {
+            padding: 0 16px;
+            height: 48px;
+            border-radius: 8px;
+            border: 1.5px solid var(--light-border);
+            background: var(--light-card);
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: var(--font);
+        }
+        .heure-modal-actions .btn-save { flex: 1; min-width: 140px; }
+
         /* ── Mobile ── */
         @media (max-width: 600px) {
             .header { padding: 0 14px; height: 52px; }
@@ -834,6 +897,31 @@
             <button type="button" id="litige-modal-close" aria-label="Fermer">×</button>
         </div>
         <div id="litige-modal-body"></div>
+    </div>
+</div>
+
+<div id="heure-modal" role="dialog" aria-modal="true" aria-labelledby="heure-modal-title">
+    <div class="litige-sheet">
+        <div class="litige-sheet-head">
+            <h3 id="heure-modal-title">Saisie manuelle</h3>
+            <button type="button" id="heure-modal-close" aria-label="Fermer">×</button>
+        </div>
+        <p class="heure-modal-hint" id="heure-modal-hint"></p>
+        <div class="heure-modal-fields">
+            <div class="time-group" id="heure-group-debut">
+                <div class="time-label">Début</div>
+                <input type="time" step="900" class="time-input" id="heure-modal-debut">
+            </div>
+            <div class="time-group" id="heure-group-fin">
+                <div class="time-label">Fin</div>
+                <input type="time" step="900" class="time-input" id="heure-modal-fin">
+            </div>
+        </div>
+        <textarea id="heure-modal-motif" class="heure-modal-motif" placeholder="Motif (optionnel)" rows="2" style="display:none"></textarea>
+        <div class="heure-modal-actions">
+            <button type="button" class="btn-cancel-heure" id="heure-modal-cancel">Annuler</button>
+            <button type="button" class="btn-save" id="heure-modal-submit">Enregistrer</button>
+        </div>
     </div>
 </div>
 
