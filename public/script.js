@@ -474,15 +474,19 @@ async function init() {
     initViewTabs();
     await Promise.all([loadEstablishments(), loadAllStaff(), loadRoles(), loadGroups()]);
 
-    loadDisposBadge();
-    loadCongesBadge();
-    loadDisposKpi();
-    loadSwapsBadge();
     loadNotifBadge();
-    _notifPollTimer = setInterval(() => { loadNotifBadge(); loadSwapsBadge(); }, 30000);
+    if (!isObservateur()) {
+        loadDisposBadge();
+        loadCongesBadge();
+        loadDisposKpi();
+        loadSwapsBadge();
+        loadDispoControl();
+        _notifPollTimer = setInterval(() => { loadNotifBadge(); loadSwapsBadge(); }, 30000);
+    } else {
+        _notifPollTimer = setInterval(() => { loadNotifBadge(); }, 30000);
+    }
     startAutoRefresh();
     initNotifListeners();
-    loadDispoControl();
     initStaffSearch();
 
     // R-04 — un directeur arrivant depuis un push « Rappel dispos » est redirigé ici par
@@ -6033,6 +6037,7 @@ function exportRecapXlsx() {
 // ── Échanges de shifts — côté patron (F-05) ──────────────────────────────────
 
 async function loadSwapsBadge() {
+    if (isObservateur()) return;
     try {
         const res = await fetch('/api/shift-swaps/count', { credentials: 'include' });
         if (!res.ok) return;
@@ -6048,6 +6053,7 @@ async function loadSwapsBadge() {
 }
 
 async function openSwapsPanel() {
+    if (isObservateur()) return;
     const modal = document.getElementById('swaps-modal');
     if (!modal) return;
     modal.style.display = 'flex';
@@ -6231,6 +6237,7 @@ async function _decideSwap(swapId, action, card) {
 // ── Disponibilités — côté patron ──────────────────────────────────────────────
 
 async function loadDisposBadge() {
+    if (isObservateur()) return;
     try {
         // Le bouton « Dispos » est le hub absences : pastille = dispos + congés en attente
         const [dispRes, congRes] = await Promise.all([
@@ -6266,6 +6273,7 @@ let _kpiData = null;            // dernière réponse /api/dispos/kpi
 const _kpiEstabOpen = {};       // establishment_id (ou '__none__') → liste des manquants dépliée ?
 
 async function loadDisposKpi() {
+    if (isObservateur()) return;
     const card = document.getElementById('dispos-kpi-card');
     if (!card) return;
     try {
@@ -7216,6 +7224,7 @@ function switchDisposTab(tab) {
 }
 
 async function openDisposPanel() {
+    if (isObservateur()) return;
     const modal = document.getElementById('dispos-modal');
     if (!modal) return;
     switchDisposTab('list');
@@ -7919,6 +7928,7 @@ function buildEstablishmentSelect(staffId) {
 }
 
 async function loadDispoControl() {
+    if (isObservateur()) return;
     try {
         const [dispoRes, pointageRes] = await Promise.all([
             fetch('/api/dispo-settings',   { credentials: 'include' }),

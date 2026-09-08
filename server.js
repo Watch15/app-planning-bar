@@ -3995,7 +3995,7 @@ async function pendingScopeFilter(user, scope) {
     return { staff_id: { $in: staff.map(s => String(s._id)) } };
 }
 
-app.get('/api/dispos/pending', checkDB, requirePatron, async (req, res) => {
+app.get('/api/dispos/pending', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
     const { from, to, scope } = req.query;
     if (!from || !to) return res.status(400).json({ error: 'from et to requis' });
     try {
@@ -4016,7 +4016,7 @@ app.get('/api/dispos/pending', checkDB, requirePatron, async (req, res) => {
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-app.get('/api/dispos/count', checkDB, requirePatron, async (req, res) => {
+app.get('/api/dispos/count', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
     try {
         // Même périmètre que la liste, sinon la pastille annonce 12 et la file en montre 3.
         // B2 — et MÊME PLAGE DE DATES, pour la même raison sur l'autre axe. La file est
@@ -4230,7 +4230,7 @@ async function fullWeekCongeSet(staffIds, from, to) {
 // KPI de complétion des dispos pour la semaine cible [from,to], scopé selon le rôle :
 // patron = tous les bars, directeur = ses bars assignés, responsable = les établissements
 // de ses shifts de la semaine en cours. Renvoie le global + une déclinaison par bar.
-app.get('/api/dispos/kpi', checkDB, requireAuth, async (req, res) => {
+app.get('/api/dispos/kpi', checkDB, requireAuth, denyObservateurEdit, async (req, res) => {
     const { from, to } = req.query;
     if (!from || !to) return res.status(400).json({ error: 'from et to requis' });
     const user = req.session.user;
@@ -4997,7 +4997,7 @@ app.get('/api/managers-off', checkDB, requirePatron, async (req, res) => {
 });
 
 // GET — liste patron (filtre ?from&to&status). Sert la vue gestion ET le planning.
-app.get('/api/conges', checkDB, requirePatron, async (req, res) => {
+app.get('/api/conges', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
     const { from, to, status } = req.query;
     try {
         const query = {};
@@ -5011,7 +5011,7 @@ app.get('/api/conges', checkDB, requirePatron, async (req, res) => {
 });
 
 // GET — compteur de demandes en attente (badge patron)
-app.get('/api/conges/pending-count', checkDB, requirePatron, async (req, res) => {
+app.get('/api/conges/pending-count', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
     try {
         const count = await db.collection('time_off').countDocuments({ status: 'pending' });
         res.json({ count });
@@ -5019,7 +5019,7 @@ app.get('/api/conges/pending-count', checkDB, requirePatron, async (req, res) =>
 });
 
 // PATCH — le patron valide ou refuse une demande de congé
-app.patch('/api/conges/:id/decision', checkDB, requirePatron, async (req, res) => {
+app.patch('/api/conges/:id/decision', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const decision = req.body.decision;
     if (decision !== 'approved' && decision !== 'rejected')
@@ -5321,7 +5321,7 @@ app.patch('/api/shift-swaps/:id/staff-decline', checkDB, requireAuth, async (req
 });
 
 // GET — patron : liste des demandes en attente
-app.get('/api/shift-swaps/pending', checkDB, requirePatron, async (req, res) => {
+app.get('/api/shift-swaps/pending', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
     const user = req.session.user;
     try {
         const swaps = await db.collection('shift_swaps').find({ status: 'pending' }).sort({ created_at: -1 }).toArray();
@@ -5334,7 +5334,7 @@ app.get('/api/shift-swaps/pending', checkDB, requirePatron, async (req, res) => 
 });
 
 // GET — patron : compteur pour badge header
-app.get('/api/shift-swaps/count', checkDB, requirePatron, async (req, res) => {
+app.get('/api/shift-swaps/count', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
     const user = req.session.user;
     try {
         if (user.role === 'patron') {
@@ -5360,7 +5360,7 @@ app.get('/api/shift-swaps/mine', checkDB, requireAuth, async (req, res) => {
 });
 
 // PATCH — patron approuve : swap effectif des staff sur les 2 shifts
-app.patch('/api/shift-swaps/:id/approve', checkDB, requirePatron, async (req, res) => {
+app.patch('/api/shift-swaps/:id/approve', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const user = req.session.user;
     try {
@@ -5427,7 +5427,7 @@ app.patch('/api/shift-swaps/:id/approve', checkDB, requirePatron, async (req, re
 });
 
 // PATCH — patron refuse
-app.patch('/api/shift-swaps/:id/reject', checkDB, requirePatron, async (req, res) => {
+app.patch('/api/shift-swaps/:id/reject', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const user = req.session.user;
     const reason = (req.body?.reason || '').toString().slice(0, 280);

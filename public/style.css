@@ -1391,7 +1391,18 @@ body.observateur #staff-bar-container,
 body.observateur #staff-bar-overlay,
 body.observateur .shift-delete,
 body.observateur .shift-resp-btn,
-body.observateur .resizer {
+body.observateur .resizer,
+body.observateur #btn-dispos,
+body.observateur #dispos-badge,
+body.observateur #btn-swaps,
+body.observateur #swaps-badge,
+body.observateur #drawer-btn-dispos,
+body.observateur #drawer-btn-swaps,
+body.observateur #header-dispo-controls,
+body.observateur #drawer-section-dispos,
+body.observateur #drawer-dispo-row,
+body.observateur #drawer-btn-dispo-settings,
+body.observateur #dispos-kpi-card {
   display: none !important;
 }
 body.observateur .shift {
