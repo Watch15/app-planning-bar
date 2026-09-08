@@ -6464,7 +6464,7 @@ app.get('/api/pointage/:date', checkDB, requireAuth, async (req, res) => {
 
 // PATCH désigner le responsable de pointage pour un établissement/date
 // Dé-désigne tous les autres responsables du même établissement ce jour
-app.patch('/api/shifts/:id/pointage-resp', checkDB, requirePatron, async (req, res) => {
+app.patch('/api/shifts/:id/pointage-resp', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const { value } = req.body; // true | false
     try {
@@ -6788,7 +6788,7 @@ async function classifyCodeRefuse(estabId, code) {
     return 'refuse_code_invalide';
 }
 
-// GET code de clôture courant (manager ou responsable de soirée)
+// GET code de clôture courant (manager éditeur ou responsable de soirée — pas observateur)
 app.get('/api/etablissements/:id/code-cloture',
     checkDB, requireAuth, denyObservateurEdit,
     async (req, res) => {
@@ -6809,9 +6809,9 @@ app.get('/api/etablissements/:id/code-cloture',
     }
 );
 
-// GET shifts + champs clôture pour une semaine (manager ou responsable de soirée)
+// GET shifts + champs clôture pour une semaine (patron/directeur/observateur lecture, ou responsable)
 app.get('/api/etablissements/:id/clotures-semaine',
-    checkDB, requireAuth, denyObservateurEdit,
+    checkDB, requireAuth,
     async (req, res) => {
         const weekStart = req.query.week_start;
         if (!weekStart || !/^\d{4}-\d{2}-\d{2}$/.test(weekStart))
@@ -7268,7 +7268,7 @@ app.get('/api/etablissements/:id/time-validations',
 );
 
 // POST valider le récap hebdo (marque patron_valide sur les shifts clôturés)
-// Observateur autorisé (panel de vérification Pointage — exception produit).
+// Observateur autorisé (pas le code OTP — celui-ci reste derrière denyObservateurEdit).
 app.post('/api/etablissements/:id/valider-recap',
     checkDB, requirePatron,
     requireEstablishmentAccess(r => r.params.id),

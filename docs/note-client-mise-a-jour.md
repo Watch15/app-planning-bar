@@ -52,6 +52,8 @@ Quand vous validez le récap de la semaine, les heures sont marquées comme vali
 **Vous (patron, directeur ou observateur) pouvez quand même ajuster** en cas de problème :
 l'origine du code reste intacte, seule l'heure retenue (et donc le réel) change.
 Le **responsable de soirée** ne peut plus ajuster une fois le récap validé.
+L'**observateur** a les mêmes actions de clôture (manuel, ajuster, récap, CA, extra)
+mais **sans accès au code OTP**.
 
 Depuis la page **Pointage**, dans **Clôture du jour**, l'onglet **Journal** montre
 les mouvements du jour (qui a saisi, quand, par **code OTP** ou **saisie manuelle**).

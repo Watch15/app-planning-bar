@@ -4,6 +4,7 @@
 // heures réelles), comme le patron. Source unique pour éviter la dérive entre les
 // différents points de contrôle de ce fichier.
 const MANAGER_ROLES = ['patron', 'directeur', 'observateur'];
+const OTP_ROLES = ['patron', 'directeur']; // code OTP : pas l'observateur
 
 function toDateStr(d) {
     return d.getFullYear() + '-' +
@@ -864,8 +865,22 @@ function canUseClotureUi() {
     ));
 }
 
+/** Lecture + journal + navigation jour (inclut observateur). */
 function isClotureManager() {
     return !!(currentUser && CLOTURE_ROLES.includes(currentUser.role));
+}
+
+/** Actions d'écriture clôture / CA / extra (inclut observateur). */
+function isClotureEditor() {
+    return !!(currentUser && CLOTURE_ROLES.includes(currentUser.role));
+}
+
+/** Code OTP : patron / directeur / responsable — pas l'observateur. */
+function canSeeCodeCloture() {
+    return !!(currentUser && (
+        OTP_ROLES.includes(currentUser.role)
+        || currentUser.role === 'staff'
+    ));
 }
 
 function nameMatchesSearch(name, q) {
@@ -1030,20 +1045,22 @@ function paintCloturesList() {
             '</div>' +
             '<div class="cloture-row-actions"></div>';
         const actions = row.querySelector('.cloture-row-actions');
-        if (!hasDebut && !closed) {
+        const canWrite = isClotureEditor()
+            || (currentUser.role === 'staff' && currentEstabId);
+        if (canWrite && !hasDebut && !closed) {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.textContent = 'Début manuel';
             btn.addEventListener('click', () => clotureManuelle(s, 'debut'));
             actions.appendChild(btn);
-        } else if (hasDebut && !closed) {
+        } else if (canWrite && hasDebut && !closed) {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.textContent = 'Fin manuelle';
             btn.addEventListener('click', () => clotureManuelle(s, 'fin'));
             actions.appendChild(btn);
         } else if (closed) {
-            const canAdjust = isClotureManager()
+            const canAdjust = isClotureEditor()
                 || (currentUser.role === 'staff' && !s.patron_valide);
             if (canAdjust) {
                 const btn = document.createElement('button');
@@ -1229,7 +1246,7 @@ async function submitHeureModal() {
 }
 
 async function validateCloturesWeek() {
-    if (!isClotureManager() || !currentEstabId || !_cloturesDay) return;
+    if (!isClotureEditor() || !currentEstabId || !_cloturesDay) return;
     const monday = toDateStr(Week.weekStart(_cloturesDay));
     if (!confirm('Valider le récap de la semaine du ' + monday + ' pour cet établissement ?\nLes shifts déjà clôturés seront marqués validés.')) return;
     try {
@@ -1315,9 +1332,9 @@ function initCloturePanel() {
     }
     panel.classList.add('visible');
     setLegacyPointageVisible(false);
-    // Valider le récap + nav jours = managers (patron/directeur/observateur)
+    // Observateur : toutes les actions sauf le code OTP.
     const btnValidate = document.getElementById('clotures-validate-week');
-    if (btnValidate) btnValidate.style.display = isClotureManager() ? '' : 'none';
+    if (btnValidate) btnValidate.style.display = isClotureEditor() ? '' : 'none';
     const prev = document.getElementById('clotures-prev-day');
     const next = document.getElementById('clotures-next-day');
     if (prev) prev.style.display = isClotureManager() ? '' : 'none';
@@ -1327,6 +1344,15 @@ function initCloturePanel() {
     if (tabs) tabs.style.display = isClotureManager() ? 'flex' : 'none';
     if (btnJournal) btnJournal.style.display = isClotureManager() ? '' : 'none';
     if (!isClotureManager() && _clotureTab === 'journal') switchClotureTab('shifts');
+    const codeCard = document.querySelector('.cloture-code-card');
+    if (codeCard) codeCard.style.display = canSeeCodeCloture() ? '' : 'none';
+    const canOperate = isClotureEditor() || currentUser.role === 'staff';
+    const extraSec = document.getElementById('extra-section');
+    if (extraSec) extraSec.style.display = canOperate ? '' : 'none';
+    const revInput = document.getElementById('revenue-input');
+    const revBtn = document.getElementById('btn-save-revenue');
+    if (revInput) revInput.disabled = !canOperate;
+    if (revBtn) revBtn.style.display = canOperate ? '' : 'none';
     // Responsable : verrouillé sur la soirée active (`today`)
     _cloturesDay = today ? new Date(today + 'T12:00:00') : new Date();
     if (!_clotureBound) {
@@ -1365,7 +1391,8 @@ function initCloturePanel() {
         document.getElementById('heure-modal-debut')?.addEventListener('change', e => snapInputToQuarter(e.target));
         document.getElementById('heure-modal-fin')?.addEventListener('change', e => snapInputToQuarter(e.target));
     }
-    refreshCodeCloture(true);
+    if (canSeeCodeCloture()) refreshCodeCloture(true);
+    else stopCodeClotureTimers();
     renderCloturesList();
 }
 

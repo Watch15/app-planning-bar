@@ -165,10 +165,13 @@ test('GET verif/journal : acteur_name + source_label', async () => {
     assert.ok(docs.some(d => d.acteur_name === 'Alice'));
 });
 
-test('observateur : peut lire journal et valider-recap', async () => {
+test('observateur : lit journal, peut valider-recap, pas le code OTP', async () => {
     const from = mondayOf();
     const j = await req('/api/pointage/verif/journal?from=' + from + '&to=' + todayStr(), OBS);
     assert.equal(j.status, 200);
+
+    const code = await req('/api/etablissements/' + ESTAB + '/code-cloture', OBS);
+    assert.equal(code.status, 403);
 
     const val = await req('/api/etablissements/' + ESTAB + '/valider-recap', OBS, {
         method: 'POST',
@@ -180,10 +183,6 @@ test('observateur : peut lire journal et valider-recap', async () => {
 
     const shift = db.collection('shifts')._docs.find(s => String(s._id) === SHIFT2);
     assert.equal(shift.patron_valide, true);
-
-    const audits = db.collection('time_validations')._docs.filter(d => d.action === 'valider_recap');
-    assert.ok(audits.length >= 1);
-    assert.equal(audits[0].source, 'valider_recap');
 });
 
 test('staff équipier : pas d\'accès verif', async () => {

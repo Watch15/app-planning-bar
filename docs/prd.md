@@ -287,7 +287,7 @@ Preuve métier parallèle puis **alignée** sur les heures opérationnelles (`re
 - **Manager** (`pointage.html`) : affiche le code courant (TTL 15 min, usage unique, régénération auto) ; liste **Clôture du jour** (navigation ±1 jour, date en français) ; début/fin manuels de secours ; ajustement des heures **retenues** sans toucher les origines `*_code`
 - **Sync `real_*`** : dès que `debut_valide_finale` + `heure_validee_finale` sont présents → `real_start` / `real_end` (floats, arrondi quart d'heure) + snapshot salarial au premier sync. Pas de sync sur début seul (D-71 / `shiftEffectiveHours`)
 - **Audit** : collection append-only `time_validations` (`accepte`, `refuse_*`, `sync_real`) avec acteur, rôle, action
-- **Récap hebdo** : `POST .../valider-recap` pose `patron_valide` (journalisé) ; patron / directeur / **observateur** peuvent encore ajuster ; le **responsable** est bloqué après validation
+- **Récap hebdo** : `POST .../valider-recap` pose `patron_valide` (journalisé) ; patron / directeur / **observateur** peuvent ajuster / valider / CA / extra ; **observateur** n’a **pas** le code OTP ; le **responsable** est bloqué après validation
 - **Journal clôture** (`pointage.html`, dans Clôture du jour) : onglets Shifts / Journal du jour + recherche par nom — `GET /api/pointage/verif/journal`
 - **Responsable de soirée** : même UI code OTP / clôture du jour, **limité à la soirée active** (cutoff pointage) — pas de navigation J-1 / J+1
 - **Litiges** : `GET /api/shifts/:id/time-validations` (+ filtre jour établissement) ; bouton **Historique** sur Pointage ; journal panel D-93
