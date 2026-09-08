@@ -49,8 +49,14 @@ L'ancienne grille de saisie manuelle heure par heure reste disponible pour le **
 ## 4. Vous pouvez toujours corriger — même après le récap
 
 Quand vous validez le récap de la semaine, les heures sont marquées comme validées.
-**Vous pouvez quand même ajuster** en cas de problème : l'origine du code reste intacte,
-seule l'heure retenue (et donc le réel) change.
+**Vous (patron, directeur ou observateur) pouvez quand même ajuster** en cas de problème :
+l'origine du code reste intacte, seule l'heure retenue (et donc le réel) change.
+Le **responsable de soirée** ne peut plus ajuster une fois le récap validé.
+
+Depuis le tableau de bord, le bouton **Pointage** ouvre maintenant un **panel de
+vérification** (pastille rouge s'il reste des services non clôturés ou non validés) :
+file à traiter + journal de tous les mouvements (qui a saisi, quand, par **code OTP**
+ou **saisie manuelle**). Le code du soir reste sur la page Pointage dédiée.
 
 ## 5. Personne non prévue
 

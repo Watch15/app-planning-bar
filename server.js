@@ -1270,10 +1270,10 @@ async function getActivePointageDateStr(now = new Date()) {
     return toDateStr(ref);
 }
 
-/** Patron/directeur (accès établissement) OU staff responsable — soirée active uniquement. */
+/** Patron/directeur/observateur (accès établissement) OU staff responsable — soirée active uniquement. */
 async function canManageCloture(user, estabId, dateOrDates) {
     if (!user || !estabId) return false;
-    if (user.role === 'patron' || user.role === 'directeur') {
+    if (user.role === 'patron' || user.role === 'directeur' || user.role === 'observateur') {
         return canAccessEstablishment(user, estabId);
     }
     if (user.role === 'staff' && user.staff_id) {
@@ -1284,6 +1284,55 @@ async function canManageCloture(user, estabId, dateOrDates) {
         return isResponsablePourSoiree(user.staff_id, estabId, active);
     }
     return false;
+}
+
+/** Filtre établissement pour les routes de vérif pointage (fail-closed). */
+function pointageVerifEstabFilter(user) {
+    const ids = userEstablishmentIds(user);
+    if (ids === null) return {};
+    if (!ids.length) return { establishment_id: { $in: [] } };
+    return { establishment_id: { $in: ids } };
+}
+
+/** Libellé UI : OTP / manuel / ajustement / refus. */
+function pointageSourceLabel(source, resultat) {
+    if (resultat && String(resultat).startsWith('refuse_')) return 'Refus code';
+    if (source === 'code') return 'Code OTP';
+    if (source === 'manuelle') return 'Saisie manuelle';
+    if (source === 'ajustement') return 'Ajustement';
+    if (source === 'valider_recap') return 'Validation récap';
+    return source || null;
+}
+
+async function resolveActeurNames(actorIds) {
+    const ids = [...new Set((actorIds || []).map(String).filter(Boolean))];
+    const map = {};
+    if (!ids.length) return map;
+    const objectIds = ids.filter(id => isValidObjectId(id)).map(id => new ObjectId(id));
+    if (objectIds.length) {
+        const staffDocs = await db.collection('staff')
+            .find({ _id: { $in: objectIds } }, { projection: { name: 1, nickname: 1 } })
+            .toArray();
+        staffDocs.forEach(s => {
+            map[String(s._id)] = s.nickname || s.name || null;
+        });
+    }
+    const missing = ids.filter(id => !map[id]);
+    if (missing.length) {
+        const or = [];
+        const missingOids = missing.filter(isValidObjectId).map(id => new ObjectId(id));
+        if (missingOids.length) or.push({ _id: { $in: missingOids } });
+        or.push({ staff_id: { $in: missing } });
+        const users = await db.collection('users').find({ $or: or }, {
+            projection: { _id: 1, staff_id: 1, name: 1, email: 1 },
+        }).toArray();
+        users.forEach(u => {
+            const label = u.name || u.email || null;
+            if (u.staff_id && !map[String(u.staff_id)]) map[String(u.staff_id)] = label;
+            if (!map[String(u._id)]) map[String(u._id)] = label;
+        });
+    }
+    return map;
 }
 
 // Compte établissement uniquement
@@ -2461,7 +2510,7 @@ app.delete('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
 // Audit litiges (AVANT `/api/shifts/:establishmentId/:date` sinon « time-validations »
 // est capturé comme une date et renvoie []).
 app.get('/api/shifts/:id/time-validations',
-    checkDB, requirePatron, denyObservateurEdit,
+    checkDB, requirePatron,
     async (req, res) => {
         if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
         try {
@@ -6962,7 +7011,7 @@ app.post('/api/shifts/:id/cloturer-par-code', checkDB, requireAuth, async (req, 
 // POST clôture manuelle (manager) — body { phase: 'debut'|'fin', heure?, heure_debut? }
 // Fin sans début : autorisée seulement si heure_debut fournie (force les deux).
 app.post('/api/shifts/:id/cloturer-manuel',
-    checkDB, requireAuth, denyObservateurEdit,
+    checkDB, requireAuth,
     async (req, res) => {
         if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
         const phase = req.body?.phase === 'debut' ? 'debut' : 'fin';
@@ -7102,7 +7151,7 @@ app.post('/api/shifts/:id/cloturer-manuel',
 
 // PATCH ajuster debut_valide_finale et/ou heure_validee_finale (sans toucher *_code)
 app.patch('/api/shifts/:id/ajuster-heure',
-    checkDB, requireAuth, denyObservateurEdit,
+    checkDB, requireAuth,
     async (req, res) => {
         if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
         const finFinale = req.body?.heure_validee_finale;
@@ -7176,7 +7225,7 @@ app.patch('/api/shifts/:id/ajuster-heure',
 
 // GET audit litiges d'un établissement pour une date — patron / directeur
 app.get('/api/etablissements/:id/time-validations',
-    checkDB, requirePatron, denyObservateurEdit,
+    checkDB, requirePatron,
     requireEstablishmentAccess(r => r.params.id),
     async (req, res) => {
         const date = req.query.date;
@@ -7219,8 +7268,9 @@ app.get('/api/etablissements/:id/time-validations',
 );
 
 // POST valider le récap hebdo (marque patron_valide sur les shifts clôturés)
+// Observateur autorisé (panel de vérification Pointage — exception produit).
 app.post('/api/etablissements/:id/valider-recap',
-    checkDB, requirePatron, denyObservateurEdit,
+    checkDB, requirePatron,
     requireEstablishmentAccess(r => r.params.id),
     async (req, res) => {
         const weekStart = req.body?.week_start;
@@ -7230,21 +7280,37 @@ app.post('/api/etablissements/:id/valider-recap',
         if (!dates) return res.status(400).json({ error: 'week_start invalide' });
         try {
             const valideLe = localDateParts();
-            const result = await db.collection('shifts').updateMany(
-                {
-                    establishment_id: req.params.id,
-                    date: { $in: dates },
-                    heure_validee_finale: { $ne: null, $exists: true },
-                    patron_valide: { $ne: true },
-                    type: { $ne: 'week_note' },
+            const actorId = req.session.user.staff_id || req.session.user._id;
+            const filter = {
+                establishment_id: req.params.id,
+                date: { $in: dates },
+                heure_validee_finale: { $ne: null, $exists: true },
+                patron_valide: { $ne: true },
+                type: { $ne: 'week_note' },
+            };
+            const toValidate = await db.collection('shifts').find(filter).toArray();
+            const result = await db.collection('shifts').updateMany(filter, {
+                $set: {
+                    patron_valide:    true,
+                    patron_valide_le: valideLe,
                 },
-                {
-                    $set: {
-                        patron_valide:    true,
-                        patron_valide_le: valideLe,
-                    },
-                }
-            );
+            });
+            for (const s of toValidate) {
+                await insertTimeValidation({
+                    etablissement_id: s.establishment_id,
+                    shift_id:         String(s._id),
+                    staff_id:         String(actorId),
+                    acteur_role:      req.session.user.role || null,
+                    action:           'valider_recap',
+                    source:           'valider_recap',
+                    code_saisi:       'RECAP',
+                    heure_saisie:     valideLe,
+                    debut_retenue:    s.debut_valide_finale ?? null,
+                    fin_retenue:      s.heure_validee_finale ?? null,
+                    resultat:         'accepte',
+                    phase:            'recap',
+                });
+            }
             res.json({
                 message: 'Récap validé',
                 modified: result.modifiedCount,
@@ -7253,6 +7319,198 @@ app.post('/api/etablissements/:id/valider-recap',
         } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
     }
 );
+
+// ── Vérification Pointage (panel patron / directeur / observateur) ────────────
+
+app.get('/api/pointage/verif/count', checkDB, requirePatron, async (req, res) => {
+    try {
+        const estabFilter = pointageVerifEstabFilter(req.session.user);
+        const active = await getActivePointageDateStr();
+        const monday = toDateStr(weekStart(new Date(active + 'T12:00:00')));
+        const weekDates = weekDateStrings(monday) || [active];
+
+        const nonClotures = await db.collection('shifts').countDocuments({
+            ...estabFilter,
+            date: active,
+            type: { $ne: 'week_note' },
+            $or: [
+                { heure_validee_finale: { $exists: false } },
+                { heure_validee_finale: null },
+                { heure_validee_finale: '' },
+            ],
+        });
+        const aValider = await db.collection('shifts').countDocuments({
+            ...estabFilter,
+            date: { $in: weekDates },
+            type: { $ne: 'week_note' },
+            heure_validee_finale: { $ne: null, $exists: true, $nin: [null, ''] },
+            patron_valide: { $ne: true },
+        });
+        res.json({
+            non_clotures: nonClotures,
+            a_valider: aValider,
+            total: nonClotures + aValider,
+            active_date: active,
+            week_start: monday,
+        });
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+app.get('/api/pointage/verif/pending', checkDB, requirePatron, async (req, res) => {
+    try {
+        const estabFilter = pointageVerifEstabFilter(req.session.user);
+        const active = await getActivePointageDateStr();
+        let weekStartStr = req.query.week_start;
+        if (!weekStartStr || !/^\d{4}-\d{2}-\d{2}$/.test(weekStartStr)) {
+            weekStartStr = toDateStr(weekStart(new Date(active + 'T12:00:00')));
+        }
+        const weekDates = weekDateStrings(weekStartStr);
+        if (!weekDates) return res.status(400).json({ error: 'week_start invalide' });
+
+        const nonClotures = await db.collection('shifts').find({
+            ...estabFilter,
+            date: active,
+            type: { $ne: 'week_note' },
+            $or: [
+                { heure_validee_finale: { $exists: false } },
+                { heure_validee_finale: null },
+                { heure_validee_finale: '' },
+            ],
+        }).toArray();
+
+        const aValider = await db.collection('shifts').find({
+            ...estabFilter,
+            date: { $in: weekDates },
+            type: { $ne: 'week_note' },
+            heure_validee_finale: { $ne: null, $exists: true, $nin: [null, ''] },
+            patron_valide: { $ne: true },
+        }).toArray();
+
+        const estabIds = [...new Set([...nonClotures, ...aValider].map(s => s.establishment_id).filter(Boolean))];
+        const estabs = estabIds.length
+            ? await db.collection('establishments').find({ id: { $in: estabIds } }).toArray()
+            : [];
+        const estabName = {};
+        estabs.forEach(e => { estabName[e.id] = e.name || e.id; });
+
+        const mapShift = (s, statut) => ({
+            _id:                  s._id,
+            staff_id:             s.staff_id,
+            staff_name:           s.staff_name,
+            establishment_id:     s.establishment_id,
+            establishment_name:   estabName[s.establishment_id] || s.establishment_id,
+            date:                 s.date,
+            start_time:           s.start_time,
+            end_time:             s.end_time,
+            debut_valide_code:    s.debut_valide_code ?? null,
+            debut_valide_finale:  s.debut_valide_finale ?? null,
+            debut_source:         s.debut_source ?? null,
+            debut_source_label:   pointageSourceLabel(s.debut_source),
+            heure_validee_code:   s.heure_validee_code ?? null,
+            heure_validee_finale: s.heure_validee_finale ?? null,
+            cloture_source:       s.cloture_source ?? null,
+            cloture_source_label: pointageSourceLabel(s.cloture_source),
+            motif_modification:   s.motif_modification ?? null,
+            patron_valide:        !!s.patron_valide,
+            statut,
+        });
+
+        const seen = new Set();
+        const items = [];
+        for (const s of nonClotures) {
+            const id = String(s._id);
+            if (seen.has(id)) continue;
+            seen.add(id);
+            items.push(mapShift(s, 'non_cloture'));
+        }
+        for (const s of aValider) {
+            const id = String(s._id);
+            if (seen.has(id)) continue;
+            seen.add(id);
+            items.push(mapShift(s, 'a_valider'));
+        }
+        items.sort((a, b) => String(a.date).localeCompare(b.date)
+            || String(a.staff_name || '').localeCompare(String(b.staff_name || ''), 'fr'));
+
+        res.json({
+            active_date: active,
+            week_start: weekStartStr,
+            items,
+        });
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+app.get('/api/pointage/verif/journal', checkDB, requirePatron, async (req, res) => {
+    const { from, to, establishment_id } = req.query;
+    if (!from || !to || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to))
+        return res.status(400).json({ error: 'from et to (YYYY-MM-DD) requis' });
+    try {
+        const user = req.session.user;
+        if (establishment_id && !canAccessEstablishment(user, establishment_id))
+            return res.status(403).json({ error: 'Accès refusé' });
+
+        const estabFilter = establishment_id
+            ? { establishment_id }
+            : pointageVerifEstabFilter(user);
+
+        const shifts = await db.collection('shifts').find({
+            ...estabFilter,
+            date: { $gte: from, $lte: to },
+            type: { $ne: 'week_note' },
+        }).toArray();
+        const shiftIds = shifts.map(s => String(s._id));
+        if (!shiftIds.length) return res.json([]);
+
+        const shiftMeta = {};
+        shifts.forEach(s => {
+            shiftMeta[String(s._id)] = {
+                staff_name: s.staff_name || null,
+                date: s.date || null,
+                establishment_id: s.establishment_id || null,
+            };
+        });
+
+        const docs = await db.collection('time_validations')
+            .find({ shift_id: { $in: shiftIds } })
+            .sort({ _id: 1 })
+            .toArray();
+
+        const acteurMap = await resolveActeurNames(docs.map(v => v.staff_id));
+        const estabIds = [...new Set(docs.map(v => v.etablissement_id).filter(Boolean))];
+        const estabs = estabIds.length
+            ? await db.collection('establishments').find({ id: { $in: estabIds } }).toArray()
+            : [];
+        const estabName = {};
+        estabs.forEach(e => { estabName[e.id] = e.name || e.id; });
+
+        res.json(docs.map(v => {
+            const meta = shiftMeta[v.shift_id] || {};
+            return {
+                _id:                v._id,
+                shift_id:           v.shift_id,
+                etablissement_id:   v.etablissement_id,
+                establishment_name: estabName[v.etablissement_id] || v.etablissement_id,
+                staff_name:         meta.staff_name || null,
+                shift_date:         meta.date || null,
+                acteur_id:          v.staff_id ?? null,
+                acteur_name:        acteurMap[String(v.staff_id)] || null,
+                acteur_role:        v.acteur_role ?? null,
+                action:             v.action ?? null,
+                source:             v.source ?? null,
+                source_label:       pointageSourceLabel(v.source, v.resultat),
+                code_saisi:         v.code_saisi ?? null,
+                heure_saisie:       v.heure_saisie ?? null,
+                phase:              v.phase ?? null,
+                resultat:           v.resultat ?? null,
+                debut_retenue:      v.debut_retenue ?? null,
+                fin_retenue:        v.fin_retenue ?? null,
+                real_start:         v.real_start ?? null,
+                real_end:           v.real_end ?? null,
+                motif:              v.motif ?? null,
+            };
+        }).reverse());
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
 
 // ── Web Push — abonnement ─────────────────────────────────────────────────────
 

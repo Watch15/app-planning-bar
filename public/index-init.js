@@ -117,6 +117,16 @@ window.addEventListener('load', () => {
         observer.observe(mainBadge, { attributes: true, childList: true, subtree: true, characterData: true });
     }
 
+    const drawerPtBadge = document.getElementById('drawer-pointage-badge');
+    const mainPtBadge = document.getElementById('pointage-badge');
+    if (drawerPtBadge && mainPtBadge) {
+        const observerPt = new MutationObserver(() => {
+            drawerPtBadge.textContent = mainPtBadge.textContent;
+            drawerPtBadge.style.display = mainPtBadge.style.display === 'flex' ? 'inline-block' : 'none';
+        });
+        observerPt.observe(mainPtBadge, { attributes: true, childList: true, subtree: true, characterData: true });
+    }
+
     // Lier le toggle du drawer au toggle principal dispo
     const drawerCheck = document.getElementById('drawer-dispo-check');
     const mainToggle  = document.getElementById('dispo-toggle');

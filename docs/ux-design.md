@@ -86,7 +86,13 @@ Inter uniquement. Échelle : 11px (labels caps) → 13px (corps) → 14–15px (
 | ~~PT-07~~ | ~~`.btn-save` utilise `var(--dark-surface)` au lieu de `var(--accent)`~~ | Moyen | ✅ Done (U-01) — bg accent + hover accent-soft |
 | ~~PT-08~~ | ~~`.validated-badge` couleurs en dur (`#6EE7B7`, `#d1fae5`, `#065f46`)~~ | Faible | ✅ Done (U-02) — migré vers tokens success/validated/gap-under |
 | ~~PT-09~~ | ~~Clôture OTP fusionnée dans Pointage (manager) + CTA staff sur carte du jour~~ | Haut | ✅ Done (D-91) — code OTP, Clôture du jour (dates FR), sync `real_*`, extra conservé |
-| ~~PT-10~~ | ~~Ajustement impossible après validation du récap~~ | Moyen | ✅ Done (D-91) — `ajuster-heure` OK même si `patron_valide` |
+| ~~PT-10~~ | ~~Ajustement après validation du récap~~ | Moyen | ✅ Done (D-91 / D-92) — patron/directeur OK ; responsable **bloqué** si `patron_valide` |
+| PT-11 | Compte établissement (tablette) encore sur l'ancienne grille cartes | Moyen | 🟠 Ouvert — backlog Pointage |
+| ~~PT-12~~ | ~~Note client : panel vérif + qui ajuste après récap~~ | Faible | ✅ Done (note-client D-93) |
+| ~~PT-16~~ | ~~Panel vérification Pointage (pastille + file + journal)~~ | Haut | ✅ Done (D-93) — pastille header, file non clôturés / à valider, journal acteur+OTP/manuel, observateur peut valider |
+| PT-13 | Écran litiges enrichi (jour / filtre) | Faible | 🟡 Partiel — journal panel D-93 |
+| PT-14 | Tests front `pointage.js` | Faible | 🟡 Ouvert (T-03) |
+| PT-15 | Extraire `matchesWordPrefix` partagé | Cosmétique | 🟡 Ouvert |
 
 ### 2.6 performance.html (Patron / Directeur — pilotage économique)
 | # | Problème | Sévérité | Statut |

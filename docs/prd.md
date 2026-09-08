@@ -287,10 +287,11 @@ Preuve métier parallèle puis **alignée** sur les heures opérationnelles (`re
 - **Manager** (`pointage.html`) : affiche le code courant (TTL 15 min, usage unique, régénération auto) ; liste **Clôture du jour** (navigation ±1 jour, date en français) ; début/fin manuels de secours ; ajustement des heures **retenues** sans toucher les origines `*_code`
 - **Sync `real_*`** : dès que `debut_valide_finale` + `heure_validee_finale` sont présents → `real_start` / `real_end` (floats, arrondi quart d'heure) + snapshot salarial au premier sync. Pas de sync sur début seul (D-71 / `shiftEffectiveHours`)
 - **Audit** : collection append-only `time_validations` (`accepte`, `refuse_*`, `sync_real`) avec acteur, rôle, action
-- **Récap hebdo** : `POST .../valider-recap` pose `patron_valide` ; le patron **peut toujours ajuster** ensuite (correction litige)
+- **Récap hebdo** : `POST .../valider-recap` pose `patron_valide` (journalisé) ; patron / directeur / **observateur** peuvent encore ajuster ; le **responsable** est bloqué après validation
+- **Panel vérification** (`index.html`) : pastille sur Pointage + modale (file à vérifier + journal acteur / OTP vs manuel) — `GET /api/pointage/verif/*`
 - **Responsable de soirée** : même UI code OTP / clôture du jour, **limité à la soirée active** (cutoff pointage) — pas de navigation J-1 / J+1
-- **Litiges** : `GET /api/shifts/:id/time-validations` (+ filtre jour établissement) ; bouton **Historique** sur Pointage (patron/directeur)
-- **Tests** : `tests/cloture-otp.test.js` · smoke `npm run smoke:cloture` / `scripts/smoke-cloture.js`
+- **Litiges** : `GET /api/shifts/:id/time-validations` (+ filtre jour établissement) ; bouton **Historique** sur Pointage ; journal panel D-93
+- **Tests** : `tests/cloture-otp.test.js` · `tests/pointage-verif.test.js` · smoke `npm run smoke:cloture`
 
 ### 3.18 Récap mensuel patron (modale Récap — `index.html`)
 Synthèse mensuelle des heures par membre du staff, accessible depuis le bouton « Récap » de la barre d'actions.

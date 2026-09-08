@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "public/script.js": {
-    "mtime": 1788784168.7752295,
-    "ast_hash": "cee8524d5237592c5d1bec6e874d46ac",
+    "mtime": 1788866288.8811362,
+    "ast_hash": "8f7f47d697b3b064cbd61eb64ef4a02f",
     "semantic_hash": ""
   },
   "public/sw.js": {
@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "server.js": {
-    "mtime": 1788864105.3705766,
-    "ast_hash": "88580ebce128ecd2bd534bbf659d70da",
+    "mtime": 1788866086.2940276,
+    "ast_hash": "84292fa3088bfa3e10423726ad937cfd",
     "semantic_hash": ""
   },
   "tests/routes.test.js": {
@@ -110,23 +110,23 @@
     "semantic_hash": ""
   },
   "docs/backlog.md": {
-    "mtime": 1788855130.3762448,
-    "ast_hash": "2f3dede0b58d6d34af94ece74874fd0d",
+    "mtime": 1788866402.0804026,
+    "ast_hash": "ed7390fc6199709f10b9863499e64dd3",
     "semantic_hash": ""
   },
   "docs/prd.md": {
-    "mtime": 1788854781.324564,
-    "ast_hash": "435fbd8294257396e66439ef54ad4dc6",
+    "mtime": 1788866389.909414,
+    "ast_hash": "0a2e137c72799822717d8feda9add442",
     "semantic_hash": ""
   },
   "docs/ux-design.md": {
-    "mtime": 1788787602.6648052,
-    "ast_hash": "1deb759476bbf704ea9ea6942fea5a04",
+    "mtime": 1788866402.0689223,
+    "ast_hash": "72b4e9055cd87ad34acf4401f3107aa2",
     "semantic_hash": ""
   },
   "public/index.html": {
-    "mtime": 1788781062.66784,
-    "ast_hash": "fdb0ccebe90022df04a915dd286fd7a4",
+    "mtime": 1788866156.466552,
+    "ast_hash": "f7de77d2faa44431f506d308ee4552db",
     "semantic_hash": ""
   },
   "public/login.html": {
@@ -175,8 +175,8 @@
     "semantic_hash": ""
   },
   "public/index-init.js": {
-    "mtime": 1788776738.342987,
-    "ast_hash": "a204df0a8996d37b6193c26f2bdc46e0",
+    "mtime": 1788866250.0887046,
+    "ast_hash": "4b69960c01a9fc45b74d20e66ee393a2",
     "semantic_hash": ""
   },
   "public/performance.js": {
@@ -290,8 +290,8 @@
     "semantic_hash": ""
   },
   "docs/note-client-mise-a-jour.md": {
-    "mtime": 1788787616.892657,
-    "ast_hash": "a587e3990ae3aaa8513f19905fbf7c4b",
+    "mtime": 1788866374.5669134,
+    "ast_hash": "c97157adffa8262e4e778e3f3ae2a0b6",
     "semantic_hash": ""
   },
   "public/lib/auth-guard.js": {
@@ -387,6 +387,11 @@
   "scripts/smoke-cloture.js": {
     "mtime": 1788787047.4763286,
     "ast_hash": "6a24a9231d74d2c4e499d8616865cc10",
+    "semantic_hash": ""
+  },
+  "tests/pointage-verif.test.js": {
+    "mtime": 1788866328.5138364,
+    "ast_hash": "c113f0c921012a0a38e336954deccd16",
     "semantic_hash": ""
   }
 }
