@@ -153,7 +153,10 @@
         }
 
         .time-group {
-            display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 100px;
+            display: flex; flex-direction: column; gap: 5px; flex: 1;
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
         }
         .time-label {
             font-size: 10px; font-weight: 700; color: var(--text-muted);
@@ -164,10 +167,26 @@
             border-radius: 8px;
             padding: 10px 12px;
             font-size: 16px; font-weight: 600; color: var(--text-primary);
-            width: 100%; outline: none; font-family: var(--font);
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            outline: none; font-family: var(--font);
             background: var(--light-bg);
             transition: border-color .15s, box-shadow .15s;
             height: 48px;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        /* Chrome/Safari : le chrome interne du type=time déborde sinon */
+        .time-input::-webkit-datetime-edit,
+        .time-input::-webkit-datetime-edit-fields-wrapper {
+            min-width: 0;
+            max-width: 100%;
+        }
+        .time-input::-webkit-calendar-picker-indicator {
+            margin: 0;
+            flex-shrink: 0;
         }
         .time-input:focus {
             border-color: var(--accent);
@@ -231,12 +250,20 @@
             padding: 20px 16px;
             margin-top: 24px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            max-width: 100%;
+            overflow-x: hidden;
         }
         .extra-title {
             font-size: 13px; font-weight: 700; color: var(--text-primary);
             margin-bottom: 16px;
         }
-        .extra-form { display: flex; flex-direction: column; gap: 10px; }
+        .extra-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 100%;
+            min-width: 0;
+        }
         .extra-form input, .extra-form select {
             border: 1.5px solid var(--light-border); border-radius: 8px;
             padding: 10px 12px; font-size: 13px; outline: none; width: 100%;
@@ -254,22 +281,25 @@
             gap: 12px;
             flex-wrap: nowrap;
             width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            overflow-x: hidden;
         }
         .extra-row .time-group {
             flex: 1 1 0;
-            min-width: 0;
+            min-width: 0 !important;
             max-width: 100%;
+            overflow: hidden;
         }
         .extra-row .time-input {
             width: 100%;
             max-width: 100%;
             min-width: 0;
-            box-sizing: border-box;
         }
         @media (max-width: 900px) {
             .extra-row {
                 flex-direction: column;
-                gap: 7px;
+                gap: 12px;
             }
             .extra-row .time-group {
                 flex: none;
@@ -658,9 +688,11 @@
         #litige-modal.open { display: flex; }
         .litige-sheet {
             width: 100%;
-            max-width: 520px;
+            max-width: min(520px, 100%);
+            min-width: 0;
             max-height: 80vh;
-            overflow: auto;
+            overflow-x: hidden;
+            overflow-y: auto;
             background: var(--light-card);
             border-radius: 16px 16px 0 0;
             padding: 16px 16px 24px;
@@ -723,6 +755,8 @@
             background: rgba(15, 23, 42, 0.45);
             align-items: flex-end;
             justify-content: center;
+            overflow: hidden;
+            padding: 0;
         }
         #heure-modal.open { display: flex; }
         .heure-modal-hint {
@@ -737,28 +771,36 @@
             flex-wrap: nowrap;
             margin-bottom: 12px;
             width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            overflow-x: hidden;
         }
         .heure-modal-fields .time-group {
             flex: 1 1 0;
-            min-width: 0;
+            min-width: 0 !important;
             max-width: 100%;
+            overflow: hidden;
         }
         .heure-modal-fields .time-input {
             width: 100%;
             max-width: 100%;
             min-width: 0;
-            box-sizing: border-box;
         }
-        /* Téléphone / tablette : empiler pour éviter le chevauchement des type=time natifs */
+        /* Téléphone / tablette : empiler + contenir les type=time natifs */
         @media (max-width: 900px) {
             .heure-modal-fields {
                 flex-direction: column;
-                gap: 7px;
+                gap: 12px;
             }
             .heure-modal-fields .time-group {
                 flex: none;
                 width: 100%;
-                min-width: 0 !important; /* override .time-group mobile 50% */
+                min-width: 0 !important;
+            }
+            .heure-modal-fields .time-input,
+            .extra-row .time-input {
+                padding-left: 8px;
+                padding-right: 8px;
             }
         }
         .heure-modal-motif {
@@ -810,7 +852,7 @@
             .time-input { height: 52px; font-size: 17px; }
             .btn-save { height: 52px; padding: 0 16px; width: 100%; }
             .btn-delete { height: 44px; width: 100%; }
-            .time-group { min-width: calc(50% - 4px); }
+            .shift-body .time-group { min-width: calc(50% - 4px); }
             .ecart-badge { width: 100%; text-align: center; }
             .extra-section { border-radius: 12px; padding: 16px 12px; }
             .btn-add-extra { height: 52px; }
@@ -821,13 +863,13 @@
             .cloture-row-actions button { width: 100%; height: 40px; }
         }
         @media (max-height: 500px) and (orientation: landscape) {
-            .time-group { min-width: calc(50% - 5px); }
+            .shift-body .time-group { min-width: calc(50% - 5px); }
             .ecart-badge { width: 100%; text-align: center; }
             .btn-save { width: 100%; }
         }
         @media (max-width: 600px) and (orientation: portrait) {
             .time-input { height: 44px; font-size: 18px; padding: 0 8px; }
-            .time-group { flex: 1; min-width: 0; }
+            .shift-body .time-group { flex: 1; min-width: 0; }
             .shift-body { gap: 20px; justify-content: center; flex-wrap: wrap; padding-right: 24px; }
             .ecart-badge { flex: 0 0 100%; text-align: center; }
             .btn-save { height: 48px; flex: 0 0 100%; }
