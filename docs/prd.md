@@ -277,6 +277,11 @@ Page dédiée au patron / directeur pour suivre la masse salariale vs CA par soi
   - Aucun taux défini → `wage_shift = 0` (affiché « — » dans le détail)
 - **Snapshot taux au pointage** : chaque shift conserve `hourly_rate_snapshot` OU `fixed_rate_snapshot` (selon le mode actif) au premier pointage — stabilise les calculs historiques même si le mode/taux du staff change ultérieurement
 - **Effet de bord côté API** : `PATCH /api/staff/:id` force automatiquement l'autre champ à `null` quand on définit `hourly_rate` ou `fixed_rate` à une valeur non-null — voir `architecture.md` §5 (Mutual exclusion Option A)
+- **Onglet Simulation** (éphémère, ne touche pas `daily_revenue`) :
+  - Semaine navigable ; CA hypo uniquement sur les jours **sans** CA réel
+  - Masse **hybride** : shifts déjà pointés (`real_*` + snapshots) + reste en heures **planifiées**
+  - Jokers non pointés valorisés par taux/forfait saisi, ou **moyenne / médiane** des `hourly_rate` staff (filtres établissements + groupes)
+  - Endpoint `POST /api/performance/simulate`
 
 ### 3.17 Pointage avancé (`pointage.html`)
 - **Deux modes selon le rôle** :

@@ -13,6 +13,9 @@ const {
     normalizePublishDoc,
     chargeMultiplier,
     resolvePerfSettings,
+    deriveStaffHourlyStat,
+    wageLineForShift,
+    buildPerformanceSimulation,
     datesCoveredByPeriods,
     dispoDeadlineWaived, forceOpenActive,
     shouldMaterializeTemplate,
@@ -377,6 +380,88 @@ test('resolvePerfSettings : fallback champ par champ (override partiel)', () => 
 test('resolvePerfSettings : charge_rate 0 explicite est respecté (pas écrasé par le défaut)', () => {
     const perEstab = { charge_rate: 0 };
     assert.equal(resolvePerfSettings(null, perEstab).charge_rate, 0);
+});
+
+// ── Simulation Performance (dérivation taux + hybride) ────────────────────────
+
+test('deriveStaffHourlyStat : moyenne et médiane', () => {
+    const staff = [
+        { hourly_rate: 10, venues: ['bar1'], groups: ['salle'] },
+        { hourly_rate: 20, venues: ['bar1'], groups: ['bar'] },
+        { hourly_rate: 30, venues: ['bar2'], groups: ['salle'] },
+        { fixed_rate: 80, venues: ['bar1'], groups: ['salle'] }, // ignoré
+    ];
+    assert.deepEqual(deriveStaffHourlyStat(staff, { stat: 'mean' }), { rate: 20, sample_size: 3, stat: 'mean' });
+    assert.deepEqual(deriveStaffHourlyStat(staff, { stat: 'median' }), { rate: 20, sample_size: 3, stat: 'median' });
+});
+
+test('deriveStaffHourlyStat : filtres établissement et groupe', () => {
+    const staff = [
+        { hourly_rate: 10, venues: ['bar1'], groups: ['salle'] },
+        { hourly_rate: 20, venues: ['bar1'], groups: ['bar'] },
+        { hourly_rate: 40, venues: ['bar2'], groups: ['salle'] },
+    ];
+    assert.equal(deriveStaffHourlyStat(staff, { stat: 'mean', establishmentIds: ['bar1'] }).rate, 15);
+    assert.equal(deriveStaffHourlyStat(staff, { stat: 'mean', groupIds: ['salle'] }).rate, 25);
+    assert.equal(deriveStaffHourlyStat(staff, {
+        stat: 'mean', establishmentIds: ['bar1'], groupIds: ['salle'],
+    }).rate, 10);
+});
+
+test('deriveStaffHourlyStat : pool vide → rate null', () => {
+    const r = deriveStaffHourlyStat([{ fixed_rate: 50, venues: ['bar1'] }], { stat: 'mean', establishmentIds: ['bar1'] });
+    assert.equal(r.rate, null);
+    assert.equal(r.sample_size, 0);
+});
+
+test('wageLineForShift : réel pointé vs joker simulé', () => {
+    const real = wageLineForShift(
+        { date: '2026-09-08', staff_id: 's1', staff_name: 'Ada', real_start: 18, real_end: 22, hourly_rate_snapshot: 12 },
+        { hourly_rate: 99 },
+        { chargeMult: 1.45 }
+    );
+    assert.equal(real.source, 'real');
+    assert.equal(real.hours_worked, 4);
+    assert.equal(real.wage_gross, 48);
+
+    const joker = wageLineForShift(
+        { date: '2026-09-10', staff_id: '__joker__', is_joker: true, start_time: 18, end_time: 24 },
+        null,
+        { chargeMult: 1.45, jokerHourly: 14 }
+    );
+    assert.equal(joker.source, 'simulated');
+    assert.equal(joker.is_joker, true);
+    assert.equal(joker.wage_gross, 84);
+
+    const skipped = wageLineForShift(
+        { date: '2026-09-08', staff_id: '__joker__', is_joker: true, real_start: 18, real_end: 22 },
+        null,
+        { chargeMult: 1.45, jokerHourly: 14 }
+    );
+    assert.equal(skipped, null);
+});
+
+test('buildPerformanceSimulation : hybride réel + estimé + CA hypo', () => {
+    const sim = buildPerformanceSimulation({
+        shifts: [
+            { _id: 'a', date: '2026-09-08', staff_id: 's1', staff_name: 'Ada',
+                real_start: 18, real_end: 22, hourly_rate_snapshot: 10 },
+            { _id: 'b', date: '2026-09-10', staff_id: '__joker__', is_joker: true,
+                start_time: 18, end_time: 22 },
+        ],
+        staffById: { s1: { name: 'Ada', hourly_rate: 10 } },
+        realRevenueByDate: { '2026-09-08': 1000 },
+        hypoRevenueByDate: { '2026-09-10': 800 },
+        chargeRate: 45,
+        jokerHourly: 15,
+    });
+    assert.equal(sim.days.length, 2);
+    assert.equal(sim.days[0].revenue_source, 'real');
+    assert.equal(sim.days[1].revenue_source, 'hypo');
+    assert.equal(sim.days[0].wage_real_gross, 40);
+    assert.equal(sim.days[1].wage_sim_gross, 60);
+    assert.equal(sim.totals.wage_bill_gross, 100);
+    assert.equal(sim.totals.revenue, 1800);
 });
 
 // ── datesCoveredByPeriods (E-22 — absences directeur exclues du pré-remplissage) ─

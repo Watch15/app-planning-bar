@@ -20,6 +20,7 @@ const {
     disposHorizonRange, disposHorizonMondays, clampHorizonWeeks, DISPO_HORIZON_MAX,
     upcomingWeekRange, upcomingWeekMondays,
     dispoMateriallyDiffers, staffReopenedFor, dispoEventDelta,
+    deriveStaffHourlyStat, buildPerformanceSimulation,
 } = require('./lib/utils');
 
 // Sentry — initialisation conditionnelle (ne se charge que si SENTRY_DSN fourni).
@@ -6373,6 +6374,147 @@ app.get('/api/performance', checkDB, requirePatron,
 
         res.json(results);
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+// POST simulation Performance — hybride (réel pointé + planifié restant), CA hypo éphémère.
+// Ne touche PAS à daily_revenue. joker_mode: manual_hourly | manual_fixed | mean | median.
+app.post('/api/performance/simulate', checkDB, requirePatron,
+    requireEstablishmentAccess(r => r.body && r.body.establishment_id), async (req, res) => {
+    try {
+        const {
+            establishment_id, from, to,
+            hypo_revenue_by_date,
+            joker_mode,
+            joker_hourly, joker_fixed,
+            source_establishment_ids, group_ids,
+        } = req.body || {};
+
+        if (!establishment_id) return res.status(400).json({ error: 'establishment_id requis' });
+        if (!from || !to) return res.status(400).json({ error: 'from et to requis (YYYY-MM-DD)' });
+        if (from > to) return res.status(400).json({ error: 'from doit être ≤ to' });
+
+        const mode = joker_mode || 'manual_hourly';
+        const allowedModes = new Set(['manual_hourly', 'manual_fixed', 'mean', 'median']);
+        if (!allowedModes.has(mode)) {
+            return res.status(400).json({ error: 'joker_mode invalide' });
+        }
+
+        const perfSettings = await loadPerfSettings(establishment_id);
+        const charge_rate = perfSettings.charge_rate;
+
+        // Résoudre le taux joker
+        let jokerHourly = null;
+        let jokerFixed = null;
+        let joker_rate_used = null;
+        let joker_rate_sample_size = null;
+        let joker_rate_kind = null; // 'hourly' | 'fixed'
+
+        if (mode === 'manual_fixed') {
+            if (joker_fixed == null || Number.isNaN(Number(joker_fixed))) {
+                return res.status(400).json({ error: 'joker_fixed requis pour manual_fixed' });
+            }
+            jokerFixed = Number(joker_fixed);
+            joker_rate_used = jokerFixed;
+            joker_rate_kind = 'fixed';
+            joker_rate_sample_size = null;
+        } else if (mode === 'manual_hourly') {
+            if (joker_hourly == null || Number.isNaN(Number(joker_hourly))) {
+                return res.status(400).json({ error: 'joker_hourly requis pour manual_hourly' });
+            }
+            jokerHourly = Number(joker_hourly);
+            joker_rate_used = jokerHourly;
+            joker_rate_kind = 'hourly';
+        } else {
+            // mean / median — pool staff filtré
+            let sourceIds = Array.isArray(source_establishment_ids) ? source_establishment_ids.filter(Boolean) : [];
+            if (sourceIds.length === 0) sourceIds = [establishment_id];
+            // Périmètre directeur : ne peut pas tirer des bars hors de son scope
+            const scope = userEstablishmentIds(req.session.user);
+            if (scope !== null) {
+                sourceIds = sourceIds.filter(id => scope.includes(id));
+                if (sourceIds.length === 0) {
+                    return res.status(403).json({ error: 'Aucun établissement source accessible' });
+                }
+            }
+            const groupFilter = Array.isArray(group_ids) ? group_ids.filter(Boolean) : [];
+            const staffPool = await db.collection('staff').find(NOT_ARCHIVED).toArray();
+            const derived = deriveStaffHourlyStat(staffPool, {
+                stat: mode,
+                establishmentIds: sourceIds,
+                groupIds: groupFilter.length ? groupFilter : undefined,
+            });
+            if (derived.rate == null) {
+                return res.status(400).json({
+                    error: 'Aucun taux horaire dans le filtre (établissements / groupes)',
+                    sample_size: 0,
+                });
+            }
+            jokerHourly = derived.rate;
+            joker_rate_used = derived.rate;
+            joker_rate_sample_size = derived.sample_size;
+            joker_rate_kind = 'hourly';
+        }
+
+        const shifts = await db.collection('shifts').find({
+            establishment_id,
+            date: { $gte: from, $lte: to },
+        }).toArray();
+
+        const revenues = await db.collection('daily_revenue').find({
+            establishment_id,
+            date: { $gte: from, $lte: to },
+        }).toArray();
+        const realRevenueByDate = {};
+        revenues.forEach(r => { realRevenueByDate[r.date] = r.revenue; });
+
+        const hypoRevenueByDate = {};
+        if (hypo_revenue_by_date && typeof hypo_revenue_by_date === 'object') {
+            Object.keys(hypo_revenue_by_date).forEach(d => {
+                if (d < from || d > to) return;
+                // Ne pas écraser un CA réel côté agrégat : buildPerformanceSimulation
+                // préfère déjà realRevenueByDate ; on stocke quand même pour les jours sans réel.
+                if (realRevenueByDate[d] != null) return;
+                const v = Number(hypo_revenue_by_date[d]);
+                if (!Number.isNaN(v) && v >= 0) hypoRevenueByDate[d] = v;
+            });
+        }
+
+        const staffIds = [...new Set(shifts
+            .map(s => s.staff_id)
+            .filter(id => id && id !== '__joker__' && isValidObjectId(id)))];
+        const staffDocs = staffIds.length
+            ? await db.collection('staff').find({ _id: { $in: staffIds.map(id => new ObjectId(id)) } }).toArray()
+            : [];
+        const staffById = {};
+        staffDocs.forEach(s => { staffById[String(s._id)] = s; });
+
+        const sim = buildPerformanceSimulation({
+            shifts,
+            staffById,
+            realRevenueByDate,
+            hypoRevenueByDate,
+            chargeRate: charge_rate,
+            jokerHourly,
+            jokerFixed,
+        });
+
+        res.json({
+            establishment_id,
+            from,
+            to,
+            joker_mode: mode,
+            joker_rate_used,
+            joker_rate_kind,
+            joker_rate_sample_size,
+            charge_rate,
+            target_charged: perfSettings.target_charged,
+            days: sim.days,
+            totals: sim.totals,
+        });
+    } catch (e) {
+        console.error('[POST /api/performance/simulate]', e);
+        res.status(500).json({ error: 'Erreur interne' });
+    }
 });
 
 // GET/PATCH objectifs performance (coefficient cible)

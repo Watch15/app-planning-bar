@@ -52,6 +52,11 @@ let currentEstab  = null;
 let targets       = { target_charged: 43, charge_rate: 45 };
 let currentData   = [];
 let calendarWeekStart = null; // Lundi de la semaine affichée dans le calendrier
+let activePerfTab = 'real';
+let simWeekStart  = null;
+let simHypoByDate = {}; // saisies CA hypo éphémères
+let simLastResult = null;
+let allGroups     = [];
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -113,11 +118,16 @@ async function init() {
     sel.addEventListener('change', async () => {
         currentEstab = sel.value;
         await loadTargets();
-        loadData();
-        loadCalendarWeek();
+        if (activePerfTab === 'real') {
+            loadData();
+            loadCalendarWeek();
+        } else {
+            await prepareSimWeek();
+        }
+        fillSimSourceEstabs();
     });
 
-    // Sélecteur période
+    // Sélecteur période (onglet Réel uniquement)
     document.getElementById('period-select').addEventListener('change', loadData);
 
     // Sauvegarde objectifs
@@ -125,6 +135,7 @@ async function init() {
 
     // Navigation calendrier
     calendarWeekStart = Week.currentWeekStart(new Date());
+    simWeekStart = new Date(calendarWeekStart);
     const _reloadOnNav = () => {
         const period = document.getElementById('period-select').value;
         if (period === 'week' || period === 'month') return Promise.all([loadCalendarWeek(), loadData()]);
@@ -149,6 +160,32 @@ async function init() {
         if (e.target.id === 'ca-modal') closeCAModal();
     });
     document.getElementById('ca-save').addEventListener('click', saveCAFromModal);
+
+    // Onglets Réel / Simulation
+    document.getElementById('tab-real').addEventListener('click', () => switchPerfTab('real'));
+    document.getElementById('tab-sim').addEventListener('click', () => switchPerfTab('sim'));
+    document.getElementById('sim-cal-prev').addEventListener('click', async () => {
+        simWeekStart.setDate(simWeekStart.getDate() - 7);
+        await prepareSimWeek();
+    });
+    document.getElementById('sim-cal-next').addEventListener('click', async () => {
+        simWeekStart.setDate(simWeekStart.getDate() + 7);
+        await prepareSimWeek();
+    });
+    document.getElementById('sim-cal-today').addEventListener('click', async () => {
+        simWeekStart = Week.currentWeekStart(new Date());
+        await prepareSimWeek();
+    });
+    document.getElementById('sim-joker-mode').addEventListener('change', updateSimJokerModeUI);
+    document.getElementById('sim-run').addEventListener('click', runSimulation);
+
+    try {
+        const gRes = await fetch('/api/groups', { credentials: 'include' });
+        if (gRes.ok) allGroups = await gRes.json();
+    } catch { allGroups = []; }
+    fillSimGroups();
+    fillSimSourceEstabs();
+    updateSimJokerModeUI();
 
     await Promise.all([loadData(), loadCalendarWeek()]);
 }
@@ -592,3 +629,324 @@ async function saveTargets() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+// ── Onglets + Simulation ──────────────────────────────────────────────────────
+
+function switchPerfTab(tab) {
+    activePerfTab = tab;
+    document.querySelectorAll('.perf-tab').forEach(btn => {
+        const on = btn.dataset.tab === tab;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    const real = document.getElementById('panel-real');
+    const sim  = document.getElementById('panel-sim');
+    real.classList.toggle('active', tab === 'real');
+    sim.classList.toggle('active', tab === 'sim');
+    if (tab === 'sim') {
+        sim.removeAttribute('hidden');
+        real.setAttribute('hidden', '');
+        document.getElementById('period-filter-group').style.display = 'none';
+        prepareSimWeek();
+    } else {
+        real.removeAttribute('hidden');
+        sim.setAttribute('hidden', '');
+        document.getElementById('period-filter-group').style.display = '';
+    }
+}
+
+function fillSimSourceEstabs() {
+    const sel = document.getElementById('sim-source-estabs');
+    if (!sel) return;
+    sel.innerHTML = '';
+    allEstabs.forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e.id;
+        opt.textContent = e.name;
+        if (e.id === currentEstab) opt.selected = true;
+        sel.appendChild(opt);
+    });
+}
+
+function fillSimGroups() {
+    const sel = document.getElementById('sim-groups');
+    if (!sel) return;
+    sel.innerHTML = '';
+    (allGroups || []).forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g;
+        opt.textContent = g;
+        sel.appendChild(opt);
+    });
+}
+
+function updateSimJokerModeUI() {
+    const mode = document.getElementById('sim-joker-mode').value;
+    const derived = mode === 'mean' || mode === 'median';
+    document.getElementById('sim-manual-hourly-wrap').style.display = mode === 'manual_hourly' ? '' : 'none';
+    document.getElementById('sim-manual-fixed-wrap').style.display = mode === 'manual_fixed' ? '' : 'none';
+    document.getElementById('sim-source-estab-wrap').style.display = derived ? '' : 'none';
+    document.getElementById('sim-groups-wrap').style.display = derived ? '' : 'none';
+    const hint = document.getElementById('sim-joker-hint');
+    if (derived) {
+        hint.textContent = 'Le taux joker = ' + (mode === 'mean' ? 'moyenne' : 'médiane')
+            + ' des taux horaires staff (filtre établissements / groupes).';
+    } else if (mode === 'manual_fixed') {
+        hint.textContent = 'Chaque joker non pointé compte un forfait fixe, indépendamment des heures.';
+    } else {
+        hint.textContent = 'Les jokers non pointés utilisent le taux horaire saisi. Les services déjà pointés restent en réel.';
+    }
+}
+
+function _simWeekRange() {
+    const monday = new Date(simWeekStart);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    return { from: toDateStr(monday), to: toDateStr(sunday), monday, sunday };
+}
+
+function _simWeekLabel(monday, sunday) {
+    const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+    if (monday.getMonth() === sunday.getMonth()) {
+        return monday.getDate() + ' → ' + sunday.getDate() + ' ' + months[sunday.getMonth()] + ' ' + sunday.getFullYear();
+    }
+    return monday.getDate() + ' ' + months[monday.getMonth()] + ' → ' + sunday.getDate() + ' ' + months[sunday.getMonth()] + ' ' + sunday.getFullYear();
+}
+
+async function prepareSimWeek() {
+    if (!simWeekStart || !currentEstab) return;
+    const { from, to, monday, sunday } = _simWeekRange();
+    document.getElementById('sim-cal-label').textContent = _simWeekLabel(monday, sunday);
+
+    // Précharger les CA réels pour verrouiller les jours déjà saisis
+    let realByDate = {};
+    try {
+        const params = new URLSearchParams({ establishment_id: currentEstab, from, to });
+        const res = await fetch('/api/performance?' + params.toString(), { credentials: 'include' });
+        const data = res.ok ? await res.json() : [];
+        data.forEach(d => { realByDate[d.date] = d.revenue; });
+    } catch { realByDate = {}; }
+
+    // Aussi interroger revenue jour par jour si pas dans performance (pas de shifts pointés)
+    // Fallback: GET revenue for each day without entry — skip for speed; use empty and
+    // rely on simulate response. Better: fetch week shifts isn't needed.
+    // Try loading daily_revenue via performance only covers days WITH revenue that have
+    // been returned - actually GET /api/performance returns only days with revenue. Good.
+
+    const DAY_SHORT = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    const grid = document.getElementById('sim-ca-grid');
+    grid.innerHTML = '';
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        const dateStr = toDateStr(d);
+        const hasReal = realByDate[dateStr] != null;
+        const card = document.createElement('div');
+        card.className = 'sim-ca-day' + (hasReal ? ' locked' : '');
+        let html = '<div class="sim-ca-label">' + DAY_SHORT[i] + ' ' + d.getDate() + '</div>';
+        if (hasReal) {
+            html += '<div class="sim-ca-real">CA réel ' + fmtEUR(realByDate[dateStr]) + '</div>';
+            delete simHypoByDate[dateStr];
+        } else {
+            const val = simHypoByDate[dateStr] != null ? simHypoByDate[dateStr] : '';
+            html += '<input type="number" min="0" step="0.01" data-sim-ca="' + dateStr + '" placeholder="CA hypo" value="' + escapeHtml(val) + '">';
+        }
+        card.innerHTML = html;
+        grid.appendChild(card);
+    }
+    grid.querySelectorAll('input[data-sim-ca]').forEach(inp => {
+        inp.addEventListener('change', () => {
+            const v = parseFloat(inp.value);
+            if (Number.isNaN(v) || v < 0) delete simHypoByDate[inp.dataset.simCa];
+            else simHypoByDate[inp.dataset.simCa] = v;
+        });
+    });
+}
+
+function _selectedOptions(sel) {
+    return [...sel.selectedOptions].map(o => o.value);
+}
+
+async function runSimulation() {
+    const btn = document.getElementById('sim-run');
+    const wrap = document.getElementById('sim-table-wrap');
+    const kpis = document.getElementById('sim-kpis');
+    const { from, to } = _simWeekRange();
+    const mode = document.getElementById('sim-joker-mode').value;
+
+    // Sync hypo from inputs
+    document.querySelectorAll('input[data-sim-ca]').forEach(inp => {
+        const v = parseFloat(inp.value);
+        if (Number.isNaN(v) || v < 0) delete simHypoByDate[inp.dataset.simCa];
+        else simHypoByDate[inp.dataset.simCa] = v;
+    });
+
+    const body = {
+        establishment_id: currentEstab,
+        from,
+        to,
+        hypo_revenue_by_date: { ...simHypoByDate },
+        joker_mode: mode,
+    };
+    if (mode === 'manual_hourly') {
+        const v = parseFloat(document.getElementById('sim-joker-hourly').value);
+        if (Number.isNaN(v) || v < 0) {
+            wrap.innerHTML = '<div class="empty-msg" style="color:var(--danger)">Taux horaire joker invalide</div>';
+            return;
+        }
+        body.joker_hourly = v;
+    } else if (mode === 'manual_fixed') {
+        const v = parseFloat(document.getElementById('sim-joker-fixed').value);
+        if (Number.isNaN(v) || v < 0) {
+            wrap.innerHTML = '<div class="empty-msg" style="color:var(--danger)">Forfait joker invalide</div>';
+            return;
+        }
+        body.joker_fixed = v;
+    } else {
+        body.source_establishment_ids = _selectedOptions(document.getElementById('sim-source-estabs'));
+        body.group_ids = _selectedOptions(document.getElementById('sim-groups'));
+    }
+
+    btn.disabled = true;
+    wrap.innerHTML = '<div class="loading-msg">Calcul…</div>';
+    kpis.innerHTML = '';
+    try {
+        const res = await fetch('/api/performance/simulate', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        simLastResult = data;
+        if (data.target_charged != null) targets.target_charged = data.target_charged;
+        renderSimKpis(data);
+        renderSimTable(data);
+        // Refresh CA grid locks from result
+        await prepareSimWeek();
+    } catch (e) {
+        wrap.innerHTML = '<div class="empty-msg" style="color:var(--danger)">' + escapeHtml(e.message || 'Erreur') + '</div>';
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function renderSimKpis(data) {
+    const t = data.totals || {};
+    const rateLine = data.joker_rate_used != null
+        ? (data.joker_rate_kind === 'fixed'
+            ? ('Forfait joker ' + Number(data.joker_rate_used).toFixed(2).replace('.', ',') + ' €')
+            : ('Taux joker ' + Number(data.joker_rate_used).toFixed(2).replace('.', ',') + ' €/h'
+                + (data.joker_rate_sample_size != null ? ' (n=' + data.joker_rate_sample_size + ')' : '')))
+        : '';
+    document.getElementById('sim-kpis').innerHTML =
+        '<div class="kpi-card"><div class="kpi-label">CA (réel + hypo)</div><div class="kpi-value num">' + fmtEUR(t.revenue) + '</div>'
+            + '<div class="kpi-sub">semaine simulée</div></div>' +
+        '<div class="kpi-card"><div class="kpi-label">Heures</div><div class="kpi-value num">' + fmtHours(t.hours_total) + '</div>'
+            + '<div class="kpi-sub">dont ' + fmtHours(t.hours_real) + ' réel · ' + fmtHours(t.hours_sim) + ' estimé</div></div>' +
+        '<div class="kpi-card"><div class="kpi-label">Masse sal. chargée</div><div class="kpi-value num">' + fmtEUR(t.wage_bill_charged) + '</div>'
+            + '<div class="kpi-sub">Coeff. ' + (t.coeff_charged != null ? fmtPct(t.coeff_charged) : '—')
+            + (rateLine ? ' · ' + rateLine : '') + '</div></div>';
+}
+
+function renderSimTable(data) {
+    const wrap = document.getElementById('sim-table-wrap');
+    const days = data.days || [];
+    if (days.length === 0) {
+        wrap.innerHTML = '<div class="empty-msg">Aucun shift sur cette semaine</div>';
+        return;
+    }
+    const target = data.target_charged != null ? data.target_charged : targets.target_charged;
+    let rows = days.map((r, idx) => {
+        const okC = r.coeff_charged != null && r.coeff_charged < target;
+        const caBadge = r.revenue_source === 'real'
+            ? '<span class="source-pill real">réel</span> '
+            : (r.revenue > 0 ? '<span class="source-pill sim">hypo</span> ' : '');
+        return (
+            '<tr class="perf-row" data-sim-idx="' + idx + '">' +
+                '<td class="date-cell"><span class="expand-icon">▸</span>' + dateLabel(r.date) + '</td>' +
+                '<td class="num">' + caBadge + fmtEUR(r.revenue) + '</td>' +
+                '<td class="num">' + (r.hours_total > 0 ? fmtHours(r.hours_total) : '—') + '</td>' +
+                '<td class="num">' + fmtEUR(r.wage_bill_gross) + '</td>' +
+                '<td class="num">' + fmtEUR(r.wage_bill_charged) + '</td>' +
+                '<td>' + (r.coeff_charged != null
+                    ? '<span class="coeff-pill ' + (okC ? 'ok' : 'bad') + '">' + fmtPct(r.coeff_charged) + '</span>'
+                    : '—') + '</td>' +
+            '</tr>' +
+            '<tr class="perf-detail" data-sim-detail="' + idx + '" style="display:none"><td colspan="6"></td></tr>'
+        );
+    }).join('');
+
+    const t = data.totals;
+    const okT = t.coeff_charged != null && t.coeff_charged < target;
+    wrap.innerHTML =
+        '<table class="perf">' +
+            '<thead><tr><th>Date</th><th class="num">CA</th><th class="num">Heures</th>' +
+            '<th class="num">Masse sal. brute</th><th class="num">Masse sal. chargée</th><th>Coeff. chargé</th></tr></thead>' +
+            '<tbody>' + rows + '</tbody>' +
+            '<tfoot><tr>' +
+                '<td>Total</td>' +
+                '<td class="num">' + fmtEUR(t.revenue) + '</td>' +
+                '<td class="num">' + fmtHours(t.hours_total) + '</td>' +
+                '<td class="num">' + fmtEUR(t.wage_bill_gross) + '</td>' +
+                '<td class="num">' + fmtEUR(t.wage_bill_charged) + '</td>' +
+                '<td>' + (t.coeff_charged != null
+                    ? '<span class="coeff-pill ' + (okT ? 'ok' : 'bad') + '">' + fmtPct(t.coeff_charged) + '</span>'
+                    : '—') + '</td>' +
+            '</tr></tfoot>' +
+        '</table>' +
+        '<div class="calc-legend">Dont réalisé : ' + fmtEUR(t.wage_real_charged)
+            + ' chargé · Dont estimé : ' + fmtEUR(t.wage_sim_charged) + ' chargé.</div>';
+
+    wrap.querySelectorAll('.perf-row').forEach(row => {
+        row.addEventListener('click', () => {
+            const idx = row.dataset.simIdx;
+            const detail = wrap.querySelector('tr.perf-detail[data-sim-detail="' + idx + '"]');
+            if (!detail) return;
+            const wasOpen = detail.style.display !== 'none';
+            wrap.querySelectorAll('.perf-detail').forEach(t => t.style.display = 'none');
+            wrap.querySelectorAll('.perf-row').forEach(r => r.classList.remove('expanded'));
+            if (!wasOpen) {
+                detail.style.display = '';
+                row.classList.add('expanded');
+                renderSimDetail(detail.querySelector('td'), days[idx]);
+            }
+        });
+    });
+}
+
+function renderSimDetail(td, day) {
+    const staff = day.staff_detail || [];
+    if (!staff.length) {
+        td.innerHTML = '<div class="detail-wrap" style="color:var(--text-muted)">Aucun shift ce jour</div>';
+        return;
+    }
+    const rows = staff.map(s => {
+        let rateLabel = '';
+        if (s.missing_rate) rateLabel = '<span class="missing-rate">taux manquant</span>';
+        else if (s.is_fixed && s.fixed_rate != null) rateLabel = 'Forfait ' + s.fixed_rate.toFixed(2).replace('.', ',') + ' €';
+        else if (s.hourly_rate != null) rateLabel = s.hourly_rate.toFixed(2).replace('.', ',') + ' €/h';
+        const src = s.source === 'real'
+            ? '<span class="source-pill real">réel</span>'
+            : '<span class="source-pill sim">estimé</span>';
+        return (
+            '<tr>' +
+                '<td>' + src + ' ' + escapeHtml(s.staff_name) + (s.is_joker ? ' (Joker)' : '') + '</td>' +
+                '<td class="num">' + fmtHours(s.hours_worked) + '</td>' +
+                '<td class="num">' + rateLabel + '</td>' +
+                '<td class="num">' + fmtEUR(s.wage_gross) + '</td>' +
+                '<td class="num">' + fmtEUR(s.wage_charged) + '</td>' +
+            '</tr>'
+        );
+    }).join('');
+    td.innerHTML =
+        '<div class="detail-wrap"><table class="detail-table">' +
+            '<thead><tr><th>Staff</th><th class="num">Heures</th><th class="num">Taux</th>' +
+            '<th class="num">Salaire brut</th><th class="num">Salaire chargé</th></tr></thead>' +
+            '<tbody>' + rows +
+                '<tr class="total-row"><td>Total</td><td class="num">' + fmtHours(day.hours_total) + '</td><td></td>' +
+                '<td class="num">' + fmtEUR(day.wage_bill_gross) + '</td>' +
+                '<td class="num">' + fmtEUR(day.wage_bill_charged) + '</td></tr>' +
+            '</tbody></table></div>';
+}

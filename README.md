@@ -272,6 +272,7 @@ travail de dev (253 shifts). Les scripts destructifs la refusent — ne pas cont
 - Filtre période suit la semaine sélectionnée dans le calendrier
 - Paramètres configurables : `target_gross`, `target_charged`, `charge_rate` (taux de charges patronales appliqué dynamiquement)
 - Snapshot `hourly_rate_snapshot` sur chaque shift pour stabilité historique
+- **Onglet Simulation** : CA hypo à la volée, masse hybride (pointé + planifié), taux jokers manuel ou moyenne/médiane staff
 
 ### Web Push
 - Notifications natives iOS/Android via VAPID
@@ -393,6 +394,7 @@ travail de dev (253 shifts). Les scripts destructifs la refusent — ne pas cont
 | POST | `/api/revenue` | Authentifié — saisie CA quotidien |
 | GET | `/api/revenue/:establishmentId/:date` | Authentifié |
 | GET | `/api/performance` | Patron — agrégats par soirée (CA, masse sal., coeff, breakdown staff) |
+| POST | `/api/performance/simulate` | Patron — simulation hybride (éphémère, ne touche pas le CA réel) |
 | GET/PATCH | `/api/performance-settings` | Authentifié / Patron — `target_gross`, `target_charged`, `charge_rate` |
 
 ### Échanges de shifts *(actives depuis D-90 — `dev` / démo ; pas encore en prod client)*

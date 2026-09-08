@@ -306,6 +306,66 @@
         .modal-fb.error { display: block; color: var(--danger); }
         .modal-hint { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
 
+        /* ── Onglets Réel / Simulation ── */
+        .perf-tabs {
+            display: flex; gap: 0; margin-bottom: 16px;
+            border-bottom: 2px solid var(--light-border);
+        }
+        .perf-tab {
+            background: none; border: none; border-bottom: 2px solid transparent;
+            margin-bottom: -2px; padding: 10px 16px; min-height: 44px;
+            font-family: var(--font); font-size: 13px; font-weight: 600;
+            color: var(--text-muted); cursor: pointer;
+        }
+        .perf-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .perf-tab:hover:not(.active) { color: var(--text-primary); }
+        .perf-panel { display: none; }
+        .perf-panel.active { display: block; }
+
+        .sim-controls {
+            background: var(--light-card); border: 1px solid var(--light-border);
+            border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
+            display: flex; flex-direction: column; gap: 14px;
+        }
+        .sim-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+        .sim-field label {
+            display: block; font-size: 10px; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4px;
+        }
+        .sim-field input, .sim-field select {
+            padding: 8px 10px; border: 1.5px solid var(--light-border); border-radius: 8px;
+            font-size: 13px; font-family: var(--font); background: var(--light-bg);
+            color: var(--text-primary); outline: none; min-height: 40px;
+        }
+        .sim-field input:focus, .sim-field select:focus { border-color: var(--accent); }
+        .sim-field select[multiple] { min-height: 88px; min-width: 180px; }
+        .sim-ca-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        .sim-ca-day {
+            background: var(--light-bg); border: 1px solid var(--light-border);
+            border-radius: 8px; padding: 8px 10px;
+        }
+        .sim-ca-day.locked { opacity: 0.75; }
+        .sim-ca-day .sim-ca-label { font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+        .sim-ca-day .sim-ca-real { font-size: 12px; color: var(--success-text); font-weight: 600; }
+        .sim-hint { font-size: 12px; color: var(--text-muted); }
+        .sim-hint.warn { color: #b45309; }
+        .btn-sim-run {
+            padding: 10px 18px; background: var(--accent); color: #fff; border: none;
+            border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+            font-family: var(--font); align-self: flex-start; min-height: 44px;
+        }
+        .btn-sim-run:hover:not(:disabled) { background: var(--accent-soft); }
+        .btn-sim-run:disabled { opacity: 0.6; cursor: wait; }
+        .source-pill {
+            display: inline-block; padding: 1px 7px; border-radius: 10px;
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+        }
+        .source-pill.real { background: var(--success-bg); color: var(--success-text); }
+        .source-pill.sim { background: #eef2ff; color: var(--accent-soft); }
+
         @media (max-width: 640px) {
             .container { padding: 12px 10px 60px; }
             table.perf { font-size: 12px; }
@@ -332,13 +392,13 @@
 </header>
 
 <div class="container">
-    <!-- Filtres -->
+    <!-- Filtres communs -->
     <div class="filters">
         <div class="filter-group" id="estab-filter-group">
             <span class="filter-label">Établissement</span>
             <select class="filter-select" id="estab-select"></select>
         </div>
-        <div class="filter-group">
+        <div class="filter-group" id="period-filter-group">
             <span class="filter-label">Période</span>
             <select class="filter-select" id="period-select">
                 <option value="all">Tout l'historique</option>
@@ -348,6 +408,13 @@
         </div>
     </div>
 
+    <div class="perf-tabs" role="tablist">
+        <button type="button" class="perf-tab active" id="tab-real" data-tab="real" role="tab" aria-selected="true">Réel</button>
+        <button type="button" class="perf-tab" id="tab-sim" data-tab="sim" role="tab" aria-selected="false">Simulation</button>
+    </div>
+
+    <!-- Panneau Réel -->
+    <div class="perf-panel active" id="panel-real" role="tabpanel">
     <!-- KPI ── -->
     <div class="kpis" id="kpis"></div>
 
@@ -365,6 +432,61 @@
     <!-- Tableau ── -->
     <div class="table-wrap" id="table-wrap">
         <div class="loading-msg">Chargement…</div>
+    </div>
+    </div>
+
+    <!-- Panneau Simulation -->
+    <div class="perf-panel" id="panel-sim" role="tabpanel" hidden>
+        <div class="sim-controls">
+            <div class="sim-row">
+                <div class="sim-field">
+                    <label>Semaine</label>
+                    <div style="display:flex;gap:6px;align-items:center">
+                        <button type="button" class="cal-nav" id="sim-cal-prev" title="Semaine précédente">‹</button>
+                        <span id="sim-cal-label" style="font-size:13px;font-weight:600;min-width:160px;text-align:center"></span>
+                        <button type="button" class="cal-nav" id="sim-cal-next" title="Semaine suivante">›</button>
+                        <button type="button" class="cal-nav cal-today" id="sim-cal-today">Aujourd'hui</button>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">CA hypothétique (jours sans CA réel)</div>
+                <div class="sim-ca-grid" id="sim-ca-grid"></div>
+            </div>
+            <div class="sim-row">
+                <div class="sim-field">
+                    <label>Taux jokers</label>
+                    <select id="sim-joker-mode">
+                        <option value="manual_hourly">Saisie — taux horaire</option>
+                        <option value="manual_fixed">Saisie — forfait / shift</option>
+                        <option value="mean">Moyenne des taux staff</option>
+                        <option value="median">Médiane des taux staff</option>
+                    </select>
+                </div>
+                <div class="sim-field" id="sim-manual-hourly-wrap">
+                    <label>€ / h joker</label>
+                    <input type="number" min="0" step="0.01" id="sim-joker-hourly" placeholder="ex. 14.50" value="14">
+                </div>
+                <div class="sim-field" id="sim-manual-fixed-wrap" style="display:none">
+                    <label>€ forfait joker</label>
+                    <input type="number" min="0" step="0.01" id="sim-joker-fixed" placeholder="ex. 80">
+                </div>
+                <div class="sim-field" id="sim-source-estab-wrap" style="display:none">
+                    <label>Établissements (pool)</label>
+                    <select id="sim-source-estabs" multiple></select>
+                </div>
+                <div class="sim-field" id="sim-groups-wrap" style="display:none">
+                    <label>Groupes (optionnel)</label>
+                    <select id="sim-groups" multiple></select>
+                </div>
+            </div>
+            <p class="sim-hint" id="sim-joker-hint">Les jokers non pointés utilisent le taux choisi. Les services déjà pointés restent en réel.</p>
+            <button type="button" class="btn-sim-run" id="sim-run">Calculer la simulation</button>
+        </div>
+        <div class="kpis" id="sim-kpis"></div>
+        <div class="table-wrap" id="sim-table-wrap">
+            <div class="empty-msg">Choisissez une semaine et lancez le calcul</div>
+        </div>
     </div>
 
     <!-- Objectifs -->

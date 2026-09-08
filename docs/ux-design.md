@@ -108,6 +108,7 @@ Inter uniquement. Échelle : 11px (labels caps) → 13px (corps) → 14–15px (
 | PF-04 | `.targets-form` (3 inputs + bouton) wrap instable 360-400 px (pas de `min-width` par groupe) | Moyen | 🟠 U-03 backlog |
 | PF-05 | `.kpi-sub` 11 px font-weight 400 → contraste / hiérarchie faible sur fond clair | Faible | 🟠 U-04 backlog |
 | PF-06 | `.day-card.empty` couleurs en dur (`#fffbf0`, `#b45309`) au lieu de `--warning-*` | Cosmétique | 🟡 U-08 backlog |
+| ~~PF-07~~ | ~~Pas de simulation CA / masse sur planning futur ou semaine en cours~~ | Haut | ✅ Done (D-95) — onglet Simulation hybride |
 
 ### 2.7 politique-confidentialite.html
 | # | Problème | Sévérité | Statut |
