@@ -372,6 +372,8 @@ call sites serveur inchangés. C'est le **gabarit** de toute future extraction i
   Un test vert ne prouve pas que la requête réelle tourne — pour ça, `npm run smoke`.
 - **Bout en bout** : `npm run smoke:dev` / `smoke:main` tapent une instance réelle avec un
   vrai Mongo (suppose la base de recette semée par `npm run dev:seed`).
+  `npm run smoke:dev:full` enchaîne parcours + clôture OTP + simulation Performance sur
+  `https://dev.templyo.fr` (`--expect origin/dev`).
 - **Les 4 gros bundles front ne sont pas couverts** (`script.js`, `planning.js`,
   `performance.js`, `pointage.js`) : zéro test, aucune infra. C'est T-03 au backlog.
   Seuls les modules `public/lib/` sont testés — parce qu'ils sont `require()`-ables sous

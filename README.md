@@ -161,8 +161,11 @@ PORT=3000
 | `npm run dev:server` | Serveur local sur la base de `.env.dev` |
 | `npm run demo:seed` | (Re)construit le jeu de **démo prospects** dans `templyo_demo` (refuse toute base sans « demo ») |
 | `npm run demo:server` | Serveur de démo sur la base de `.env.demo` (port 3100) |
-| `npm run smoke` | 29 vérifications HTTP sur l'instance locale (⊘ sautées si le seed date d'une autre semaine) |
+| `npm run smoke` | Vérifications HTTP sur l'instance locale (⊘ sautées si le seed date d'une autre semaine) |
 | `npm run smoke:dev` / `smoke:main` | Idem sur l'environnement déployé |
+| `npm run smoke:cloture` / `:dev` | Smoke clôture OTP |
+| `npm run smoke:simulate` / `:dev` | Smoke prévisions Performance (simulation) |
+| `npm run smoke:dev:full` | **Dev complet** : parcours + clôture + simulation → `https://dev.templyo.fr` |
 | `npm run smoke -- <url>` | Idem sur une URL quelconque |
 
 ---
