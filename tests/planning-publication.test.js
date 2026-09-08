@@ -206,6 +206,18 @@ test('joker-ouverts : un Joker d\'une semaine non publiée n\'est pas proposé',
     assert.deepEqual(body.map(j => j.date), [day(CUR, 2)]);
 });
 
+test('joker-ouverts : un Joker ouvert dont la date est passée disparaît', async () => {
+    const past = toDateStr(new Date(Date.now() - 3 * 864e5));
+    app.locals.setTestDb(seed([
+        { staff_id: '__joker__', is_joker: true, joker_open: true, establishment_id: 'bar1',
+          date: past, start_time: 18, end_time: 24 },
+        { staff_id: '__joker__', is_joker: true, joker_open: true, establishment_id: 'bar1',
+          date: day(CUR, 2), start_time: 18, end_time: 24 },
+    ]));
+    const body = await (await req('/api/shifts/joker-ouverts', STAFF)).json();
+    assert.ok(!body.some(j => j.date === past), 'date passée exclue');
+});
+
 // ── La note de semaine est bornée comme la saisie ────────────────────────────
 
 const postNote = week_start => req('/api/dispos/week-note', STAFF, {

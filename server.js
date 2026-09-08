@@ -2613,6 +2613,7 @@ app.get('/api/my-shifts', checkDB, requireAuth, async (req, res) => {
         // Sans effet sur l'usage courant : la semaine en cours et les passées sont
         // auto-publiées, donc elles traversent le filtre inchangées.
         const isVisible = await publishedShiftFilter();
+        const todayActive = await getActivePointageDateStr();
 
         const myRawShifts = (await db.collection('shifts').find(shiftQuery)
             .sort({ date: 1, start_time: 1 }).toArray()).filter(isVisible);
@@ -2639,7 +2640,9 @@ app.get('/api/my-shifts', checkDB, requireAuth, async (req, res) => {
         // Gardé parce qu'il redevient porteur à la seconde où quelqu'un calcule `myDates`
         // autrement (à partir de la requête brute, par exemple), et que ce jour-là
         // l'oubli serait silencieux. Même arbitrage qu'en F-14 pour `joker-open`.
-        }).toArray()).filter(isVisible) : [];
+        }).toArray()).filter(isVisible)
+            // Joker ouvert dont la date est passée : ne plus l'afficher au staff.
+            .filter(j => !j.joker_open || j.date >= todayActive) : [];
 
         const myShifts = [...myRawShifts, ...jokers].sort((a, b) =>
             a.date < b.date ? -1 : a.date > b.date ? 1 : a.start_time - b.start_time
@@ -5466,8 +5469,21 @@ app.get('/api/shifts/joker-ouverts', checkDB, requireAuth, async (req, res) => {
     const { establishment_id } = req.query;
     const staffId = req.session.user.staff_id || null;
     try {
+        // Date de soirée active (cutoff pointage) : un Joker d'hier ne doit plus
+        // apparaître une fois la date passée, même s'il reste `joker_open`.
+        const today = await getActivePointageDateStr();
+        // Fermeture douce des ouverts périmés (ne les propose plus, historique conservé).
+        await db.collection('shifts').updateMany(
+            {
+                joker_open: true,
+                date: { $lt: today },
+                $or: [{ is_joker: true }, { staff_id: '__joker__' }],
+            },
+            { $set: { joker_open: false } }
+        );
         const query = {
             joker_open: true,
+            date: { $gte: today },
             $or: [{ is_joker: true }, { staff_id: '__joker__' }],
         };
         if (establishment_id) query.establishment_id = establishment_id;
@@ -5517,6 +5533,7 @@ app.post('/api/shifts/:id/joker-candidature', checkDB, requireAuth, async (req, 
     if (!user.staff_id) return res.status(403).json({ error: 'Réservé au staff connecté' });
     try {
         const staffDoc = await db.collection('staff').findOne({ _id: new ObjectId(user.staff_id) });
+        const today = await getActivePointageDateStr();
 
         // Atomique : on push uniquement si Joker ouvert ET staff pas déjà candidat.
         // Évite race condition au double-tap (deux candidatures simultanées).
@@ -5525,6 +5542,7 @@ app.post('/api/shifts/:id/joker-candidature', checkDB, requireAuth, async (req, 
                 _id: new ObjectId(req.params.id),
                 $or: [{ is_joker: true }, { staff_id: '__joker__' }],
                 joker_open: true,
+                date: { $gte: today },
                 'joker_candidates.staff_id': { $ne: user.staff_id },
             },
             {
@@ -5545,6 +5563,7 @@ app.post('/api/shifts/:id/joker-candidature', checkDB, requireAuth, async (req, 
         if (!shift)                                            return res.status(404).json({ error: 'Shift introuvable' });
         if (!shift.is_joker && shift.staff_id !== '__joker__') return res.status(400).json({ error: 'Ce shift n\'est pas un Joker' });
         if (!shift.joker_open)                                 return res.status(403).json({ error: 'Ce Joker n\'est pas ouvert aux candidatures' });
+        if (shift.date < today)                                return res.status(403).json({ error: 'Ce créneau est déjà passé' });
         return res.status(409).json({ error: 'Candidature déjà envoyée' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });

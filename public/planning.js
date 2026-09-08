@@ -452,6 +452,7 @@ function renderOpenJokersInto(jokers, from, to, section) {
         // Filtrer à la plage de dates de la semaine visible
         const weekJokers = jokers
             .filter(j => j.date >= from && j.date <= to)
+            .filter(j => j.date >= toDateStr(new Date()))
             .sort((a, b) => a.date === b.date ? a.start_time - b.start_time : a.date.localeCompare(b.date));
         if (weekJokers.length === 0) { section.innerHTML = ''; return; }
 
@@ -3432,10 +3433,69 @@ function loadMyPendingSwaps() {
 
 let _swapSource = null;
 let _swapTarget = null;
+let _swapEligible = [];
+
+function _swapMatchSearch(t, q) {
+    if (!q) return true;
+    const name = String(t.staff_name || '').toLowerCase();
+    const nick = (() => {
+        const sm = allStaff.find(s => String(s._id) === String(t.staff_id));
+        return sm ? String(sm.nickname || '').toLowerCase() : '';
+    })();
+    const estab = String(formatEstablishment(t.establishment_id) || t.establishment_id || '').toLowerCase();
+    return name.includes(q) || nick.includes(q) || estab.includes(q);
+}
+
+function renderSwapTargets(filterQ) {
+    const targets = document.getElementById('swap-targets');
+    if (!targets) return;
+    const q = String(filterQ || '').trim().toLowerCase();
+    const list = _swapEligible.filter(t => _swapMatchSearch(t, q));
+    if (!_swapEligible.length) {
+        targets.innerHTML = '<div style="padding:24px;text-align:center;color:#aaa;font-size:13px">Aucun shift collègue échangeable dans les 4 prochaines semaines</div>';
+        return;
+    }
+    if (!list.length) {
+        targets.innerHTML = '<div style="padding:24px;text-align:center;color:#aaa;font-size:13px">Aucun résultat pour « '
+            + String(filterQ || '').replace(/</g, '&lt;') + ' »</div>';
+        return;
+    }
+    const multiEstab = new Set(_swapEligible.map(t => t.establishment_id)).size > 1;
+    targets.innerHTML = '';
+    list.forEach(t => {
+        const item = document.createElement('div');
+        item.style.cssText = 'border:1.5px solid #e8eaed;border-radius:10px;padding:10px 12px;cursor:pointer;transition:all 0.15s;background:white';
+        if (_swapTarget && String(_swapTarget._id) === String(t._id)) {
+            item.style.borderColor = '#534AB7';
+            item.style.background = '#eef2ff';
+        }
+        const _tSm   = allStaff.find(s => String(s._id) === t.staff_id);
+        const _tName = _tSm ? (_tSm.nickname || (t.staff_name || '').split(' ')[0]) : (t.staff_name ? t.staff_name.split(' ')[0] : '—');
+        item.innerHTML =
+            '<div style="display:flex;align-items:center;gap:8px">' +
+                '<span style="width:10px;height:10px;border-radius:50%;background:' + (t.color || '#888') + ';flex-shrink:0"></span>' +
+                '<div style="flex:1;min-width:0">' +
+                    '<div style="font-weight:700;font-size:13px;color:#1a1a2e">' + _esc(_tName) + '</div>' +
+                    '<div style="font-size:12px;color:#555">' + _fmtSwapDate(t.date) + ' · ' + fmtHour(t.start_time) + ' → ' + fmtHour(t.end_time) + '</div>' +
+                    (multiEstab
+                        ? '<div style="font-size:11px;color:#534AB7;font-weight:600">' + _esc(formatEstablishment(t.establishment_id)) + '</div>'
+                        : '<div style="font-size:11px;color:#888">' + _esc(formatEstablishment(t.establishment_id)) + '</div>') +
+                '</div>' +
+            '</div>';
+        item.addEventListener('click', () => {
+            _swapTarget = t;
+            renderSwapTargets(document.getElementById('swap-search')?.value || '');
+            const b = document.getElementById('swap-submit');
+            if (b) { b.disabled = false; b.style.opacity = '1'; }
+        });
+        targets.appendChild(item);
+    });
+}
 
 async function openSwapModal(shift) {
     _swapSource = shift;
     _swapTarget = null;
+    _swapEligible = [];
     const modal = document.getElementById('swap-modal');
     modal.style.display = 'flex';
 
@@ -3446,6 +3506,14 @@ async function openSwapModal(shift) {
         '<div style="font-size:12px;color:#555;margin-top:2px">' + formatEstablishment(shift.establishment_id) + '</div>';
 
     document.getElementById('swap-note').value = '';
+    const search = document.getElementById('swap-search');
+    if (search) {
+        search.value = '';
+        if (!search._bound) {
+            search._bound = true;
+            search.addEventListener('input', () => renderSwapTargets(search.value));
+        }
+    }
     const btn = document.getElementById('swap-submit');
     btn.disabled = true; btn.style.opacity = '0.5';
 
@@ -3464,36 +3532,8 @@ async function openSwapModal(shift) {
         const list = await res.json();
         if (!res.ok) throw new Error(list.error || 'Erreur');
         // Exclure le shift source
-        const eligible = list.filter(s => s._id !== shift._id);
-        if (eligible.length === 0) {
-            targets.innerHTML = '<div style="padding:24px;text-align:center;color:#aaa;font-size:13px">Aucun shift collègue échangeable dans les 4 prochaines semaines</div>';
-            return;
-        }
-        targets.innerHTML = '';
-        eligible.forEach(t => {
-            const item = document.createElement('div');
-            item.style.cssText = 'border:1.5px solid #e8eaed;border-radius:10px;padding:10px 12px;cursor:pointer;transition:all 0.15s;background:white';
-            const _tSm   = allStaff.find(s => String(s._id) === t.staff_id);
-            const _tName = _tSm ? (_tSm.nickname || (t.staff_name || '').split(' ')[0]) : (t.staff_name ? t.staff_name.split(' ')[0] : '—');
-            item.innerHTML =
-                '<div style="display:flex;align-items:center;gap:8px">' +
-                    '<span style="width:10px;height:10px;border-radius:50%;background:' + (t.color || '#888') + ';flex-shrink:0"></span>' +
-                    '<div style="flex:1;min-width:0">' +
-                        '<div style="font-weight:700;font-size:13px;color:#1a1a2e">' + _tName + '</div>' +
-                        '<div style="font-size:12px;color:#555">' + _fmtSwapDate(t.date) + ' · ' + fmtHour(t.start_time) + ' → ' + fmtHour(t.end_time) + '</div>' +
-                        '<div style="font-size:11px;color:#888">' + formatEstablishment(t.establishment_id) + '</div>' +
-                    '</div>' +
-                '</div>';
-            item.addEventListener('click', () => {
-                _swapTarget = t;
-                [...targets.children].forEach(c => { c.style.borderColor = '#e8eaed'; c.style.background = 'white'; });
-                item.style.borderColor = '#534AB7';
-                item.style.background  = '#eef2ff';
-                const b = document.getElementById('swap-submit');
-                b.disabled = false; b.style.opacity = '1';
-            });
-            targets.appendChild(item);
-        });
+        _swapEligible = list.filter(s => s._id !== shift._id);
+        renderSwapTargets('');
     } catch (e) {
         targets.innerHTML = '<div style="padding:16px;text-align:center;color:#e74c3c;font-size:13px">' + (e.message || 'Erreur') + '</div>';
     }
@@ -3504,6 +3544,7 @@ function closeSwapModal() {
     if (modal) modal.style.display = 'none';
     _swapSource = null;
     _swapTarget = null;
+    _swapEligible = [];
 }
 
 async function submitSwap() {

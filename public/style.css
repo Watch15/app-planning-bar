@@ -1388,8 +1388,14 @@ body.observateur #btn-copy-day,
 body.observateur #btn-copy-week,
 body.observateur #fab-staff,
 body.observateur #staff-bar-container,
-body.observateur #staff-bar-overlay {
+body.observateur #staff-bar-overlay,
+body.observateur .shift-delete,
+body.observateur .shift-resp-btn,
+body.observateur .resizer {
   display: none !important;
+}
+body.observateur .shift {
+  cursor: default;
 }
 
 /* ── Récap : sous-onglets (Récap / Calendrier congés) ───────────────────────*/

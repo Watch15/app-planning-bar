@@ -238,6 +238,10 @@ function editModeOn() {
     return _editScope !== null && _editScope === currentVenueId + '|' + selectedDate;
 }
 
+function isObservateur() {
+    return !!(currentUser && currentUser.role === 'observateur');
+}
+
 // « Le verrou s'applique-t-il ici ? » — pointeur grossier ET semaine publiée pour
 // l'établissement affiché. Deux lecteurs, le blocage des gestes et l'affichage du bouton
 // d'en-tête : les tenir sur la MÊME expression est ce qui les empêche de diverger.
@@ -252,6 +256,12 @@ function blockedByEditLock() {
     if (editModeOn() || !editLockApplies()) return false;
     showEditLockBanner();
     return true;
+}
+
+/** Observateur lecture seule, ou verrou tactile hors mode éditeur. */
+function shiftInteractionBlocked() {
+    if (isObservateur()) return true;
+    return blockedByEditLock();
 }
 
 // Contenu entièrement statique : construit et câblé UNE fois, puis simplement réaffiché.
@@ -2155,7 +2165,7 @@ function createShiftEl(shift) {
         el.addEventListener('click', e => {
             if (e.target.closest('.resizer') || e.target.closest('.shift-delete')) return;
             if (_shiftWasDragged) { _shiftWasDragged = false; return; }
-            if (blockedByEditLock()) return;
+            if (shiftInteractionBlocked()) return;
             openJokerModal(shift, el);
         });
     }
@@ -2166,7 +2176,7 @@ function createShiftEl(shift) {
         el.addEventListener('click', e => {
             if (e.target.closest('.resizer') || e.target.closest('.shift-delete') || e.target.closest('.shift-resp-btn')) return;
             if (_shiftWasDragged) { _shiftWasDragged = false; return; }
-            if (blockedByEditLock()) return;
+            if (shiftInteractionBlocked()) return;
             if (isPhone() || isTablet()) {
                 openMobileShiftEditModal(shift);
             } else {
@@ -2180,7 +2190,7 @@ function createShiftEl(shift) {
         const btn = el.querySelector('.shift-resp-btn');
         btn.addEventListener('click', async e => {
             e.stopPropagation();
-            if (blockedByEditLock()) return;
+            if (shiftInteractionBlocked()) return;
             const newVal = !(shift.pointage_resp === true);
             try {
                 const r = await fetch('/api/shifts/' + shift._id + '/pointage-resp', {
@@ -2204,6 +2214,7 @@ function createShiftEl(shift) {
 // ── Modale édition horaires planifiés (mobile) ───────────────────────────────
 
 function openMobileShiftEditModal(shift) {
+    if (isObservateur()) return;
     const fmt = h => h == null ? '' : String(Math.floor(h % 24)).padStart(2, '0') + ':' + String(Math.round((h % 1) * 60)).padStart(2, '0');
     const name = escapeHtml(displayName(shift.staff_id, shift.staff_name));
 
@@ -2535,6 +2546,7 @@ function openReplaceStaffModal(shift) {
 
 
 function openRealHoursModal(shift, shiftEl) {
+    if (isObservateur()) return;
     const fmt     = h => h == null ? '' : String(Math.floor(h % 24)).padStart(2, '0') + ':' + String(Math.round((h % 1) * 60)).padStart(2, '0');
     const fmtDisp = h => h == null ? '—' : String(Math.floor(h % 24)).padStart(2, '0') + 'h' + String(Math.round((h % 1) * 60)).padStart(2, '0');
 
@@ -4602,6 +4614,8 @@ function renderWeekGantt() {
 // (publié, hors mode éditeur), le clic ne doit rien faire — ni changer d'onglet.
 
 function switchToDayView(date) {
+    // Observateur : consultation via les onglets Jour/Semaine, pas via clic shift.
+    if (isObservateur()) return;
     if (editLockApplies() && !editModeOn()) {
         showEditLockBanner();
         return;
