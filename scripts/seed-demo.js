@@ -680,18 +680,19 @@ async function run() {
             submitted_at: addDays(now, -daysAgo),
         });
         shifts.push({
-            establishment_id: Z, staff_id: '__joker__', staff_name: 'Joker', color: '#888',
+            establishment_id: Z, staff_id: '__joker__', staff_name: 'Joker · Bar', color: '#888',
             date: jokerDate1, start_time: 19, end_time: 26,
-            is_joker: true, joker_open: true, note: 'Renfort bar — soirée DJ',
+            is_joker: true, joker_open: true, joker_group: 'Bar', note: 'Renfort bar — soirée DJ',
             joker_candidates: [candidature('Bastien Roy', 2), candidature('Wassim Haddad', 1),
                                candidature('Zoé Marchetti', 1)],
         });
         // Le second est sur la semaine en brouillon : il apparaîtra au staff au moment
         // exact où on publiera la semaine devant le prospect.
         shifts.push({
-            establishment_id: T, staff_id: '__joker__', staff_name: 'Joker', color: '#888',
+            establishment_id: T, staff_id: '__joker__', staff_name: 'Joker · Salle', color: '#888',
             date: toDateStr(addDays(nextMon, 5)), start_time: 19, end_time: 24.5,
-            is_joker: true, joker_open: true, joker_candidates: [], note: 'Service du samedi soir',
+            is_joker: true, joker_open: true, joker_group: 'Salle', joker_candidates: [],
+            note: 'Service du samedi soir',
         });
 
         // Seule insertion de shifts qui soit attendue plutôt que mise au lot : une
@@ -1105,7 +1106,7 @@ async function run() {
             'Onglet Congés — une demande de Quentin Faure attend une réponse, une de Damien Ferrer a été '
                 + 'REFUSÉE, Lucas Bonnet est en congé cette semaine (grisé au planning) et Oksana Petrenko '
                 + 'part 8 jours à cheval sur les deux semaines ouvertes.',
-            'Joker ouvert samedi au Zinc — 3 candidatures reçues, en retenir une en un clic.',
+            'Joker ouvert samedi au Zinc (groupe Bar) — 3 candidatures, en retenir une. Sidebar : un Joker par groupe.',
             'Gestion du staff — 25 personnes : taux horaire, rôles, groupes, jours de repos '
                 + '(Nathan Rivière, Élodie Sanchez), surnoms (« Bast », « PY »), et Rachida Amrani qui ne '
                 + 'saisit pas de dispos. Yasmine Corbier est ARCHIVÉE : partie il y a 3 semaines, elle '
@@ -1117,10 +1118,10 @@ async function run() {
             'Historique d\'une dispo (F-12) — Adrien a saisi, corrigé, puis la directrice a validé : qui a fait quoi, et quand.',
             'Pointage — comparer planifié et réel sur les semaines passées : c\'est là que les heures non facturées apparaissent.',
             'Performance → onglet Réel — CA, masse chargée et coefficient jour par jour, coloré contre l\'objectif propre à chaque établissement.',
-            'Performance → onglet Simulation — basculer Semaine / Jour. Sur le Zinc : un jour récent sans CA '
+            'Performance → onglet Simulation — Semaine / Jour. Taux ou forfait par groupe de Joker ; moyenne/médiane auto. '
+                + 'Filtre établissements Courant / Tous. Jour Zinc sans CA '
                 + (simGapDate ? '(' + simGapDate + ') ' : '')
-                + 'attend un hypo ; la semaine courante mélange réel (passé pointé) et estimé (futur + Joker). '
-                + 'Montrer moyenne / médiane des taux staff (filtre Bar).',
+                + 'pour hypo hybride.',
             'Observateur (comptable@' + MAIL_DOMAIN + ') — voit Planning et Performance, mais ni Dispos ni Échanges (D-94).',
             'Récap mensuel du mois dernier — heures par personne, écart planifié/réel, ventilation par '
                 + 'établissement, congés validés, et Zoé Marchetti au forfait isolée des salariés à l\'heure.',

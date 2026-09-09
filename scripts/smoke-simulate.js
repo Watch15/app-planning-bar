@@ -152,18 +152,18 @@ async function main() {
                 hypo_revenue_by_date: { [currMon]: hypo },
                 joker_mode: 'mean',
                 source_establishment_ids: [ESTAB],
-                group_ids: ['Bar'],
             },
         });
         eq(r.status, 200, 'status ' + JSON.stringify(r.data && r.data.error));
         ok(r.data.joker_rate_used != null, 'joker_rate_used');
-        ok(r.data.joker_rate_sample_size >= 1, 'sample_size');
+        ok(r.data.joker_rates_by_group, 'joker_rates_by_group');
         const day = (r.data.days || []).find(d => d.date === currMon);
         if (revenueBefore == null && day) {
             eq(day.revenue_source, 'hypo', 'revenue_source');
             eq(day.revenue, hypo, 'revenue hypo');
         }
-        return 'taux_joker=' + r.data.joker_rate_used + ' n=' + r.data.joker_rate_sample_size
+        return 'taux_joker=' + r.data.joker_rate_used
+            + ' groupes=' + Object.keys(r.data.joker_rates_by_group || {}).join(',')
             + ' total_chargé=' + r.data.totals.wage_bill_charged;
     });
 
@@ -228,8 +228,8 @@ async function main() {
     console.log('Smoke simulation OK.\n');
     console.log('Check-list manuelle (UI) :');
     console.log('  1. patron@ → Performance → onglet Simulation');
-    console.log('  2. Bascule Semaine / Jour · saisir un CA hypo · moyenne/médiane jokers');
-    console.log('  3. Vérifier « dont réalisé / dont estimé » dans les KPI\n');
+    console.log('  2. Bascule Semaine / Jour · un taux (ou forfait) par groupe de Joker');
+    console.log('  3. Moyenne/médiane auto + Courant/Tous · KPI dont réalisé / estimé\n');
 }
 
 main().catch(e => {

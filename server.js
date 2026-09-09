@@ -20,7 +20,7 @@ const {
     disposHorizonRange, disposHorizonMondays, clampHorizonWeeks, DISPO_HORIZON_MAX,
     upcomingWeekRange, upcomingWeekMondays,
     dispoMateriallyDiffers, staffReopenedFor, dispoEventDelta,
-    deriveStaffHourlyStat, buildPerformanceSimulation,
+    deriveStaffHourlyStat, buildPerformanceSimulation, jokerGroupKey, isJokerShift, isShiftCompleted,
 } = require('./lib/utils');
 
 // Sentry — initialisation conditionnelle (ne se charge que si SENTRY_DSN fourni).
@@ -2886,7 +2886,7 @@ app.get('/api/week-full/:establishmentId', checkDB, requireAuth,
 // ── Shifts — écriture ─────────────────────────────────────────────────────────
 
 app.post('/api/shifts', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
-    const { staff_id, staff_name, establishment_id, date, start_time, end_time, color, is_joker, note } = req.body;
+    const { staff_id, staff_name, establishment_id, date, start_time, end_time, color, is_joker, note, joker_group } = req.body;
     if (!staff_id || !establishment_id || !date || start_time == null || end_time == null)
         return res.status(400).json({ error: 'staff_id, establishment_id, date, start_time, end_time requis' });
     if (end_time <= start_time) return res.status(400).json({ error: 'end_time > start_time requis' });
@@ -2894,16 +2894,16 @@ app.post('/api/shifts', checkDB, requirePatron, denyObservateurEdit, async (req,
         return res.status(403).json({ error: 'Accès refusé à cet établissement' });
     try {
         const warnings = [];
-        // F-13 — on refuse de planifier quelqu'un d'archivé. Le front ne le propose plus,
-        // mais la barre du personnel peut dater d'avant l'archivage dans un onglet resté
-        // ouvert : sans ce contrôle, le patron reconstruirait sans le voir un planning
-        // autour d'une personne partie. Le passé, lui, n'est jamais touché.
-        // Un Joker n'est personne : ni archivable, ni en conflit avec lui-même. La règle
-        // était écrite quatre fois dans cette seule route — une de plus à chaque ajout.
         const isJoker = is_joker || staff_id === '__joker__';
-        // Les deux lectures sont indépendantes. En série, elles ajoutaient un aller-retour
-        // Mongo entier à CHAQUE créneau déposé — geste répété 30 à 60 fois quand le patron
-        // monte une semaine, et le seul endroit du diff où la latence se ressent.
+        let resolvedJokerGroup = null;
+        if (isJoker && joker_group != null && String(joker_group).trim() !== '') {
+            const estab = await db.collection('establishments').findOne({ id: establishment_id });
+            const allowed = Array.isArray(estab?.groups) ? estab.groups : [];
+            if (!allowed.includes(String(joker_group))) {
+                return res.status(400).json({ error: 'joker_group invalide pour cet établissement' });
+            }
+            resolvedJokerGroup = String(joker_group);
+        }
         const [resolved, conflicts] = await Promise.all([
             resolveStaffForPlanning({ staff_id, is_joker }),
             isJoker ? []   : db.collection('shifts').find({
@@ -2913,7 +2913,6 @@ app.post('/api/shifts', checkDB, requirePatron, denyObservateurEdit, async (req,
         if (resolved.denied)
             return res.status(resolved.denied.status).json({ error: resolved.denied.error });
         for (const s of conflicts) {
-            // Double shift : chevauchement horaire avec un autre établissement → blocage strict
             if (start_time < s.end_time && end_time > s.start_time) {
                 const estab = await db.collection('establishments').findOne({ id: s.establishment_id });
                 return res.status(409).json({ error: 'Double shift : ' + (staff_name || 'ce staff') + ' a déjà un shift sur ce créneau (' + (estab?.name || s.establishment_id) + '). Enregistrement bloqué.' });
@@ -2922,12 +2921,16 @@ app.post('/api/shifts', checkDB, requirePatron, denyObservateurEdit, async (req,
             if (gap < 1)
                 warnings.push({ type: 'gap', message: 'Seulement ' + Math.round(gap * 60) + ' min de coupure avec ' + s.establishment_id });
         }
+        const displayName = isJoker
+            ? (resolvedJokerGroup ? ('Joker · ' + resolvedJokerGroup) : (staff_name || 'Joker'))
+            : (staff_name || '');
         const shift = {
-            staff_id, staff_name: staff_name || '',
+            staff_id, staff_name: displayName,
             establishment_id, date,
             start_time: parseFloat(start_time), end_time: parseFloat(end_time),
             color: color || '#95a5a6',
             ...(isJoker ? { is_joker: true } : {}),
+            ...(resolvedJokerGroup ? { joker_group: resolvedJokerGroup } : {}),
             ...(note ? { note: String(note).slice(0, 280) } : {}),
         };
         const result = await db.collection('shifts').insertOne(shift);
@@ -3019,9 +3022,16 @@ app.patch('/api/shifts/:id/joker-open', checkDB, requirePatron, denyObservateurE
             // solliciter pour ce créneau » se lit ici : le laisser faux obligerait à
             // relire une autre fonction pour savoir qui la liste contient vraiment.
             const estabStaff = await db.collection('staff').find({ venues: shift.establishment_id, ...NOT_ARCHIVED }).toArray();
-            const staffIds   = estabStaff.map(s => String(s._id));
+            const eligible = shift.joker_group
+                ? estabStaff.filter(s => {
+                    const g = Array.isArray(s.groups) ? s.groups : [];
+                    return g.length === 0 || g.includes(shift.joker_group);
+                })
+                : estabStaff;
+            const staffIds   = eligible.map(s => String(s._id));
             if (staffIds.length && shift.date >= toDateStr(new Date())) {
-                const body = 'Un créneau est ouvert ' + formatDateFR(shift.date) + ' ' +
+                const grp = shift.joker_group ? (' · ' + shift.joker_group) : '';
+                const body = 'Un créneau' + grp + ' est ouvert ' + formatDateFR(shift.date) + ' ' +
                     formatShiftTime(shift.start_time) + '–' + formatShiftTime(shift.end_time) + '. Tu es disponible ?';
                 await sendPushToStaff(staffIds, {
                     title: 'Templyo — Créneau disponible',
@@ -3042,11 +3052,12 @@ app.patch('/api/shifts/:id/joker-open', checkDB, requirePatron, denyObservateurE
 
 app.patch('/api/shifts/:id', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
-    const { start_time, end_time, staff_id, staff_name, color, is_joker, note } = req.body;
+    const { start_time, end_time, staff_id, staff_name, color, is_joker, note, joker_group } = req.body;
     const assigningStaff = staff_id !== undefined;
     const updatingNote   = note !== undefined;
-    if (!assigningStaff && !updatingNote && start_time == null && end_time == null)
-        return res.status(400).json({ error: 'start_time, end_time, staff_id ou note requis' });
+    const updatingJokerGroup = joker_group !== undefined;
+    if (!assigningStaff && !updatingNote && !updatingJokerGroup && start_time == null && end_time == null)
+        return res.status(400).json({ error: 'start_time, end_time, staff_id, note ou joker_group requis' });
     try {
         const existing = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
         if (!existing) return res.status(404).json({ error: 'Shift introuvable' });
@@ -3061,6 +3072,23 @@ app.patch('/api/shifts/:id', checkDB, requirePatron, denyObservateurEdit, async 
 
         // Note sur un Joker
         if (updatingNote) updateFields.note = String(note).slice(0, 280);
+
+        if (updatingJokerGroup) {
+            const isJoker = existing.is_joker || existing.staff_id === '__joker__';
+            if (!isJoker) return res.status(400).json({ error: 'joker_group réservé aux Jokers' });
+            if (joker_group == null || String(joker_group).trim() === '') {
+                updateFields.joker_group = null;
+                updateFields.staff_name = 'Joker';
+            } else {
+                const estab = await db.collection('establishments').findOne({ id: existing.establishment_id });
+                const allowed = Array.isArray(estab?.groups) ? estab.groups : [];
+                if (!allowed.includes(String(joker_group))) {
+                    return res.status(400).json({ error: 'joker_group invalide pour cet établissement' });
+                }
+                updateFields.joker_group = String(joker_group);
+                updateFields.staff_name = 'Joker · ' + updateFields.joker_group;
+            }
+        }
 
         // Les deux lectures sont indépendantes — même raison qu'en `POST /api/shifts`, dont
         // cette route est la sœur : en série, chaque affectation payait un aller-retour
@@ -3094,6 +3122,7 @@ app.patch('/api/shifts/:id', checkDB, requirePatron, denyObservateurEdit, async 
             if (existing.is_joker) {
                 updateFields.joker_open       = false;
                 updateFields.joker_candidates = [];
+                updateFields.joker_group      = null;
             }
         }
 
@@ -3226,7 +3255,12 @@ app.post('/api/copy-day', checkDB, requirePatron, denyObservateurEdit, async (re
                 const base = { ...rest, establishment_id, date };
                 if (!archivedIds.has(String(rest.staff_id))) return base;
                 jokerised++;
-                return { ...base, ...JOKER_SHIFT };
+                return {
+                    ...base,
+                    ...JOKER_SHIFT,
+                    ...(rest.joker_group ? { joker_group: rest.joker_group } : {}),
+                    staff_name: rest.joker_group ? ('Joker · ' + rest.joker_group) : 'Joker',
+                };
             });
             if (newShifts.length > 0) { await db.collection('shifts').insertMany(newShifts); created += newShifts.length; }
         }
@@ -3283,17 +3317,26 @@ app.post('/api/copy-week', checkDB, requirePatron, denyObservateurEdit, async (r
                     start_time: s.start_time,
                     end_time:   s.end_time,
                     ...(s.note ? { note: s.note } : {}),
+                    ...(s.joker_group ? { joker_group: s.joker_group } : {}),
                 };
                 if (copyMode === 'jokers') {
-                    // Créneau vide : Joker non attribué, à re-remplir
-                    return { ...base, ...JOKER_SHIFT };
+                    // Créneau vide : Joker non attribué — conserve le groupe si source en avait un
+                    return {
+                        ...base,
+                        ...JOKER_SHIFT,
+                        staff_name: s.joker_group ? ('Joker · ' + s.joker_group) : 'Joker',
+                    };
                 }
                 // Garder l'affectation (un Joker source reste Joker) — sauf si la personne
                 // a été archivée entre-temps : le créneau survit, son titulaire non.
                 const isJoker = s.is_joker || s.staff_id === '__joker__';
                 if (archivedIds.has(String(s.staff_id))) {
                     jokerised++;
-                    return { ...base, ...JOKER_SHIFT };
+                    return {
+                        ...base,
+                        ...JOKER_SHIFT,
+                        staff_name: s.joker_group ? ('Joker · ' + s.joker_group) : 'Joker',
+                    };
                 }
                 return {
                     ...base,
@@ -6388,6 +6431,7 @@ app.get('/api/performance', checkDB, requirePatron,
 
 // POST simulation Performance — hybride (réel pointé + planifié restant), CA hypo éphémère.
 // Ne touche PAS à daily_revenue. joker_mode: manual_hourly | manual_fixed | mean | median.
+// Valo joker par groupe (`joker_group`) via maps joker_*_by_group (scalaires = fallback legacy).
 app.post('/api/performance/simulate', checkDB, requirePatron,
     requireEstablishmentAccess(r => r.body && r.body.establishment_id), async (req, res) => {
     try {
@@ -6396,7 +6440,8 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
             hypo_revenue_by_date,
             joker_mode,
             joker_hourly, joker_fixed,
-            source_establishment_ids, group_ids,
+            joker_hourly_by_group, joker_fixed_by_group,
+            source_establishment_ids,
         } = req.body || {};
 
         if (!establishment_id) return res.status(400).json({ error: 'establishment_id requis' });
@@ -6412,33 +6457,85 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
         const perfSettings = await loadPerfSettings(establishment_id);
         const charge_rate = perfSettings.charge_rate;
 
-        // Résoudre le taux joker
+        const shifts = await db.collection('shifts').find({
+            establishment_id,
+            date: { $gte: from, $lte: to },
+        }).toArray();
+
+        const jokerGroups = new Set();
+        shifts.forEach(s => {
+            if (!isJokerShift(s) || isShiftCompleted(s)) return;
+            jokerGroups.add(jokerGroupKey(s));
+        });
+
         let jokerHourly = null;
         let jokerFixed = null;
+        let jokerHourlyByGroup = null;
+        let jokerFixedByGroup = null;
         let joker_rate_used = null;
         let joker_rate_sample_size = null;
-        let joker_rate_kind = null; // 'hourly' | 'fixed'
+        let joker_rate_kind = null;
+        const joker_rates_by_group = {};
+
+        const parseGroupMap = (raw) => {
+            const out = {};
+            if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+                Object.keys(raw).forEach(k => {
+                    const v = Number(raw[k]);
+                    if (!Number.isNaN(v) && v >= 0) out[k] = v;
+                });
+            }
+            return out;
+        };
+        const groupLabel = g => (g === '_' ? 'Sans groupe' : g);
 
         if (mode === 'manual_fixed') {
-            if (joker_fixed == null || Number.isNaN(Number(joker_fixed))) {
-                return res.status(400).json({ error: 'joker_fixed requis pour manual_fixed' });
+            jokerFixedByGroup = parseGroupMap(joker_fixed_by_group);
+            if (Object.keys(jokerFixedByGroup).length === 0 && joker_fixed != null && !Number.isNaN(Number(joker_fixed))) {
+                const v = Number(joker_fixed);
+                if (jokerGroups.size === 0) jokerFixedByGroup['_'] = v;
+                else jokerGroups.forEach(g => { jokerFixedByGroup[g] = v; });
+                jokerFixed = v;
             }
-            jokerFixed = Number(joker_fixed);
-            joker_rate_used = jokerFixed;
+            for (const g of jokerGroups) {
+                if (jokerFixedByGroup[g] == null) {
+                    return res.status(400).json({
+                        error: 'Forfait joker manquant pour le groupe « ' + groupLabel(g) + ' »',
+                    });
+                }
+                joker_rates_by_group[g] = { rate: jokerFixedByGroup[g], sample_size: null, kind: 'fixed' };
+            }
             joker_rate_kind = 'fixed';
-            joker_rate_sample_size = null;
-        } else if (mode === 'manual_hourly') {
-            if (joker_hourly == null || Number.isNaN(Number(joker_hourly))) {
-                return res.status(400).json({ error: 'joker_hourly requis pour manual_hourly' });
+            const firstKey = jokerGroups.size ? [...jokerGroups][0] : Object.keys(jokerFixedByGroup)[0];
+            joker_rate_used = firstKey != null ? jokerFixedByGroup[firstKey] : null;
+            if (joker_rate_used == null && jokerGroups.size > 0) {
+                return res.status(400).json({ error: 'joker_fixed ou joker_fixed_by_group requis' });
             }
-            jokerHourly = Number(joker_hourly);
-            joker_rate_used = jokerHourly;
+        } else if (mode === 'manual_hourly') {
+            jokerHourlyByGroup = parseGroupMap(joker_hourly_by_group);
+            if (Object.keys(jokerHourlyByGroup).length === 0 && joker_hourly != null && !Number.isNaN(Number(joker_hourly))) {
+                const v = Number(joker_hourly);
+                if (jokerGroups.size === 0) jokerHourlyByGroup['_'] = v;
+                else jokerGroups.forEach(g => { jokerHourlyByGroup[g] = v; });
+                jokerHourly = v;
+            }
+            for (const g of jokerGroups) {
+                if (jokerHourlyByGroup[g] == null) {
+                    return res.status(400).json({
+                        error: 'Taux horaire joker manquant pour le groupe « ' + groupLabel(g) + ' »',
+                    });
+                }
+                joker_rates_by_group[g] = { rate: jokerHourlyByGroup[g], sample_size: null, kind: 'hourly' };
+            }
             joker_rate_kind = 'hourly';
+            const firstKey = jokerGroups.size ? [...jokerGroups][0] : Object.keys(jokerHourlyByGroup)[0];
+            joker_rate_used = firstKey != null ? jokerHourlyByGroup[firstKey] : null;
+            if (joker_rate_used == null && jokerGroups.size > 0) {
+                return res.status(400).json({ error: 'joker_hourly ou joker_hourly_by_group requis' });
+            }
         } else {
-            // mean / median — pool staff filtré
             let sourceIds = Array.isArray(source_establishment_ids) ? source_establishment_ids.filter(Boolean) : [];
             if (sourceIds.length === 0) sourceIds = [establishment_id];
-            // Périmètre directeur : ne peut pas tirer des bars hors de son scope
             const scope = userEstablishmentIds(req.session.user);
             if (scope !== null) {
                 sourceIds = sourceIds.filter(id => scope.includes(id));
@@ -6446,29 +6543,38 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
                     return res.status(403).json({ error: 'Aucun établissement source accessible' });
                 }
             }
-            const groupFilter = Array.isArray(group_ids) ? group_ids.filter(Boolean) : [];
             const staffPool = await db.collection('staff').find(NOT_ARCHIVED).toArray();
-            const derived = deriveStaffHourlyStat(staffPool, {
-                stat: mode,
-                establishmentIds: sourceIds,
-                groupIds: groupFilter.length ? groupFilter : undefined,
-            });
-            if (derived.rate == null) {
-                return res.status(400).json({
-                    error: 'Aucun taux horaire dans le filtre (établissements / groupes)',
-                    sample_size: 0,
+            jokerHourlyByGroup = {};
+            let totalSample = 0;
+            const groupsToDerive = jokerGroups.size ? jokerGroups : new Set(['_']);
+            for (const g of groupsToDerive) {
+                const derived = deriveStaffHourlyStat(staffPool, {
+                    stat: mode,
+                    establishmentIds: sourceIds,
+                    groupIds: g === '_' ? undefined : [g],
                 });
+                if (derived.rate == null) {
+                    return res.status(400).json({
+                        error: 'Aucun taux horaire dans le filtre (établissements'
+                            + (g === '_' ? '' : ' / groupe « ' + g + ' »') + ')',
+                        sample_size: 0,
+                        group: g === '_' ? null : g,
+                    });
+                }
+                jokerHourlyByGroup[g] = derived.rate;
+                joker_rates_by_group[g] = {
+                    rate: derived.rate,
+                    sample_size: derived.sample_size,
+                    kind: 'hourly',
+                };
+                totalSample += derived.sample_size;
             }
-            jokerHourly = derived.rate;
-            joker_rate_used = derived.rate;
-            joker_rate_sample_size = derived.sample_size;
             joker_rate_kind = 'hourly';
+            const keys = Object.keys(jokerHourlyByGroup);
+            joker_rate_used = keys.length ? jokerHourlyByGroup[keys[0]] : null;
+            joker_rate_sample_size = totalSample;
+            jokerHourly = joker_rate_used;
         }
-
-        const shifts = await db.collection('shifts').find({
-            establishment_id,
-            date: { $gte: from, $lte: to },
-        }).toArray();
 
         const revenues = await db.collection('daily_revenue').find({
             establishment_id,
@@ -6481,8 +6587,6 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
         if (hypo_revenue_by_date && typeof hypo_revenue_by_date === 'object') {
             Object.keys(hypo_revenue_by_date).forEach(d => {
                 if (d < from || d > to) return;
-                // Ne pas écraser un CA réel côté agrégat : buildPerformanceSimulation
-                // préfère déjà realRevenueByDate ; on stocke quand même pour les jours sans réel.
                 if (realRevenueByDate[d] != null) return;
                 const v = Number(hypo_revenue_by_date[d]);
                 if (!Number.isNaN(v) && v >= 0) hypoRevenueByDate[d] = v;
@@ -6506,6 +6610,8 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
             chargeRate: charge_rate,
             jokerHourly,
             jokerFixed,
+            jokerHourlyByGroup,
+            jokerFixedByGroup,
         });
 
         res.json({
@@ -6516,6 +6622,7 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
             joker_rate_used,
             joker_rate_kind,
             joker_rate_sample_size,
+            joker_rates_by_group,
             charge_rate,
             target_charged: perfSettings.target_charged,
             days: sim.days,

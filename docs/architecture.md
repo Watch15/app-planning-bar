@@ -221,6 +221,7 @@ Rate limiter en mémoire basé sur `Map` (aucune dépendance externe). Login : 1
   "is_joker": false,
   "note": "string ≤ 280 (Joker uniquement)",
   "joker_open": false,
+  "joker_group": "Bar | Cuisine | … | null (valo Simulation + filtre candidatures)",
   "joker_candidates": [
     {
       "staff_id": "string",

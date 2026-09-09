@@ -175,14 +175,19 @@ const FEATURES = [
         ctx.shift('FanFan_restaurant', 'David', ctx.day(ctx.thisMon, 4), 18, 24),
         // Lundi courant SANS CA (cf. bloc ca) — masse planifiée pour hypo Simulation.
         ctx.shift('Josy_pub', 'Bruno', ctx.day(ctx.thisMon, 0), 18, 24),
-        { establishment_id: 'Josy_pub', staff_id: '__joker__', staff_name: 'Joker', color: '#888',
+        { establishment_id: 'Josy_pub', staff_id: '__joker__', staff_name: 'Joker · Bar', color: '#888',
           date: ctx.day(ctx.thisMon, 5), start_time: 19, end_time: 26,
-          is_joker: true, joker_open: true,
+          is_joker: true, joker_open: true, joker_group: 'Bar',
           joker_candidates: [
               { staff_id: ctx.staff.Bruno, staff_name: 'Bruno', staff_color: ctx.color.Bruno,
                 submitted_at: new Date(Date.now() - 864e5) },
           ],
           note: 'Renfort samedi soir' },
+        // 2e joker (Cuisine) sur Poni — Simulation multi-taux / filtre « Tous »
+        { establishment_id: 'Poni_restaurant', staff_id: '__joker__', staff_name: 'Joker · Cuisine', color: '#888',
+          date: ctx.day(ctx.thisMon, 5), start_time: 19, end_time: 24,
+          is_joker: true, joker_open: true, joker_group: 'Cuisine',
+          joker_candidates: [], note: 'Renfort cuisine samedi' },
     ];
     // Shift « aujourd'hui » pour la clôture OTP — uniquement s'il n'existe pas déjà
     // (sinon mercredi = aujourd'hui ⇒ double créneau Alice).
@@ -400,14 +405,13 @@ const FEATURES = [
     ]);
 } },
 
-{ id: 'simulation', label: 'Simulation Performance (D-95) — jour / semaine hybride',
-  howToTest: 'patron@ → Performance → onglet Simulation. 1) Mode Semaine : CA figé mercredi, hypo '
-      + 'saisissable lundi/samedi ; KPI « dont réalisé / estimé ». 2) Mode Jour : basculer sur samedi '
-      + '(Joker) → taux manuel / moyenne / médiane (filtre Bar + Josy). 3) Double-clic une case CA '
-      + 'semaine → passe en Jour. Auto : npm run smoke:simulate.',
+{ id: 'simulation', label: 'Simulation Performance (D-95) — jour / semaine, taux par groupe',
+  howToTest: 'patron@ → Performance → Simulation. 1) Mode Semaine : CA figé mercredi, hypo '
+      + 'saisissable ailleurs. 2) Valorisation : un champ €/h (ou forfait) par groupe de Joker '
+      + '(Bar sur Josy, Cuisine sur Poni). 3) Moyenne/médiane : auto par joker_group + Courant/Tous. '
+      + 'Auto : npm run smoke:simulate.',
   async seed() {
-    // Données déjà posées : semaine passée pointée+CA, semaine courante hybride (planning-courant),
-    // CA partiel (bloc ca), Joker non pointé, taux staff Bar pour mean/median.
+    // Données déjà posées : jokers Bar + Cuisine, hybride pointage, CA partiel.
   }
 },
 ];

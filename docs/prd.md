@@ -280,7 +280,7 @@ Page dédiée au patron / directeur pour suivre la masse salariale vs CA par soi
 - **Onglet Simulation** (éphémère, ne touche pas `daily_revenue`) :
   - Périmètre **Semaine** ou **Jour** (bascule + navigation ‹ › / Aujourd’hui) ; CA hypo uniquement sur les jours **sans** CA réel
   - Masse **hybride** : shifts déjà pointés (`real_*` + snapshots) + reste en heures **planifiées**
-  - Jokers non pointés valorisés par taux/forfait saisi, ou **moyenne / médiane** des `hourly_rate` staff (filtres établissements + groupes)
+  - Jokers non pointés valorisés **par `joker_group`** : taux/forfait saisi par groupe, ou **moyenne / médiane** auto du même groupe (filtre établissements Courant / Tous)
   - Endpoint `POST /api/performance/simulate`
 
 ### 3.17 Pointage avancé (`pointage.html`)

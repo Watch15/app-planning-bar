@@ -464,9 +464,10 @@ function renderOpenJokersInto(jokers, from, to, section) {
             const applied   = !!j.has_applied;
             const estabName = j.establishment_name || j.establishment_id || '';
             const safeEstab = estabName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const grp = j.joker_group ? (' · ' + String(j.joker_group).replace(/</g, '&lt;').replace(/>/g, '&gt;')) : '';
             return '<div class="open-joker-item">' +
                 '<div class="open-joker-date">' + dayLabel +
-                    '<small>' + startFmt + ' à ' + endFmt +
+                    '<small>' + startFmt + ' à ' + endFmt + grp +
                         (safeEstab ? ' · <span class="open-joker-estab">' + safeEstab + '</span>' : '') +
                     '</small>' +
                 '</div>' +

@@ -1720,37 +1720,51 @@ function renderSidebar() {
         list.appendChild(card);
     });
 
-    // ── Carte Joker (toujours en bas de la sidebar) ───────────────────────────
-    const jokerCard = document.createElement('div');
-    jokerCard.className = 'staff-card staff-card-joker';
-    jokerCard.draggable = true;
-    jokerCard.dataset.staffId = '__joker__';
-    jokerCard.title = 'Joker : créneau ouvert sans staff désigné. Glisse-le sur la timeline pour créer un créneau à pourvoir (motif rayé). Tu pourras ensuite l’ouvrir aux candidatures du staff.';
-    jokerCard.innerHTML =
-        '<span class="joker-icon">?</span>' +
-        '<span class="staff-card-body">' +
-            '<span class="staff-info-name">Joker</span>' +
-            '<span class="staff-card-meta"><span class="staff-role-badge joker">Créneau ouvert</span></span>' +
-        '</span>';
+    // ── Cartes Joker (une par groupe de l'établissement, ou générique) ────────
+    const venue = allEstablishments.find(e => e.id === currentVenueId);
+    let jokerGroups = Array.isArray(venue?.groups) ? venue.groups.slice() : [];
+    if (currentGroup) {
+        jokerGroups = jokerGroups.includes(currentGroup) ? [currentGroup] : [];
+    }
+    // Établissement sans groupes : une carte générique (joker_group null)
+    const jokerDefs = jokerGroups.length
+        ? jokerGroups.map(g => ({ joker_group: g, name: 'Joker · ' + g }))
+        : (currentGroup ? [] : [{ joker_group: null, name: 'Joker' }]);
 
-    jokerCard.addEventListener('dragstart', e => {
-        const joker = {
-            _id:     '__joker__',
-            name:    'Joker',
-            color:   '#95a5a6',
+    jokerDefs.forEach(def => {
+        const jokerCard = document.createElement('div');
+        jokerCard.className = 'staff-card staff-card-joker';
+        jokerCard.draggable = true;
+        jokerCard.dataset.staffId = '__joker__';
+        if (def.joker_group) jokerCard.dataset.jokerGroup = def.joker_group;
+        jokerCard.title = def.joker_group
+            ? ('Joker « ' + def.joker_group + ' » : créneau à pourvoir pour ce groupe. Glisse-le sur la timeline.')
+            : 'Joker : créneau ouvert sans staff désigné. Glisse-le sur la timeline pour créer un créneau à pourvoir.';
+        jokerCard.innerHTML =
+            '<span class="joker-icon">?</span>' +
+            '<span class="staff-card-body">' +
+                '<span class="staff-info-name">' + escapeHtml(def.name) + '</span>' +
+                '<span class="staff-card-meta"><span class="staff-role-badge joker">'
+                    + (def.joker_group ? escapeHtml(def.joker_group) : 'Créneau ouvert')
+                    + '</span></span>' +
+            '</span>';
+
+        const jokerPayload = {
+            _id: '__joker__',
+            name: def.name,
+            color: '#95a5a6',
             isJoker: true,
+            joker_group: def.joker_group,
         };
-        onSidebarDragStart(e, joker, jokerCard);
+        jokerCard.addEventListener('dragstart', e => onSidebarDragStart(e, jokerPayload, jokerCard));
+        jokerCard.addEventListener('dragend', () => onSidebarDragEnd(jokerCard));
+        jokerCard.addEventListener('touchend', e => {
+            e.preventDefault();
+            if (!isTouchDevice()) return;
+            tapSelectStaff(jokerPayload, jokerCard);
+        }, { passive: false });
+        list.appendChild(jokerCard);
     });
-    jokerCard.addEventListener('dragend', () => onSidebarDragEnd(jokerCard));
-
-    // ── Tap-to-place Joker (téléphone + tablette) ─────────────────────────────
-    jokerCard.addEventListener('touchend', e => {
-        e.preventDefault();
-        if (!isTouchDevice()) return;
-        tapSelectStaff({ _id: '__joker__', name: 'Joker', color: '#95a5a6', isJoker: true }, jokerCard);
-    }, { passive: false });
-    list.appendChild(jokerCard);
 }
 
 // ── Établissements ────────────────────────────────────────────────────────────
@@ -1957,8 +1971,8 @@ function extendDisplayForRealHours() {
     TOTAL_HOURS = END_HOUR - START_HOUR;
 }
 
-// Filtre groupe : renvoie true si le staff appartient au groupe actif
-// ou n'a aucun groupe (toujours visible). Les Jokers sont également toujours visibles.
+// Filtre groupe : staff du groupe (ou sans groupe = polyvalent).
+// Jokers : filtrés via joker_group du shift (voir buildDisplayedStaff).
 function staffMatchesCurrentGroup(staffId) {
     if (!currentGroup) return true;
     if (!staffId || staffId === '__joker__') return true;
@@ -1972,9 +1986,17 @@ function buildDisplayedStaff() {
     const seen = new Map();
     currentShifts.forEach(s => {
         if (s.is_joker || s.staff_id === '__joker__') {
-            // Chaque shift Joker = une ligne distincte (clé = shift _id)
+            if (currentGroup && s.joker_group !== currentGroup) return;
             const rowId = String(s._id);
-            seen.set(rowId, { _id: rowId, name: s.staff_name, color: s.color || '#95a5a6', isJoker: true });
+            const label = s.joker_group
+                ? (s.staff_name && String(s.staff_name).includes(s.joker_group)
+                    ? s.staff_name
+                    : ('Joker · ' + s.joker_group))
+                : (s.staff_name || 'Joker');
+            seen.set(rowId, {
+                _id: rowId, name: label, color: s.color || '#95a5a6',
+                isJoker: true, joker_group: s.joker_group || null,
+            });
         } else if (!seen.has(s.staff_id)) {
             if (!staffMatchesCurrentGroup(s.staff_id)) return;
             seen.set(s.staff_id, { _id: s.staff_id, name: s.staff_name, color: s.color });
@@ -3086,16 +3108,34 @@ async function openJokerModal(shift, el) {
 
     function buildBox() {
         const isOpen = !!shift.joker_open;
+        const venue = allEstablishments.find(e => e.id === currentVenueId || e.id === shift.establishment_id);
+        const groupOpts = Array.isArray(venue?.groups) ? venue.groups : [];
+        const groupSelect = groupOpts.length
+            ? '<div style="margin-bottom:14px">' +
+                '<div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Groupe</div>' +
+                '<select id="_jk-group" style="width:100%;padding:8px 10px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit">' +
+                '<option value="">Sans groupe</option>' +
+                groupOpts.map(g => '<option value="' + escapeHtml(g) + '"'
+                    + (shift.joker_group === g ? ' selected' : '') + '>' + escapeHtml(g) + '</option>').join('') +
+                '</select></div>'
+            : '';
         box.innerHTML =
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
-                '<span style="font-size:15px;font-weight:700;color:#1a1a2e">⚡ Créneau Joker</span>' +
+                '<span style="font-size:15px;font-weight:700;color:#1a1a2e">⚡ '
+                    + escapeHtml(shift.joker_group ? ('Joker · ' + shift.joker_group) : 'Créneau Joker')
+                    + '</span>' +
                 '<button id="_jk-close" style="background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;line-height:1">&times;</button>' +
             '</div>' +
             '<div style="font-size:13px;color:#888;margin-bottom:16px">' + fmtH(shift.start_time) + ' – ' + fmtH(shift.end_time) + '</div>' +
+            groupSelect +
             '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;background:' + (isOpen ? '#f0effe' : '#f8f8f8') + ';border-radius:10px;border:1.5px solid ' + (isOpen ? '#534AB7' : '#e0e0e0') + ';margin-bottom:14px;user-select:none">' +
                 '<input type="checkbox" id="_jk-toggle" ' + (isOpen ? 'checked' : '') + ' style="width:16px;height:16px;accent-color:#534AB7;cursor:pointer">' +
                 '<div><div style="font-size:13px;font-weight:600;color:#1a1a2e">📢 Proposer au staff</div>' +
-                '<div style="font-size:11px;color:#888;margin-top:2px">Notifie le staff et ouvre les candidatures</div></div>' +
+                '<div style="font-size:11px;color:#888;margin-top:2px">'
+                    + (shift.joker_group
+                        ? ('Notifie le staff du groupe « ' + escapeHtml(shift.joker_group) + ' » (+ polyvalents)')
+                        : 'Notifie le staff et ouvre les candidatures')
+                    + '</div></div>' +
             '</label>' +
             (isOpen
                 ? '<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Candidatures</div><div id="_jk-candidates"></div></div>'
@@ -3104,13 +3144,39 @@ async function openJokerModal(shift, el) {
                 '<div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Note</div>' +
                 '<textarea id="_jk-note" style="width:100%;height:72px;border:1.5px solid #e0e0e0;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;outline:none;box-sizing:border-box" placeholder="Note sur ce créneau…">' + escapeHtml(shift.note || '') + '</textarea>' +
             '</div>' +
-            '<div style="display:flex;justify-content:flex-end">' +
+            '<div style="display:flex;justify-content:flex-end;gap:8px">' +
+                (groupOpts.length ? '<button id="_jk-save-group" style="background:#f0effe;color:#534AB7;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer">Groupe</button>' : '') +
                 '<button id="_jk-save" style="background:#534AB7;color:white;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer">Enregistrer note</button>' +
             '</div>';
 
         box.querySelector('#_jk-close').addEventListener('click', close);
 
         if (isOpen) renderCandidatesList();
+
+        const saveGroupBtn = box.querySelector('#_jk-save-group');
+        if (saveGroupBtn) {
+            saveGroupBtn.addEventListener('click', async () => {
+                const sel = box.querySelector('#_jk-group');
+                const val = sel ? sel.value : '';
+                try {
+                    const r = await fetch('/api/shifts/' + shift._id, {
+                        method: 'PATCH', credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ joker_group: val || null }),
+                    });
+                    if (!r.ok) throw new Error((await r.json()).error);
+                    shift.joker_group = val || null;
+                    shift.staff_name = val ? ('Joker · ' + val) : 'Joker';
+                    const row = currentShifts.find(s => String(s._id) === String(shift._id));
+                    if (row) { row.joker_group = shift.joker_group; row.staff_name = shift.staff_name; }
+                    buildDisplayedStaff();
+                    renderBody();
+                    showToast(val ? ('Groupe « ' + val + ' »') : 'Sans groupe');
+                    close();
+                    openJokerModal(shift, el);
+                } catch (err) { showToast(err.message || 'Erreur', true); }
+            });
+        }
 
         box.querySelector('#_jk-toggle').addEventListener('change', async (ev) => {
             const open = ev.target.checked;
@@ -3263,18 +3329,20 @@ async function createShift(staff, startTime, endTime) {
                 }
             }
         }
-        const staffName = staff.name; // déjà "Joker 1", "Joker 2"... ou le vrai nom
+        const staffName = staff.name;
+        const body = {
+            staff_id: staffId, staff_name: staffName,
+            establishment_id: currentVenueId, date: selectedDate,
+            start_time: startTime, end_time: endTime,
+            color: staff.color,
+            is_joker: !!staff.isJoker,
+        };
+        if (staff.isJoker && staff.joker_group) body.joker_group = staff.joker_group;
         const res = await fetch('/api/shifts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({
-                staff_id: staffId, staff_name: staffName,
-                establishment_id: currentVenueId, date: selectedDate,
-                start_time: startTime, end_time: endTime,
-                color: staff.color,
-                is_joker: !!staff.isJoker,
-            }),
+            body: JSON.stringify(body),
         });
         const data = await res.json();
         if (!res.ok) { showToast(data.error || 'Erreur création', true); return; }

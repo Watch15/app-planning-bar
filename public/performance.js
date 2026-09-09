@@ -60,6 +60,10 @@ let simHypoByDate = {}; // saisies CA hypo éphémères
 let simLastResult = null;
 let allGroups     = [];
 let simRealByDate = {}; // cache CA réels de la période affichée
+let simJokerGroups = []; // clés '_' | 'Bar' | …
+let simManualByGroup = {}; // { Bar: 14, _: 13 }
+let simEstabScope = 'current'; // 'current' | 'all' | 'custom'
+
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -184,12 +188,9 @@ async function init() {
     });
     document.getElementById('sim-joker-mode').addEventListener('change', updateSimJokerModeUI);
     document.getElementById('sim-run').addEventListener('click', runSimulation);
+    document.getElementById('sim-estab-current').addEventListener('click', () => setSimEstabScope('current'));
+    document.getElementById('sim-estab-all').addEventListener('click', () => setSimEstabScope('all'));
 
-    try {
-        const gRes = await fetch('/api/groups', { credentials: 'include' });
-        if (gRes.ok) allGroups = await gRes.json();
-    } catch { allGroups = []; }
-    fillSimGroups();
     fillSimSourceEstabs();
     updateSimJokerModeUI();
 
@@ -705,46 +706,134 @@ function shiftSimPeriod(dir) {
 }
 
 function fillSimSourceEstabs() {
-    const sel = document.getElementById('sim-source-estabs');
-    if (!sel) return;
-    sel.innerHTML = '';
+    const wrap = document.getElementById('sim-estab-checks');
+    if (!wrap) return;
+    wrap.innerHTML = '';
     allEstabs.forEach(e => {
-        const opt = document.createElement('option');
-        opt.value = e.id;
-        opt.textContent = e.name;
-        if (e.id === currentEstab) opt.selected = true;
-        sel.appendChild(opt);
+        const id = 'sim-estab-' + e.id;
+        const lab = document.createElement('label');
+        lab.innerHTML = '<input type="checkbox" data-estab-id="' + escapeHtml(e.id) + '" id="' + escapeHtml(id) + '">'
+            + ' <span>' + escapeHtml(e.name) + '</span>';
+        const cb = lab.querySelector('input');
+        cb.checked = simEstabScope === 'all' || e.id === currentEstab;
+        cb.addEventListener('change', () => {
+            simEstabScope = 'custom';
+            document.getElementById('sim-estab-current').classList.remove('active');
+            document.getElementById('sim-estab-all').classList.remove('active');
+        });
+        wrap.appendChild(lab);
     });
 }
 
-function fillSimGroups() {
-    const sel = document.getElementById('sim-groups');
-    if (!sel) return;
-    sel.innerHTML = '';
-    (allGroups || []).forEach(g => {
-        const opt = document.createElement('option');
-        opt.value = g;
-        opt.textContent = g;
-        sel.appendChild(opt);
+function setSimEstabScope(scope) {
+    simEstabScope = scope;
+    document.getElementById('sim-estab-current').classList.toggle('active', scope === 'current');
+    document.getElementById('sim-estab-all').classList.toggle('active', scope === 'all');
+    document.querySelectorAll('#sim-estab-checks input[data-estab-id]').forEach(cb => {
+        cb.checked = scope === 'all' || (scope === 'current' && cb.dataset.estabId === currentEstab);
     });
+}
+
+function _selectedSimEstabIds() {
+    if (simEstabScope === 'current') return [currentEstab];
+    if (simEstabScope === 'all') return allEstabs.map(e => e.id);
+    return [...document.querySelectorAll('#sim-estab-checks input[data-estab-id]:checked')]
+        .map(cb => cb.dataset.estabId);
+}
+
+function _jokerGroupLabel(g) {
+    return g === '_' ? 'Sans groupe' : g;
+}
+
+function _syncManualFromInputs() {
+    document.querySelectorAll('#sim-joker-by-group input[data-jg]').forEach(inp => {
+        const v = parseFloat(inp.value);
+        if (Number.isNaN(v) || v < 0) delete simManualByGroup[inp.dataset.jg];
+        else simManualByGroup[inp.dataset.jg] = v;
+    });
+}
+
+function renderSimJokerByGroup(derivedRates) {
+    const wrap = document.getElementById('sim-joker-by-group');
+    if (!wrap) return;
+    const mode = document.getElementById('sim-joker-mode').value;
+    const derived = mode === 'mean' || mode === 'median';
+    if (!simJokerGroups.length) {
+        wrap.innerHTML = '<p class="sim-hint" style="margin:0">Aucun joker non pointé sur cette période.</p>';
+        return;
+    }
+    wrap.innerHTML = '';
+    simJokerGroups.forEach(g => {
+        const card = document.createElement('div');
+        card.className = 'sim-joker-group-card';
+        const label = _jokerGroupLabel(g);
+        if (derived) {
+            const info = derivedRates && derivedRates[g];
+            card.innerHTML = '<div class="sim-jg-label">' + escapeHtml(label) + '</div>'
+                + '<div class="sim-jg-derived">'
+                + (info && info.rate != null
+                    ? (Number(info.rate).toFixed(2).replace('.', ',') + ' €/h'
+                        + (info.sample_size != null ? ' · n=' + info.sample_size : ''))
+                    : '— (calculer)')
+                + '</div>';
+        } else {
+            const unit = mode === 'manual_fixed' ? '€ / shift' : '€ / h';
+            const def = simManualByGroup[g] != null ? simManualByGroup[g]
+                : (mode === 'manual_fixed' ? 80 : 14);
+            card.innerHTML = '<div class="sim-jg-label">' + escapeHtml(label) + ' · ' + unit + '</div>'
+                + '<input type="number" min="0" step="0.01" data-jg="' + escapeHtml(g) + '" value="' + escapeHtml(def) + '">';
+        }
+        wrap.appendChild(card);
+    });
+    if (!derived) {
+        wrap.querySelectorAll('input[data-jg]').forEach(inp => {
+            inp.addEventListener('change', () => {
+                const v = parseFloat(inp.value);
+                if (Number.isNaN(v) || v < 0) delete simManualByGroup[inp.dataset.jg];
+                else simManualByGroup[inp.dataset.jg] = v;
+            });
+        });
+    }
 }
 
 function updateSimJokerModeUI() {
     const mode = document.getElementById('sim-joker-mode').value;
     const derived = mode === 'mean' || mode === 'median';
-    document.getElementById('sim-manual-hourly-wrap').style.display = mode === 'manual_hourly' ? '' : 'none';
-    document.getElementById('sim-manual-fixed-wrap').style.display = mode === 'manual_fixed' ? '' : 'none';
     document.getElementById('sim-source-estab-wrap').style.display = derived ? '' : 'none';
-    document.getElementById('sim-groups-wrap').style.display = derived ? '' : 'none';
     const hint = document.getElementById('sim-joker-hint');
     if (derived) {
-        hint.textContent = 'Le taux joker = ' + (mode === 'mean' ? 'moyenne' : 'médiane')
-            + ' des taux horaires staff (filtre établissements / groupes).';
+        hint.textContent = 'Le taux de chaque Joker = ' + (mode === 'mean' ? 'moyenne' : 'médiane')
+            + ' des taux staff du même groupe (filtre établissements ci-dessus).';
     } else if (mode === 'manual_fixed') {
-        hint.textContent = 'Chaque joker non pointé compte un forfait fixe, indépendamment des heures.';
+        hint.textContent = 'Un forfait par groupe de Joker présent sur la période.';
     } else {
-        hint.textContent = 'Les jokers non pointés utilisent le taux horaire saisi. Les services déjà pointés restent en réel.';
+        hint.textContent = 'Un taux horaire par groupe de Joker présent sur la période.';
     }
+    renderSimJokerByGroup(simLastResult && simLastResult.joker_rates_by_group);
+}
+
+async function _loadSimJokerGroups(from, to) {
+    const groups = new Set();
+    try {
+        const res = await fetch('/api/week-full/' + encodeURIComponent(currentEstab)
+            + '?from=' + from + '&to=' + to, { credentials: 'include' });
+        if (res.ok) {
+            const byDate = await res.json();
+            Object.keys(byDate || {}).forEach(d => {
+                if (d < from || d > to) return;
+                (byDate[d] || []).forEach(s => {
+                    if (!(s.is_joker || s.staff_id === '__joker__')) return;
+                    if (s.real_start != null && s.real_end != null) return;
+                    groups.add(s.joker_group ? String(s.joker_group) : '_');
+                });
+            });
+        }
+    } catch { /* ignore */ }
+    return [...groups].sort((a, b) => {
+        if (a === '_') return 1;
+        if (b === '_') return -1;
+        return a.localeCompare(b, 'fr');
+    });
 }
 
 function _simWeekRange() {
@@ -840,21 +929,27 @@ async function prepareSimPeriod() {
     const sub = document.getElementById('sim-ca-sub');
     const grid = document.getElementById('sim-ca-grid');
 
+    const [realMap, jokerGroups] = await Promise.all([
+        _loadSimRealByDate(from, to),
+        _loadSimJokerGroups(from, to),
+    ]);
+    simRealByDate = realMap;
+    simJokerGroups = jokerGroups;
+
     if (simScope === 'day') {
         document.getElementById('sim-cal-label').textContent = _simDayLabel(range.day);
         sub.textContent = 'Saisissez un CA hypothétique si aucun CA réel n’est enregistré pour ce jour.';
-        simRealByDate = await _loadSimRealByDate(from, to);
         const hasReal = simRealByDate[from] != null;
         grid.className = 'sim-ca-grid sim-ca-single';
         grid.innerHTML = '';
         grid.appendChild(_renderSimCaCell(from, 'CA du jour', hasReal, simRealByDate[from], ''));
         _bindSimCaInputs(grid);
+        updateSimJokerModeUI();
         return;
     }
 
     document.getElementById('sim-cal-label').textContent = _simWeekLabel(range.monday, range.sunday);
     sub.textContent = 'Saisissez un CA hypothétique sur les jours sans CA réel. Les CA déjà enregistrés restent figés.';
-    simRealByDate = await _loadSimRealByDate(from, to);
     const DAY_SHORT = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
     grid.className = 'sim-ca-grid';
     grid.innerHTML = '';
@@ -873,10 +968,7 @@ async function prepareSimPeriod() {
         grid.appendChild(card);
     }
     _bindSimCaInputs(grid);
-}
-
-function _selectedOptions(sel) {
-    return [...sel.selectedOptions].map(o => o.value);
+    updateSimJokerModeUI();
 }
 
 async function runSimulation() {
@@ -891,6 +983,7 @@ async function runSimulation() {
         if (Number.isNaN(v) || v < 0) delete simHypoByDate[inp.dataset.simCa];
         else simHypoByDate[inp.dataset.simCa] = v;
     });
+    _syncManualFromInputs();
 
     const hypo = {};
     Object.keys(simHypoByDate).forEach(d => {
@@ -905,22 +998,36 @@ async function runSimulation() {
         joker_mode: mode,
     };
     if (mode === 'manual_hourly') {
-        const v = parseFloat(document.getElementById('sim-joker-hourly').value);
-        if (Number.isNaN(v) || v < 0) {
-            wrap.innerHTML = '<div class="empty-msg" style="color:var(--danger)">Taux horaire joker invalide</div>';
-            return;
+        const map = {};
+        for (const g of simJokerGroups) {
+            const v = simManualByGroup[g];
+            if (v == null || Number.isNaN(Number(v)) || Number(v) < 0) {
+                wrap.innerHTML = '<div class="empty-msg" style="color:var(--danger)">Taux manquant pour « '
+                    + escapeHtml(_jokerGroupLabel(g)) + ' »</div>';
+                return;
+            }
+            map[g] = Number(v);
         }
-        body.joker_hourly = v;
+        body.joker_hourly_by_group = map;
     } else if (mode === 'manual_fixed') {
-        const v = parseFloat(document.getElementById('sim-joker-fixed').value);
-        if (Number.isNaN(v) || v < 0) {
-            wrap.innerHTML = '<div class="empty-msg" style="color:var(--danger)">Forfait joker invalide</div>';
+        const map = {};
+        for (const g of simJokerGroups) {
+            const v = simManualByGroup[g];
+            if (v == null || Number.isNaN(Number(v)) || Number(v) < 0) {
+                wrap.innerHTML = '<div class="empty-msg" style="color:var(--danger)">Forfait manquant pour « '
+                    + escapeHtml(_jokerGroupLabel(g)) + ' »</div>';
+                return;
+            }
+            map[g] = Number(v);
+        }
+        body.joker_fixed_by_group = map;
+    } else {
+        const ids = _selectedSimEstabIds();
+        if (!ids.length) {
+            wrap.innerHTML = '<div class="empty-msg" style="color:var(--danger)">Sélectionnez au moins un établissement</div>';
             return;
         }
-        body.joker_fixed = v;
-    } else {
-        body.source_establishment_ids = _selectedOptions(document.getElementById('sim-source-estabs'));
-        body.group_ids = _selectedOptions(document.getElementById('sim-groups'));
+        body.source_establishment_ids = ids;
     }
 
     btn.disabled = true;
@@ -940,6 +1047,7 @@ async function runSimulation() {
         renderSimKpis(data);
         renderSimTable(data);
         await prepareSimPeriod();
+        renderSimJokerByGroup(data.joker_rates_by_group);
     } catch (e) {
         wrap.innerHTML = '<div class="empty-msg" style="color:var(--danger)">' + escapeHtml(e.message || 'Erreur') + '</div>';
     } finally {
@@ -950,12 +1058,22 @@ async function runSimulation() {
 function renderSimKpis(data) {
     const t = data.totals || {};
     const scopeLabel = simScope === 'day' ? 'jour simulé' : 'semaine simulée';
-    const rateLine = data.joker_rate_used != null
-        ? (data.joker_rate_kind === 'fixed'
-            ? ('Forfait joker ' + Number(data.joker_rate_used).toFixed(2).replace('.', ',') + ' €')
-            : ('Taux joker ' + Number(data.joker_rate_used).toFixed(2).replace('.', ',') + ' €/h'
-                + (data.joker_rate_sample_size != null ? ' (n=' + data.joker_rate_sample_size + ')' : '')))
-        : '';
+    const byG = data.joker_rates_by_group || {};
+    const keys = Object.keys(byG);
+    let rateLine = '';
+    if (keys.length > 1) {
+        rateLine = keys.map(g => {
+            const info = byG[g];
+            const lab = g === '_' ? '∅' : g;
+            const unit = info.kind === 'fixed' ? '€' : '€/h';
+            return lab + ' ' + Number(info.rate).toFixed(2).replace('.', ',') + ' ' + unit;
+        }).join(' · ');
+    } else if (data.joker_rate_used != null) {
+        rateLine = data.joker_rate_kind === 'fixed'
+            ? ('Forfait ' + Number(data.joker_rate_used).toFixed(2).replace('.', ',') + ' €')
+            : ('Taux ' + Number(data.joker_rate_used).toFixed(2).replace('.', ',') + ' €/h'
+                + (data.joker_rate_sample_size != null ? ' (n=' + data.joker_rate_sample_size + ')' : ''));
+    }
     document.getElementById('sim-kpis').innerHTML =
         '<div class="kpi-card"><div class="kpi-label">CA (réel + hypo)</div><div class="kpi-value num">' + fmtEUR(t.revenue) + '</div>'
             + '<div class="kpi-sub">' + scopeLabel + '</div></div>' +

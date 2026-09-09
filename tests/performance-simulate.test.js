@@ -54,7 +54,8 @@ test('simulate : hybride pointé + joker planifié + moyenne', async () => {
         },
         {
             establishment_id: 'bar1', date: '2026-09-10',
-            staff_id: '__joker__', is_joker: true, staff_name: 'Joker',
+            staff_id: '__joker__', is_joker: true, staff_name: 'Joker · salle',
+            joker_group: 'salle',
             start_time: 18, end_time: 22,
         },
     ]);
@@ -68,14 +69,13 @@ test('simulate : hybride pointé + joker planifié + moyenne', async () => {
             hypo_revenue_by_date: { '2026-09-10': 800 },
             joker_mode: 'mean',
             source_establishment_ids: ['bar1'],
-            group_ids: ['salle'],
         }),
     });
     assert.equal(res.status, 200, await res.clone().text());
     const data = await res.json();
-    // moyenne bar1 + salle = (10+20)/2 = 15
+    // moyenne bar1 + groupe salle = (10+20)/2 = 15
     assert.equal(data.joker_rate_used, 15);
-    assert.equal(data.joker_rate_sample_size, 2);
+    assert.equal(data.joker_rates_by_group.salle.rate, 15);
     assert.equal(data.totals.revenue, 1800);
     assert.equal(data.totals.wage_real_gross, 40); // 4h × 10
     assert.equal(data.totals.wage_sim_gross, 60);  // 4h × 15
@@ -87,10 +87,45 @@ test('simulate : hybride pointé + joker planifié + moyenne', async () => {
     assert.equal(wed.staff_detail[0].is_joker, true);
 });
 
+test('simulate : taux manuel distinct par groupe', async () => {
+    await db.collection('settings').insertOne({ key: 'performance', charge_rate: 0 });
+    await db.collection('shifts').insertMany([
+        {
+            establishment_id: 'bar1', date: '2026-09-10',
+            staff_id: '__joker__', is_joker: true, joker_group: 'Bar',
+            staff_name: 'Joker · Bar', start_time: 18, end_time: 22,
+        },
+        {
+            establishment_id: 'bar1', date: '2026-09-11',
+            staff_id: '__joker__', is_joker: true, joker_group: 'Cuisine',
+            staff_name: 'Joker · Cuisine', start_time: 18, end_time: 22,
+        },
+    ]);
+    const res = await req('/api/performance/simulate', PATRON, {
+        method: 'POST',
+        body: JSON.stringify({
+            establishment_id: 'bar1',
+            from: '2026-09-08', to: '2026-09-14',
+            joker_mode: 'manual_hourly',
+            joker_hourly_by_group: { Bar: 10, Cuisine: 20 },
+        }),
+    });
+    assert.equal(res.status, 200, await res.clone().text());
+    const data = await res.json();
+    assert.equal(data.joker_rates_by_group.Bar.rate, 10);
+    assert.equal(data.joker_rates_by_group.Cuisine.rate, 20);
+    assert.equal(data.totals.wage_sim_gross, 4 * 10 + 4 * 20);
+});
+
 test('simulate : pool vide → 400', async () => {
     await db.collection('settings').insertOne({ key: 'performance', charge_rate: 45 });
     await db.collection('staff').insertOne({
         name: 'ForfaitOnly', fixed_rate: 80, venues: ['bar1'], groups: [],
+    });
+    await db.collection('shifts').insertOne({
+        establishment_id: 'bar1', date: '2026-09-10',
+        staff_id: '__joker__', is_joker: true, joker_group: 'salle',
+        start_time: 18, end_time: 22,
     });
     const res = await req('/api/performance/simulate', PATRON, {
         method: 'POST',
