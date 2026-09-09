@@ -766,6 +766,11 @@ function renderSimJokerByGroup(derivedRates) {
     simJokerGroups.forEach(g => {
         const card = document.createElement('div');
         card.className = 'sim-joker-group-card';
+        const c = (window.JokerGroupColor && JokerGroupColor.of(g === '_' ? null : g))
+            || { bg: '#6b7280', soft: '#f3f4f6', text: '#374151' };
+        card.style.setProperty('--jg', c.bg);
+        card.style.setProperty('--jg-soft', c.soft);
+        card.style.setProperty('--jg-text', c.text);
         const label = _jokerGroupLabel(g);
         if (derived) {
             const info = derivedRates && derivedRates[g];
@@ -902,12 +907,15 @@ function _renderSimCaCell(dateStr, label, hasReal, realVal, extraClass) {
     card.className = 'sim-ca-day' + (hasReal ? ' locked' : '') + (extraClass ? ' ' + extraClass : '');
     let html = '<div class="sim-ca-label">' + label + '</div>';
     if (hasReal) {
-        html += '<div class="sim-ca-real">CA réel ' + fmtEUR(realVal) + '</div>';
+        html += '<div class="sim-ca-real">' + fmtEUR(realVal) + '</div>';
         delete simHypoByDate[dateStr];
     } else {
         const val = simHypoByDate[dateStr] != null ? simHypoByDate[dateStr] : '';
-        html += '<input type="number" min="0" step="0.01" data-sim-ca="' + dateStr
-            + '" placeholder="CA hypo" value="' + escapeHtml(val) + '">';
+        html += '<div class="input-eur">'
+            + '<input type="number" min="0" step="0.01" data-sim-ca="' + dateStr
+            + '" placeholder="Hypothèse" value="' + escapeHtml(val) + '" inputmode="decimal">'
+            + '<span class="eur-symbol">€</span>'
+            + '</div>';
     }
     card.innerHTML = html;
     return card;

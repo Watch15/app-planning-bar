@@ -465,7 +465,10 @@ function renderOpenJokersInto(jokers, from, to, section) {
             const estabName = j.establishment_name || j.establishment_id || '';
             const safeEstab = estabName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const grp = j.joker_group ? (' · ' + String(j.joker_group).replace(/</g, '&lt;').replace(/>/g, '&gt;')) : '';
-            return '<div class="open-joker-item">' +
+            const jc = (window.JokerGroupColor && JokerGroupColor.of(j.joker_group))
+                || { bg: '#6b7280', soft: '#f3f4f6' };
+            return '<div class="open-joker-item" style="border-left:3px solid ' + jc.bg
+                + ';padding-left:10px;background:linear-gradient(90deg,' + jc.soft + ' 0%,transparent 48%)">' +
                 '<div class="open-joker-date">' + dayLabel +
                     '<small>' + startFmt + ' à ' + endFmt + grp +
                         (safeEstab ? ' · <span class="open-joker-estab">' + safeEstab + '</span>' : '') +

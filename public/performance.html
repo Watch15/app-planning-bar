@@ -377,23 +377,42 @@
         @media (max-width: 900px) {
             .sim-ca-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
         }
+        /* Même langage visuel que .day-card (grille CA Performance) */
         .sim-ca-day {
-            background: var(--light-bg); border: 1px solid var(--light-border);
-            border-radius: 8px; padding: 8px 10px; min-width: 0;
+            background: var(--light-bg); border: 1.5px solid var(--light-border);
+            border-radius: 10px; padding: 10px 10px 12px; min-width: 0;
+            display: flex; flex-direction: column; gap: 6px;
+            transition: border-color .15s, box-shadow .15s;
         }
-        .sim-ca-day.locked { border-color: #a7f3d0; background: #ecfdf5; }
-        .sim-ca-day.active-day { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
-        .sim-ca-day .sim-ca-label { font-size: 11px; font-weight: 600; margin-bottom: 4px; }
-        .sim-ca-day .sim-ca-real { font-size: 12px; color: var(--success-text); font-weight: 600; }
-        .sim-ca-day input { width: 100%; }
-        .sim-ca-single {
-            display: block; max-width: 320px;
+        .sim-ca-day.locked {
+            background: var(--success-bg); border-color: #6EE7B7;
         }
-        .sim-ca-single .sim-ca-day {
-            padding: 12px 14px;
+        .sim-ca-day.active-day {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
         }
-        .sim-ca-single input {
-            width: 100%; font-size: 16px; min-height: 48px; font-weight: 600;
+        .sim-ca-day .sim-ca-label {
+            font-size: 10px; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: .4px;
+        }
+        .sim-ca-day .sim-ca-real {
+            font-size: 13px; color: var(--success-text); font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+        .sim-ca-day .input-eur { width: 100%; }
+        .sim-ca-day .input-eur input {
+            width: 100%; padding: 8px 28px 8px 10px;
+            border: 1.5px solid var(--light-border); border-radius: 8px;
+            font-size: 13px; font-family: var(--font); font-weight: 600;
+            background: #fff; color: var(--text-primary); outline: none;
+            min-height: 40px; font-variant-numeric: tabular-nums;
+        }
+        .sim-ca-day .input-eur input:focus { border-color: var(--accent); }
+        .sim-ca-day .input-eur .eur-symbol { right: 10px; font-size: 12px; }
+        .sim-ca-single { display: block; max-width: 320px; }
+        .sim-ca-single .sim-ca-day { padding: 12px 14px; }
+        .sim-ca-single .input-eur input {
+            font-size: 16px; min-height: 48px;
         }
         .sim-day-detail {
             margin-top: 12px;
@@ -407,18 +426,21 @@
             margin-top: 12px;
         }
         .sim-joker-group-card {
-            background: var(--light-bg); border: 1px solid var(--light-border);
-            border-radius: 8px; padding: 10px 12px; min-width: 140px; flex: 1 1 140px;
+            background: var(--jg-soft, var(--light-bg));
+            border: 1.5px solid color-mix(in srgb, var(--jg, var(--light-border)) 45%, var(--light-border));
+            border-left: 3px solid var(--jg, var(--light-border));
+            border-radius: 10px; padding: 10px 12px; min-width: 140px; flex: 1 1 140px;
         }
         .sim-joker-group-card .sim-jg-label {
-            font-size: 11px; font-weight: 700; color: var(--text-muted);
+            font-size: 11px; font-weight: 700; color: var(--jg-text, var(--text-muted));
             text-transform: uppercase; letter-spacing: .3px; margin-bottom: 6px;
         }
         .sim-joker-group-card input {
             width: 100%; padding: 8px 10px; border: 1.5px solid var(--light-border);
             border-radius: 8px; font-size: 13px; font-family: var(--font);
-            min-height: 40px; background: #fff;
+            min-height: 40px; background: #fff; outline: none;
         }
+        .sim-joker-group-card input:focus { border-color: var(--accent); }
         .sim-joker-group-card .sim-jg-derived {
             font-size: 14px; font-weight: 700; color: var(--text-primary);
         }
@@ -648,8 +670,9 @@
 
 <!-- Lundi de la semaine — module partagé/testé (tests/week.test.js) -->
 <script src="/lib/auth-guard.js"></script>
-<script src="/lib/week.js"></script>
-<script src="/performance.js"></script>
+    <script src="/lib/week.js"></script>
+    <script src="/lib/joker-group-color.js"></script>
+    <script src="/performance.js"></script>
 <script src="/sw-register.js"></script>
 
 </body>

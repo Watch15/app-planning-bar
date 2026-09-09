@@ -34,6 +34,19 @@ function applyVenueHours(venueId) {
     TOTAL_HOURS = END_HOUR - START_HOUR;
 }
 
+/** Couleurs Joker par groupe (module /lib/joker-group-color.js). */
+function jokerGroupAccent(group) {
+    return (window.JokerGroupColor && JokerGroupColor.of(group).bg) || '#6b7280';
+}
+function applyJokerGroupColor(el, group) {
+    if (!el) return;
+    const c = (window.JokerGroupColor && JokerGroupColor.of(group))
+        || { bg: '#6b7280', soft: '#f3f4f6', text: '#374151' };
+    el.style.setProperty('--jg', c.bg);
+    el.style.setProperty('--jg-soft', c.soft);
+    el.style.setProperty('--jg-text', c.text);
+}
+
 const DAY_NAMES_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 const DAY_NAMES_LONG  = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 // Mois abrégés — UNE seule définition. Il en existait 5 copies locales identiques,
@@ -1737,6 +1750,7 @@ function renderSidebar() {
         jokerCard.draggable = true;
         jokerCard.dataset.staffId = '__joker__';
         if (def.joker_group) jokerCard.dataset.jokerGroup = def.joker_group;
+        applyJokerGroupColor(jokerCard, def.joker_group);
         jokerCard.title = def.joker_group
             ? ('Joker « ' + def.joker_group + ' » : créneau à pourvoir pour ce groupe. Glisse-le sur la timeline.')
             : 'Joker : créneau ouvert sans staff désigné. Glisse-le sur la timeline pour créer un créneau à pourvoir.';
@@ -1752,7 +1766,7 @@ function renderSidebar() {
         const jokerPayload = {
             _id: '__joker__',
             name: def.name,
-            color: '#95a5a6',
+            color: jokerGroupAccent(def.joker_group),
             isJoker: true,
             joker_group: def.joker_group,
         };
@@ -1994,7 +2008,8 @@ function buildDisplayedStaff() {
                     : ('Joker · ' + s.joker_group))
                 : (s.staff_name || 'Joker');
             seen.set(rowId, {
-                _id: rowId, name: label, color: s.color || '#95a5a6',
+                _id: rowId, name: label,
+                color: jokerGroupAccent(s.joker_group) || s.color || '#95a5a6',
                 isJoker: true, joker_group: s.joker_group || null,
             });
         } else if (!seen.has(s.staff_id)) {
@@ -2035,12 +2050,16 @@ function createStaffRow(staff) {
     const row = document.createElement('div');
     row.className      = 'staff-row' + (staff.isJoker ? ' staff-row-joker' : '');
     row.dataset.staffId = staff._id;
+    if (staff.isJoker) applyJokerGroupColor(row, staff.joker_group);
 
     const label = document.createElement('div');
     label.className = 'row-label';
+    const jokerTextColor = staff.isJoker
+        ? (window.JokerGroupColor ? JokerGroupColor.of(staff.joker_group).text : '#888')
+        : null;
     label.innerHTML = staff.isJoker
         ? `<span class="joker-dot">?</span>
-           <span style="font-style:italic;color:#888">${escapeHtml(staff.name)}</span>
+           <span style="font-style:italic;color:${escapeHtml(jokerTextColor)}">${escapeHtml(staff.name)}</span>
            <button class="row-delete" onclick="removeStaffFromDay('${escapeHtml(staff._id)}')">×</button>`
         : `<span class="row-label-dot" style="background:${escapeHtml(staff.color)}"></span>
            <span>${escapeHtml(displayName(staff._id, staff.name))}</span>
@@ -2125,15 +2144,18 @@ function createStaffRow(staff) {
 
 function createShiftEl(shift) {
     const el = document.createElement('div');
-    el.className  = 'shift' + (shift.is_joker || shift.staff_id === '__joker__' ? ' shift-joker' : '');
+    const isJokerShift = shift.is_joker || shift.staff_id === '__joker__';
+    el.className  = 'shift' + (isJokerShift ? ' shift-joker' : '');
     el.dataset.id = shift._id;
 
     const bgColor   = shift.color || '#3498db';
     const textColor = shiftTextColor(shift);
-    if (shift.is_joker || shift.staff_id === '__joker__') {
-        el.style.background = 'repeating-linear-gradient(45deg, #bdc3c7, #bdc3c7 4px, #ecf0f1 4px, #ecf0f1 10px)';
-        el.style.color      = '#555';
-        el.style.border     = '1.5px dashed #95a5a6';
+    if (isJokerShift) {
+        applyJokerGroupColor(el, shift.joker_group);
+        if (window.JokerGroupColor) {
+            el.style.background = JokerGroupColor.stripeBackground(shift.joker_group);
+            el.style.color = JokerGroupColor.of(shift.joker_group).text;
+        }
     } else {
         el.style.background = bgColor;
         el.style.color      = textColor;
@@ -2164,18 +2186,22 @@ function createShiftEl(shift) {
         ? `<button class="shift-resp-btn${shift.pointage_resp ? ' active' : ''}" title="Responsable pointage">👑</button>`
         : '';
 
-    const isJoker       = shift.is_joker || shift.staff_id === '__joker__';
+    const isJoker       = isJokerShift;
     const noteText      = isJoker && shift.note
         ? `<span class="shift-note-text">${shift.note.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>`
         : '';
     const jokerOpenBadge = isJoker && shift.joker_open
         ? `<span class="joker-open-badge">📢 Ouvert</span>`
         : '';
+    const jokerGroupChip = isJoker && shift.joker_group
+        ? `<span class="joker-group-chip">${escapeHtml(shift.joker_group)}</span>`
+        : '';
     if (isJoker && shift.note) el.classList.add('has-note');
 
     el.innerHTML = `
         <div class="resizer left"></div>
         <span class="shift-name">${escapeHtml(displayName(shift.staff_id, shift.staff_name))}</span>
+        ${jokerGroupChip}
         <span class="shift-hours">${fmt(displayStart)} – ${fmt(displayEnd)}</span>
         ${realBadge}
         ${noteText}
@@ -2187,7 +2213,8 @@ function createShiftEl(shift) {
     // Clic sur un Joker → modale patron (note + toggle + candidatures)
     if (isJoker) {
         el.style.cursor = 'pointer';
-        el.title = 'Créneau Joker (motif rayé) — créneau à pourvoir. Clic pour ouvrir aux candidatures du staff ou assigner directement.';
+        const grpHint = shift.joker_group ? (' · ' + shift.joker_group) : '';
+        el.title = 'Créneau Joker' + grpHint + ' (motif rayé) — créneau à pourvoir. Clic pour ouvrir aux candidatures du staff ou assigner directement.';
         el.addEventListener('click', e => {
             if (e.target.closest('.resizer') || e.target.closest('.shift-delete')) return;
             if (_shiftWasDragged) { _shiftWasDragged = false; return; }
@@ -3121,7 +3148,8 @@ async function openJokerModal(shift, el) {
             : '';
         box.innerHTML =
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
-                '<span style="font-size:15px;font-weight:700;color:#1a1a2e">⚡ '
+                '<span style="font-size:15px;font-weight:700;color:#1a1a2e;display:flex;align-items:center;gap:8px">' +
+                    '<span style="width:10px;height:10px;border-radius:50%;background:' + escapeHtml(jokerGroupAccent(shift.joker_group)) + ';flex-shrink:0"></span>'
                     + escapeHtml(shift.joker_group ? ('Joker · ' + shift.joker_group) : 'Créneau Joker')
                     + '</span>' +
                 '<button id="_jk-close" style="background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;line-height:1">&times;</button>' +

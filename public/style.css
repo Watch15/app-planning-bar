@@ -340,11 +340,6 @@ a:hover { color: var(--accent-soft); }
   overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
 }
 .shift.has-note { height: auto; min-height: 48px; padding: 4px 0; }
-.joker-open-badge {
-  font-size: 9px; font-weight: 700; background: #534AB7; color: white;
-  border-radius: 4px; padding: 1px 5px; pointer-events: none;
-  display: inline-block; margin-top: 2px;
-}
 .shift-joker { cursor: pointer; }
 .shift-resp-btn {
   position: absolute; top: -6px; left: -6px;
@@ -1223,22 +1218,74 @@ body.device-tablet .ms-actions button {
 
 
 
-/* ── Joker ───────────────────────────────────────────────────────────────────*/
-.staff-card-joker { border: 1.5px dashed #c8ccd6; background: var(--light-bg); cursor: grab; }
-.staff-card-joker:hover { border-color: #aaa; background: var(--light-card); }
-.joker-icon { width: 18px; height: 18px; border-radius: 50%; background: #bdc3c7; color: white; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.staff-role-badge.joker { background: var(--light-bg); color: var(--text-muted); font-style: italic; }
-.staff-row-joker .row-label { background: var(--light-bg); }
-.joker-dot { width: 18px; height: 18px; border-radius: 50%; background: #ddd; color: #aaa; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.shift-joker {
-  background: repeating-linear-gradient(45deg, rgba(0,0,0,0.06) 0 4px, transparent 4px 8px) var(--light-bg) !important;
-  border: 1.5px dashed var(--light-border) !important;
-  opacity: 0.90; cursor: crosshair; transition: border-color var(--transition), opacity var(--transition);
+/* ── Joker (couleurs par groupe via --jg / --jg-soft / --jg-text) ─────────────*/
+.staff-card-joker {
+  border: 1.5px dashed var(--jg, #c8ccd6);
+  background: var(--jg-soft, var(--light-bg));
+  cursor: grab;
 }
-.shift-joker .shift-name { font-style: italic; color: var(--text-secondary) !important; }
-.shift-joker.joker-target { border: 2px solid var(--success) !important; opacity: 1; background: repeating-linear-gradient(45deg, #d1fae5, #d1fae5 4px, #ecfdf5 4px, #ecfdf5 10px) !important; }
+.staff-card-joker:hover {
+  border-color: var(--jg, #aaa);
+  filter: brightness(0.98);
+}
+.joker-icon {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--jg, #bdc3c7); color: #fff;
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.staff-role-badge.joker {
+  background: color-mix(in srgb, var(--jg, #6C63FF) 14%, #fff);
+  color: var(--jg-text, var(--accent-soft));
+  border: 1px solid color-mix(in srgb, var(--jg, #6C63FF) 35%, transparent);
+  font-style: italic;
+}
+.staff-row-joker .row-label {
+  background: var(--jg-soft, var(--light-bg));
+  border-left: 3px solid var(--jg, transparent);
+}
+.joker-dot {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--jg, #ddd); color: #fff;
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.shift-joker {
+  background: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--jg, #95a5a6) 42%, transparent),
+    color-mix(in srgb, var(--jg, #95a5a6) 42%, transparent) 4px,
+    var(--jg-soft, #ecf0f1) 4px,
+    var(--jg-soft, #ecf0f1) 10px
+  ) !important;
+  color: var(--jg-text, #555) !important;
+  border: 1.5px dashed var(--jg, #95a5a6) !important;
+  opacity: 0.95; cursor: crosshair;
+  transition: border-color var(--transition), opacity var(--transition);
+  box-shadow: none;
+}
+.shift-joker .shift-name { font-style: italic; color: var(--jg-text, var(--text-secondary)) !important; }
+.shift-joker .joker-group-chip {
+  font-size: 9px; font-weight: 700; line-height: 1;
+  background: var(--jg, #6b7280); color: #fff;
+  border-radius: 4px; padding: 2px 5px; pointer-events: none;
+  margin-top: 1px; letter-spacing: .2px; align-self: flex-start;
+}
+.joker-open-badge {
+  font-size: 9px; font-weight: 700;
+  background: var(--jg, #534AB7); color: #fff;
+  border-radius: 4px; padding: 1px 5px; pointer-events: none;
+  display: inline-block; margin-top: 2px;
+}
+.shift-joker.joker-target {
+  border: 2px solid var(--success) !important; opacity: 1;
+  background: repeating-linear-gradient(45deg, #d1fae5, #d1fae5 4px, #ecfdf5 4px, #ecfdf5 10px) !important;
+}
 .shift-joker.joker-target .shift-name { color: var(--success-text) !important; font-style: normal !important; }
-.shift-joker.joker-target::after { content: '+ Assigner'; position: absolute; bottom: 2px; right: 6px; font-size: 9px; font-weight: 700; color: var(--success); pointer-events: none; }
+.shift-joker.joker-target::after {
+  content: '+ Assigner'; position: absolute; bottom: 2px; right: 6px;
+  font-size: 9px; font-weight: 700; color: var(--success); pointer-events: none;
+}
 
 /* ── Réaffectation : survol d'un shift assigné par une autre personne ─────────*/
 .shift.shift-reassign-target { outline: 2px solid var(--accent); outline-offset: 1px; box-shadow: 0 0 0 4px var(--accent-glow); position: relative; }
