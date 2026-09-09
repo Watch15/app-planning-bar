@@ -3450,18 +3450,54 @@ function _swapMatchSearch(t, q) {
     return name.includes(q) || nick.includes(q) || estab.includes(q);
 }
 
-function renderSwapTargets(filterQ) {
+function _swapFilterState() {
+    const q = String(document.getElementById('swap-search')?.value || '').trim().toLowerCase();
+    const date = String(document.getElementById('swap-date')?.value || '').trim();
+    return { q, date };
+}
+
+function _rerenderSwapTargets() {
+    const { q, date } = _swapFilterState();
+    renderSwapTargets(q, date);
+}
+
+/** Remplit le sélecteur avec les dates réellement échangeables (= semaines publiées). */
+function _fillSwapDateOptions(preserve) {
+    const dateSel = document.getElementById('swap-date');
+    if (!dateSel) return;
+    const prev = preserve ? dateSel.value : '';
+    const dates = [...new Set(_swapEligible.map(t => t.date).filter(Boolean))].sort();
+    dateSel.innerHTML = '<option value="">Toutes les dates</option>'
+        + dates.map(d => '<option value="' + d + '">' + _fmtSwapDate(d) + '</option>').join('');
+    dateSel.value = (prev && dates.includes(prev)) ? prev : '';
+    dateSel.disabled = dates.length === 0;
+}
+
+function renderSwapTargets(filterQ, filterDate) {
     const targets = document.getElementById('swap-targets');
     if (!targets) return;
     const q = String(filterQ || '').trim().toLowerCase();
-    const list = _swapEligible.filter(t => _swapMatchSearch(t, q));
+    const date = String(filterDate != null ? filterDate : (document.getElementById('swap-date')?.value || '')).trim();
+    const list = _swapEligible.filter(t => {
+        if (date && t.date !== date) return false;
+        return _swapMatchSearch(t, q);
+    });
+    // Si la cible choisie sort du filtre, on la désélectionne
+    if (_swapTarget && !list.some(t => String(t._id) === String(_swapTarget._id))) {
+        _swapTarget = null;
+        const b = document.getElementById('swap-submit');
+        if (b) { b.disabled = true; b.style.opacity = '0.5'; }
+    }
     if (!_swapEligible.length) {
-        targets.innerHTML = '<div style="padding:24px;text-align:center;color:#aaa;font-size:13px">Aucun shift collègue échangeable dans les 4 prochaines semaines</div>';
+        targets.innerHTML = '<div style="padding:24px;text-align:center;color:#aaa;font-size:13px">Aucun shift collègue échangeable sur les semaines publiées (horizon 4 semaines)</div>';
         return;
     }
     if (!list.length) {
-        targets.innerHTML = '<div style="padding:24px;text-align:center;color:#aaa;font-size:13px">Aucun résultat pour « '
-            + String(filterQ || '').replace(/</g, '&lt;') + ' »</div>';
+        let msg = 'Aucun résultat';
+        if (date && q) msg = 'Aucun résultat pour « ' + String(filterQ || '').replace(/</g, '&lt;') + ' » le ' + _fmtSwapDate(date);
+        else if (date) msg = 'Aucun shift collègue le ' + _fmtSwapDate(date);
+        else if (q) msg = 'Aucun résultat pour « ' + String(filterQ || '').replace(/</g, '&lt;') + ' »';
+        targets.innerHTML = '<div style="padding:24px;text-align:center;color:#aaa;font-size:13px">' + msg + '</div>';
         return;
     }
     const multiEstab = new Set(_swapEligible.map(t => t.establishment_id)).size > 1;
@@ -3488,7 +3524,7 @@ function renderSwapTargets(filterQ) {
             '</div>';
         item.addEventListener('click', () => {
             _swapTarget = t;
-            renderSwapTargets(document.getElementById('swap-search')?.value || '');
+            _rerenderSwapTargets();
             const b = document.getElementById('swap-submit');
             if (b) { b.disabled = false; b.style.opacity = '1'; }
         });
@@ -3515,13 +3551,23 @@ async function openSwapModal(shift) {
         search.value = '';
         if (!search._bound) {
             search._bound = true;
-            search.addEventListener('input', () => renderSwapTargets(search.value));
+            search.addEventListener('input', _rerenderSwapTargets);
+        }
+    }
+    const dateSel = document.getElementById('swap-date');
+    if (dateSel) {
+        dateSel.innerHTML = '<option value="">Toutes les dates</option>';
+        dateSel.value = '';
+        dateSel.disabled = true;
+        if (!dateSel._bound) {
+            dateSel._bound = true;
+            dateSel.addEventListener('change', _rerenderSwapTargets);
         }
     }
     const btn = document.getElementById('swap-submit');
     btn.disabled = true; btn.style.opacity = '0.5';
 
-    // Charger les shifts échangeables (4 semaines glissantes depuis aujourd'hui)
+    // Horizon 4 semaines ; le serveur ne renvoie que les shifts des semaines publiées.
     const targets = document.getElementById('swap-targets');
     targets.innerHTML = '<div style="padding:24px;text-align:center;color:#aaa;font-size:13px">Chargement…</div>';
     try {
@@ -3537,7 +3583,8 @@ async function openSwapModal(shift) {
         if (!res.ok) throw new Error(list.error || 'Erreur');
         // Exclure le shift source
         _swapEligible = list.filter(s => s._id !== shift._id);
-        renderSwapTargets('');
+        _fillSwapDateOptions(false);
+        _rerenderSwapTargets();
     } catch (e) {
         targets.innerHTML = '<div style="padding:16px;text-align:center;color:#e74c3c;font-size:13px">' + (e.message || 'Erreur') + '</div>';
     }
@@ -3549,6 +3596,14 @@ function closeSwapModal() {
     _swapSource = null;
     _swapTarget = null;
     _swapEligible = [];
+    const search = document.getElementById('swap-search');
+    if (search) search.value = '';
+    const dateSel = document.getElementById('swap-date');
+    if (dateSel) {
+        dateSel.innerHTML = '<option value="">Toutes les dates</option>';
+        dateSel.value = '';
+        dateSel.disabled = true;
+    }
 }
 
 async function submitSwap() {
