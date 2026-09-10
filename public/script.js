@@ -32,6 +32,7 @@ function applyVenueHours(venueId) {
         CLOSE_TIME = close;              // heure exacte de fermeture (clamp placement)
     }
     TOTAL_HOURS = END_HOUR - START_HOUR;
+    syncJokerGroupColors(venueId);
 }
 
 /** Couleurs Joker par groupe (module /lib/joker-group-color.js). */
@@ -45,6 +46,11 @@ function applyJokerGroupColor(el, group) {
     el.style.setProperty('--jg', c.bg);
     el.style.setProperty('--jg-soft', c.soft);
     el.style.setProperty('--jg-text', c.text);
+}
+function syncJokerGroupColors(venueId) {
+    if (!window.JokerGroupColor || !JokerGroupColor.setCustoms) return;
+    const venue = allEstablishments.find(e => e.id === venueId || String(e._id) === venueId);
+    JokerGroupColor.setCustoms(venue && venue.joker_colors);
 }
 
 const DAY_NAMES_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
@@ -1764,29 +1770,51 @@ function renderSidebar() {
         jokerCard.title = def.joker_group
             ? ('Joker « ' + def.joker_group + ' » : créneau à pourvoir pour ce groupe. Glisse-le sur la timeline.')
             : 'Joker : créneau ouvert sans staff désigné. Glisse-le sur la timeline pour créer un créneau à pourvoir.';
+        const jokerAccent = jokerGroupAccent(def.joker_group);
         jokerCard.innerHTML =
             '<span class="joker-icon">?</span>' +
             '<span class="staff-card-body">' +
-                '<span class="staff-info-name">' + escapeHtml(def.name) + '</span>' +
+                '<span class="staff-info-name">Joker</span>' +
                 '<span class="staff-card-meta"><span class="staff-role-badge joker">'
                     + (def.joker_group ? escapeHtml(def.joker_group) : 'Créneau ouvert')
                     + '</span></span>' +
-            '</span>';
+            '</span>' +
+            '<div class="color-controls">' +
+                '<input type="color" class="color-picker" value="' + jokerAccent + '" title="Couleur du Joker">' +
+                '<button class="btn-auto-color">Auto</button>' +
+            '</div>';
 
         const jokerPayload = {
             _id: '__joker__',
             name: def.name,
-            color: jokerGroupAccent(def.joker_group),
+            color: jokerAccent,
             isJoker: true,
             joker_group: def.joker_group,
         };
-        jokerCard.addEventListener('dragstart', e => onSidebarDragStart(e, jokerPayload, jokerCard));
+        jokerCard.addEventListener('dragstart', e => {
+            if (e.target.closest('.color-controls')) { e.preventDefault(); return; }
+            onSidebarDragStart(e, jokerPayload, jokerCard);
+        });
         jokerCard.addEventListener('dragend', () => onSidebarDragEnd(jokerCard));
         jokerCard.addEventListener('touchend', e => {
+            if (e.target.closest('.color-controls')) return;
             e.preventDefault();
             if (!isTouchDevice()) return;
             tapSelectStaff(jokerPayload, jokerCard);
         }, { passive: false });
+
+        const jokerPicker = jokerCard.querySelector('.color-picker');
+        jokerPicker.addEventListener('change', async e => {
+            e.stopPropagation();
+            await updateJokerGroupColor(def.joker_group, e.target.value);
+        });
+        jokerPicker.addEventListener('mousedown', e => e.stopPropagation());
+        const jokerAuto = jokerCard.querySelector('.btn-auto-color');
+        jokerAuto.addEventListener('click', async e => {
+            e.stopPropagation();
+            await updateJokerGroupColor(def.joker_group, null);
+        });
+        jokerAuto.addEventListener('mousedown', e => e.stopPropagation());
         list.appendChild(jokerCard);
     });
 }
@@ -2069,10 +2097,10 @@ function createStaffRow(staff) {
         : null;
     label.innerHTML = staff.isJoker
         ? `<span class="joker-dot">?</span>
-           <span style="font-style:italic;color:${escapeHtml(jokerTextColor)}">${escapeHtml(staff.name)}</span>
+           <span class="row-label-name" style="font-style:italic;color:${escapeHtml(jokerTextColor)}">${escapeHtml(staff.joker_group || 'Joker')}</span>
            <button class="row-delete" onclick="removeStaffFromDay('${escapeHtml(staff._id)}')">×</button>`
         : `<span class="row-label-dot" style="background:${escapeHtml(staff.color)}"></span>
-           <span>${escapeHtml(displayName(staff._id, staff.name))}</span>
+           <span class="row-label-name">${escapeHtml(displayName(staff._id, staff.name))}</span>
            <button class="row-delete" onclick="removeStaffFromDay('${escapeHtml(staff._id)}')">×</button>`;
 
     const rail = document.createElement('div');
@@ -2201,17 +2229,16 @@ function createShiftEl(shift) {
         ? `<span class="shift-note-text">${shift.note.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>`
         : '';
     const jokerOpenBadge = isJoker && shift.joker_open
-        ? `<span class="joker-open-badge">📢 Ouvert</span>`
+        ? `<span class="joker-open-badge">Ouvert</span>`
         : '';
-    const jokerGroupChip = isJoker && shift.joker_group
-        ? `<span class="joker-group-chip">${escapeHtml(shift.joker_group)}</span>`
-        : '';
+    const shiftLabel = isJoker
+        ? escapeHtml(shift.joker_group || 'Joker')
+        : escapeHtml(displayName(shift.staff_id, shift.staff_name));
     if (isJoker && shift.note) el.classList.add('has-note');
 
     el.innerHTML = `
         <div class="resizer left"></div>
-        <span class="shift-name">${escapeHtml(displayName(shift.staff_id, shift.staff_name))}</span>
-        ${jokerGroupChip}
+        <span class="shift-name">${shiftLabel}</span>
         <span class="shift-hours">${fmt(displayStart)} – ${fmt(displayEnd)}</span>
         ${realBadge}
         ${noteText}
@@ -3239,7 +3266,7 @@ async function openJokerModal(shift, el) {
                     if (open && !badge) {
                         const b = document.createElement('span');
                         b.className = 'joker-open-badge';
-                        b.textContent = '📢 Ouvert';
+                        b.textContent = 'Ouvert';
                         shiftEl2.querySelector('.shift-hours').after(b);
                     } else if (!open && badge) { badge.remove(); }
                 }
@@ -9103,6 +9130,29 @@ async function updateStaffColor(staff, newColor, card) {
         });
         showToast(`Couleur de ${staff.name} mise à jour`);
     } catch { showToast('Erreur sauvegarde couleur', true); }
+}
+
+async function updateJokerGroupColor(group, newColor) {
+    if (!currentVenueId) return;
+    try {
+        const res = await fetch('/api/establishments/joker-color', {
+            method: 'PATCH', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                establishment_id: currentVenueId,
+                group: group || null,
+                color: newColor,
+            }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        const venue = allEstablishments.find(e => e.id === currentVenueId || String(e._id) === currentVenueId);
+        if (venue) venue.joker_colors = data.joker_colors || {};
+        syncJokerGroupColors(currentVenueId);
+        renderSidebar();
+        renderBody();
+        showToast(newColor ? 'Couleur du Joker mise à jour' : 'Couleur du Joker réinitialisée');
+    } catch (err) { showToast(err.message || 'Erreur sauvegarde couleur', true); }
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────

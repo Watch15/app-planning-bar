@@ -2253,6 +2253,45 @@ app.post('/api/establishments', checkDB, requireAdmin, async (req, res) => {
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
+// Couleur d'un Joker (par groupe, pour cet établissement). `color: null` = palette auto.
+// AVANT `/:id` : sinon Express capturerait « joker-color » comme un ObjectId.
+app.patch('/api/establishments/joker-color',
+    checkDB, requirePatron, denyObservateurEdit,
+    requireEstablishmentAccess(r => r.body && r.body.establishment_id),
+    async (req, res) => {
+        try {
+            const establishment_id = req.body && req.body.establishment_id;
+            const color = req.body && req.body.color;
+            let group = req.body && req.body.group;
+            if (group == null || String(group).trim() === '') group = '_';
+            else group = String(group);
+            const HEX = /^#[0-9A-Fa-f]{6}$/;
+            if (color != null && color !== '' && !HEX.test(color)) {
+                return res.status(400).json({ error: 'color (#rrggbb) invalide' });
+            }
+            const estab = await db.collection('establishments').findOne({ id: establishment_id });
+            if (!estab) return res.status(404).json({ error: 'Établissement introuvable' });
+            if (group !== '_') {
+                const allowed = Array.isArray(estab.groups) ? estab.groups : [];
+                if (!allowed.includes(group)) {
+                    return res.status(400).json({ error: 'groupe invalide pour cet établissement' });
+                }
+            }
+            const colors = Object.assign({}, estab.joker_colors || {});
+            if (color) colors[group] = color;
+            else delete colors[group];
+            await db.collection('establishments').updateOne(
+                { id: establishment_id },
+                { $set: { joker_colors: colors } }
+            );
+            res.json({ message: 'Couleur Joker mise à jour', joker_colors: colors });
+        } catch (e) {
+            console.error('[PATCH /api/establishments/joker-color]', e);
+            res.status(500).json({ error: 'Erreur interne' });
+        }
+    }
+);
+
 app.patch('/api/establishments/:id', checkDB, requireAdmin, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const { name, type, open_time, close_time, groups } = req.body;

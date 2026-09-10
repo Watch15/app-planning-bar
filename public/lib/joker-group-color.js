@@ -1,6 +1,7 @@
 'use strict';
-// Couleurs stables par nom de groupe Joker (planning + staff open-jokers).
-// Hash déterministe → même groupe = même teinte partout, sans stocker en base.
+// Couleurs par nom de groupe Joker (planning + staff open-jokers).
+// Défaut : hash déterministe (même groupe = même teinte, sans stocker).
+// Override : `setCustoms({ Bar: '#rrggbb', _: '#…' })` depuis `establishments.joker_colors`.
 
 (function (root) {
     const PALETTE = [
@@ -22,6 +23,14 @@
     };
 
     const FALLBACK = { key: 'neutral', bg: '#6b7280', soft: '#f3f4f6', stripe: '#d1d5db', text: '#374151' };
+    const HEX = /^#([0-9A-Fa-f]{6})$/;
+
+    let _customs = {};
+
+    function groupKey(group) {
+        if (group == null || String(group).trim() === '' || group === '_') return '_';
+        return String(group);
+    }
 
     function hash(str) {
         let h = 2166136261;
@@ -32,7 +41,36 @@
         return h >>> 0;
     }
 
-    function of(group) {
+    function mix(hex, tTowardWhite) {
+        const m = HEX.exec(hex);
+        if (!m) return hex;
+        const n = parseInt(m[1], 16);
+        const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+        const mix1 = c => Math.round(c + (255 - c) * tTowardWhite);
+        const to = v => v.toString(16).padStart(2, '0');
+        return '#' + to(mix1(r)) + to(mix1(g)) + to(mix1(b));
+    }
+
+    function darken(hex, factor) {
+        const m = HEX.exec(hex);
+        if (!m) return '#374151';
+        const n = parseInt(m[1], 16);
+        const to = v => Math.round(v * factor).toString(16).padStart(2, '0');
+        return '#' + to((n >> 16) & 255) + to((n >> 8) & 255) + to(n & 255);
+    }
+
+    function fromHex(bg) {
+        if (!HEX.test(bg || '')) return Object.assign({}, FALLBACK);
+        return {
+            key: 'custom',
+            bg: bg,
+            soft: mix(bg, 0.88),
+            stripe: mix(bg, 0.38),
+            text: darken(bg, 0.38),
+        };
+    }
+
+    function hashedOf(group) {
         if (group == null || String(group).trim() === '' || group === '_') {
             return Object.assign({}, FALLBACK);
         }
@@ -41,10 +79,32 @@
         return Object.assign({}, PALETTE[hash(name) % PALETTE.length]);
     }
 
+    function of(group) {
+        const key = groupKey(group);
+        if (_customs[key]) return fromHex(_customs[key]);
+        return hashedOf(group);
+    }
+
     function stripeBackground(group) {
         const c = of(group);
         return 'repeating-linear-gradient(45deg, ' + c.bg + '55, ' + c.bg + '55 4px, ' + c.soft + ' 4px, ' + c.soft + ' 10px)';
     }
 
-    root.JokerGroupColor = { of, stripeBackground, PALETTE, FALLBACK };
+    function setCustoms(map) {
+        _customs = {};
+        if (!map || typeof map !== 'object') return;
+        for (const [k, v] of Object.entries(map)) {
+            if (HEX.test(v)) _customs[k === '' ? '_' : k] = v;
+        }
+    }
+
+    function customs() {
+        return Object.assign({}, _customs);
+    }
+
+    root.JokerGroupColor = {
+        of, stripeBackground, setCustoms, customs, fromHex, groupKey,
+        PALETTE, FALLBACK, HEX: HEX.source,
+    };
+    if (typeof module === 'object' && module.exports) module.exports = root.JokerGroupColor;
 })(typeof window !== 'undefined' ? window : globalThis);
