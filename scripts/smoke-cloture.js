@@ -224,6 +224,8 @@ async function main() {
 
     // ── 6. Réutilisation du code de début → refus ────────────────────────────
     await check('réutilisation du code début → déjà utilisé / invalide', async () => {
+        // Ne pas chevaucher le seed « semaine courante » : le jeudi Bruno est déjà
+        // sur Poni 12–20 → un 10–13 à Josy tombe en 409 « Double shift ».
         const create = await req('pat', '/api/shifts', {
             method: 'POST',
             body: {
@@ -231,12 +233,13 @@ async function main() {
                 staff_id: (await req('bru', '/auth/me')).data.user.staff_id,
                 staff_name: 'Bruno',
                 date: todayStr(),
-                start_time: 10,
-                end_time: 13,
+                start_time: 8,
+                end_time: 11,
                 color: '#9b59b6',
             },
         });
-        ok(create.status === 201 || create.status === 200, 'création shift Bruno');
+        ok(create.status === 201 || create.status === 200,
+            'création shift Bruno · status=' + create.status + ' ' + JSON.stringify(create.data));
         const sid2 = String(create.data._id);
         const r = await req('bru', '/api/shifts/' + sid2 + '/cloturer-par-code', {
             method: 'POST', body: { code, phase: 'debut' },
