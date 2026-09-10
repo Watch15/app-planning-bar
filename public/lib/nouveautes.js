@@ -64,6 +64,53 @@
 
     const NOUVEAUTES = [
         {
+            id: 'perf-simulation', date: '2026-09-11',
+            roles: ['patron', 'directeur', 'observateur'],
+            titre: 'Estimer un jour ou une semaine sans toucher au CA réel',
+            quoi: "L'onglet Simulation de Performance calcule à la volée : vous saisissez un "
+                + "CA hypothétique seulement sur les jours sans CA enregistré. Les services "
+                + "déjà pointés restent en réel ; le reste (dont les Jokers) est estimé. "
+                + "Vous choisissez comment valoriser les Jokers — taux, forfait, moyenne ou "
+                + "médiane des taux du staff — par groupe.",
+            ou: 'Performance → onglet « Simulation »'
+        },
+        {
+            id: 'jokers-par-groupe', date: '2026-09-11',
+            roles: ['patron', 'directeur'],
+            titre: 'Un Joker par groupe, chacun avec sa couleur',
+            quoi: "Sur le planning, vous posez un créneau Joker pour Bar, Cuisine, Salle… "
+                + "Chaque groupe a sa teinte : on voit tout de suite quel poste reste à "
+                + "pourvoir. La Simulation valorise aussi ces Jokers groupe par groupe.",
+            ou: 'Planning → cartes Joker sous la liste staff ; Performance → Simulation'
+        },
+        {
+            id: 'jokers-par-groupe-staff', date: '2026-09-11',
+            roles: ['staff'],
+            titre: 'Les créneaux ouverts portent leur groupe',
+            quoi: "Quand un créneau à pourvoir vous est proposé, le groupe (Bar, Cuisine…) "
+                + "est indiqué et la couleur aide à le repérer. Vous candidaturez comme "
+                + "avant avec « Je suis dispo ».",
+            ou: 'Planning → carte « Créneaux disponibles »'
+        },
+        {
+            id: 'observateur-hors-dispos-echanges', date: '2026-09-11',
+            roles: ['observateur'],
+            titre: 'Plus de Dispos ni d\'Échanges à valider',
+            quoi: "Votre compte ne voit plus les boutons Dispos et Échanges. Vous gardez "
+                + "les actions utiles sur la clôture du jour (ajustements, récap, CA) — "
+                + "sauf le code à 4 chiffres, qui reste réservé au patron et au directeur.",
+            ou: 'Bandeau du haut / menu — les entrées Dispos et Échanges n\'apparaissent plus'
+        },
+        {
+            id: 'echange-filtre-date', date: '2026-09-11',
+            roles: ['staff'],
+            titre: 'Filtrer les échanges par date',
+            quoi: "Quand vous proposez un échange, un menu de dates liste seulement les "
+                + "jours où un collègue a un créneau échangeable (semaines déjà publiées). "
+                + "Combinez-le avec la recherche par nom ou établissement.",
+            ou: 'Planning → journée → « Proposer un échange » → menu de dates à côté de la recherche'
+        },
+        {
             id: 'echange-shifts-staff', date: '2026-09-04',
             roles: ['staff'],
             titre: 'Échanger un service avec un collègue',

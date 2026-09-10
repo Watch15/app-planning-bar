@@ -22,6 +22,12 @@ const {
     dispoMateriallyDiffers, staffReopenedFor, dispoEventDelta,
     deriveStaffHourlyStat, buildPerformanceSimulation, jokerGroupKey, isJokerShift, isShiftCompleted,
 } = require('./lib/utils');
+const {
+    resolveAll: resolveClientFeatures,
+    enabled: clientFeatureEnabled,
+    requireFeature,
+    normalizeProfile: normalizeClientProfile,
+} = require('./lib/client-features');
 
 // Sentry — initialisation conditionnelle (ne se charge que si SENTRY_DSN fourni).
 // Doit être importé AVANT de créer l'app Express pour que l'auto-instrumentation
@@ -131,6 +137,23 @@ const OUTBOUND_ENABLED = process.env.OUTBOUND_ENABLED !== 'false';
 // — deux déploiements (ou deux replicas Railway du même service) = deux crons sur les
 // mêmes données, donc rappels en double. Règle : une seule instance par base l'active.
 const CRON_ENABLED = process.env.CRON_ENABLED !== 'false';
+
+// Profil + flags : catalogue dans `lib/client-features.js` (source unique).
+const CLIENT_PROFILE = normalizeClientProfile(process.env.CLIENT_PROFILE);
+function clientFeatureFlags() {
+    return resolveClientFeatures({ profile: CLIENT_PROFILE });
+}
+// Accessible aux routes futures : requireFeature('weekly_staff_validation'), …
+app.locals.clientFeatures = {
+    profile: CLIENT_PROFILE,
+    enabled: clientFeatureEnabled,
+    requireFeature,
+    snapshot: clientFeatureFlags,
+};
+if (CLIENT_PROFILE !== 'default') {
+    logInfo('🏷️  CLIENT_PROFILE=' + CLIENT_PROFILE + ' · flags '
+        + JSON.stringify(clientFeatureFlags().features));
+}
 
 // Sécurité : en prod, un SESSION_SECRET explicite est obligatoire.
 // Sans ça, le fallback est connu et les sessions deviennent forgeables.
@@ -1415,7 +1438,7 @@ app.post('/auth/login', checkDB, async (req, res) => {
             assigned_establishments: merged.assigned_establishments || [],
             establishment_id:        merged.establishment_id || null,
         };
-        res.json({ message: 'Connecté', user: req.session.user });
+        res.json({ message: 'Connecté', user: req.session.user, client: clientFeatureFlags() });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
@@ -1430,7 +1453,12 @@ app.post('/auth/logout', (req, res) => {
 // Envoyer un OTP par SMS (pour connexion ou récupération de compte)
 app.get('/auth/me', (req, res) => {
     if (!req.session?.user) return res.status(401).json({ error: 'Non authentifié' });
-    res.json({ user: req.session.user });
+    res.json({ user: req.session.user, client: clientFeatureFlags() });
+});
+
+// Snapshot flags (auth) — utile pour le front sans recharger le user
+app.get('/api/client-features', checkDB, requireAuth, (req, res) => {
+    res.json(clientFeatureFlags());
 });
 
 // Activation compte via token invitation
@@ -6400,7 +6428,9 @@ app.get('/api/performance', checkDB, requirePatron,
                 }
                 wage_bill_gross += wage;
                 staff_detail.push({
+                    staff_id:     s.staff_id ? String(s.staff_id) : null,
                     staff_name:   s.staff_name || (staffDoc && staffDoc.name) || 'Inconnu',
+                    groups:       Array.isArray(staffDoc && staffDoc.groups) ? staffDoc.groups : [],
                     hours_worked: Math.round(hours * 100) / 100,
                     hourly_rate:  is_fixed ? null : rate,
                     fixed_rate:   is_fixed ? rate : null,

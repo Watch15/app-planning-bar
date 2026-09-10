@@ -167,6 +167,10 @@ async function checkAuth() {
         const res  = await fetch('/auth/me', { credentials: 'include' });
         if (!res.ok) { window.location.href = '/login.html'; return null; }
         const data = await res.json();
+        if (window.ClientFeatures) {
+            ClientFeatures.fromAuthPayload(data);
+            ClientFeatures.applyDom();
+        }
         if (!['etablissement', 'patron', 'directeur', 'staff', 'observateur'].includes(data.user?.role)) {
             window.location.href = '/login.html'; return null;
         }

@@ -59,10 +59,13 @@ let simScope      = 'week'; // 'week' | 'day'
 let simHypoByDate = {}; // saisies CA hypo éphémères
 let simLastResult = null;
 let allGroups     = [];
+let currentGroup  = ''; // '' = tous
 let simRealByDate = {}; // cache CA réels de la période affichée
 let simJokerGroups = []; // clés '_' | 'Bar' | …
 let simManualByGroup = {}; // { Bar: 14, _: 13 }
 let simEstabScope = 'current'; // 'current' | 'all' | 'custom'
+let rawPerfData   = []; // avant filtre groupe (Réel)
+let rawCalendarData = [];
 
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -74,6 +77,10 @@ async function checkAuth() {
         const data = await res.json();
         if (!['patron', 'directeur', 'observateur'].includes(data.user?.role)) {
             window.location.href = '/'; return null;
+        }
+        if (window.ClientFeatures) {
+            ClientFeatures.fromAuthPayload(data);
+            ClientFeatures.applyDom();
         }
         return data.user;
     } catch { window.location.href = '/login.html'; return null; }
@@ -107,8 +114,14 @@ async function init() {
         return;
     }
 
-    // Sélecteur établissement
+    // Sélecteur établissement (+ « Toutes les affaires » si multi)
     const sel = document.getElementById('estab-select');
+    if (allEstabs.length > 1) {
+        const allOpt = document.createElement('option');
+        allOpt.value = '__all__';
+        allOpt.textContent = 'Toutes les affaires';
+        sel.appendChild(allOpt);
+    }
     allEstabs.forEach(e => {
         const opt = document.createElement('option');
         opt.value = e.id; opt.textContent = e.name;
@@ -117,23 +130,35 @@ async function init() {
     if (allEstabs.length === 1) document.getElementById('estab-filter-group').style.display = 'none';
     currentEstab = allEstabs[0].id;
     sel.value = currentEstab;
-    await loadTargets(); // paramètres de l'établissement courant
-    // R-10 — `await` indispensable : `targets` est module-level et sert à colorer les
-    // pastilles (ok/bad). Sans lui, `loadData()` partait en parallèle et rendait le premier
-    // affichage du nouveau bar contre l'objectif du PRÉCÉDENT — des couleurs fausses
-    // présentées comme justes, ce qui vide E-24 de son sens.
+    await loadTargets();
     sel.addEventListener('change', async () => {
         currentEstab = sel.value;
-        await loadTargets();
+        _syncPerfUiForEstabScope();
+        if (!isAllEstabs()) await loadTargets();
         if (activePerfTab === 'real') {
             loadData();
             loadCalendarWeek();
-        } else {
+        } else if (!isAllEstabs()) {
             await prepareSimPeriod();
         }
         fillSimSourceEstabs();
     });
-
+    _syncPerfUiForEstabScope();
+    fillGroupSelect();
+    const groupSel = document.getElementById('group-select');
+    if (groupSel) {
+        groupSel.addEventListener('change', () => {
+            currentGroup = groupSel.value || '';
+            if (activePerfTab === 'real') {
+                currentData = applyGroupFilter(rawPerfData);
+                renderKpis(currentData);
+                renderTable(currentData);
+                if (rawCalendarData.length) renderCalendarGrid(applyGroupFilter(rawCalendarData));
+            } else {
+                prepareSimPeriod();
+            }
+        });
+    }
     // Sélecteur période (onglet Réel uniquement)
     document.getElementById('period-select').addEventListener('change', loadData);
 
@@ -207,8 +232,6 @@ async function loadCalendarWeek(opts) {
 
     const monday = new Date(calendarWeekStart);
     const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
-    const from = toDateStr(monday);
-    const to   = toDateStr(sunday);
 
     const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
     const label  = (monday.getMonth() === sunday.getMonth())
@@ -217,12 +240,11 @@ async function loadCalendarWeek(opts) {
     document.getElementById('cal-label').textContent = label;
 
     try {
-        const params = new URLSearchParams({ establishment_id: currentEstab, from, to });
-        const res = await fetch('/api/performance?' + params.toString(), { credentials: 'include' });
-        const data = res.ok ? await res.json() : [];
-        renderCalendarGrid(data);
+        const data = await fetchPerformance(toDateStr(monday), toDateStr(sunday));
+        rawCalendarData = data;
+        renderCalendarGrid(applyGroupFilter(data));
     } catch {
-        if (!silent) renderCalendarGrid([]);
+        if (!silent) { rawCalendarData = []; renderCalendarGrid([]); }
     } finally {
         if (silent && grid) grid.classList.remove('is-updating');
     }
@@ -285,6 +307,10 @@ function renderCalendarGrid(data) {
 // ── Modale CA ─────────────────────────────────────────────────────────────────
 
 function openCAModal(dateStr, existingRevenue) {
+    if (isAllEstabs()) {
+        alert('Pour saisir ou corriger un CA, choisissez d’abord un établissement (pas « Toutes les affaires »).');
+        return;
+    }
     document.getElementById('ca-date').value = dateStr;
     const input = document.getElementById('ca-input');
     const hint  = document.getElementById('ca-hint');
@@ -333,6 +359,136 @@ async function saveCAFromModal() {
 
 // ── Chargement données ──────────────────────────────────────────────────────────
 
+function isAllEstabs() {
+    return currentEstab === '__all__';
+}
+
+function estabIdsForQuery() {
+    if (!isAllEstabs()) return currentEstab ? [currentEstab] : [];
+    return allEstabs.map(e => e.id);
+}
+
+/** Agrège plusieurs réponses /api/performance (une par établissement) par date. */
+function mergePerfByDate(lists) {
+    const byDate = {};
+    lists.flat().forEach(r => {
+        if (!r || !r.date) return;
+        if (!byDate[r.date]) {
+            byDate[r.date] = {
+                date: r.date,
+                revenue: 0,
+                wage_bill_gross: 0,
+                wage_bill_charged: 0,
+                staff_detail: [],
+            };
+        }
+        const m = byDate[r.date];
+        m.revenue += r.revenue || 0;
+        m.wage_bill_gross += r.wage_bill_gross || 0;
+        m.wage_bill_charged += r.wage_bill_charged || 0;
+        (r.staff_detail || []).forEach(s => m.staff_detail.push(s));
+    });
+    return Object.values(byDate).map(m => {
+        const coeff_gross = m.revenue > 0 ? (m.wage_bill_gross / m.revenue) * 100 : 0;
+        const coeff_charged = m.revenue > 0 ? (m.wage_bill_charged / m.revenue) * 100 : 0;
+        return {
+            date: m.date,
+            revenue: Math.round(m.revenue * 100) / 100,
+            wage_bill_gross: Math.round(m.wage_bill_gross * 100) / 100,
+            wage_bill_charged: Math.round(m.wage_bill_charged * 100) / 100,
+            coeff_gross: Math.round(coeff_gross * 10) / 10,
+            coeff_charged: Math.round(coeff_charged * 10) / 10,
+            staff_detail: m.staff_detail,
+        };
+    }).sort((a, b) => (a.date < b.date ? 1 : -1));
+}
+
+async function fetchPerformance(from, to) {
+    const ids = estabIdsForQuery();
+    if (!ids.length) return [];
+    const lists = await Promise.all(ids.map(async id => {
+        const params = new URLSearchParams({ establishment_id: id });
+        if (from) params.set('from', from);
+        if (to) params.set('to', to);
+        const res = await fetch('/api/performance?' + params.toString(), { credentials: 'include' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        return Array.isArray(data) ? data : [];
+    }));
+    return ids.length === 1 ? lists[0] : mergePerfByDate(lists);
+}
+
+function _syncPerfUiForEstabScope() {
+    const all = isAllEstabs();
+    const tabSim = document.getElementById('tab-sim');
+    const targetsForm = document.querySelector('.targets-form');
+    if (tabSim) {
+        tabSim.disabled = all;
+        tabSim.title = all
+            ? 'Choisissez un établissement pour utiliser la Simulation'
+            : '';
+        tabSim.style.opacity = all ? '0.45' : '';
+        tabSim.style.cursor = all ? 'not-allowed' : '';
+    }
+    if (targetsForm) {
+        targetsForm.style.opacity = all ? '0.5' : '';
+        targetsForm.querySelectorAll('input, button').forEach(el => {
+            el.disabled = all;
+        });
+    }
+    if (all && activePerfTab === 'sim') {
+        switchPerfTab('real');
+    }
+}
+
+function staffMatchesGroup(s) {
+    if (!currentGroup) return true;
+    const g = s.groups || [];
+    if (g.length === 0) return true; // polyvalent
+    return g.includes(currentGroup);
+}
+
+/** Recalcule masses / coeffs après filtre groupe (CA jour inchangé = périmètre établissement). */
+function applyGroupFilter(rows) {
+    if (!currentGroup) return rows;
+    return rows.map(r => {
+        const staff_detail = (r.staff_detail || []).filter(staffMatchesGroup);
+        const wage_bill_gross = staff_detail.reduce((a, s) => a + (s.wage_gross || 0), 0);
+        const wage_bill_charged = staff_detail.reduce((a, s) => a + (s.wage_charged || 0), 0);
+        const revenue = r.revenue || 0;
+        return {
+            ...r,
+            staff_detail,
+            wage_bill_gross: Math.round(wage_bill_gross * 100) / 100,
+            wage_bill_charged: Math.round(wage_bill_charged * 100) / 100,
+            coeff_gross: revenue > 0 ? Math.round((wage_bill_gross / revenue) * 1000) / 10 : 0,
+            coeff_charged: revenue > 0 ? Math.round((wage_bill_charged / revenue) * 1000) / 10 : 0,
+        };
+    });
+}
+
+function fillGroupSelect() {
+    const wrap = document.getElementById('group-filter-group');
+    const sel = document.getElementById('group-select');
+    if (!wrap || !sel) return;
+    const set = new Set();
+    allEstabs.forEach(e => {
+        (e.groups || []).forEach(g => set.add(g));
+    });
+    allGroups = [...set].sort((a, b) => a.localeCompare(b, 'fr'));
+    if (allGroups.length === 0) {
+        wrap.style.display = 'none';
+        currentGroup = '';
+        return;
+    }
+    wrap.style.display = '';
+    const prev = currentGroup;
+    sel.innerHTML = '<option value="">Tous les groupes</option>'
+        + allGroups.map(g => '<option value="' + escapeHtml(g) + '">' + escapeHtml(g) + '</option>').join('');
+    currentGroup = allGroups.includes(prev) ? prev : '';
+    sel.value = currentGroup;
+}
+
 function _periodRange() {
     const period = document.getElementById('period-select').value;
     const ref = calendarWeekStart ? new Date(calendarWeekStart) : new Date();
@@ -372,19 +528,16 @@ async function loadData(opts) {
     }
 
     const { from, to } = _periodRange();
-    const params = new URLSearchParams({ establishment_id: currentEstab });
-    if (from) params.set('from', from);
-    if (to)   params.set('to', to);
 
     try {
-        const res = await fetch('/api/performance?' + params.toString(), { credentials: 'include' });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-        currentData = data;
-        renderKpis(data);
-        renderTable(data);
+        const data = await fetchPerformance(from, to);
+        rawPerfData = data;
+        const view = applyGroupFilter(data);
+        currentData = view;
+        renderKpis(view);
+        renderTable(view);
         if (silent && expandedDate) {
-            const newIdx = data.findIndex(r => r.date === expandedDate);
+            const newIdx = view.findIndex(r => r.date === expandedDate);
             if (newIdx >= 0) {
                 const row    = wrap.querySelector('.perf-row[data-idx="' + newIdx + '"]');
                 const detail = wrap.querySelector('.perf-detail[data-detail-for="' + newIdx + '"]');
@@ -393,9 +546,9 @@ async function loadData(opts) {
                     detail.style.display = '';
                     renderDetail(
                         detail.querySelector('td'),
-                        data[newIdx].staff_detail,
-                        data[newIdx].wage_bill_charged,
-                        data[newIdx].wage_bill_gross
+                        view[newIdx].staff_detail,
+                        view[newIdx].wage_bill_charged,
+                        view[newIdx].wage_bill_gross
                     );
                 }
             }
@@ -589,6 +742,11 @@ function renderDetail(td, staff, totalWageCharged, totalWageGross) {
 // Rechargé à chaque changement d'établissement ; le serveur applique le fallback
 // global si l'établissement n'a pas encore de réglage propre.
 async function loadTargets() {
+    if (isAllEstabs()) {
+        const scope = document.getElementById('targets-scope');
+        if (scope) scope.textContent = ' — (choisir un établissement)';
+        return;
+    }
     try {
         const res = await fetch('/api/performance-settings?establishment_id=' + encodeURIComponent(currentEstab), { credentials: 'include' });
         if (res.ok) targets = await res.json();
@@ -603,6 +761,7 @@ async function loadTargets() {
 }
 
 async function saveTargets() {
+    if (isAllEstabs()) return;
     const btn = document.getElementById('btn-save-targets');
     const fb  = document.getElementById('targets-feedback');
     const tc  = parseFloat(document.getElementById('target-charged').value);
@@ -640,6 +799,10 @@ document.addEventListener('DOMContentLoaded', init);
 // ── Onglets + Simulation ──────────────────────────────────────────────────────
 
 function switchPerfTab(tab) {
+    if (tab === 'sim' && isAllEstabs()) {
+        alert('Choisissez un établissement pour utiliser la Simulation.');
+        return;
+    }
     activePerfTab = tab;
     document.querySelectorAll('.perf-tab').forEach(btn => {
         const on = btn.dataset.tab === tab;
@@ -829,7 +992,10 @@ async function _loadSimJokerGroups(from, to) {
                 (byDate[d] || []).forEach(s => {
                     if (!(s.is_joker || s.staff_id === '__joker__')) return;
                     if (s.real_start != null && s.real_end != null) return;
-                    groups.add(s.joker_group ? String(s.joker_group) : '_');
+                    const key = s.joker_group ? String(s.joker_group) : '_';
+                    if (currentGroup && key !== currentGroup && key !== '_') return;
+                    if (currentGroup && key === '_' ) return;
+                    groups.add(key);
                 });
             });
         }

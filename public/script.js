@@ -686,6 +686,10 @@ async function checkAuth() {
             if (res.status === 401) { window.location.href = '/login.html'; return null; }
             if (!res.ok) { if (attempt === 0) { await new Promise(r => setTimeout(r, 800)); continue; } break; }
             const data = await res.json();
+            if (window.ClientFeatures) {
+                ClientFeatures.fromAuthPayload(data);
+                ClientFeatures.applyDom();
+            }
             // Redirections selon le rôle
             if (data.user?.role === 'staff')        { window.location.href = '/planning.html'; return null; }
             if (data.user?.role === 'etablissement') { window.location.href = '/pointage.html'; return null; }

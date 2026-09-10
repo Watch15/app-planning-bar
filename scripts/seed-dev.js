@@ -421,7 +421,7 @@ async function run() {
     // `expect` : la recette vise les bases en `…_dev` / `…_main`. Sans cette borne, un
     // `ENV_FILE=.env.demo npm run dev:seed` écrasait la base de démo par le jeu minimal,
     // sans rien dire — les deux scripts purgent exactement les mêmes collections.
-    const { client, db, dbName } = await openDb({ destructive: true, expect: /(dev|main)$/ });
+    const { client, db, dbName } = await openDb({ destructive: true, expect: /(dev|main|castaniu)/i });
     try {
         // 15 purges indépendantes : en série c'était 15 allers-retours Atlas (~1,5 s).
         await Promise.all(WIPE.map(c => db.collection(c).deleteMany({})));

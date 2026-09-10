@@ -139,6 +139,10 @@ async function checkAuth() {
             if (res.status === 401) { window.location.href = '/login.html'; return null; }
             if (!res.ok) { if (attempt === 0) { await new Promise(r => setTimeout(r, 800)); continue; } break; }
             const data = await res.json();
+            if (window.ClientFeatures) {
+                ClientFeatures.fromAuthPayload(data);
+                ClientFeatures.applyDom();
+            }
             // Patron + directeur → index.html, établissement → pointage.html
             if (data.user?.role === 'patron')       { window.location.href = '/';   return null; }
             // R-04 — depuis E-22 le directeur a un profil staff, donc il REÇOIT les rappels

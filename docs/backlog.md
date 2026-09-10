@@ -2396,6 +2396,25 @@ fond de carte).
 | **Sprint sept. 2026 — observateur, jokers, échanges** ||
 | D-94 | **Observateur hors Dispos/Échanges + polish planning** (`server.js`, `public/{index.html,script.js,style.css,planning.js}`, tests joker) — (1) **Observateur** : ne **voit** ni n’**accède** à Dispos / Échanges à valider (`body.observateur` masque header + drawer + toggle/paramètres/KPI ; early-return JS ; `denyObservateurEdit` sur pending/count/confirm/reject/ignore dispos, congés décision, KPI, shift-swaps pending/count/approve/reject). Clic shift = **no-op** (comme hors mode éditeur). (2) Badge user header : **prénom seul** (plus le rôle). (3) Tablette : clic shift → feuille d’édition complète (`openMobileShiftEditModal`). (4) Semaine publiée verrouillée (tactile) : hors mode éditeur, clic shift = no-op. (5) **Joker ouvert** dont la date est passée : soft-close + disparition de `joker-ouverts` / candidature refusée. (6) Échange staff : recherche cible par **nom / surnom / établissement**. | — |
 | D-95 | **Onglet Simulation Performance** (`lib/utils.js`, `server.js`, `public/performance.{html,js}`, tests) — calcul **à la volée** (ne touche pas `daily_revenue`) : périmètre **jour ou semaine** ; CA hypo ; masse **hybride** ; jokers via `joker_group` (taux/forfait **par groupe** ou mean/median auto) + filtre établissements Courant/Tous. Cartes Joker planning **par groupe**. `POST /api/performance/simulate`. | — |
+| D-95b | **UX Jokers couleurs + CA hypo Simulation + filtre date échanges** — palette stable par groupe (`public/lib/joker-group-color.js`) sur cartes / timeline / open-jokers ; cases CA hypo alignées DA (`input-eur`) ; recherche échange staff : sélecteur de dates = jours réellement échangeables (semaines publiées). | — |
+
+### Retour rdv client (2026-09-10) — à faire / brouillons
+
+| ID | Description | Statut |
+|---|---|---|
+| D-96 | **Perf — Toutes les affaires** : option « Toutes les affaires » + agrégation CA / masse / KPIs (client `fetchPerformance` / `mergePerfByDate`). Saisie CA et objectifs : un établissement à la fois. Simulation désactivée en mode Tous. | ✅ |
+| D-97 | **Perf — Filtre groupe page** : sélecteur Groupe (établissements.groups) ; filtre `staff_detail` + masses ; CA jour inchangé. API Réel enrichie `staff_id` / `groups`. | ✅ |
+| D-98 | **Perf — Panel moyennes / médianes** : zone dédiée (taux staff par groupe / pool établissements), pas seulement les modes Joker de Simulation. | Ouvert |
+| D-99 | **Sim — Forme de rémunération par groupe** : sur chaque carte groupe, choix horaire \| forfait (voire mean/median) au lieu d’un `#sim-joker-mode` global ; étendre `POST /api/performance/simulate`. | Ouvert |
+| D-100 | **Validation hebdo Castaniu (brouillon)** — attestation staff fin de semaine. Flag : `weekly_staff_validation` (`CLIENT_PROFILE=castaniu` + `FEATURE_WEEKLY_VALIDATION=true`). Infra flags : `docs/feature-flags.md`. **Non cadré**. | Brouillon |
+| D-101 | **Créneaux prédéfinis N+1 (brouillon)** — grille + candidatures type Joker ; coexiste avec dispos. Flag : `predefined_slots`. Doc produit : `docs/design-creneaux-predefinis.md`. | Brouillon |
+| D-102 | **Infra feature flags** — `lib/client-features.js` + front `ClientFeatures` + `/auth/me.client` + `requireFeature` + tests. Doc : `docs/feature-flags.md`. | ✅ |
+
+### Dette flags — plus tard
+
+| ID | Description | Statut |
+|---|---|---|
+| D-103 | **Migrer les features DÉJÀ en place** vers le catalogue `CLIENT_PROFILE` / `FEATURE_*` (échanges F-05, Simulation, clôture OTP, jokers groupe, observateur hors dispos… — inventaire à faire). **Pas maintenant** : l’infra D-102 existe ; on ne wrappe les features historiques qu’après stabilisation Castaniu (D-100/D-101) et quand un vrai besoin multi-client l’exige. Jusque-là : flags **uniquement** pour le neuf réservé (Castaniu). | Plus tard |
 
 ---
 

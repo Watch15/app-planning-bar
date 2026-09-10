@@ -90,8 +90,12 @@ entier.
 |---|---|---|---|---|---|
 | Recette | `Dev` (env. Dev) | `app-planning-bar` / **dev** | `vab3u2w` | `templyo_dev` | development |
 | Pré-production | `Dev` (env. Prod) | `app-planning-bar` / **main** | `vab3u2w` | `templyo_main` | production |
-| **Production client** | `Castaniu Family` | **`app-planning-bar-castaniu-family`** / main | `gqfynu8` | `gestion_bar` | production |
+| Production client | `Castaniu Family` | **`app-planning-bar-castaniu-family`** / main | `gqfynu8` | `gestion_bar` | production |
+| **Recette Castaniu** | *(locale / service à créer)* | `app-planning-bar` / **dev** | `vab3u2w` | `templyo_castaniu_dev` | development |
 | **Démonstration** | *(service dédié, créé le 2026-08-31)* | `app-planning-bar` / **main** | `vab3u2w` | `templyo_demo` | production |
+
+> Recette Castaniu : `CLIENT_PROFILE=castaniu`, `npm run castaniu:seed` / `castaniu:server`.
+> Détail : [`docs/setup-castaniu-dev.md`](setup-castaniu-dev.md). **Jamais** le cluster prod `gqfynu8`.
 
 > ⚠️ **Le service de pré-production s'appelle aussi « Dev ».** Deux services portent ce nom
 > dans deux environnements différents. Se fier au nom seul mène à l'erreur ; se fier au

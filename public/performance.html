@@ -525,7 +525,13 @@
     <div class="filters">
         <div class="filter-group" id="estab-filter-group">
             <span class="filter-label">Établissement</span>
-            <select class="filter-select" id="estab-select"></select>
+            <select class="filter-select" id="estab-select" title="Un établissement ou toutes les affaires"></select>
+        </div>
+        <div class="filter-group" id="group-filter-group" style="display:none">
+            <span class="filter-label">Groupe</span>
+            <select class="filter-select" id="group-select">
+                <option value="">Tous les groupes</option>
+            </select>
         </div>
         <div class="filter-group" id="period-filter-group">
             <span class="filter-label">Période</span>
@@ -670,6 +676,7 @@
 
 <!-- Lundi de la semaine — module partagé/testé (tests/week.test.js) -->
 <script src="/lib/auth-guard.js"></script>
+<script src="/lib/client-features.js"></script>
     <script src="/lib/week.js"></script>
     <script src="/lib/joker-group-color.js"></script>
     <script src="/performance.js"></script>
