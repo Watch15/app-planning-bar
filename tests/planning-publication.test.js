@@ -195,7 +195,7 @@ test('responsable-week : semaine NON publiée → ni roster ni téléphones', as
 
 test('joker-ouverts : un Joker d\'une semaine non publiée n\'est pas proposé', async () => {
     // Le proposer reviendrait à annoncer un besoin sur un brouillon — et à laisser
-    // postuler dessus.
+    // postuler dessus. Exception D-101 : `slot_offer` (test suivant).
     // day(CUR, 6) = dimanche de la semaine courante : toujours ≥ date de soirée active
     // (day(CUR, 2) tombe dans le passé dès mercredi+cutoff → faux négatif).
     const visibleDate = day(CUR, 6);
@@ -207,6 +207,47 @@ test('joker-ouverts : un Joker d\'une semaine non publiée n\'est pas proposé',
     ]));
     const body = await (await req('/api/shifts/joker-ouverts', STAFF)).json();
     assert.deepEqual(body.map(j => j.date), [visibleDate]);
+});
+
+test('joker-ouverts : un slot_offer est visible même si la semaine n\'est pas publiée', async () => {
+    // D-101 — « Proposer les créneaux » rend la grille visible tout de suite, sans
+    // attendre le bouton Publier. Un Joker ouvert ponctuel de la même semaine
+    // brouillon reste caché.
+    app.locals.setTestDb(seed([
+        { staff_id: '__joker__', is_joker: true, joker_open: true, slot_offer: true,
+          establishment_id: 'bar1', date: day(N1, 2), start_time: 18, end_time: 24 },
+        { staff_id: '__joker__', is_joker: true, joker_open: true,
+          establishment_id: 'bar1', date: day(N1, 3), start_time: 18, end_time: 24 },
+    ]));
+    const body = await (await req('/api/shifts/joker-ouverts', STAFF)).json();
+    assert.deepEqual(body.map(j => j.date), [day(N1, 2)]);
+    assert.equal(body[0].slot_offer, true);
+});
+
+test('joker-candidature : un slot_offer non publié reste candidatable', async () => {
+    const id = '0123456789abcdef0123aaaa';
+    app.locals.setTestDb(seed([
+        { _id: id, staff_id: '__joker__', is_joker: true, joker_open: true, slot_offer: true,
+          establishment_id: 'bar1', date: day(N1, 2), start_time: 18, end_time: 24,
+          joker_candidates: [] },
+    ]));
+    const res = await req('/api/shifts/' + id + '/joker-candidature', STAFF, {
+        method: 'POST', body: '{}',
+    });
+    assert.equal(res.status, 200, await res.clone().text());
+});
+
+test('joker-candidature : un Joker ponctuel non publié n\'est pas candidatable', async () => {
+    const id = '0123456789abcdef0123bbbb';
+    app.locals.setTestDb(seed([
+        { _id: id, staff_id: '__joker__', is_joker: true, joker_open: true,
+          establishment_id: 'bar1', date: day(N1, 2), start_time: 18, end_time: 24,
+          joker_candidates: [] },
+    ]));
+    const res = await req('/api/shifts/' + id + '/joker-candidature', STAFF, {
+        method: 'POST', body: '{}',
+    });
+    assert.equal(res.status, 403);
 });
 
 test('joker-ouverts : un Joker ouvert dont la date est passée disparaît', async () => {

@@ -44,11 +44,11 @@ async function checkAuth() {
     }
     const user = data.user;
     if (!user) { window.location.href = '/login.html'; return null; }
-    if (user.role === 'staff') {
-        document.getElementById('back-link').href = '/planning.html';
-    } else {
-        document.getElementById('back-link').href = '/';
-    }
+    const home = (user.role === 'staff') ? '/planning.html' : '/';
+    const backBtn = document.getElementById('btn-back');
+    const brandLink = document.getElementById('back-link');
+    if (backBtn) backBtn.href = home;
+    if (brandLink) brandLink.href = home;
     return user;
 }
 

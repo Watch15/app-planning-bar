@@ -604,8 +604,9 @@ async function loadPlanning(from, to, user) {
 //
 // 2. UNE SEULE REQUÊTE. On ne demande plus « quelles semaines puis-je ouvrir ? »
 //    (`/api/my-published-weeks`) : `/api/my-shifts` filtre déjà la publication SHIFT PAR
-//    SHIFT (`isDatePublished` côté serveur). Une semaine non publiée ne rend donc rien et
-//    ne produit aucun bloc — la porte reste tenue par le serveur, pas par le navigateur.
+//    SHIFT (`isDatePublished` côté serveur). Une semaine non publiée ne rend donc rien
+//    — sauf D-101 : un `slot_offer` (bouton « Proposer les créneaux ») ouvre un bloc
+//    même sans shift personnel et même sans publication. La porte reste côté serveur.
 
 // Horizon chargé d'un coup. 8 = ce que l'ancien onglet interrogeait déjà. Au-delà on ne
 // chargerait que du vide, le serveur ne rendant que du publié.
@@ -707,6 +708,15 @@ async function _loadUpcomingWeeks() {
     // Une semaine où je n'ai QUE des Jokers de collègues n'est pas mon planning.
     for (const [wk, b] of byWeek) if (!b.mine.length) byWeek.delete(wk);
 
+    // D-101 — uniquement après « Proposer les créneaux » (`slot_offer`). Sans ça,
+    // une grille proposée sans aucun shift personnel n'ouvrait aucun bloc. Un
+    // Joker ponctuel (renfort) ne crée pas de semaine à lui seul.
+    for (const j of (openJokers || [])) {
+        if (!j.slot_offer || !j.date || j.date < from || j.date > to) continue;
+        const wk = toDateStr(Week.weekStart(new Date(j.date + 'T12:00:00')));
+        if (!byWeek.has(wk)) byWeek.set(wk, { mine: [], jokers: [] });
+    }
+
     disconnectWeekObservers();
     wrap.innerHTML = '';
 
@@ -753,8 +763,12 @@ function renderUpcomingWeek(wrap, monday, weekShifts, weekJokers, colleagues, op
     block.append(sep, stats, jokerSection, list);
     wrap.appendChild(block);
 
-    renderStatsInto(weekShifts, stats);
-    renderDaysInto(monday, weekShifts, colleagues, list, weekJokers);
+    if (weekShifts.length) {
+        renderStatsInto(weekShifts, stats);
+        renderDaysInto(monday, weekShifts, colleagues, list, weekJokers);
+    } else {
+        stats.style.display = 'none';
+    }
     renderOpenJokersInto(openJokers, monday, end, jokerSection);
 }
 

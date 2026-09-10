@@ -263,6 +263,19 @@ const DISPO_TARGET = Object.freeze({ can_submit_dispos: true, ...NOT_ARCHIVED })
 // le jour où le Joker gagne un champ.
 const JOKER_SHIFT = Object.freeze({ staff_id: '__joker__', staff_name: '', is_joker: true, color: '#95a5a6' });
 
+/**
+ * Élígibilité staff ↔ Joker par groupe (liste, candidature, push).
+ * — Joker sans `joker_group` : accessible à tous.
+ * — Staff sans groupes : polyvalent → tous les Jokers.
+ * — Sinon : uniquement les Jokers dont le groupe est dans `staff.groups`.
+ */
+function staffMatchesJokerGroup(staffDoc, jokerGroup) {
+    if (jokerGroup == null || String(jokerGroup).trim() === '') return true;
+    const g = Array.isArray(staffDoc && staffDoc.groups) ? staffDoc.groups : [];
+    if (g.length === 0) return true;
+    return g.includes(String(jokerGroup));
+}
+
 // F-13 — le profil s'il est archivé, `null` sinon. Deux portes s'en servent (la connexion
 // et la création de shift) ; lui donner un nom offre un point d'ancrage greppable à celles
 // qui suivront, au lieu d'un `findOne` recopié à chaque fois qu'on y repense.
@@ -3060,12 +3073,7 @@ app.patch('/api/shifts/:id/joker-open', checkDB, requirePatron, denyObservateurE
             // solliciter pour ce créneau » se lit ici : le laisser faux obligerait à
             // relire une autre fonction pour savoir qui la liste contient vraiment.
             const estabStaff = await db.collection('staff').find({ venues: shift.establishment_id, ...NOT_ARCHIVED }).toArray();
-            const eligible = shift.joker_group
-                ? estabStaff.filter(s => {
-                    const g = Array.isArray(s.groups) ? s.groups : [];
-                    return g.length === 0 || g.includes(shift.joker_group);
-                })
-                : estabStaff;
+            const eligible = estabStaff.filter(s => staffMatchesJokerGroup(s, shift.joker_group));
             const staffIds   = eligible.map(s => String(s._id));
             if (staffIds.length && shift.date >= toDateStr(new Date())) {
                 const grp = shift.joker_group ? (' · ' + shift.joker_group) : '';
@@ -3127,13 +3135,9 @@ app.post('/api/jokers/open-week',
             const notifyIds = new Set();
             for (const shift of targets) {
                 if (shift.date < today) continue;
-                const eligible = shift.joker_group
-                    ? estabStaff.filter(s => {
-                        const g = Array.isArray(s.groups) ? s.groups : [];
-                        return g.length === 0 || g.includes(shift.joker_group);
-                    })
-                    : estabStaff;
-                eligible.forEach(s => notifyIds.add(String(s._id)));
+                estabStaff
+                    .filter(s => staffMatchesJokerGroup(s, shift.joker_group))
+                    .forEach(s => notifyIds.add(String(s._id)));
             }
             if (notifyIds.size) {
                 await sendPushToStaff([...notifyIds], {
@@ -5643,17 +5647,24 @@ app.get('/api/shifts/joker-ouverts', checkDB, requireAuth, async (req, res) => {
             $or: [{ is_joker: true }, { staff_id: '__joker__' }],
         };
         if (establishment_id) query.establishment_id = establishment_id;
-        // B2-b — un Joker d'une semaine NON PUBLIÉE appartient à un planning que le staff
-        // n'a pas à voir : le proposer reviendrait à annoncer un besoin sur un brouillon,
-        // et à laisser postuler dessus (`joker-candidature`). La route n'avait ni borne de
-        // date ni filtre — c'est `planning.js` qui bornait, dans le navigateur.
+        // B2-b — un Joker ponctuel d'une semaine NON PUBLIÉE appartient à un brouillon :
+        // le proposer reviendrait à annoncer un besoin non annoncé, et à laisser
+        // postuler dessus (`joker-candidature`).
+        // D-101 — exception : dès « Proposer les créneaux », `slot_offer` est visible
+        // côté staff même si la semaine n'est pas publiée. Le reste du brouillon
+        // (shifts affectés, Jokers non proposés) reste caché par `my-shifts`.
         const isVisible = await publishedShiftFilter();
-        const shifts = (await db.collection('shifts').find(query, {
+        let shifts = (await db.collection('shifts').find(query, {
             projection: {
                 _id: 1, date: 1, start_time: 1, end_time: 1, establishment_id: 1,
                 joker_candidates: 1, joker_group: 1, slot_offer: 1,
             }
-        }).toArray()).filter(isVisible);
+        }).toArray()).filter(s => s.slot_offer || isVisible(s));
+        // Filtre groupe : seuls les Jokers du (des) groupe(s) du staff (polyvalent = tous).
+        if (staffId && isValidObjectId(String(staffId))) {
+            const staffDoc = await db.collection('staff').findOne({ _id: new ObjectId(String(staffId)) });
+            shifts = shifts.filter(s => staffMatchesJokerGroup(staffDoc, s.joker_group));
+        }
         // Résoudre les noms d'établissements en une requête batch
         const estabIds = [...new Set(shifts.map(s => s.establishment_id).filter(Boolean))];
         const estabDocs = estabIds.length
@@ -5695,6 +5706,23 @@ app.post('/api/shifts/:id/joker-candidature', checkDB, requireAuth, async (req, 
     try {
         const staffDoc = await db.collection('staff').findOne({ _id: new ObjectId(user.staff_id) });
         const today = await getActivePointageDateStr();
+
+        const existing = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
+        if (!existing) return res.status(404).json({ error: 'Shift introuvable' });
+        if (!existing.is_joker && existing.staff_id !== '__joker__') {
+            return res.status(400).json({ error: 'Ce shift n\'est pas un Joker' });
+        }
+        if (!staffMatchesJokerGroup(staffDoc, existing.joker_group)) {
+            return res.status(403).json({ error: 'Ce créneau est réservé à un autre groupe' });
+        }
+        // B2-b + D-101 — un Joker ponctuel d'un brouillon n'est pas candidatable.
+        // Seul un `slot_offer` (bouton « Proposer les créneaux ») l'est sans publication.
+        if (!existing.slot_offer) {
+            const isVisible = await publishedShiftFilter();
+            if (!isVisible(existing)) {
+                return res.status(403).json({ error: 'Ce créneau n\'est pas encore proposé' });
+            }
+        }
 
         // Atomique : on push uniquement si Joker ouvert ET staff pas déjà candidat.
         // Évite race condition au double-tap (deux candidatures simultanées).
