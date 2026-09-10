@@ -1447,6 +1447,16 @@ function renderSimDetail(td, day) {
     const rows = staff.map(s => {
         let rateLabel = '';
         if (s.missing_rate) rateLabel = '<span class="missing-rate">taux manquant</span>';
+        // Repli « comme un Joker » : le taux vient du groupe, pas de la fiche. On le dit,
+        // sinon un chiffre plausible passerait pour un taux réel que personne n'a saisi.
+        else if (s.rate_fallback) {
+            const grp = s.fallback_group && s.fallback_group !== '_' ? s.fallback_group : 'sans groupe';
+            const val = s.is_fixed && s.fixed_rate != null
+                ? 'Forfait ' + s.fixed_rate.toFixed(2).replace('.', ',') + ' €'
+                : (s.hourly_rate != null ? s.hourly_rate.toFixed(2).replace('.', ',') + ' €/h' : '—');
+            rateLabel = '<span class="rate-fallback" title="Aucun taux sur la fiche : taux du groupe appliqué">'
+                + val + ' <em>(groupe ' + escapeHtml(grp) + ')</em></span>';
+        }
         else if (s.is_fixed && s.fixed_rate != null) rateLabel = 'Forfait ' + s.fixed_rate.toFixed(2).replace('.', ',') + ' €';
         else if (s.hourly_rate != null) rateLabel = s.hourly_rate.toFixed(2).replace('.', ',') + ' €/h';
         const src = s.source === 'real'

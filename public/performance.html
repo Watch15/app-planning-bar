@@ -251,6 +251,10 @@
         .detail-table tr:last-child td { border-bottom: none; }
         .detail-table .total-row td { font-weight: 700; border-top: 1.5px solid var(--light-border); padding-top: 8px; }
         .missing-rate { color: var(--warning-text); background: var(--warning-bg); padding: 1px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        /* Taux repris du groupe faute de taux sur la fiche : lisible, mais visiblement
+           pas un taux saisi — sinon le chiffre passerait pour une donnee reelle. */
+        .rate-fallback { color: var(--text-muted); font-size: 11px; }
+        .rate-fallback em { font-style: normal; opacity: .75; }
 
         /* Refresh « doux » après modification des paramètres : on garde la donnée
            précédente visible sous une légère opacité au lieu de la blanker. */

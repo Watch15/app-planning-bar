@@ -20,7 +20,7 @@ const {
     disposHorizonRange, disposHorizonMondays, clampHorizonWeeks, DISPO_HORIZON_MAX,
     upcomingWeekRange, upcomingWeekMondays,
     dispoMateriallyDiffers, staffReopenedFor, dispoEventDelta,
-    deriveStaffHourlyStat, buildPerformanceSimulation, jokerGroupKey, isJokerShift, isShiftCompleted,
+    deriveStaffHourlyStat, buildPerformanceSimulation, jokerGroupKey, staffGroupKey, isJokerShift, isShiftCompleted,
     buildStaffRateStatsReport,
 } = require('./lib/utils');
 const {
@@ -6691,11 +6691,36 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
             date: { $gte: from, $lte: to },
         }).toArray();
 
+        // Les fiches staff servent DEUX fois : à coûter les lignes plus bas, et — depuis
+        // le repli « comme un Joker » — à savoir quels groupes ont besoin d'un taux. Elles
+        // doivent donc être chargées AVANT la résolution des taux, pas après.
+        const staffIds = [...new Set(shifts
+            .map(s => s.staff_id)
+            .filter(id => id && id !== '__joker__' && isValidObjectId(id)))];
+        const staffDocs = staffIds.length
+            ? await db.collection('staff').find({ _id: { $in: staffIds.map(id => new ObjectId(id)) } }).toArray()
+            : [];
+        const staffById = {};
+        staffDocs.forEach(s => { staffById[String(s._id)] = s; });
+
+        // Groupes à tarifer. Deux populations, une seule question posée au patron :
+        //   • les Jokers non pourvus, comme avant ;
+        //   • les personnes SANS taux placées sur un créneau non pointé — elles étaient
+        //     comptées 0 € en silence, elles prennent maintenant le taux de leur groupe.
+        // Les deux ensembles restent distincts pour que la réponse puisse dire lesquels
+        // sont là pour des personnes sans taux plutôt que pour des Jokers ; `rateGroups`
+        // est ce qu'il faut réellement résoudre, et c'est lui qui reçoit un taux global
+        // saisi sans précision de groupe.
         const jokerGroups = new Set();
+        const staffFallbackGroups = new Set();
         shifts.forEach(s => {
-            if (!isJokerShift(s) || isShiftCompleted(s)) return;
-            jokerGroups.add(jokerGroupKey(s));
+            if (isShiftCompleted(s)) return;
+            if (isJokerShift(s)) { jokerGroups.add(jokerGroupKey(s)); return; }
+            const doc = s.staff_id && s.staff_id !== '__joker__' ? staffById[String(s.staff_id)] : null;
+            if (doc && (doc.fixed_rate != null || doc.hourly_rate != null)) return;
+            staffFallbackGroups.add(staffGroupKey(doc));
         });
+        const rateGroups = new Set([...jokerGroups, ...staffFallbackGroups]);
 
         let jokerHourly = null;
         let jokerFixed = null;
@@ -6740,22 +6765,55 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
         if (Object.keys(hourlyMapIn).length === 0 && joker_hourly != null && !Number.isNaN(Number(joker_hourly))) {
             const v = Number(joker_hourly);
             jokerHourly = v;
-            if (jokerGroups.size === 0) hourlyMapIn['_'] = v;
-            else jokerGroups.forEach(g => { hourlyMapIn[g] = v; });
+            if (rateGroups.size === 0) hourlyMapIn['_'] = v;
+            else rateGroups.forEach(g => { hourlyMapIn[g] = v; });
         }
         if (Object.keys(fixedMapIn).length === 0 && joker_fixed != null && !Number.isNaN(Number(joker_fixed))) {
             const v = Number(joker_fixed);
             jokerFixed = v;
-            if (jokerGroups.size === 0) fixedMapIn['_'] = v;
-            else jokerGroups.forEach(g => { fixedMapIn[g] = v; });
+            if (rateGroups.size === 0) fixedMapIn['_'] = v;
+            else rateGroups.forEach(g => { fixedMapIn[g] = v; });
         }
 
-        const groupsToResolve = jokerGroups.size ? [...jokerGroups] : [];
+        const groupsToResolve = rateGroups.size ? [...rateGroups] : [];
         let totalSample = 0;
+
+        // Un groupe présent UNIQUEMENT pour une personne sans taux n'a pas de carte à
+        // l'écran : la page ne liste que les groupes de Jokers, et elle ne peut pas
+        // deviner qui n'a pas de taux (`/api/week-full` ne renvoie aucun tarif). Lui
+        // opposer un 400 « taux manquant pour le groupe X » serait une impasse — une
+        // erreur qui désigne un champ de saisie qui n'existe pas. On dérive donc une
+        // moyenne pour ces groupes-là, et on ne bloque que sur les groupes de Jokers,
+        // que le patron voit et peut renseigner.
+        const isJokerGroup = g => jokerGroups.has(g);
+        const deriveFor = async (g, stat) => {
+            const pool = await ensureStaffPool();
+            return deriveStaffHourlyStat(pool, {
+                stat,
+                establishmentIds: sourceIds,
+                groupIds: g === '_' ? undefined : [g],
+            });
+        };
 
         for (const g of groupsToResolve) {
             const mode = (modeByGroupRaw && modeByGroupRaw[g]) || defaultMode;
             joker_modes_resolved[g] = mode;
+            const manual = mode === 'manual_fixed' || mode === 'manual_hourly';
+            const saisi = mode === 'manual_fixed' ? fixedMapIn[g] : hourlyMapIn[g];
+
+            if (manual && saisi == null && !isJokerGroup(g)) {
+                // Personne sans taux, aucun Joker dans ce groupe, aucune saisie possible.
+                const derived = await deriveFor(g, 'mean');
+                if (derived.rate == null) continue;   // rien à en tirer : la ligne restera « taux manquant »
+                jokerHourlyByGroup[g] = derived.rate;
+                joker_rates_by_group[g] = {
+                    rate: derived.rate, sample_size: derived.sample_size, kind: 'hourly', mode: 'mean',
+                };
+                joker_modes_resolved[g] = 'mean';
+                totalSample += derived.sample_size;
+                continue;
+            }
+
             if (mode === 'manual_fixed') {
                 if (fixedMapIn[g] == null) {
                     return res.status(400).json({
@@ -6773,13 +6831,10 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
                 jokerHourlyByGroup[g] = hourlyMapIn[g];
                 joker_rates_by_group[g] = { rate: hourlyMapIn[g], sample_size: null, kind: 'hourly', mode };
             } else {
-                const pool = await ensureStaffPool();
-                const derived = deriveStaffHourlyStat(pool, {
-                    stat: mode,
-                    establishmentIds: sourceIds,
-                    groupIds: g === '_' ? undefined : [g],
-                });
+                const derived = await deriveFor(g, mode);
                 if (derived.rate == null) {
+                    // Même logique : on ne bloque que si un Joker attend ce taux.
+                    if (!isJokerGroup(g)) continue;
                     return res.status(400).json({
                         error: 'Aucun taux horaire dans le filtre (établissements'
                             + (g === '_' ? '' : ' / groupe « ' + g + ' »') + ')',
@@ -6798,17 +6853,23 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
             }
         }
 
-        if (groupsToResolve.length === 0) {
-            // Pas de joker : conserver un mode global pour la réponse.
+        // ⚠️ Un groupe peut désormais rester NON résolu (personne sans taux, aucun Joker,
+        // aucun taux dérivable) : ses lignes retomberont sur « taux manquant ». On agrège
+        // donc sur les groupes RÉELLEMENT résolus, jamais sur `groupsToResolve` — sinon
+        // `joker_rates_by_group[firstG]` est undefined et la route casse en 500.
+        const resolvedGroups = groupsToResolve.filter(g => joker_rates_by_group[g]);
+        if (resolvedGroups.length === 0) {
             joker_rate_kind = defaultMode === 'manual_fixed' ? 'fixed' : 'hourly';
         } else {
-            const kinds = new Set(Object.values(joker_rates_by_group).map(x => x.kind));
+            const kinds = new Set(resolvedGroups.map(g => joker_rates_by_group[g].kind));
             joker_rate_kind = kinds.size === 1 ? [...kinds][0] : 'mixed';
-            const firstG = groupsToResolve[0];
+            const firstG = resolvedGroups[0];
             joker_rate_used = joker_rates_by_group[firstG].rate;
             joker_rate_sample_size = totalSample || null;
             if (Object.keys(jokerHourlyByGroup).length) jokerHourly = joker_rate_used;
-            if (Object.keys(jokerFixedByGroup).length) jokerFixed = jokerFixedByGroup[firstG];
+            if (Object.keys(jokerFixedByGroup).length) jokerFixed = jokerFixedByGroup[firstG] != null
+                ? jokerFixedByGroup[firstG]
+                : jokerFixedByGroup[Object.keys(jokerFixedByGroup)[0]];
         }
 
         const revenues = await db.collection('daily_revenue').find({
@@ -6828,14 +6889,6 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
             });
         }
 
-        const staffIds = [...new Set(shifts
-            .map(s => s.staff_id)
-            .filter(id => id && id !== '__joker__' && isValidObjectId(id)))];
-        const staffDocs = staffIds.length
-            ? await db.collection('staff').find({ _id: { $in: staffIds.map(id => new ObjectId(id)) } }).toArray()
-            : [];
-        const staffById = {};
-        staffDocs.forEach(s => { staffById[String(s._id)] = s; });
 
         const sim = buildPerformanceSimulation({
             shifts,
@@ -6859,6 +6912,9 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
             joker_rate_kind,
             joker_rate_sample_size,
             joker_rates_by_group,
+            // Groupes présents UNIQUEMENT parce qu'une personne sans taux y est placée :
+            // l'écran s'en sert pour ne pas parler de « Joker » là où il n'y en a pas.
+            staff_fallback_groups: [...staffFallbackGroups],
             charge_rate,
             target_charged: perfSettings.target_charged,
             days: sim.days,
