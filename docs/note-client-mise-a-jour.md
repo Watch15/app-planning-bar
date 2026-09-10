@@ -1,7 +1,7 @@
 # Templyo — ce qui change à la prochaine mise à jour
 
-*Note à envoyer avant le déploiement. Rédigée pour être lue par le patron, pas par un
-développeur. Version du 2026-09-11 (livraison après rdv client).*
+*Rédigée pour être lue par le patron, pas par un développeur. Version du 2026-09-10,
+jour de la livraison — le lot est déjà en ligne chez le client depuis ce jour-là.*
 
 > Les notes des mises à jour précédentes restent consultables dans l'historique du dépôt
 > (`git log docs/note-client-mise-a-jour.md`).

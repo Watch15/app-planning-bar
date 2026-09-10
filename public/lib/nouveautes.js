@@ -64,7 +64,7 @@
 
     const NOUVEAUTES = [
         {
-            id: 'perf-simulation', date: '2026-09-11',
+            id: 'perf-simulation', date: '2026-09-10',
             roles: ['patron', 'directeur', 'observateur'],
             titre: 'Estimer un jour ou une semaine sans toucher au CA réel',
             quoi: "L'onglet Simulation de Performance calcule à la volée : vous saisissez un "
@@ -75,7 +75,7 @@
             ou: 'Performance → onglet « Simulation »'
         },
         {
-            id: 'jokers-par-groupe', date: '2026-09-11',
+            id: 'jokers-par-groupe', date: '2026-09-10',
             roles: ['patron', 'directeur'],
             titre: 'Un Joker par groupe, chacun avec sa couleur',
             quoi: "Sur le planning, vous posez un créneau Joker pour Bar, Cuisine, Salle… "
@@ -84,7 +84,7 @@
             ou: 'Planning → cartes Joker sous la liste staff (survol → pastille de couleur)'
         },
         {
-            id: 'jokers-par-groupe-staff', date: '2026-09-11',
+            id: 'jokers-par-groupe-staff', date: '2026-09-10',
             roles: ['staff'],
             titre: 'Les créneaux ouverts portent leur groupe',
             quoi: "Quand un créneau à pourvoir vous est proposé, le groupe (Bar, Cuisine…) "
@@ -93,7 +93,7 @@
             ou: 'Planning → carte « Créneaux disponibles »'
         },
         {
-            id: 'creneaux-semaine-patron', date: '2026-09-11',
+            id: 'creneaux-semaine-patron', date: '2026-09-10',
             roles: ['patron', 'directeur'],
             titre: 'Proposer d’un coup les créneaux de la semaine',
             quoi: "Quand la grille de la semaine suivante est prête (souvent des Jokers), "
@@ -103,7 +103,7 @@
             ou: 'Planning → semaine ciblée → bouton « Proposer les créneaux »'
         },
         {
-            id: 'creneaux-semaine-staff', date: '2026-09-11',
+            id: 'creneaux-semaine-staff', date: '2026-09-10',
             roles: ['staff'],
             titre: 'Candidater sur les créneaux de la semaine proposée',
             quoi: "Dès que votre responsable propose les créneaux d’une semaine, ils "
@@ -114,7 +114,7 @@
             ou: 'Planning → semaines à venir → « Créneaux disponibles »'
         },
         {
-            id: 'perf-toutes-affaires', date: '2026-09-11',
+            id: 'perf-toutes-affaires', date: '2026-09-10',
             roles: ['patron', 'directeur', 'observateur'],
             titre: 'Voir Performance sur toutes les affaires d’un coup',
             quoi: "En plus d’un établissement à la fois, vous pouvez afficher toutes les "
@@ -123,7 +123,7 @@
             ou: 'Performance → sélecteur d’établissement « Toutes les affaires » / Groupe'
         },
         {
-            id: 'observateur-hors-dispos-echanges', date: '2026-09-11',
+            id: 'observateur-hors-dispos-echanges', date: '2026-09-10',
             roles: ['observateur'],
             titre: 'Plus de Dispos ni d\'Échanges à valider',
             quoi: "Votre compte ne voit plus les boutons Dispos et Échanges. Vous gardez "
@@ -132,7 +132,7 @@
             ou: 'Bandeau du haut / menu — les entrées Dispos et Échanges n\'apparaissent plus'
         },
         {
-            id: 'echange-filtre-date', date: '2026-09-11',
+            id: 'echange-filtre-date', date: '2026-09-10',
             roles: ['staff'],
             titre: 'Filtrer les échanges par date',
             quoi: "Quand vous proposez un échange, un menu de dates liste seulement les "
