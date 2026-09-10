@@ -1,0 +1,15 @@
+{
+  "name": "app-templyo",
+  "install": "bash .cursor/install.sh",
+  "start": "bash .cursor/start.sh",
+  "terminals": [
+    {
+      "name": "app",
+      "command": "npm run dev:server",
+      "description": "Serveur Express (base gestion_bar_dev) sur http://localhost:3000"
+    }
+  ],
+  "ports": [
+    { "name": "web", "port": 3000 }
+  ]
+}
