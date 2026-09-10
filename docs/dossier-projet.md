@@ -143,11 +143,11 @@ cliquer partout en direct.
 1. **Commande de démarrage : `npm start`, pas `node server.js`.** `npm start` substitue
    `%%BUILD_TIME%%` dans `public/sw.js` ; sans lui le service worker garde un marqueur
    littéral et la mise à jour automatique de la PWA ne se déclenche jamais.
-2. **Laisser le déploiement auto Railway ACTIF sur ce service.** CD-01
-   (`.github/workflows/ci.yml`) ne déploie qu'**un seul** service, celui nommé dans
-   `vars.RAILWAY_SERVICE` ; il ne connaît pas la démo. Corollaire assumé : la démo se
-   déploie sans attendre que la CI soit verte — c'est acceptable ici, ça ne le serait
-   pas en prod.
+2. **Laisser le déploiement auto Railway ACTIF sur ce service**, avec « Wait for CI »
+   activé comme sur les autres. C'est ce réglage qui porte CD-01 : il n'y a pas de job
+   de déploiement dans `.github/workflows/ci.yml`, donc rien à configurer côté GitHub
+   pour la démo. Elle attend le check vert du workflow comme la prod, puis se déploie
+   seule.
 3. **Le seed se lance depuis le poste**, pas depuis Railway : `npm run demo:seed` écrit
    dans `templyo_demo` sur Atlas, la même base que lit le service. Rien à installer
    côté Railway. À relancer avant chaque rendez-vous — le jeu est calculé relativement

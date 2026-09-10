@@ -90,7 +90,7 @@ git push main ──►│
 ### P1 — Fermer le trou « prod déployée même si CI rouge »
 | ID | Action | Effort | Bénéfice |
 |---|---|---|---|
-| CD-01 | **Garder le déploiement par la CI.** Soit activer dans Railway « Wait for CI to pass before deploy » (check GitHub), soit déclencher le deploy *depuis* GitHub Actions (Railway CLI / deploy hook) **après** le job `test`. | 🟢 | La prod ne reçoit plus un commit cassé |
+| CD-01 | **Garder le déploiement par la CI.** ✅ *Tranché le 2026-09-10 : réglage Railway « Wait for CI », activé service par service.* La piste `railway up` depuis GitHub Actions a été écartée — elle n'aurait gardé que `main`, elle aurait doublé le déploiement tant que l'auto-deploy Railway reste actif, et le service `Dev` étant partagé par les trois environnements, son nom seul ne désigne pas une cible. | 🟢 | Aucun environnement ne reçoit un commit cassé |
 | CD-02 | **Protéger `main`** (GitHub branch protection) : exiger la CI verte + 1 review avant merge. Aujourd'hui le rebase/push direct sur `main` est possible. | 🟢 | Empêche un push direct non testé |
 | CD-03 | **Étendre la CI à `dev`** (actuellement `branches: [main]` seulement) : tester avant même la promotion vers `main`. | 🟢 | Feedback plus tôt dans le flux |
 

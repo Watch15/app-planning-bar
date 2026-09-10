@@ -37,72 +37,19 @@ jobs:
       - name: Run tests
         run: npm test
 
-  # CD-01 — Déploiement gardé par la CI.
-  # Ne tourne QU'APRÈS un job `test` vert (needs) ET seulement sur un push direct
-  # sur main → un commit qui casse les tests ne part jamais en prod.
-  # ⚠️ Prérequis (à faire AVANT que ce job soit actif sur main) :
-  #   1. GitHub → Settings → Secrets and variables → Actions :
-  #        - secret  RAILWAY_TOKEN  = token de projet Railway (Project → Settings → Tokens)
-  #        - variable RAILWAY_SERVICE = nom exact du service Railway à déployer
-  #   2. Railway → service → Settings → désactiver le déploiement auto depuis GitHub
-  #      (sinon double déploiement : Railway + ce job).
-  deploy:
-    needs: test
-    # Uniquement le repo canonique : le fork « castanui » lance les tests mais ne
-    # déploie pas la prod (il n'a pas les secrets Railway, et ne le doit pas).
-    # `vars.RAILWAY_SERVICE != ''` → le job est IGNORÉ (pas en échec) tant que la
-    # variable n'est pas définie : la CI reste verte avant l'activation de CD-01.
-    if: >-
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/main' &&
-      github.repository == 'Watch15/app-planning-bar' &&
-      vars.RAILWAY_SERVICE != ''
-    runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-production
-      cancel-in-progress: false
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22.x
-
-      - name: Install Railway CLI
-        run: npm i -g @railway/cli
-
-      - name: Deploy to Railway
-        # Railway renvoie parfois une erreur TRANSITOIRE de son orchestrateur de build
-        # (ex. « StartSnapshotAndBuild UNAVAILABLE / ECONNREFUSED 10.x.x.x » ou
-        # « Failed to stream build logs ») : c'est côté plateforme, pas notre code.
-        # Dans ces cas le build n'a pas démarré → on réessaie avant d'échouer.
-        run: |
-          for attempt in 1 2 3; do
-            echo "→ Déploiement Railway — tentative $attempt/3"
-            if railway up --service "$RAILWAY_SERVICE" --ci; then
-              exit 0
-            fi
-            echo "::warning::railway up a échoué (tentative $attempt/3) — nouvelle tentative dans 20s…"
-            sleep 20
-          done
-          echo "::error::railway up a échoué après 3 tentatives — vérifier status.railway.app et les Build Logs ci-dessus."
-          exit 1
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
-
-      - name: Smoke test (health)
-        if: vars.HEALTH_URL != ''
-        run: |
-          sleep 25
-          for i in 1 2 3 4 5 6; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' "$HEALTH_URL" || echo 000)
-            echo "Tentative $i → HTTP $code"
-            [ "$code" = "200" ] && exit 0
-            sleep 10
-          done
-          echo "::error::Healthcheck KO après déploiement ($HEALTH_URL)"
-          exit 1
-        env:
-          HEALTH_URL: ${{ vars.HEALTH_URL }}
+  # CD-01 — Le déploiement gardé par la CI est assuré côté Railway, pas ici.
+  #
+  # Chaque service Railway DOIT avoir le réglage « Wait for CI » activé : Railway attend
+  # que le check GitHub de ce workflow soit vert avant de lancer son déploiement. Un
+  # commit qui casse le lint ou les tests n'est donc jamais déployé, sur AUCUN des
+  # environnements — Dev, Demo, Prod et le fork client `Castaniu Family`.
+  #
+  # Il y a donc UN SEUL chemin de déploiement (le webhook GitHub de Railway). Ne pas
+  # rajouter ici un job `railway up` : ça redéploierait une seconde fois le même
+  # service, en concurrence avec le déploiement automatique.
+  #
+  # Piège à connaître si on revient un jour sur ce choix : le service `Dev`
+  # (bb14c37f) est PARTAGÉ par les trois environnements Prod / Demo / Dev. Son seul
+  # nom ne désigne donc pas une cible — c'est l'environnement auquel le token est
+  # scopé qui tranche. Un `railway up --service Dev` sans `--environment` explicite
+  # peut déployer dev.templyo.fr en croyant livrer la prod.
