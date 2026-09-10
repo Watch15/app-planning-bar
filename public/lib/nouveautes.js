@@ -64,6 +64,18 @@
 
     const NOUVEAUTES = [
         {
+            id: 'sim-taux-manquant', date: '2026-09-11',
+            roles: ['patron', 'directeur', 'observateur'],
+            titre: 'Plus de trou dans la masse quand un taux manque',
+            quoi: "Dans Simulation, une personne dont la fiche n'a pas de taux comptait pour "
+                + "0 € : la masse salariale et le coefficient étaient faux sans rien dire. "
+                + "Elle est maintenant estimée au taux de son groupe, comme un Joker, et la "
+                + "ligne précise « (groupe Bar) » pour qu'on ne la confonde pas avec un taux "
+                + "vraiment saisi. Les heures déjà pointées, elles, ne sont jamais estimées : "
+                + "un taux qui manque là reste signalé, pour ne pas inventer une dépense.",
+            ou: 'Performance → Simulation → « Détail » d’un jour'
+        },
+        {
             id: 'perf-simulation', date: '2026-09-10',
             roles: ['patron', 'directeur', 'observateur'],
             titre: 'Estimer un jour ou une semaine sans toucher au CA réel',
