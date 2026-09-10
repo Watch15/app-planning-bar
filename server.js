@@ -21,6 +21,7 @@ const {
     upcomingWeekRange, upcomingWeekMondays,
     dispoMateriallyDiffers, staffReopenedFor, dispoEventDelta,
     deriveStaffHourlyStat, buildPerformanceSimulation, jokerGroupKey, isJokerShift, isShiftCompleted,
+    buildStaffRateStatsReport,
 } = require('./lib/utils');
 const {
     resolveAll: resolveClientFeatures,
@@ -396,6 +397,13 @@ async function connectDB() {
         db.collection('time_validations').createIndex(
             { etablissement_id: 1 }
         ).catch(e => console.warn('⚠️ Index time_validations.etablissement_id:', e.message));
+        // D-100 — codes signature hebdo (staff + semaine) + signatures.
+        db.collection('codes_signature_hebdo').createIndex(
+            { staff_id: 1, week_start: 1 }, { unique: true }
+        ).catch(e => console.warn('⚠️ Index codes_signature_hebdo:', e.message));
+        db.collection('week_signatures').createIndex(
+            { staff_id: 1, week_start: 1 }, { unique: true }
+        ).catch(e => console.warn('⚠️ Index week_signatures:', e.message));
         // Une seule instance par base doit porter le cron (cf. CRON_ENABLED).
         if (CRON_ENABLED) {
             scheduleDailyAt10();
@@ -3041,9 +3049,11 @@ app.patch('/api/shifts/:id/joker-open', checkDB, requirePatron, denyObservateurE
         if (!canAccessEstablishment(req.session.user, shift.establishment_id)) return res.status(403).json({ error: 'Accès refusé' });
 
         if (open) {
+            const setFields = { joker_open: true };
+            if (req.body && req.body.slot_offer === true) setFields.slot_offer = true;
             await db.collection('shifts').updateOne(
                 { _id: new ObjectId(req.params.id) },
-                { $set: { joker_open: true } }
+                { $set: setFields }
             );
             // B-10 : pas de push si le shift Joker est dans le passé
             // F-14 — `sendPushToStaff` écarte déjà les archivés, mais le prédicat « qui
@@ -3077,6 +3087,69 @@ app.patch('/api/shifts/:id/joker-open', checkDB, requirePatron, denyObservateurE
         res.json({ message: 'Joker mis à jour' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
+
+// D-101 — ouvrir en masse les Jokers d'une semaine (créneaux prédéfinis / slot_offer).
+app.post('/api/jokers/open-week',
+    checkDB, requirePatron, denyObservateurEdit, requireFeature('predefined_slots'),
+    requireEstablishmentAccess(r => r.body && r.body.establishment_id),
+    async (req, res) => {
+        try {
+            const establishment_id = req.body && req.body.establishment_id;
+            const week_start = req.body && req.body.week_start;
+            if (!establishment_id) return res.status(400).json({ error: 'establishment_id requis' });
+            if (!week_start || !/^\d{4}-\d{2}-\d{2}$/.test(week_start)) {
+                return res.status(400).json({ error: 'week_start (YYYY-MM-DD) requis' });
+            }
+            const dates = weekDateStrings(week_start);
+            if (!dates) return res.status(400).json({ error: 'week_start invalide' });
+
+            const filter = {
+                establishment_id,
+                date: { $in: dates },
+                type: { $ne: 'week_note' },
+                $or: [{ is_joker: true }, { staff_id: '__joker__' }],
+                joker_open: { $ne: true },
+            };
+            const targets = await db.collection('shifts').find(filter).toArray();
+            if (!targets.length) {
+                return res.json({ message: 'Aucun joker à ouvrir', opened: 0 });
+            }
+            const ids = targets.map(s => s._id);
+            await db.collection('shifts').updateMany(
+                { _id: { $in: ids } },
+                { $set: { joker_open: true, slot_offer: true } }
+            );
+
+            const today = toDateStr(new Date());
+            const estabStaff = await db.collection('staff').find({
+                venues: establishment_id, ...NOT_ARCHIVED,
+            }).toArray();
+            const notifyIds = new Set();
+            for (const shift of targets) {
+                if (shift.date < today) continue;
+                const eligible = shift.joker_group
+                    ? estabStaff.filter(s => {
+                        const g = Array.isArray(s.groups) ? s.groups : [];
+                        return g.length === 0 || g.includes(shift.joker_group);
+                    })
+                    : estabStaff;
+                eligible.forEach(s => notifyIds.add(String(s._id)));
+            }
+            if (notifyIds.size) {
+                await sendPushToStaff([...notifyIds], {
+                    title: 'Templyo — Créneaux proposés',
+                    body: 'Des créneaux de la semaine sont ouverts aux candidatures.',
+                    tag: 'slot-offer-week-' + week_start + '-' + establishment_id,
+                    url: '/planning.html',
+                });
+            }
+            res.json({ message: 'Créneaux proposés', opened: ids.length, week_start, establishment_id });
+        } catch (e) {
+            console.error('[POST /api/jokers/open-week]', e);
+            res.status(500).json({ error: 'Erreur interne' });
+        }
+    }
+);
 
 app.patch('/api/shifts/:id', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
@@ -5575,7 +5648,10 @@ app.get('/api/shifts/joker-ouverts', checkDB, requireAuth, async (req, res) => {
         // date ni filtre — c'est `planning.js` qui bornait, dans le navigateur.
         const isVisible = await publishedShiftFilter();
         const shifts = (await db.collection('shifts').find(query, {
-            projection: { _id: 1, date: 1, start_time: 1, end_time: 1, establishment_id: 1, joker_candidates: 1 }
+            projection: {
+                _id: 1, date: 1, start_time: 1, end_time: 1, establishment_id: 1,
+                joker_candidates: 1, joker_group: 1, slot_offer: 1,
+            }
         }).toArray()).filter(isVisible);
         // Résoudre les noms d'établissements en une requête batch
         const estabIds = [...new Set(shifts.map(s => s.establishment_id).filter(Boolean))];
@@ -5591,6 +5667,8 @@ app.get('/api/shifts/joker-ouverts', checkDB, requireAuth, async (req, res) => {
             end_time:           s.end_time,
             establishment_id:   s.establishment_id,
             establishment_name: estabNameById[s.establishment_id] || s.establishment_id,
+            joker_group:        s.joker_group || null,
+            slot_offer:         !!s.slot_offer,
             has_applied:        staffId ? (s.joker_candidates || []).some(c => c.staff_id === staffId) : false,
         }));
         res.json(result);
@@ -6459,9 +6537,50 @@ app.get('/api/performance', checkDB, requirePatron,
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
+// GET moyennes / médianes des taux staff (D-98) — pool établissements + filtre groupe.
+app.get('/api/performance/staff-rate-stats', checkDB, requirePatron, async (req, res) => {
+    try {
+        let ids = [];
+        const raw = req.query.establishment_ids;
+        if (Array.isArray(raw)) ids = raw.filter(Boolean);
+        else if (typeof raw === 'string' && raw.trim()) {
+            ids = raw.split(',').map(s => s.trim()).filter(Boolean);
+        }
+        if (ids.length === 0 && req.query.establishment_id) {
+            ids = [String(req.query.establishment_id)];
+        }
+        if (ids.length === 0) {
+            return res.status(400).json({ error: 'establishment_ids ou establishment_id requis' });
+        }
+        const scope = userEstablishmentIds(req.session.user);
+        if (scope !== null) {
+            ids = ids.filter(id => scope.includes(id));
+            if (ids.length === 0) {
+                return res.status(403).json({ error: 'Aucun établissement accessible' });
+            }
+        }
+        const group = req.query.group ? String(req.query.group).trim() : '';
+        const staffPool = await db.collection('staff').find(NOT_ARCHIVED).toArray();
+        const report = buildStaffRateStatsReport(staffPool, {
+            establishmentIds: ids,
+            groupIds: group ? [group] : undefined,
+        });
+        res.json({
+            establishment_ids: ids,
+            group: group || null,
+            groups: report.groups,
+            overall: report.overall,
+        });
+    } catch (e) {
+        console.error('[GET /api/performance/staff-rate-stats]', e);
+        res.status(500).json({ error: 'Erreur interne' });
+    }
+});
+
 // POST simulation Performance — hybride (réel pointé + planifié restant), CA hypo éphémère.
 // Ne touche PAS à daily_revenue. joker_mode: manual_hourly | manual_fixed | mean | median.
 // Valo joker par groupe (`joker_group`) via maps joker_*_by_group (scalaires = fallback legacy).
+// D-99 : joker_mode_by_group { Bar: 'manual_hourly', Cuisine: 'mean', … } pour modes distincts.
 app.post('/api/performance/simulate', checkDB, requirePatron,
     requireEstablishmentAccess(r => r.body && r.body.establishment_id), async (req, res) => {
     try {
@@ -6469,6 +6588,7 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
             establishment_id, from, to,
             hypo_revenue_by_date,
             joker_mode,
+            joker_mode_by_group,
             joker_hourly, joker_fixed,
             joker_hourly_by_group, joker_fixed_by_group,
             source_establishment_ids,
@@ -6478,10 +6598,21 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
         if (!from || !to) return res.status(400).json({ error: 'from et to requis (YYYY-MM-DD)' });
         if (from > to) return res.status(400).json({ error: 'from doit être ≤ to' });
 
-        const mode = joker_mode || 'manual_hourly';
         const allowedModes = new Set(['manual_hourly', 'manual_fixed', 'mean', 'median']);
-        if (!allowedModes.has(mode)) {
+        const defaultMode = joker_mode || 'manual_hourly';
+        if (!allowedModes.has(defaultMode)) {
             return res.status(400).json({ error: 'joker_mode invalide' });
+        }
+        const modeByGroupRaw = (joker_mode_by_group && typeof joker_mode_by_group === 'object'
+            && !Array.isArray(joker_mode_by_group))
+            ? joker_mode_by_group
+            : null;
+        if (modeByGroupRaw) {
+            for (const k of Object.keys(modeByGroupRaw)) {
+                if (!allowedModes.has(modeByGroupRaw[k])) {
+                    return res.status(400).json({ error: 'joker_mode_by_group invalide pour « ' + k + ' »' });
+                }
+            }
         }
 
         const perfSettings = await loadPerfSettings(establishment_id);
@@ -6500,12 +6631,13 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
 
         let jokerHourly = null;
         let jokerFixed = null;
-        let jokerHourlyByGroup = null;
-        let jokerFixedByGroup = null;
+        let jokerHourlyByGroup = {};
+        let jokerFixedByGroup = {};
         let joker_rate_used = null;
         let joker_rate_sample_size = null;
         let joker_rate_kind = null;
         const joker_rates_by_group = {};
+        const joker_modes_resolved = {};
 
         const parseGroupMap = (raw) => {
             const out = {};
@@ -6519,66 +6651,62 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
         };
         const groupLabel = g => (g === '_' ? 'Sans groupe' : g);
 
-        if (mode === 'manual_fixed') {
-            jokerFixedByGroup = parseGroupMap(joker_fixed_by_group);
-            if (Object.keys(jokerFixedByGroup).length === 0 && joker_fixed != null && !Number.isNaN(Number(joker_fixed))) {
-                const v = Number(joker_fixed);
-                if (jokerGroups.size === 0) jokerFixedByGroup['_'] = v;
-                else jokerGroups.forEach(g => { jokerFixedByGroup[g] = v; });
-                jokerFixed = v;
+        let sourceIds = Array.isArray(source_establishment_ids) ? source_establishment_ids.filter(Boolean) : [];
+        if (sourceIds.length === 0) sourceIds = [establishment_id];
+        const scope = userEstablishmentIds(req.session.user);
+        if (scope !== null) {
+            sourceIds = sourceIds.filter(id => scope.includes(id));
+            if (sourceIds.length === 0 && (defaultMode === 'mean' || defaultMode === 'median'
+                || (modeByGroupRaw && Object.values(modeByGroupRaw).some(m => m === 'mean' || m === 'median')))) {
+                return res.status(403).json({ error: 'Aucun établissement source accessible' });
             }
-            for (const g of jokerGroups) {
-                if (jokerFixedByGroup[g] == null) {
+        }
+        let staffPool = null;
+        const ensureStaffPool = async () => {
+            if (!staffPool) staffPool = await db.collection('staff').find(NOT_ARCHIVED).toArray();
+            return staffPool;
+        };
+
+        const hourlyMapIn = parseGroupMap(joker_hourly_by_group);
+        const fixedMapIn = parseGroupMap(joker_fixed_by_group);
+        if (Object.keys(hourlyMapIn).length === 0 && joker_hourly != null && !Number.isNaN(Number(joker_hourly))) {
+            const v = Number(joker_hourly);
+            jokerHourly = v;
+            if (jokerGroups.size === 0) hourlyMapIn['_'] = v;
+            else jokerGroups.forEach(g => { hourlyMapIn[g] = v; });
+        }
+        if (Object.keys(fixedMapIn).length === 0 && joker_fixed != null && !Number.isNaN(Number(joker_fixed))) {
+            const v = Number(joker_fixed);
+            jokerFixed = v;
+            if (jokerGroups.size === 0) fixedMapIn['_'] = v;
+            else jokerGroups.forEach(g => { fixedMapIn[g] = v; });
+        }
+
+        const groupsToResolve = jokerGroups.size ? [...jokerGroups] : [];
+        let totalSample = 0;
+
+        for (const g of groupsToResolve) {
+            const mode = (modeByGroupRaw && modeByGroupRaw[g]) || defaultMode;
+            joker_modes_resolved[g] = mode;
+            if (mode === 'manual_fixed') {
+                if (fixedMapIn[g] == null) {
                     return res.status(400).json({
                         error: 'Forfait joker manquant pour le groupe « ' + groupLabel(g) + ' »',
                     });
                 }
-                joker_rates_by_group[g] = { rate: jokerFixedByGroup[g], sample_size: null, kind: 'fixed' };
-            }
-            joker_rate_kind = 'fixed';
-            const firstKey = jokerGroups.size ? [...jokerGroups][0] : Object.keys(jokerFixedByGroup)[0];
-            joker_rate_used = firstKey != null ? jokerFixedByGroup[firstKey] : null;
-            if (joker_rate_used == null && jokerGroups.size > 0) {
-                return res.status(400).json({ error: 'joker_fixed ou joker_fixed_by_group requis' });
-            }
-        } else if (mode === 'manual_hourly') {
-            jokerHourlyByGroup = parseGroupMap(joker_hourly_by_group);
-            if (Object.keys(jokerHourlyByGroup).length === 0 && joker_hourly != null && !Number.isNaN(Number(joker_hourly))) {
-                const v = Number(joker_hourly);
-                if (jokerGroups.size === 0) jokerHourlyByGroup['_'] = v;
-                else jokerGroups.forEach(g => { jokerHourlyByGroup[g] = v; });
-                jokerHourly = v;
-            }
-            for (const g of jokerGroups) {
-                if (jokerHourlyByGroup[g] == null) {
+                jokerFixedByGroup[g] = fixedMapIn[g];
+                joker_rates_by_group[g] = { rate: fixedMapIn[g], sample_size: null, kind: 'fixed', mode };
+            } else if (mode === 'manual_hourly') {
+                if (hourlyMapIn[g] == null) {
                     return res.status(400).json({
                         error: 'Taux horaire joker manquant pour le groupe « ' + groupLabel(g) + ' »',
                     });
                 }
-                joker_rates_by_group[g] = { rate: jokerHourlyByGroup[g], sample_size: null, kind: 'hourly' };
-            }
-            joker_rate_kind = 'hourly';
-            const firstKey = jokerGroups.size ? [...jokerGroups][0] : Object.keys(jokerHourlyByGroup)[0];
-            joker_rate_used = firstKey != null ? jokerHourlyByGroup[firstKey] : null;
-            if (joker_rate_used == null && jokerGroups.size > 0) {
-                return res.status(400).json({ error: 'joker_hourly ou joker_hourly_by_group requis' });
-            }
-        } else {
-            let sourceIds = Array.isArray(source_establishment_ids) ? source_establishment_ids.filter(Boolean) : [];
-            if (sourceIds.length === 0) sourceIds = [establishment_id];
-            const scope = userEstablishmentIds(req.session.user);
-            if (scope !== null) {
-                sourceIds = sourceIds.filter(id => scope.includes(id));
-                if (sourceIds.length === 0) {
-                    return res.status(403).json({ error: 'Aucun établissement source accessible' });
-                }
-            }
-            const staffPool = await db.collection('staff').find(NOT_ARCHIVED).toArray();
-            jokerHourlyByGroup = {};
-            let totalSample = 0;
-            const groupsToDerive = jokerGroups.size ? jokerGroups : new Set(['_']);
-            for (const g of groupsToDerive) {
-                const derived = deriveStaffHourlyStat(staffPool, {
+                jokerHourlyByGroup[g] = hourlyMapIn[g];
+                joker_rates_by_group[g] = { rate: hourlyMapIn[g], sample_size: null, kind: 'hourly', mode };
+            } else {
+                const pool = await ensureStaffPool();
+                const derived = deriveStaffHourlyStat(pool, {
                     stat: mode,
                     establishmentIds: sourceIds,
                     groupIds: g === '_' ? undefined : [g],
@@ -6596,14 +6724,23 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
                     rate: derived.rate,
                     sample_size: derived.sample_size,
                     kind: 'hourly',
+                    mode,
                 };
                 totalSample += derived.sample_size;
             }
-            joker_rate_kind = 'hourly';
-            const keys = Object.keys(jokerHourlyByGroup);
-            joker_rate_used = keys.length ? jokerHourlyByGroup[keys[0]] : null;
-            joker_rate_sample_size = totalSample;
-            jokerHourly = joker_rate_used;
+        }
+
+        if (groupsToResolve.length === 0) {
+            // Pas de joker : conserver un mode global pour la réponse.
+            joker_rate_kind = defaultMode === 'manual_fixed' ? 'fixed' : 'hourly';
+        } else {
+            const kinds = new Set(Object.values(joker_rates_by_group).map(x => x.kind));
+            joker_rate_kind = kinds.size === 1 ? [...kinds][0] : 'mixed';
+            const firstG = groupsToResolve[0];
+            joker_rate_used = joker_rates_by_group[firstG].rate;
+            joker_rate_sample_size = totalSample || null;
+            if (Object.keys(jokerHourlyByGroup).length) jokerHourly = joker_rate_used;
+            if (Object.keys(jokerFixedByGroup).length) jokerFixed = jokerFixedByGroup[firstG];
         }
 
         const revenues = await db.collection('daily_revenue').find({
@@ -6640,15 +6777,16 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
             chargeRate: charge_rate,
             jokerHourly,
             jokerFixed,
-            jokerHourlyByGroup,
-            jokerFixedByGroup,
+            jokerHourlyByGroup: Object.keys(jokerHourlyByGroup).length ? jokerHourlyByGroup : null,
+            jokerFixedByGroup: Object.keys(jokerFixedByGroup).length ? jokerFixedByGroup : null,
         });
 
         res.json({
             establishment_id,
             from,
             to,
-            joker_mode: mode,
+            joker_mode: defaultMode,
+            joker_modes_by_group: joker_modes_resolved,
             joker_rate_used,
             joker_rate_kind,
             joker_rate_sample_size,
@@ -6665,12 +6803,8 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
 });
 
 // GET/PATCH objectifs performance (coefficient cible)
-// S-03 : `requireAuth` seul laissait n'importe quel staff lire les objectifs et le taux
-// de charges de n'importe quel bar en devinant l'id (slug `Nom_bar`).
-// `whenAbsent: 'patronOnly'` porte la règle propre à ces deux routes : sans
-// `establishment_id`, on vise le doc GLOBAL `performance`, dont `charge_rate` alimente
-// TOUS les établissements par fallback (`resolvePerfSettings`) — un directeur limité à un
-// bar y déplacerait les chiffres de bars qu'il ne voit même pas.
+// S-03 : `requireAuth` seul laissait n'importe quel staff lire les objectifs.
+// `whenAbsent: 'patronOnly'` : sans establishment_id → doc GLOBAL `performance`.
 app.get('/api/performance-settings', checkDB, requirePatron,
     requireEstablishmentAccess(r => r.query.establishment_id, { whenAbsent: 'patronOnly' }), async (req, res) => {
     try {
@@ -7083,6 +7217,103 @@ async function ensureCodeCloture(estabId) {
 async function insertTimeValidation(payload) {
     // Append-only : jamais d'update/delete sur time_validations.
     await db.collection('time_validations').insertOne(payload);
+}
+
+/** Semaine W à signer pendant la fenêtre W+1 (lun–dim). */
+function weekSignTargetFromNow(now) {
+    const ref = now || new Date();
+    const mondayThis = weekStart(ref);
+    const mondayW = new Date(mondayThis);
+    mondayW.setDate(mondayW.getDate() - 7);
+    const weekStartStr = toDateStr(mondayW);
+    const windowStart = toDateStr(mondayThis);
+    const sunday = new Date(mondayThis);
+    sunday.setDate(sunday.getDate() + 6);
+    const windowEnd = toDateStr(sunday);
+    const today = toDateStr(ref);
+    return {
+        week_start: weekStartStr,
+        window_start: windowStart,
+        window_end: windowEnd,
+        in_window: today >= windowStart && today <= windowEnd,
+    };
+}
+
+function weekSignExpireMs(weekStartStr) {
+    const mon = new Date(weekStartStr + 'T12:00:00');
+    mon.setDate(mon.getDate() + 13); // dimanche de W+1
+    return new Date(mon.getFullYear(), mon.getMonth(), mon.getDate(), 23, 59, 59, 999).getTime();
+}
+
+async function staffHasResponsableRole(staffId) {
+    if (!staffId || !isValidObjectId(String(staffId))) return false;
+    const responsableRoles = await db.collection('roles').find({ type: 'responsable' }).toArray();
+    const responsableIds = responsableRoles.map(r => String(r._id));
+    if (!responsableIds.length) return false;
+    const staff = await db.collection('staff').findOne({ _id: new ObjectId(String(staffId)) });
+    if (!staff) return false;
+    const roles = Array.isArray(staff.roles) ? staff.roles.map(String) : [];
+    return roles.some(r => responsableIds.includes(r));
+}
+
+async function canAccessWeekValidation(user) {
+    if (!user) return false;
+    if (user.role === 'patron' || user.role === 'directeur' || user.role === 'observateur') return true;
+    if (user.role === 'staff' && user.staff_id) return staffHasResponsableRole(user.staff_id);
+    return false;
+}
+
+function canEditWeekValidation(user) {
+    return !!(user && user.role !== 'observateur');
+}
+
+async function ensureWeekSignCode(staffId, weekStartStr) {
+    const expire_ms = weekSignExpireMs(weekStartStr);
+    const existing = await db.collection('codes_signature_hebdo').findOne({
+        staff_id: String(staffId),
+        week_start: weekStartStr,
+    });
+    if (existing && !existing.code_utilise && existing.expire_ms >= Date.now()) {
+        return existing;
+    }
+    const doc = {
+        staff_id: String(staffId),
+        week_start: weekStartStr,
+        code_actuel: genCode4(),
+        code_utilise: false,
+        expire_ms,
+        regenerated_at: new Date(),
+    };
+    await db.collection('codes_signature_hebdo').updateOne(
+        { staff_id: String(staffId), week_start: weekStartStr },
+        { $set: doc },
+        { upsert: true }
+    );
+    return doc;
+}
+
+async function regenerateWeekSignCode(staffId, weekStartStr) {
+    const doc = {
+        staff_id: String(staffId),
+        week_start: weekStartStr,
+        code_actuel: genCode4(),
+        code_utilise: false,
+        expire_ms: weekSignExpireMs(weekStartStr),
+        regenerated_at: new Date(),
+    };
+    await db.collection('codes_signature_hebdo').updateOne(
+        { staff_id: String(staffId), week_start: weekStartStr },
+        { $set: doc },
+        { upsert: true }
+    );
+    return doc;
+}
+
+function validationEstabFilter(user) {
+    const ids = userEstablishmentIds(user);
+    if (ids === null) return {};
+    if (!ids.length) return { establishment_id: { $in: [] } };
+    return { establishment_id: { $in: ids } };
 }
 
 async function classifyCodeRefuse(estabId, code) {
@@ -7587,6 +7818,31 @@ app.post('/api/etablissements/:id/valider-recap',
         const dates = weekDateStrings(weekStart);
         if (!dates) return res.status(400).json({ error: 'week_start invalide' });
         try {
+            if (clientFeatureEnabled('weekly_staff_validation')) {
+                const staffIds = await db.collection('shifts').distinct('staff_id', {
+                    establishment_id: req.params.id,
+                    date: { $in: dates },
+                    type: { $ne: 'week_note' },
+                    is_joker: { $ne: true },
+                    staff_id: { $nin: [null, '', '__joker__'] },
+                });
+                const needSign = staffIds.filter(id => id && isValidObjectId(String(id)));
+                if (needSign.length) {
+                    const signed = await db.collection('week_signatures').find({
+                        week_start: weekStart,
+                        staff_id: { $in: needSign.map(String) },
+                        status: 'signed',
+                    }).toArray();
+                    const signedSet = new Set(signed.map(s => String(s.staff_id)));
+                    const missing = needSign.filter(id => !signedSet.has(String(id)));
+                    if (missing.length) {
+                        return res.status(409).json({
+                            error: 'Signatures hebdomadaires manquantes (' + missing.length + ' staff)',
+                            missing_staff_ids: missing.map(String),
+                        });
+                    }
+                }
+            }
             const valideLe = localDateParts();
             const actorId = req.session.user.staff_id || req.session.user._id;
             const filter = {
@@ -7625,6 +7881,417 @@ app.post('/api/etablissements/:id/valider-recap',
                 matched:  result.matchedCount,
             });
         } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+    }
+);
+
+// ── D-100 Validation hebdomadaire (signature staff via code) ─────────────────
+
+app.get('/api/validation/week',
+    checkDB, requireAuth, requireFeature('weekly_staff_validation'),
+    async (req, res) => {
+        try {
+            const user = req.session.user;
+            if (!(await canAccessWeekValidation(user))) {
+                return res.status(403).json({ error: 'Accès réservé aux managers / responsables' });
+            }
+            let weekStartStr = req.query.week_start;
+            const target = weekSignTargetFromNow();
+            if (!weekStartStr || !/^\d{4}-\d{2}-\d{2}$/.test(weekStartStr)) {
+                weekStartStr = target.week_start;
+            }
+            const dates = weekDateStrings(weekStartStr);
+            if (!dates) return res.status(400).json({ error: 'week_start invalide' });
+
+            const estabFilter = validationEstabFilter(user);
+            const shifts = await db.collection('shifts').find({
+                ...estabFilter,
+                date: { $in: dates },
+                type: { $ne: 'week_note' },
+                is_joker: { $ne: true },
+                staff_id: { $nin: [null, '', '__joker__'] },
+            }).toArray();
+
+            const byStaff = {};
+            shifts.forEach(s => {
+                const sid = String(s.staff_id);
+                if (!byStaff[sid]) {
+                    byStaff[sid] = {
+                        staff_id: sid,
+                        staff_name: s.staff_name || null,
+                        establishments: new Set(),
+                        shifts: [],
+                        hours: 0,
+                    };
+                }
+                byStaff[sid].establishments.add(s.establishment_id);
+                const st = s.real_start != null ? s.real_start : s.start_time;
+                const en = s.real_end != null ? s.real_end : s.end_time;
+                let h = (st != null && en != null) ? (Number(en) - Number(st)) : 0;
+                if (h < 0) h = 0;
+                byStaff[sid].hours += h;
+                byStaff[sid].shifts.push({
+                    _id: String(s._id),
+                    date: s.date,
+                    establishment_id: s.establishment_id,
+                    start_time: st,
+                    end_time: en,
+                    hours: h,
+                    staff_week_signed: !!s.staff_week_signed,
+                    patron_valide: !!s.patron_valide,
+                });
+            });
+
+            const staffIds = Object.keys(byStaff);
+            const signatures = staffIds.length
+                ? await db.collection('week_signatures').find({
+                    week_start: weekStartStr,
+                    staff_id: { $in: staffIds },
+                }).toArray()
+                : [];
+            const sigByStaff = {};
+            signatures.forEach(s => { sigByStaff[String(s.staff_id)] = s; });
+
+            const staffDocs = staffIds.filter(isValidObjectId).length
+                ? await db.collection('staff').find({
+                    _id: { $in: staffIds.filter(isValidObjectId).map(id => new ObjectId(id)) },
+                }).toArray()
+                : [];
+            const nameById = {};
+            staffDocs.forEach(s => {
+                nameById[String(s._id)] = s.nickname || s.name || null;
+            });
+
+            const staff = staffIds.map(sid => {
+                const row = byStaff[sid];
+                const sig = sigByStaff[sid];
+                return {
+                    staff_id: sid,
+                    staff_name: nameById[sid] || row.staff_name || 'Staff',
+                    establishment_ids: [...row.establishments],
+                    shifts_count: row.shifts.length,
+                    hours: Math.round(row.hours * 100) / 100,
+                    signed: !!(sig && sig.status === 'signed'),
+                    signed_at: sig && sig.signed_at ? sig.signed_at : null,
+                    signed_by_user_id: sig && sig.signed_by_user_id ? sig.signed_by_user_id : null,
+                    shifts: row.shifts,
+                };
+            }).sort((a, b) => String(a.staff_name).localeCompare(String(b.staff_name), 'fr'));
+
+            res.json({
+                week_start: weekStartStr,
+                window: target,
+                can_edit: canEditWeekValidation(user),
+                staff,
+            });
+        } catch (e) {
+            console.error('[GET /api/validation/week]', e);
+            res.status(500).json({ error: 'Erreur interne' });
+        }
+    }
+);
+
+app.post('/api/validation/sign',
+    checkDB, requireAuth, requireFeature('weekly_staff_validation'), denyObservateurEdit,
+    async (req, res) => {
+        try {
+            const user = req.session.user;
+            if (!(await canAccessWeekValidation(user)) || !canEditWeekValidation(user)) {
+                return res.status(403).json({ error: 'Accès refusé' });
+            }
+            const staffId = req.body && req.body.staff_id ? String(req.body.staff_id) : '';
+            const weekStartStr = req.body && req.body.week_start ? String(req.body.week_start) : '';
+            const code = req.body && req.body.code != null ? String(req.body.code).trim() : '';
+            if (!staffId || !isValidObjectId(staffId)) {
+                return res.status(400).json({ error: 'staff_id invalide' });
+            }
+            if (!weekStartStr || !/^\d{4}-\d{2}-\d{2}$/.test(weekStartStr)) {
+                return res.status(400).json({ error: 'week_start requis' });
+            }
+            if (!/^\d{4}$/.test(code)) {
+                return res.status(400).json({ error: 'code à 4 chiffres requis' });
+            }
+            const dates = weekDateStrings(weekStartStr);
+            if (!dates) return res.status(400).json({ error: 'week_start invalide' });
+
+            const existingSig = await db.collection('week_signatures').findOne({
+                staff_id: staffId, week_start: weekStartStr, status: 'signed',
+            });
+            if (existingSig) {
+                return res.status(409).json({ error: 'Déjà signé pour cette semaine' });
+            }
+
+            const codeDoc = await db.collection('codes_signature_hebdo').findOne({
+                staff_id: staffId, week_start: weekStartStr,
+            });
+            if (!codeDoc || String(codeDoc.code_actuel) !== code) {
+                await insertTimeValidation({
+                    etablissement_id: '_week',
+                    shift_id: null,
+                    staff_id: staffId,
+                    acteur_role: user.role || null,
+                    action: 'week_sign',
+                    source: 'week_sign',
+                    code_saisi: code,
+                    heure_saisie: localDateParts(),
+                    resultat: 'refuse_code_invalide',
+                    phase: 'week_sign',
+                    week_start: weekStartStr,
+                });
+                return res.status(401).json({ error: 'Code invalide' });
+            }
+            if (codeDoc.code_utilise) {
+                return res.status(401).json({ error: 'Code déjà utilisé — réouvrez pour en générer un nouveau' });
+            }
+            if (codeDoc.expire_ms != null && codeDoc.expire_ms < Date.now()) {
+                return res.status(401).json({ error: 'Code expiré' });
+            }
+
+            const estabFilter = validationEstabFilter(user);
+            const shifts = await db.collection('shifts').find({
+                ...estabFilter,
+                staff_id: staffId,
+                date: { $in: dates },
+                type: { $ne: 'week_note' },
+                is_joker: { $ne: true },
+            }).toArray();
+            if (!shifts.length) {
+                return res.status(404).json({ error: 'Aucun shift à signer pour ce staff' });
+            }
+            // Signature multi-affaires : tous les shifts du staff sur la semaine (périmètre accessible).
+            const allShifts = await db.collection('shifts').find({
+                staff_id: staffId,
+                date: { $in: dates },
+                type: { $ne: 'week_note' },
+                is_joker: { $ne: true },
+            }).toArray();
+            const establishmentIds = [...new Set(allShifts.map(s => s.establishment_id).filter(Boolean))];
+            const signedAt = new Date();
+            const actorId = String(user.staff_id || user._id);
+
+            await db.collection('codes_signature_hebdo').updateOne(
+                { staff_id: staffId, week_start: weekStartStr, code_actuel: code, code_utilise: false },
+                { $set: { code_utilise: true, used_at: signedAt, used_by_user_id: actorId } }
+            );
+
+            await db.collection('week_signatures').updateOne(
+                { staff_id: staffId, week_start: weekStartStr },
+                {
+                    $set: {
+                        staff_id: staffId,
+                        week_start: weekStartStr,
+                        establishment_ids: establishmentIds,
+                        status: 'signed',
+                        signed_at: signedAt,
+                        signed_by_user_id: actorId,
+                        code_ok: true,
+                    },
+                },
+                { upsert: true }
+            );
+
+            const shiftIds = allShifts.map(s => s._id);
+            if (shiftIds.length) {
+                await db.collection('shifts').updateMany(
+                    { _id: { $in: shiftIds } },
+                    { $set: { staff_week_signed: true, staff_week_signed_at: signedAt } }
+                );
+            }
+
+            await insertTimeValidation({
+                etablissement_id: establishmentIds[0] || '_week',
+                shift_id: null,
+                staff_id: staffId,
+                acteur_role: user.role || null,
+                action: 'week_sign',
+                source: 'week_sign',
+                code_saisi: code,
+                heure_saisie: localDateParts(),
+                resultat: 'accepte',
+                phase: 'week_sign',
+                week_start: weekStartStr,
+                establishment_ids: establishmentIds,
+                signed_by_user_id: actorId,
+            });
+
+            res.json({
+                message: 'Semaine signée',
+                staff_id: staffId,
+                week_start: weekStartStr,
+                establishment_ids: establishmentIds,
+                shifts_signed: shiftIds.length,
+            });
+        } catch (e) {
+            console.error('[POST /api/validation/sign]', e);
+            res.status(500).json({ error: 'Erreur interne' });
+        }
+    }
+);
+
+app.post('/api/validation/reopen',
+    checkDB, requireAuth, requireFeature('weekly_staff_validation'), denyObservateurEdit,
+    async (req, res) => {
+        try {
+            const user = req.session.user;
+            if (!(await canAccessWeekValidation(user)) || !canEditWeekValidation(user)) {
+                return res.status(403).json({ error: 'Accès refusé' });
+            }
+            const staffId = req.body && req.body.staff_id ? String(req.body.staff_id) : '';
+            const weekStartStr = req.body && req.body.week_start ? String(req.body.week_start) : '';
+            if (!staffId || !isValidObjectId(staffId)) {
+                return res.status(400).json({ error: 'staff_id invalide' });
+            }
+            if (!weekStartStr || !/^\d{4}-\d{2}-\d{2}$/.test(weekStartStr)) {
+                return res.status(400).json({ error: 'week_start requis' });
+            }
+            const dates = weekDateStrings(weekStartStr);
+            if (!dates) return res.status(400).json({ error: 'week_start invalide' });
+
+            const locked = await db.collection('shifts').findOne({
+                staff_id: staffId,
+                date: { $in: dates },
+                patron_valide: true,
+            });
+            if (locked) {
+                return res.status(409).json({ error: 'Récap déjà validé — réouverture impossible' });
+            }
+
+            await db.collection('week_signatures').updateOne(
+                { staff_id: staffId, week_start: weekStartStr },
+                {
+                    $set: {
+                        status: 'reopened',
+                        reopened_at: new Date(),
+                        reopened_by_user_id: String(user.staff_id || user._id),
+                    },
+                },
+                { upsert: true }
+            );
+            await db.collection('shifts').updateMany(
+                {
+                    staff_id: staffId,
+                    date: { $in: dates },
+                    type: { $ne: 'week_note' },
+                    is_joker: { $ne: true },
+                },
+                { $unset: { staff_week_signed: '', staff_week_signed_at: '' } }
+            );
+            const codeDoc = await regenerateWeekSignCode(staffId, weekStartStr);
+
+            await insertTimeValidation({
+                etablissement_id: '_week',
+                shift_id: null,
+                staff_id: staffId,
+                acteur_role: user.role || null,
+                action: 'week_sign_reopen',
+                source: 'week_sign',
+                code_saisi: 'REOPEN',
+                heure_saisie: localDateParts(),
+                resultat: 'accepte',
+                phase: 'week_sign',
+                week_start: weekStartStr,
+            });
+
+            res.json({
+                message: 'Signature réouverte',
+                staff_id: staffId,
+                week_start: weekStartStr,
+                code_regenerated: true,
+                // Le nouveau code n'est pas renvoyé au manager : seul le staff le consulte.
+                expire_ms: codeDoc.expire_ms,
+            });
+        } catch (e) {
+            console.error('[POST /api/validation/reopen]', e);
+            res.status(500).json({ error: 'Erreur interne' });
+        }
+    }
+);
+
+app.get('/api/validation/history',
+    checkDB, requireAuth, requireFeature('weekly_staff_validation'),
+    async (req, res) => {
+        try {
+            const user = req.session.user;
+            if (!(await canAccessWeekValidation(user))) {
+                return res.status(403).json({ error: 'Accès refusé' });
+            }
+            const q = { phase: 'week_sign' };
+            if (req.query.week_start && /^\d{4}-\d{2}-\d{2}$/.test(req.query.week_start)) {
+                q.week_start = req.query.week_start;
+            }
+            const nameFilter = req.query.q ? String(req.query.q).trim().toLowerCase() : '';
+            const docs = await db.collection('time_validations')
+                .find(q)
+                .sort({ _id: -1 })
+                .limit(100)
+                .toArray();
+            const staffIds = [...new Set(docs.map(d => String(d.staff_id)).filter(Boolean))];
+            const names = await resolveActeurNames(staffIds);
+            let rows = docs.map(d => ({
+                _id: String(d._id),
+                week_start: d.week_start || null,
+                staff_id: d.staff_id ? String(d.staff_id) : null,
+                staff_name: d.staff_id ? (names[String(d.staff_id)] || null) : null,
+                action: d.action,
+                resultat: d.resultat,
+                code_saisi: d.code_saisi,
+                acteur_role: d.acteur_role,
+                establishment_ids: d.establishment_ids || null,
+                heure_saisie: d.heure_saisie || null,
+            }));
+            if (nameFilter) {
+                rows = rows.filter(r =>
+                    (r.staff_name && r.staff_name.toLowerCase().includes(nameFilter))
+                    || (r.staff_id && r.staff_id.toLowerCase().includes(nameFilter))
+                );
+            }
+            res.json({ items: rows });
+        } catch (e) {
+            console.error('[GET /api/validation/history]', e);
+            res.status(500).json({ error: 'Erreur interne' });
+        }
+    }
+);
+
+/** Staff : consulter / générer mon code de signature pour la semaine cible. */
+app.get('/api/me/week-sign-code',
+    checkDB, requireAuth, requireFeature('weekly_staff_validation'),
+    async (req, res) => {
+        try {
+            const user = req.session.user;
+            if (user.role !== 'staff' || !user.staff_id) {
+                return res.status(403).json({ error: 'Réservé au staff' });
+            }
+            const target = weekSignTargetFromNow();
+            let weekStartStr = req.query.week_start;
+            if (!weekStartStr || !/^\d{4}-\d{2}-\d{2}$/.test(weekStartStr)) {
+                weekStartStr = target.week_start;
+            }
+            const sig = await db.collection('week_signatures').findOne({
+                staff_id: String(user.staff_id),
+                week_start: weekStartStr,
+                status: 'signed',
+            });
+            if (sig) {
+                return res.json({
+                    week_start: weekStartStr,
+                    signed: true,
+                    code: null,
+                    window: target,
+                });
+            }
+            const doc = await ensureWeekSignCode(user.staff_id, weekStartStr);
+            res.json({
+                week_start: weekStartStr,
+                signed: false,
+                code: doc.code_actuel,
+                code_utilise: !!doc.code_utilise,
+                expire_ms: doc.expire_ms,
+                window: target,
+            });
+        } catch (e) {
+            console.error('[GET /api/me/week-sign-code]', e);
+            res.status(500).json({ error: 'Erreur interne' });
+        }
     }
 );
 

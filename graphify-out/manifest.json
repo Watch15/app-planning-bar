@@ -1,7 +1,7 @@
 {
   "lib/utils.js": {
-    "mtime": 1788938293.7305622,
-    "ast_hash": "3fcc3f8b3c7ebfc300594ec9fa0b8263",
+    "mtime": 1789024769.6344686,
+    "ast_hash": "848f08e467900ae570c1409ac6b36156",
     "semantic_hash": ""
   },
   "package.json": {
@@ -25,8 +25,8 @@
     "semantic_hash": "ff84def9ff25b1b84207ad1d15571fba"
   },
   "public/planning.js": {
-    "mtime": 1789022252.3389487,
-    "ast_hash": "b3288c787ca30e02557aaccd23761a9f",
+    "mtime": 1789025132.9714494,
+    "ast_hash": "aac329762eb86ab66ff8ab63c6f7d2d3",
     "semantic_hash": ""
   },
   "public/pointage.js": {
@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "public/script.js": {
-    "mtime": 1789022250.1547582,
-    "ast_hash": "2266cfa44aa8ef30de9aa120ab10a737",
+    "mtime": 1789025168.6646373,
+    "ast_hash": "d38eb7abf752c0a59577f86c367f10b4",
     "semantic_hash": ""
   },
   "public/sw.js": {
@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "server.js": {
-    "mtime": 1789022270.5275633,
-    "ast_hash": "7cde90df7f9df17e8952959f5a8f78e4",
+    "mtime": 1789025129.091491,
+    "ast_hash": "66631113876d56f03fe245d8a956985f",
     "semantic_hash": ""
   },
   "tests/routes.test.js": {
@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "docs/backlog.md": {
-    "mtime": 1789022282.6557734,
-    "ast_hash": "4e621f2d4578237eaa301fd6a57884fd",
+    "mtime": 1789025228.2852864,
+    "ast_hash": "215f05769c094f948dd930de0df692ed",
     "semantic_hash": ""
   },
   "docs/prd.md": {
@@ -125,8 +125,8 @@
     "semantic_hash": ""
   },
   "public/index.html": {
-    "mtime": 1789022244.6093252,
-    "ast_hash": "749959213b823b5eba8b845a3e729edb",
+    "mtime": 1789025139.954257,
+    "ast_hash": "307080564fb8ee456e57fc77621327c6",
     "semantic_hash": ""
   },
   "public/login.html": {
@@ -135,13 +135,13 @@
     "semantic_hash": ""
   },
   "public/performance.html": {
-    "mtime": 1789022219.1755931,
-    "ast_hash": "464f1530f370f105adb6f1fa58bdecfe",
+    "mtime": 1789024587.2394097,
+    "ast_hash": "10f8bb4551e863d96d9ec153b2c174d5",
     "semantic_hash": ""
   },
   "public/planning.html": {
-    "mtime": 1789022246.348153,
-    "ast_hash": "34da8eef493f262851421376a7786354",
+    "mtime": 1789025023.912671,
+    "ast_hash": "4c0df7e75e0a0f6b0f8baa095a59f281",
     "semantic_hash": ""
   },
   "public/pointage.html": {
@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "public/performance.js": {
-    "mtime": 1789022253.47154,
-    "ast_hash": "f1cfa18d4655ba091f93ec872396d1f3",
+    "mtime": 1789024695.062919,
+    "ast_hash": "6bd0b2a7cd41178ceb5a6f0be7e6ac81",
     "semantic_hash": ""
   },
   "public/sw-register.js": {
@@ -245,8 +245,8 @@
     "semantic_hash": ""
   },
   "scripts/_db.js": {
-    "mtime": 1788779199.2866592,
-    "ast_hash": "c5c174c0e11f2cc844f1ec885bc62048",
+    "mtime": 1789024860.9282944,
+    "ast_hash": "ca2c8ea41e802ce50f73bd5167c4ea2d",
     "semantic_hash": ""
   },
   "scripts/dev-run.js": {
@@ -405,8 +405,8 @@
     "semantic_hash": ""
   },
   "tests/performance-simulate.test.js": {
-    "mtime": 1788938736.4804115,
-    "ast_hash": "99a89f2cbd178d9ecb7c9e4000d0e63a",
+    "mtime": 1789024716.0347188,
+    "ast_hash": "1fd9080742e7e32b1746e9b78887fdda",
     "semantic_hash": ""
   },
   "public/lib/joker-group-color.js": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "docs/design-creneaux-predefinis.md": {
-    "mtime": 1788995923.0603833,
-    "ast_hash": "dd35fbaec98fb3cbc4e88089e799ae31",
+    "mtime": 1789025074.4600363,
+    "ast_hash": "340c2121c76ece7de074d12050b7d178",
     "semantic_hash": ""
   },
   "docs/setup-castaniu-dev.md": {
@@ -425,8 +425,8 @@
     "semantic_hash": ""
   },
   "lib/client-features.js": {
-    "mtime": 1789022159.7618186,
-    "ast_hash": "1723f648ec3b5826ffa5d20a3912f18b",
+    "mtime": 1789025170.93692,
+    "ast_hash": "4dc157451fb4e00b77949b556dd1e4f9",
     "semantic_hash": ""
   },
   "public/lib/client-features.js": {
@@ -440,8 +440,38 @@
     "semantic_hash": ""
   },
   "docs/feature-flags.md": {
-    "mtime": 1789022273.728891,
-    "ast_hash": "c0860a293b87082595536c01373cf0fb",
+    "mtime": 1789022475.7826908,
+    "ast_hash": "c65987805e579ab4dc7ea4254cbb4299",
+    "semantic_hash": ""
+  },
+  "public/validation.js": {
+    "mtime": 1789025009.2686665,
+    "ast_hash": "6e3b7b2289de47044d3c66b7071a553e",
+    "semantic_hash": ""
+  },
+  "tests/jokers-open-week.test.js": {
+    "mtime": 1789025230.1954496,
+    "ast_hash": "ce170dbf8450cfc6447ee7e957d6f928",
+    "semantic_hash": ""
+  },
+  "tests/staff-rate-stats.test.js": {
+    "mtime": 1789024770.4779413,
+    "ast_hash": "2dc503b22ac907844b15ef9899bda4ad",
+    "semantic_hash": ""
+  },
+  "tests/week-validation.test.js": {
+    "mtime": 1789025224.6383748,
+    "ast_hash": "bda4130bd062e836863ec41fddcf57f6",
+    "semantic_hash": ""
+  },
+  "docs/design-validation-hebdo.md": {
+    "mtime": 1789024801.7493494,
+    "ast_hash": "f1b4e4a0ca5fa5d9ffdbc7b13b7ab7df",
+    "semantic_hash": ""
+  },
+  "public/validation.html": {
+    "mtime": 1789025009.2867317,
+    "ast_hash": "268958e4ad8d1c6409761084c09cb721",
     "semantic_hash": ""
   }
 }

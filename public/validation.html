@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Validation — Templyo</title>
+    <link rel="stylesheet" href="/lib/nouveautes.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --font: 'DM Sans', system-ui, sans-serif;
+            --teal: #0d9488;
+            --teal-soft: rgba(13, 148, 136, 0.12);
+            --bg: #f1f5f9;
+            --card: #fff;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --muted: #64748b;
+            --danger: #dc2626;
+            --ok: #059669;
+        }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+        .header {
+            background: #0f172a; color: #fff; height: 52px; padding: 0 16px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .header a { color: #fff; text-decoration: none; font-weight: 600; font-size: 14px; }
+        .header .brand { display: flex; align-items: center; gap: 10px; }
+        .header .brand-mark {
+            width: 28px; height: 28px; border-radius: 8px; background: var(--teal);
+            display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+        }
+        .badge-teal {
+            font-size: 11px; font-weight: 600; color: var(--teal);
+            background: var(--teal-soft); border: 1px solid color-mix(in srgb, var(--teal) 35%, transparent);
+            border-radius: 999px; padding: 4px 10px;
+        }
+        .wrap { max-width: 920px; margin: 0 auto; padding: 20px 16px 48px; }
+        h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+        .sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .tab {
+            border: 1.5px solid var(--border); background: var(--card); border-radius: 10px;
+            padding: 10px 14px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font);
+            min-height: 44px;
+        }
+        .tab.active { border-color: var(--teal); color: var(--teal); background: var(--teal-soft); }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+        .toolbar button, .toolbar input {
+            border: 1.5px solid var(--border); background: var(--card); border-radius: 10px;
+            padding: 10px 12px; font-size: 13px; font-family: var(--font); min-height: 44px;
+        }
+        .toolbar button { cursor: pointer; font-weight: 600; }
+        .toolbar button:hover { border-color: var(--teal); color: var(--teal); }
+        .card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+            padding: 14px 16px; margin-bottom: 10px;
+        }
+        .card.signed { border-left: 3px solid var(--ok); }
+        .card.pending { border-left: 3px solid var(--teal); }
+        .card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+        .name { font-weight: 700; font-size: 15px; }
+        .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+        .status { font-size: 12px; font-weight: 700; }
+        .status.ok { color: var(--ok); }
+        .status.wait { color: var(--teal); }
+        .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .actions input[type="text"] {
+            width: 110px; letter-spacing: 0.2em; text-align: center; font-weight: 700;
+            border: 1.5px solid var(--border); border-radius: 10px; padding: 10px; min-height: 44px;
+            font-family: var(--font); font-size: 16px;
+        }
+        .btn-primary {
+            background: var(--teal); color: #fff; border: none; border-radius: 10px;
+            padding: 10px 14px; font-weight: 700; cursor: pointer; font-family: var(--font);
+            min-height: 44px; font-size: 13px;
+        }
+        .btn-ghost {
+            background: var(--card); border: 1.5px solid var(--border); border-radius: 10px;
+            padding: 10px 14px; font-weight: 600; cursor: pointer; font-family: var(--font);
+            min-height: 44px; font-size: 13px;
+        }
+        .detail { margin-top: 10px; font-size: 12px; color: var(--muted); }
+        .detail summary { cursor: pointer; font-weight: 600; color: var(--text); }
+        .empty { text-align: center; color: var(--muted); padding: 32px 12px; }
+        .err { color: var(--danger); font-size: 13px; margin-top: 8px; }
+        .hist-row {
+            display: grid; grid-template-columns: 1fr auto; gap: 8px;
+            padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+        }
+        .hist-row:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="brand">
+            <div class="brand-mark">T</div>
+            <a href="/" id="back-link">Templyo</a>
+        </div>
+        <span class="badge-teal">Validation</span>
+    </header>
+    <main class="wrap">
+        <h1>Validation des heures</h1>
+        <p class="sub" id="week-sub">Signature hebdomadaire — saisissez le code de l’employé</p>
+
+        <div class="tabs" role="tablist">
+            <button type="button" class="tab active" id="tab-list" data-panel="panel-list">À signer</button>
+            <button type="button" class="tab" id="tab-hist" data-panel="panel-hist">Historique</button>
+        </div>
+
+        <div id="panel-list">
+            <div class="toolbar">
+                <button type="button" id="week-prev" title="Semaine précédente">‹</button>
+                <strong id="week-label">—</strong>
+                <button type="button" id="week-next" title="Semaine suivante">›</button>
+                <button type="button" id="week-current">Semaine cible</button>
+            </div>
+            <div id="staff-list"><div class="empty">Chargement…</div></div>
+        </div>
+
+        <div id="panel-hist" hidden>
+            <div class="toolbar">
+                <input type="search" id="hist-q" placeholder="Filtrer par nom…" autocomplete="off">
+                <button type="button" id="hist-refresh">Actualiser</button>
+            </div>
+            <div class="card" id="hist-list"><div class="empty">Chargement…</div></div>
+        </div>
+    </main>
+    <script src="/lib/client-features.js"></script>
+    <script src="/lib/week.js"></script>
+    <script src="/validation.js"></script>
+</body>
+</html>

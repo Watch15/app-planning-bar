@@ -967,6 +967,7 @@
                 </button>
                 <div class="user-menu-dropdown" id="user-menu-dropdown">
                     <button class="user-menu-item" type="button" data-nv-open style="display:none">Du neuf</button>
+                    <a class="user-menu-item" id="menu-validation" href="/validation.html" style="display:none;text-decoration:none">Validation</a>
                     <button class="user-menu-item" id="menu-mes-absences" style="display:none" onclick="openManagerOffModal()">Mes absences</button>
                     <button class="user-menu-item" id="menu-mes-dispos" style="display:none" onclick="openManagerDisposModal()">Mes disponibilités</button>
                     <button class="user-menu-item user-menu-logout" onclick="logout()">Déconnexion</button>
@@ -1031,6 +1032,7 @@
             <button class="btn-manage-staff" id="btn-edit-lock" style="display:none"></button>
             <button class="btn-copy-day" id="btn-copy-day">Copier ce jour →</button>
             <button class="btn-manage-staff" id="btn-copy-week" style="font-size:12px;padding:5px 12px">Copier la semaine →</button>
+            <button class="btn-manage-staff" id="btn-propose-slots" data-feature="predefined_slots" style="display:none;font-size:12px;padding:5px 12px;background:rgba(13,148,136,0.12);border-color:#0d9488;color:#0d9488" title="Ouvre les Jokers de la semaine aux candidatures (créneaux prédéfinis)">Proposer les créneaux</button>
             <button class="btn-manage-staff" id="btn-refresh-day" title="Recharger les heures réelles saisies depuis la tablette de pointage" style="font-size:12px;padding:5px 10px">⟳ Actualiser</button>
             <button class="btn-manage-staff" id="btn-publish-week" style="font-size:12px;padding:5px 12px;background:var(--accent);border-color:var(--accent);color:#fff">Publier la semaine</button>
             <button class="day-detail-close" id="day-detail-close">×</button>

@@ -141,3 +141,43 @@ test('simulate : pool vide → 400', async () => {
     const data = await res.json();
     assert.match(data.error, /Aucun taux horaire/);
 });
+
+test('simulate : modes distincts par groupe (D-99)', async () => {
+    const sid = new ObjectId();
+    await db.collection('settings').insertOne({ key: 'performance', charge_rate: 0 });
+    await db.collection('staff').insertMany([
+        { _id: sid, name: 'Ada', hourly_rate: 10, venues: ['bar1'], groups: ['Cuisine'] },
+        { name: 'Bob', hourly_rate: 20, venues: ['bar1'], groups: ['Cuisine'] },
+    ]);
+    await db.collection('shifts').insertMany([
+        {
+            establishment_id: 'bar1', date: '2026-09-10',
+            staff_id: '__joker__', is_joker: true, joker_group: 'Bar',
+            staff_name: 'Joker · Bar', start_time: 18, end_time: 22,
+        },
+        {
+            establishment_id: 'bar1', date: '2026-09-11',
+            staff_id: '__joker__', is_joker: true, joker_group: 'Cuisine',
+            staff_name: 'Joker · Cuisine', start_time: 18, end_time: 22,
+        },
+    ]);
+    const res = await req('/api/performance/simulate', PATRON, {
+        method: 'POST',
+        body: JSON.stringify({
+            establishment_id: 'bar1',
+            from: '2026-09-08', to: '2026-09-14',
+            joker_mode: 'manual_hourly',
+            joker_mode_by_group: { Bar: 'manual_fixed', Cuisine: 'mean' },
+            joker_fixed_by_group: { Bar: 100 },
+            source_establishment_ids: ['bar1'],
+        }),
+    });
+    assert.equal(res.status, 200, await res.clone().text());
+    const data = await res.json();
+    assert.equal(data.joker_modes_by_group.Bar, 'manual_fixed');
+    assert.equal(data.joker_modes_by_group.Cuisine, 'mean');
+    assert.equal(data.joker_rates_by_group.Bar.rate, 100);
+    assert.equal(data.joker_rates_by_group.Bar.kind, 'fixed');
+    assert.equal(data.joker_rates_by_group.Cuisine.rate, 15);
+    assert.equal(data.totals.wage_sim_gross, 100 + 4 * 15);
+});

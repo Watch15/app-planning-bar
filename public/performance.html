@@ -104,6 +104,27 @@
         .kpi-value { font-size: 22px; font-weight: 700; color: var(--text-primary); }
         .kpi-sub   { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 
+        /* ── Panel taux staff (D-98) ── */
+        .rate-stats {
+            background: var(--light-card); border: 1px solid var(--light-border);
+            border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
+        }
+        .rate-stats-title {
+            font-size: 12px; font-weight: 700; color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: .4px; margin-bottom: 10px;
+        }
+        .rate-stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px;
+        }
+        .rate-stats-card {
+            background: var(--light-bg); border: 1px solid var(--light-border);
+            border-radius: 10px; padding: 10px 12px;
+        }
+        .rate-stats-card .rs-label { font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+        .rate-stats-card .rs-row { font-size: 12px; color: var(--text-secondary); display: flex; justify-content: space-between; gap: 8px; margin-top: 2px; }
+        .rate-stats-card .rs-row strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+        .rate-stats-empty { font-size: 13px; color: var(--text-muted); }
+
         /* ── Vue calendaire ── */
         .calendar-wrap {
             background: var(--light-card); border: 1px solid var(--light-border);
@@ -444,6 +465,12 @@
         .sim-joker-group-card .sim-jg-derived {
             font-size: 14px; font-weight: 700; color: var(--text-primary);
         }
+        .sim-joker-group-card .sim-jg-mode {
+            width: 100%; margin-bottom: 8px; padding: 6px 8px;
+            border: 1.5px solid var(--light-border); border-radius: 8px;
+            font-size: 12px; font-family: var(--font); background: #fff;
+            min-height: 36px; color: var(--text-primary);
+        }
         .sim-estab-scope {
             display: inline-flex; background: var(--light-bg);
             border: 1.5px solid var(--light-border); border-radius: 10px; padding: 3px;
@@ -550,6 +577,10 @@
 
     <!-- Panneau Réel -->
     <div class="perf-panel active" id="panel-real" role="tabpanel">
+    <div class="rate-stats" id="rate-stats" aria-live="polite">
+        <div class="rate-stats-title">Taux staff (moyenne / médiane)</div>
+        <div class="rate-stats-empty">Chargement…</div>
+    </div>
     <!-- KPI ── -->
     <div class="kpis" id="kpis"></div>
 
@@ -593,10 +624,10 @@
 
         <div class="sim-section">
             <div class="sim-section-title">Valorisation des Jokers</div>
-            <p class="sim-section-sub">Les services déjà pointés restent en réel. Seuls les créneaux non pointés (dont les Jokers) sont estimés.</p>
+            <p class="sim-section-sub">Les services déjà pointés restent en réel. Seuls les créneaux non pointés (dont les Jokers) sont estimés. Choisissez un mode par groupe (ou appliquez le mode global à tous).</p>
             <div class="sim-row">
                 <div class="sim-field">
-                    <label>Mode</label>
+                    <label>Mode (appliquer à tous)</label>
                     <select id="sim-joker-mode">
                         <option value="manual_hourly">Taux horaire saisi</option>
                         <option value="manual_fixed">Forfait par shift</option>

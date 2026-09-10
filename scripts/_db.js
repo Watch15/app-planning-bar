@@ -25,6 +25,7 @@ const APP_COLLECTIONS = [
     'roles', 'settings', 'daily_revenue', 'notifications', 'staff_notifications',
     'push_subscriptions', 'shift_swaps',
     'codes_cloture', 'time_validations',
+    'codes_signature_hebdo', 'week_signatures',
 ];
 
 function loadEnv() {

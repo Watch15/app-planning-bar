@@ -173,6 +173,38 @@ async function logout() {
     window.location.href = '/login.html';
 }
 
+async function loadWeekSignCodeBanner() {
+    const banner = document.getElementById('week-sign-code-banner');
+    if (!banner) return;
+    if (!window.ClientFeatures || !ClientFeatures.enabled('weekly_staff_validation')) {
+        banner.style.display = 'none';
+        return;
+    }
+    try {
+        const res = await fetch('/api/me/week-sign-code', { credentials: 'include' });
+        if (res.status === 404) { banner.style.display = 'none'; return; }
+        const data = await res.json();
+        if (!res.ok) { banner.style.display = 'none'; return; }
+        banner.style.display = '';
+        const val = document.getElementById('week-sign-code-value');
+        const hint = document.getElementById('week-sign-code-hint');
+        if (data.signed) {
+            if (val) val.textContent = 'OK';
+            if (hint) hint.textContent = 'Ta semaine est déjà signée. Merci !';
+        } else if (data.code) {
+            if (val) val.textContent = data.code;
+            if (hint) {
+                hint.textContent = 'Donne ce code à ton responsable pour valider tes heures'
+                    + (data.week_start ? ' (semaine du ' + data.week_start + ')' : '') + '.';
+            }
+        } else {
+            banner.style.display = 'none';
+        }
+    } catch {
+        banner.style.display = 'none';
+    }
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 let allStaff = [];
@@ -200,6 +232,7 @@ async function init() {
     if (av) av.textContent = (user.name || user.email || '?').charAt(0).toUpperCase();
 
     Nouveautes.init(user.role, { autoOuvrir: true });
+    loadWeekSignCodeBanner();
 
     initTabs();
     initStatsToggle();
@@ -343,6 +376,10 @@ async function init() {
         if (rRes.ok) {
             const initData = await rRes.json();
             if (initData.authorized && initData.days) {
+                const btnVal = document.getElementById('btn-validation');
+                if (btnVal && window.ClientFeatures && ClientFeatures.enabled('weekly_staff_validation')) {
+                    btnVal.style.display = '';
+                }
                 const viewResp = document.createElement('div');
                 viewResp.id            = 'view-resp-dashboard';
                 viewResp.style.display = 'none';
@@ -469,11 +506,14 @@ function renderOpenJokersInto(jokers, from, to, section) {
             const estabName = j.establishment_name || j.establishment_id || '';
             const safeEstab = estabName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const grp = j.joker_group ? (' · ' + String(j.joker_group).replace(/</g, '&lt;').replace(/>/g, '&gt;')) : '';
+            const slotBadge = j.slot_offer
+                ? ' <span style="font-size:10px;font-weight:700;color:#0d9488;background:rgba(13,148,136,.12);border-radius:999px;padding:2px 7px">Semaine proposée</span>'
+                : '';
             const jc = (window.JokerGroupColor && JokerGroupColor.of(j.joker_group))
                 || { bg: '#6b7280', soft: '#f3f4f6' };
             return '<div class="open-joker-item" style="border-left:3px solid ' + jc.bg
                 + ';padding-left:10px;background:linear-gradient(90deg,' + jc.soft + ' 0%,transparent 48%)">' +
-                '<div class="open-joker-date">' + dayLabel +
+                '<div class="open-joker-date">' + dayLabel + slotBadge +
                     '<small>' + startFmt + ' à ' + endFmt + grp +
                         (safeEstab ? ' · <span class="open-joker-estab">' + safeEstab + '</span>' : '') +
                     '</small>' +

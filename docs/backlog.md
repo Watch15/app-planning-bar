@@ -2404,10 +2404,10 @@ fond de carte).
 |---|---|---|
 | D-96 | **Perf — Toutes les affaires** : option « Toutes les affaires » + agrégation CA / masse / KPIs (client `fetchPerformance` / `mergePerfByDate`). Saisie CA et objectifs : un établissement à la fois. Simulation désactivée en mode Tous. | ✅ |
 | D-97 | **Perf — Filtre groupe page** : sélecteur Groupe (établissements.groups) ; filtre `staff_detail` + masses ; CA jour inchangé. API Réel enrichie `staff_id` / `groups`. | ✅ |
-| D-98 | **Perf — Panel moyennes / médianes** : zone dédiée (taux staff par groupe / pool établissements), pas seulement les modes Joker de Simulation. | Ouvert |
-| D-99 | **Sim — Forme de rémunération par groupe** : sur chaque carte groupe, choix horaire \| forfait (voire mean/median) au lieu d’un `#sim-joker-mode` global ; étendre `POST /api/performance/simulate`. | Ouvert |
-| D-100 | **Validation hebdo Castaniu (brouillon)** — attestation staff fin de semaine. Flag : `weekly_staff_validation` (`CLIENT_PROFILE=castaniu` + `FEATURE_WEEKLY_VALIDATION=true`). Infra flags : `docs/feature-flags.md`. **Non cadré**. | Brouillon |
-| D-101 | **Créneaux prédéfinis N+1 (brouillon)** — grille + candidatures type Joker ; coexiste avec dispos. Flag : `predefined_slots`. Doc produit : `docs/design-creneaux-predefinis.md`. | Brouillon |
+| D-98 | **Perf — Panel moyennes / médianes** : zone dédiée (taux staff par groupe / pool établissements), pas seulement les modes Joker de Simulation. | ✅ |
+| D-99 | **Sim — Forme de rémunération par groupe** : sur chaque carte groupe, choix horaire \| forfait (voire mean/median) au lieu d’un `#sim-joker-mode` global ; étendre `POST /api/performance/simulate`. | ✅ |
+| D-100 | **Validation hebdo Castaniu** — signature multi-affaires (code staff → responsable), onglet Validation, flag `weekly_staff_validation`. Doc : `docs/design-validation-hebdo.md`. | ✅ |
+| D-101 | **Créneaux prédéfinis N+1** — `slot_offer` + ouverture masse, coexistence dispos, flag `predefined_slots`. Doc : `docs/design-creneaux-predefinis.md`. | ✅ |
 | D-102 | **Infra feature flags** — `lib/client-features.js` + front `ClientFeatures` + `/auth/me.client` + `requireFeature` + tests. Doc : `docs/feature-flags.md`. | ✅ |
 
 ### Dette flags — plus tard

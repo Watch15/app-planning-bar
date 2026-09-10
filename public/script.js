@@ -689,6 +689,7 @@ async function checkAuth() {
             if (window.ClientFeatures) {
                 ClientFeatures.fromAuthPayload(data);
                 ClientFeatures.applyDom();
+                if (typeof refreshProposeSlotsButton === 'function') refreshProposeSlotsButton();
             }
             // Redirections selon le rôle
             if (data.user?.role === 'staff')        { window.location.href = '/planning.html'; return null; }
@@ -696,6 +697,11 @@ async function checkAuth() {
             // patron, directeur et observateur sont autorisés sur la vue patron
             if (data.user?.role !== 'patron' && data.user?.role !== 'directeur' && data.user?.role !== 'observateur') {
                 window.location.href = '/login.html'; return null;
+            }
+            const menuVal = document.getElementById('menu-validation');
+            if (menuVal && window.ClientFeatures && ClientFeatures.enabled('weekly_staff_validation')
+                && (data.user.role === 'patron' || data.user.role === 'directeur')) {
+                menuVal.style.display = '';
             }
             return data.user;
         } catch {
@@ -4085,6 +4091,48 @@ let _copyWeekMode = 'staff'; // 'staff' (garder les affectations) | 'jokers' (cr
 
 const _btnCopyWeek = document.getElementById('btn-copy-week');
 if (_btnCopyWeek) _btnCopyWeek.addEventListener('click', openCopyWeekModal);
+
+const _btnProposeSlots = document.getElementById('btn-propose-slots');
+if (_btnProposeSlots) {
+    _btnProposeSlots.addEventListener('click', proposeWeekSlots);
+}
+
+function refreshProposeSlotsButton() {
+    const btn = document.getElementById('btn-propose-slots');
+    if (!btn) return;
+    btn.style.display = (window.ClientFeatures && ClientFeatures.enabled('predefined_slots')) ? '' : 'none';
+}
+
+async function proposeWeekSlots() {
+    if (!window.ClientFeatures || !ClientFeatures.enabled('predefined_slots')) {
+        showToast('Créneaux prédéfinis non activés sur cette instance');
+        return;
+    }
+    if (!currentVenueId || !currentWeekStart) {
+        showToast('Établissement / semaine manquants');
+        return;
+    }
+    const weekStartStr = toDateStr(currentWeekStart);
+    if (!confirm('Proposer tous les Jokers non ouverts de cette semaine aux candidatures ?')) return;
+    try {
+        const res = await fetch('/api/jokers/open-week', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                establishment_id: currentVenueId,
+                week_start: weekStartStr,
+                slot_offer: true,
+            }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        showToast((data.opened || 0) + ' créneau(x) proposé(s)');
+        if (selectedDate && typeof loadDayDetail === 'function') loadDayDetail(selectedDate);
+    } catch (e) {
+        showToast(e.message || 'Erreur', true);
+    }
+}
 
 function openCopyWeekModal() {
     _copyWeekMode = 'staff';

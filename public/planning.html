@@ -857,6 +857,7 @@
             <span id="btn-notif-label">Notifs</span>
         </button>
         <button class="btn-notif" type="button" title="Ce qui a changé dans l'application" data-nv-open data-nv-dot style="display:none">Du neuf</button>
+        <a class="btn-notif" id="btn-validation" href="/validation.html" title="Signature hebdomadaire des heures" style="display:none;text-decoration:none">Validation</a>
         <button class="btn-logout" onclick="logout()">⎋ <span class="btn-logout-label">Sortir</span></button>
     </div>
 </div>
@@ -870,6 +871,11 @@
 <div class="greeting">
     <div class="greeting-name" id="greeting-name">Bonjour !</div>
     <div class="greeting-sub" id="greeting-sub">Voici ton planning de la semaine</div>
+</div>
+<div id="week-sign-code-banner" class="card" style="display:none;margin:0 16px 12px;padding:12px 14px;background:#f0fdfa;border:1px solid #99f6e4;border-radius:12px">
+    <div style="font-size:12px;font-weight:700;color:#0f766e;margin-bottom:4px">Code signature hebdo</div>
+    <div id="week-sign-code-value" style="font-size:22px;font-weight:700;letter-spacing:0.25em;color:#0f172a">····</div>
+    <div id="week-sign-code-hint" style="font-size:11px;color:#64748b;margin-top:4px">Donne ce code à ton responsable pour valider tes heures.</div>
 </div>
 
 <div id="view-planning">

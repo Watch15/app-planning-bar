@@ -63,9 +63,11 @@ let currentGroup  = ''; // '' = tous
 let simRealByDate = {}; // cache CA réels de la période affichée
 let simJokerGroups = []; // clés '_' | 'Bar' | …
 let simManualByGroup = {}; // { Bar: 14, _: 13 }
+let simModeByGroup = {}; // D-99 { Bar: 'manual_hourly', … }
 let simEstabScope = 'current'; // 'current' | 'all' | 'custom'
 let rawPerfData   = []; // avant filtre groupe (Réel)
 let rawCalendarData = [];
+let lastRateStats = null;
 
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -138,6 +140,7 @@ async function init() {
         if (activePerfTab === 'real') {
             loadData();
             loadCalendarWeek();
+            loadRateStats();
         } else if (!isAllEstabs()) {
             await prepareSimPeriod();
         }
@@ -154,6 +157,7 @@ async function init() {
                 renderKpis(currentData);
                 renderTable(currentData);
                 if (rawCalendarData.length) renderCalendarGrid(applyGroupFilter(rawCalendarData));
+                loadRateStats();
             } else {
                 prepareSimPeriod();
             }
@@ -211,7 +215,11 @@ async function init() {
         }
         prepareSimPeriod();
     });
-    document.getElementById('sim-joker-mode').addEventListener('change', updateSimJokerModeUI);
+    document.getElementById('sim-joker-mode').addEventListener('change', () => {
+        const mode = document.getElementById('sim-joker-mode').value;
+        simJokerGroups.forEach(g => { simModeByGroup[g] = mode; });
+        updateSimJokerModeUI();
+    });
     document.getElementById('sim-run').addEventListener('click', runSimulation);
     document.getElementById('sim-estab-current').addEventListener('click', () => setSimEstabScope('current'));
     document.getElementById('sim-estab-all').addEventListener('click', () => setSimEstabScope('all'));
@@ -219,7 +227,7 @@ async function init() {
     fillSimSourceEstabs();
     updateSimJokerModeUI();
 
-    await Promise.all([loadData(), loadCalendarWeek()]);
+    await Promise.all([loadData(), loadCalendarWeek(), loadRateStats()]);
 }
 
 // ── Calendrier semaine ────────────────────────────────────────────────────────
@@ -416,6 +424,66 @@ async function fetchPerformance(from, to) {
         return Array.isArray(data) ? data : [];
     }));
     return ids.length === 1 ? lists[0] : mergePerfByDate(lists);
+}
+
+async function loadRateStats() {
+    const wrap = document.getElementById('rate-stats');
+    if (!wrap) return;
+    const ids = estabIdsForQuery();
+    if (!ids.length) {
+        wrap.innerHTML = '<div class="rate-stats-title">Taux staff (moyenne / médiane)</div>'
+            + '<div class="rate-stats-empty">Aucun établissement</div>';
+        return;
+    }
+    try {
+        const params = new URLSearchParams({ establishment_ids: ids.join(',') });
+        if (currentGroup) params.set('group', currentGroup);
+        const res = await fetch('/api/performance/staff-rate-stats?' + params.toString(), { credentials: 'include' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur');
+        lastRateStats = data;
+        renderRateStats(data);
+    } catch (e) {
+        wrap.innerHTML = '<div class="rate-stats-title">Taux staff (moyenne / médiane)</div>'
+            + '<div class="rate-stats-empty" style="color:var(--danger)">'
+            + escapeHtml(e.message || 'Erreur') + '</div>';
+    }
+}
+
+function _fmtRateOrDash(n) {
+    if (n == null || Number.isNaN(Number(n))) return '—';
+    return Number(n).toFixed(2).replace('.', ',') + ' €/h';
+}
+
+function renderRateStats(data) {
+    const wrap = document.getElementById('rate-stats');
+    if (!wrap) return;
+    const cards = [];
+    const overall = data.overall || {};
+    cards.push({ label: currentGroup ? currentGroup : 'Tous groupes', bucket: overall });
+    (data.groups || []).forEach(g => {
+        if (currentGroup && g.key === currentGroup) return;
+        if (currentGroup) return;
+        cards.push({ label: g.label || g.key, bucket: g });
+    });
+    if (!cards.length || (overall.sample_size === 0 && overall.n_fixed === 0 && !(data.groups || []).length)) {
+        wrap.innerHTML = '<div class="rate-stats-title">Taux staff (moyenne / médiane)</div>'
+            + '<div class="rate-stats-empty">Aucun taux horaire dans ce filtre</div>';
+        return;
+    }
+    wrap.innerHTML = '<div class="rate-stats-title">Taux staff (moyenne / médiane)</div>'
+        + '<div class="rate-stats-grid">'
+        + cards.map(c => {
+            const b = c.bucket || {};
+            return '<div class="rate-stats-card">'
+                + '<div class="rs-label">' + escapeHtml(c.label) + '</div>'
+                + '<div class="rs-row"><span>Moyenne</span><strong>' + _fmtRateOrDash(b.mean) + '</strong></div>'
+                + '<div class="rs-row"><span>Médiane</span><strong>' + _fmtRateOrDash(b.median) + '</strong></div>'
+                + '<div class="rs-row"><span>Échantillon</span><strong>n=' + (b.sample_size || 0)
+                + ' · h=' + (b.n_hourly || 0) + ' · f=' + (b.n_fixed || 0) + '</strong></div>'
+                + '</div>';
+        }).join('')
+        + '</div>';
 }
 
 function _syncPerfUiForEstabScope() {
@@ -919,14 +987,22 @@ function _syncManualFromInputs() {
 function renderSimJokerByGroup(derivedRates) {
     const wrap = document.getElementById('sim-joker-by-group');
     if (!wrap) return;
-    const mode = document.getElementById('sim-joker-mode').value;
-    const derived = mode === 'mean' || mode === 'median';
+    const globalMode = document.getElementById('sim-joker-mode').value;
     if (!simJokerGroups.length) {
         wrap.innerHTML = '<p class="sim-hint" style="margin:0">Aucun joker non pointé sur cette période.</p>';
         return;
     }
     wrap.innerHTML = '';
+    const modeOptions = [
+        ['manual_hourly', 'Taux horaire'],
+        ['manual_fixed', 'Forfait'],
+        ['mean', 'Moyenne'],
+        ['median', 'Médiane'],
+    ];
     simJokerGroups.forEach(g => {
+        if (!simModeByGroup[g]) simModeByGroup[g] = globalMode;
+        const mode = simModeByGroup[g] || globalMode;
+        const derived = mode === 'mean' || mode === 'median';
         const card = document.createElement('div');
         card.className = 'sim-joker-group-card';
         const c = (window.JokerGroupColor && JokerGroupColor.of(g === '_' ? null : g))
@@ -935,10 +1011,14 @@ function renderSimJokerByGroup(derivedRates) {
         card.style.setProperty('--jg-soft', c.soft);
         card.style.setProperty('--jg-text', c.text);
         const label = _jokerGroupLabel(g);
+        const sel = '<select class="sim-jg-mode" data-jg-mode="' + escapeHtml(g) + '">'
+            + modeOptions.map(([v, t]) =>
+                '<option value="' + v + '"' + (mode === v ? ' selected' : '') + '>' + t + '</option>').join('')
+            + '</select>';
+        let body;
         if (derived) {
             const info = derivedRates && derivedRates[g];
-            card.innerHTML = '<div class="sim-jg-label">' + escapeHtml(label) + '</div>'
-                + '<div class="sim-jg-derived">'
+            body = '<div class="sim-jg-derived">'
                 + (info && info.rate != null
                     ? (Number(info.rate).toFixed(2).replace('.', ',') + ' €/h'
                         + (info.sample_size != null ? ' · n=' + info.sample_size : ''))
@@ -948,35 +1028,34 @@ function renderSimJokerByGroup(derivedRates) {
             const unit = mode === 'manual_fixed' ? '€ / shift' : '€ / h';
             const def = simManualByGroup[g] != null ? simManualByGroup[g]
                 : (mode === 'manual_fixed' ? 80 : 14);
-            card.innerHTML = '<div class="sim-jg-label">' + escapeHtml(label) + ' · ' + unit + '</div>'
+            body = '<div class="sim-jg-label" style="margin:0 0 4px;text-transform:none;letter-spacing:0;font-weight:500">'
+                + escapeHtml(unit) + '</div>'
                 + '<input type="number" min="0" step="0.01" data-jg="' + escapeHtml(g) + '" value="' + escapeHtml(def) + '">';
         }
+        card.innerHTML = '<div class="sim-jg-label">' + escapeHtml(label) + '</div>' + sel + body;
         wrap.appendChild(card);
     });
-    if (!derived) {
-        wrap.querySelectorAll('input[data-jg]').forEach(inp => {
-            inp.addEventListener('change', () => {
-                const v = parseFloat(inp.value);
-                if (Number.isNaN(v) || v < 0) delete simManualByGroup[inp.dataset.jg];
-                else simManualByGroup[inp.dataset.jg] = v;
-            });
+    wrap.querySelectorAll('select[data-jg-mode]').forEach(sel => {
+        sel.addEventListener('change', () => {
+            simModeByGroup[sel.dataset.jgMode] = sel.value;
+            updateSimJokerModeUI();
         });
-    }
+    });
+    wrap.querySelectorAll('input[data-jg]').forEach(inp => {
+        inp.addEventListener('change', () => {
+            const v = parseFloat(inp.value);
+            if (Number.isNaN(v) || v < 0) delete simManualByGroup[inp.dataset.jg];
+            else simManualByGroup[inp.dataset.jg] = v;
+        });
+    });
 }
 
 function updateSimJokerModeUI() {
-    const mode = document.getElementById('sim-joker-mode').value;
-    const derived = mode === 'mean' || mode === 'median';
-    document.getElementById('sim-source-estab-wrap').style.display = derived ? '' : 'none';
+    const modes = simJokerGroups.map(g => simModeByGroup[g] || document.getElementById('sim-joker-mode').value);
+    const needsPool = modes.some(m => m === 'mean' || m === 'median');
+    document.getElementById('sim-source-estab-wrap').style.display = needsPool ? '' : 'none';
     const hint = document.getElementById('sim-joker-hint');
-    if (derived) {
-        hint.textContent = 'Le taux de chaque Joker = ' + (mode === 'mean' ? 'moyenne' : 'médiane')
-            + ' des taux staff du même groupe (filtre établissements ci-dessus).';
-    } else if (mode === 'manual_fixed') {
-        hint.textContent = 'Un forfait par groupe de Joker présent sur la période.';
-    } else {
-        hint.textContent = 'Un taux horaire par groupe de Joker présent sur la période.';
-    }
+    hint.textContent = 'Chaque groupe a son propre mode de rémunération. Le sélecteur global applique le même mode à toutes les cartes.';
     renderSimJokerByGroup(simLastResult && simLastResult.joker_rates_by_group);
 }
 
@@ -1170,32 +1249,37 @@ async function runSimulation() {
         to,
         hypo_revenue_by_date: hypo,
         joker_mode: mode,
+        joker_mode_by_group: {},
     };
-    if (mode === 'manual_hourly') {
-        const map = {};
-        for (const g of simJokerGroups) {
+    const hourlyMap = {};
+    const fixedMap = {};
+    let needsPool = false;
+    for (const g of simJokerGroups) {
+        const gMode = simModeByGroup[g] || mode;
+        body.joker_mode_by_group[g] = gMode;
+        if (gMode === 'manual_hourly') {
             const v = simManualByGroup[g];
             if (v == null || Number.isNaN(Number(v)) || Number(v) < 0) {
                 wrap.innerHTML = '<div class="empty-msg" style="color:var(--danger)">Taux manquant pour « '
                     + escapeHtml(_jokerGroupLabel(g)) + ' »</div>';
                 return;
             }
-            map[g] = Number(v);
-        }
-        body.joker_hourly_by_group = map;
-    } else if (mode === 'manual_fixed') {
-        const map = {};
-        for (const g of simJokerGroups) {
+            hourlyMap[g] = Number(v);
+        } else if (gMode === 'manual_fixed') {
             const v = simManualByGroup[g];
             if (v == null || Number.isNaN(Number(v)) || Number(v) < 0) {
                 wrap.innerHTML = '<div class="empty-msg" style="color:var(--danger)">Forfait manquant pour « '
                     + escapeHtml(_jokerGroupLabel(g)) + ' »</div>';
                 return;
             }
-            map[g] = Number(v);
+            fixedMap[g] = Number(v);
+        } else {
+            needsPool = true;
         }
-        body.joker_fixed_by_group = map;
-    } else {
+    }
+    if (Object.keys(hourlyMap).length) body.joker_hourly_by_group = hourlyMap;
+    if (Object.keys(fixedMap).length) body.joker_fixed_by_group = fixedMap;
+    if (needsPool) {
         const ids = _selectedSimEstabIds();
         if (!ids.length) {
             wrap.innerHTML = '<div class="empty-msg" style="color:var(--danger)">Sélectionnez au moins un établissement</div>';
