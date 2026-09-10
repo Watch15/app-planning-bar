@@ -90,9 +90,51 @@ git push main ──►│
 ### P1 — Fermer le trou « prod déployée même si CI rouge »
 | ID | Action | Effort | Bénéfice |
 |---|---|---|---|
-| CD-01 | **Garder le déploiement par la CI.** ✅ *Tranché le 2026-09-10 : réglage Railway « Wait for CI », activé service par service.* La piste `railway up` depuis GitHub Actions a été écartée — elle n'aurait gardé que `main`, elle aurait doublé le déploiement tant que l'auto-deploy Railway reste actif, et le service `Dev` étant partagé par les trois environnements, son nom seul ne désigne pas une cible. | 🟢 | Aucun environnement ne reçoit un commit cassé |
+| CD-01 | **Garder le déploiement par la CI.** *Approche tranchée le 2026-09-10 : réglage Railway « Wait for CI » (`DeploymentTrigger.checkSuites`), service par service — la piste `railway up` depuis GitHub Actions est écartée, elle n'aurait gardé que `main`, aurait doublé le déploiement, et le service `Dev` étant partagé par les trois environnements son nom seul ne désigne pas une cible.* ⚠️ **PARTIEL : actif sur le seul `Castaniu Family`.** Les trois instances internes (Prod, Demo, Dev) sont encore à `false` — décision du 2026-09-10 : on attend avant de les basculer. Voir le détail sous le tableau. | 🟢 | Aucun environnement ne reçoit un commit cassé |
 | CD-02 | **Protéger `main`** (GitHub branch protection) : exiger la CI verte + 1 review avant merge. Aujourd'hui le rebase/push direct sur `main` est possible. | 🟢 | Empêche un push direct non testé |
 | CD-03 | **Étendre la CI à `dev`** (actuellement `branches: [main]` seulement) : tester avant même la promotion vers `main`. | 🟢 | Feedback plus tôt dans le flux |
+
+#### CD-01 — état réel au 2026-09-10, et ce qui reste à faire
+
+« Wait for CI » se lit et s'écrit par `railway api` (GraphQL), pas par les sous-commandes
+du CLI : c'est le champ `checkSuites` d'un `DeploymentTrigger`.
+
+| Env | Service | Branche | Trigger | `checkSuites` |
+|---|---|---|---|---|
+| Prod | `Dev` (prod interne) | `main` | `ef6cc85c-0088-4da6-a294-670c99f3b84e` | ❌ false |
+| Demo | `Dev` | `dev` | `53d0648e-6f5d-45d2-b020-58bed3ab2947` | ❌ false |
+| Dev | `Dev` | `dev` | `c8cceb89-6eb6-4a8d-bc97-789cfae11ac1` | ❌ false |
+| Prod | `Castaniu Family` | `main` (fork) | `6960e13f-bac8-4950-87c4-2f9c331e3261` | ✅ true |
+
+**Seul le client est gardé.** C'est la raison concrète pour laquelle les commits à CI rouge
+des 9 et 10/09 sont partis en prod interne sans que rien ne les arrête, alors que le
+déploiement client, lui, a bien attendu sa CI (visible à l'œil nu : ~3 min d'écart entre
+les deux au déploiement du 10/09 au soir).
+
+Lecture de l'état, sans rien modifier :
+
+```
+railway api 'query($p:String!,$e:String!,$s:String!){deploymentTriggers(projectId:$p,environmentId:$e,serviceId:$s){edges{node{id branch repository checkSuites}}}}' \
+  --var p=45380fe6-9afb-4e26-b9d7-d5dc5c9a18c7 --var e=<ENV_ID> --var s=<SERVICE_ID>
+```
+
+Bascule, un trigger à la fois :
+
+```
+railway api 'mutation($id:String!){deploymentTriggerUpdate(id:$id,input:{checkSuites:true}){id branch checkSuites}}' --var id=<TRIGGER>
+```
+
+**Décision du 2026-09-10 : on attend.** La bascule n'est pas faite sur les trois instances
+internes. Deux choses à savoir avant de s'y mettre :
+
+- **Un trigger RECRÉÉ repasse à `false` en silence.** Le trigger de la prod interne portait
+  `checkSuites: true` en août ; un renommage de service (`Dev` → `Demo` → `Dev`) l'a fait
+  recréer sous un nouvel id, garde perdue sans aucun signal. Un réglage coché une fois
+  n'est pas acquis : le relire avant d'affirmer qu'une garde existe.
+- **Avec `checkSuites: true`, une CI rouge au moment du push ne se rattrape pas d'un
+  `gh run rerun`.** Railway crée le déploiement puis le marque SKIPPED, et il ne le
+  réveille pas une fois qu'il a statué sur cette suite de checks. La sortie propre, sans
+  commit de rattrapage, est `serviceInstanceDeployV2(environmentId, serviceId, commitSha)`.
 
 ### P2 — Élever la qualité statique et la couverture
 | ID | Action | Effort | Bénéfice |

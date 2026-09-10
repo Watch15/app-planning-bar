@@ -44,6 +44,16 @@ jobs:
   # commit qui casse le lint ou les tests n'est donc jamais déployé, sur AUCUN des
   # environnements — Dev, Demo, Prod et le fork client `Castaniu Family`.
   #
+  # ⚠️ Au 2026-09-10 ce n'est VRAI que pour `Castaniu Family`. Les trois instances
+  # internes ont encore `checkSuites: false` et déploient sans attendre la CI — c'est
+  # ce qui a laissé passer les commits rouges des 09 et 10/09 en prod interne. Bascule
+  # volontairement différée (décision du 2026-09-10), à faire par `railway api` :
+  #   mutation { deploymentTriggerUpdate(id: "<trigger>", input: { checkSuites: true }) }
+  # Triggers : Prod ef6cc85c… · Demo 53d0648e… · Dev c8cceb89…  (lecture :
+  # `deploymentTriggers(projectId, environmentId, serviceId)`). Un trigger RECRÉÉ
+  # (renommage de service, dépôt reconnecté) repasse à `false` en silence : le relire
+  # avant d'affirmer qu'une garde existe.
+  #
   # Il y a donc UN SEUL chemin de déploiement (le webhook GitHub de Railway). Ne pas
   # rajouter ici un job `railway up` : ça redéploierait une seconde fois le même
   # service, en concurrence avec le déploiement automatique.
