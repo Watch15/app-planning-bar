@@ -196,26 +196,31 @@ test('responsable-week : semaine NON publiée → ni roster ni téléphones', as
 test('joker-ouverts : un Joker d\'une semaine non publiée n\'est pas proposé', async () => {
     // Le proposer reviendrait à annoncer un besoin sur un brouillon — et à laisser
     // postuler dessus.
+    // day(CUR, 6) = dimanche de la semaine courante : toujours ≥ date de soirée active
+    // (day(CUR, 2) tombe dans le passé dès mercredi+cutoff → faux négatif).
+    const visibleDate = day(CUR, 6);
     app.locals.setTestDb(seed([
         { staff_id: '__joker__', is_joker: true, joker_open: true, establishment_id: 'bar1',
-          date: day(CUR, 2), start_time: 18, end_time: 24 },
+          date: visibleDate, start_time: 18, end_time: 24 },
         { staff_id: '__joker__', is_joker: true, joker_open: true, establishment_id: 'bar1',
           date: day(N1, 2), start_time: 18, end_time: 24 },
     ]));
     const body = await (await req('/api/shifts/joker-ouverts', STAFF)).json();
-    assert.deepEqual(body.map(j => j.date), [day(CUR, 2)]);
+    assert.deepEqual(body.map(j => j.date), [visibleDate]);
 });
 
 test('joker-ouverts : un Joker ouvert dont la date est passée disparaît', async () => {
     const past = toDateStr(new Date(Date.now() - 3 * 864e5));
+    const visibleDate = day(CUR, 6);
     app.locals.setTestDb(seed([
         { staff_id: '__joker__', is_joker: true, joker_open: true, establishment_id: 'bar1',
           date: past, start_time: 18, end_time: 24 },
         { staff_id: '__joker__', is_joker: true, joker_open: true, establishment_id: 'bar1',
-          date: day(CUR, 2), start_time: 18, end_time: 24 },
+          date: visibleDate, start_time: 18, end_time: 24 },
     ]));
     const body = await (await req('/api/shifts/joker-ouverts', STAFF)).json();
     assert.ok(!body.some(j => j.date === past), 'date passée exclue');
+    assert.ok(body.some(j => j.date === visibleDate), 'Joker futur de la semaine courante visible');
 });
 
 // ── La note de semaine est bornée comme la saisie ────────────────────────────

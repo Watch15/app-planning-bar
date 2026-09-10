@@ -3360,7 +3360,8 @@ app.post('/api/copy-day', checkDB, requirePatron, denyObservateurEdit, async (re
                     ...base,
                     ...JOKER_SHIFT,
                     ...(rest.joker_group ? { joker_group: rest.joker_group } : {}),
-                    staff_name: rest.joker_group ? ('Joker · ' + rest.joker_group) : 'Joker',
+                    // Sans groupe : garder staff_name '' (JOKER_SHIFT) — pas « Joker »
+                    ...(rest.joker_group ? { staff_name: 'Joker · ' + rest.joker_group } : {}),
                 };
             });
             if (newShifts.length > 0) { await db.collection('shifts').insertMany(newShifts); created += newShifts.length; }
@@ -3425,7 +3426,7 @@ app.post('/api/copy-week', checkDB, requirePatron, denyObservateurEdit, async (r
                     return {
                         ...base,
                         ...JOKER_SHIFT,
-                        staff_name: s.joker_group ? ('Joker · ' + s.joker_group) : 'Joker',
+                        ...(s.joker_group ? { staff_name: 'Joker · ' + s.joker_group } : {}),
                     };
                 }
                 // Garder l'affectation (un Joker source reste Joker) — sauf si la personne
@@ -3436,7 +3437,7 @@ app.post('/api/copy-week', checkDB, requirePatron, denyObservateurEdit, async (r
                     return {
                         ...base,
                         ...JOKER_SHIFT,
-                        staff_name: s.joker_group ? ('Joker · ' + s.joker_group) : 'Joker',
+                        ...(s.joker_group ? { staff_name: 'Joker · ' + s.joker_group } : {}),
                     };
                 }
                 return {
