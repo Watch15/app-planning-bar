@@ -19,7 +19,7 @@ Le patron compose à l’avance (~N+1) une grille de créneaux ; le staff candid
 ## Hors v1
 
 - Entité « offre » séparée, templates dédiés, deadline autonome, remplacement des dispos.
-- Du neuf tant que non déployé chez le client.
+- Du neuf : après déploiement client (entrées `creneaux-semaine-*`).
 
 ## Lien backlog
 

@@ -79,9 +79,9 @@
             roles: ['patron', 'directeur'],
             titre: 'Un Joker par groupe, chacun avec sa couleur',
             quoi: "Sur le planning, vous posez un créneau Joker pour Bar, Cuisine, Salle… "
-                + "Chaque groupe a sa teinte : on voit tout de suite quel poste reste à "
-                + "pourvoir. La Simulation valorise aussi ces Jokers groupe par groupe.",
-            ou: 'Planning → cartes Joker sous la liste staff ; Performance → Simulation'
+                + "Chaque groupe a sa teinte. Comme pour le staff, survolez la carte Joker "
+                + "pour choisir la couleur (ou Auto pour revenir à la teinte automatique).",
+            ou: 'Planning → cartes Joker sous la liste staff (survol → pastille de couleur)'
         },
         {
             id: 'jokers-par-groupe-staff', date: '2026-09-11',
@@ -91,6 +91,36 @@
                 + "est indiqué et la couleur aide à le repérer. Vous candidaturez comme "
                 + "avant avec « Je suis dispo ».",
             ou: 'Planning → carte « Créneaux disponibles »'
+        },
+        {
+            id: 'creneaux-semaine-patron', date: '2026-09-11',
+            roles: ['patron', 'directeur'],
+            titre: 'Proposer d’un coup les créneaux de la semaine',
+            quoi: "Quand la grille de la semaine suivante est prête (souvent des Jokers), "
+                + "« Proposer les créneaux » ouvre tous les postes non pourvus aux "
+                + "candidatures. L’équipe les voit tout de suite, même si vous n’avez "
+                + "pas encore publié la semaine — et même si personne n’y a encore de shift.",
+            ou: 'Planning → semaine ciblée → bouton « Proposer les créneaux »'
+        },
+        {
+            id: 'creneaux-semaine-staff', date: '2026-09-11',
+            roles: ['staff'],
+            titre: 'Candidater sur les créneaux de la semaine proposée',
+            quoi: "Dès que votre responsable propose les créneaux d’une semaine, ils "
+                + "apparaissent dans votre planning (bandeau « Créneaux disponibles », "
+                + "badge « Semaine proposée »). Vous pouvez dire « Je suis dispo » "
+                + "sans attendre que la semaine soit publiée, et même si vous n’avez "
+                + "pas encore de shift cette semaine-là.",
+            ou: 'Planning → semaines à venir → « Créneaux disponibles »'
+        },
+        {
+            id: 'perf-toutes-affaires', date: '2026-09-11',
+            roles: ['patron', 'directeur', 'observateur'],
+            titre: 'Voir Performance sur toutes les affaires d’un coup',
+            quoi: "En plus d’un établissement à la fois, vous pouvez afficher toutes les "
+                + "affaires ensemble (CA, masse, indicateurs). Le filtre Groupe restreint "
+                + "l’équipe affichée. La Simulation reste sur un établissement à la fois.",
+            ou: 'Performance → sélecteur d’établissement « Toutes les affaires » / Groupe'
         },
         {
             id: 'observateur-hors-dispos-echanges', date: '2026-09-11',

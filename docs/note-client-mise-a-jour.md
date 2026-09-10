@@ -1,7 +1,7 @@
 # Templyo — ce qui change à la prochaine mise à jour
 
 *Note à envoyer avant le déploiement. Rédigée pour être lue par le patron, pas par un
-développeur. Version du 2026-09-11 (complément après rdv client).*
+développeur. Version du 2026-09-11 (livraison après rdv client).*
 
 > Les notes des mises à jour précédentes restent consultables dans l'historique du dépôt
 > (`git log docs/note-client-mise-a-jour.md`).
@@ -10,49 +10,59 @@ développeur. Version du 2026-09-11 (complément après rdv client).*
 
 Bonjour,
 
-Cette mise à jour enrichit surtout **le pilotage** (Simulation, Jokers par groupe) et
-**l’organisation d’équipe** (échanges, rôle observateur). La **clôture de service par
-code** reste la méthode en place pour pointer début et fin de service.
+Cette mise à jour enrichit **le pilotage** (Performance, Simulation), **les Jokers**,
+et surtout **la composition de la semaine suivante** : vous pouvez proposer les créneaux
+à l’équipe **avant** de publier le planning. La **clôture de service par code** reste
+la méthode en place pour pointer début et fin de service.
 
-## 1. Simulation dans Performance
+## 1. Proposer les créneaux de la semaine
 
-Dans **Performance**, l’onglet **Simulation** permet d’estimer un **jour** ou une
-**semaine** : vous saisissez un CA hypothétique seulement là où il n’y a pas encore de
-CA réel — **rien n’est écrit** dans le CA officiel.
+Sur le **planning**, une fois la grille posée (souvent en copiant une semaine, en
+Jokers), le bouton **« Proposer les créneaux »** ouvre tous les postes non pourvus aux
+candidatures.
 
-La masse salariale est **hybride** : les services déjà pointés restent en réel ; le reste
-(planifié + Jokers) est estimé. Vous choisissez comment valoriser les Jokers (taux
-horaire, forfait, moyenne ou médiane des taux du staff, **par groupe**).
+L’équipe les voit **tout de suite**, même si la semaine n’est pas encore publiée, et
+même si personne n’y a encore de shift. Sans ce clic, rien n’est annoncé : le brouillon
+reste chez vous.
 
-## 2. Jokers par groupe, plus lisibles
+## 2. Jokers par groupe, couleur au choix
 
 Chaque établissement peut avoir un **Joker par groupe** (Bar, Cuisine, Salle…). Sur le
-planning, ces créneaux se distinguent par **couleur**. En Simulation, la valorisation
-suit le même découpage par groupe.
+planning, survolez la carte Joker comme pour un membre du staff : **pastille de couleur**
+ou **Auto**. La Simulation valorise aussi ces Jokers groupe par groupe.
 
-## 3. Échanges de service — filtre par date
+## 3. Performance — toutes les affaires, filtre groupe, Simulation
+
+Dans **Performance**, vous pouvez afficher **toutes les affaires** d’un coup (CA, masse,
+indicateurs), ou filtrer par **groupe**. La saisie du CA et des objectifs reste
+établissement par établissement.
+
+L’onglet **Simulation** estime un **jour** ou une **semaine** : CA hypothétique seulement
+là où il n’y a pas encore de CA réel — **rien n’est écrit** dans le CA officiel. Masse
+**hybride** (pointé = réel, le reste estimé). Valorisation des Jokers **par groupe**
+(horaire, forfait, moyenne ou médiane).
+
+## 4. Échanges de service — filtre par date
 
 Quand un membre de l’équipe propose un échange, il peut **filtrer les créneaux collègues
-par date**. Seules les semaines **déjà publiées** entrent en jeu (fenêtre d’environ
-quatre semaines).
+par date**. Seules les semaines **déjà publiées** entrent en jeu.
 
-## 4. Observateur
+## 5. Observateur
 
 Le compte **observateur** ne voit plus **Dispos** ni **Échanges** à valider. Il conserve
 les actions utiles sur la clôture (sauf le **code** à 4 chiffres, réservé patron /
 directeur).
 
-## 5. Clôture par code — inchangée
+## 6. Clôture par code — inchangée
 
 Vous dictez toujours le **code à 4 chiffres** (Pointage) ; l’équipe pointe **début** puis
-**fin** ; les heures réelles suivent pour le récap et la paie. Vous pouvez toujours
-ajuster après coup (origine du code conservée).
+**fin** ; les heures réelles suivent pour le récap et la paie.
 
 ---
 
-En résumé : **Simulation pour anticiper**, **Jokers plus clairs par groupe**,
-**échanges plus faciles à cibler**, **observateur recentré** — sans changer la façon de
-pointer le service.
+En résumé : **proposer la semaine sans la publier**, **Jokers colorés comme le staff**,
+**Performance toutes affaires**, **Simulation pour anticiper** — sans changer la façon
+de pointer le service.
 
 Bonne soirée,
 L’équipe Templyo
