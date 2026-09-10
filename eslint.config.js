@@ -54,6 +54,8 @@ module.exports = [
                 ShiftHours: 'readonly',    // public/lib/shift-hours.js (UMD)
                 DispoTemplate: 'readonly', // public/lib/dispo-template.js (UMD)
                 Nouveautes: 'readonly',    // public/lib/nouveautes.js (UMD)
+                ClientFeatures: 'readonly',  // public/lib/client-features.js (UMD)
+                JokerGroupColor: 'readonly', // public/lib/joker-group-color.js (UMD)
                 XLSX: 'readonly',          // vendor/xlsx
                 jspdf: 'readonly',         // vendor/jspdf
                 jsPDF: 'readonly',

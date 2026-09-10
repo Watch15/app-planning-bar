@@ -5,11 +5,11 @@
 // Ne pas hardcoder CLIENT_PROFILE ici : seule la réponse serveur fait foi.
 (function (root, factory) {
     if (typeof module === 'object' && module.exports) {
-        module.exports = factory();
+        module.exports = factory(root);
     } else {
-        root.ClientFeatures = factory();
+        root.ClientFeatures = factory(root);
     }
-})(typeof self !== 'undefined' ? self : this, function () {
+})(typeof self !== 'undefined' ? self : this, function (root) {
     'use strict';
 
     let _state = { profile: 'default', features: {} };
