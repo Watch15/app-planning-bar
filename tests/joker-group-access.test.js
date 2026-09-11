@@ -58,22 +58,25 @@ beforeEach(() => {
 test('joker-ouverts : staff Bar ne voit que Bar (+ sans groupe)', async () => {
     const body = await (await req('/api/shifts/joker-ouverts', STAFF_BAR)).json();
     assert.equal(body.length, 2);
-    assert.ok(body.some(j => j.joker_group === 'Bar'));
-    assert.ok(body.some(j => j.joker_group == null));
-    assert.ok(!body.some(j => j.joker_group === 'Cuisine'));
+    // Le nom de groupe n'est plus exposé au staff — filtre vérifié via les horaires seedés
+    // (Bar 18–22 + sans-groupe 19–23 ; Cuisine exclu).
+    assert.ok(body.some(j => j.start_time === 18 && j.end_time === 22));
+    assert.ok(body.some(j => j.start_time === 19 && j.end_time === 23));
+    assert.ok(body.every(j => !('joker_group' in j)));
 });
 
 test('joker-ouverts : staff Cuisine ne voit que Cuisine (+ sans groupe)', async () => {
     const body = await (await req('/api/shifts/joker-ouverts', STAFF_CUIS)).json();
     assert.equal(body.length, 2);
-    assert.ok(body.some(j => j.joker_group === 'Cuisine'));
-    assert.ok(body.some(j => j.joker_group == null));
-    assert.ok(!body.some(j => j.joker_group === 'Bar'));
+    assert.ok(body.some(j => j.start_time === 18 && j.end_time === 22));
+    assert.ok(body.some(j => j.start_time === 19 && j.end_time === 23));
+    assert.ok(body.every(j => !('joker_group' in j)));
 });
 
 test('joker-ouverts : polyvalent voit tous les Jokers', async () => {
     const body = await (await req('/api/shifts/joker-ouverts', STAFF_POLY)).json();
     assert.equal(body.length, 3);
+    assert.ok(body.every(j => !('joker_group' in j)));
 });
 
 test('joker-candidature : refus si mauvais groupe', async () => {

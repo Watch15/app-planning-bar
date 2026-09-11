@@ -5721,7 +5721,8 @@ app.get('/api/shifts/joker-ouverts', checkDB, requireAuth, async (req, res) => {
             end_time:           s.end_time,
             establishment_id:   s.establishment_id,
             establishment_name: estabNameById[s.establishment_id] || s.establishment_id,
-            joker_group:        s.joker_group || null,
+            // Pas de `joker_group` côté staff : le filtre est déjà fait serveur,
+            // le nom de groupe ne doit pas apparaître dans l'UI planning.
             slot_offer:         !!s.slot_offer,
             has_applied:        staffId ? (s.joker_candidates || []).some(c => c.staff_id === staffId) : false,
         }));
@@ -5810,6 +5811,57 @@ app.post('/api/shifts/:id/joker-candidature', checkDB, requireAuth, async (req, 
         if (!shift.joker_open)                                 return res.status(403).json({ error: 'Ce Joker n\'est pas ouvert aux candidatures' });
         if (shift.date < today)                                return res.status(403).json({ error: 'Ce créneau est déjà passé' });
         return res.status(409).json({ error: 'Candidature déjà envoyée' });
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
+// DELETE — Staff se retire d'une candidature Joker, ou patron retire un candidat
+app.delete('/api/shifts/:id/joker-candidature', checkDB, requireAuth, async (req, res) => {
+    if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
+    const user = req.session.user;
+    const isManager = user.role === 'patron' || user.role === 'directeur';
+    let targetStaffId = null;
+    if (isManager) {
+        targetStaffId = req.body && req.body.staff_id != null
+            ? String(req.body.staff_id)
+            : (req.query.staff_id != null ? String(req.query.staff_id) : '');
+        if (!targetStaffId) return res.status(400).json({ error: 'staff_id requis' });
+    } else if (user.staff_id) {
+        targetStaffId = String(user.staff_id);
+    } else {
+        return res.status(403).json({ error: 'Réservé au staff connecté' });
+    }
+    try {
+        const today = await getActivePointageDateStr();
+        const existing = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
+        if (!existing) return res.status(404).json({ error: 'Shift introuvable' });
+        if (!existing.is_joker && existing.staff_id !== '__joker__') {
+            return res.status(400).json({ error: 'Ce shift n\'est pas un Joker' });
+        }
+        if (isManager && !canAccessEstablishment(user, existing.establishment_id)) {
+            return res.status(403).json({ error: 'Accès refusé' });
+        }
+        if (!existing.joker_open) {
+            return res.status(403).json({ error: 'Ce Joker n\'est plus ouvert aux candidatures' });
+        }
+        if (existing.date < today) {
+            return res.status(403).json({ error: 'Ce créneau est déjà passé' });
+        }
+        const has = (existing.joker_candidates || []).some(c => String(c.staff_id) === targetStaffId);
+        if (!has) {
+            return res.status(404).json({ error: 'Candidature introuvable' });
+        }
+        const updated = await db.collection('shifts').findOneAndUpdate(
+            { _id: new ObjectId(req.params.id), joker_open: true },
+            { $pull: { joker_candidates: { staff_id: targetStaffId } } },
+            { returnDocument: 'after' }
+        );
+        if (!updated) {
+            return res.status(404).json({ error: 'Candidature introuvable' });
+        }
+        res.json({
+            message: isManager ? 'Candidature retirée' : 'Tu t\'es retiré de ce créneau',
+            joker_candidates: updated.joker_candidates || [],
+        });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 

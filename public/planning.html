@@ -498,9 +498,13 @@
             transition: background 0.15s; white-space: nowrap; flex-shrink: 0;
         }
         .btn-je-suis-dispo:hover:not([disabled]) { background: #3d35a0; }
-        .btn-je-suis-dispo.applied, .btn-je-suis-dispo[disabled] {
-            background: #27ae60; cursor: default; opacity: 0.9;
+        .btn-je-suis-dispo[disabled] {
+            background: #94a3b8; cursor: default; opacity: 0.9;
         }
+        .btn-je-suis-dispo.withdraw {
+            background: #fff; color: #b45309; border: 1.5px solid #f59e0b; cursor: pointer;
+        }
+        .btn-je-suis-dispo.withdraw:hover { background: #fffbeb; }
         @media (max-width: 480px) {
             .open-joker-card { margin: 0 14px 8px; }
             .open-joker-item { flex-wrap: wrap; }
@@ -579,10 +583,16 @@
             background: #534AB7;
         }
         .sp-block--applied {
-            cursor: default;
+            cursor: pointer;
             background: #d1fae5;
             color: #065f46;
             border-color: #10b981;
+        }
+        .sp-block--withdraw {
+            cursor: pointer;
+            background: #fffbeb;
+            color: #92400e;
+            border-color: #f59e0b;
         }
         .sp-block--blocked {
             cursor: default;
@@ -597,6 +607,45 @@
             .sp-plan { margin: 0 14px 8px; }
             .sp-axis, .sp-stack { padding-left: 8px; padding-right: 8px; }
             .sp-block-when { display: none; }
+        }
+
+        /* ── Modale de confirmation (remplace window.confirm) ── */
+        .app-confirm-overlay {
+            position: fixed; inset: 0; z-index: 10000;
+            background: rgba(0, 0, 0, 0.45);
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .app-confirm-sheet {
+            background: #fff; border-radius: 14px;
+            padding: 24px; max-width: 380px; width: 100%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+        }
+        .app-confirm-sheet--phone {
+            align-self: flex-end;
+            border-radius: 20px 20px 0 0;
+            max-width: 100%;
+            padding: 24px 24px max(20px, env(safe-area-inset-bottom));
+            box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.18);
+        }
+        .app-confirm-overlay:has(.app-confirm-sheet--phone) {
+            align-items: flex-end; padding: 0;
+        }
+        .app-confirm-msg {
+            font-size: 14px; color: #1a1a2e; line-height: 1.5; margin: 0 0 20px;
+        }
+        .app-confirm-actions {
+            display: flex; gap: 8px; justify-content: flex-end;
+        }
+        .app-confirm-cancel {
+            padding: 10px 18px; border-radius: 8px;
+            border: 1px solid #e0e0e0; background: #fff;
+            font-size: 14px; cursor: pointer; color: #555; font-family: inherit;
+        }
+        .app-confirm-ok {
+            padding: 10px 18px; border-radius: 8px;
+            border: none; background: #0d9488; color: #fff;
+            font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
         }
 
         /* ── Notifications in-app toasts ── */

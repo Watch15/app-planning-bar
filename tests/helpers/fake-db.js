@@ -280,6 +280,13 @@ function makeCollection(initialDocs) {
                     docs[idx][k].push(v);
                 }
             }
+            if (update.$pull) {
+                for (const [k, v] of Object.entries(update.$pull)) {
+                    if (Array.isArray(docs[idx][k])) {
+                        docs[idx][k] = docs[idx][k].filter(x => !pullHits(x, v));
+                    }
+                }
+            }
             const after = docs[idx];
             return (opts && opts.returnDocument === 'before') ? before : after;
         },

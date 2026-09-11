@@ -3157,7 +3157,8 @@ async function openJokerModal(shift, el) {
                 '<span style="width:10px;height:10px;border-radius:50%;background:' + escapeHtml(c.staff_color || '#888') + ';flex-shrink:0;display:inline-block"></span>' +
                 '<span style="flex:1;font-size:13px;font-weight:600;color:#1a1a2e">' + escapeHtml(c.staff_name || '?') + '</span>' +
                 '<span style="font-size:11px;color:#aaa">à ' + timeStr + '</span>' +
-                '<button class="btn-assign-cand" data-staff-id="' + escapeHtml(c.staff_id) + '" data-staff-name="' + escapeHtml(c.staff_name || '') + '" data-staff-color="' + escapeHtml(c.staff_color || '#888') + '" style="background:#534AB7;color:white;border:none;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer">Assigner</button>' +
+                '<button type="button" class="btn-remove-cand" data-staff-id="' + escapeHtml(c.staff_id) + '" data-staff-name="' + escapeHtml(c.staff_name || '') + '" style="background:none;color:#c0392b;border:1px solid #f5c6c6;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer">Retirer</button>' +
+                '<button type="button" class="btn-assign-cand" data-staff-id="' + escapeHtml(c.staff_id) + '" data-staff-name="' + escapeHtml(c.staff_name || '') + '" data-staff-color="' + escapeHtml(c.staff_color || '#888') + '" style="background:#534AB7;color:white;border:none;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer">Assigner</button>' +
                 '</div>';
         }).join('');
         cList.querySelectorAll('.btn-assign-cand').forEach(btn => {
@@ -3166,6 +3167,25 @@ async function openJokerModal(shift, el) {
                 const staffObj = { _id: btn.dataset.staffId, name: btn.dataset.staffName, color: btn.dataset.staffColor };
                 await assignStaffToJoker(staffObj, fakeEl);
                 close();
+            });
+        });
+        cList.querySelectorAll('.btn-remove-cand').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const name = btn.dataset.staffName || 'ce membre';
+                showConfirm('Retirer la candidature de <strong>' + escapeHtml(name) + '</strong> ?', async () => {
+                    try {
+                        const r = await fetch('/api/shifts/' + shift._id + '/joker-candidature', {
+                            method: 'DELETE', credentials: 'include',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ staff_id: btn.dataset.staffId }),
+                        });
+                        const data = await r.json().catch(() => ({}));
+                        if (!r.ok) throw new Error(data.error || 'Erreur');
+                        shift.joker_candidates = data.joker_candidates || [];
+                        renderCandidatesList();
+                        showToast('Candidature retirée');
+                    } catch (err) { showToast(err.message || 'Erreur', true); }
+                });
             });
         });
     }
@@ -4140,7 +4160,7 @@ async function proposeWeekSlots() {
         return;
     }
     const weekStartStr = toDateStr(currentWeekStart);
-    if (!confirm('Proposer tous les Jokers non ouverts de cette semaine aux candidatures ?')) return;
+    if (!await askConfirm('Proposer tous les Jokers non ouverts de cette semaine aux candidatures ?')) return;
     try {
         const res = await fetch('/api/jokers/open-week', {
             method: 'POST',

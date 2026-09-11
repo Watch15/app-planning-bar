@@ -19,6 +19,29 @@ function textColorFor(hex) {
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? '#1a1a2e' : '#ffffff';
 }
 
+// Modale de confirmation (remplace window.confirm — bloqué / moche en PWA).
+function showConfirm(message, onConfirm, onCancel) {
+    const mob = window.matchMedia('(max-width: 768px)').matches;
+    const overlay = document.createElement('div');
+    overlay.className = 'app-confirm-overlay';
+    overlay.innerHTML =
+        '<div class="app-confirm-sheet' + (mob ? ' app-confirm-sheet--phone' : '') + '" role="dialog" aria-modal="true">' +
+            '<p class="app-confirm-msg">' + message + '</p>' +
+            '<div class="app-confirm-actions">' +
+                '<button type="button" class="app-confirm-cancel">Annuler</button>' +
+                '<button type="button" class="app-confirm-ok">Confirmer</button>' +
+            '</div>' +
+        '</div>';
+    document.body.appendChild(overlay);
+    const close = () => overlay.remove();
+    overlay.querySelector('.app-confirm-ok').addEventListener('click', () => { close(); onConfirm(); });
+    overlay.querySelector('.app-confirm-cancel').addEventListener('click', () => { close(); if (onCancel) onCancel(); });
+    overlay.addEventListener('click', e => { if (e.target === overlay) { close(); if (onCancel) onCancel(); } });
+}
+
+const askConfirm = message => new Promise(resolve =>
+    showConfirm(message, () => resolve(true), () => resolve(false)));
+
 function toDateStr(d) {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -498,6 +521,24 @@ function applyJokerCandidature(id) {
     });
 }
 
+function withdrawJokerCandidature(id) {
+    return fetch('/api/shifts/' + id + '/joker-candidature', {
+        method: 'DELETE', credentials: 'include',
+    }).then(async r => {
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || 'Erreur');
+        return data;
+    });
+}
+
+function bustJokersCache() { _jokersCache = null; }
+
+function jokerSlotLabel(joker) {
+    const d = parseDate(joker.date);
+    return DAY_NAMES[d.getDay()] + ' ' + d.getDate()
+        + ' · ' + fmtHour(joker.start_time) + ' → ' + fmtHour(joker.end_time);
+}
+
 function bindJokerApply(el, joker, after, needConfirm, myShifts) {
     if (!el || !joker || joker.has_applied) return;
     el.addEventListener('click', async ev => {
@@ -508,17 +549,40 @@ function bindJokerApply(el, joker, after, needConfirm, myShifts) {
             return;
         }
         if (needConfirm) {
-            const d = parseDate(joker.date);
-            const label = (joker.joker_group ? joker.joker_group + ' · ' : '')
-                + DAY_NAMES[d.getDay()] + ' ' + d.getDate()
-                + ' · ' + fmtHour(joker.start_time) + ' → ' + fmtHour(joker.end_time);
-            if (!confirm('Je suis dispo pour ce créneau ?\n' + label)) return;
+            const ok = await askConfirm(
+                'Je suis dispo pour ce créneau ?<br><strong>' + _esc(jokerSlotLabel(joker)) + '</strong>'
+            );
+            if (!ok) return;
         }
         el.dataset.busy = '1';
         try {
             await applyJokerCandidature(joker._id);
             joker.has_applied = true;
+            bustJokersCache();
             showMsg('✅ Ta disponibilité a été envoyée !', 'success');
+            if (typeof after === 'function') after();
+        } catch (e) {
+            el.dataset.busy = '0';
+            showMsg(e.message || 'Erreur', 'error');
+        }
+    });
+}
+
+function bindJokerWithdraw(el, joker, after) {
+    if (!el || !joker || !joker.has_applied) return;
+    el.addEventListener('click', async ev => {
+        ev.stopPropagation();
+        if (el.dataset.busy === '1') return;
+        const ok = await askConfirm(
+            'Te retirer de ce créneau ?<br><strong>' + _esc(jokerSlotLabel(joker)) + '</strong>'
+        );
+        if (!ok) return;
+        el.dataset.busy = '1';
+        try {
+            await withdrawJokerCandidature(joker._id);
+            joker.has_applied = false;
+            bustJokersCache();
+            showMsg('Candidature retirée', 'success');
             if (typeof after === 'function') after();
         } catch (e) {
             el.dataset.busy = '0';
@@ -643,14 +707,14 @@ function buildSlotOfferPlanning(slotOffers, from, myShifts, refresh) {
                 const block = document.createElement('div');
                 const applied = !!j.has_applied;
                 block.className = 'sp-block sp-block--offer'
-                    + (applied ? ' sp-block--applied' : '')
+                    + (applied ? ' sp-block--withdraw' : '')
                     + (blocked && !applied ? ' sp-block--blocked' : '')
                     + (past && !applied && !blocked ? ' sp-block--past' : '');
                 block.style.left = pctLeft(Math.max(j.start_time, OPEN_H));
                 block.style.width = pctWidth(Math.max(j.start_time, OPEN_H), Math.min(j.end_time, CLOSE_H));
-                const who = applied ? 'Envoyée'
+                const who = applied ? 'Se retirer'
                     : blocked ? 'Déjà en shift'
-                    : _esc(j.joker_group || 'Poste ouvert');
+                    : 'Poste ouvert';
                 const showWhen = (j.end_time - j.start_time) >= 1.2;
                 block.innerHTML =
                     '<span class="sp-block-who">' + who + '</span>' +
@@ -658,7 +722,8 @@ function buildSlotOfferPlanning(slotOffers, from, myShifts, refresh) {
                 if (blocked && !applied) {
                     block.title = 'Tu as déjà un shift sur ces horaires';
                 }
-                if (!applied && !past && !blocked) bindJokerApply(block, j, refresh, true, weekMine);
+                if (applied && !past) bindJokerWithdraw(block, j, refresh);
+                else if (!applied && !past && !blocked) bindJokerApply(block, j, refresh, true, weekMine);
                 lane.appendChild(block);
                 lanes.appendChild(lane);
             });
@@ -682,19 +747,17 @@ function buildPunctualJokerList(weekJokers, refresh, myShifts) {
         const blocked   = jokerConflictsWithMine(j, myShifts);
         const estabName = j.establishment_name || j.establishment_id || '';
         const safeEstab = estabName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        const grp = j.joker_group ? (' · ' + String(j.joker_group).replace(/</g, '&lt;').replace(/>/g, '&gt;')) : '';
-        const jc = (window.JokerGroupColor && JokerGroupColor.of(j.joker_group))
-            || { bg: '#6b7280', soft: '#f3f4f6' };
-        const btnLabel = applied ? '✅ Envoyée' : blocked ? 'Déjà en shift' : 'Je suis dispo';
-        const btnOff = applied || blocked;
-        return '<div class="open-joker-item" style="border-left:3px solid ' + jc.bg
-            + ';padding-left:10px;background:linear-gradient(90deg,' + jc.soft + ' 0%,transparent 48%)">' +
+        // Pas de nom de groupe côté staff — créneau anonyme (horaire + établissement).
+        const btnLabel = applied ? 'Se retirer' : blocked ? 'Déjà en shift' : 'Je suis dispo';
+        const btnClass = applied ? ' withdraw' : '';
+        const btnOff = blocked && !applied;
+        return '<div class="open-joker-item">' +
             '<div class="open-joker-date">' + dayLabel +
-                '<small>' + fmtHour(j.start_time) + ' à ' + fmtHour(j.end_time) + grp +
+                '<small>' + fmtHour(j.start_time) + ' à ' + fmtHour(j.end_time) +
                     (safeEstab ? ' · <span class="open-joker-estab">' + safeEstab + '</span>' : '') +
                 '</small>' +
             '</div>' +
-            '<button class="btn-je-suis-dispo' + (applied ? ' applied' : '') + '" data-id="' + j._id + '"' + (btnOff ? ' disabled' : '') + '>' +
+            '<button type="button" class="btn-je-suis-dispo' + btnClass + '" data-id="' + j._id + '"' + (btnOff ? ' disabled' : '') + '>' +
                 btnLabel +
             '</button>' +
         '</div>';
@@ -704,7 +767,9 @@ function buildPunctualJokerList(weekJokers, refresh, myShifts) {
         itemsHtml;
     card.querySelectorAll('.btn-je-suis-dispo:not([disabled])').forEach(btn => {
         const j = weekJokers.find(x => String(x._id) === String(btn.dataset.id));
-        bindJokerApply(btn, j, refresh, false, myShifts);
+        if (!j) return;
+        if (j.has_applied) bindJokerWithdraw(btn, j, refresh);
+        else bindJokerApply(btn, j, refresh, true, myShifts);
     });
     return card;
 }

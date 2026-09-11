@@ -282,6 +282,40 @@ test('joker-candidature : un Joker ponctuel non publié n\'est pas candidatable'
     assert.equal(res.status, 403);
 });
 
+test('joker-candidature DELETE : le staff peut se retirer', async () => {
+    const id = '0123456789abcdef0123e001';
+    app.locals.setTestDb(seed([
+        { _id: id, staff_id: '__joker__', is_joker: true, joker_open: true, slot_offer: true,
+          establishment_id: 'bar1', date: day(N1, 2), start_time: 18, end_time: 24,
+          joker_candidates: [
+              { staff_id: STAFF_ID, staff_name: 'Bob', staff_color: '#3498db', submitted_at: new Date() },
+          ] },
+    ]));
+    const res = await req('/api/shifts/' + id + '/joker-candidature', STAFF, { method: 'DELETE' });
+    assert.equal(res.status, 200, await res.clone().text());
+    const body = await res.json();
+    assert.equal((body.joker_candidates || []).length, 0);
+});
+
+test('joker-candidature DELETE : le patron peut retirer un candidat', async () => {
+    const id = '0123456789abcdef0123e002';
+    const PATRON = { _id: 'u-pat', role: 'patron', name: 'Paul' };
+    app.locals.setTestDb(seed([
+        { _id: id, staff_id: '__joker__', is_joker: true, joker_open: true, slot_offer: true,
+          establishment_id: 'bar1', date: day(N1, 2), start_time: 18, end_time: 24,
+          joker_candidates: [
+              { staff_id: STAFF_ID, staff_name: 'Bob', staff_color: '#3498db', submitted_at: new Date() },
+          ] },
+    ]));
+    const res = await req('/api/shifts/' + id + '/joker-candidature', PATRON, {
+        method: 'DELETE',
+        body: JSON.stringify({ staff_id: STAFF_ID }),
+    });
+    assert.equal(res.status, 200, await res.clone().text());
+    const body = await res.json();
+    assert.equal((body.joker_candidates || []).length, 0);
+});
+
 test('joker-ouverts : un Joker ouvert dont la date est passée disparaît', async () => {
     const past = toDateStr(new Date(Date.now() - 3 * 864e5));
     const visibleDate = day(CUR, 6);
