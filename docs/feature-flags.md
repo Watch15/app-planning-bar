@@ -12,7 +12,7 @@ Front : [`public/lib/client-features.js`](../public/lib/client-features.js) (`Cl
 | `profiles` dans le catalogue | Restreint la feature à certains profils |
 
 Activation = **profil autorisé** + **`FEATURE_*=true`** (sauf `defaultOn`).  
-`FEATURE_*=force` active même hors profil (recette locale uniquement).  
+`FEATURE_*=force` active même hors profil — recette locale, **et les environnements de recette hébergés** (cf. « Où le flag est posé »).  
 `FEATURE_*=false` force off.
 
 ## Catalogue actuel
@@ -21,6 +21,36 @@ Activation = **profil autorisé** + **`FEATURE_*=true`** (sauf `defaultOn`).
 |-----|-----|---------|--------|--------|
 | `weekly_staff_validation` | `FEATURE_WEEKLY_VALIDATION` | castaniu | off | D-100 |
 | `predefined_slots` | `FEATURE_PREDEFINED_SLOTS` | castaniu | **on** | D-101 |
+
+## Où le flag est posé (état au 2026-09-11)
+
+Le catalogue dit ce qu'une feature *peut* être ; seule la config d'une instance dit ce
+qu'elle *est*. Les variables Railway ne sont dans aucun fichier du dépôt — se fier au
+catalogue seul fait conclure à un bug là où il n'y a qu'une variable absente.
+
+| Instance | `CLIENT_PROFILE` | `FEATURE_PREDEFINED_SLOTS` | D-101 visible |
+|---|---|---|---|
+| Local `.env` | `castaniu` | `true` | ✅ |
+| Local `.env.dev` / `.env.castaniu` | — / `castaniu` | `force` / `true` | ✅ |
+| Railway **Dev** (dev.templyo.fr) | *(absent)* | `force` **← posé le 2026-09-11** | ✅ |
+| Railway **Demo** / **Prod** interne | *(absent)* | *(absente)* | ❌ |
+| Railway **Castaniu Family** (prod client) | `castaniu` | `true` (+ `FEATURE_WEEKLY_VALIDATION=false`) | ✅ |
+
+`force` sur Dev est délibéré : il ouvre **cette seule** feature sans faire passer
+dev.templyo.fr en profil `castaniu`, ce qui y allumerait aussi, sans prévenir, toute
+future feature castaniu-only. La base reste `templyo_dev` : c'est une recette d'UI,
+pas un miroir de la prod client.
+
+**Symptôme à reconnaître :** une feature gated qui marche en local et reste invisible
+sur une instance hébergée n'est presque jamais un défaut de code ni un cache — c'est
+`CLIENT_PROFILE` / `FEATURE_*` absent de cet environnement. Se lit en une commande :
+
+```
+railway variables --environment <Dev|Demo|Prod> --service <Dev|"Castaniu Family"> --json
+```
+
+Vérifier quand même que le code est bien déployé avant de conclure :
+`curl -s https://dev.templyo.fr/script.js | grep -c proposeWeekSlots`.
 
 ## API / UI
 
@@ -55,4 +85,4 @@ FEATURE_WEEKLY_VALIDATION=false
 FEATURE_PREDEFINED_SLOTS=true    # D-101 : on par défaut sur Castaniu ; false pour forcer off
 ```
 
-`FEATURE_*=force` active même hors profil (recette locale, `npm run dev`).
+`FEATURE_*=force` active même hors profil (`npm run dev`, et l’env Railway **Dev**).

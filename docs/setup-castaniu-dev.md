@@ -58,7 +58,7 @@ FEATURE_PREDEFINED_SLOTS=true     # D-101 — on par défaut sur Castaniu (false
 ```
 
 Toute UI / route Castaniu doit passer par `ClientFeatures.enabled(…)` / `requireFeature(…)`.
-Sans le profil Castaniu, `predefined_slots` reste invisible (sauf `FEATURE_PREDEFINED_SLOTS=force` en local). `FEATURE_*=false` force off.
+Sans le profil Castaniu, `predefined_slots` reste invisible — sauf `FEATURE_PREDEFINED_SLOTS=force`, posé en local et sur l’env Railway **Dev** depuis le 2026-09-11 (cf. [`feature-flags.md`](feature-flags.md#où-le-flag-est-posé-état-au-2026-09-11)). `FEATURE_*=false` force off.
 
 ## Lien tickets
 
