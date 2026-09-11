@@ -20,7 +20,7 @@ Activation = **profil autorisé** + **`FEATURE_*=true`** (sauf `defaultOn`).
 | Clé | Env | Profils | Défaut | Ticket |
 |-----|-----|---------|--------|--------|
 | `weekly_staff_validation` | `FEATURE_WEEKLY_VALIDATION` | castaniu | off | D-100 |
-| `predefined_slots` | `FEATURE_PREDEFINED_SLOTS` | castaniu | off | D-101 |
+| `predefined_slots` | `FEATURE_PREDEFINED_SLOTS` | castaniu | **on** | D-101 |
 
 ## API / UI
 
@@ -52,7 +52,7 @@ Voir [`setup-castaniu-dev.md`](setup-castaniu-dev.md). Exemple :
 ```
 CLIENT_PROFILE=castaniu
 FEATURE_WEEKLY_VALIDATION=false
-FEATURE_PREDEFINED_SLOTS=false
+FEATURE_PREDEFINED_SLOTS=true    # D-101 : on par défaut sur Castaniu ; false pour forcer off
 ```
 
-Passer à `true` uniquement quand le code de la feature est prêt à être essayé.
+`FEATURE_*=force` active même hors profil (recette locale, `npm run dev`).

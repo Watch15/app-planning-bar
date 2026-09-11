@@ -42,6 +42,20 @@ test('force active hors profil', () => {
     }), true);
 });
 
+test('predefined_slots : on par défaut sur castaniu sans FEATURE_*', () => {
+    assert.equal(enabled('predefined_slots', {
+        profile: 'castaniu',
+        env: {},
+    }), true);
+});
+
+test('predefined_slots : off hors profil sans force', () => {
+    assert.equal(enabled('predefined_slots', {
+        profile: 'default',
+        env: {},
+    }), false);
+});
+
 test('off explicite bat defaultOn', () => {
     assert.equal(enabled('predefined_slots', {
         profile: 'castaniu',
@@ -59,7 +73,7 @@ test('resolveAll expose profile + toutes les clés du catalogue', () => {
         assert.equal(typeof snap.features[key], 'boolean', key);
     }
     assert.equal(snap.features.weekly_staff_validation, true);
-    assert.equal(snap.features.predefined_slots, false);
+    assert.equal(snap.features.predefined_slots, true);
 });
 
 test('clé inconnue → false', () => {

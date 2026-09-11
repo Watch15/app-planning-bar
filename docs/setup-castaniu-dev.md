@@ -54,11 +54,11 @@ Dans `.env.castaniu` :
 ```
 CLIENT_PROFILE=castaniu
 FEATURE_WEEKLY_VALIDATION=false   # D-100 — true seulement quand prêt
-FEATURE_PREDEFINED_SLOTS=false    # D-101 — true seulement quand prêt
+FEATURE_PREDEFINED_SLOTS=true     # D-101 — on par défaut sur Castaniu (false pour forcer off)
 ```
 
 Toute UI / route Castaniu doit passer par `ClientFeatures.enabled(…)` / `requireFeature(…)`.
-Sans le bon profil **et** le `FEATURE_*=true`, la feature reste invisible (404 API).
+Sans le profil Castaniu, `predefined_slots` reste invisible (sauf `FEATURE_PREDEFINED_SLOTS=force` en local). `FEATURE_*=false` force off.
 
 ## Lien tickets
 

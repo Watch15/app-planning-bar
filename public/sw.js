@@ -27,6 +27,7 @@ const STATIC = [
     '/index-init.js',
     '/sw-register.js',
     '/lib/auth-guard.js',
+    '/lib/client-features.js',
     '/lib/shift-hours.js',
     '/lib/week.js',
     '/lib/dispo-template.js',

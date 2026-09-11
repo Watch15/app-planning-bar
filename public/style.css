@@ -178,17 +178,36 @@ a:hover { color: var(--accent-soft); }
 }
 .week-arrow:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 .week-label { font-size: 14px; font-weight: 600; flex: 1; text-align: center; color: var(--text-primary); letter-spacing: -0.2px; }
-.week-nav .btn-propose-slots,
-.day-detail-header .btn-propose-slots {
-  padding: 5px 12px; height: 30px; border-radius: var(--radius);
-  border: 1px solid #0d9488; background: rgba(13,148,136,0.12);
-  font-size: 12px; font-weight: 600; color: #0d9488;
-  cursor: pointer; white-space: nowrap; font-family: var(--font); flex-shrink: 0;
-  align-items: center;
+.propose-slots-bar {
+  display: none;
+  justify-content: center;
+  padding: 8px 16px;
+  background: #f0fdfa;
+  border-bottom: 1px solid #99f6e4;
 }
-.week-nav .btn-propose-slots:hover,
-.day-detail-header .btn-propose-slots:hover { background: rgba(13,148,136,0.2); color: #0f766e; }
-.btn-propose-slots.is-on { display: inline-flex !important; }
+.propose-slots-bar.is-on { display: flex !important; }
+.propose-slots-bar .btn-propose-slots {
+  width: 100%;
+  max-width: 560px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1.5px solid #0d9488;
+  background: #0d9488;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
+}
+.propose-slots-bar .btn-propose-slots:hover { background: #0f766e; border-color: #0f766e; }
+@media (max-width: 768px) {
+  .propose-slots-bar { padding: 8px 12px; }
+  .propose-slots-bar .btn-propose-slots { font-size: 13px; padding: 10px 12px; }
+}
 .btn-today {
   padding: 5px 12px; height: 30px; border-radius: 20px;
   border: 1px solid var(--light-border); background: var(--light-bg);
@@ -258,13 +277,34 @@ a:hover { color: var(--accent-soft); }
   border-color: var(--text-secondary);
   background: var(--light-bg);
 }
-.btn-copy-day {
-  padding: 5px 12px; border-radius: var(--radius);
-  border: 1px solid var(--light-border); background: var(--light-card);
-  font-size: 12px; font-weight: 500; color: var(--text-secondary);
-  cursor: pointer; transition: all var(--transition); white-space: nowrap; font-family: var(--font);
+.copy-menu { position: relative; flex-shrink: 0; }
+.copy-menu-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 80;
+  min-width: 188px;
+  background: var(--light-card);
+  border: 1px solid var(--light-border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
 }
-.btn-copy-day:hover { border-color: var(--warning); color: var(--warning); }
+.copy-menu.open .copy-menu-dropdown { display: block; }
+.copy-menu-item {
+  display: flex; align-items: center; width: 100%;
+  padding: 10px 14px; border: none; background: none;
+  text-align: left; cursor: pointer;
+  font-family: var(--font); font-size: 13px; font-weight: 600;
+  color: var(--text-primary);
+}
+.copy-menu-item:hover { background: var(--light-bg); }
+.copy-menu-item + .copy-menu-item { border-top: 1px solid var(--light-border); }
+.copy-menu-caret { font-size: 9px; opacity: 0.7; margin-left: 2px; }
+@media (max-width: 768px) {
+  .copy-menu-item { padding: 12px 14px; min-height: 44px; }
+}
 .day-detail-close {
   width: 30px; height: 30px; border-radius: var(--radius);
   border: 1px solid var(--light-border); background: var(--light-bg); font-size: 15px;
@@ -1462,9 +1502,8 @@ body.device-tablet .ms-actions button {
    Staff / Comptes / Récap / Performance / Pointage restent pleinement utilisables. */
 body.observateur #btn-publish-week,
 body.observateur #btn-edit-lock,
-body.observateur #btn-copy-day,
-body.observateur #btn-copy-week,
-body.observateur .btn-propose-slots,
+body.observateur #copy-menu,
+body.observateur #propose-slots-bar,
 body.observateur #fab-staff,
 body.observateur #staff-bar-container,
 body.observateur #staff-bar-overlay,

@@ -479,11 +479,11 @@ async function init() {
     if (!me) return;
 
     currentUser = me;
-    if (typeof refreshProposeSlotsButton === 'function') refreshProposeSlotsButton();
     // Observateur : accès vue patron mais lecture seule sur le PLANNING. Le serveur
     // bloque toute écriture planning (403) ; ici on masque en plus les contrôles de
     // construction du planning (publier, palette staff) via la classe body.observateur.
     if (me.role === 'observateur') document.body.classList.add('observateur');
+    if (typeof refreshProposeSlotsButton === 'function') refreshProposeSlotsButton();
     renderUserBadge(me);
     renderDateDisplay();
     Nouveautes.init(me.role, { autoOuvrir: true });
@@ -3975,6 +3975,27 @@ function initTimelineBodyTap() {
 }
 
 
+(function setupCopyMenu() {
+    const wrap = document.getElementById('copy-menu');
+    const trigger = document.getElementById('btn-copy-menu');
+    if (!wrap || !trigger) return;
+    const close = () => {
+        wrap.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+    };
+    trigger.addEventListener('click', e => {
+        e.stopPropagation();
+        const open = wrap.classList.toggle('open');
+        trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', close);
+    wrap.addEventListener('click', e => e.stopPropagation());
+    const dayBtn = document.getElementById('btn-copy-day');
+    const weekBtn = document.getElementById('btn-copy-week');
+    if (dayBtn) dayBtn.addEventListener('click', close);
+    if (weekBtn) weekBtn.addEventListener('click', close);
+})();
+
 document.getElementById('btn-copy-day').addEventListener('click', () => {
     if (!currentShifts.length) { showToast('Aucun shift à copier', true); return; }
     openCopyModal();
@@ -4120,17 +4141,14 @@ let _copyWeekMode = 'staff'; // 'staff' (garder les affectations) | 'jokers' (cr
 const _btnCopyWeek = document.getElementById('btn-copy-week');
 if (_btnCopyWeek) _btnCopyWeek.addEventListener('click', openCopyWeekModal);
 
-document.querySelectorAll('.btn-propose-slots').forEach(btn => {
-    btn.addEventListener('click', proposeWeekSlots);
-});
+const _btnProposeSlots = document.getElementById('btn-propose-slots');
+if (_btnProposeSlots) _btnProposeSlots.addEventListener('click', proposeWeekSlots);
 
 function refreshProposeSlotsButton() {
-    const on = !!(window.ClientFeatures && ClientFeatures.enabled('predefined_slots'));
-    document.querySelectorAll('.btn-propose-slots').forEach(btn => {
-        btn.classList.toggle('is-on', on);
-        btn.hidden = !on;
-        btn.style.display = on ? 'inline-flex' : 'none';
-    });
+    const on = !!(window.ClientFeatures && ClientFeatures.enabled('predefined_slots'))
+        && !document.body.classList.contains('observateur');
+    const bar = document.getElementById('propose-slots-bar');
+    if (bar) bar.classList.toggle('is-on', on);
 }
 
 async function proposeWeekSlots() {

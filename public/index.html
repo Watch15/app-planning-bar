@@ -170,7 +170,6 @@
             }
             .week-nav .btn-today { font-size: 11px !important; padding: 4px 8px !important; }
             .week-nav .week-arrow { font-size: 14px !important; padding: 4px 8px !important; }
-            .week-nav .btn-propose-slots { font-size: 11px !important; padding: 4px 8px !important; height: 28px; flex-shrink: 0; }
             .view-tabs { width: auto !important; }
             .view-tab { font-size: 11px !important; padding: 8px 10px !important; min-height: 36px !important; }
 
@@ -320,28 +319,17 @@
             .week-card { min-width: 100px; flex-shrink: 0; }
 
             /* ── Day detail header — une seule ligne, boutons secondaires masqués ── */
-            .day-detail-header { flex-wrap: nowrap !important; gap: 5px !important; padding: 8px 12px !important; overflow: hidden; }
+            .day-detail-header { flex-wrap: nowrap !important; gap: 5px !important; padding: 8px 12px !important; overflow: visible; }
             .day-detail-title  { font-size: 12px !important; flex: 1 !important; min-width: 0 !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            #btn-copy-day      { display: none !important; }
             #btn-refresh-day   { display: none !important; }
-            /* L'en-tête est en overflow:hidden : sur téléphone on garde le cadenas seul,
-               le bandeau se charge de l'expliquer au premier geste bloqué. !important parce
-               que la règle de base est déclarée PLUS BAS dans le fichier, à specificité égale. */
+            /* L'en-tête laisse dépasser le menu Copier (jour + semaine).
+               !important parce que la règle de base est déclarée PLUS BAS dans le fichier. */
             #btn-edit-lock                { font-size: 14px !important; padding: 3px 7px !important; }
             #btn-edit-lock::after         { content: '🔒' !important; }
             #btn-edit-lock.editing::after { content: '✏️' !important; }
             #btn-publish-week  { font-size: 11px !important; padding: 5px 10px !important; white-space: nowrap; flex-shrink: 0; }
-            /* La largeur utile tourne autour de 360 px et l'en-tête rogne ce qui dépasse :
-               les deux libellés longs sont réduits pour que le cadenas, l'état de publication
-               et la croix de fermeture tiennent tous les trois. */
             .btn-week-qualifier { display: none !important; }   /* « — Semaine en cours » */
-            #btn-copy-week      { font-size: 0 !important; padding: 4px 8px !important; flex-shrink: 0; }
-            /* Libellé court plutôt qu'icône nue : l'action recopie une semaine ENTIÈRE par-dessus
-               une autre, la flèche est ce qui dit « vers ». Un pictogramme seul se confondrait
-               avec « copier ce jour », masqué ici mais présent dans la tête du patron. */
-            #btn-copy-week::after { content: 'Copier →'; font-size: 11px; line-height: 1.4; }
-            .day-detail-header .btn-propose-slots { font-size: 0 !important; padding: 4px 8px !important; flex-shrink: 0; }
-            .day-detail-header .btn-propose-slots::after { content: 'Proposer'; font-size: 11px; font-weight: 600; line-height: 1.4; }
+            #btn-copy-menu { font-size: 11px !important; padding: 4px 8px !important; flex-shrink: 0; }
             .day-detail-close  { flex-shrink: 0 !important; }
 
             /* ── Timeline — évite le retour navigateur en scrollant horizontalement ── */
@@ -443,7 +431,6 @@
             .week-nav .week-label { font-size: 11px !important; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; }
             .week-nav .btn-today  { font-size: 11px !important; padding: 2px 8px !important; height: 24px; }
             .week-nav .week-arrow { font-size: 13px !important; width: 28px !important; height: 28px !important; }
-            .week-nav .btn-propose-slots { font-size: 10px !important; padding: 2px 7px !important; height: 24px; flex-shrink: 0; }
             .view-tabs { width: auto !important; }
             .view-tab  { font-size: 11px !important; padding: 7px 10px !important; min-height: 34px !important; }
 
@@ -482,12 +469,12 @@
             .shift-hours { font-size: 10px !important; }
             .color-controls { display: none !important; }
 
-            /* ── Day detail header — compact, tous les boutons en paysage ── */
-            .day-detail-header { flex-wrap: nowrap !important; gap: 5px !important; padding: 5px 10px !important; overflow: hidden; }
+            /* ── Day detail header — compact, menu Copier unique ── */
+            .day-detail-header { flex-wrap: nowrap !important; gap: 5px !important; padding: 5px 10px !important; overflow: visible; }
             .day-detail-title  { font-size: 11px !important; flex: 1 !important; min-width: 0 !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            #btn-copy-day    { font-size: 10px !important; padding: 3px 7px !important; white-space: nowrap; flex-shrink: 0; }
             #btn-refresh-day { font-size: 10px !important; padding: 3px 7px !important; white-space: nowrap; flex-shrink: 0; }
             #btn-publish-week  { font-size: 10px !important; padding: 4px 8px !important; white-space: nowrap; flex-shrink: 0; }
+            #btn-copy-menu { font-size: 10px !important; padding: 3px 8px !important; flex-shrink: 0; }
             .day-detail-close  { flex-shrink: 0 !important; }
 
             /* ── Staff bar → bottom sheet paysage ── */
@@ -999,7 +986,9 @@
             <button class="view-tab active" data-view="day">Jour</button>
             <button class="view-tab" data-view="week">Semaine</button>
         </div>
-        <button type="button" class="btn-propose-slots" data-feature="predefined_slots" style="display:none" title="Ouvre les Jokers de la semaine aux candidatures">Proposer les créneaux</button>
+    </div>
+    <div id="propose-slots-bar" class="propose-slots-bar">
+        <button type="button" id="btn-propose-slots" class="btn-propose-slots">Proposer les créneaux de cette semaine</button>
     </div>
 
     <!-- ── Carte KPI complétion des dispos (semaine prochaine) ── -->
@@ -1035,9 +1024,13 @@
             <!-- Libellé en CSS (#btn-edit-lock::after) ; le style en ligne ne garde que
                  l'état initial masqué, que refreshEditLockUI() retire. -->
             <button class="btn-manage-staff" id="btn-edit-lock" style="display:none"></button>
-            <button class="btn-copy-day" id="btn-copy-day">Copier ce jour →</button>
-            <button class="btn-manage-staff" id="btn-copy-week" style="font-size:12px;padding:5px 12px">Copier la semaine →</button>
-            <button type="button" class="btn-manage-staff btn-propose-slots" data-feature="predefined_slots" style="display:none;font-size:12px;padding:5px 12px;background:rgba(13,148,136,0.12);border-color:#0d9488;color:#0d9488" title="Ouvre les Jokers de la semaine aux candidatures">Proposer les créneaux</button>
+            <div class="copy-menu" id="copy-menu">
+                <button type="button" class="btn-manage-staff" id="btn-copy-menu" aria-expanded="false" aria-haspopup="menu">Copier <span class="copy-menu-caret" aria-hidden="true">▾</span></button>
+                <div class="copy-menu-dropdown" id="copy-menu-dropdown" role="menu">
+                    <button type="button" class="copy-menu-item" id="btn-copy-day" role="menuitem">Ce jour →</button>
+                    <button type="button" class="copy-menu-item" id="btn-copy-week" role="menuitem">Cette semaine →</button>
+                </div>
+            </div>
             <button class="btn-manage-staff" id="btn-refresh-day" title="Recharger les heures réelles saisies depuis la tablette de pointage" style="font-size:12px;padding:5px 10px">⟳ Actualiser</button>
             <button class="btn-manage-staff" id="btn-publish-week" style="font-size:12px;padding:5px 12px;background:var(--accent);border-color:var(--accent);color:#fff">Publier la semaine</button>
             <button class="day-detail-close" id="day-detail-close">×</button>

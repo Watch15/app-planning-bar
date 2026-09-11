@@ -35,13 +35,13 @@
     "semantic_hash": ""
   },
   "public/script.js": {
-    "mtime": 1789031214.1724741,
-    "ast_hash": "8e505919f1f96551afe5ee9bb11d7197",
+    "mtime": 1789135453.2240167,
+    "ast_hash": "17513c3f72f93246536e5327d22232ab",
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1789031214.1769915,
-    "ast_hash": "a273526540951e2620c6de994720729e",
+    "mtime": 1789135157.5842495,
+    "ast_hash": "5daadb3aee29a92135fb91dade1f7743",
     "semantic_hash": ""
   },
   "public/vendor/html2canvas.min.js": {
@@ -125,8 +125,8 @@
     "semantic_hash": ""
   },
   "public/index.html": {
-    "mtime": 1789133627.3045392,
-    "ast_hash": "e805e0104158dd255bd39d01ef2b3a18",
+    "mtime": 1789135520.8115966,
+    "ast_hash": "68e752eaaf5a7034514a95c0353630b2",
     "semantic_hash": ""
   },
   "public/login.html": {
@@ -415,18 +415,18 @@
     "semantic_hash": ""
   },
   "docs/design-creneaux-predefinis.md": {
-    "mtime": 1789133788.415097,
-    "ast_hash": "1020424138e3eb33934df7e7f6633706",
+    "mtime": 1789135321.167816,
+    "ast_hash": "a29d602dd4cfe80384c9b7a516a3ea0d",
     "semantic_hash": ""
   },
   "docs/setup-castaniu-dev.md": {
-    "mtime": 1789031214.1025774,
-    "ast_hash": "17a004f0c61ab4af136fb22dfd54e5b8",
+    "mtime": 1789135318.91752,
+    "ast_hash": "a8d744529a6e3f34675497036882858e",
     "semantic_hash": ""
   },
   "lib/client-features.js": {
-    "mtime": 1789031214.141135,
-    "ast_hash": "4dc157451fb4e00b77949b556dd1e4f9",
+    "mtime": 1789135155.2976658,
+    "ast_hash": "c3f125eac2745eaa5ee444045b5f1ed6",
     "semantic_hash": ""
   },
   "public/lib/client-features.js": {
@@ -435,13 +435,13 @@
     "semantic_hash": ""
   },
   "tests/client-features.test.js": {
-    "mtime": 1789031214.1982234,
-    "ast_hash": "e77adda91c90735e087813e37a7f86e9",
+    "mtime": 1789135312.7342265,
+    "ast_hash": "ca249a48dadafd37447834679977ece4",
     "semantic_hash": ""
   },
   "docs/feature-flags.md": {
-    "mtime": 1789031214.062277,
-    "ast_hash": "c65987805e579ab4dc7ea4254cbb4299",
+    "mtime": 1789135316.209618,
+    "ast_hash": "342e8feb7af0c07d89680c0a946c8ecb",
     "semantic_hash": ""
   },
   "public/validation.js": {
