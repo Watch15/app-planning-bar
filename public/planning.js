@@ -614,6 +614,149 @@ function spServiceType(start, end) {
     return 'soir';
 }
 
+// Préférence d'affichage créneaux proposés : liste (lisible téléphone) ou grille/tableau.
+const SLOT_OFFER_VIEW_KEY = 'templyo_slot_offer_view';
+function getSlotOfferView() {
+    try {
+        const v = localStorage.getItem(SLOT_OFFER_VIEW_KEY);
+        if (v === 'list' || v === 'grid') return v;
+    } catch { /* private mode */ }
+    // Défaut téléphone → liste ; ordi → tableau.
+    return window.matchMedia('(max-width: 640px)').matches ? 'list' : 'grid';
+}
+function setSlotOfferView(mode) {
+    if (mode !== 'list' && mode !== 'grid') return;
+    try { localStorage.setItem(SLOT_OFFER_VIEW_KEY, mode); } catch { /* ignore */ }
+}
+
+function slotOfferServiceLegendHtml() {
+    return '<div class="sp-service-legend">' +
+        '<span class="sp-service-legend-title">Service</span>' +
+        ['midi', 'soir', 'long'].map(k =>
+            '<span class="sp-service-legend-item">' +
+                '<span class="sp-service-swatch" style="border-color:' + SP_SERVICE_COLORS[k] + '"></span>' +
+                SP_SERVICE_LABELS[k] +
+            '</span>'
+        ).join('') +
+    '</div>';
+}
+
+function slotOfferHeadHtml(n, mode) {
+    const hint = mode === 'list'
+        ? 'Choisis un créneau'
+        : 'Glisse pour voir les horaires · tape pour postuler';
+    return '<div class="sp-plan-head">' +
+        '<div class="sp-plan-title-row">' +
+            '<div class="sp-plan-title">Créneaux proposés · ' + n + '</div>' +
+            '<div class="sp-view-toggle" role="group" aria-label="Mode d\'affichage">' +
+                '<button type="button" class="sp-view-btn' + (mode === 'list' ? ' active' : '') + '" data-sp-view="list">Liste</button>' +
+                '<button type="button" class="sp-view-btn' + (mode === 'grid' ? ' active' : '') + '" data-sp-view="grid">' +
+                    '<span class="sp-view-long">Tableau de bord</span>' +
+                    '<span class="sp-view-short">Tableau</span>' +
+                '</button>' +
+            '</div>' +
+        '</div>' +
+        '<div class="sp-plan-hint">' + hint + '</div>' +
+    '</div>' +
+    slotOfferServiceLegendHtml();
+}
+
+function bindSlotOfferViewToggle(root, refresh) {
+    if (!root) return;
+    root.querySelectorAll('[data-sp-view]').forEach(btn => {
+        btn.addEventListener('click', ev => {
+            ev.stopPropagation();
+            const mode = btn.dataset.spView;
+            if (mode !== 'list' && mode !== 'grid') return;
+            if (mode === getSlotOfferView()) return;
+            setSlotOfferView(mode);
+            if (typeof refresh === 'function') refresh();
+        });
+    });
+}
+
+function buildSlotOffers(slotOffers, from, myShifts, refresh) {
+    return getSlotOfferView() === 'list'
+        ? buildSlotOfferList(slotOffers, from, myShifts, refresh)
+        : buildSlotOfferPlanning(slotOffers, from, myShifts, refresh);
+}
+
+// Liste jour par jour — lisible sur téléphone, boutons explicites.
+function buildSlotOfferList(slotOffers, from, myShifts, refresh) {
+    const today = toDateStr(new Date());
+    const weekMine = (myShifts || []).filter(s => s.date >= from && s.date <= weekEndStr(from));
+    const wrap = document.createElement('div');
+    wrap.className = 'sp-plan sp-plan--list';
+    wrap.innerHTML = slotOfferHeadHtml(slotOffers.length, 'list');
+    bindSlotOfferViewToggle(wrap, refresh);
+
+    const body = document.createElement('div');
+    body.className = 'sp-list-body';
+    const monday = parseDate(from);
+    let any = false;
+
+    for (let i = 0; i < 7; i++) {
+        const d = addDays(monday, i);
+        const date = toDateStr(d);
+        const dayN = d.getDay();
+        const dayOffers = slotOffers.filter(j => j.date === date)
+            .sort((a, b) => a.start_time - b.start_time);
+        if (!dayOffers.length) continue;
+        any = true;
+
+        const day = document.createElement('div');
+        day.className = 'sp-list-day'
+            + ((dayN === 0 || dayN === 6) ? ' weekend' : '')
+            + (date === today ? ' today' : '');
+        day.innerHTML =
+            '<div class="sp-list-day-label">' +
+                '<span class="sp-list-day-name">' + DAY_NAMES[dayN] + '</span>' +
+                '<span class="sp-list-day-num">' + d.getDate() + '</span>' +
+            '</div>';
+
+        dayOffers.forEach(j => {
+            const past = j.date < today;
+            const blocked = jokerConflictsWithMine(j, weekMine);
+            const applied = !!j.has_applied;
+            const svc = spServiceType(j.start_time, j.end_time);
+            const estabName = j.establishment_name || j.establishment_id || '';
+            const safeEstab = String(estabName).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const btnLabel = applied ? 'Se retirer'
+                : blocked ? 'Déjà en shift'
+                : 'Je suis dispo';
+            const btnClass = applied ? ' withdraw' : '';
+            const btnOff = (blocked && !applied) || past;
+
+            const row = document.createElement('div');
+            row.className = 'sp-list-item'
+                + (applied ? ' applied' : '')
+                + (blocked && !applied ? ' blocked' : '')
+                + (past ? ' past' : '');
+            row.innerHTML =
+                '<span class="sp-list-svc" style="border-color:' + SP_SERVICE_COLORS[svc] + ';color:' + SP_SERVICE_COLORS[svc] + '">' +
+                    SP_SERVICE_LABELS[svc] +
+                '</span>' +
+                '<div class="sp-list-meta">' +
+                    '<div class="sp-list-hours">' + fmtHour(j.start_time) + ' → ' + fmtHour(j.end_time) + '</div>' +
+                    (safeEstab ? '<div class="sp-list-estab">' + safeEstab + '</div>' : '') +
+                '</div>' +
+                '<button type="button" class="btn-je-suis-dispo' + btnClass + '"' + (btnOff ? ' disabled' : '') + '>' +
+                    btnLabel +
+                '</button>';
+            const btn = row.querySelector('.btn-je-suis-dispo');
+            if (applied && !past) bindJokerWithdraw(btn, j, refresh);
+            else if (!applied && !past && !blocked) bindJokerApply(btn, j, refresh, true, weekMine);
+            day.appendChild(row);
+        });
+        body.appendChild(day);
+    }
+    if (!any) {
+        body.innerHTML = '<div class="sp-list-empty">Aucun créneau cette semaine</div>';
+    }
+    wrap.appendChild(body);
+    return wrap;
+}
+
 // Grille semaine des `slot_offer` : barres horaires, tap = candidature.
 function buildSlotOfferPlanning(slotOffers, from, myShifts, refresh) {
     const today = toDateStr(new Date());
@@ -638,24 +781,10 @@ function buildSlotOfferPlanning(slotOffers, from, myShifts, refresh) {
     const pctWidth = (s, e) => (Math.max(e - s, 0) / RANGE * 100).toFixed(2) + '%';
 
     const wrap = document.createElement('div');
-    wrap.className = 'sp-plan';
+    wrap.className = 'sp-plan sp-plan--grid';
     wrap.style.setProperty('--sp-tick', (2 / RANGE * 100).toFixed(2) + '%');
-
-    const n = slotOffers.length;
-    wrap.innerHTML =
-        '<div class="sp-plan-head">' +
-            '<div class="sp-plan-title">Créneaux proposés · ' + n + '</div>' +
-            '<div class="sp-plan-hint">Tape celui qui t’intéresse</div>' +
-        '</div>' +
-        '<div class="sp-service-legend">' +
-            '<span class="sp-service-legend-title">Service</span>' +
-            ['midi', 'soir', 'long'].map(k =>
-                '<span class="sp-service-legend-item">' +
-                    '<span class="sp-service-swatch" style="border-color:' + SP_SERVICE_COLORS[k] + '"></span>' +
-                    SP_SERVICE_LABELS[k] +
-                '</span>'
-            ).join('') +
-        '</div>';
+    wrap.innerHTML = slotOfferHeadHtml(slotOffers.length, 'grid');
+    bindSlotOfferViewToggle(wrap, refresh);
 
     // Zone scrollable : sur téléphone la grille ne se comprime plus — on glisse
     // horizontalement (~44 px/heure) pour garder des barres lisibles.
@@ -822,7 +951,7 @@ function renderOpenJokersInto(jokers, from, to, section, myShifts) {
 
         const refresh = () => renderOpenJokersInto(jokers, from, to, section, myShifts);
         section.innerHTML = '';
-        if (slotOffers.length) section.appendChild(buildSlotOfferPlanning(slotOffers, from, myShifts || [], refresh));
+        if (slotOffers.length) section.appendChild(buildSlotOffers(slotOffers, from, myShifts || [], refresh));
         if (punctual.length)   section.appendChild(buildPunctualJokerList(punctual, refresh, myShifts || []));
     } catch { /* silencieux */ }
 }

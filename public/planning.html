@@ -521,11 +521,32 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .sp-plan-head {
-            display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+            display: flex; flex-direction: column; gap: 6px;
             padding: 12px 14px 8px;
+        }
+        .sp-plan-title-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            flex-wrap: wrap;
         }
         .sp-plan-title { font-size: 14px; font-weight: 700; color: #0d9488; }
         .sp-plan-hint  { font-size: 11px; color: var(--text-muted); }
+        .sp-view-toggle {
+            display: inline-flex; gap: 2px; padding: 2px;
+            background: #f1f5f9; border-radius: 8px; flex-shrink: 0;
+        }
+        .sp-view-btn {
+            border: none; background: transparent; cursor: pointer;
+            font-family: inherit; font-size: 11px; font-weight: 600;
+            color: var(--text-secondary); padding: 5px 10px; border-radius: 6px;
+            line-height: 1.2; transition: background 0.12s, color 0.12s;
+        }
+        .sp-view-btn:hover { color: var(--text-primary); }
+        .sp-view-btn.active {
+            background: #fff; color: #0d9488;
+            box-shadow: 0 1px 2px rgba(15, 15, 26, 0.08);
+        }
+        .sp-view-short { display: none; }
+        .sp-view-long  { display: inline; }
         .sp-service-legend {
             display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
             padding: 0 14px 10px; font-size: 11px; color: var(--text-secondary);
@@ -664,6 +685,70 @@
             }
             .sp-block--offer { border-width: 2px; }
             .sp-block-when { display: inline; font-size: 10px; }
+            .sp-view-long  { display: none; }
+            .sp-view-short { display: inline; }
+            .sp-view-btn { padding: 5px 8px; font-size: 10px; }
+        }
+
+        /* ── Créneaux proposés — vue liste ── */
+        .sp-list-body { padding: 0 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+        .sp-list-day {
+            border: 1px solid var(--light-border);
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fafbfc;
+        }
+        .sp-list-day.weekend { border-color: rgba(108, 99, 255, 0.22); }
+        .sp-list-day.today { border-color: rgba(13, 148, 136, 0.35); }
+        .sp-list-day-label {
+            display: flex; align-items: baseline; gap: 8px;
+            padding: 8px 12px; background: #fff;
+            border-bottom: 1px solid var(--light-border);
+        }
+        .sp-list-day-name {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.4px; color: var(--text-muted);
+        }
+        .sp-list-day-num { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+        .sp-list-day.weekend .sp-list-day-name,
+        .sp-list-day.weekend .sp-list-day-num { color: var(--accent); }
+        .sp-list-day.today .sp-list-day-num { color: #0d9488; }
+        .sp-list-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px;
+            border-top: 1px solid #eef1f5;
+            background: #fff;
+        }
+        .sp-list-item:first-of-type { border-top: none; }
+        .sp-list-item.past { opacity: 0.5; }
+        .sp-list-item.blocked { background: #f8fafc; }
+        .sp-list-item.applied { background: #fffbeb; }
+        .sp-list-svc {
+            flex-shrink: 0;
+            font-size: 11px; font-weight: 700;
+            padding: 4px 8px; border-radius: 6px;
+            border: 2px solid; background: #fff;
+            min-width: 42px; text-align: center;
+        }
+        .sp-list-meta { flex: 1; min-width: 0; }
+        .sp-list-hours {
+            font-size: 13px; font-weight: 700; color: var(--text-primary);
+            font-variant-numeric: tabular-nums;
+        }
+        .sp-list-estab {
+            font-size: 11px; color: #534AB7; font-weight: 600;
+            margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .sp-list-item .btn-je-suis-dispo {
+            flex-shrink: 0; padding: 8px 12px; font-size: 11px;
+        }
+        .sp-list-empty {
+            text-align: center; color: #ccc; font-size: 13px; padding: 16px;
+        }
+        @media (max-width: 480px) {
+            .sp-list-body { padding: 0 8px 10px; }
+            .sp-list-item { flex-wrap: wrap; gap: 8px; }
+            .sp-list-item .btn-je-suis-dispo { width: 100%; }
         }
 
         /* ── Modale de confirmation (remplace window.confirm) ── */
