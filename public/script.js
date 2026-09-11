@@ -4141,14 +4141,18 @@ let _copyWeekMode = 'staff'; // 'staff' (garder les affectations) | 'jokers' (cr
 const _btnCopyWeek = document.getElementById('btn-copy-week');
 if (_btnCopyWeek) _btnCopyWeek.addEventListener('click', openCopyWeekModal);
 
-const _btnProposeSlots = document.getElementById('btn-propose-slots');
-if (_btnProposeSlots) _btnProposeSlots.addEventListener('click', proposeWeekSlots);
+const _btnProposeSlotsHeader = document.getElementById('btn-propose-slots-header');
+if (_btnProposeSlotsHeader) _btnProposeSlotsHeader.addEventListener('click', proposeWeekSlots);
 
 function refreshProposeSlotsButton() {
     const on = !!(window.ClientFeatures && ClientFeatures.enabled('predefined_slots'))
         && !document.body.classList.contains('observateur');
-    const bar = document.getElementById('propose-slots-bar');
-    if (bar) bar.classList.toggle('is-on', on);
+    const headerBtn = document.getElementById('btn-propose-slots-header');
+    if (headerBtn) {
+        headerBtn.classList.toggle('is-on', on);
+        headerBtn.hidden = !on;
+        headerBtn.style.display = on ? 'inline-flex' : 'none';
+    }
 }
 
 async function proposeWeekSlots() {

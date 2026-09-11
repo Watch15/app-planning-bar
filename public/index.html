@@ -330,6 +330,18 @@
             #btn-publish-week  { font-size: 11px !important; padding: 5px 10px !important; white-space: nowrap; flex-shrink: 0; }
             .btn-week-qualifier { display: none !important; }   /* « — Semaine en cours » */
             #btn-copy-menu { font-size: 11px !important; padding: 4px 8px !important; flex-shrink: 0; }
+            #btn-propose-slots-header.is-on {
+                font-size: 0 !important;
+                padding: 4px 8px !important;
+                flex-shrink: 0;
+                min-height: 28px;
+            }
+            #btn-propose-slots-header.is-on::after {
+                content: 'Proposer';
+                font-size: 11px;
+                font-weight: 700;
+                line-height: 1.4;
+            }
             .day-detail-close  { flex-shrink: 0 !important; }
 
             /* ── Timeline — évite le retour navigateur en scrollant horizontalement ── */
@@ -987,9 +999,6 @@
             <button class="view-tab" data-view="week">Semaine</button>
         </div>
     </div>
-    <div id="propose-slots-bar" class="propose-slots-bar">
-        <button type="button" id="btn-propose-slots" class="btn-propose-slots">Proposer les créneaux de cette semaine</button>
-    </div>
 
     <!-- ── Carte KPI complétion des dispos (semaine prochaine) ── -->
     <div id="dispos-kpi-card" style="display:none"></div>
@@ -1031,6 +1040,7 @@
                     <button type="button" class="copy-menu-item" id="btn-copy-week" role="menuitem">Cette semaine →</button>
                 </div>
             </div>
+            <button type="button" class="btn-propose-slots-header" id="btn-propose-slots-header" style="display:none" title="Ouvre les Jokers de la semaine aux candidatures">Proposer les créneaux</button>
             <button class="btn-manage-staff" id="btn-refresh-day" title="Recharger les heures réelles saisies depuis la tablette de pointage" style="font-size:12px;padding:5px 10px">⟳ Actualiser</button>
             <button class="btn-manage-staff" id="btn-publish-week" style="font-size:12px;padding:5px 12px;background:var(--accent);border-color:var(--accent);color:#fff">Publier la semaine</button>
             <button class="day-detail-close" id="day-detail-close">×</button>

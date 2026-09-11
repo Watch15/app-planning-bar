@@ -1475,6 +1475,8 @@ app.post('/auth/logout', (req, res) => {
 // Envoyer un OTP par SMS (pour connexion ou récupération de compte)
 app.get('/auth/me', (req, res) => {
     if (!req.session?.user) return res.status(401).json({ error: 'Non authentifié' });
+    // Pas de cache : les flags CLIENT_PROFILE / FEATURE_* doivent suivre un redémarrage serveur.
+    res.set('Cache-Control', 'no-store');
     res.json({ user: req.session.user, client: clientFeatureFlags() });
 });
 
