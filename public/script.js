@@ -4380,6 +4380,20 @@ function renderTeamDashboard() {
     });
 }
 
+// Type de service d'après les horaires planifiés (même règle que le PDF export) :
+// midi = finit ≤ 18h · soir = commence tard · long = matin + soirée (chevauche les deux).
+const SERVICE_TYPE_COLORS = { midi: '#f39c12', soir: '#534AB7', long: '#e74c3c' };
+const SERVICE_TYPE_LABELS = { midi: 'Midi', soir: 'Soir', long: 'Long' };
+function serviceTypeOf(start, end) {
+    if (start == null || end == null) return 'soir';
+    if (start < 16 && end > 18) return 'long';
+    if (end <= 18) return 'midi';
+    return 'soir';
+}
+function serviceTypeColor(start, end) {
+    return SERVICE_TYPE_COLORS[serviceTypeOf(start, end)];
+}
+
 // ── Tableau de bord (lignes staff × colonnes jour) ────────────────────────────
 
 function renderDashboard() {
@@ -9962,11 +9976,9 @@ async function saveDashboardPdf() {
     };
 
     // Type de service d'après les horaires planifiés du shift, pour l'encadrement
-    // couleur : matin = finit ≤ 18h · soir = commence ≥ 16h · long = matin + soirée
-    // (commence le matin ET finit tard → chevauche les deux services).
-    const SERVICE_COLORS = { matin: '#f39c12', soir: '#534AB7', long: '#e74c3c' };
-    const serviceColor = (start, end) =>
-        SERVICE_COLORS[(start < 16 && end > 18) ? 'long' : (end <= 18 ? 'matin' : 'soir')];
+    // couleur (même règle que le tableau de bord à l'écran).
+    const SERVICE_COLORS = SERVICE_TYPE_COLORS;
+    const serviceColor = (start, end) => serviceTypeColor(start, end);
 
     const staffMap = new Map();
     days.forEach(({ date }) => {
@@ -10066,7 +10078,7 @@ async function saveDashboardPdf() {
         '</header>' +
         '<div style="display:flex;gap:14px;align-items:center;margin-bottom:10px;font-size:10px;color:#4a4f63">' +
             '<span style="font-weight:700;color:#8892a4;text-transform:uppercase;letter-spacing:.6px">Service</span>' +
-            [['Matin', SERVICE_COLORS.matin], ['Soir', SERVICE_COLORS.soir], ['Long', SERVICE_COLORS.long]].map(([lbl, c]) =>
+            [['Midi', SERVICE_COLORS.midi], ['Soir', SERVICE_COLORS.soir], ['Long', SERVICE_COLORS.long]].map(([lbl, c]) =>
                 '<span style="display:inline-flex;align-items:center;gap:5px">' +
                     '<span style="width:12px;height:12px;border-radius:3px;border:2px solid ' + c + ';background:#fff;display:inline-block"></span>' + lbl +
                 '</span>').join('') +

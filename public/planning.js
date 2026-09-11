@@ -602,6 +602,16 @@ function jokerConflictsWithMine(joker, myShifts) {
     });
 }
 
+// Type de service (même règle que l'export PDF patron) — encadrement des créneaux proposés.
+const SP_SERVICE_COLORS = { midi: '#f39c12', soir: '#534AB7', long: '#e74c3c' };
+const SP_SERVICE_LABELS = { midi: 'Midi', soir: 'Soir', long: 'Long' };
+function spServiceType(start, end) {
+    if (start == null || end == null) return 'soir';
+    if (start < 16 && end > 18) return 'long';
+    if (end <= 18) return 'midi';
+    return 'soir';
+}
+
 // Grille semaine des `slot_offer` : barres horaires, tap = candidature.
 function buildSlotOfferPlanning(slotOffers, from, myShifts, refresh) {
     const today = toDateStr(new Date());
@@ -634,6 +644,15 @@ function buildSlotOfferPlanning(slotOffers, from, myShifts, refresh) {
         '<div class="sp-plan-head">' +
             '<div class="sp-plan-title">Créneaux proposés · ' + n + '</div>' +
             '<div class="sp-plan-hint">Tape celui qui t’intéresse</div>' +
+        '</div>' +
+        '<div class="sp-service-legend">' +
+            '<span class="sp-service-legend-title">Service</span>' +
+            ['midi', 'soir', 'long'].map(k =>
+                '<span class="sp-service-legend-item">' +
+                    '<span class="sp-service-swatch" style="border-color:' + SP_SERVICE_COLORS[k] + '"></span>' +
+                    SP_SERVICE_LABELS[k] +
+                '</span>'
+            ).join('') +
         '</div>';
 
     let ticks = '';
@@ -706,21 +725,25 @@ function buildSlotOfferPlanning(slotOffers, from, myShifts, refresh) {
                 lane.className = 'sp-lane';
                 const block = document.createElement('div');
                 const applied = !!j.has_applied;
-                block.className = 'sp-block sp-block--offer'
+                const svc = spServiceType(j.start_time, j.end_time);
+                block.className = 'sp-block sp-block--offer sp-block--svc-' + svc
                     + (applied ? ' sp-block--withdraw' : '')
                     + (blocked && !applied ? ' sp-block--blocked' : '')
                     + (past && !applied && !blocked ? ' sp-block--past' : '');
                 block.style.left = pctLeft(Math.max(j.start_time, OPEN_H));
                 block.style.width = pctWidth(Math.max(j.start_time, OPEN_H), Math.min(j.end_time, CLOSE_H));
+                block.style.borderColor = SP_SERVICE_COLORS[svc];
                 const who = applied ? 'Se retirer'
                     : blocked ? 'Déjà en shift'
-                    : 'Poste ouvert';
+                    : SP_SERVICE_LABELS[svc];
                 const showWhen = (j.end_time - j.start_time) >= 1.2;
                 block.innerHTML =
                     '<span class="sp-block-who">' + who + '</span>' +
                     (showWhen ? '<span class="sp-block-when">' + fmtHour(j.start_time) + ' → ' + fmtHour(j.end_time) + '</span>' : '');
                 if (blocked && !applied) {
                     block.title = 'Tu as déjà un shift sur ces horaires';
+                } else if (!applied && !past) {
+                    block.title = 'Service ' + SP_SERVICE_LABELS[svc];
                 }
                 if (applied && !past) bindJokerWithdraw(block, j, refresh);
                 else if (!applied && !past && !blocked) bindJokerApply(block, j, refresh, true, weekMine);
