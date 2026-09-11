@@ -247,55 +247,13 @@ a:hover { color: var(--accent-soft); }
   border-color: var(--text-secondary);
   background: var(--light-bg);
 }
-.copy-menu { position: relative; flex-shrink: 0; }
-.copy-menu-dropdown {
-  display: none;
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  z-index: 200;
-  min-width: 188px;
-  background: var(--light-card);
-  border: 1px solid var(--light-border);
-  border-radius: 10px;
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
+.btn-copy-day {
+  padding: 5px 12px; border-radius: var(--radius);
+  border: 1px solid var(--light-border); background: var(--light-card);
+  font-size: 12px; font-weight: 500; color: var(--text-secondary);
+  cursor: pointer; transition: all var(--transition); white-space: nowrap; font-family: var(--font);
 }
-.copy-menu.open .copy-menu-dropdown { display: block; }
-.copy-menu-item {
-  display: flex; align-items: center; width: 100%;
-  padding: 10px 14px; border: none; background: none;
-  text-align: left; cursor: pointer;
-  font-family: var(--font); font-size: 13px; font-weight: 600;
-  color: var(--text-primary);
-}
-.copy-menu-item:hover { background: var(--light-bg); }
-.copy-menu-item + .copy-menu-item { border-top: 1px solid var(--light-border); }
-.copy-menu-caret { font-size: 9px; opacity: 0.7; margin-left: 2px; }
-@media (max-width: 768px) {
-  .copy-menu-item { padding: 12px 14px; min-height: 44px; }
-}
-.btn-propose-slots-header {
-  display: none;
-  align-items: center;
-  flex-shrink: 0;
-  min-height: 30px;
-  padding: 5px 12px;
-  border-radius: var(--radius);
-  border: 1.5px solid #0d9488;
-  background: #0d9488;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  font-family: var(--font);
-  cursor: pointer;
-  white-space: nowrap;
-}
-.btn-propose-slots-header.is-on { display: inline-flex !important; }
-.btn-propose-slots-header:hover { background: #0f766e; border-color: #0f766e; }
-@media (max-width: 768px) {
-  .btn-propose-slots-header.is-on { font-size: 11px; padding: 4px 8px; }
-}
+.btn-copy-day:hover { border-color: var(--warning); color: var(--warning); }
 .day-detail-close {
   width: 30px; height: 30px; border-radius: var(--radius);
   border: 1px solid var(--light-border); background: var(--light-bg); font-size: 15px;
@@ -1493,8 +1451,9 @@ body.device-tablet .ms-actions button {
    Staff / Comptes / Récap / Performance / Pointage restent pleinement utilisables. */
 body.observateur #btn-publish-week,
 body.observateur #btn-edit-lock,
-body.observateur #copy-menu,
-body.observateur #btn-propose-slots-header,
+body.observateur #btn-copy-day,
+body.observateur #btn-copy-week,
+body.observateur #btn-propose-slots,
 body.observateur #fab-staff,
 body.observateur #staff-bar-container,
 body.observateur #staff-bar-overlay,

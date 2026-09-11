@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "public/script.js": {
-    "mtime": 1789135453.2240167,
-    "ast_hash": "17513c3f72f93246536e5327d22232ab",
+    "mtime": 1789137672.7646635,
+    "ast_hash": "8e505919f1f96551afe5ee9bb11d7197",
     "semantic_hash": ""
   },
   "public/sw.js": {
@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "server.js": {
-    "mtime": 1789133697.71969,
-    "ast_hash": "24ebe268dffb906de4bf1881ade9a685",
+    "mtime": 1789136067.8457887,
+    "ast_hash": "93215c769992439d179e40e4af965b52",
     "semantic_hash": ""
   },
   "tests/routes.test.js": {
@@ -125,8 +125,8 @@
     "semantic_hash": ""
   },
   "public/index.html": {
-    "mtime": 1789135520.8115966,
-    "ast_hash": "68e752eaaf5a7034514a95c0353630b2",
+    "mtime": 1789137662.0539305,
+    "ast_hash": "1171993be19c274904f09d64db0d6c7c",
     "semantic_hash": ""
   },
   "public/login.html": {
@@ -415,13 +415,13 @@
     "semantic_hash": ""
   },
   "docs/design-creneaux-predefinis.md": {
-    "mtime": 1789135321.167816,
-    "ast_hash": "a29d602dd4cfe80384c9b7a516a3ea0d",
+    "mtime": 1789137675.2046156,
+    "ast_hash": "ce2020e1b7f90de0c201b102a90b0a06",
     "semantic_hash": ""
   },
   "docs/setup-castaniu-dev.md": {
-    "mtime": 1789135318.91752,
-    "ast_hash": "a8d744529a6e3f34675497036882858e",
+    "mtime": 1789137209.1216702,
+    "ast_hash": "5cc2ca47f8feb66b826308672053927f",
     "semantic_hash": ""
   },
   "lib/client-features.js": {
@@ -440,8 +440,8 @@
     "semantic_hash": ""
   },
   "docs/feature-flags.md": {
-    "mtime": 1789135316.209618,
-    "ast_hash": "342e8feb7af0c07d89680c0a946c8ecb",
+    "mtime": 1789137201.846551,
+    "ast_hash": "a65db7e82c7c62e3f8aeea1662b45f88",
     "semantic_hash": ""
   },
   "public/validation.js": {
