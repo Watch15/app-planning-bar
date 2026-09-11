@@ -1,7 +1,8 @@
 # Templyo — ce qui change à la prochaine mise à jour
 
-*Rédigée pour être lue par le patron, pas par un développeur. Version du 2026-09-10,
-jour de la livraison — le lot est déjà en ligne chez le client depuis ce jour-là.*
+*Rédigée pour être lue par le patron, pas par un développeur. Version du 2026-09-11.
+Le gros du lot est en ligne chez le client depuis le 10 ; les compléments sur les
+créneaux proposés (couleurs de service, retrait de candidature) partent le 11.*
 
 > Les notes des mises à jour précédentes restent consultables dans l'historique du dépôt
 > (`git log docs/note-client-mise-a-jour.md`).
@@ -25,6 +26,20 @@ L’équipe les voit **tout de suite sur une grille semaine** (comme votre plann
 même si la semaine n’est pas encore publiée, et même si personne n’y a encore de
 shift. Chacun tape le créneau qui l’intéresse. Sans ce clic, rien n’est annoncé :
 le brouillon reste chez vous.
+
+Sur cette grille, chaque créneau est **encadré de la couleur de son service** — midi,
+soir, ou long quand il couvre les deux — avec la légende juste au-dessus. Ce sont les
+mêmes couleurs que sur votre **PDF de la semaine**, dont la légende dit désormais
+**« Midi »** là où elle disait « Matin » : un seul vocabulaire, de votre document
+imprimé à l’écran de votre équipe.
+
+Côté équipe, une candidature n’est plus un aller simple. Le créneau affiche
+**« Se retirer »** une fois qu’on s’y est dit dispo, et **« Déjà en shift »**,
+intapable, quand il tombe sur des heures déjà travaillées — personne ne peut se
+porter candidat sur un horaire qu’il ne pourrait pas honorer. Et quand **vous**
+retenez quelqu’un sur un créneau, ses autres candidatures **aux mêmes heures** sont
+retirées automatiquement : vous ne verrez plus un nom proposé deux fois sur la même
+plage.
 
 ## 2. Jokers par groupe, couleur au choix
 

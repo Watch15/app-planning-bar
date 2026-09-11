@@ -290,8 +290,8 @@
     "semantic_hash": ""
   },
   "docs/note-client-mise-a-jour.md": {
-    "mtime": 1789132453.1230226,
-    "ast_hash": "767fdc782510bab665198a2ec1eb9ae7",
+    "mtime": 1789140248.627122,
+    "ast_hash": "dc2404490bd41d8def18bfa89ca6dd99",
     "semantic_hash": ""
   },
   "public/lib/auth-guard.js": {
@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "public/lib/nouveautes.js": {
-    "mtime": 1789133753.969657,
-    "ast_hash": "f6567f8b4f3aee08ffc55261f2aa2041",
+    "mtime": 1789140194.491974,
+    "ast_hash": "23ec211d9ec44f5efd6d95d07a185093",
     "semantic_hash": ""
   },
   "tests/nouveautes.test.js": {

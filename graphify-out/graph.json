@@ -1576,7 +1576,7 @@
       "label": "filtrer()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L442",
+      "source_location": "L475",
       "_origin": "ast",
       "id": "lib_nouveautes_filtrer",
       "community": 63,
@@ -1586,7 +1586,7 @@
       "label": "grouperParSemaine()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L464",
+      "source_location": "L497",
       "_origin": "ast",
       "id": "lib_nouveautes_grouperparsemaine",
       "community": 63,
@@ -1596,7 +1596,7 @@
       "label": "limiterSemaines()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L485",
+      "source_location": "L518",
       "_origin": "ast",
       "id": "lib_nouveautes_limitersemaines",
       "community": 63,
@@ -1606,7 +1606,7 @@
       "label": "recalculer()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L517",
+      "source_location": "L550",
       "_origin": "ast",
       "id": "lib_nouveautes_recalculer",
       "community": 63,
@@ -1616,7 +1616,7 @@
       "label": "semaineFr()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L523",
+      "source_location": "L556",
       "_origin": "ast",
       "id": "lib_nouveautes_semainefr",
       "community": 63,
@@ -1626,7 +1626,7 @@
       "label": "majPastille()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L528",
+      "source_location": "L561",
       "_origin": "ast",
       "id": "lib_nouveautes_majpastille",
       "community": 63,
@@ -1636,7 +1636,7 @@
       "label": "charger()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L538",
+      "source_location": "L571",
       "_origin": "ast",
       "id": "lib_nouveautes_charger",
       "community": 63,
@@ -1646,7 +1646,7 @@
       "label": "marquerLu()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L552",
+      "source_location": "L585",
       "_origin": "ast",
       "id": "lib_nouveautes_marquerlu",
       "community": 63,
@@ -1656,7 +1656,7 @@
       "label": "surEchap()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L564",
+      "source_location": "L597",
       "_origin": "ast",
       "id": "lib_nouveautes_surechap",
       "community": 63,
@@ -1666,7 +1666,7 @@
       "label": "fermer()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L566",
+      "source_location": "L599",
       "_origin": "ast",
       "id": "lib_nouveautes_fermer",
       "community": 63,
@@ -1676,7 +1676,7 @@
       "label": "carte()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L575",
+      "source_location": "L608",
       "_origin": "ast",
       "id": "lib_nouveautes_carte",
       "community": 63,
@@ -1686,7 +1686,7 @@
       "label": "ouvrir()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L583",
+      "source_location": "L616",
       "_origin": "ast",
       "id": "lib_nouveautes_ouvrir",
       "community": 63,
@@ -1696,7 +1696,7 @@
       "label": "init()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L642",
+      "source_location": "L675",
       "_origin": "ast",
       "id": "lib_nouveautes_init",
       "community": 63,
@@ -2889,7 +2889,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "public_planning_todatestr",
-      "community": 108,
+      "community": 75,
       "norm_label": "todatestr()"
     },
     {
@@ -2899,7 +2899,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "public_planning_getmondayof",
-      "community": 108,
+      "community": 70,
       "norm_label": "getmondayof()"
     },
     {
@@ -2949,7 +2949,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "public_planning_fmthour",
-      "community": 81,
+      "community": 108,
       "norm_label": "fmthour()"
     },
     {
@@ -3139,7 +3139,7 @@
       "source_location": "L536",
       "_origin": "ast",
       "id": "public_planning_jokerslotlabel",
-      "community": 81,
+      "community": 108,
       "norm_label": "jokerslotlabel()"
     },
     {
@@ -3399,7 +3399,7 @@
       "source_location": "L1223",
       "_origin": "ast",
       "id": "public_planning_renderdays",
-      "community": 79,
+      "community": 108,
       "norm_label": "renderdays()"
     },
     {
@@ -3429,7 +3429,7 @@
       "source_location": "L1518",
       "_origin": "ast",
       "id": "public_planning_opendaysheet",
-      "community": 0,
+      "community": 108,
       "norm_label": "opendaysheet()"
     },
     {
@@ -3439,7 +3439,7 @@
       "source_location": "L1703",
       "_origin": "ast",
       "id": "public_planning_formatestablishment",
-      "community": 81,
+      "community": 108,
       "norm_label": "formatestablishment()"
     },
     {
@@ -3479,7 +3479,7 @@
       "source_location": "L1860",
       "_origin": "ast",
       "id": "public_planning_renderrespdispokpi",
-      "community": 108,
+      "community": 70,
       "norm_label": "renderrespdispokpi()"
     },
     {
@@ -3499,7 +3499,7 @@
       "source_location": "L2084",
       "_origin": "ast",
       "id": "public_planning_openbottomsheet",
-      "community": 0,
+      "community": 108,
       "norm_label": "openbottomsheet()"
     },
     {
@@ -3509,7 +3509,7 @@
       "source_location": "L2109",
       "_origin": "ast",
       "id": "public_planning_opencontactsheet",
-      "community": 0,
+      "community": 108,
       "norm_label": "opencontactsheet()"
     },
     {
@@ -3749,7 +3749,7 @@
       "source_location": "L3000",
       "_origin": "ast",
       "id": "public_planning_submitdispos",
-      "community": 108,
+      "community": 70,
       "norm_label": "submitdispos()"
     },
     {
@@ -3829,7 +3829,7 @@
       "source_location": "L3132",
       "_origin": "ast",
       "id": "public_planning_templatedayline",
-      "community": 81,
+      "community": 108,
       "norm_label": "templatedayline()"
     },
     {
@@ -3919,7 +3919,7 @@
       "source_location": "L3301",
       "_origin": "ast",
       "id": "public_planning_initcongesform",
-      "community": 108,
+      "community": 84,
       "norm_label": "initcongesform()"
     },
     {
@@ -4069,7 +4069,7 @@
       "source_location": "L3568",
       "_origin": "ast",
       "id": "public_planning_showmsg",
-      "community": 108,
+      "community": 70,
       "norm_label": "showmsg()"
     },
     {
@@ -4149,7 +4149,7 @@
       "source_location": "L3766",
       "_origin": "ast",
       "id": "public_planning_swapmatchsearch",
-      "community": 81,
+      "community": 108,
       "norm_label": "_swapmatchsearch()"
     },
     {
@@ -4279,7 +4279,7 @@
       "source_location": "L4078",
       "_origin": "ast",
       "id": "public_planning_opencloturecodemodal",
-      "community": 81,
+      "community": 108,
       "norm_label": "opencloturecodemodal()"
     },
     {
@@ -8539,7 +8539,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_support_word_breaking",
-      "community": 3,
+      "community": 2,
       "norm_label": "support_word_breaking()"
     },
     {
@@ -18406,7 +18406,7 @@
       "label": "1. Proposer les cr\u00e9neaux de la semaine",
       "file_type": "document",
       "source_file": "docs/note-client-mise-a-jour.md",
-      "source_location": "L18",
+      "source_location": "L19",
       "_origin": "ast",
       "id": "docs_note_client_mise_a_jour_1_proposer_les_cr\u00e9neaux_de_la_semaine",
       "community": 47,
@@ -18416,7 +18416,7 @@
       "label": "2. Jokers par groupe, couleur au choix",
       "file_type": "document",
       "source_file": "docs/note-client-mise-a-jour.md",
-      "source_location": "L29",
+      "source_location": "L44",
       "_origin": "ast",
       "id": "docs_note_client_mise_a_jour_2_jokers_par_groupe_couleur_au_choix",
       "community": 47,
@@ -18426,7 +18426,7 @@
       "label": "3. Performance \u2014 toutes les affaires, filtre groupe, Simulation",
       "file_type": "document",
       "source_file": "docs/note-client-mise-a-jour.md",
-      "source_location": "L35",
+      "source_location": "L50",
       "_origin": "ast",
       "id": "docs_note_client_mise_a_jour_3_performance_toutes_les_affaires_filtre_groupe_simulation",
       "community": 47,
@@ -18436,7 +18436,7 @@
       "label": "4. \u00c9changes de service \u2014 filtre par date",
       "file_type": "document",
       "source_file": "docs/note-client-mise-a-jour.md",
-      "source_location": "L46",
+      "source_location": "L61",
       "_origin": "ast",
       "id": "docs_note_client_mise_a_jour_4_\u00e9changes_de_service_filtre_par_date",
       "community": 47,
@@ -18446,7 +18446,7 @@
       "label": "5. Observateur",
       "file_type": "document",
       "source_file": "docs/note-client-mise-a-jour.md",
-      "source_location": "L51",
+      "source_location": "L66",
       "_origin": "ast",
       "id": "docs_note_client_mise_a_jour_5_observateur",
       "community": 47,
@@ -18456,7 +18456,7 @@
       "label": "6. Cl\u00f4ture par code \u2014 inchang\u00e9e",
       "file_type": "document",
       "source_file": "docs/note-client-mise-a-jour.md",
-      "source_location": "L57",
+      "source_location": "L72",
       "_origin": "ast",
       "id": "docs_note_client_mise_a_jour_6_cl\u00f4ture_par_code_inchang\u00e9e",
       "community": 47,
@@ -55519,5 +55519,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "c24738e5dd22333741f382859f8a53a5fa7417dd"
+  "built_at_commit": "836f830e5c62aa9a8ae93d716ea0ca9aa84eb6f3"
 }

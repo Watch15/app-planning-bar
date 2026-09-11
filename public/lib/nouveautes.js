@@ -64,6 +64,39 @@
 
     const NOUVEAUTES = [
         {
+            id: 'candidature-retrait', date: '2026-09-12',
+            roles: ['staff'],
+            titre: 'Revenir sur une candidature, et jamais deux créneaux à la même heure',
+            quoi: "Vous vous êtes dit dispo puis ça ne va plus ? Le créneau affiche "
+                + "« Se retirer » : une confirmation, et votre candidature est enlevée. "
+                + "Un créneau qui tombe sur des heures où vous travaillez déjà affiche "
+                + "« Déjà en shift » et ne se tape pas — plus de candidature sur un "
+                + "horaire que vous ne pourriez pas honorer. Et le jour où on vous "
+                + "retient sur un créneau, vos autres candidatures aux mêmes heures "
+                + "sont retirées toutes seules.",
+            ou: 'Planning → « Créneaux proposés » → bouton du créneau'
+        },
+        {
+            id: 'creneaux-couleur-service', date: '2026-09-12',
+            roles: ['staff'],
+            titre: 'Midi, soir ou long : la couleur le dit',
+            quoi: "Sur la grille des créneaux proposés, chaque barre est encadrée de la "
+                + "couleur de son service — midi, soir, ou long quand il couvre les deux. "
+                + "La légende « Service » est juste au-dessus. Ce sont exactement les "
+                + "mêmes couleurs que sur le planning imprimé par votre responsable.",
+            ou: 'Planning → « Créneaux proposés » → légende « Service » en haut de la grille'
+        },
+        {
+            id: 'pdf-legende-midi', date: '2026-09-12',
+            roles: ['patron', 'directeur'],
+            titre: 'Le tableau de bord en PDF dit « Midi » au lieu de « Matin »',
+            quoi: "Dans le PDF de la semaine, la légende des services parle maintenant de "
+                + "« Midi » — le mot employé partout ailleurs dans l’application. Les "
+                + "couleurs, elles, ne changent pas, et ce sont désormais les mêmes que "
+                + "celles que votre équipe voit sur les créneaux que vous lui proposez.",
+            ou: 'Tableau de bord → bouton « PDF » → légende en haut du document'
+        },
+        {
             id: 'creneaux-planning-staff', date: '2026-09-12',
             roles: ['staff'],
             titre: 'Les créneaux proposés s’affichent comme un planning',

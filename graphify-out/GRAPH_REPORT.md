@@ -1,7 +1,7 @@
 # Graph Report - app-planning-bar  (2026-09-11)
 
 ## Corpus Check
-- 88 files · ~351,027 words
+- 88 files · ~351,505 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c24738e5`
+- Built from commit: `836f830e`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -172,7 +172,7 @@
 
 ### Community 0 - "Planning Board UI"
 Cohesion: 0.05
-Nodes (36): allEstablishments, allStaff, buildTeamDisplayNames(), _CONGE_STATUS, createDispoCard(), DAY_NAMES, DAY_NAMES_LONG, DISPO_TYPES (+28 more)
+Nodes (33): allEstablishments, allStaff, buildTeamDisplayNames(), _CONGE_STATUS, createDispoCard(), DAY_NAMES, DAY_NAMES_LONG, DISPO_TYPES (+25 more)
 
 ### Community 1 - "Architecture & Design Rationale"
 Cohesion: 0.18
@@ -180,11 +180,11 @@ Nodes (13): hourly_rate_snapshot / fixed_rate_snapshot, Modèle de données shif
 
 ### Community 2 - "html2canvas Render Engine"
 Cohesion: 0.04
-Nodes (18): Be(), cn(), Cs(), dA(), E(), FA(), gs(), hA() (+10 more)
+Nodes (19): Be(), cn(), Cs(), dA(), E(), FA(), gs(), hA() (+11 more)
 
 ### Community 3 - "html2canvas Parser"
-Cohesion: 0.15
-Nodes (33): Ae(), mr(), QB(), re(), se(), SUPPORT_WORD_BREAKING(), w(), _() (+25 more)
+Cohesion: 0.16
+Nodes (32): Ae(), mr(), QB(), re(), se(), w(), _(), a() (+24 more)
 
 ### Community 4 - "Main Planning Script (State)"
 Cohesion: 0.02
@@ -410,8 +410,8 @@ Cohesion: 0.31
 Nodes (6): install(), samePathname(), shouldRedirectOn401(), assert, { shouldRedirectOn401, samePathname, install }, { test }
 
 ### Community 70 - "Community 70"
-Cohesion: 0.19
-Nodes (17): createCongeDayCard(), createRestDayCard(), currentDispoMonday(), currentDispoWeekLocked(), deadlineForWeek(), deadlineLabel(), deadlineLabelForWeek(), deadlineShortLabelForWeek() (+9 more)
+Cohesion: 0.16
+Nodes (21): createCongeDayCard(), createRestDayCard(), currentDispoMonday(), currentDispoWeekLocked(), deadlineForWeek(), deadlineLabel(), deadlineLabelForWeek(), deadlineShortLabelForWeek() (+13 more)
 
 ### Community 71 - "Community 71"
 Cohesion: 0.15
@@ -431,7 +431,7 @@ Nodes (8): Calendrier congés — lisibilité (2026-08-27), 🔴 CI rouge sur No
 
 ### Community 75 - "Community 75"
 Cohesion: 0.20
-Nodes (17): appendHistMoreBtn(), applyStatsPeriod(), buildHistStatsHtml(), fetchMyShifts(), fmtDuration(), histRange(), loadHistorique(), loadHistoriqueMois() (+9 more)
+Nodes (18): appendHistMoreBtn(), applyStatsPeriod(), buildHistStatsHtml(), fetchMyShifts(), fmtDuration(), histRange(), loadHistorique(), loadHistoriqueMois() (+10 more)
 
 ### Community 76 - "Community 76"
 Cohesion: 0.12
@@ -446,16 +446,16 @@ Cohesion: 0.17
 Nodes (13): args, BASE, check(), crypto, expectIdx, get(), git(), GUARDED (+5 more)
 
 ### Community 79 - "Community 79"
-Cohesion: 0.18
-Nodes (19): buildPunctualJokerList(), cancelMySwap(), closeClotureCodeModal(), closeSwapModal(), disconnectWeekObservers(), fetchOpenJokers(), isJoker(), loadMyPendingSwaps() (+11 more)
+Cohesion: 0.19
+Nodes (18): buildPunctualJokerList(), cancelMySwap(), closeClotureCodeModal(), closeSwapModal(), disconnectWeekObservers(), fetchOpenJokers(), isJoker(), loadMyPendingSwaps() (+10 more)
 
 ### Community 80 - "Community 80"
 Cohesion: 0.08
 Nodes (30): buildTemplateDispos(), buildPerformanceSimulation(), buildStaffRateStatsReport(), chargeMultiplier(), congeCoversDate(), congeDaysInRange(), crypto, datesOverlap() (+22 more)
 
 ### Community 81 - "Community 81"
-Cohesion: 0.21
-Nodes (12): _fillSwapDateOptions(), fmtHour(), _fmtSwapDate(), formatEstablishment(), jokerSlotLabel(), openClotureCodeModal(), openSwapModal(), renderSwapTargets() (+4 more)
+Cohesion: 0.47
+Nodes (6): _fillSwapDateOptions(), _fmtSwapDate(), openSwapModal(), renderSwapTargets(), _rerenderSwapTargets(), _swapFilterState()
 
 ### Community 82 - "Community 82"
 Cohesion: 0.17
@@ -466,8 +466,8 @@ Cohesion: 0.18
 Nodes (5): { app, startApp, stopApp, req }, assert, { makeDb }, PATRON, { test, before, after, beforeEach }
 
 ### Community 84 - "Community 84"
-Cohesion: 0.20
-Nodes (11): applyCongeModes(), checkAuth(), currentMonday(), init(), initCalSync(), initStatsToggle(), initTabs(), loadServiceCutoff() (+3 more)
+Cohesion: 0.18
+Nodes (12): applyCongeModes(), checkAuth(), currentMonday(), init(), initCalSync(), initCongesForm(), initStatsToggle(), initTabs() (+4 more)
 
 ### Community 85 - "Community 85"
 Cohesion: 0.22
@@ -550,8 +550,8 @@ Cohesion: 0.29
 Nodes (6): description, license, main, name, type, version
 
 ### Community 108 - "Community 108"
-Cohesion: 0.25
-Nodes (14): activeServiceDateStr(), addDays(), buildSlotOfferPlanning(), getMondayOf(), initCongesForm(), parseDate(), renderDaysInto(), renderRespDispoKpi() (+6 more)
+Cohesion: 0.16
+Nodes (18): activeServiceDateStr(), addDays(), buildSlotOfferPlanning(), fmtHour(), formatEstablishment(), jokerSlotLabel(), openBottomSheet(), openClotureCodeModal() (+10 more)
 
 ### Community 109 - "Community 109"
 Cohesion: 0.29
@@ -615,8 +615,8 @@ _Questions this graph is uniquely positioned to answer:_
 - **What connects `name`, `install`, `start` to the rest of the system?**
   _797 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Planning Board UI` be split into smaller, more focused modules?**
-  _Cohesion score 0.04682040531097135 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.04784313725490196 - nodes in this community are weakly interconnected._
 - **Should `html2canvas Render Engine` be split into smaller, more focused modules?**
-  _Cohesion score 0.03989071038251366 - nodes in this community are weakly interconnected._
-- **Should `html2canvas Parser` be split into smaller, more focused modules?**
-  _Cohesion score 0.14772727272727273 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.03913273400317292 - nodes in this community are weakly interconnected._
+- **Should `Main Planning Script (State)` be split into smaller, more focused modules?**
+  _Cohesion score 0.022923646623170518 - nodes in this community are weakly interconnected._
