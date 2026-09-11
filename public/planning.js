@@ -21,7 +21,9 @@ function textColorFor(hex) {
 
 // Modale de confirmation (remplace window.confirm — bloqué / moche en PWA).
 function showConfirm(message, onConfirm, onCancel) {
-    const mob = window.matchMedia('(max-width: 768px)').matches;
+    const landscape = window.matchMedia('(orientation: landscape) and (max-height: 500px)').matches;
+    // Bottom-sheet uniquement en portrait téléphone — en paysage, carte centrée compacte.
+    const mob = window.matchMedia('(max-width: 768px)').matches && !landscape;
     const overlay = document.createElement('div');
     overlay.className = 'app-confirm-overlay';
     overlay.innerHTML =
@@ -655,14 +657,24 @@ function buildSlotOfferPlanning(slotOffers, from, myShifts, refresh) {
             ).join('') +
         '</div>';
 
+    // Zone scrollable : sur téléphone la grille ne se comprime plus — on glisse
+    // horizontalement (~44 px/heure) pour garder des barres lisibles.
+    const scroll = document.createElement('div');
+    scroll.className = 'sp-plan-scroll';
+    const canvas = document.createElement('div');
+    canvas.className = 'sp-plan-canvas';
+    canvas.style.setProperty('--sp-hours', String(RANGE));
+    scroll.appendChild(canvas);
+    wrap.appendChild(scroll);
+
     let ticks = '';
     for (let h = OPEN_H; h <= CLOSE_H; h += 2) {
         ticks += '<span class="sp-tick" style="left:' + pctLeft(h) + '">' + fmtHour(h) + '</span>';
     }
     const axis = document.createElement('div');
     axis.className = 'sp-axis';
-    axis.innerHTML = '<span></span><div class="sp-axis-track">' + ticks + '</div>';
-    wrap.appendChild(axis);
+    axis.innerHTML = '<div class="sp-axis-gutter"></div><div class="sp-axis-track">' + ticks + '</div>';
+    canvas.appendChild(axis);
 
     const stack = document.createElement('div');
     stack.className = 'sp-stack';
@@ -756,7 +768,7 @@ function buildSlotOfferPlanning(slotOffers, from, myShifts, refresh) {
         day.appendChild(rail);
         stack.appendChild(day);
     }
-    wrap.appendChild(stack);
+    canvas.appendChild(stack);
     return wrap;
 }
 

@@ -341,15 +341,22 @@ let copyShiftsBuffer = []; // shifts modifiables avant confirmation
 // ── Modales utilitaires (remplacent confirm/prompt natifs — bloqués PWA iOS) ──
 
 function showConfirm(message, onConfirm, onCancel) {
-    const mob = isPhone();
+    const landscape = window.matchMedia('(orientation: landscape) and (max-height: 500px)').matches;
+    // Bottom-sheet portrait téléphone ; en paysage → carte centrée compacte (boutons plus petits).
+    const mob = isPhone() && !landscape;
+    const pad = landscape ? '12px 14px' : (mob ? '24px 24px max(20px,env(safe-area-inset-bottom))' : '24px');
+    const radius = landscape ? '12px' : (mob ? '20px 20px 0 0' : '14px');
+    const maxW = landscape ? 'min(420px,92vw)' : (mob ? '100%' : '380px');
+    const btnPad = landscape ? '6px 12px' : '10px 18px';
+    const btnFs = landscape ? '12px' : '14px';
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:' + (mob ? 'flex-end' : 'center') + ';justify-content:center;padding:' + (mob ? '0' : '20px');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:' + (mob ? 'flex-end' : 'center') + ';justify-content:center;padding:' + (mob ? '0' : (landscape ? '10px' : '20px'));
     overlay.innerHTML =
-        '<div style="background:white;border-radius:' + (mob ? '20px 20px 0 0' : '14px') + ';padding:' + (mob ? '24px 24px max(20px,env(safe-area-inset-bottom))' : '24px') + ';max-width:' + (mob ? '100%' : '380px') + ';width:100%;box-shadow:0 -4px 32px rgba(0,0,0,0.18)">' +
-            '<p style="font-size:14px;color:#1a1a2e;line-height:1.5;margin-bottom:20px">' + message + '</p>' +
+        '<div style="background:white;border-radius:' + radius + ';padding:' + pad + ';max-width:' + maxW + ';width:100%;max-height:' + (landscape ? '88vh' : 'none') + ';overflow-y:auto;box-shadow:0 -4px 32px rgba(0,0,0,0.18)">' +
+            '<p style="font-size:' + (landscape ? '13px' : '14px') + ';color:#1a1a2e;line-height:1.5;margin:0 0 ' + (landscape ? '10px' : '20px') + '">' + message + '</p>' +
             '<div style="display:flex;gap:8px;justify-content:flex-end">' +
-                '<button id="_mc" style="padding:10px 18px;border-radius:8px;border:1px solid #e0e0e0;background:white;font-size:14px;cursor:pointer;color:#555">Annuler</button>' +
-                '<button id="_mo" style="padding:10px 18px;border-radius:8px;border:none;background:#e74c3c;color:white;font-size:14px;font-weight:600;cursor:pointer">Confirmer</button>' +
+                '<button id="_mc" style="padding:' + btnPad + ';border-radius:8px;border:1px solid #e0e0e0;background:white;font-size:' + btnFs + ';cursor:pointer;color:#555;min-height:' + (landscape ? '34px' : 'auto') + '">Annuler</button>' +
+                '<button id="_mo" style="padding:' + btnPad + ';border-radius:8px;border:none;background:#e74c3c;color:white;font-size:' + btnFs + ';font-weight:600;cursor:pointer;min-height:' + (landscape ? '34px' : 'auto') + '">Confirmer</button>' +
             '</div>' +
         '</div>';
     document.body.appendChild(overlay);

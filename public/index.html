@@ -553,6 +553,11 @@
             /* ── Modales → bottom sheet avec plus de hauteur disponible ── */
             .modal-overlay { align-items: flex-end !important; padding: 0 !important; }
             .modal { border-radius: 16px 16px 0 0 !important; max-width: 100vw !important; width: 100% !important; max-height: 90vh; overflow-y: auto; padding: 16px !important; padding-bottom: max(12px, env(safe-area-inset-bottom)) !important; }
+            .modal-actions { gap: 6px !important; margin-top: 8px !important; }
+            .btn-cancel, .btn-confirm {
+                padding: 6px 12px !important; font-size: 12px !important;
+                min-height: 34px !important; border-radius: 7px !important;
+            }
 
             /* ── Stats bar compacte ── */
             .stats-bar { flex-wrap: wrap; padding: 6px 8px !important; gap: 5px !important; }
