@@ -379,7 +379,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "lib_utils_datesoverlap",
-      "community": 121,
+      "community": 80,
       "norm_label": "datesoverlap()"
     },
     {
@@ -389,7 +389,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "lib_utils_congecoversdate",
-      "community": 121,
+      "community": 80,
       "norm_label": "congecoversdate()"
     },
     {
@@ -399,7 +399,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "lib_utils_congedaysinrange",
-      "community": 121,
+      "community": 80,
       "norm_label": "congedaysinrange()"
     },
     {
@@ -1576,7 +1576,7 @@
       "label": "filtrer()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L419",
+      "source_location": "L442",
       "_origin": "ast",
       "id": "lib_nouveautes_filtrer",
       "community": 63,
@@ -1586,7 +1586,7 @@
       "label": "grouperParSemaine()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L441",
+      "source_location": "L464",
       "_origin": "ast",
       "id": "lib_nouveautes_grouperparsemaine",
       "community": 63,
@@ -1596,7 +1596,7 @@
       "label": "limiterSemaines()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L462",
+      "source_location": "L485",
       "_origin": "ast",
       "id": "lib_nouveautes_limitersemaines",
       "community": 63,
@@ -1606,7 +1606,7 @@
       "label": "recalculer()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L494",
+      "source_location": "L517",
       "_origin": "ast",
       "id": "lib_nouveautes_recalculer",
       "community": 63,
@@ -1616,7 +1616,7 @@
       "label": "semaineFr()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L500",
+      "source_location": "L523",
       "_origin": "ast",
       "id": "lib_nouveautes_semainefr",
       "community": 63,
@@ -1626,7 +1626,7 @@
       "label": "majPastille()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L505",
+      "source_location": "L528",
       "_origin": "ast",
       "id": "lib_nouveautes_majpastille",
       "community": 63,
@@ -1636,7 +1636,7 @@
       "label": "charger()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L515",
+      "source_location": "L538",
       "_origin": "ast",
       "id": "lib_nouveautes_charger",
       "community": 63,
@@ -1646,7 +1646,7 @@
       "label": "marquerLu()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L529",
+      "source_location": "L552",
       "_origin": "ast",
       "id": "lib_nouveautes_marquerlu",
       "community": 63,
@@ -1656,7 +1656,7 @@
       "label": "surEchap()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L541",
+      "source_location": "L564",
       "_origin": "ast",
       "id": "lib_nouveautes_surechap",
       "community": 63,
@@ -1666,7 +1666,7 @@
       "label": "fermer()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L543",
+      "source_location": "L566",
       "_origin": "ast",
       "id": "lib_nouveautes_fermer",
       "community": 63,
@@ -1676,7 +1676,7 @@
       "label": "carte()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L552",
+      "source_location": "L575",
       "_origin": "ast",
       "id": "lib_nouveautes_carte",
       "community": 63,
@@ -1686,7 +1686,7 @@
       "label": "ouvrir()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L560",
+      "source_location": "L583",
       "_origin": "ast",
       "id": "lib_nouveautes_ouvrir",
       "community": 63,
@@ -1696,7 +1696,7 @@
       "label": "init()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L619",
+      "source_location": "L642",
       "_origin": "ast",
       "id": "lib_nouveautes_init",
       "community": 63,
@@ -2859,7 +2859,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "public_planning_todatestr",
-      "community": 84,
+      "community": 108,
       "norm_label": "todatestr()"
     },
     {
@@ -2869,7 +2869,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "public_planning_getmondayof",
-      "community": 70,
+      "community": 108,
       "norm_label": "getmondayof()"
     },
     {
@@ -2909,7 +2909,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "public_planning_adddays",
-      "community": 70,
+      "community": 108,
       "norm_label": "adddays()"
     },
     {
@@ -2949,7 +2949,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "public_planning_parsedate",
-      "community": 84,
+      "community": 108,
       "norm_label": "parsedate()"
     },
     {
@@ -2959,7 +2959,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "public_planning_weekendstr",
-      "community": 84,
+      "community": 108,
       "norm_label": "weekendstr()"
     },
     {
@@ -2969,7 +2969,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "public_planning_weekrangelabel",
-      "community": 84,
+      "community": 108,
       "norm_label": "weekrangelabel()"
     },
     {
@@ -3056,7 +3056,7 @@
       "label": "fetchOpenJokers()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L469",
+      "source_location": "L470",
       "_origin": "ast",
       "id": "public_planning_fetchopenjokers",
       "community": 79,
@@ -3066,17 +3066,67 @@
       "label": "renderOpenJokers()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L483",
+      "source_location": "L484",
       "_origin": "ast",
       "id": "public_planning_renderopenjokers",
       "community": 79,
       "norm_label": "renderopenjokers()"
     },
     {
-      "label": "renderOpenJokersInto()",
+      "label": "applyJokerCandidature()",
       "file_type": "code",
       "source_file": "public/planning.js",
       "source_location": "L490",
+      "_origin": "ast",
+      "id": "public_planning_applyjokercandidature",
+      "community": 0,
+      "norm_label": "applyjokercandidature()"
+    },
+    {
+      "label": "bindJokerApply()",
+      "file_type": "code",
+      "source_file": "public/planning.js",
+      "source_location": "L501",
+      "_origin": "ast",
+      "id": "public_planning_bindjokerapply",
+      "community": 0,
+      "norm_label": "bindjokerapply()"
+    },
+    {
+      "label": "jokerGroupCss()",
+      "file_type": "code",
+      "source_file": "public/planning.js",
+      "source_location": "L526",
+      "_origin": "ast",
+      "id": "public_planning_jokergroupcss",
+      "community": 0,
+      "norm_label": "jokergroupcss()"
+    },
+    {
+      "label": "buildSlotOfferPlanning()",
+      "file_type": "code",
+      "source_file": "public/planning.js",
+      "source_location": "L533",
+      "_origin": "ast",
+      "id": "public_planning_buildslotofferplanning",
+      "community": 108,
+      "norm_label": "buildslotofferplanning()"
+    },
+    {
+      "label": "buildPunctualJokerList()",
+      "file_type": "code",
+      "source_file": "public/planning.js",
+      "source_location": "L660",
+      "_origin": "ast",
+      "id": "public_planning_buildpunctualjokerlist",
+      "community": 79,
+      "norm_label": "buildpunctualjokerlist()"
+    },
+    {
+      "label": "renderOpenJokersInto()",
+      "file_type": "code",
+      "source_file": "public/planning.js",
+      "source_location": "L695",
       "_origin": "ast",
       "id": "public_planning_renderopenjokersinto",
       "community": 79,
@@ -3086,7 +3136,7 @@
       "label": "loadPlanning()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L558",
+      "source_location": "L714",
       "_origin": "ast",
       "id": "public_planning_loadplanning",
       "community": 79,
@@ -3096,7 +3146,7 @@
       "label": "loadSeenWeeks()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L621",
+      "source_location": "L782",
       "_origin": "ast",
       "id": "public_planning_loadseenweeks",
       "community": 79,
@@ -3106,7 +3156,7 @@
       "label": "markWeekSeen()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L626",
+      "source_location": "L787",
       "_origin": "ast",
       "id": "public_planning_markweekseen",
       "community": 0,
@@ -3116,7 +3166,7 @@
       "label": "_weekObservers",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L639",
+      "source_location": "L800",
       "_origin": "ast",
       "id": "public_planning_weekobservers",
       "community": 0,
@@ -3126,7 +3176,7 @@
       "label": "disconnectWeekObservers()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L641",
+      "source_location": "L802",
       "_origin": "ast",
       "id": "public_planning_disconnectweekobservers",
       "community": 79,
@@ -3136,7 +3186,7 @@
       "label": "observeWeekSeen()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L649",
+      "source_location": "L810",
       "_origin": "ast",
       "id": "public_planning_observeweekseen",
       "community": 0,
@@ -3146,7 +3196,7 @@
       "label": "loadUpcomingWeeks()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L666",
+      "source_location": "L827",
       "_origin": "ast",
       "id": "public_planning_loadupcomingweeks",
       "community": 79,
@@ -3156,17 +3206,17 @@
       "label": "renderUpcomingWeek()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L739",
+      "source_location": "L900",
       "_origin": "ast",
       "id": "public_planning_renderupcomingweek",
-      "community": 84,
+      "community": 108,
       "norm_label": "renderupcomingweek()"
     },
     {
       "label": "scrollToHashWeek()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L782",
+      "source_location": "L943",
       "_origin": "ast",
       "id": "public_planning_scrolltohashweek",
       "community": 84,
@@ -3176,7 +3226,7 @@
       "label": "renderStats()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L796",
+      "source_location": "L957",
       "_origin": "ast",
       "id": "public_planning_renderstats",
       "community": 75,
@@ -3186,7 +3236,7 @@
       "label": "renderStatsInto()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L801",
+      "source_location": "L962",
       "_origin": "ast",
       "id": "public_planning_renderstatsinto",
       "community": 75,
@@ -3196,7 +3246,7 @@
       "label": "statCard()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L842",
+      "source_location": "L1003",
       "_origin": "ast",
       "id": "public_planning_statcard",
       "community": 75,
@@ -3206,7 +3256,7 @@
       "label": "initStatsToggle()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L852",
+      "source_location": "L1013",
       "_origin": "ast",
       "id": "public_planning_initstatstoggle",
       "community": 84,
@@ -3216,7 +3266,7 @@
       "label": "applyStatsPeriod()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L866",
+      "source_location": "L1027",
       "_origin": "ast",
       "id": "public_planning_applystatsperiod",
       "community": 75,
@@ -3226,7 +3276,7 @@
       "label": "loadMonthRecap()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L884",
+      "source_location": "L1045",
       "_origin": "ast",
       "id": "public_planning_loadmonthrecap",
       "community": 75,
@@ -3236,7 +3286,7 @@
       "label": "renderMonthStats()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L911",
+      "source_location": "L1072",
       "_origin": "ast",
       "id": "public_planning_rendermonthstats",
       "community": 75,
@@ -3246,27 +3296,27 @@
       "label": "renderDays()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L956",
+      "source_location": "L1117",
       "_origin": "ast",
       "id": "public_planning_renderdays",
-      "community": 84,
+      "community": 79,
       "norm_label": "renderdays()"
     },
     {
       "label": "renderDaysInto()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L961",
+      "source_location": "L1122",
       "_origin": "ast",
       "id": "public_planning_renderdaysinto",
-      "community": 84,
+      "community": 108,
       "norm_label": "renderdaysinto()"
     },
     {
       "label": "_shortColleagueName()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1246",
+      "source_location": "L1406",
       "_origin": "ast",
       "id": "public_planning_shortcolleaguename",
       "community": 0,
@@ -3276,7 +3326,7 @@
       "label": "openDaySheet()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1252",
+      "source_location": "L1412",
       "_origin": "ast",
       "id": "public_planning_opendaysheet",
       "community": 0,
@@ -3286,7 +3336,7 @@
       "label": "formatEstablishment()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1437",
+      "source_location": "L1597",
       "_origin": "ast",
       "id": "public_planning_formatestablishment",
       "community": 81,
@@ -3296,7 +3346,7 @@
       "label": "buildTeamDisplayNames()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1447",
+      "source_location": "L1607",
       "_origin": "ast",
       "id": "public_planning_buildteamdisplaynames",
       "community": 0,
@@ -3306,7 +3356,7 @@
       "label": "_kpiBarHtml()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1495",
+      "source_location": "L1655",
       "_origin": "ast",
       "id": "public_planning_kpibarhtml",
       "community": 0,
@@ -3316,7 +3366,7 @@
       "label": "_respKpiInnerHtml()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1513",
+      "source_location": "L1673",
       "_origin": "ast",
       "id": "public_planning_respkpiinnerhtml",
       "community": 0,
@@ -3326,17 +3376,17 @@
       "label": "renderRespDispoKpi()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1594",
+      "source_location": "L1754",
       "_origin": "ast",
       "id": "public_planning_renderrespdispokpi",
-      "community": 70,
+      "community": 108,
       "norm_label": "renderrespdispokpi()"
     },
     {
       "label": "renderResponsableDashboard()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1640",
+      "source_location": "L1800",
       "_origin": "ast",
       "id": "public_planning_renderresponsabledashboard",
       "community": 0,
@@ -3346,7 +3396,7 @@
       "label": "openBottomSheet()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1818",
+      "source_location": "L1978",
       "_origin": "ast",
       "id": "public_planning_openbottomsheet",
       "community": 0,
@@ -3356,7 +3406,7 @@
       "label": "openContactSheet()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1843",
+      "source_location": "L2003",
       "_origin": "ast",
       "id": "public_planning_opencontactsheet",
       "community": 0,
@@ -3366,7 +3416,7 @@
       "label": "showTab()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1864",
+      "source_location": "L2024",
       "_origin": "ast",
       "id": "public_planning_showtab",
       "community": 0,
@@ -3376,7 +3426,7 @@
       "label": "initTabs()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1881",
+      "source_location": "L2041",
       "_origin": "ast",
       "id": "public_planning_inittabs",
       "community": 84,
@@ -3386,7 +3436,7 @@
       "label": "initCalSync()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1899",
+      "source_location": "L2059",
       "_origin": "ast",
       "id": "public_planning_initcalsync",
       "community": 84,
@@ -3396,7 +3446,7 @@
       "label": "renderHistModeToggle()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1991",
+      "source_location": "L2151",
       "_origin": "ast",
       "id": "public_planning_renderhistmodetoggle",
       "community": 75,
@@ -3406,7 +3456,7 @@
       "label": "loadHistorique()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2007",
+      "source_location": "L2167",
       "_origin": "ast",
       "id": "public_planning_loadhistorique",
       "community": 75,
@@ -3416,7 +3466,7 @@
       "label": "histRange()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2013",
+      "source_location": "L2173",
       "_origin": "ast",
       "id": "public_planning_histrange",
       "community": 75,
@@ -3426,7 +3476,7 @@
       "label": "loadHistoriqueMois()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2020",
+      "source_location": "L2180",
       "_origin": "ast",
       "id": "public_planning_loadhistoriquemois",
       "community": 75,
@@ -3436,7 +3486,7 @@
       "label": "renderHistoriqueMois()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2049",
+      "source_location": "L2209",
       "_origin": "ast",
       "id": "public_planning_renderhistoriquemois",
       "community": 75,
@@ -3446,7 +3496,7 @@
       "label": "appendHistMoreBtn()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2097",
+      "source_location": "L2257",
       "_origin": "ast",
       "id": "public_planning_appendhistmorebtn",
       "community": 75,
@@ -3456,7 +3506,7 @@
       "label": "loadHistoriqueSemaine()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2117",
+      "source_location": "L2277",
       "_origin": "ast",
       "id": "public_planning_loadhistoriquesemaine",
       "community": 75,
@@ -3466,7 +3516,7 @@
       "label": "buildHistStatsHtml()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2154",
+      "source_location": "L2314",
       "_origin": "ast",
       "id": "public_planning_buildhiststatshtml",
       "community": 75,
@@ -3476,7 +3526,7 @@
       "label": "renderHistoriqueSemaine()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2191",
+      "source_location": "L2351",
       "_origin": "ast",
       "id": "public_planning_renderhistoriquesemaine",
       "community": 75,
@@ -3486,7 +3536,7 @@
       "label": "DISPO_TYPES",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2272",
+      "source_location": "L2432",
       "_origin": "ast",
       "id": "public_planning_dispo_types",
       "community": 0,
@@ -3496,7 +3546,7 @@
       "label": "dispoSelections",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2281",
+      "source_location": "L2441",
       "_origin": "ast",
       "id": "public_planning_disposelections",
       "community": 0,
@@ -3506,7 +3556,7 @@
       "label": "dispoMondays",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2287",
+      "source_location": "L2447",
       "_origin": "ast",
       "id": "public_planning_dispomondays",
       "community": 0,
@@ -3516,7 +3566,7 @@
       "label": "currentDispoMonday()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2291",
+      "source_location": "L2451",
       "_origin": "ast",
       "id": "public_planning_currentdispomonday",
       "community": 70,
@@ -3526,7 +3576,7 @@
       "label": "currentDispoWeekLocked()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2300",
+      "source_location": "L2460",
       "_origin": "ast",
       "id": "public_planning_currentdispoweeklocked",
       "community": 70,
@@ -3536,7 +3586,7 @@
       "label": "loadDisposTab()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2304",
+      "source_location": "L2464",
       "_origin": "ast",
       "id": "public_planning_loaddispostab",
       "community": 70,
@@ -3546,7 +3596,7 @@
       "label": "createDispoCard()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2592",
+      "source_location": "L2752",
       "_origin": "ast",
       "id": "public_planning_createdispocard",
       "community": 0,
@@ -3556,7 +3606,7 @@
       "label": "createRestDayCard()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2683",
+      "source_location": "L2843",
       "_origin": "ast",
       "id": "public_planning_createrestdaycard",
       "community": 70,
@@ -3566,7 +3616,7 @@
       "label": "createCongeDayCard()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2695",
+      "source_location": "L2855",
       "_origin": "ast",
       "id": "public_planning_createcongedaycard",
       "community": 70,
@@ -3576,37 +3626,37 @@
       "label": "parseDispoTime()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2710",
+      "source_location": "L2870",
       "_origin": "ast",
       "id": "public_planning_parsedispotime",
-      "community": 70,
+      "community": 0,
       "norm_label": "parsedispotime()"
     },
     {
       "label": "readDispoTimes()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2723",
+      "source_location": "L2883",
       "_origin": "ast",
       "id": "public_planning_readdispotimes",
-      "community": 70,
+      "community": 0,
       "norm_label": "readdispotimes()"
     },
     {
       "label": "submitDispos()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2734",
+      "source_location": "L2894",
       "_origin": "ast",
       "id": "public_planning_submitdispos",
-      "community": 70,
+      "community": 108,
       "norm_label": "submitdispos()"
     },
     {
       "label": "dispoTemplateDays()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2807",
+      "source_location": "L2967",
       "_origin": "ast",
       "id": "public_planning_dispotemplatedays",
       "community": 70,
@@ -3616,7 +3666,7 @@
       "label": "loadDispoTemplate()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2813",
+      "source_location": "L2973",
       "_origin": "ast",
       "id": "public_planning_loaddispotemplate",
       "community": 70,
@@ -3626,7 +3676,7 @@
       "label": "deadlineLabel()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2826",
+      "source_location": "L2986",
       "_origin": "ast",
       "id": "public_planning_deadlinelabel",
       "community": 70,
@@ -3636,7 +3686,7 @@
       "label": "deadlineForWeek()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2832",
+      "source_location": "L2992",
       "_origin": "ast",
       "id": "public_planning_deadlineforweek",
       "community": 70,
@@ -3646,7 +3696,7 @@
       "label": "deadlineLabelForWeek()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2836",
+      "source_location": "L2996",
       "_origin": "ast",
       "id": "public_planning_deadlinelabelforweek",
       "community": 70,
@@ -3656,7 +3706,7 @@
       "label": "deadlineShortLabelForWeek()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2843",
+      "source_location": "L3003",
       "_origin": "ast",
       "id": "public_planning_deadlineshortlabelforweek",
       "community": 70,
@@ -3666,7 +3716,7 @@
       "label": "setTplFeedback()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2851",
+      "source_location": "L3011",
       "_origin": "ast",
       "id": "public_planning_settplfeedback",
       "community": 70,
@@ -3676,7 +3726,7 @@
       "label": "templateDayLine()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2866",
+      "source_location": "L3026",
       "_origin": "ast",
       "id": "public_planning_templatedayline",
       "community": 81,
@@ -3686,7 +3736,7 @@
       "label": "templateTargetLabel()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2884",
+      "source_location": "L3044",
       "_origin": "ast",
       "id": "public_planning_templatetargetlabel",
       "community": 0,
@@ -3696,7 +3746,7 @@
       "label": "renderDispoTplCard()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2892",
+      "source_location": "L3052",
       "_origin": "ast",
       "id": "public_planning_renderdispotplcard",
       "community": 70,
@@ -3706,7 +3756,7 @@
       "label": "saveDispoTemplate()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2946",
+      "source_location": "L3106",
       "_origin": "ast",
       "id": "public_planning_savedispotemplate",
       "community": 70,
@@ -3716,7 +3766,7 @@
       "label": "putDispoTemplate()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2965",
+      "source_location": "L3125",
       "_origin": "ast",
       "id": "public_planning_putdispotemplate",
       "community": 70,
@@ -3726,17 +3776,17 @@
       "label": "showDisposSub()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2991",
+      "source_location": "L3151",
       "_origin": "ast",
       "id": "public_planning_showdispossub",
-      "community": 0,
+      "community": 125,
       "norm_label": "showdispossub()"
     },
     {
       "label": "fmtCongeDate()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3007",
+      "source_location": "L3167",
       "_origin": "ast",
       "id": "public_planning_fmtcongedate",
       "community": 0,
@@ -3746,17 +3796,17 @@
       "label": "setCongeStatus()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3012",
+      "source_location": "L3172",
       "_origin": "ast",
       "id": "public_planning_setcongestatus",
-      "community": 0,
+      "community": 125,
       "norm_label": "setcongestatus()"
     },
     {
       "label": "applyCongeModes()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3020",
+      "source_location": "L3180",
       "_origin": "ast",
       "id": "public_planning_applycongemodes",
       "community": 84,
@@ -3766,37 +3816,37 @@
       "label": "initCongesForm()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3035",
+      "source_location": "L3195",
       "_origin": "ast",
       "id": "public_planning_initcongesform",
-      "community": 84,
+      "community": 108,
       "norm_label": "initcongesform()"
     },
     {
       "label": "submitConge()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3051",
+      "source_location": "L3211",
       "_origin": "ast",
       "id": "public_planning_submitconge",
-      "community": 0,
+      "community": 125,
       "norm_label": "submitconge()"
     },
     {
       "label": "loadCongesTab()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3081",
+      "source_location": "L3241",
       "_origin": "ast",
       "id": "public_planning_loadcongestab",
-      "community": 0,
+      "community": 125,
       "norm_label": "loadcongestab()"
     },
     {
       "label": "_CONGE_STATUS",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3094",
+      "source_location": "L3254",
       "_origin": "ast",
       "id": "public_planning_conge_status",
       "community": 0,
@@ -3806,27 +3856,27 @@
       "label": "renderCongesList()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3100",
+      "source_location": "L3260",
       "_origin": "ast",
       "id": "public_planning_rendercongeslist",
-      "community": 0,
+      "community": 125,
       "norm_label": "rendercongeslist()"
     },
     {
       "label": "cancelConge()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3133",
+      "source_location": "L3293",
       "_origin": "ast",
       "id": "public_planning_cancelconge",
-      "community": 0,
+      "community": 125,
       "norm_label": "cancelconge()"
     },
     {
       "label": "_NOTIF_CFG",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3147",
+      "source_location": "L3307",
       "_origin": "ast",
       "id": "public_planning_notif_cfg",
       "community": 0,
@@ -3836,7 +3886,7 @@
       "label": "_notifQueue",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3154",
+      "source_location": "L3314",
       "_origin": "ast",
       "id": "public_planning_notifqueue",
       "community": 0,
@@ -3846,7 +3896,7 @@
       "label": "_shownNotifs",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3157",
+      "source_location": "L3317",
       "_origin": "ast",
       "id": "public_planning_shownnotifs",
       "community": 0,
@@ -3856,7 +3906,7 @@
       "label": "loadStaffNotifs()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3159",
+      "source_location": "L3319",
       "_origin": "ast",
       "id": "public_planning_loadstaffnotifs",
       "community": 0,
@@ -3866,7 +3916,7 @@
       "label": "_drainNotifQueue()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3173",
+      "source_location": "L3333",
       "_origin": "ast",
       "id": "public_planning_drainnotifqueue",
       "community": 0,
@@ -3876,7 +3926,7 @@
       "label": "_showNotifToast()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3179",
+      "source_location": "L3339",
       "_origin": "ast",
       "id": "public_planning_shownotiftoast",
       "community": 0,
@@ -3886,7 +3936,7 @@
       "label": "_dismissToast()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3224",
+      "source_location": "L3384",
       "_origin": "ast",
       "id": "public_planning_dismisstoast",
       "community": 0,
@@ -3896,7 +3946,7 @@
       "label": "_esc()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3234",
+      "source_location": "L3394",
       "_origin": "ast",
       "id": "public_planning_esc",
       "community": 0,
@@ -3906,7 +3956,7 @@
       "label": "_showColleagueToast()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3260",
+      "source_location": "L3420",
       "_origin": "ast",
       "id": "public_planning_showcolleaguetoast",
       "community": 0,
@@ -3916,17 +3966,17 @@
       "label": "showMsg()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3302",
+      "source_location": "L3462",
       "_origin": "ast",
       "id": "public_planning_showmsg",
-      "community": 70,
+      "community": 108,
       "norm_label": "showmsg()"
     },
     {
       "label": "urlBase64ToUint8Array()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3321",
+      "source_location": "L3481",
       "_origin": "ast",
       "id": "public_planning_urlbase64touint8array",
       "community": 0,
@@ -3936,7 +3986,7 @@
       "label": "initPushButton()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3328",
+      "source_location": "L3488",
       "_origin": "ast",
       "id": "public_planning_initpushbutton",
       "community": 0,
@@ -3946,7 +3996,7 @@
       "label": "togglePushSubscription()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3358",
+      "source_location": "L3518",
       "_origin": "ast",
       "id": "public_planning_togglepushsubscription",
       "community": 0,
@@ -3956,7 +4006,7 @@
       "label": "startStaffAutoRefresh()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3441",
+      "source_location": "L3601",
       "_origin": "ast",
       "id": "public_planning_startstaffautorefresh",
       "community": 84,
@@ -3966,7 +4016,7 @@
       "label": "showSwapToast()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3469",
+      "source_location": "L3629",
       "_origin": "ast",
       "id": "public_planning_showswaptoast",
       "community": 79,
@@ -3976,7 +4026,7 @@
       "label": "loadMyPendingSwaps()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3485",
+      "source_location": "L3645",
       "_origin": "ast",
       "id": "public_planning_loadmypendingswaps",
       "community": 79,
@@ -3986,7 +4036,7 @@
       "label": "_swapEligible",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3498",
+      "source_location": "L3658",
       "_origin": "ast",
       "id": "public_planning_swapeligible",
       "community": 0,
@@ -3996,7 +4046,7 @@
       "label": "_swapMatchSearch()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3500",
+      "source_location": "L3660",
       "_origin": "ast",
       "id": "public_planning_swapmatchsearch",
       "community": 81,
@@ -4006,7 +4056,7 @@
       "label": "_swapFilterState()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3511",
+      "source_location": "L3671",
       "_origin": "ast",
       "id": "public_planning_swapfilterstate",
       "community": 81,
@@ -4016,7 +4066,7 @@
       "label": "_rerenderSwapTargets()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3517",
+      "source_location": "L3677",
       "_origin": "ast",
       "id": "public_planning_rerenderswaptargets",
       "community": 81,
@@ -4026,7 +4076,7 @@
       "label": "_fillSwapDateOptions()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3523",
+      "source_location": "L3683",
       "_origin": "ast",
       "id": "public_planning_fillswapdateoptions",
       "community": 81,
@@ -4036,7 +4086,7 @@
       "label": "renderSwapTargets()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3534",
+      "source_location": "L3694",
       "_origin": "ast",
       "id": "public_planning_renderswaptargets",
       "community": 81,
@@ -4046,7 +4096,7 @@
       "label": "openSwapModal()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3593",
+      "source_location": "L3753",
       "_origin": "ast",
       "id": "public_planning_openswapmodal",
       "community": 81,
@@ -4056,7 +4106,7 @@
       "label": "closeSwapModal()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3651",
+      "source_location": "L3811",
       "_origin": "ast",
       "id": "public_planning_closeswapmodal",
       "community": 79,
@@ -4066,7 +4116,7 @@
       "label": "submitSwap()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3667",
+      "source_location": "L3827",
       "_origin": "ast",
       "id": "public_planning_submitswap",
       "community": 79,
@@ -4076,7 +4126,7 @@
       "label": "cancelMySwap()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3699",
+      "source_location": "L3859",
       "_origin": "ast",
       "id": "public_planning_cancelmyswap",
       "community": 79,
@@ -4086,7 +4136,7 @@
       "label": "respondToSwap()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3722",
+      "source_location": "L3882",
       "_origin": "ast",
       "id": "public_planning_respondtoswap",
       "community": 79,
@@ -4096,7 +4146,7 @@
       "label": "_fmtSwapDate()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3746",
+      "source_location": "L3906",
       "_origin": "ast",
       "id": "public_planning_fmtswapdate",
       "community": 81,
@@ -4106,17 +4156,17 @@
       "label": "activeServiceDateStr()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3776",
+      "source_location": "L3936",
       "_origin": "ast",
       "id": "public_planning_activeservicedatestr",
-      "community": 84,
+      "community": 108,
       "norm_label": "activeservicedatestr()"
     },
     {
       "label": "buildClotureCta()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3783",
+      "source_location": "L3943",
       "_origin": "ast",
       "id": "public_planning_buildcloturecta",
       "community": 0,
@@ -4126,7 +4176,7 @@
       "label": "openClotureCodeModal()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3812",
+      "source_location": "L3972",
       "_origin": "ast",
       "id": "public_planning_opencloturecodemodal",
       "community": 81,
@@ -4136,7 +4186,7 @@
       "label": "closeClotureCodeModal()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3845",
+      "source_location": "L4005",
       "_origin": "ast",
       "id": "public_planning_closecloturecodemodal",
       "community": 79,
@@ -4146,7 +4196,7 @@
       "label": "submitClotureCode()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3855",
+      "source_location": "L4015",
       "_origin": "ast",
       "id": "public_planning_submitcloturecode",
       "community": 79,
@@ -5299,7 +5349,7 @@
       "source_location": "L441",
       "_origin": "ast",
       "id": "public_script_parsedate",
-      "community": 6,
+      "community": 28,
       "norm_label": "parsedate()"
     },
     {
@@ -5339,7 +5389,7 @@
       "source_location": "L463",
       "_origin": "ast",
       "id": "public_script_formatdatelong",
-      "community": 6,
+      "community": 38,
       "norm_label": "formatdatelong()"
     },
     {
@@ -5719,7 +5769,7 @@
       "source_location": "L1313",
       "_origin": "ast",
       "id": "public_script_loaddaydetail",
-      "community": 6,
+      "community": 38,
       "norm_label": "loaddaydetail()"
     },
     {
@@ -5729,7 +5779,7 @@
       "source_location": "L1361",
       "_origin": "ast",
       "id": "public_script_loadpublishbutton",
-      "community": 6,
+      "community": 28,
       "norm_label": "loadpublishbutton()"
     },
     {
@@ -5879,7 +5929,7 @@
       "source_location": "L2010",
       "_origin": "ast",
       "id": "public_script_extenddisplayforrealhours",
-      "community": 6,
+      "community": 38,
       "norm_label": "extenddisplayforrealhours()"
     },
     {
@@ -5899,7 +5949,7 @@
       "source_location": "L2037",
       "_origin": "ast",
       "id": "public_script_builddisplayedstaff",
-      "community": 6,
+      "community": 38,
       "norm_label": "builddisplayedstaff()"
     },
     {
@@ -6389,7 +6439,7 @@
       "source_location": "L4133",
       "_origin": "ast",
       "id": "public_script_proposeweekslots",
-      "community": 6,
+      "community": 38,
       "norm_label": "proposeweekslots()"
     },
     {
@@ -6519,7 +6569,7 @@
       "source_location": "L5076",
       "_origin": "ast",
       "id": "public_script_openaccountsmodal",
-      "community": 14,
+      "community": 121,
       "norm_label": "openaccountsmodal()"
     },
     {
@@ -6529,7 +6579,7 @@
       "source_location": "L5087",
       "_origin": "ast",
       "id": "public_script_switchaccountstab",
-      "community": 14,
+      "community": 121,
       "norm_label": "switchaccountstab()"
     },
     {
@@ -6539,7 +6589,7 @@
       "source_location": "L5109",
       "_origin": "ast",
       "id": "public_script_updatependingbadge",
-      "community": 14,
+      "community": 121,
       "norm_label": "_updatependingbadge()"
     },
     {
@@ -6549,7 +6599,7 @@
       "source_location": "L5116",
       "_origin": "ast",
       "id": "public_script_populatebarscheckboxes",
-      "community": 14,
+      "community": 121,
       "norm_label": "populatebarscheckboxes()"
     },
     {
@@ -6559,7 +6609,7 @@
       "source_location": "L5139",
       "_origin": "ast",
       "id": "public_script_renderaccountslist",
-      "community": 14,
+      "community": 121,
       "norm_label": "renderaccountslist()"
     },
     {
@@ -6569,7 +6619,7 @@
       "source_location": "L5221",
       "_origin": "ast",
       "id": "public_script_renderpendinginvites",
-      "community": 14,
+      "community": 121,
       "norm_label": "renderpendinginvites()"
     },
     {
@@ -6579,7 +6629,7 @@
       "source_location": "L5333",
       "_origin": "ast",
       "id": "public_script_populatestaffselect",
-      "community": 14,
+      "community": 121,
       "norm_label": "populatestaffselect()"
     },
     {
@@ -6719,7 +6769,7 @@
       "source_location": "L6214",
       "_origin": "ast",
       "id": "public_script_loadswapsbadge",
-      "community": 9,
+      "community": 38,
       "norm_label": "loadswapsbadge()"
     },
     {
@@ -6799,7 +6849,7 @@
       "source_location": "L6380",
       "_origin": "ast",
       "id": "public_script_decideswap",
-      "community": 9,
+      "community": 38,
       "norm_label": "_decideswap()"
     },
     {
@@ -6819,7 +6869,7 @@
       "source_location": "L6435",
       "_origin": "ast",
       "id": "public_script_kpiprogressbar",
-      "community": 9,
+      "community": 14,
       "norm_label": "_kpiprogressbar()"
     },
     {
@@ -6839,7 +6889,7 @@
       "source_location": "L6450",
       "_origin": "ast",
       "id": "public_script_loaddisposkpi",
-      "community": 9,
+      "community": 6,
       "norm_label": "loaddisposkpi()"
     },
     {
@@ -6849,7 +6899,7 @@
       "source_location": "L6469",
       "_origin": "ast",
       "id": "public_script_kpiestabrow",
-      "community": 9,
+      "community": 14,
       "norm_label": "_kpiestabrow()"
     },
     {
@@ -6859,7 +6909,7 @@
       "source_location": "L6493",
       "_origin": "ast",
       "id": "public_script_renderdisposkpicard",
-      "community": 9,
+      "community": 14,
       "norm_label": "renderdisposkpicard()"
     },
     {
@@ -6929,7 +6979,7 @@
       "source_location": "L6573",
       "_origin": "ast",
       "id": "public_script_loadcongeslist",
-      "community": 17,
+      "community": 9,
       "norm_label": "loadcongeslist()"
     },
     {
@@ -6939,7 +6989,7 @@
       "source_location": "L6603",
       "_origin": "ast",
       "id": "public_script_rendercongeslistpatron",
-      "community": 17,
+      "community": 9,
       "norm_label": "rendercongeslistpatron()"
     },
     {
@@ -6959,7 +7009,7 @@
       "source_location": "L6689",
       "_origin": "ast",
       "id": "public_script_decideconge",
-      "community": 17,
+      "community": 9,
       "norm_label": "decideconge()"
     },
     {
@@ -6979,7 +7029,7 @@
       "source_location": "L6719",
       "_origin": "ast",
       "id": "public_script_updatereassignbadge",
-      "community": 6,
+      "community": 127,
       "norm_label": "_updatereassignbadge()"
     },
     {
@@ -6989,7 +7039,7 @@
       "source_location": "L6727",
       "_origin": "ast",
       "id": "public_script_loadreassignbadge",
-      "community": 6,
+      "community": 127,
       "norm_label": "loadreassignbadge()"
     },
     {
@@ -7009,7 +7059,7 @@
       "source_location": "L6832",
       "_origin": "ast",
       "id": "public_script_nonaffecteesafterremove",
-      "community": 38,
+      "community": 127,
       "norm_label": "_nonaffecteesafterremove()"
     },
     {
@@ -7019,7 +7069,7 @@
       "source_location": "L6849",
       "_origin": "ast",
       "id": "public_script_recreateshiftfromdispo",
-      "community": 38,
+      "community": 127,
       "norm_label": "_recreateshiftfromdispo()"
     },
     {
@@ -7029,7 +7079,7 @@
       "source_location": "L6879",
       "_origin": "ast",
       "id": "public_script_ignorenonaffectee",
-      "community": 38,
+      "community": 127,
       "norm_label": "_ignorenonaffectee()"
     },
     {
@@ -8349,7 +8399,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_support_word_breaking",
-      "community": 2,
+      "community": 3,
       "norm_label": "support_word_breaking()"
     },
     {
@@ -9009,7 +9059,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "vendor_jspdf_umd_min_jt",
-      "community": 46,
+      "community": 3,
       "norm_label": "jt()"
     },
     {
@@ -9019,7 +9069,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "vendor_jspdf_umd_min_mt",
-      "community": 46,
+      "community": 3,
       "norm_label": "mt()"
     },
     {
@@ -9029,7 +9079,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "vendor_jspdf_umd_min_et",
-      "community": 46,
+      "community": 3,
       "norm_label": "et()"
     },
     {
@@ -9179,7 +9229,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "scripts_db_app_collections",
-      "community": 18,
+      "community": 117,
       "norm_label": "app_collections"
     },
     {
@@ -9219,7 +9269,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_create_patron",
-      "community": 18,
+      "community": 122,
       "norm_label": "create-patron.js"
     },
     {
@@ -9229,7 +9279,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_create_patron_bcrypt",
-      "community": 18,
+      "community": 122,
       "norm_label": "bcrypt"
     },
     {
@@ -9239,7 +9289,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "scripts_create_patron_readline",
-      "community": 18,
+      "community": 122,
       "norm_label": "readline"
     },
     {
@@ -9249,7 +9299,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "scripts_create_patron_opendb",
-      "community": 18,
+      "community": 122,
       "norm_label": "{ opendb }"
     },
     {
@@ -9259,7 +9309,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "scripts_create_patron_rl",
-      "community": 18,
+      "community": 122,
       "norm_label": "rl"
     },
     {
@@ -9269,7 +9319,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "scripts_create_patron_ask",
-      "community": 18,
+      "community": 122,
       "norm_label": "ask()"
     },
     {
@@ -9279,7 +9329,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "scripts_create_patron_main",
-      "community": 18,
+      "community": 122,
       "norm_label": "main()"
     },
     {
@@ -9289,7 +9339,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_db_uri",
-      "community": 18,
+      "community": 123,
       "norm_label": "db-uri.js"
     },
     {
@@ -9299,7 +9349,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "scripts_db_uri_fs",
-      "community": 18,
+      "community": 123,
       "norm_label": "fs"
     },
     {
@@ -9309,7 +9359,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "scripts_db_uri_prod_db_name",
-      "community": 18,
+      "community": 123,
       "norm_label": "{ prod_db_name }"
     },
     {
@@ -9319,7 +9369,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "scripts_db_uri_path",
-      "community": 18,
+      "community": 123,
       "norm_label": "path"
     },
     {
@@ -9329,7 +9379,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "scripts_db_uri_full",
-      "community": 18,
+      "community": 123,
       "norm_label": "full"
     },
     {
@@ -9339,7 +9389,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "scripts_db_uri_cfg",
-      "community": 18,
+      "community": 123,
       "norm_label": "cfg"
     },
     {
@@ -9349,7 +9399,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "scripts_db_uri_head_query",
-      "community": 18,
+      "community": 123,
       "norm_label": "[head, query]"
     },
     {
@@ -9419,7 +9469,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link",
-      "community": 18,
+      "community": 126,
       "norm_label": "fix-orphan-staff-link.js"
     },
     {
@@ -9429,7 +9479,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_objectid",
-      "community": 18,
+      "community": 126,
       "norm_label": "{ objectid }"
     },
     {
@@ -9439,7 +9489,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_opendb",
-      "community": 18,
+      "community": 126,
       "norm_label": "{ opendb }"
     },
     {
@@ -9449,7 +9499,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_apply",
-      "community": 18,
+      "community": 126,
       "norm_label": "apply"
     },
     {
@@ -9459,7 +9509,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_normname_norm",
-      "community": 18,
+      "community": 126,
       "norm_label": "{ normname: norm }"
     },
     {
@@ -9469,7 +9519,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_main",
-      "community": 18,
+      "community": 126,
       "norm_label": "main()"
     },
     {
@@ -9879,7 +9929,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_seed_dev",
-      "community": 18,
+      "community": 117,
       "norm_label": "seed-dev.js"
     },
     {
@@ -9889,7 +9939,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "scripts_seed_dev_bcrypt",
-      "community": 18,
+      "community": 117,
       "norm_label": "bcrypt"
     },
     {
@@ -9899,7 +9949,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "scripts_seed_dev_objectid",
-      "community": 18,
+      "community": 117,
       "norm_label": "{ objectid }"
     },
     {
@@ -9909,7 +9959,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "scripts_seed_dev_opendb_app_collections",
-      "community": 18,
+      "community": 117,
       "norm_label": "{ opendb, app_collections }"
     },
     {
@@ -9919,7 +9969,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "scripts_seed_dev_todatestr_weekstart",
-      "community": 18,
+      "community": 117,
       "norm_label": "{ todatestr, weekstart }"
     },
     {
@@ -9929,7 +9979,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "scripts_seed_dev_features",
-      "community": 18,
+      "community": 117,
       "norm_label": "features"
     },
     {
@@ -9939,7 +9989,7 @@
       "source_location": "L420",
       "_origin": "ast",
       "id": "scripts_seed_dev_run",
-      "community": 18,
+      "community": 117,
       "norm_label": "run()"
     },
     {
@@ -10019,7 +10069,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "scripts_smoke_cloture_check",
-      "community": 113,
+      "community": 35,
       "norm_label": "check()"
     },
     {
@@ -12129,7 +12179,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conges_test",
-      "community": 121,
+      "community": 80,
       "norm_label": "conges.test.js"
     },
     {
@@ -12139,7 +12189,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conges_test_test",
-      "community": 121,
+      "community": 80,
       "norm_label": "{ test }"
     },
     {
@@ -12149,7 +12199,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "tests_conges_test_assert",
-      "community": 121,
+      "community": 80,
       "norm_label": "assert"
     },
     {
@@ -12159,7 +12209,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "tests_conges_test_datesoverlap_congecoversdate_congedaysinrange",
-      "community": 121,
+      "community": 80,
       "norm_label": "{ datesoverlap, congecoversdate, congedaysinrange }"
     },
     {
@@ -12969,7 +13019,7 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "tests_estab_access_test_confirm",
-      "community": 79,
+      "community": 38,
       "norm_label": "confirm()"
     },
     {
@@ -13149,7 +13199,7 @@
       "source_location": "L129",
       "_origin": "ast",
       "id": "helpers_fake_db_makecollection",
-      "community": 10,
+      "community": 66,
       "norm_label": "makecollection()"
     },
     {
@@ -14809,7 +14859,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "tests_shift_swaps_test_seed",
-      "community": 10,
+      "community": 65,
       "norm_label": "seed()"
     },
     {
@@ -18123,10 +18173,20 @@
       "norm_label": "p1 \u2014 fermer le trou \u00ab prod deployee meme si ci rouge \u00bb"
     },
     {
-      "label": "P2 \u2014 \u00c9lever la qualit\u00e9 statique et la couverture",
+      "label": "CD-01 \u2014 \u00e9tat r\u00e9el au 2026-09-10, et ce qui reste \u00e0 faire",
       "file_type": "document",
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L97",
+      "_origin": "ast",
+      "id": "docs_methodologie_et_cicd_cd_01_\u00e9tat_r\u00e9el_au_2026_09_10_et_ce_qui_reste_\u00e0_faire",
+      "community": 19,
+      "norm_label": "cd-01 \u2014 etat reel au 2026-09-10, et ce qui reste a faire"
+    },
+    {
+      "label": "P2 \u2014 \u00c9lever la qualit\u00e9 statique et la couverture",
+      "file_type": "document",
+      "source_file": "docs/methodologie-et-cicd.md",
+      "source_location": "L139",
       "_origin": "ast",
       "id": "docs_methodologie_et_cicd_p2_\u00e9lever_la_qualit\u00e9_statique_et_la_couverture",
       "community": 19,
@@ -18136,7 +18196,7 @@
       "label": "P3 \u2014 Industrialiser le process & l'environnement",
       "file_type": "document",
       "source_file": "docs/methodologie-et-cicd.md",
-      "source_location": "L104",
+      "source_location": "L146",
       "_origin": "ast",
       "id": "docs_methodologie_et_cicd_p3_industrialiser_le_process_l_environnement",
       "community": 19,
@@ -18146,7 +18206,7 @@
       "label": "C\u00f4t\u00e9 m\u00e9thode (process)",
       "file_type": "document",
       "source_file": "docs/methodologie-et-cicd.md",
-      "source_location": "L112",
+      "source_location": "L154",
       "_origin": "ast",
       "id": "docs_methodologie_et_cicd_c\u00f4t\u00e9_m\u00e9thode_process",
       "community": 19,
@@ -18156,7 +18216,7 @@
       "label": "4. R\u00e9sum\u00e9 ex\u00e9cutif",
       "file_type": "document",
       "source_file": "docs/methodologie-et-cicd.md",
-      "source_location": "L121",
+      "source_location": "L163",
       "_origin": "ast",
       "id": "docs_methodologie_et_cicd_4_r\u00e9sum\u00e9_ex\u00e9cutif",
       "community": 19,
@@ -18196,7 +18256,7 @@
       "label": "2. Jokers par groupe, couleur au choix",
       "file_type": "document",
       "source_file": "docs/note-client-mise-a-jour.md",
-      "source_location": "L28",
+      "source_location": "L29",
       "_origin": "ast",
       "id": "docs_note_client_mise_a_jour_2_jokers_par_groupe_couleur_au_choix",
       "community": 47,
@@ -18206,7 +18266,7 @@
       "label": "3. Performance \u2014 toutes les affaires, filtre groupe, Simulation",
       "file_type": "document",
       "source_file": "docs/note-client-mise-a-jour.md",
-      "source_location": "L34",
+      "source_location": "L35",
       "_origin": "ast",
       "id": "docs_note_client_mise_a_jour_3_performance_toutes_les_affaires_filtre_groupe_simulation",
       "community": 47,
@@ -18216,7 +18276,7 @@
       "label": "4. \u00c9changes de service \u2014 filtre par date",
       "file_type": "document",
       "source_file": "docs/note-client-mise-a-jour.md",
-      "source_location": "L45",
+      "source_location": "L46",
       "_origin": "ast",
       "id": "docs_note_client_mise_a_jour_4_\u00e9changes_de_service_filtre_par_date",
       "community": 47,
@@ -18226,7 +18286,7 @@
       "label": "5. Observateur",
       "file_type": "document",
       "source_file": "docs/note-client-mise-a-jour.md",
-      "source_location": "L50",
+      "source_location": "L51",
       "_origin": "ast",
       "id": "docs_note_client_mise_a_jour_5_observateur",
       "community": 47,
@@ -18236,7 +18296,7 @@
       "label": "6. Cl\u00f4ture par code \u2014 inchang\u00e9e",
       "file_type": "document",
       "source_file": "docs/note-client-mise-a-jour.md",
-      "source_location": "L56",
+      "source_location": "L57",
       "_origin": "ast",
       "id": "docs_note_client_mise_a_jour_6_cl\u00f4ture_par_code_inchang\u00e9e",
       "community": 47,
@@ -19306,7 +19366,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 108,
+      "community": 91,
       "norm_label": "server.js (serveur express monolithique)",
       "id": "readme_server_js"
     },
@@ -19631,7 +19691,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 117,
+      "community": 20,
       "norm_label": "synchronisation agenda \u2014 flux ical (d-72)",
       "id": "architecture_ical_feed"
     },
@@ -19644,7 +19704,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 117,
+      "community": 20,
       "norm_label": "flag calendar_enabled (ical desactive d-83)",
       "id": "architecture_calendar_enabled_flag"
     },
@@ -19683,7 +19743,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 108,
+      "community": 62,
       "norm_label": "f-05 echange de shifts (desactive)",
       "id": "backlog_f05_shift_swaps"
     },
@@ -19696,7 +19756,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 117,
+      "community": 20,
       "norm_label": "f-09 abonnement agenda ical",
       "id": "backlog_f09_ical"
     },
@@ -19722,7 +19782,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 108,
+      "community": 91,
       "norm_label": "r-04 decoupage server.js en routers (reporte)",
       "id": "backlog_r04_split_server"
     },
@@ -19761,7 +19821,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 108,
+      "community": 62,
       "norm_label": "pieges blocs /* f-05 desactive */ (d-47)",
       "id": "backlog_f05_blocks_trap"
     },
@@ -19826,7 +19886,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 101,
       "norm_label": "pointage avance (heures reelles)",
       "id": "prd_pointage"
     },
@@ -19891,7 +19951,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 20,
+      "community": 101,
       "norm_label": "audit ergonomie tactile mobile (d-49)",
       "id": "ux_design_touch_audit"
     },
@@ -19930,7 +19990,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 20,
+      "community": 1,
       "norm_label": "performance.html (pilotage economique)",
       "id": "performance_performance_html"
     },
@@ -19956,7 +20016,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 101,
       "norm_label": "pointage.html (compte etablissement)",
       "id": "pointage_pointage_html"
     },
@@ -20020,9 +20080,9 @@
       "source_file": ".cursor/environment.json",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "cursor_environment",
-      "target": "cursor_environment_install",
-      "confidence_score": 1.0
+      "target": "cursor_environment_install"
     },
     {
       "relation": "contains",
@@ -20030,9 +20090,9 @@
       "source_file": ".cursor/environment.json",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "cursor_environment",
-      "target": "cursor_environment_name",
-      "confidence_score": 1.0
+      "target": "cursor_environment_name"
     },
     {
       "relation": "contains",
@@ -20040,9 +20100,9 @@
       "source_file": ".cursor/environment.json",
       "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "cursor_environment",
-      "target": "cursor_environment_ports",
-      "confidence_score": 1.0
+      "target": "cursor_environment_ports"
     },
     {
       "relation": "contains",
@@ -20050,9 +20110,9 @@
       "source_file": ".cursor/environment.json",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "cursor_environment",
-      "target": "cursor_environment_start",
-      "confidence_score": 1.0
+      "target": "cursor_environment_start"
     },
     {
       "relation": "contains",
@@ -20060,9 +20120,9 @@
       "source_file": ".cursor/environment.json",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "cursor_environment",
-      "target": "cursor_environment_terminals",
-      "confidence_score": 1.0
+      "target": "cursor_environment_terminals"
     },
     {
       "relation": "contains",
@@ -20070,9 +20130,9 @@
       "source_file": ".cursor/install.sh",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "cursor_install",
-      "target": "c_users_pierr_app_planning_bar_cursor_install_sh__entry",
-      "confidence_score": 1.0
+      "target": "c_users_pierr_app_planning_bar_cursor_install_sh__entry"
     },
     {
       "relation": "contains",
@@ -20080,9 +20140,9 @@
       "source_file": ".cursor/start.sh",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "cursor_start",
-      "target": "c_users_pierr_app_planning_bar_cursor_start_sh__entry",
-      "confidence_score": 1.0
+      "target": "c_users_pierr_app_planning_bar_cursor_start_sh__entry"
     },
     {
       "relation": "contains",
@@ -20503,9 +20563,9 @@
       "source_file": "lib/utils.js",
       "source_location": "L325",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_utils",
-      "target": "lib_utils_groupfallbackrate",
-      "confidence_score": 1.0
+      "target": "lib_utils_groupfallbackrate"
     },
     {
       "relation": "contains",
@@ -20693,9 +20753,9 @@
       "source_file": "lib/utils.js",
       "source_location": "L313",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_utils",
-      "target": "lib_utils_staffgroupkey",
-      "confidence_score": 1.0
+      "target": "lib_utils_staffgroupkey"
     },
     {
       "relation": "contains",
@@ -21018,9 +21078,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "lib_utils",
-      "confidence_score": 1.0
+      "target": "lib_utils"
     },
     {
       "relation": "imports_from",
@@ -21766,9 +21826,9 @@
       "source_file": "lib/utils.js",
       "source_location": "L410",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_utils_wagelineforshift",
-      "target": "lib_utils_staffgroupkey",
-      "confidence_score": 1.0
+      "target": "lib_utils_staffgroupkey"
     },
     {
       "relation": "imports",
@@ -21777,9 +21837,9 @@
       "source_file": "server.js",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "lib_utils_staffgroupkey",
-      "confidence_score": 1.0
+      "target": "lib_utils_staffgroupkey"
     },
     {
       "relation": "calls",
@@ -21788,9 +21848,9 @@
       "source_file": "lib/utils.js",
       "source_location": "L392",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_utils_wagelineforshift",
-      "target": "lib_utils_groupfallbackrate",
-      "confidence_score": 1.0
+      "target": "lib_utils_groupfallbackrate"
     },
     {
       "relation": "imports",
@@ -23104,9 +23164,9 @@
       "source_file": "public/lib/joker-group-color.js",
       "source_location": "L101",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_joker_group_color",
-      "target": "lib_joker_group_color_customs",
-      "confidence_score": 1.0
+      "target": "lib_joker_group_color_customs"
     },
     {
       "relation": "contains",
@@ -23114,9 +23174,9 @@
       "source_file": "public/lib/joker-group-color.js",
       "source_location": "L54",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_joker_group_color",
-      "target": "lib_joker_group_color_darken",
-      "confidence_score": 1.0
+      "target": "lib_joker_group_color_darken"
     },
     {
       "relation": "contains",
@@ -23124,9 +23184,9 @@
       "source_file": "public/lib/joker-group-color.js",
       "source_location": "L62",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_joker_group_color",
-      "target": "lib_joker_group_color_fromhex",
-      "confidence_score": 1.0
+      "target": "lib_joker_group_color_fromhex"
     },
     {
       "relation": "contains",
@@ -23134,9 +23194,9 @@
       "source_file": "public/lib/joker-group-color.js",
       "source_location": "L30",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_joker_group_color",
-      "target": "lib_joker_group_color_groupkey",
-      "confidence_score": 1.0
+      "target": "lib_joker_group_color_groupkey"
     },
     {
       "relation": "contains",
@@ -23154,9 +23214,9 @@
       "source_file": "public/lib/joker-group-color.js",
       "source_location": "L73",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_joker_group_color",
-      "target": "lib_joker_group_color_hashedof",
-      "confidence_score": 1.0
+      "target": "lib_joker_group_color_hashedof"
     },
     {
       "relation": "contains",
@@ -23164,9 +23224,9 @@
       "source_file": "public/lib/joker-group-color.js",
       "source_location": "L44",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_joker_group_color",
-      "target": "lib_joker_group_color_mix",
-      "confidence_score": 1.0
+      "target": "lib_joker_group_color_mix"
     },
     {
       "relation": "contains",
@@ -23184,9 +23244,9 @@
       "source_file": "public/lib/joker-group-color.js",
       "source_location": "L93",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_joker_group_color",
-      "target": "lib_joker_group_color_setcustoms",
-      "confidence_score": 1.0
+      "target": "lib_joker_group_color_setcustoms"
     },
     {
       "relation": "contains",
@@ -23205,9 +23265,9 @@
       "source_file": "tests/joker-color.test.js",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_color_test",
-      "target": "lib_joker_group_color",
-      "confidence_score": 1.0
+      "target": "lib_joker_group_color"
     },
     {
       "relation": "calls",
@@ -23216,9 +23276,9 @@
       "source_file": "public/lib/joker-group-color.js",
       "source_location": "L83",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_joker_group_color_of",
-      "target": "lib_joker_group_color_groupkey",
-      "confidence_score": 1.0
+      "target": "lib_joker_group_color_groupkey"
     },
     {
       "relation": "calls",
@@ -23227,9 +23287,9 @@
       "source_file": "public/lib/joker-group-color.js",
       "source_location": "L67",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_joker_group_color_fromhex",
-      "target": "lib_joker_group_color_mix",
-      "confidence_score": 1.0
+      "target": "lib_joker_group_color_mix"
     },
     {
       "relation": "calls",
@@ -23260,9 +23320,9 @@
       "source_file": "public/lib/joker-group-color.js",
       "source_location": "L69",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_joker_group_color_fromhex",
-      "target": "lib_joker_group_color_darken",
-      "confidence_score": 1.0
+      "target": "lib_joker_group_color_darken"
     },
     {
       "relation": "calls",
@@ -23271,9 +23331,9 @@
       "source_file": "public/lib/joker-group-color.js",
       "source_location": "L84",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_joker_group_color_of",
-      "target": "lib_joker_group_color_fromhex",
-      "confidence_score": 1.0
+      "target": "lib_joker_group_color_fromhex"
     },
     {
       "relation": "calls",
@@ -23282,9 +23342,9 @@
       "source_file": "public/lib/joker-group-color.js",
       "source_location": "L85",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "lib_joker_group_color_of",
-      "target": "lib_joker_group_color_hashedof",
-      "confidence_score": 1.0
+      "target": "lib_joker_group_color_hashedof"
     },
     {
       "relation": "calls",
@@ -26291,11 +26351,31 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public/planning.js",
+      "source_location": "L490",
+      "weight": 1.0,
+      "source": "public_planning",
+      "target": "public_planning_applyjokercandidature",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
       "source_location": "L521",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "public_planning",
       "target": "public_planning_applystatsperiod"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
+      "source_location": "L501",
+      "weight": 1.0,
+      "source": "public_planning",
+      "target": "public_planning_bindjokerapply",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -26316,6 +26396,26 @@
       "confidence_score": 1.0,
       "source": "public_planning",
       "target": "public_planning_buildhiststatshtml"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
+      "source_location": "L660",
+      "weight": 1.0,
+      "source": "public_planning",
+      "target": "public_planning_buildpunctualjokerlist",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
+      "source_location": "L533",
+      "weight": 1.0,
+      "source": "public_planning",
+      "target": "public_planning_buildslotofferplanning",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -26756,6 +26856,16 @@
       "confidence_score": 1.0,
       "source": "public_planning",
       "target": "public_planning_isjoker"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
+      "source_location": "L526",
+      "weight": 1.0,
+      "source": "public_planning",
+      "target": "public_planning_jokergroupcss",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -27593,6 +27703,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "public/planning.js",
+      "source_location": "L534",
+      "weight": 1.0,
+      "source": "public_planning_buildslotofferplanning",
+      "target": "public_planning_todatestr",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
       "source_location": "L1879",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -27697,6 +27818,17 @@
       "confidence_score": 1.0,
       "source": "public_planning_renderhistoriquemois",
       "target": "public_planning_todatestr"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
+      "source_location": "L698",
+      "weight": 1.0,
+      "source": "public_planning_renderopenjokersinto",
+      "target": "public_planning_todatestr",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -27879,6 +28011,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "public/planning.js",
+      "source_location": "L580",
+      "weight": 1.0,
+      "source": "public_planning_buildslotofferplanning",
+      "target": "public_planning_adddays",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
       "source_location": "L1491",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -28011,6 +28154,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "public/planning.js",
+      "source_location": "L568",
+      "weight": 1.0,
+      "source": "public_planning_buildslotofferplanning",
+      "target": "public_planning_fmthour",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
       "source_location": "L3667",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -28126,6 +28280,17 @@
       "confidence_score": 1.0,
       "source": "public_planning_renderstatsinto",
       "target": "public_planning_fmtduration"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
+      "source_location": "L577",
+      "weight": 1.0,
+      "source": "public_planning_buildslotofferplanning",
+      "target": "public_planning_parsedate",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -28407,6 +28572,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "public/planning.js",
+      "source_location": "L717",
+      "weight": 1.0,
+      "source": "public_planning_loadplanning",
+      "target": "public_planning_fetchopenjokers",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
       "source_location": "L615",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -28445,6 +28621,39 @@
       "confidence_score": 1.0,
       "source": "public_planning_renderopenjokers",
       "target": "public_planning_renderopenjokersinto"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
+      "source_location": "L707",
+      "weight": 1.0,
+      "source": "public_planning_renderopenjokersinto",
+      "target": "public_planning_buildslotofferplanning",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
+      "source_location": "L708",
+      "weight": 1.0,
+      "source": "public_planning_renderopenjokersinto",
+      "target": "public_planning_buildpunctualjokerlist",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "public/planning.js",
+      "source_location": "L751",
+      "weight": 1.0,
+      "source": "public_planning_loadplanning",
+      "target": "public_planning_renderopenjokersinto",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -33910,9 +34119,9 @@
       "source_file": "public/script.js",
       "source_location": "L50",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script",
-      "target": "public_script_syncjokergroupcolors",
-      "confidence_score": 1.0
+      "target": "public_script_syncjokergroupcolors"
     },
     {
       "relation": "contains",
@@ -33960,9 +34169,9 @@
       "source_file": "public/script.js",
       "source_location": "L9135",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script",
-      "target": "public_script_updatejokergroupcolor",
-      "confidence_score": 1.0
+      "target": "public_script_updatejokergroupcolor"
     },
     {
       "relation": "contains",
@@ -34084,9 +34293,9 @@
       "source_file": "public/script.js",
       "source_location": "L35",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_applyvenuehours",
-      "target": "public_script_syncjokergroupcolors",
-      "confidence_score": 1.0
+      "target": "public_script_syncjokergroupcolors"
     },
     {
       "relation": "calls",
@@ -34128,9 +34337,9 @@
       "source_file": "public/script.js",
       "source_location": "L9151",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_updatejokergroupcolor",
-      "target": "public_script_syncjokergroupcolors",
-      "confidence_score": 1.0
+      "target": "public_script_syncjokergroupcolors"
     },
     {
       "relation": "calls",
@@ -36625,9 +36834,9 @@
       "source_file": "public/script.js",
       "source_location": "L9152",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_updatejokergroupcolor",
-      "target": "public_script_rendersidebar",
-      "confidence_score": 1.0
+      "target": "public_script_rendersidebar"
     },
     {
       "relation": "calls",
@@ -36768,9 +36977,9 @@
       "source_file": "public/script.js",
       "source_location": "L9153",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_updatejokergroupcolor",
-      "target": "public_script_renderbody",
-      "confidence_score": 1.0
+      "target": "public_script_renderbody"
     },
     {
       "relation": "calls",
@@ -38451,9 +38660,9 @@
       "source_file": "public/script.js",
       "source_location": "L9154",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_script_updatejokergroupcolor",
-      "target": "public_script_showtoast",
-      "confidence_score": 1.0
+      "target": "public_script_showtoast"
     },
     {
       "relation": "calls",
@@ -44011,9 +44220,9 @@
       "source_file": "server.js",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "server_isvalidobjectid_hashtoken_normalizephone_weekstart_currentweekstart_disposweekstart_isautopublished_isdatepublished_normalizepublishdoc_chargemultiplier_todatestr_datesoverlap_congedaysinrange_splitdisposbyconges_isfullrangeonconge_validateoffperiod_scopemanageroff_resolveperfsettings_pickstaffcolor_buildtemplatedispos_datescoveredbyperiods_dispodeadlinewaived_forceopenactive_shouldmaterializetemplate_disposhorizonrange_disposhorizonmondays_clamphorizonweeks_dispo_horizon_max_upcomingweekrange_upcomingweekmondays_dispomateriallydiffers_staffreopenedfor_dispoeventdelta_derivestaffhourlystat_buildperformancesimulation_jokergroupkey_staffgroupkey_isjokershift_isshiftcompleted_buildstaffratestatsreport",
-      "confidence_score": 1.0
+      "target": "server_isvalidobjectid_hashtoken_normalizephone_weekstart_currentweekstart_disposweekstart_isautopublished_isdatepublished_normalizepublishdoc_chargemultiplier_todatestr_datesoverlap_congedaysinrange_splitdisposbyconges_isfullrangeonconge_validateoffperiod_scopemanageroff_resolveperfsettings_pickstaffcolor_buildtemplatedispos_datescoveredbyperiods_dispodeadlinewaived_forceopenactive_shouldmaterializetemplate_disposhorizonrange_disposhorizonmondays_clamphorizonweeks_dispo_horizon_max_upcomingweekrange_upcomingweekmondays_dispomateriallydiffers_staffreopenedfor_dispoeventdelta_derivestaffhourlystat_buildperformancesimulation_jokergroupkey_staffgroupkey_isjokershift_isshiftcompleted_buildstaffratestatsreport"
     },
     {
       "relation": "contains",
@@ -44481,9 +44690,9 @@
       "source_file": "server.js",
       "source_location": "L272",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "server",
-      "target": "server_staffmatchesjokergroup",
-      "confidence_score": 1.0
+      "target": "server_staffmatchesjokergroup"
     },
     {
       "relation": "contains",
@@ -47002,9 +47211,9 @@
       "source_file": "tests/joker-color.test.js",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_color_test",
-      "target": "helpers_fake_db",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db"
     },
     {
       "relation": "imports_from",
@@ -47013,9 +47222,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "helpers_fake_db",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db"
     },
     {
       "relation": "imports_from",
@@ -47288,9 +47497,9 @@
       "source_file": "tests/joker-color.test.js",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_color_test",
-      "target": "helpers_fake_db_makedb",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db_makedb"
     },
     {
       "relation": "imports",
@@ -47299,9 +47508,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "helpers_fake_db_makedb",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db_makedb"
     },
     {
       "relation": "imports",
@@ -47578,9 +47787,9 @@
       "source_file": "tests/joker-color.test.js",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_color_test",
-      "target": "helpers_harness",
-      "confidence_score": 1.0
+      "target": "helpers_harness"
     },
     {
       "relation": "imports_from",
@@ -47589,9 +47798,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "helpers_harness",
-      "confidence_score": 1.0
+      "target": "helpers_harness"
     },
     {
       "relation": "imports_from",
@@ -47743,9 +47952,9 @@
       "source_file": "tests/joker-color.test.js",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_color_test",
-      "target": "helpers_harness_app",
-      "confidence_score": 1.0
+      "target": "helpers_harness_app"
     },
     {
       "relation": "imports",
@@ -47754,9 +47963,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "helpers_harness_app",
-      "confidence_score": 1.0
+      "target": "helpers_harness_app"
     },
     {
       "relation": "imports",
@@ -47897,9 +48106,9 @@
       "source_file": "tests/joker-color.test.js",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_color_test",
-      "target": "helpers_harness_startapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_startapp"
     },
     {
       "relation": "imports",
@@ -47908,9 +48117,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "helpers_harness_startapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_startapp"
     },
     {
       "relation": "imports",
@@ -48062,9 +48271,9 @@
       "source_file": "tests/joker-color.test.js",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_color_test",
-      "target": "helpers_harness_stopapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_stopapp"
     },
     {
       "relation": "imports",
@@ -48073,9 +48282,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "helpers_harness_stopapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_stopapp"
     },
     {
       "relation": "imports",
@@ -48227,9 +48436,9 @@
       "source_file": "tests/joker-color.test.js",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_color_test",
-      "target": "helpers_harness_req",
-      "confidence_score": 1.0
+      "target": "helpers_harness_req"
     },
     {
       "relation": "imports",
@@ -48238,9 +48447,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "helpers_harness_req",
-      "confidence_score": 1.0
+      "target": "helpers_harness_req"
     },
     {
       "relation": "imports",
@@ -48457,9 +48666,9 @@
       "source_file": "tests/joker-color.test.js",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_color_test",
-      "target": "tests_joker_color_test_app_startapp_stopapp_req",
-      "confidence_score": 1.0
+      "target": "tests_joker_color_test_app_startapp_stopapp_req"
     },
     {
       "relation": "contains",
@@ -48467,9 +48676,9 @@
       "source_file": "tests/joker-color.test.js",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_color_test",
-      "target": "tests_joker_color_test_assert",
-      "confidence_score": 1.0
+      "target": "tests_joker_color_test_assert"
     },
     {
       "relation": "contains",
@@ -48477,9 +48686,9 @@
       "source_file": "tests/joker-color.test.js",
       "source_location": "L11",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_color_test",
-      "target": "tests_joker_color_test_dir",
-      "confidence_score": 1.0
+      "target": "tests_joker_color_test_dir"
     },
     {
       "relation": "contains",
@@ -48487,9 +48696,9 @@
       "source_file": "tests/joker-color.test.js",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_color_test",
-      "target": "tests_joker_color_test_jokergroupcolor",
-      "confidence_score": 1.0
+      "target": "tests_joker_color_test_jokergroupcolor"
     },
     {
       "relation": "contains",
@@ -48497,9 +48706,9 @@
       "source_file": "tests/joker-color.test.js",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_color_test",
-      "target": "tests_joker_color_test_makedb",
-      "confidence_score": 1.0
+      "target": "tests_joker_color_test_makedb"
     },
     {
       "relation": "contains",
@@ -48507,9 +48716,9 @@
       "source_file": "tests/joker-color.test.js",
       "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_color_test",
-      "target": "tests_joker_color_test_obs",
-      "confidence_score": 1.0
+      "target": "tests_joker_color_test_obs"
     },
     {
       "relation": "contains",
@@ -48517,9 +48726,9 @@
       "source_file": "tests/joker-color.test.js",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_color_test",
-      "target": "tests_joker_color_test_patron",
-      "confidence_score": 1.0
+      "target": "tests_joker_color_test_patron"
     },
     {
       "relation": "contains",
@@ -48527,9 +48736,9 @@
       "source_file": "tests/joker-color.test.js",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_color_test",
-      "target": "tests_joker_color_test_test_before_after_beforeeach",
-      "confidence_score": 1.0
+      "target": "tests_joker_color_test_test_before_after_beforeeach"
     },
     {
       "relation": "contains",
@@ -48537,9 +48746,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "tests_joker_group_access_test_app_startapp_stopapp_req",
-      "confidence_score": 1.0
+      "target": "tests_joker_group_access_test_app_startapp_stopapp_req"
     },
     {
       "relation": "contains",
@@ -48547,9 +48756,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "tests_joker_group_access_test_assert",
-      "confidence_score": 1.0
+      "target": "tests_joker_group_access_test_assert"
     },
     {
       "relation": "contains",
@@ -48557,9 +48766,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L15",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "tests_joker_group_access_test_bar_id",
-      "confidence_score": 1.0
+      "target": "tests_joker_group_access_test_bar_id"
     },
     {
       "relation": "contains",
@@ -48567,9 +48776,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "tests_joker_group_access_test_cuis_id",
-      "confidence_score": 1.0
+      "target": "tests_joker_group_access_test_cuis_id"
     },
     {
       "relation": "contains",
@@ -48577,9 +48786,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L11",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "tests_joker_group_access_test_cur",
-      "confidence_score": 1.0
+      "target": "tests_joker_group_access_test_cur"
     },
     {
       "relation": "contains",
@@ -48587,9 +48796,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "tests_joker_group_access_test_day",
-      "confidence_score": 1.0
+      "target": "tests_joker_group_access_test_day"
     },
     {
       "relation": "contains",
@@ -48597,9 +48806,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "tests_joker_group_access_test_makedb",
-      "confidence_score": 1.0
+      "target": "tests_joker_group_access_test_makedb"
     },
     {
       "relation": "contains",
@@ -48607,9 +48816,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "tests_joker_group_access_test_objectid",
-      "confidence_score": 1.0
+      "target": "tests_joker_group_access_test_objectid"
     },
     {
       "relation": "contains",
@@ -48617,9 +48826,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "tests_joker_group_access_test_poly_id",
-      "confidence_score": 1.0
+      "target": "tests_joker_group_access_test_poly_id"
     },
     {
       "relation": "contains",
@@ -48627,9 +48836,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L19",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "tests_joker_group_access_test_staff_bar",
-      "confidence_score": 1.0
+      "target": "tests_joker_group_access_test_staff_bar"
     },
     {
       "relation": "contains",
@@ -48637,9 +48846,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L20",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "tests_joker_group_access_test_staff_cuis",
-      "confidence_score": 1.0
+      "target": "tests_joker_group_access_test_staff_cuis"
     },
     {
       "relation": "contains",
@@ -48647,9 +48856,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L21",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "tests_joker_group_access_test_staff_poly",
-      "confidence_score": 1.0
+      "target": "tests_joker_group_access_test_staff_poly"
     },
     {
       "relation": "contains",
@@ -48657,9 +48866,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "tests_joker_group_access_test_test_before_after_beforeeach",
-      "confidence_score": 1.0
+      "target": "tests_joker_group_access_test_test_before_after_beforeeach"
     },
     {
       "relation": "contains",
@@ -48667,9 +48876,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L13",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "tests_joker_group_access_test_visible",
-      "confidence_score": 1.0
+      "target": "tests_joker_group_access_test_visible"
     },
     {
       "relation": "contains",
@@ -48677,9 +48886,9 @@
       "source_file": "tests/joker-group-access.test.js",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_joker_group_access_test",
-      "target": "tests_joker_group_access_test_weekstart_todatestr",
-      "confidence_score": 1.0
+      "target": "tests_joker_group_access_test_weekstart_todatestr"
     },
     {
       "relation": "contains",
@@ -53241,6 +53450,16 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "docs/methodologie-et-cicd.md",
+      "source_location": "L97",
+      "weight": 1.0,
+      "source": "docs_methodologie_et_cicd_p1_fermer_le_trou_prod_d\u00e9ploy\u00e9e_m\u00eame_si_ci_rouge",
+      "target": "docs_methodologie_et_cicd_cd_01_\u00e9tat_r\u00e9el_au_2026_09_10_et_ce_qui_reste_\u00e0_faire",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L1",
       "weight": 1.0,
@@ -53254,9 +53473,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "target": "docs_note_client_mise_a_jour_1_proposer_les_cr\u00e9neaux_de_la_semaine",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_1_proposer_les_cr\u00e9neaux_de_la_semaine"
     },
     {
       "relation": "contains",
@@ -53264,9 +53483,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L28",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "target": "docs_note_client_mise_a_jour_2_jokers_par_groupe_couleur_au_choix",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_2_jokers_par_groupe_couleur_au_choix"
     },
     {
       "relation": "contains",
@@ -53274,9 +53493,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L34",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "target": "docs_note_client_mise_a_jour_3_performance_toutes_les_affaires_filtre_groupe_simulation",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_3_performance_toutes_les_affaires_filtre_groupe_simulation"
     },
     {
       "relation": "contains",
@@ -53284,9 +53503,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L45",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "target": "docs_note_client_mise_a_jour_4_\u00e9changes_de_service_filtre_par_date",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_4_\u00e9changes_de_service_filtre_par_date"
     },
     {
       "relation": "contains",
@@ -53294,9 +53513,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L50",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "target": "docs_note_client_mise_a_jour_5_observateur",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_5_observateur"
     },
     {
       "relation": "contains",
@@ -53304,9 +53523,9 @@
       "source_file": "docs/note-client-mise-a-jour.md",
       "source_location": "L56",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_note_client_mise_a_jour_templyo_ce_qui_change_\u00e0_la_prochaine_mise_\u00e0_jour",
-      "target": "docs_note_client_mise_a_jour_6_cl\u00f4ture_par_code_inchang\u00e9e",
-      "confidence_score": 1.0
+      "target": "docs_note_client_mise_a_jour_6_cl\u00f4ture_par_code_inchang\u00e9e"
     },
     {
       "relation": "contains",
@@ -54881,5 +55100,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "bd01eb4154790c7a486e08a7cf2d6ec68397b0b2"
+  "built_at_commit": "f83ad1d9535b19e61eb07967ecd2733cb44fe280"
 }

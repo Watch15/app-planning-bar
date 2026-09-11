@@ -328,7 +328,8 @@ async function init() {
         // elle doit se remettre à jour comme le reste.
         const cur = window._currentPlan;
         if (cur && cur.from && cur.to && document.getElementById('open-jokers-section')) {
-            renderOpenJokers(cur.from, cur.to, 'open-jokers-section');
+            renderOpenJokers(cur.from, cur.to, 'open-jokers-section',
+                (_lastWeekData && _lastWeekData.shifts) || []);
         }
         loadUpcomingWeeks();
     });
@@ -480,76 +481,231 @@ function fetchOpenJokers() {
 }
 
 // Call site historique : une semaine, un conteneur désigné par son id.
-async function renderOpenJokers(from, to, containerId) {
+async function renderOpenJokers(from, to, containerId, myShifts) {
     const section = document.getElementById(containerId);
     if (!section) return;
-    renderOpenJokersInto(await fetchOpenJokers(), from, to, section);
+    renderOpenJokersInto(await fetchOpenJokers(), from, to, section, myShifts);
+}
+
+function applyJokerCandidature(id) {
+    return fetch('/api/shifts/' + id + '/joker-candidature', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+    }).then(async r => {
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || 'Erreur');
+        return data;
+    });
+}
+
+function bindJokerApply(el, joker, after, needConfirm) {
+    if (!el || !joker || joker.has_applied) return;
+    el.addEventListener('click', async ev => {
+        ev.stopPropagation();
+        if (el.dataset.busy === '1') return;
+        if (needConfirm) {
+            const d = parseDate(joker.date);
+            const label = (joker.joker_group ? joker.joker_group + ' · ' : '')
+                + DAY_NAMES[d.getDay()] + ' ' + d.getDate()
+                + ' · ' + fmtHour(joker.start_time) + ' → ' + fmtHour(joker.end_time);
+            if (!confirm('Je suis dispo pour ce créneau ?\n' + label)) return;
+        }
+        el.dataset.busy = '1';
+        try {
+            await applyJokerCandidature(joker._id);
+            joker.has_applied = true;
+            showMsg('✅ Ta disponibilité a été envoyée !', 'success');
+            if (typeof after === 'function') after();
+        } catch (e) {
+            el.dataset.busy = '0';
+            showMsg(e.message || 'Erreur', 'error');
+        }
+    });
+}
+
+function jokerGroupCss(group) {
+    const jc = (window.JokerGroupColor && JokerGroupColor.of(group))
+        || { bg: '#6b7280', soft: '#f3f4f6', text: '#374151' };
+    return '--jg:' + jc.bg + ';--jg-soft:' + jc.soft + ';--jg-text:' + jc.text;
+}
+
+// Grille semaine des `slot_offer` : mêmes barres que le planning patron, tap = candidature.
+function buildSlotOfferPlanning(slotOffers, from, myShifts, refresh) {
+    const today = toDateStr(new Date());
+    const weekMine = (myShifts || []).filter(s => s.date >= from && s.date <= weekEndStr(from));
+
+    let minH = Infinity, maxH = -Infinity;
+    const bump = (s, e) => {
+        if (s != null && isFinite(s)) minH = Math.min(minH, s);
+        if (e != null && isFinite(e)) maxH = Math.max(maxH, e);
+    };
+    slotOffers.forEach(j => bump(j.start_time, j.end_time));
+    weekMine.forEach(s => {
+        const { start, end } = shiftEffectiveHours(s);
+        bump(start, end);
+    });
+    if (!isFinite(minH) || !isFinite(maxH)) { minH = 18; maxH = 26; }
+
+    const OPEN_H  = Math.max(0, Math.floor(minH));
+    const CLOSE_H = Math.min(30, Math.ceil(maxH) || (OPEN_H + 1));
+    const RANGE   = (CLOSE_H - OPEN_H) || 1;
+    const pctLeft  = h     => ((h - OPEN_H) / RANGE * 100).toFixed(2) + '%';
+    const pctWidth = (s, e) => (Math.max(e - s, 0) / RANGE * 100).toFixed(2) + '%';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'sp-plan';
+    wrap.style.setProperty('--sp-tick', (2 / RANGE * 100).toFixed(2) + '%');
+
+    const n = slotOffers.length;
+    wrap.innerHTML =
+        '<div class="sp-plan-head">' +
+            '<div class="sp-plan-title">Créneaux proposés · ' + n + '</div>' +
+            '<div class="sp-plan-hint">Tape celui qui t’intéresse</div>' +
+        '</div>';
+
+    let ticks = '';
+    for (let h = OPEN_H; h <= CLOSE_H; h += 2) {
+        ticks += '<span class="sp-tick" style="left:' + pctLeft(h) + '">' + fmtHour(h) + '</span>';
+    }
+    const axis = document.createElement('div');
+    axis.className = 'sp-axis';
+    axis.innerHTML = '<span></span><div class="sp-axis-track">' + ticks + '</div>';
+    wrap.appendChild(axis);
+
+    const stack = document.createElement('div');
+    stack.className = 'sp-stack';
+    const monday = parseDate(from);
+
+    for (let i = 0; i < 7; i++) {
+        const d    = addDays(monday, i);
+        const date = toDateStr(d);
+        const dayN = d.getDay();
+        const dayOffers = slotOffers.filter(j => j.date === date)
+            .sort((a, b) => a.start_time - b.start_time);
+        const dayMine = weekMine.filter(s => s.date === date);
+
+        const day = document.createElement('div');
+        day.className = 'sp-day'
+            + ((dayN === 0 || dayN === 6) ? ' weekend' : '')
+            + (date === today ? ' today' : '');
+        day.innerHTML =
+            '<div class="sp-day-tag">' +
+                '<div class="sp-day-name">' + DAY_NAMES[dayN] + '</div>' +
+                '<div class="sp-day-num">' + d.getDate() + '</div>' +
+            '</div>';
+
+        const rail = document.createElement('div');
+        rail.className = 'sp-rail';
+
+        if (dayOffers.length === 0 && dayMine.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'sp-empty';
+            empty.textContent = '—';
+            rail.appendChild(empty);
+        } else {
+            const lanes = document.createElement('div');
+            lanes.className = 'sp-lanes';
+
+            dayMine.forEach(s => {
+                const { start, end } = shiftEffectiveHours(s);
+                if (start == null || end == null) return;
+                const sm = (allStaff || []).find(x => String(x._id) === String(s.staff_id));
+                const color = (sm && sm.color) || s.color || '#534AB7';
+                const lane = document.createElement('div');
+                lane.className = 'sp-lane';
+                const block = document.createElement('div');
+                block.className = 'sp-block sp-block--mine';
+                block.style.left = pctLeft(Math.max(start, OPEN_H));
+                block.style.width = pctWidth(Math.max(start, OPEN_H), Math.min(end, CLOSE_H));
+                block.style.background = color;
+                block.style.color = textColorFor(color);
+                block.innerHTML =
+                    '<span class="sp-block-who">Moi</span>' +
+                    '<span class="sp-block-when">' + fmtHour(start) + ' → ' + fmtHour(end) + '</span>';
+                lane.appendChild(block);
+                lanes.appendChild(lane);
+            });
+
+            dayOffers.forEach(j => {
+                const past = j.date < today;
+                const lane = document.createElement('div');
+                lane.className = 'sp-lane';
+                const block = document.createElement('div');
+                const applied = !!j.has_applied;
+                block.className = 'sp-block sp-block--offer'
+                    + (applied ? ' sp-block--applied' : '')
+                    + (past && !applied ? ' sp-block--past' : '');
+                block.setAttribute('style', jokerGroupCss(j.joker_group));
+                block.style.left = pctLeft(Math.max(j.start_time, OPEN_H));
+                block.style.width = pctWidth(Math.max(j.start_time, OPEN_H), Math.min(j.end_time, CLOSE_H));
+                const who = applied ? 'Envoyée' : _esc(j.joker_group || 'Poste ouvert');
+                const showWhen = (j.end_time - j.start_time) >= 1.2;
+                block.innerHTML =
+                    '<span class="sp-block-who">' + who + '</span>' +
+                    (showWhen ? '<span class="sp-block-when">' + fmtHour(j.start_time) + ' → ' + fmtHour(j.end_time) + '</span>' : '');
+                if (!applied && !past) bindJokerApply(block, j, refresh, true);
+                lane.appendChild(block);
+                lanes.appendChild(lane);
+            });
+            rail.appendChild(lanes);
+        }
+
+        day.appendChild(rail);
+        stack.appendChild(day);
+    }
+    wrap.appendChild(stack);
+    return wrap;
+}
+
+function buildPunctualJokerList(weekJokers, refresh) {
+    const card = document.createElement('div');
+    card.className = 'open-joker-card';
+    const itemsHtml = weekJokers.map(j => {
+        const d         = new Date(j.date + 'T12:00:00');
+        const dayLabel  = DAY_NAMES[d.getDay()] + ' ' + d.getDate() + ' ' + MONTH_NAMES[d.getMonth()];
+        const applied   = !!j.has_applied;
+        const estabName = j.establishment_name || j.establishment_id || '';
+        const safeEstab = estabName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const grp = j.joker_group ? (' · ' + String(j.joker_group).replace(/</g, '&lt;').replace(/>/g, '&gt;')) : '';
+        const jc = (window.JokerGroupColor && JokerGroupColor.of(j.joker_group))
+            || { bg: '#6b7280', soft: '#f3f4f6' };
+        return '<div class="open-joker-item" style="border-left:3px solid ' + jc.bg
+            + ';padding-left:10px;background:linear-gradient(90deg,' + jc.soft + ' 0%,transparent 48%)">' +
+            '<div class="open-joker-date">' + dayLabel +
+                '<small>' + fmtHour(j.start_time) + ' à ' + fmtHour(j.end_time) + grp +
+                    (safeEstab ? ' · <span class="open-joker-estab">' + safeEstab + '</span>' : '') +
+                '</small>' +
+            '</div>' +
+            '<button class="btn-je-suis-dispo' + (applied ? ' applied' : '') + '" data-id="' + j._id + '"' + (applied ? ' disabled' : '') + '>' +
+                (applied ? '✅ Envoyée' : 'Je suis dispo') +
+            '</button>' +
+        '</div>';
+    }).join('');
+    card.innerHTML =
+        '<div class="open-joker-header">📢 Créneaux disponibles · ' + weekJokers.length + '</div>' +
+        itemsHtml;
+    card.querySelectorAll('.btn-je-suis-dispo:not([disabled])').forEach(btn => {
+        const j = weekJokers.find(x => String(x._id) === String(btn.dataset.id));
+        bindJokerApply(btn, j, refresh, false);
+    });
+    return card;
 }
 
 // Rendu d'un lot DÉJÀ récupéré, borné à la plage [from, to].
-function renderOpenJokersInto(jokers, from, to, section) {
+function renderOpenJokersInto(jokers, from, to, section, myShifts) {
     if (!section || !Array.isArray(jokers)) return;
     try {
-        // Filtrer à la plage de dates de la semaine visible
-        const weekJokers = jokers
-            .filter(j => j.date >= from && j.date <= to)
-            .filter(j => j.date >= toDateStr(new Date()))
+        const today = toDateStr(new Date());
+        const inWeek = j => j.date >= from && j.date <= to;
+        const slotOffers = jokers.filter(j => j.slot_offer && inWeek(j));
+        const punctual = jokers
+            .filter(j => !j.slot_offer && inWeek(j) && j.date >= today)
             .sort((a, b) => a.date === b.date ? a.start_time - b.start_time : a.date.localeCompare(b.date));
-        if (weekJokers.length === 0) { section.innerHTML = ''; return; }
 
-        const itemsHtml = weekJokers.map(j => {
-            const d         = new Date(j.date + 'T12:00:00');
-            const dayLabel  = DAY_NAMES[d.getDay()] + ' ' + d.getDate() + ' ' + MONTH_NAMES[d.getMonth()];
-            const startFmt  = fmtHour(j.start_time);
-            const endFmt    = fmtHour(j.end_time);
-            const applied   = !!j.has_applied;
-            const estabName = j.establishment_name || j.establishment_id || '';
-            const safeEstab = estabName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const grp = j.joker_group ? (' · ' + String(j.joker_group).replace(/</g, '&lt;').replace(/>/g, '&gt;')) : '';
-            const slotBadge = j.slot_offer
-                ? ' <span style="font-size:10px;font-weight:700;color:#0d9488;background:rgba(13,148,136,.12);border-radius:999px;padding:2px 7px">Semaine proposée</span>'
-                : '';
-            const jc = (window.JokerGroupColor && JokerGroupColor.of(j.joker_group))
-                || { bg: '#6b7280', soft: '#f3f4f6' };
-            return '<div class="open-joker-item" style="border-left:3px solid ' + jc.bg
-                + ';padding-left:10px;background:linear-gradient(90deg,' + jc.soft + ' 0%,transparent 48%)">' +
-                '<div class="open-joker-date">' + dayLabel + slotBadge +
-                    '<small>' + startFmt + ' à ' + endFmt + grp +
-                        (safeEstab ? ' · <span class="open-joker-estab">' + safeEstab + '</span>' : '') +
-                    '</small>' +
-                '</div>' +
-                '<button class="btn-je-suis-dispo' + (applied ? ' applied' : '') + '" data-id="' + j._id + '"' + (applied ? ' disabled' : '') + '>' +
-                    (applied ? '✅ Envoyée' : 'Je suis dispo') +
-                '</button>' +
-            '</div>';
-        }).join('');
-
-        section.innerHTML =
-            '<div class="open-joker-card">' +
-                '<div class="open-joker-header">📢 Créneaux disponibles · ' + weekJokers.length + '</div>' +
-                itemsHtml +
-            '</div>';
-
-        section.querySelectorAll('.btn-je-suis-dispo:not([disabled])').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const id = btn.dataset.id;
-                btn.disabled = true;
-                try {
-                    const r = await fetch('/api/shifts/' + id + '/joker-candidature', {
-                        method: 'POST', credentials: 'include',
-                        headers: { 'Content-Type': 'application/json' },
-                    });
-                    const data = await r.json();
-                    if (!r.ok) throw new Error(data.error);
-                    btn.textContent = '✅ Disponibilité envoyée';
-                    btn.classList.add('applied');
-                    showMsg('✅ Ta disponibilité a été envoyée !', 'success');
-                } catch (e) {
-                    btn.disabled = false;
-                    showMsg(e.message || 'Erreur', 'error');
-                }
-            });
-        });
+        const refresh = () => renderOpenJokersInto(jokers, from, to, section, myShifts);
+        section.innerHTML = '';
+        if (slotOffers.length) section.appendChild(buildSlotOfferPlanning(slotOffers, from, myShifts || [], refresh));
+        if (punctual.length)   section.appendChild(buildPunctualJokerList(punctual, refresh));
     } catch { /* silencieux */ }
 }
 
@@ -558,7 +714,7 @@ function renderOpenJokersInto(jokers, from, to, section) {
 async function loadPlanning(from, to, user) {
     const list = document.getElementById('days-list');
 
-    const data = await fetchMyShifts(from, to);
+    const [data, openJokers] = await Promise.all([fetchMyShifts(from, to), fetchOpenJokers()]);
     if (!data) return;                               // session expirée → redirection en cours
 
     if (data.error) {
@@ -586,8 +742,13 @@ async function loadPlanning(from, to, user) {
         // L'utilisateur a basculé sur Mois — on l'a déjà rendu, rien à faire ici
         loadMonthRecap();
     }
-    renderDays(from, myShifts, data.colleagues, jokers);
-    renderOpenJokers(from, to, 'open-jokers-section');
+    const hasSlotOffers = (openJokers || []).some(j => j.slot_offer && j.date >= from && j.date <= to);
+    if (myShifts.length === 0 && hasSlotOffers) {
+        list.innerHTML = '';
+    } else {
+        renderDays(from, myShifts, data.colleagues, jokers);
+    }
+    renderOpenJokersInto(openJokers, from, to, document.getElementById('open-jokers-section'), myShifts);
     // Bannière top retirée : CTA OTP sur la carte du jour (évite le doublon avec Créneaux)
 }
 
@@ -769,7 +930,7 @@ function renderUpcomingWeek(wrap, monday, weekShifts, weekJokers, colleagues, op
     } else {
         stats.style.display = 'none';
     }
-    renderOpenJokersInto(openJokers, monday, end, jokerSection);
+    renderOpenJokersInto(openJokers, monday, end, jokerSection, weekShifts);
 }
 
 // Le push de publication pointe sur `#semaine-<lundi>` : amener le staff DIRECTEMENT sur
@@ -1232,9 +1393,8 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
 document.addEventListener('click', (ev) => {
     if (!ev.target.closest) return;
     if (ev.target.closest('[data-pill-name]')) return;
-    const onCta = !!ev.target.closest('.cloture-cta');
+    if (ev.target.closest('.cloture-cta') || ev.target.closest('.sp-block')) return;
     const card = ev.target.closest('.day-card--tappable');
-    if (onCta) return;
     if (!card || !card._dayDetail) return;
     openDaySheet(card._dayDetail);
 });

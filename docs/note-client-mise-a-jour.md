@@ -21,9 +21,10 @@ Sur le **planning**, une fois la grille posée (souvent en copiant une semaine, 
 Jokers), le bouton **« Proposer les créneaux »** ouvre tous les postes non pourvus aux
 candidatures.
 
-L’équipe les voit **tout de suite**, même si la semaine n’est pas encore publiée, et
-même si personne n’y a encore de shift. Sans ce clic, rien n’est annoncé : le brouillon
-reste chez vous.
+L’équipe les voit **tout de suite sur une grille semaine** (comme votre planning),
+même si la semaine n’est pas encore publiée, et même si personne n’y a encore de
+shift. Chacun tape le créneau qui l’intéresse. Sans ce clic, rien n’est annoncé :
+le brouillon reste chez vous.
 
 ## 2. Jokers par groupe, couleur au choix
 

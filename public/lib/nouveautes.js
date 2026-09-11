@@ -64,6 +64,17 @@
 
     const NOUVEAUTES = [
         {
+            id: 'creneaux-planning-staff', date: '2026-09-12',
+            roles: ['staff'],
+            titre: 'Les créneaux proposés s’affichent comme un planning',
+            quoi: "Quand votre responsable propose les créneaux d’une semaine, ils "
+                + "apparaissent en barres sur une grille (jours × heures), comme "
+                + "sur le planning du patron. Tapez celui qui vous intéresse pour "
+                + "dire que vous êtes dispo — même si la semaine n’est pas encore "
+                + "publiée, et même si vous n’y avez pas encore de shift.",
+            ou: 'Planning → « Créneaux proposés » → tapez la barre du créneau'
+        },
+        {
             id: 'sim-taux-manquant', date: '2026-09-11',
             roles: ['patron', 'directeur', 'observateur'],
             titre: 'Plus de trou dans la masse quand un taux manque',
