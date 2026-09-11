@@ -3291,6 +3291,33 @@ app.patch('/api/shifts/:id', checkDB, requirePatron, denyObservateurEdit, async 
             { $set: updateFields }
         );
 
+        // D-101 — assigné sur un créneau (Joker / slot proposé) : retirer ce staff
+        // de toutes les autres candidatures qui chevauchent les mêmes horaires le même jour.
+        let clearedOverlapping = 0;
+        if (assigningStaff && isJokerShift(existing) && staff_id && staff_id !== '__joker__') {
+            const sid = String(staff_id);
+            const shiftIdStr = String(req.params.id);
+            const others = await db.collection('shifts').find({
+                date: existing.date,
+                $or: [{ is_joker: true }, { staff_id: '__joker__' }],
+            }).toArray();
+            const overlapping = others.filter(s =>
+                String(s._id) !== shiftIdStr
+                && Array.isArray(s.joker_candidates)
+                && s.joker_candidates.some(c => String(c.staff_id) === sid)
+                && hoursOverlap(newStart, newEnd, s.start_time, s.end_time)
+            );
+            if (overlapping.length) {
+                await Promise.all(overlapping.map(s =>
+                    db.collection('shifts').updateOne(
+                        { _id: s._id },
+                        { $pull: { joker_candidates: { staff_id: sid } } }
+                    )
+                ));
+                clearedOverlapping = overlapping.length;
+            }
+        }
+
         // ── Notifications (push staff + in-app patron) — avec debounce 60s ───────
         const targetStaffId = updateFields.staff_id || existing.staff_id;
         if (targetStaffId && targetStaffId !== '__joker__') {
@@ -3339,7 +3366,7 @@ app.patch('/api/shifts/:id', checkDB, requirePatron, denyObservateurEdit, async 
             );
         }
 
-        res.json({ message: 'Shift mis à jour', warnings });
+        res.json({ message: 'Shift mis à jour', warnings, cleared_overlapping_candidatures: clearedOverlapping });
         touchLastUpdated();
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });

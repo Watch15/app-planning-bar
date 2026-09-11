@@ -316,6 +316,64 @@ test('joker-candidature DELETE : le patron peut retirer un candidat', async () =
     assert.equal((body.joker_candidates || []).length, 0);
 });
 
+test('assignation joker : retire les candidatures qui chevauchent le même jour', async () => {
+    const idA = '0123456789abcdef0123e010';
+    const idB = '0123456789abcdef0123e011';
+    const idC = '0123456789abcdef0123e012';
+    const PATRON = { _id: 'u-pat', role: 'patron', name: 'Paul' };
+    const cand = { staff_id: STAFF_ID, staff_name: 'Bob', staff_color: '#3498db', submitted_at: new Date() };
+    const date = day(N1, 2);
+    const db = seed([
+        // Midi — assigné
+        { _id: idA, staff_id: '__joker__', is_joker: true, joker_open: true, slot_offer: true,
+          establishment_id: 'bar1', date, start_time: 10, end_time: 15, joker_candidates: [cand] },
+        // Chevauche (12–18) → candidature retirée
+        { _id: idB, staff_id: '__joker__', is_joker: true, joker_open: true, slot_offer: true,
+          establishment_id: 'bar1', date, start_time: 12, end_time: 18, joker_candidates: [cand] },
+        // Autre jour, mêmes heures → candidature conservée
+        { _id: idC, staff_id: '__joker__', is_joker: true, joker_open: true, slot_offer: true,
+          establishment_id: 'bar1', date: day(N1, 3), start_time: 10, end_time: 15, joker_candidates: [cand] },
+    ]);
+    app.locals.setTestDb(db);
+
+    const res = await req('/api/shifts/' + idA, PATRON, {
+        method: 'PATCH',
+        body: JSON.stringify({ staff_id: STAFF_ID, staff_name: 'Bob', is_joker: false }),
+    });
+    assert.equal(res.status, 200, await res.clone().text());
+    const body = await res.json();
+    assert.equal(body.cleared_overlapping_candidatures, 1);
+
+    const shifts = db.collection('shifts')._docs;
+    assert.equal(shifts.find(s => s._id === idA).staff_id, STAFF_ID);
+    assert.equal((shifts.find(s => s._id === idB).joker_candidates || []).length, 0);
+    assert.equal((shifts.find(s => s._id === idC).joker_candidates || []).length, 1);
+});
+
+test('assignation joker : enchaînement pile ne retire pas la candidature', async () => {
+    const idA = '0123456789abcdef0123e020';
+    const idB = '0123456789abcdef0123e021';
+    const PATRON = { _id: 'u-pat', role: 'patron', name: 'Paul' };
+    const cand = { staff_id: STAFF_ID, staff_name: 'Bob', staff_color: '#3498db', submitted_at: new Date() };
+    const date = day(N1, 2);
+    const db = seed([
+        { _id: idA, staff_id: '__joker__', is_joker: true, joker_open: true, slot_offer: true,
+          establishment_id: 'bar1', date, start_time: 10, end_time: 14, joker_candidates: [cand] },
+        { _id: idB, staff_id: '__joker__', is_joker: true, joker_open: true, slot_offer: true,
+          establishment_id: 'bar1', date, start_time: 14, end_time: 18, joker_candidates: [cand] },
+    ]);
+    app.locals.setTestDb(db);
+
+    const res = await req('/api/shifts/' + idA, PATRON, {
+        method: 'PATCH',
+        body: JSON.stringify({ staff_id: STAFF_ID, staff_name: 'Bob', is_joker: false }),
+    });
+    assert.equal(res.status, 200, await res.clone().text());
+    const body = await res.json();
+    assert.equal(body.cleared_overlapping_candidatures, 0);
+    assert.equal((db.collection('shifts')._docs.find(s => s._id === idB).joker_candidates || []).length, 1);
+});
+
 test('joker-ouverts : un Joker ouvert dont la date est passée disparaît', async () => {
     const past = toDateStr(new Date(Date.now() - 3 * 864e5));
     const visibleDate = day(CUR, 6);
