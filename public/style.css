@@ -178,13 +178,17 @@ a:hover { color: var(--accent-soft); }
 }
 .week-arrow:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 .week-label { font-size: 14px; font-weight: 600; flex: 1; text-align: center; color: var(--text-primary); letter-spacing: -0.2px; }
-#btn-propose-slots {
+.week-nav .btn-propose-slots,
+.day-detail-header .btn-propose-slots {
   padding: 5px 12px; height: 30px; border-radius: var(--radius);
   border: 1px solid #0d9488; background: rgba(13,148,136,0.12);
   font-size: 12px; font-weight: 600; color: #0d9488;
   cursor: pointer; white-space: nowrap; font-family: var(--font); flex-shrink: 0;
+  align-items: center;
 }
-#btn-propose-slots:hover { background: rgba(13,148,136,0.2); }
+.week-nav .btn-propose-slots:hover,
+.day-detail-header .btn-propose-slots:hover { background: rgba(13,148,136,0.2); color: #0f766e; }
+.btn-propose-slots.is-on { display: inline-flex !important; }
 .btn-today {
   padding: 5px 12px; height: 30px; border-radius: 20px;
   border: 1px solid var(--light-border); background: var(--light-bg);
@@ -1460,6 +1464,7 @@ body.observateur #btn-publish-week,
 body.observateur #btn-edit-lock,
 body.observateur #btn-copy-day,
 body.observateur #btn-copy-week,
+body.observateur .btn-propose-slots,
 body.observateur #fab-staff,
 body.observateur #staff-bar-container,
 body.observateur #staff-bar-overlay,

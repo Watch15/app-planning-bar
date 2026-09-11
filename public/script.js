@@ -479,6 +479,7 @@ async function init() {
     if (!me) return;
 
     currentUser = me;
+    if (typeof refreshProposeSlotsButton === 'function') refreshProposeSlotsButton();
     // Observateur : accès vue patron mais lecture seule sur le PLANNING. Le serveur
     // bloque toute écriture planning (403) ; ici on masque en plus les contrôles de
     // construction du planning (publier, palette staff) via la classe body.observateur.
@@ -4119,15 +4120,17 @@ let _copyWeekMode = 'staff'; // 'staff' (garder les affectations) | 'jokers' (cr
 const _btnCopyWeek = document.getElementById('btn-copy-week');
 if (_btnCopyWeek) _btnCopyWeek.addEventListener('click', openCopyWeekModal);
 
-const _btnProposeSlots = document.getElementById('btn-propose-slots');
-if (_btnProposeSlots) {
-    _btnProposeSlots.addEventListener('click', proposeWeekSlots);
-}
+document.querySelectorAll('.btn-propose-slots').forEach(btn => {
+    btn.addEventListener('click', proposeWeekSlots);
+});
 
 function refreshProposeSlotsButton() {
-    const btn = document.getElementById('btn-propose-slots');
-    if (!btn) return;
-    btn.style.display = (window.ClientFeatures && ClientFeatures.enabled('predefined_slots')) ? '' : 'none';
+    const on = !!(window.ClientFeatures && ClientFeatures.enabled('predefined_slots'));
+    document.querySelectorAll('.btn-propose-slots').forEach(btn => {
+        btn.classList.toggle('is-on', on);
+        btn.hidden = !on;
+        btn.style.display = on ? 'inline-flex' : 'none';
+    });
 }
 
 async function proposeWeekSlots() {

@@ -170,8 +170,7 @@
             }
             .week-nav .btn-today { font-size: 11px !important; padding: 4px 8px !important; }
             .week-nav .week-arrow { font-size: 14px !important; padding: 4px 8px !important; }
-            #btn-propose-slots { font-size: 0 !important; padding: 4px 8px !important; height: 28px; flex-shrink: 0; }
-            #btn-propose-slots::after { content: 'Proposer'; font-size: 11px; font-weight: 600; }
+            .week-nav .btn-propose-slots { font-size: 11px !important; padding: 4px 8px !important; height: 28px; flex-shrink: 0; }
             .view-tabs { width: auto !important; }
             .view-tab { font-size: 11px !important; padding: 8px 10px !important; min-height: 36px !important; }
 
@@ -341,6 +340,8 @@
                une autre, la flèche est ce qui dit « vers ». Un pictogramme seul se confondrait
                avec « copier ce jour », masqué ici mais présent dans la tête du patron. */
             #btn-copy-week::after { content: 'Copier →'; font-size: 11px; line-height: 1.4; }
+            .day-detail-header .btn-propose-slots { font-size: 0 !important; padding: 4px 8px !important; flex-shrink: 0; }
+            .day-detail-header .btn-propose-slots::after { content: 'Proposer'; font-size: 11px; font-weight: 600; line-height: 1.4; }
             .day-detail-close  { flex-shrink: 0 !important; }
 
             /* ── Timeline — évite le retour navigateur en scrollant horizontalement ── */
@@ -442,8 +443,7 @@
             .week-nav .week-label { font-size: 11px !important; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; }
             .week-nav .btn-today  { font-size: 11px !important; padding: 2px 8px !important; height: 24px; }
             .week-nav .week-arrow { font-size: 13px !important; width: 28px !important; height: 28px !important; }
-            #btn-propose-slots { font-size: 0 !important; padding: 2px 7px !important; height: 24px; flex-shrink: 0; }
-            #btn-propose-slots::after { content: 'Proposer'; font-size: 10px; font-weight: 600; }
+            .week-nav .btn-propose-slots { font-size: 10px !important; padding: 2px 7px !important; height: 24px; flex-shrink: 0; }
             .view-tabs { width: auto !important; }
             .view-tab  { font-size: 11px !important; padding: 7px 10px !important; min-height: 34px !important; }
 
@@ -999,7 +999,7 @@
             <button class="view-tab active" data-view="day">Jour</button>
             <button class="view-tab" data-view="week">Semaine</button>
         </div>
-        <button type="button" id="btn-propose-slots" data-feature="predefined_slots" style="display:none" title="Ouvre les Jokers de la semaine aux candidatures">Proposer les créneaux</button>
+        <button type="button" class="btn-propose-slots" data-feature="predefined_slots" style="display:none" title="Ouvre les Jokers de la semaine aux candidatures">Proposer les créneaux</button>
     </div>
 
     <!-- ── Carte KPI complétion des dispos (semaine prochaine) ── -->
@@ -1037,6 +1037,7 @@
             <button class="btn-manage-staff" id="btn-edit-lock" style="display:none"></button>
             <button class="btn-copy-day" id="btn-copy-day">Copier ce jour →</button>
             <button class="btn-manage-staff" id="btn-copy-week" style="font-size:12px;padding:5px 12px">Copier la semaine →</button>
+            <button type="button" class="btn-manage-staff btn-propose-slots" data-feature="predefined_slots" style="display:none;font-size:12px;padding:5px 12px;background:rgba(13,148,136,0.12);border-color:#0d9488;color:#0d9488" title="Ouvre les Jokers de la semaine aux candidatures">Proposer les créneaux</button>
             <button class="btn-manage-staff" id="btn-refresh-day" title="Recharger les heures réelles saisies depuis la tablette de pointage" style="font-size:12px;padding:5px 10px">⟳ Actualiser</button>
             <button class="btn-manage-staff" id="btn-publish-week" style="font-size:12px;padding:5px 12px;background:var(--accent);border-color:var(--accent);color:#fff">Publier la semaine</button>
             <button class="day-detail-close" id="day-detail-close">×</button>
