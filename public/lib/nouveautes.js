@@ -80,11 +80,13 @@
             id: 'creneaux-couleur-service', date: '2026-09-12',
             roles: ['staff'],
             titre: 'Midi, soir ou long : la couleur le dit',
-            quoi: "Sur la grille des créneaux proposés, chaque barre est encadrée de la "
-                + "couleur de son service — midi, soir, ou long quand il couvre les deux. "
-                + "La légende « Service » est juste au-dessus. Ce sont exactement les "
-                + "mêmes couleurs que sur le planning imprimé par votre responsable.",
-            ou: 'Planning → « Créneaux proposés » → légende « Service » en haut de la grille'
+            quoi: "Chaque créneau proposé porte la couleur de son service — midi, soir, "
+                + "ou long quand il couvre les deux. En liste, c’est l’étiquette à gauche "
+                + "qui le dit ; en tableau de bord, c’est l’encadrement de la barre. La "
+                + "légende « Service » est juste au-dessus, dans les deux cas. Ce sont "
+                + "exactement les mêmes couleurs que sur le planning imprimé par votre "
+                + "responsable.",
+            ou: 'Planning → « Créneaux proposés » → légende « Service » en haut du bloc'
         },
         {
             id: 'pdf-legende-midi', date: '2026-09-12',
@@ -99,13 +101,15 @@
         {
             id: 'creneaux-planning-staff', date: '2026-09-12',
             roles: ['staff'],
-            titre: 'Les créneaux proposés s’affichent comme un planning',
-            quoi: "Quand votre responsable propose les créneaux d’une semaine, ils "
-                + "apparaissent en barres sur une grille (jours × heures), comme "
-                + "sur le planning du patron. Tapez celui qui vous intéresse pour "
-                + "dire que vous êtes dispo — même si la semaine n’est pas encore "
+            titre: 'Les créneaux proposés, en liste ou en tableau',
+            quoi: "Quand votre responsable propose les créneaux d’une semaine, vous les "
+                + "voyez en liste jour par jour — le plus lisible sur téléphone — ou en "
+                + "tableau de bord, des barres sur une grille jours × heures comme le "
+                + "planning du patron. Deux boutons en haut du bloc basculent de l’un à "
+                + "l’autre, et votre choix est retenu pour la prochaine fois. Dans les "
+                + "deux cas vous vous dites dispo même si la semaine n’est pas encore "
                 + "publiée, et même si vous n’y avez pas encore de shift.",
-            ou: 'Planning → « Créneaux proposés » → tapez la barre du créneau (indisponible si vous avez déjà un shift sur ces heures)'
+            ou: 'Planning → « Créneaux proposés » → boutons « Liste » / « Tableau de bord »'
         },
         {
             id: 'sim-taux-manquant', date: '2026-09-11',

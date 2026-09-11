@@ -22,13 +22,16 @@ Sur le **planning**, une fois la grille posée (souvent en copiant une semaine, 
 Jokers), le bouton **« Proposer les créneaux »** ouvre tous les postes non pourvus aux
 candidatures.
 
-L’équipe les voit **tout de suite sur une grille semaine** (comme votre planning),
-même si la semaine n’est pas encore publiée, et même si personne n’y a encore de
-shift. Chacun tape le créneau qui l’intéresse. Sans ce clic, rien n’est annoncé :
-le brouillon reste chez vous.
+L’équipe les voit **tout de suite**, même si la semaine n’est pas encore publiée, et
+même si personne n’y a encore de shift. Chacun tape le créneau qui l’intéresse. Sans
+ce clic, rien n’est annoncé : le brouillon reste chez vous.
 
-Sur cette grille, chaque créneau est **encadré de la couleur de son service** — midi,
-soir, ou long quand il couvre les deux — avec la légende juste au-dessus. Ce sont les
+Deux façons de les lire, au choix de chacun : **« Liste »**, jour par jour, taillée pour
+le téléphone, ou **« Tableau de bord »**, les créneaux en barres sur une grille semaine
+comme votre planning. Le choix est retenu d’une fois sur l’autre.
+
+Dans les deux vues, chaque créneau porte la **couleur de son service** — midi, soir, ou
+long quand il couvre les deux — avec la légende juste au-dessus. Ce sont les
 mêmes couleurs que sur votre **PDF de la semaine**, dont la légende dit désormais
 **« Midi »** là où elle disait « Matin » : un seul vocabulaire, de votre document
 imprimé à l’écran de votre équipe.

@@ -1576,7 +1576,7 @@
       "label": "filtrer()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L475",
+      "source_location": "L479",
       "_origin": "ast",
       "id": "lib_nouveautes_filtrer",
       "community": 63,
@@ -1586,7 +1586,7 @@
       "label": "grouperParSemaine()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L497",
+      "source_location": "L501",
       "_origin": "ast",
       "id": "lib_nouveautes_grouperparsemaine",
       "community": 63,
@@ -1596,7 +1596,7 @@
       "label": "limiterSemaines()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L518",
+      "source_location": "L522",
       "_origin": "ast",
       "id": "lib_nouveautes_limitersemaines",
       "community": 63,
@@ -1606,7 +1606,7 @@
       "label": "recalculer()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L550",
+      "source_location": "L554",
       "_origin": "ast",
       "id": "lib_nouveautes_recalculer",
       "community": 63,
@@ -1616,7 +1616,7 @@
       "label": "semaineFr()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L556",
+      "source_location": "L560",
       "_origin": "ast",
       "id": "lib_nouveautes_semainefr",
       "community": 63,
@@ -1626,7 +1626,7 @@
       "label": "majPastille()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L561",
+      "source_location": "L565",
       "_origin": "ast",
       "id": "lib_nouveautes_majpastille",
       "community": 63,
@@ -1636,7 +1636,7 @@
       "label": "charger()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L571",
+      "source_location": "L575",
       "_origin": "ast",
       "id": "lib_nouveautes_charger",
       "community": 63,
@@ -1646,7 +1646,7 @@
       "label": "marquerLu()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L585",
+      "source_location": "L589",
       "_origin": "ast",
       "id": "lib_nouveautes_marquerlu",
       "community": 63,
@@ -1656,7 +1656,7 @@
       "label": "surEchap()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L597",
+      "source_location": "L601",
       "_origin": "ast",
       "id": "lib_nouveautes_surechap",
       "community": 63,
@@ -1666,7 +1666,7 @@
       "label": "fermer()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L599",
+      "source_location": "L603",
       "_origin": "ast",
       "id": "lib_nouveautes_fermer",
       "community": 63,
@@ -1676,7 +1676,7 @@
       "label": "carte()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L608",
+      "source_location": "L612",
       "_origin": "ast",
       "id": "lib_nouveautes_carte",
       "community": 63,
@@ -1686,7 +1686,7 @@
       "label": "ouvrir()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L616",
+      "source_location": "L620",
       "_origin": "ast",
       "id": "lib_nouveautes_ouvrir",
       "community": 63,
@@ -1696,7 +1696,7 @@
       "label": "init()",
       "file_type": "code",
       "source_file": "public/lib/nouveautes.js",
-      "source_location": "L675",
+      "source_location": "L679",
       "_origin": "ast",
       "id": "lib_nouveautes_init",
       "community": 63,
@@ -18486,7 +18486,7 @@
       "label": "2. Jokers par groupe, couleur au choix",
       "file_type": "document",
       "source_file": "docs/note-client-mise-a-jour.md",
-      "source_location": "L44",
+      "source_location": "L47",
       "_origin": "ast",
       "id": "docs_note_client_mise_a_jour_2_jokers_par_groupe_couleur_au_choix",
       "community": 47,
@@ -18496,7 +18496,7 @@
       "label": "3. Performance \u2014 toutes les affaires, filtre groupe, Simulation",
       "file_type": "document",
       "source_file": "docs/note-client-mise-a-jour.md",
-      "source_location": "L50",
+      "source_location": "L53",
       "_origin": "ast",
       "id": "docs_note_client_mise_a_jour_3_performance_toutes_les_affaires_filtre_groupe_simulation",
       "community": 47,
@@ -18506,7 +18506,7 @@
       "label": "4. \u00c9changes de service \u2014 filtre par date",
       "file_type": "document",
       "source_file": "docs/note-client-mise-a-jour.md",
-      "source_location": "L61",
+      "source_location": "L64",
       "_origin": "ast",
       "id": "docs_note_client_mise_a_jour_4_\u00e9changes_de_service_filtre_par_date",
       "community": 47,
@@ -18516,7 +18516,7 @@
       "label": "5. Observateur",
       "file_type": "document",
       "source_file": "docs/note-client-mise-a-jour.md",
-      "source_location": "L66",
+      "source_location": "L69",
       "_origin": "ast",
       "id": "docs_note_client_mise_a_jour_5_observateur",
       "community": 47,
@@ -18526,7 +18526,7 @@
       "label": "6. Cl\u00f4ture par code \u2014 inchang\u00e9e",
       "file_type": "document",
       "source_file": "docs/note-client-mise-a-jour.md",
-      "source_location": "L72",
+      "source_location": "L75",
       "_origin": "ast",
       "id": "docs_note_client_mise_a_jour_6_cl\u00f4ture_par_code_inchang\u00e9e",
       "community": 47,
@@ -26687,9 +26687,9 @@
       "source_file": "public/planning.js",
       "source_location": "L664",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_bindslotofferviewtoggle",
-      "confidence_score": 1.0
+      "target": "public_planning_bindslotofferviewtoggle"
     },
     {
       "relation": "contains",
@@ -26727,9 +26727,9 @@
       "source_file": "public/planning.js",
       "source_location": "L685",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_buildslotofferlist",
-      "confidence_score": 1.0
+      "target": "public_planning_buildslotofferlist"
     },
     {
       "relation": "contains",
@@ -26747,9 +26747,9 @@
       "source_file": "public/planning.js",
       "source_location": "L678",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_buildslotoffers",
-      "confidence_score": 1.0
+      "target": "public_planning_buildslotoffers"
     },
     {
       "relation": "contains",
@@ -27127,9 +27127,9 @@
       "source_file": "public/planning.js",
       "source_location": "L619",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_getslotofferview",
-      "confidence_score": 1.0
+      "target": "public_planning_getslotofferview"
     },
     {
       "relation": "contains",
@@ -27767,9 +27767,9 @@
       "source_file": "public/planning.js",
       "source_location": "L627",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_setslotofferview",
-      "confidence_score": 1.0
+      "target": "public_planning_setslotofferview"
     },
     {
       "relation": "contains",
@@ -27887,9 +27887,9 @@
       "source_file": "public/planning.js",
       "source_location": "L644",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_slotofferheadhtml",
-      "confidence_score": 1.0
+      "target": "public_planning_slotofferheadhtml"
     },
     {
       "relation": "contains",
@@ -27897,9 +27897,9 @@
       "source_file": "public/planning.js",
       "source_location": "L632",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_slotofferservicelegendhtml",
-      "confidence_score": 1.0
+      "target": "public_planning_slotofferservicelegendhtml"
     },
     {
       "relation": "contains",
@@ -28149,9 +28149,9 @@
       "source_file": "public/planning.js",
       "source_location": "L686",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_buildslotofferlist",
-      "target": "public_planning_todatestr",
-      "confidence_score": 1.0
+      "target": "public_planning_todatestr"
     },
     {
       "relation": "calls",
@@ -28468,9 +28468,9 @@
       "source_file": "public/planning.js",
       "source_location": "L699",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_buildslotofferlist",
-      "target": "public_planning_adddays",
-      "confidence_score": 1.0
+      "target": "public_planning_adddays"
     },
     {
       "relation": "calls",
@@ -28765,9 +28765,9 @@
       "source_file": "public/planning.js",
       "source_location": "L695",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_buildslotofferlist",
-      "target": "public_planning_parsedate",
-      "confidence_score": 1.0
+      "target": "public_planning_parsedate"
     },
     {
       "relation": "calls",
@@ -29128,9 +29128,9 @@
       "source_file": "public/planning.js",
       "source_location": "L679",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_buildslotoffers",
-      "target": "public_planning_getslotofferview",
-      "confidence_score": 1.0
+      "target": "public_planning_getslotofferview"
     },
     {
       "relation": "calls",
@@ -29139,9 +29139,9 @@
       "source_file": "public/planning.js",
       "source_location": "L661",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_slotofferheadhtml",
-      "target": "public_planning_slotofferservicelegendhtml",
-      "confidence_score": 1.0
+      "target": "public_planning_slotofferservicelegendhtml"
     },
     {
       "relation": "calls",
@@ -29150,9 +29150,9 @@
       "source_file": "public/planning.js",
       "source_location": "L690",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_buildslotofferlist",
-      "target": "public_planning_slotofferheadhtml",
-      "confidence_score": 1.0
+      "target": "public_planning_slotofferheadhtml"
     },
     {
       "relation": "calls",
@@ -29161,9 +29161,9 @@
       "source_file": "public/planning.js",
       "source_location": "L786",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_buildslotofferplanning",
-      "target": "public_planning_slotofferheadhtml",
-      "confidence_score": 1.0
+      "target": "public_planning_slotofferheadhtml"
     },
     {
       "relation": "calls",
@@ -29172,9 +29172,9 @@
       "source_file": "public/planning.js",
       "source_location": "L691",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_buildslotofferlist",
-      "target": "public_planning_bindslotofferviewtoggle",
-      "confidence_score": 1.0
+      "target": "public_planning_bindslotofferviewtoggle"
     },
     {
       "relation": "calls",
@@ -29183,9 +29183,9 @@
       "source_file": "public/planning.js",
       "source_location": "L787",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_buildslotofferplanning",
-      "target": "public_planning_bindslotofferviewtoggle",
-      "confidence_score": 1.0
+      "target": "public_planning_bindslotofferviewtoggle"
     },
     {
       "relation": "calls",
@@ -29194,9 +29194,9 @@
       "source_file": "public/planning.js",
       "source_location": "L680",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_buildslotoffers",
-      "target": "public_planning_buildslotofferlist",
-      "confidence_score": 1.0
+      "target": "public_planning_buildslotofferlist"
     },
     {
       "relation": "calls",
@@ -29205,9 +29205,9 @@
       "source_file": "public/planning.js",
       "source_location": "L681",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_buildslotoffers",
-      "target": "public_planning_buildslotofferplanning",
-      "confidence_score": 1.0
+      "target": "public_planning_buildslotofferplanning"
     },
     {
       "relation": "calls",
@@ -29216,9 +29216,9 @@
       "source_file": "public/planning.js",
       "source_location": "L954",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_renderopenjokersinto",
-      "target": "public_planning_buildslotoffers",
-      "confidence_score": 1.0
+      "target": "public_planning_buildslotoffers"
     },
     {
       "relation": "calls",
@@ -55791,5 +55791,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "fd32b430e65cfc7fe48217a21c7dc13b7840e128"
+  "built_at_commit": "ea7cc41ae74d43325a69e2f77f57a8cc7b38d119"
 }
