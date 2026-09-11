@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
-const { shiftEffectiveHours, shiftDurationHours, monthlyTotals, fmtHourOfDay, fmtClock, fmtDurationH } = require('../public/lib/shift-hours.js');
+const { shiftEffectiveHours, shiftDurationHours, monthlyTotals, fmtHourOfDay, fmtClock, fmtDurationH, hoursOverlap } = require('../public/lib/shift-hours.js');
 
 test('pointage complet → heures réelles utilisées', () => {
     const s = { start_time: 18, end_time: 24, real_start: 18.5, real_end: 26 };
@@ -135,4 +135,19 @@ test('monthlyTotals : liste vide ou shifts sans date → aucun mois', () => {
     assert.deepStrictEqual(monthlyTotals([]), []);
     assert.deepStrictEqual(monthlyTotals(null), []);
     assert.deepStrictEqual(monthlyTotals([{ start_time: 18, end_time: 24 }]), []);
+});
+
+test('hoursOverlap : recouvrement franc', () => {
+    assert.equal(hoursOverlap(18, 24, 20, 26), true);
+    assert.equal(hoursOverlap(18, 24, 18, 24), true);
+});
+
+test('hoursOverlap : enchaînement pile à l\'heure = pas de conflit', () => {
+    assert.equal(hoursOverlap(10, 14, 14, 18), false);
+    assert.equal(hoursOverlap(14, 18, 10, 14), false);
+});
+
+test('hoursOverlap : plages disjointes ou horaires manquants', () => {
+    assert.equal(hoursOverlap(10, 12, 18, 24), false);
+    assert.equal(hoursOverlap(null, 12, 10, 14), false);
 });

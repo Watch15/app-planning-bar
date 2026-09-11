@@ -498,11 +498,15 @@ function applyJokerCandidature(id) {
     });
 }
 
-function bindJokerApply(el, joker, after, needConfirm) {
+function bindJokerApply(el, joker, after, needConfirm, myShifts) {
     if (!el || !joker || joker.has_applied) return;
     el.addEventListener('click', async ev => {
         ev.stopPropagation();
         if (el.dataset.busy === '1') return;
+        if (jokerConflictsWithMine(joker, myShifts)) {
+            showMsg('Tu as déjà un shift sur ces horaires', 'error');
+            return;
+        }
         if (needConfirm) {
             const d = parseDate(joker.date);
             const label = (joker.joker_group ? joker.joker_group + ' · ' : '')
@@ -523,13 +527,18 @@ function bindJokerApply(el, joker, after, needConfirm) {
     });
 }
 
-function jokerGroupCss(group) {
-    const jc = (window.JokerGroupColor && JokerGroupColor.of(group))
-        || { bg: '#6b7280', soft: '#f3f4f6', text: '#374151' };
-    return '--jg:' + jc.bg + ';--jg-soft:' + jc.soft + ';--jg-text:' + jc.text;
+function jokerConflictsWithMine(joker, myShifts) {
+    const overlap = window.ShiftHours && ShiftHours.hoursOverlap;
+    if (!overlap || !joker) return false;
+    return (myShifts || []).some(s => {
+        if (!s || s.date !== joker.date) return false;
+        if (isJoker(s)) return false;
+        const { start, end } = shiftEffectiveHours(s);
+        return overlap(start, end, joker.start_time, joker.end_time);
+    });
 }
 
-// Grille semaine des `slot_offer` : mêmes barres que le planning patron, tap = candidature.
+// Grille semaine des `slot_offer` : barres horaires, tap = candidature.
 function buildSlotOfferPlanning(slotOffers, from, myShifts, refresh) {
     const today = toDateStr(new Date());
     const weekMine = (myShifts || []).filter(s => s.date >= from && s.date <= weekEndStr(from));
@@ -628,22 +637,28 @@ function buildSlotOfferPlanning(slotOffers, from, myShifts, refresh) {
 
             dayOffers.forEach(j => {
                 const past = j.date < today;
+                const blocked = jokerConflictsWithMine(j, weekMine);
                 const lane = document.createElement('div');
                 lane.className = 'sp-lane';
                 const block = document.createElement('div');
                 const applied = !!j.has_applied;
                 block.className = 'sp-block sp-block--offer'
                     + (applied ? ' sp-block--applied' : '')
-                    + (past && !applied ? ' sp-block--past' : '');
-                block.setAttribute('style', jokerGroupCss(j.joker_group));
+                    + (blocked && !applied ? ' sp-block--blocked' : '')
+                    + (past && !applied && !blocked ? ' sp-block--past' : '');
                 block.style.left = pctLeft(Math.max(j.start_time, OPEN_H));
                 block.style.width = pctWidth(Math.max(j.start_time, OPEN_H), Math.min(j.end_time, CLOSE_H));
-                const who = applied ? 'Envoyée' : _esc(j.joker_group || 'Poste ouvert');
+                const who = applied ? 'Envoyée'
+                    : blocked ? 'Déjà en shift'
+                    : _esc(j.joker_group || 'Poste ouvert');
                 const showWhen = (j.end_time - j.start_time) >= 1.2;
                 block.innerHTML =
                     '<span class="sp-block-who">' + who + '</span>' +
                     (showWhen ? '<span class="sp-block-when">' + fmtHour(j.start_time) + ' → ' + fmtHour(j.end_time) + '</span>' : '');
-                if (!applied && !past) bindJokerApply(block, j, refresh, true);
+                if (blocked && !applied) {
+                    block.title = 'Tu as déjà un shift sur ces horaires';
+                }
+                if (!applied && !past && !blocked) bindJokerApply(block, j, refresh, true, weekMine);
                 lane.appendChild(block);
                 lanes.appendChild(lane);
             });
@@ -657,18 +672,21 @@ function buildSlotOfferPlanning(slotOffers, from, myShifts, refresh) {
     return wrap;
 }
 
-function buildPunctualJokerList(weekJokers, refresh) {
+function buildPunctualJokerList(weekJokers, refresh, myShifts) {
     const card = document.createElement('div');
     card.className = 'open-joker-card';
     const itemsHtml = weekJokers.map(j => {
         const d         = new Date(j.date + 'T12:00:00');
         const dayLabel  = DAY_NAMES[d.getDay()] + ' ' + d.getDate() + ' ' + MONTH_NAMES[d.getMonth()];
         const applied   = !!j.has_applied;
+        const blocked   = jokerConflictsWithMine(j, myShifts);
         const estabName = j.establishment_name || j.establishment_id || '';
         const safeEstab = estabName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const grp = j.joker_group ? (' · ' + String(j.joker_group).replace(/</g, '&lt;').replace(/>/g, '&gt;')) : '';
         const jc = (window.JokerGroupColor && JokerGroupColor.of(j.joker_group))
             || { bg: '#6b7280', soft: '#f3f4f6' };
+        const btnLabel = applied ? '✅ Envoyée' : blocked ? 'Déjà en shift' : 'Je suis dispo';
+        const btnOff = applied || blocked;
         return '<div class="open-joker-item" style="border-left:3px solid ' + jc.bg
             + ';padding-left:10px;background:linear-gradient(90deg,' + jc.soft + ' 0%,transparent 48%)">' +
             '<div class="open-joker-date">' + dayLabel +
@@ -676,8 +694,8 @@ function buildPunctualJokerList(weekJokers, refresh) {
                     (safeEstab ? ' · <span class="open-joker-estab">' + safeEstab + '</span>' : '') +
                 '</small>' +
             '</div>' +
-            '<button class="btn-je-suis-dispo' + (applied ? ' applied' : '') + '" data-id="' + j._id + '"' + (applied ? ' disabled' : '') + '>' +
-                (applied ? '✅ Envoyée' : 'Je suis dispo') +
+            '<button class="btn-je-suis-dispo' + (applied ? ' applied' : '') + '" data-id="' + j._id + '"' + (btnOff ? ' disabled' : '') + '>' +
+                btnLabel +
             '</button>' +
         '</div>';
     }).join('');
@@ -686,7 +704,7 @@ function buildPunctualJokerList(weekJokers, refresh) {
         itemsHtml;
     card.querySelectorAll('.btn-je-suis-dispo:not([disabled])').forEach(btn => {
         const j = weekJokers.find(x => String(x._id) === String(btn.dataset.id));
-        bindJokerApply(btn, j, refresh, false);
+        bindJokerApply(btn, j, refresh, false, myShifts);
     });
     return card;
 }
@@ -705,7 +723,7 @@ function renderOpenJokersInto(jokers, from, to, section, myShifts) {
         const refresh = () => renderOpenJokersInto(jokers, from, to, section, myShifts);
         section.innerHTML = '';
         if (slotOffers.length) section.appendChild(buildSlotOfferPlanning(slotOffers, from, myShifts || [], refresh));
-        if (punctual.length)   section.appendChild(buildPunctualJokerList(punctual, refresh));
+        if (punctual.length)   section.appendChild(buildPunctualJokerList(punctual, refresh, myShifts || []));
     } catch { /* silencieux */ }
 }
 

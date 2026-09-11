@@ -23,6 +23,7 @@ const {
     deriveStaffHourlyStat, buildPerformanceSimulation, jokerGroupKey, staffGroupKey, isJokerShift, isShiftCompleted,
     buildStaffRateStatsReport,
 } = require('./lib/utils');
+const { hoursOverlap, shiftEffectiveHours } = require('./public/lib/shift-hours');
 const {
     resolveAll: resolveClientFeatures,
     enabled: clientFeatureEnabled,
@@ -5761,6 +5762,20 @@ app.post('/api/shifts/:id/joker-candidature', checkDB, requireAuth, async (req, 
             if (!isVisible(existing)) {
                 return res.status(403).json({ error: 'Ce créneau n\'est pas encore proposé' });
             }
+        }
+
+        const mineSameDay = await db.collection('shifts').find({
+            staff_id: user.staff_id,
+            date: existing.date,
+            type: { $ne: 'week_note' },
+        }).toArray();
+        const hoursClash = mineSameDay.some(s => {
+            if (isJokerShift(s)) return false;
+            const { start, end } = shiftEffectiveHours(s);
+            return hoursOverlap(start, end, existing.start_time, existing.end_time);
+        });
+        if (hoursClash) {
+            return res.status(409).json({ error: 'Tu as déjà un shift sur ces horaires' });
         }
 
         // Atomique : on push uniquement si Joker ouvert ET staff pas déjà candidat.

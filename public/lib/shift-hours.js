@@ -110,5 +110,12 @@
         return sign + body;
     }
 
-    return { shiftEffectiveHours, shiftDurationHours, monthlyTotals, fmtHourOfDay, fmtClock, fmtDurationH };
+    // Chevauchement d'horaires (heures décimales, éventuellement > 24 pour la nuit).
+    // Bornes exclusives : 10h–14h et 14h–18h ne se recouvrent pas (enchaînement possible).
+    function hoursOverlap(aStart, aEnd, bStart, bEnd) {
+        if (aStart == null || aEnd == null || bStart == null || bEnd == null) return false;
+        return aStart < bEnd && bStart < aEnd;
+    }
+
+    return { shiftEffectiveHours, shiftDurationHours, monthlyTotals, fmtHourOfDay, fmtClock, fmtDurationH, hoursOverlap };
 });

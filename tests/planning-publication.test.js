@@ -237,6 +237,38 @@ test('joker-candidature : un slot_offer non publié reste candidatable', async (
     assert.equal(res.status, 200, await res.clone().text());
 });
 
+test('joker-candidature : refusé si un shift personnel chevauche les horaires', async () => {
+    const id = '0123456789abcdef0123cccc';
+    const date = day(CUR, 6);
+    app.locals.setTestDb(seed([
+        { _id: id, staff_id: '__joker__', is_joker: true, joker_open: true, slot_offer: true,
+          establishment_id: 'bar1', date, start_time: 18, end_time: 24, joker_candidates: [] },
+        { staff_id: STAFF_ID, staff_name: 'Bob', establishment_id: 'bar1',
+          date, start_time: 20, end_time: 26 },
+    ]));
+    const res = await req('/api/shifts/' + id + '/joker-candidature', STAFF, {
+        method: 'POST', body: '{}',
+    });
+    assert.equal(res.status, 409);
+    const body = await res.json();
+    assert.match(body.error, /déjà un shift/i);
+});
+
+test('joker-candidature : un shift qui s\'enchaîne pile à l\'heure ne bloque pas', async () => {
+    const id = '0123456789abcdef0123dddd';
+    const date = day(CUR, 6);
+    app.locals.setTestDb(seed([
+        { _id: id, staff_id: '__joker__', is_joker: true, joker_open: true, slot_offer: true,
+          establishment_id: 'bar1', date, start_time: 18, end_time: 24, joker_candidates: [] },
+        { staff_id: STAFF_ID, staff_name: 'Bob', establishment_id: 'bar1',
+          date, start_time: 10, end_time: 18 },
+    ]));
+    const res = await req('/api/shifts/' + id + '/joker-candidature', STAFF, {
+        method: 'POST', body: '{}',
+    });
+    assert.equal(res.status, 200, await res.clone().text());
+});
+
 test('joker-candidature : un Joker ponctuel non publié n\'est pas candidatable', async () => {
     const id = '0123456789abcdef0123bbbb';
     app.locals.setTestDb(seed([

@@ -72,7 +72,7 @@
                 + "sur le planning du patron. Tapez celui qui vous intéresse pour "
                 + "dire que vous êtes dispo — même si la semaine n’est pas encore "
                 + "publiée, et même si vous n’y avez pas encore de shift.",
-            ou: 'Planning → « Créneaux proposés » → tapez la barre du créneau'
+            ou: 'Planning → « Créneaux proposés » → tapez la barre du créneau (indisponible si vous avez déjà un shift sur ces heures)'
         },
         {
             id: 'sim-taux-manquant', date: '2026-09-11',
@@ -123,7 +123,7 @@
                 + "« Proposer les créneaux » ouvre tous les postes non pourvus aux "
                 + "candidatures. L’équipe les voit tout de suite, même si vous n’avez "
                 + "pas encore publié la semaine — et même si personne n’y a encore de shift.",
-            ou: 'Planning → semaine ciblée → bouton « Proposer les créneaux »'
+            ou: 'Planning → bouton « Proposer les créneaux » (barre de la semaine)'
         },
         {
             id: 'creneaux-semaine-staff', date: '2026-09-10',

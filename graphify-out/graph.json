@@ -359,7 +359,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "lib_utils_normalizepublishdoc",
-      "community": 80,
+      "community": 5,
       "norm_label": "normalizepublishdoc()"
     },
     {
@@ -449,7 +449,7 @@
       "source_location": "L188",
       "_origin": "ast",
       "id": "lib_utils_resolveperfsettings",
-      "community": 80,
+      "community": 73,
       "norm_label": "resolveperfsettings()"
     },
     {
@@ -589,7 +589,7 @@
       "source_location": "L577",
       "_origin": "ast",
       "id": "lib_utils_datescoveredbyperiods",
-      "community": 72,
+      "community": 80,
       "norm_label": "datescoveredbyperiods()"
     },
     {
@@ -619,7 +619,7 @@
       "source_location": "L626",
       "_origin": "ast",
       "id": "lib_utils_buildtemplatedispos",
-      "community": 72,
+      "community": 80,
       "norm_label": "{ buildtemplatedispos }"
     },
     {
@@ -689,7 +689,7 @@
       "source_location": "L750",
       "_origin": "ast",
       "id": "lib_utils_dispoeventdelta",
-      "community": 72,
+      "community": 5,
       "norm_label": "dispoeventdelta()"
     },
     {
@@ -1771,6 +1771,16 @@
       "id": "lib_shift_hours_fmtdurationh",
       "community": 16,
       "norm_label": "fmtdurationh()"
+    },
+    {
+      "label": "hoursOverlap()",
+      "file_type": "code",
+      "source_file": "public/lib/shift-hours.js",
+      "source_location": "L115",
+      "_origin": "ast",
+      "id": "lib_shift_hours_hoursoverlap",
+      "community": 16,
+      "norm_label": "hoursoverlap()"
     },
     {
       "label": "week.js",
@@ -2859,7 +2869,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "public_planning_todatestr",
-      "community": 108,
+      "community": 72,
       "norm_label": "todatestr()"
     },
     {
@@ -2869,7 +2879,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "public_planning_getmondayof",
-      "community": 108,
+      "community": 70,
       "norm_label": "getmondayof()"
     },
     {
@@ -2909,7 +2919,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "public_planning_adddays",
-      "community": 108,
+      "community": 70,
       "norm_label": "adddays()"
     },
     {
@@ -2989,7 +2999,7 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "public_planning_fetchmyshifts",
-      "community": 75,
+      "community": 72,
       "norm_label": "fetchmyshifts()"
     },
     {
@@ -3093,20 +3103,20 @@
       "norm_label": "bindjokerapply()"
     },
     {
-      "label": "jokerGroupCss()",
+      "label": "jokerConflictsWithMine()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L526",
+      "source_location": "L530",
       "_origin": "ast",
-      "id": "public_planning_jokergroupcss",
+      "id": "public_planning_jokerconflictswithmine",
       "community": 0,
-      "norm_label": "jokergroupcss()"
+      "norm_label": "jokerconflictswithmine()"
     },
     {
       "label": "buildSlotOfferPlanning()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L533",
+      "source_location": "L542",
       "_origin": "ast",
       "id": "public_planning_buildslotofferplanning",
       "community": 108,
@@ -3116,27 +3126,27 @@
       "label": "buildPunctualJokerList()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L660",
+      "source_location": "L675",
       "_origin": "ast",
       "id": "public_planning_buildpunctualjokerlist",
-      "community": 79,
+      "community": 108,
       "norm_label": "buildpunctualjokerlist()"
     },
     {
       "label": "renderOpenJokersInto()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L695",
+      "source_location": "L713",
       "_origin": "ast",
       "id": "public_planning_renderopenjokersinto",
-      "community": 79,
+      "community": 108,
       "norm_label": "renderopenjokersinto()"
     },
     {
       "label": "loadPlanning()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L714",
+      "source_location": "L732",
       "_origin": "ast",
       "id": "public_planning_loadplanning",
       "community": 79,
@@ -3146,7 +3156,7 @@
       "label": "loadSeenWeeks()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L782",
+      "source_location": "L800",
       "_origin": "ast",
       "id": "public_planning_loadseenweeks",
       "community": 79,
@@ -3156,7 +3166,7 @@
       "label": "markWeekSeen()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L787",
+      "source_location": "L805",
       "_origin": "ast",
       "id": "public_planning_markweekseen",
       "community": 0,
@@ -3166,7 +3176,7 @@
       "label": "_weekObservers",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L800",
+      "source_location": "L818",
       "_origin": "ast",
       "id": "public_planning_weekobservers",
       "community": 0,
@@ -3176,7 +3186,7 @@
       "label": "disconnectWeekObservers()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L802",
+      "source_location": "L820",
       "_origin": "ast",
       "id": "public_planning_disconnectweekobservers",
       "community": 79,
@@ -3186,7 +3196,7 @@
       "label": "observeWeekSeen()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L810",
+      "source_location": "L828",
       "_origin": "ast",
       "id": "public_planning_observeweekseen",
       "community": 0,
@@ -3196,7 +3206,7 @@
       "label": "loadUpcomingWeeks()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L827",
+      "source_location": "L845",
       "_origin": "ast",
       "id": "public_planning_loadupcomingweeks",
       "community": 79,
@@ -3206,7 +3216,7 @@
       "label": "renderUpcomingWeek()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L900",
+      "source_location": "L918",
       "_origin": "ast",
       "id": "public_planning_renderupcomingweek",
       "community": 108,
@@ -3216,7 +3226,7 @@
       "label": "scrollToHashWeek()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L943",
+      "source_location": "L961",
       "_origin": "ast",
       "id": "public_planning_scrolltohashweek",
       "community": 84,
@@ -3226,7 +3236,7 @@
       "label": "renderStats()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L957",
+      "source_location": "L975",
       "_origin": "ast",
       "id": "public_planning_renderstats",
       "community": 75,
@@ -3236,7 +3246,7 @@
       "label": "renderStatsInto()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L962",
+      "source_location": "L980",
       "_origin": "ast",
       "id": "public_planning_renderstatsinto",
       "community": 75,
@@ -3246,7 +3256,7 @@
       "label": "statCard()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1003",
+      "source_location": "L1021",
       "_origin": "ast",
       "id": "public_planning_statcard",
       "community": 75,
@@ -3256,7 +3266,7 @@
       "label": "initStatsToggle()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1013",
+      "source_location": "L1031",
       "_origin": "ast",
       "id": "public_planning_initstatstoggle",
       "community": 84,
@@ -3266,7 +3276,7 @@
       "label": "applyStatsPeriod()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1027",
+      "source_location": "L1045",
       "_origin": "ast",
       "id": "public_planning_applystatsperiod",
       "community": 75,
@@ -3276,7 +3286,7 @@
       "label": "loadMonthRecap()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1045",
+      "source_location": "L1063",
       "_origin": "ast",
       "id": "public_planning_loadmonthrecap",
       "community": 75,
@@ -3286,7 +3296,7 @@
       "label": "renderMonthStats()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1072",
+      "source_location": "L1090",
       "_origin": "ast",
       "id": "public_planning_rendermonthstats",
       "community": 75,
@@ -3296,27 +3306,27 @@
       "label": "renderDays()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1117",
+      "source_location": "L1135",
       "_origin": "ast",
       "id": "public_planning_renderdays",
-      "community": 79,
+      "community": 81,
       "norm_label": "renderdays()"
     },
     {
       "label": "renderDaysInto()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1122",
+      "source_location": "L1140",
       "_origin": "ast",
       "id": "public_planning_renderdaysinto",
-      "community": 108,
+      "community": 81,
       "norm_label": "renderdaysinto()"
     },
     {
       "label": "_shortColleagueName()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1406",
+      "source_location": "L1424",
       "_origin": "ast",
       "id": "public_planning_shortcolleaguename",
       "community": 0,
@@ -3326,7 +3336,7 @@
       "label": "openDaySheet()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1412",
+      "source_location": "L1430",
       "_origin": "ast",
       "id": "public_planning_opendaysheet",
       "community": 0,
@@ -3336,7 +3346,7 @@
       "label": "formatEstablishment()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1597",
+      "source_location": "L1615",
       "_origin": "ast",
       "id": "public_planning_formatestablishment",
       "community": 81,
@@ -3346,17 +3356,17 @@
       "label": "buildTeamDisplayNames()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1607",
+      "source_location": "L1625",
       "_origin": "ast",
       "id": "public_planning_buildteamdisplaynames",
-      "community": 0,
+      "community": 72,
       "norm_label": "buildteamdisplaynames()"
     },
     {
       "label": "_kpiBarHtml()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1655",
+      "source_location": "L1673",
       "_origin": "ast",
       "id": "public_planning_kpibarhtml",
       "community": 0,
@@ -3366,7 +3376,7 @@
       "label": "_respKpiInnerHtml()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1673",
+      "source_location": "L1691",
       "_origin": "ast",
       "id": "public_planning_respkpiinnerhtml",
       "community": 0,
@@ -3376,27 +3386,27 @@
       "label": "renderRespDispoKpi()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1754",
+      "source_location": "L1772",
       "_origin": "ast",
       "id": "public_planning_renderrespdispokpi",
-      "community": 108,
+      "community": 70,
       "norm_label": "renderrespdispokpi()"
     },
     {
       "label": "renderResponsableDashboard()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1800",
+      "source_location": "L1818",
       "_origin": "ast",
       "id": "public_planning_renderresponsabledashboard",
-      "community": 0,
+      "community": 72,
       "norm_label": "renderresponsabledashboard()"
     },
     {
       "label": "openBottomSheet()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L1978",
+      "source_location": "L1996",
       "_origin": "ast",
       "id": "public_planning_openbottomsheet",
       "community": 0,
@@ -3406,7 +3416,7 @@
       "label": "openContactSheet()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2003",
+      "source_location": "L2021",
       "_origin": "ast",
       "id": "public_planning_opencontactsheet",
       "community": 0,
@@ -3416,7 +3426,7 @@
       "label": "showTab()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2024",
+      "source_location": "L2042",
       "_origin": "ast",
       "id": "public_planning_showtab",
       "community": 0,
@@ -3426,7 +3436,7 @@
       "label": "initTabs()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2041",
+      "source_location": "L2059",
       "_origin": "ast",
       "id": "public_planning_inittabs",
       "community": 84,
@@ -3436,7 +3446,7 @@
       "label": "initCalSync()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2059",
+      "source_location": "L2077",
       "_origin": "ast",
       "id": "public_planning_initcalsync",
       "community": 84,
@@ -3446,77 +3456,77 @@
       "label": "renderHistModeToggle()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2151",
+      "source_location": "L2169",
       "_origin": "ast",
       "id": "public_planning_renderhistmodetoggle",
-      "community": 75,
+      "community": 72,
       "norm_label": "renderhistmodetoggle()"
     },
     {
       "label": "loadHistorique()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2167",
+      "source_location": "L2185",
       "_origin": "ast",
       "id": "public_planning_loadhistorique",
-      "community": 75,
+      "community": 72,
       "norm_label": "loadhistorique()"
     },
     {
       "label": "histRange()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2173",
+      "source_location": "L2191",
       "_origin": "ast",
       "id": "public_planning_histrange",
-      "community": 75,
+      "community": 72,
       "norm_label": "histrange()"
     },
     {
       "label": "loadHistoriqueMois()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2180",
+      "source_location": "L2198",
       "_origin": "ast",
       "id": "public_planning_loadhistoriquemois",
-      "community": 75,
+      "community": 72,
       "norm_label": "loadhistoriquemois()"
     },
     {
       "label": "renderHistoriqueMois()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2209",
+      "source_location": "L2227",
       "_origin": "ast",
       "id": "public_planning_renderhistoriquemois",
-      "community": 75,
+      "community": 72,
       "norm_label": "renderhistoriquemois()"
     },
     {
       "label": "appendHistMoreBtn()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2257",
+      "source_location": "L2275",
       "_origin": "ast",
       "id": "public_planning_appendhistmorebtn",
-      "community": 75,
+      "community": 72,
       "norm_label": "appendhistmorebtn()"
     },
     {
       "label": "loadHistoriqueSemaine()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2277",
+      "source_location": "L2295",
       "_origin": "ast",
       "id": "public_planning_loadhistoriquesemaine",
-      "community": 75,
+      "community": 72,
       "norm_label": "loadhistoriquesemaine()"
     },
     {
       "label": "buildHistStatsHtml()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2314",
+      "source_location": "L2332",
       "_origin": "ast",
       "id": "public_planning_buildhiststatshtml",
       "community": 75,
@@ -3526,7 +3536,7 @@
       "label": "renderHistoriqueSemaine()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2351",
+      "source_location": "L2369",
       "_origin": "ast",
       "id": "public_planning_renderhistoriquesemaine",
       "community": 75,
@@ -3536,7 +3546,7 @@
       "label": "DISPO_TYPES",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2432",
+      "source_location": "L2450",
       "_origin": "ast",
       "id": "public_planning_dispo_types",
       "community": 0,
@@ -3546,7 +3556,7 @@
       "label": "dispoSelections",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2441",
+      "source_location": "L2459",
       "_origin": "ast",
       "id": "public_planning_disposelections",
       "community": 0,
@@ -3556,7 +3566,7 @@
       "label": "dispoMondays",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2447",
+      "source_location": "L2465",
       "_origin": "ast",
       "id": "public_planning_dispomondays",
       "community": 0,
@@ -3566,7 +3576,7 @@
       "label": "currentDispoMonday()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2451",
+      "source_location": "L2469",
       "_origin": "ast",
       "id": "public_planning_currentdispomonday",
       "community": 70,
@@ -3576,7 +3586,7 @@
       "label": "currentDispoWeekLocked()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2460",
+      "source_location": "L2478",
       "_origin": "ast",
       "id": "public_planning_currentdispoweeklocked",
       "community": 70,
@@ -3586,7 +3596,7 @@
       "label": "loadDisposTab()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2464",
+      "source_location": "L2482",
       "_origin": "ast",
       "id": "public_planning_loaddispostab",
       "community": 70,
@@ -3596,7 +3606,7 @@
       "label": "createDispoCard()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2752",
+      "source_location": "L2770",
       "_origin": "ast",
       "id": "public_planning_createdispocard",
       "community": 0,
@@ -3606,7 +3616,7 @@
       "label": "createRestDayCard()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2843",
+      "source_location": "L2861",
       "_origin": "ast",
       "id": "public_planning_createrestdaycard",
       "community": 70,
@@ -3616,7 +3626,7 @@
       "label": "createCongeDayCard()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2855",
+      "source_location": "L2873",
       "_origin": "ast",
       "id": "public_planning_createcongedaycard",
       "community": 70,
@@ -3626,37 +3636,37 @@
       "label": "parseDispoTime()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2870",
+      "source_location": "L2888",
       "_origin": "ast",
       "id": "public_planning_parsedispotime",
-      "community": 0,
+      "community": 70,
       "norm_label": "parsedispotime()"
     },
     {
       "label": "readDispoTimes()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2883",
+      "source_location": "L2901",
       "_origin": "ast",
       "id": "public_planning_readdispotimes",
-      "community": 0,
+      "community": 70,
       "norm_label": "readdispotimes()"
     },
     {
       "label": "submitDispos()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2894",
+      "source_location": "L2912",
       "_origin": "ast",
       "id": "public_planning_submitdispos",
-      "community": 108,
+      "community": 70,
       "norm_label": "submitdispos()"
     },
     {
       "label": "dispoTemplateDays()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2967",
+      "source_location": "L2985",
       "_origin": "ast",
       "id": "public_planning_dispotemplatedays",
       "community": 70,
@@ -3666,7 +3676,7 @@
       "label": "loadDispoTemplate()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2973",
+      "source_location": "L2991",
       "_origin": "ast",
       "id": "public_planning_loaddispotemplate",
       "community": 70,
@@ -3676,7 +3686,7 @@
       "label": "deadlineLabel()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2986",
+      "source_location": "L3004",
       "_origin": "ast",
       "id": "public_planning_deadlinelabel",
       "community": 70,
@@ -3686,7 +3696,7 @@
       "label": "deadlineForWeek()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2992",
+      "source_location": "L3010",
       "_origin": "ast",
       "id": "public_planning_deadlineforweek",
       "community": 70,
@@ -3696,7 +3706,7 @@
       "label": "deadlineLabelForWeek()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L2996",
+      "source_location": "L3014",
       "_origin": "ast",
       "id": "public_planning_deadlinelabelforweek",
       "community": 70,
@@ -3706,7 +3716,7 @@
       "label": "deadlineShortLabelForWeek()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3003",
+      "source_location": "L3021",
       "_origin": "ast",
       "id": "public_planning_deadlineshortlabelforweek",
       "community": 70,
@@ -3716,7 +3726,7 @@
       "label": "setTplFeedback()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3011",
+      "source_location": "L3029",
       "_origin": "ast",
       "id": "public_planning_settplfeedback",
       "community": 70,
@@ -3726,7 +3736,7 @@
       "label": "templateDayLine()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3026",
+      "source_location": "L3044",
       "_origin": "ast",
       "id": "public_planning_templatedayline",
       "community": 81,
@@ -3736,7 +3746,7 @@
       "label": "templateTargetLabel()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3044",
+      "source_location": "L3062",
       "_origin": "ast",
       "id": "public_planning_templatetargetlabel",
       "community": 0,
@@ -3746,7 +3756,7 @@
       "label": "renderDispoTplCard()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3052",
+      "source_location": "L3070",
       "_origin": "ast",
       "id": "public_planning_renderdispotplcard",
       "community": 70,
@@ -3756,7 +3766,7 @@
       "label": "saveDispoTemplate()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3106",
+      "source_location": "L3124",
       "_origin": "ast",
       "id": "public_planning_savedispotemplate",
       "community": 70,
@@ -3766,7 +3776,7 @@
       "label": "putDispoTemplate()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3125",
+      "source_location": "L3143",
       "_origin": "ast",
       "id": "public_planning_putdispotemplate",
       "community": 70,
@@ -3776,7 +3786,7 @@
       "label": "showDisposSub()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3151",
+      "source_location": "L3169",
       "_origin": "ast",
       "id": "public_planning_showdispossub",
       "community": 125,
@@ -3786,7 +3796,7 @@
       "label": "fmtCongeDate()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3167",
+      "source_location": "L3185",
       "_origin": "ast",
       "id": "public_planning_fmtcongedate",
       "community": 0,
@@ -3796,7 +3806,7 @@
       "label": "setCongeStatus()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3172",
+      "source_location": "L3190",
       "_origin": "ast",
       "id": "public_planning_setcongestatus",
       "community": 125,
@@ -3806,7 +3816,7 @@
       "label": "applyCongeModes()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3180",
+      "source_location": "L3198",
       "_origin": "ast",
       "id": "public_planning_applycongemodes",
       "community": 84,
@@ -3816,17 +3826,17 @@
       "label": "initCongesForm()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3195",
+      "source_location": "L3213",
       "_origin": "ast",
       "id": "public_planning_initcongesform",
-      "community": 108,
+      "community": 84,
       "norm_label": "initcongesform()"
     },
     {
       "label": "submitConge()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3211",
+      "source_location": "L3229",
       "_origin": "ast",
       "id": "public_planning_submitconge",
       "community": 125,
@@ -3836,7 +3846,7 @@
       "label": "loadCongesTab()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3241",
+      "source_location": "L3259",
       "_origin": "ast",
       "id": "public_planning_loadcongestab",
       "community": 125,
@@ -3846,7 +3856,7 @@
       "label": "_CONGE_STATUS",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3254",
+      "source_location": "L3272",
       "_origin": "ast",
       "id": "public_planning_conge_status",
       "community": 0,
@@ -3856,7 +3866,7 @@
       "label": "renderCongesList()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3260",
+      "source_location": "L3278",
       "_origin": "ast",
       "id": "public_planning_rendercongeslist",
       "community": 125,
@@ -3866,7 +3876,7 @@
       "label": "cancelConge()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3293",
+      "source_location": "L3311",
       "_origin": "ast",
       "id": "public_planning_cancelconge",
       "community": 125,
@@ -3876,7 +3886,7 @@
       "label": "_NOTIF_CFG",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3307",
+      "source_location": "L3325",
       "_origin": "ast",
       "id": "public_planning_notif_cfg",
       "community": 0,
@@ -3886,7 +3896,7 @@
       "label": "_notifQueue",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3314",
+      "source_location": "L3332",
       "_origin": "ast",
       "id": "public_planning_notifqueue",
       "community": 0,
@@ -3896,7 +3906,7 @@
       "label": "_shownNotifs",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3317",
+      "source_location": "L3335",
       "_origin": "ast",
       "id": "public_planning_shownnotifs",
       "community": 0,
@@ -3906,7 +3916,7 @@
       "label": "loadStaffNotifs()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3319",
+      "source_location": "L3337",
       "_origin": "ast",
       "id": "public_planning_loadstaffnotifs",
       "community": 0,
@@ -3916,7 +3926,7 @@
       "label": "_drainNotifQueue()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3333",
+      "source_location": "L3351",
       "_origin": "ast",
       "id": "public_planning_drainnotifqueue",
       "community": 0,
@@ -3926,7 +3936,7 @@
       "label": "_showNotifToast()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3339",
+      "source_location": "L3357",
       "_origin": "ast",
       "id": "public_planning_shownotiftoast",
       "community": 0,
@@ -3936,7 +3946,7 @@
       "label": "_dismissToast()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3384",
+      "source_location": "L3402",
       "_origin": "ast",
       "id": "public_planning_dismisstoast",
       "community": 0,
@@ -3946,7 +3956,7 @@
       "label": "_esc()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3394",
+      "source_location": "L3412",
       "_origin": "ast",
       "id": "public_planning_esc",
       "community": 0,
@@ -3956,7 +3966,7 @@
       "label": "_showColleagueToast()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3420",
+      "source_location": "L3438",
       "_origin": "ast",
       "id": "public_planning_showcolleaguetoast",
       "community": 0,
@@ -3966,17 +3976,17 @@
       "label": "showMsg()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3462",
+      "source_location": "L3480",
       "_origin": "ast",
       "id": "public_planning_showmsg",
-      "community": 108,
+      "community": 70,
       "norm_label": "showmsg()"
     },
     {
       "label": "urlBase64ToUint8Array()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3481",
+      "source_location": "L3499",
       "_origin": "ast",
       "id": "public_planning_urlbase64touint8array",
       "community": 0,
@@ -3986,7 +3996,7 @@
       "label": "initPushButton()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3488",
+      "source_location": "L3506",
       "_origin": "ast",
       "id": "public_planning_initpushbutton",
       "community": 0,
@@ -3996,7 +4006,7 @@
       "label": "togglePushSubscription()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3518",
+      "source_location": "L3536",
       "_origin": "ast",
       "id": "public_planning_togglepushsubscription",
       "community": 0,
@@ -4006,7 +4016,7 @@
       "label": "startStaffAutoRefresh()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3601",
+      "source_location": "L3619",
       "_origin": "ast",
       "id": "public_planning_startstaffautorefresh",
       "community": 84,
@@ -4016,7 +4026,7 @@
       "label": "showSwapToast()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3629",
+      "source_location": "L3647",
       "_origin": "ast",
       "id": "public_planning_showswaptoast",
       "community": 79,
@@ -4026,7 +4036,7 @@
       "label": "loadMyPendingSwaps()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3645",
+      "source_location": "L3663",
       "_origin": "ast",
       "id": "public_planning_loadmypendingswaps",
       "community": 79,
@@ -4036,7 +4046,7 @@
       "label": "_swapEligible",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3658",
+      "source_location": "L3676",
       "_origin": "ast",
       "id": "public_planning_swapeligible",
       "community": 0,
@@ -4046,7 +4056,7 @@
       "label": "_swapMatchSearch()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3660",
+      "source_location": "L3678",
       "_origin": "ast",
       "id": "public_planning_swapmatchsearch",
       "community": 81,
@@ -4056,7 +4066,7 @@
       "label": "_swapFilterState()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3671",
+      "source_location": "L3689",
       "_origin": "ast",
       "id": "public_planning_swapfilterstate",
       "community": 81,
@@ -4066,7 +4076,7 @@
       "label": "_rerenderSwapTargets()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3677",
+      "source_location": "L3695",
       "_origin": "ast",
       "id": "public_planning_rerenderswaptargets",
       "community": 81,
@@ -4076,7 +4086,7 @@
       "label": "_fillSwapDateOptions()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3683",
+      "source_location": "L3701",
       "_origin": "ast",
       "id": "public_planning_fillswapdateoptions",
       "community": 81,
@@ -4086,7 +4096,7 @@
       "label": "renderSwapTargets()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3694",
+      "source_location": "L3712",
       "_origin": "ast",
       "id": "public_planning_renderswaptargets",
       "community": 81,
@@ -4096,7 +4106,7 @@
       "label": "openSwapModal()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3753",
+      "source_location": "L3771",
       "_origin": "ast",
       "id": "public_planning_openswapmodal",
       "community": 81,
@@ -4106,7 +4116,7 @@
       "label": "closeSwapModal()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3811",
+      "source_location": "L3829",
       "_origin": "ast",
       "id": "public_planning_closeswapmodal",
       "community": 79,
@@ -4116,7 +4126,7 @@
       "label": "submitSwap()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3827",
+      "source_location": "L3845",
       "_origin": "ast",
       "id": "public_planning_submitswap",
       "community": 79,
@@ -4126,7 +4136,7 @@
       "label": "cancelMySwap()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3859",
+      "source_location": "L3877",
       "_origin": "ast",
       "id": "public_planning_cancelmyswap",
       "community": 79,
@@ -4136,7 +4146,7 @@
       "label": "respondToSwap()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3882",
+      "source_location": "L3900",
       "_origin": "ast",
       "id": "public_planning_respondtoswap",
       "community": 79,
@@ -4146,7 +4156,7 @@
       "label": "_fmtSwapDate()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3906",
+      "source_location": "L3924",
       "_origin": "ast",
       "id": "public_planning_fmtswapdate",
       "community": 81,
@@ -4156,17 +4166,17 @@
       "label": "activeServiceDateStr()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3936",
+      "source_location": "L3954",
       "_origin": "ast",
       "id": "public_planning_activeservicedatestr",
-      "community": 108,
+      "community": 81,
       "norm_label": "activeservicedatestr()"
     },
     {
       "label": "buildClotureCta()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3943",
+      "source_location": "L3961",
       "_origin": "ast",
       "id": "public_planning_buildcloturecta",
       "community": 0,
@@ -4176,7 +4186,7 @@
       "label": "openClotureCodeModal()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L3972",
+      "source_location": "L3990",
       "_origin": "ast",
       "id": "public_planning_opencloturecodemodal",
       "community": 81,
@@ -4186,7 +4196,7 @@
       "label": "closeClotureCodeModal()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L4005",
+      "source_location": "L4023",
       "_origin": "ast",
       "id": "public_planning_closecloturecodemodal",
       "community": 79,
@@ -4196,7 +4206,7 @@
       "label": "submitClotureCode()",
       "file_type": "code",
       "source_file": "public/planning.js",
-      "source_location": "L4015",
+      "source_location": "L4033",
       "_origin": "ast",
       "id": "public_planning_submitcloturecode",
       "community": 79,
@@ -5349,7 +5359,7 @@
       "source_location": "L441",
       "_origin": "ast",
       "id": "public_script_parsedate",
-      "community": 28,
+      "community": 6,
       "norm_label": "parsedate()"
     },
     {
@@ -5389,7 +5399,7 @@
       "source_location": "L463",
       "_origin": "ast",
       "id": "public_script_formatdatelong",
-      "community": 38,
+      "community": 6,
       "norm_label": "formatdatelong()"
     },
     {
@@ -5769,7 +5779,7 @@
       "source_location": "L1313",
       "_origin": "ast",
       "id": "public_script_loaddaydetail",
-      "community": 38,
+      "community": 6,
       "norm_label": "loaddaydetail()"
     },
     {
@@ -5779,7 +5789,7 @@
       "source_location": "L1361",
       "_origin": "ast",
       "id": "public_script_loadpublishbutton",
-      "community": 28,
+      "community": 6,
       "norm_label": "loadpublishbutton()"
     },
     {
@@ -5849,7 +5859,7 @@
       "source_location": "L1556",
       "_origin": "ast",
       "id": "public_script_buildrolefilters",
-      "community": 17,
+      "community": 6,
       "norm_label": "buildrolefilters()"
     },
     {
@@ -5869,7 +5879,7 @@
       "source_location": "L1594",
       "_origin": "ast",
       "id": "public_script_rendersidebar",
-      "community": 17,
+      "community": 6,
       "norm_label": "rendersidebar()"
     },
     {
@@ -5929,7 +5939,7 @@
       "source_location": "L2010",
       "_origin": "ast",
       "id": "public_script_extenddisplayforrealhours",
-      "community": 38,
+      "community": 6,
       "norm_label": "extenddisplayforrealhours()"
     },
     {
@@ -5949,7 +5959,7 @@
       "source_location": "L2037",
       "_origin": "ast",
       "id": "public_script_builddisplayedstaff",
-      "community": 38,
+      "community": 6,
       "norm_label": "builddisplayedstaff()"
     },
     {
@@ -6439,7 +6449,7 @@
       "source_location": "L4133",
       "_origin": "ast",
       "id": "public_script_proposeweekslots",
-      "community": 38,
+      "community": 6,
       "norm_label": "proposeweekslots()"
     },
     {
@@ -6759,7 +6769,7 @@
       "source_location": "L6102",
       "_origin": "ast",
       "id": "public_script_exportrecapxlsx",
-      "community": 8,
+      "community": 38,
       "norm_label": "exportrecapxlsx()"
     },
     {
@@ -6769,7 +6779,7 @@
       "source_location": "L6214",
       "_origin": "ast",
       "id": "public_script_loadswapsbadge",
-      "community": 38,
+      "community": 9,
       "norm_label": "loadswapsbadge()"
     },
     {
@@ -6849,7 +6859,7 @@
       "source_location": "L6380",
       "_origin": "ast",
       "id": "public_script_decideswap",
-      "community": 38,
+      "community": 9,
       "norm_label": "_decideswap()"
     },
     {
@@ -6869,7 +6879,7 @@
       "source_location": "L6435",
       "_origin": "ast",
       "id": "public_script_kpiprogressbar",
-      "community": 14,
+      "community": 9,
       "norm_label": "_kpiprogressbar()"
     },
     {
@@ -6889,7 +6899,7 @@
       "source_location": "L6450",
       "_origin": "ast",
       "id": "public_script_loaddisposkpi",
-      "community": 6,
+      "community": 9,
       "norm_label": "loaddisposkpi()"
     },
     {
@@ -6899,7 +6909,7 @@
       "source_location": "L6469",
       "_origin": "ast",
       "id": "public_script_kpiestabrow",
-      "community": 14,
+      "community": 9,
       "norm_label": "_kpiestabrow()"
     },
     {
@@ -6909,7 +6919,7 @@
       "source_location": "L6493",
       "_origin": "ast",
       "id": "public_script_renderdisposkpicard",
-      "community": 14,
+      "community": 9,
       "norm_label": "renderdisposkpicard()"
     },
     {
@@ -6979,7 +6989,7 @@
       "source_location": "L6573",
       "_origin": "ast",
       "id": "public_script_loadcongeslist",
-      "community": 9,
+      "community": 17,
       "norm_label": "loadcongeslist()"
     },
     {
@@ -6989,7 +6999,7 @@
       "source_location": "L6603",
       "_origin": "ast",
       "id": "public_script_rendercongeslistpatron",
-      "community": 9,
+      "community": 17,
       "norm_label": "rendercongeslistpatron()"
     },
     {
@@ -7029,7 +7039,7 @@
       "source_location": "L6719",
       "_origin": "ast",
       "id": "public_script_updatereassignbadge",
-      "community": 127,
+      "community": 6,
       "norm_label": "_updatereassignbadge()"
     },
     {
@@ -7039,7 +7049,7 @@
       "source_location": "L6727",
       "_origin": "ast",
       "id": "public_script_loadreassignbadge",
-      "community": 127,
+      "community": 6,
       "norm_label": "loadreassignbadge()"
     },
     {
@@ -7059,7 +7069,7 @@
       "source_location": "L6832",
       "_origin": "ast",
       "id": "public_script_nonaffecteesafterremove",
-      "community": 127,
+      "community": 38,
       "norm_label": "_nonaffecteesafterremove()"
     },
     {
@@ -7069,7 +7079,7 @@
       "source_location": "L6849",
       "_origin": "ast",
       "id": "public_script_recreateshiftfromdispo",
-      "community": 127,
+      "community": 38,
       "norm_label": "_recreateshiftfromdispo()"
     },
     {
@@ -7079,7 +7089,7 @@
       "source_location": "L6879",
       "_origin": "ast",
       "id": "public_script_ignorenonaffectee",
-      "community": 127,
+      "community": 38,
       "norm_label": "_ignorenonaffectee()"
     },
     {
@@ -7279,7 +7289,7 @@
       "source_location": "L7401",
       "_origin": "ast",
       "id": "public_script_opendispospanel",
-      "community": 9,
+      "community": 6,
       "norm_label": "opendispospanel()"
     },
     {
@@ -9229,7 +9239,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "scripts_db_app_collections",
-      "community": 117,
+      "community": 18,
       "norm_label": "app_collections"
     },
     {
@@ -9269,7 +9279,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_create_patron",
-      "community": 122,
+      "community": 18,
       "norm_label": "create-patron.js"
     },
     {
@@ -9279,7 +9289,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_create_patron_bcrypt",
-      "community": 122,
+      "community": 18,
       "norm_label": "bcrypt"
     },
     {
@@ -9289,7 +9299,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "scripts_create_patron_readline",
-      "community": 122,
+      "community": 18,
       "norm_label": "readline"
     },
     {
@@ -9299,7 +9309,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "scripts_create_patron_opendb",
-      "community": 122,
+      "community": 18,
       "norm_label": "{ opendb }"
     },
     {
@@ -9309,7 +9319,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "scripts_create_patron_rl",
-      "community": 122,
+      "community": 18,
       "norm_label": "rl"
     },
     {
@@ -9319,7 +9329,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "scripts_create_patron_ask",
-      "community": 122,
+      "community": 18,
       "norm_label": "ask()"
     },
     {
@@ -9329,7 +9339,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "scripts_create_patron_main",
-      "community": 122,
+      "community": 18,
       "norm_label": "main()"
     },
     {
@@ -9339,7 +9349,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_db_uri",
-      "community": 123,
+      "community": 18,
       "norm_label": "db-uri.js"
     },
     {
@@ -9349,7 +9359,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "scripts_db_uri_fs",
-      "community": 123,
+      "community": 18,
       "norm_label": "fs"
     },
     {
@@ -9359,7 +9369,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "scripts_db_uri_prod_db_name",
-      "community": 123,
+      "community": 18,
       "norm_label": "{ prod_db_name }"
     },
     {
@@ -9369,7 +9379,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "scripts_db_uri_path",
-      "community": 123,
+      "community": 18,
       "norm_label": "path"
     },
     {
@@ -9379,7 +9389,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "scripts_db_uri_full",
-      "community": 123,
+      "community": 18,
       "norm_label": "full"
     },
     {
@@ -9389,7 +9399,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "scripts_db_uri_cfg",
-      "community": 123,
+      "community": 18,
       "norm_label": "cfg"
     },
     {
@@ -9399,7 +9409,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "scripts_db_uri_head_query",
-      "community": 123,
+      "community": 18,
       "norm_label": "[head, query]"
     },
     {
@@ -9469,7 +9479,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link",
-      "community": 126,
+      "community": 18,
       "norm_label": "fix-orphan-staff-link.js"
     },
     {
@@ -9479,7 +9489,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_objectid",
-      "community": 126,
+      "community": 18,
       "norm_label": "{ objectid }"
     },
     {
@@ -9489,7 +9499,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_opendb",
-      "community": 126,
+      "community": 18,
       "norm_label": "{ opendb }"
     },
     {
@@ -9499,7 +9509,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_apply",
-      "community": 126,
+      "community": 18,
       "norm_label": "apply"
     },
     {
@@ -9509,7 +9519,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_normname_norm",
-      "community": 126,
+      "community": 18,
       "norm_label": "{ normname: norm }"
     },
     {
@@ -9519,7 +9529,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_main",
-      "community": 126,
+      "community": 18,
       "norm_label": "main()"
     },
     {
@@ -9929,7 +9939,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_seed_dev",
-      "community": 117,
+      "community": 18,
       "norm_label": "seed-dev.js"
     },
     {
@@ -9939,7 +9949,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "scripts_seed_dev_bcrypt",
-      "community": 117,
+      "community": 18,
       "norm_label": "bcrypt"
     },
     {
@@ -9949,7 +9959,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "scripts_seed_dev_objectid",
-      "community": 117,
+      "community": 18,
       "norm_label": "{ objectid }"
     },
     {
@@ -9959,7 +9969,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "scripts_seed_dev_opendb_app_collections",
-      "community": 117,
+      "community": 18,
       "norm_label": "{ opendb, app_collections }"
     },
     {
@@ -9969,7 +9979,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "scripts_seed_dev_todatestr_weekstart",
-      "community": 117,
+      "community": 18,
       "norm_label": "{ todatestr, weekstart }"
     },
     {
@@ -9979,7 +9989,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "scripts_seed_dev_features",
-      "community": 117,
+      "community": 18,
       "norm_label": "features"
     },
     {
@@ -9989,7 +9999,7 @@
       "source_location": "L420",
       "_origin": "ast",
       "id": "scripts_seed_dev_run",
-      "community": 117,
+      "community": 18,
       "norm_label": "run()"
     },
     {
@@ -10109,7 +10119,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "scripts_smoke_cloture_mondaystr",
-      "community": 35,
+      "community": 67,
       "norm_label": "mondaystr()"
     },
     {
@@ -10843,10 +10853,20 @@
       "norm_label": "{\r\n    isvalidobjectid, hashtoken, normalizephone,\r\n    weekstart, currentweekstart, disposweekstart, isautopublished, isdatepublished, normalizepublishdoc, chargemultiplier,\r\n    todatestr, datesoverlap, congedaysinrange, splitdisposbyconges, isfullrangeonconge,\r\n    validateoffperiod, scopemanageroff, resolveperfsettings, pickstaffcolor, buildtemplatedispos,\r\n    datescoveredbyperiods, dispodeadlinewaived, forceopenactive, shouldmaterializetemplate,\r\n    disposhorizonrange, disposhorizonmondays, clamphorizonweeks, dispo_horizon_max,\r\n    upcomingweekrange, upcomingweekmondays,\r\n    dispomateriallydiffers, staffreopenedfor, dispoeventdelta,\r\n    derivestaffhourlystat, buildperformancesimulation, jokergroupkey, staffgroupkey, isjokershift, isshiftcompleted,\r\n    buildstaffratestatsreport,\r\n}"
     },
     {
-      "label": "{\r\n    resolveAll: resolveClientFeatures,\r\n    enabled: clientFeatureEnabled,\r\n    requireFeature,\r\n    normalizeProfile: normalizeClientProfile,\r\n}",
+      "label": "{ hoursOverlap, shiftEffectiveHours }",
       "file_type": "code",
       "source_file": "server.js",
       "source_location": "L26",
+      "_origin": "ast",
+      "id": "server_hoursoverlap_shifteffectivehours",
+      "community": 5,
+      "norm_label": "{ hoursoverlap, shifteffectivehours }"
+    },
+    {
+      "label": "{\r\n    resolveAll: resolveClientFeatures,\r\n    enabled: clientFeatureEnabled,\r\n    requireFeature,\r\n    normalizeProfile: normalizeClientProfile,\r\n}",
+      "file_type": "code",
+      "source_file": "server.js",
+      "source_location": "L27",
       "_origin": "ast",
       "id": "server_resolveall_resolveclientfeatures_enabled_clientfeatureenabled_requirefeature_normalizeprofile_normalizeclientprofile",
       "community": 5,
@@ -10856,7 +10876,7 @@
       "label": "app",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L46",
+      "source_location": "L47",
       "_origin": "ast",
       "id": "server_app",
       "community": 5,
@@ -10866,7 +10886,7 @@
       "label": "CLIENT_PROFILE",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L143",
+      "source_location": "L144",
       "_origin": "ast",
       "id": "server_client_profile",
       "community": 5,
@@ -10876,7 +10896,7 @@
       "label": "clientFeatureFlags()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L144",
+      "source_location": "L145",
       "_origin": "ast",
       "id": "server_clientfeatureflags",
       "community": 5,
@@ -10886,7 +10906,7 @@
       "label": "rateLimitMap",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L213",
+      "source_location": "L214",
       "_origin": "ast",
       "id": "server_ratelimitmap",
       "community": 5,
@@ -10896,7 +10916,7 @@
       "label": "rateLimit()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L214",
+      "source_location": "L215",
       "_origin": "ast",
       "id": "server_ratelimit",
       "community": 5,
@@ -10906,7 +10926,7 @@
       "label": "client",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L238",
+      "source_location": "L239",
       "_origin": "ast",
       "id": "server_client",
       "community": 5,
@@ -10916,7 +10936,7 @@
       "label": "NOT_ARCHIVED",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L251",
+      "source_location": "L252",
       "_origin": "ast",
       "id": "server_not_archived",
       "community": 5,
@@ -10926,7 +10946,7 @@
       "label": "DISPO_TARGET",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L256",
+      "source_location": "L257",
       "_origin": "ast",
       "id": "server_dispo_target",
       "community": 5,
@@ -10936,7 +10956,7 @@
       "label": "JOKER_SHIFT",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L264",
+      "source_location": "L265",
       "_origin": "ast",
       "id": "server_joker_shift",
       "community": 5,
@@ -10946,7 +10966,7 @@
       "label": "staffMatchesJokerGroup()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L272",
+      "source_location": "L273",
       "_origin": "ast",
       "id": "server_staffmatchesjokergroup",
       "community": 5,
@@ -10956,7 +10976,7 @@
       "label": "archivedStaff()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L282",
+      "source_location": "L283",
       "_origin": "ast",
       "id": "server_archivedstaff",
       "community": 94,
@@ -10966,7 +10986,7 @@
       "label": "resolveStaffForPlanning()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L310",
+      "source_location": "L311",
       "_origin": "ast",
       "id": "server_resolvestaffforplanning",
       "community": 94,
@@ -10976,7 +10996,7 @@
       "label": "archivedIdsAmong()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L335",
+      "source_location": "L336",
       "_origin": "ast",
       "id": "server_archivedidsamong",
       "community": 82,
@@ -10986,7 +11006,7 @@
       "label": "connectDB()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L347",
+      "source_location": "L348",
       "_origin": "ast",
       "id": "server_connectdb",
       "community": 82,
@@ -10996,7 +11016,7 @@
       "label": "sendEmail()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L435",
+      "source_location": "L436",
       "_origin": "ast",
       "id": "server_sendemail",
       "community": 5,
@@ -11006,7 +11026,7 @@
       "label": "appUrl()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L466",
+      "source_location": "L467",
       "_origin": "ast",
       "id": "server_appurl",
       "community": 5,
@@ -11016,7 +11036,7 @@
       "label": "sendSMS()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L472",
+      "source_location": "L473",
       "_origin": "ast",
       "id": "server_sendsms",
       "community": 5,
@@ -11026,7 +11046,7 @@
       "label": "sendPushToStaff()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L499",
+      "source_location": "L500",
       "_origin": "ast",
       "id": "server_sendpushtostaff",
       "community": 82,
@@ -11036,7 +11056,7 @@
       "label": "notifyPatrons()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L594",
+      "source_location": "L595",
       "_origin": "ast",
       "id": "server_notifypatrons",
       "community": 5,
@@ -11046,57 +11066,57 @@
       "label": "publishedShiftFilter()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L630",
+      "source_location": "L631",
       "_origin": "ast",
       "id": "server_publishedshiftfilter",
-      "community": 80,
+      "community": 5,
       "norm_label": "publishedshiftfilter()"
     },
     {
       "label": "auditActor()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L659",
+      "source_location": "L660",
       "_origin": "ast",
       "id": "server_auditactor",
-      "community": 72,
+      "community": 5,
       "norm_label": "auditactor()"
     },
     {
       "label": "recordDispoEvents()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L674",
+      "source_location": "L675",
       "_origin": "ast",
       "id": "server_recorddispoevents",
-      "community": 72,
+      "community": 5,
       "norm_label": "recorddispoevents()"
     },
     {
       "label": "purgeDisposAvecTrace()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L710",
+      "source_location": "L711",
       "_origin": "ast",
       "id": "server_purgedisposavectrace",
-      "community": 72,
+      "community": 5,
       "norm_label": "purgedisposavectrace()"
     },
     {
       "label": "fetchPublishedWeeks()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L732",
+      "source_location": "L733",
       "_origin": "ast",
       "id": "server_fetchpublishedweeks",
-      "community": 80,
+      "community": 5,
       "norm_label": "fetchpublishedweeks()"
     },
     {
       "label": "dispoOpenVenues()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L748",
+      "source_location": "L749",
       "_origin": "ast",
       "id": "server_dispoopenvenues",
       "community": 82,
@@ -11106,7 +11126,7 @@
       "label": "staffDispoOpen()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L757",
+      "source_location": "L758",
       "_origin": "ast",
       "id": "server_staffdispoopen",
       "community": 82,
@@ -11116,7 +11136,7 @@
       "label": "checkDispoRappels()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L767",
+      "source_location": "L768",
       "_origin": "ast",
       "id": "server_checkdisporappels",
       "community": 82,
@@ -11126,7 +11146,7 @@
       "label": "cleanupOldJokers()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L901",
+      "source_location": "L902",
       "_origin": "ast",
       "id": "server_cleanupoldjokers",
       "community": 82,
@@ -11136,7 +11156,7 @@
       "label": "cleanupPastDispos()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L920",
+      "source_location": "L921",
       "_origin": "ast",
       "id": "server_cleanuppastdispos",
       "community": 5,
@@ -11146,7 +11166,7 @@
       "label": "scheduleDailyAt10()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L950",
+      "source_location": "L951",
       "_origin": "ast",
       "id": "server_scheduledailyat10",
       "community": 82,
@@ -11156,7 +11176,7 @@
       "label": "_shiftNotifDebounce",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L982",
+      "source_location": "L983",
       "_origin": "ast",
       "id": "server_shiftnotifdebounce",
       "community": 5,
@@ -11166,7 +11186,7 @@
       "label": "scheduleShiftNotif()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L986",
+      "source_location": "L987",
       "_origin": "ast",
       "id": "server_scheduleshiftnotif",
       "community": 5,
@@ -11176,7 +11196,7 @@
       "label": "createNotifForPatrons()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1026",
+      "source_location": "L1027",
       "_origin": "ast",
       "id": "server_createnotifforpatrons",
       "community": 5,
@@ -11186,7 +11206,7 @@
       "label": "setupSession()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1061",
+      "source_location": "L1062",
       "_origin": "ast",
       "id": "server_setupsession",
       "community": 5,
@@ -11196,7 +11216,7 @@
       "label": "rejectQueryOperators()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1142",
+      "source_location": "L1143",
       "_origin": "ast",
       "id": "server_rejectqueryoperators",
       "community": 5,
@@ -11206,7 +11226,7 @@
       "label": "checkDB()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1154",
+      "source_location": "L1155",
       "_origin": "ast",
       "id": "server_checkdb",
       "community": 5,
@@ -11216,7 +11236,7 @@
       "label": "requireAuth()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1159",
+      "source_location": "L1160",
       "_origin": "ast",
       "id": "server_requireauth",
       "community": 5,
@@ -11226,7 +11246,7 @@
       "label": "requirePatron()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1168",
+      "source_location": "L1169",
       "_origin": "ast",
       "id": "server_requirepatron",
       "community": 5,
@@ -11236,7 +11256,7 @@
       "label": "requireAdmin()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1179",
+      "source_location": "L1180",
       "_origin": "ast",
       "id": "server_requireadmin",
       "community": 5,
@@ -11246,7 +11266,7 @@
       "label": "requirePatronOnly()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1189",
+      "source_location": "L1190",
       "_origin": "ast",
       "id": "server_requirepatrononly",
       "community": 5,
@@ -11256,7 +11276,7 @@
       "label": "denyObservateurEdit()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1201",
+      "source_location": "L1202",
       "_origin": "ast",
       "id": "server_denyobservateuredit",
       "community": 5,
@@ -11266,7 +11286,7 @@
       "label": "userEstablishmentIds()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1211",
+      "source_location": "L1212",
       "_origin": "ast",
       "id": "server_userestablishmentids",
       "community": 5,
@@ -11276,7 +11296,7 @@
       "label": "canAccessEstablishment()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1220",
+      "source_location": "L1221",
       "_origin": "ast",
       "id": "server_canaccessestablishment",
       "community": 5,
@@ -11286,7 +11306,7 @@
       "label": "requireEstablishmentAccess()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1243",
+      "source_location": "L1244",
       "_origin": "ast",
       "id": "server_requireestablishmentaccess",
       "community": 5,
@@ -11296,7 +11316,7 @@
       "label": "isResponsablePourSoiree()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1270",
+      "source_location": "L1271",
       "_origin": "ast",
       "id": "server_isresponsablepoursoiree",
       "community": 5,
@@ -11306,7 +11326,7 @@
       "label": "getActivePointageDateStr()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1310",
+      "source_location": "L1311",
       "_origin": "ast",
       "id": "server_getactivepointagedatestr",
       "community": 5,
@@ -11316,7 +11336,7 @@
       "label": "canManageCloture()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1319",
+      "source_location": "L1320",
       "_origin": "ast",
       "id": "server_canmanagecloture",
       "community": 5,
@@ -11326,7 +11346,7 @@
       "label": "pointageVerifEstabFilter()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1335",
+      "source_location": "L1336",
       "_origin": "ast",
       "id": "server_pointageverifestabfilter",
       "community": 5,
@@ -11336,7 +11356,7 @@
       "label": "pointageSourceLabel()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1343",
+      "source_location": "L1344",
       "_origin": "ast",
       "id": "server_pointagesourcelabel",
       "community": 5,
@@ -11346,7 +11366,7 @@
       "label": "resolveActeurNames()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1352",
+      "source_location": "L1353",
       "_origin": "ast",
       "id": "server_resolveacteurnames",
       "community": 5,
@@ -11356,7 +11376,7 @@
       "label": "requireEtablissement()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1384",
+      "source_location": "L1385",
       "_origin": "ast",
       "id": "server_requireetablissement",
       "community": 5,
@@ -11366,7 +11386,7 @@
       "label": "createManagerStaffProfile()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1650",
+      "source_location": "L1651",
       "_origin": "ast",
       "id": "server_createmanagerstaffprofile",
       "community": 94,
@@ -11376,7 +11396,7 @@
       "label": "ensureDirectorStaffProfile()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1681",
+      "source_location": "L1682",
       "_origin": "ast",
       "id": "server_ensuredirectorstaffprofile",
       "community": 94,
@@ -11386,7 +11406,7 @@
       "label": "syncDirectorAssignedEstablishments()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1703",
+      "source_location": "L1704",
       "_origin": "ast",
       "id": "server_syncdirectorassignedestablishments",
       "community": 5,
@@ -11396,7 +11416,7 @@
       "label": "invalidateUserSessions()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1725",
+      "source_location": "L1726",
       "_origin": "ast",
       "id": "server_invalidateusersessions",
       "community": 5,
@@ -11406,7 +11426,7 @@
       "label": "invalidateStaffSessions()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1740",
+      "source_location": "L1741",
       "_origin": "ast",
       "id": "server_invalidatestaffsessions",
       "community": 5,
@@ -11416,7 +11436,7 @@
       "label": "icsEscape()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L2795",
+      "source_location": "L2796",
       "_origin": "ast",
       "id": "server_icsescape",
       "community": 5,
@@ -11426,7 +11446,7 @@
       "label": "icsLocalDateTime()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L2806",
+      "source_location": "L2807",
       "_origin": "ast",
       "id": "server_icslocaldatetime",
       "community": 5,
@@ -11436,7 +11456,7 @@
       "label": "ICS_VTIMEZONE",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L2819",
+      "source_location": "L2820",
       "_origin": "ast",
       "id": "server_ics_vtimezone",
       "community": 5,
@@ -11446,7 +11466,7 @@
       "label": "buildShiftsIcs()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L2833",
+      "source_location": "L2834",
       "_origin": "ast",
       "id": "server_buildshiftsics",
       "community": 5,
@@ -11456,7 +11476,7 @@
       "label": "computeEffectiveDeadline()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3519",
+      "source_location": "L3520",
       "_origin": "ast",
       "id": "server_computeeffectivedeadline",
       "community": 82,
@@ -11466,7 +11486,7 @@
       "label": "dispoHorizons()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3558",
+      "source_location": "L3559",
       "_origin": "ast",
       "id": "server_dispohorizons",
       "community": 67,
@@ -11476,7 +11496,7 @@
       "label": "aggStatus()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3815",
+      "source_location": "L3816",
       "_origin": "ast",
       "id": "server_aggstatus",
       "community": 5,
@@ -11486,17 +11506,17 @@
       "label": "releaseShiftsOnDispoChange()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3907",
+      "source_location": "L3908",
       "_origin": "ast",
       "id": "server_releaseshiftsondispochange",
-      "community": 80,
+      "community": 5,
       "norm_label": "releaseshiftsondispochange()"
     },
     {
       "label": "pendingScopeFilter()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4174",
+      "source_location": "L4175",
       "_origin": "ast",
       "id": "server_pendingscopefilter",
       "community": 5,
@@ -11506,7 +11526,7 @@
       "label": "fullWeekCongeSet()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4399",
+      "source_location": "L4400",
       "_origin": "ast",
       "id": "server_fullweekcongeset",
       "community": 5,
@@ -11516,17 +11536,17 @@
       "label": "appliquerCongeApprouve()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4668",
+      "source_location": "L4669",
       "_origin": "ast",
       "id": "server_appliquercongeapprouve",
-      "community": 72,
+      "community": 5,
       "norm_label": "appliquercongeapprouve()"
     },
     {
       "label": "requireDirecteur()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4787",
+      "source_location": "L4788",
       "_origin": "ast",
       "id": "server_requiredirecteur",
       "community": 5,
@@ -11536,7 +11556,7 @@
       "label": "requireStaffProfileId()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4879",
+      "source_location": "L4880",
       "_origin": "ast",
       "id": "server_requirestaffprofileid",
       "community": 5,
@@ -11546,7 +11566,7 @@
       "label": "DISPO_TEMPLATE_TYPES",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4885",
+      "source_location": "L4886",
       "_origin": "ast",
       "id": "server_dispo_template_types",
       "community": 5,
@@ -11556,37 +11576,37 @@
       "label": "managerOffPeriods()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4896",
+      "source_location": "L4897",
       "_origin": "ast",
       "id": "server_manageroffperiods",
-      "community": 72,
+      "community": 80,
       "norm_label": "manageroffperiods()"
     },
     {
       "label": "disposOffPeriods()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4922",
+      "source_location": "L4923",
       "_origin": "ast",
       "id": "server_disposoffperiods",
-      "community": 72,
+      "community": 80,
       "norm_label": "disposoffperiods()"
     },
     {
       "label": "materializeTemplateWeek()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4946",
+      "source_location": "L4947",
       "_origin": "ast",
       "id": "server_materializetemplateweek",
-      "community": 72,
+      "community": 80,
       "norm_label": "materializetemplateweek()"
     },
     {
       "label": "templateEligible()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4987",
+      "source_location": "L4988",
       "_origin": "ast",
       "id": "server_templateeligible",
       "community": 82,
@@ -11596,7 +11616,7 @@
       "label": "materializeAllDispoTemplates()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5019",
+      "source_location": "L5020",
       "_origin": "ast",
       "id": "server_materializealldispotemplates",
       "community": 82,
@@ -11606,7 +11626,7 @@
       "label": "DISPO_TEMPLATE_PATHS",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5069",
+      "source_location": "L5070",
       "_origin": "ast",
       "id": "server_dispo_template_paths",
       "community": 5,
@@ -11616,7 +11636,7 @@
       "label": "swapsAllowCross()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5277",
+      "source_location": "L5278",
       "_origin": "ast",
       "id": "server_swapsallowcross",
       "community": 5,
@@ -11626,7 +11646,7 @@
       "label": "weekEndStr()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5879",
+      "source_location": "L5894",
       "_origin": "ast",
       "id": "server_weekendstr",
       "community": 5,
@@ -11636,17 +11656,17 @@
       "label": "loadPerfSettings()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6491",
+      "source_location": "L6506",
       "_origin": "ast",
       "id": "server_loadperfsettings",
-      "community": 80,
+      "community": 73,
       "norm_label": "loadperfsettings()"
     },
     {
       "label": "pickPointageEstab()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7005",
+      "source_location": "L7020",
       "_origin": "ast",
       "id": "server_pickpointageestab",
       "community": 5,
@@ -11656,7 +11676,7 @@
       "label": "localDateParts()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7200",
+      "source_location": "L7215",
       "_origin": "ast",
       "id": "server_localdateparts",
       "community": 5,
@@ -11666,7 +11686,7 @@
       "label": "fmtClockHHMM()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7211",
+      "source_location": "L7226",
       "_origin": "ast",
       "id": "server_fmtclockhhmm",
       "community": 5,
@@ -11676,7 +11696,7 @@
       "label": "fmtHourFloatToHHMM()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7216",
+      "source_location": "L7231",
       "_origin": "ast",
       "id": "server_fmthourfloattohhmm",
       "community": 5,
@@ -11686,7 +11706,7 @@
       "label": "genCode4()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7225",
+      "source_location": "L7240",
       "_origin": "ast",
       "id": "server_gencode4",
       "community": 5,
@@ -11696,7 +11716,7 @@
       "label": "isValidHHMM()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7229",
+      "source_location": "L7244",
       "_origin": "ast",
       "id": "server_isvalidhhmm",
       "community": 5,
@@ -11706,7 +11726,7 @@
       "label": "hhmmToHourFloat()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7234",
+      "source_location": "L7249",
       "_origin": "ast",
       "id": "server_hhmmtohourfloat",
       "community": 5,
@@ -11716,7 +11736,7 @@
       "label": "roundQuarter()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7241",
+      "source_location": "L7256",
       "_origin": "ast",
       "id": "server_roundquarter",
       "community": 5,
@@ -11726,7 +11746,7 @@
       "label": "syncRealHoursFromCloture()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7250",
+      "source_location": "L7265",
       "_origin": "ast",
       "id": "server_syncrealhoursfromcloture",
       "community": 5,
@@ -11736,7 +11756,7 @@
       "label": "weekDateStrings()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7300",
+      "source_location": "L7315",
       "_origin": "ast",
       "id": "server_weekdatestrings",
       "community": 5,
@@ -11746,7 +11766,7 @@
       "label": "regenerateCodeCloture()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7311",
+      "source_location": "L7326",
       "_origin": "ast",
       "id": "server_regeneratecodecloture",
       "community": 5,
@@ -11756,7 +11776,7 @@
       "label": "ensureCodeCloture()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7333",
+      "source_location": "L7348",
       "_origin": "ast",
       "id": "server_ensurecodecloture",
       "community": 5,
@@ -11766,7 +11786,7 @@
       "label": "insertTimeValidation()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7341",
+      "source_location": "L7356",
       "_origin": "ast",
       "id": "server_inserttimevalidation",
       "community": 5,
@@ -11776,7 +11796,7 @@
       "label": "weekSignTargetFromNow()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7347",
+      "source_location": "L7362",
       "_origin": "ast",
       "id": "server_weeksigntargetfromnow",
       "community": 67,
@@ -11786,7 +11806,7 @@
       "label": "weekSignExpireMs()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7366",
+      "source_location": "L7381",
       "_origin": "ast",
       "id": "server_weeksignexpirems",
       "community": 5,
@@ -11796,7 +11816,7 @@
       "label": "staffHasResponsableRole()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7372",
+      "source_location": "L7387",
       "_origin": "ast",
       "id": "server_staffhasresponsablerole",
       "community": 94,
@@ -11806,7 +11826,7 @@
       "label": "canAccessWeekValidation()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7383",
+      "source_location": "L7398",
       "_origin": "ast",
       "id": "server_canaccessweekvalidation",
       "community": 94,
@@ -11816,7 +11836,7 @@
       "label": "canEditWeekValidation()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7390",
+      "source_location": "L7405",
       "_origin": "ast",
       "id": "server_caneditweekvalidation",
       "community": 5,
@@ -11826,7 +11846,7 @@
       "label": "ensureWeekSignCode()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7394",
+      "source_location": "L7409",
       "_origin": "ast",
       "id": "server_ensureweeksigncode",
       "community": 5,
@@ -11836,7 +11856,7 @@
       "label": "regenerateWeekSignCode()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7419",
+      "source_location": "L7434",
       "_origin": "ast",
       "id": "server_regenerateweeksigncode",
       "community": 5,
@@ -11846,7 +11866,7 @@
       "label": "validationEstabFilter()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7436",
+      "source_location": "L7451",
       "_origin": "ast",
       "id": "server_validationestabfilter",
       "community": 5,
@@ -11856,7 +11876,7 @@
       "label": "classifyCodeRefuse()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7443",
+      "source_location": "L7458",
       "_origin": "ast",
       "id": "server_classifycoderefuse",
       "community": 5,
@@ -11866,7 +11886,7 @@
       "label": "formatShiftTime()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L8679",
+      "source_location": "L8694",
       "_origin": "ast",
       "id": "server_formatshifttime",
       "community": 5,
@@ -11876,7 +11896,7 @@
       "label": "formatDateFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L8686",
+      "source_location": "L8701",
       "_origin": "ast",
       "id": "server_formatdatefr",
       "community": 5,
@@ -11886,7 +11906,7 @@
       "label": "formatDateShortFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L8692",
+      "source_location": "L8707",
       "_origin": "ast",
       "id": "server_formatdateshortfr",
       "community": 5,
@@ -11896,7 +11916,7 @@
       "label": "formatWeekFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L8698",
+      "source_location": "L8713",
       "_origin": "ast",
       "id": "server_formatweekfr",
       "community": 5,
@@ -11906,7 +11926,7 @@
       "label": "touchLastUpdated()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L8706",
+      "source_location": "L8721",
       "_origin": "ast",
       "id": "server_touchlastupdated",
       "community": 5,
@@ -11916,7 +11936,7 @@
       "label": "nouveautesUserId()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L8777",
+      "source_location": "L8792",
       "_origin": "ast",
       "id": "server_nouveautesuserid",
       "community": 94,
@@ -11926,7 +11946,7 @@
       "label": "DEPLOYED_COMMIT",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L8830",
+      "source_location": "L8845",
       "_origin": "ast",
       "id": "server_deployed_commit",
       "community": 5,
@@ -13019,7 +13039,7 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "tests_estab_access_test_confirm",
-      "community": 38,
+      "community": 79,
       "norm_label": "confirm()"
     },
     {
@@ -13259,7 +13279,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "helpers_harness_req",
-      "community": 29,
+      "community": 58,
       "norm_label": "req()"
     },
     {
@@ -13299,7 +13319,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_joker_color_test",
-      "community": 90,
+      "community": 91,
       "norm_label": "joker-color.test.js"
     },
     {
@@ -13309,7 +13329,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_joker_color_test_test_before_after_beforeeach",
-      "community": 90,
+      "community": 91,
       "norm_label": "{ test, before, after, beforeeach }"
     },
     {
@@ -13319,7 +13339,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "tests_joker_color_test_assert",
-      "community": 90,
+      "community": 91,
       "norm_label": "assert"
     },
     {
@@ -13329,7 +13349,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "tests_joker_color_test_jokergroupcolor",
-      "community": 90,
+      "community": 91,
       "norm_label": "jokergroupcolor"
     },
     {
@@ -13339,7 +13359,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "tests_joker_color_test_makedb",
-      "community": 90,
+      "community": 91,
       "norm_label": "{ makedb }"
     },
     {
@@ -13349,7 +13369,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_joker_color_test_app_startapp_stopapp_req",
-      "community": 90,
+      "community": 91,
       "norm_label": "{ app, startapp, stopapp, req }"
     },
     {
@@ -13359,7 +13379,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "tests_joker_color_test_patron",
-      "community": 90,
+      "community": 91,
       "norm_label": "patron"
     },
     {
@@ -13369,7 +13389,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "tests_joker_color_test_dir",
-      "community": 90,
+      "community": 91,
       "norm_label": "dir"
     },
     {
@@ -13379,7 +13399,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "tests_joker_color_test_obs",
-      "community": 90,
+      "community": 91,
       "norm_label": "obs"
     },
     {
@@ -13839,7 +13859,7 @@
       "source_location": "L292",
       "_origin": "ast",
       "id": "tests_manager_dispos_test_postonedispo",
-      "community": 29,
+      "community": 58,
       "norm_label": "postonedispo()"
     },
     {
@@ -14219,7 +14239,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "tests_perf_settings_test_patch",
-      "community": 29,
+      "community": 58,
       "norm_label": "patch()"
     },
     {
@@ -14476,7 +14496,7 @@
       "label": "postNote()",
       "file_type": "code",
       "source_file": "tests/planning-publication.test.js",
-      "source_location": "L269",
+      "source_location": "L301",
       "_origin": "ast",
       "id": "tests_planning_publication_test_postnote",
       "community": 68,
@@ -14486,7 +14506,7 @@
       "label": "N2mon",
       "file_type": "code",
       "source_file": "tests/planning-publication.test.js",
-      "source_location": "L272",
+      "source_location": "L304",
       "_origin": "ast",
       "id": "tests_planning_publication_test_n2mon",
       "community": 68,
@@ -14496,7 +14516,7 @@
       "label": "N5mon",
       "file_type": "code",
       "source_file": "tests/planning-publication.test.js",
-      "source_location": "L273",
+      "source_location": "L305",
       "_origin": "ast",
       "id": "tests_planning_publication_test_n5mon",
       "community": 68,
@@ -14693,14 +14713,14 @@
       "norm_label": "assert"
     },
     {
-      "label": "{ shiftEffectiveHours, shiftDurationHours, monthlyTotals, fmtHourOfDay, fmtClock, fmtDurationH }",
+      "label": "{ shiftEffectiveHours, shiftDurationHours, monthlyTotals, fmtHourOfDay, fmtClock, fmtDurationH, hoursOverlap }",
       "file_type": "code",
       "source_file": "tests/shift-hours.test.js",
       "source_location": "L3",
       "_origin": "ast",
-      "id": "tests_shift_hours_test_shifteffectivehours_shiftdurationhours_monthlytotals_fmthourofday_fmtclock_fmtdurationh",
+      "id": "tests_shift_hours_test_shifteffectivehours_shiftdurationhours_monthlytotals_fmthourofday_fmtclock_fmtdurationh_hoursoverlap",
       "community": 16,
-      "norm_label": "{ shifteffectivehours, shiftdurationhours, monthlytotals, fmthourofday, fmtclock, fmtdurationh }"
+      "norm_label": "{ shifteffectivehours, shiftdurationhours, monthlytotals, fmthourofday, fmtclock, fmtdurationh, hoursoverlap }"
     },
     {
       "label": "shift-swaps.test.js",
@@ -14859,7 +14879,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "tests_shift_swaps_test_seed",
-      "community": 65,
+      "community": 10,
       "norm_label": "seed()"
     },
     {
@@ -15189,7 +15209,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_staff_rate_stats_test",
-      "community": 120,
+      "community": 90,
       "norm_label": "staff-rate-stats.test.js"
     },
     {
@@ -15199,7 +15219,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_staff_rate_stats_test_test_before_after_beforeeach",
-      "community": 120,
+      "community": 90,
       "norm_label": "{ test, before, after, beforeeach }"
     },
     {
@@ -15209,7 +15229,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "tests_staff_rate_stats_test_assert",
-      "community": 120,
+      "community": 90,
       "norm_label": "assert"
     },
     {
@@ -15219,7 +15239,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "tests_staff_rate_stats_test_makedb",
-      "community": 120,
+      "community": 90,
       "norm_label": "{ makedb }"
     },
     {
@@ -15229,7 +15249,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "tests_staff_rate_stats_test_app_startapp_stopapp_req",
-      "community": 120,
+      "community": 90,
       "norm_label": "{ app, startapp, stopapp, req }"
     },
     {
@@ -15239,7 +15259,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_staff_rate_stats_test_buildstaffratestatsreport",
-      "community": 120,
+      "community": 90,
       "norm_label": "{ buildstaffratestatsreport }"
     },
     {
@@ -15249,7 +15269,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "tests_staff_rate_stats_test_patron",
-      "community": 120,
+      "community": 90,
       "norm_label": "patron"
     },
     {
@@ -15259,7 +15279,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "tests_staff_rate_stats_test_staff_user",
-      "community": 120,
+      "community": 90,
       "norm_label": "staff_user"
     },
     {
@@ -15569,7 +15589,7 @@
       "source_location": "L173",
       "_origin": "ast",
       "id": "readme_environnements_comment_s_y_connecter",
-      "community": 103,
+      "community": 25,
       "norm_label": "environnements \u2014 comment s'y connecter"
     },
     {
@@ -15579,7 +15599,7 @@
       "source_location": "L175",
       "_origin": "ast",
       "id": "readme_par_l_application_le_plus_courant",
-      "community": 103,
+      "community": 25,
       "norm_label": "par l'application (le plus courant)"
     },
     {
@@ -15589,7 +15609,7 @@
       "source_location": "L199",
       "_origin": "ast",
       "id": "readme_directement_\u00e0_la_base_mongosh_compass",
-      "community": 103,
+      "community": 25,
       "norm_label": "directement a la base (mongosh / compass)"
     },
     {
@@ -15609,7 +15629,7 @@
       "source_location": "L230",
       "_origin": "ast",
       "id": "readme_fonctionnalit\u00e9s",
-      "community": 93,
+      "community": 25,
       "norm_label": "fonctionnalites"
     },
     {
@@ -15619,7 +15639,7 @@
       "source_location": "L232",
       "_origin": "ast",
       "id": "readme_authentification",
-      "community": 93,
+      "community": 25,
       "norm_label": "authentification"
     },
     {
@@ -15629,7 +15649,7 @@
       "source_location": "L240",
       "_origin": "ast",
       "id": "readme_vue_patron_index_html",
-      "community": 93,
+      "community": 25,
       "norm_label": "vue patron (`index.html`)"
     },
     {
@@ -15639,7 +15659,7 @@
       "source_location": "L255",
       "_origin": "ast",
       "id": "readme_vue_staff_planning_html",
-      "community": 93,
+      "community": 25,
       "norm_label": "vue staff (`planning.html`)"
     },
     {
@@ -15649,7 +15669,7 @@
       "source_location": "L264",
       "_origin": "ast",
       "id": "readme_pointage_pointage_html",
-      "community": 93,
+      "community": 25,
       "norm_label": "pointage (`pointage.html`)"
     },
     {
@@ -15659,7 +15679,7 @@
       "source_location": "L270",
       "_origin": "ast",
       "id": "readme_performance_performance_html",
-      "community": 93,
+      "community": 25,
       "norm_label": "performance (`performance.html`)"
     },
     {
@@ -15669,7 +15689,7 @@
       "source_location": "L280",
       "_origin": "ast",
       "id": "readme_web_push",
-      "community": 93,
+      "community": 25,
       "norm_label": "web push"
     },
     {
@@ -15679,7 +15699,7 @@
       "source_location": "L286",
       "_origin": "ast",
       "id": "readme_pwa",
-      "community": 93,
+      "community": 25,
       "norm_label": "pwa"
     },
     {
@@ -15699,7 +15719,7 @@
       "source_location": "L317",
       "_origin": "ast",
       "id": "readme_routes_api_principales",
-      "community": 91,
+      "community": 25,
       "norm_label": "routes api principales"
     },
     {
@@ -15709,7 +15729,7 @@
       "source_location": "L319",
       "_origin": "ast",
       "id": "readme_auth",
-      "community": 91,
+      "community": 25,
       "norm_label": "auth"
     },
     {
@@ -15719,7 +15739,7 @@
       "source_location": "L329",
       "_origin": "ast",
       "id": "readme_comptes_staff",
-      "community": 91,
+      "community": 25,
       "norm_label": "comptes & staff"
     },
     {
@@ -15729,7 +15749,7 @@
       "source_location": "L339",
       "_origin": "ast",
       "id": "readme_\u00e9tablissements",
-      "community": 91,
+      "community": 25,
       "norm_label": "etablissements"
     },
     {
@@ -15739,7 +15759,7 @@
       "source_location": "L346",
       "_origin": "ast",
       "id": "readme_shifts_pointage",
-      "community": 91,
+      "community": 25,
       "norm_label": "shifts & pointage"
     },
     {
@@ -15749,7 +15769,7 @@
       "source_location": "L376",
       "_origin": "ast",
       "id": "readme_disponibilit\u00e9s",
-      "community": 91,
+      "community": 25,
       "norm_label": "disponibilites"
     },
     {
@@ -15759,7 +15779,7 @@
       "source_location": "L394",
       "_origin": "ast",
       "id": "readme_performance_ca",
-      "community": 91,
+      "community": 25,
       "norm_label": "performance / ca"
     },
     {
@@ -15769,7 +15789,7 @@
       "source_location": "L403",
       "_origin": "ast",
       "id": "readme_\u00e9changes_de_shifts_actives_depuis_d_90_dev_d\u00e9mo_pas_encore_en_prod_client",
-      "community": 91,
+      "community": 25,
       "norm_label": "echanges de shifts *(actives depuis d-90 \u2014 `dev` / demo ; pas encore en prod client)*"
     },
     {
@@ -15779,7 +15799,7 @@
       "source_location": "L415",
       "_origin": "ast",
       "id": "readme_web_push_notifications",
-      "community": 91,
+      "community": 25,
       "norm_label": "web push & notifications"
     },
     {
@@ -15789,7 +15809,7 @@
       "source_location": "L423",
       "_origin": "ast",
       "id": "readme_infra",
-      "community": 91,
+      "community": 25,
       "norm_label": "infra"
     },
     {
@@ -15799,7 +15819,7 @@
       "source_location": "L430",
       "_origin": "ast",
       "id": "readme_r\u00e8gles_techniques_\u00e0_ne_jamais_casser",
-      "community": 98,
+      "community": 25,
       "norm_label": "regles techniques a ne jamais casser"
     },
     {
@@ -15809,7 +15829,7 @@
       "source_location": "L432",
       "_origin": "ast",
       "id": "readme_timezone_jamais_toisostring",
-      "community": 98,
+      "community": 25,
       "norm_label": "timezone \u2014 jamais `toisostring()`"
     },
     {
@@ -15819,7 +15839,7 @@
       "source_location": "L448",
       "_origin": "ast",
       "id": "readme_script_js_monolithique_ne_pas_d\u00e9couper",
-      "community": 98,
+      "community": 25,
       "norm_label": "`script.js` \u2014 monolithique, ne pas decouper"
     },
     {
@@ -15829,7 +15849,7 @@
       "source_location": "L451",
       "_origin": "ast",
       "id": "readme_sessions_mongodb_promesses_uniquement",
-      "community": 98,
+      "community": 25,
       "norm_label": "sessions mongodb \u2014 promesses uniquement"
     },
     {
@@ -15839,7 +15859,7 @@
       "source_location": "L454",
       "_origin": "ast",
       "id": "readme_cache_service_worker_ne_pas_toucher_build_time",
-      "community": 98,
+      "community": 25,
       "norm_label": "cache service worker \u2014 ne pas toucher `%%build_time%%`"
     },
     {
@@ -15849,7 +15869,7 @@
       "source_location": "L457",
       "_origin": "ast",
       "id": "readme_helpers_purs_lib_utils_js",
-      "community": 98,
+      "community": 25,
       "norm_label": "helpers purs \u2192 `lib/utils.js`"
     },
     {
@@ -16009,7 +16029,7 @@
       "source_location": "L169",
       "_origin": "ast",
       "id": "docs_architecture_4_authentification_autorisation",
-      "community": 102,
+      "community": 24,
       "norm_label": "4. authentification & autorisation"
     },
     {
@@ -16019,7 +16039,7 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "docs_architecture_session",
-      "community": 102,
+      "community": 24,
       "norm_label": "session"
     },
     {
@@ -16029,7 +16049,7 @@
       "source_location": "L176",
       "_origin": "ast",
       "id": "docs_architecture_hi\u00e9rarchie_des_r\u00f4les",
-      "community": 102,
+      "community": 24,
       "norm_label": "hierarchie des roles"
     },
     {
@@ -16039,7 +16059,7 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "docs_architecture_limitation_du_d\u00e9bit",
-      "community": 102,
+      "community": 24,
       "norm_label": "limitation du debit"
     },
     {
@@ -17039,7 +17059,7 @@
       "source_location": "L2422",
       "_origin": "ast",
       "id": "docs_backlog_backlog_pointage_cl\u00f4ture_otp_sept_2026",
-      "community": 104,
+      "community": 62,
       "norm_label": "backlog pointage / cloture otp (sept. 2026)"
     },
     {
@@ -17049,7 +17069,7 @@
       "source_location": "L2427",
       "_origin": "ast",
       "id": "docs_backlog_livr\u00e9",
-      "community": 104,
+      "community": 62,
       "norm_label": "livre"
     },
     {
@@ -17059,7 +17079,7 @@
       "source_location": "L2442",
       "_origin": "ast",
       "id": "docs_backlog_ouvert_\u00e0_prioriser",
-      "community": 104,
+      "community": 62,
       "norm_label": "ouvert \u2014 a prioriser"
     },
     {
@@ -17069,7 +17089,7 @@
       "source_location": "L2452",
       "_origin": "ast",
       "id": "docs_backlog_invariants_ne_pas_casser",
-      "community": 104,
+      "community": 62,
       "norm_label": "invariants (ne pas casser)"
     },
     {
@@ -17466,7 +17486,7 @@
       "label": "Hors v1",
       "file_type": "document",
       "source_file": "docs/design-creneaux-predefinis.md",
-      "source_location": "L19",
+      "source_location": "L20",
       "_origin": "ast",
       "id": "docs_design_creneaux_predefinis_hors_v1",
       "community": 77,
@@ -17476,7 +17496,7 @@
       "label": "Lien backlog",
       "file_type": "document",
       "source_file": "docs/design-creneaux-predefinis.md",
-      "source_location": "L24",
+      "source_location": "L25",
       "_origin": "ast",
       "id": "docs_design_creneaux_predefinis_lien_backlog",
       "community": 77,
@@ -19366,7 +19386,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 91,
+      "community": 25,
       "norm_label": "server.js (serveur express monolithique)",
       "id": "readme_server_js"
     },
@@ -19743,7 +19763,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 62,
+      "community": 25,
       "norm_label": "f-05 echange de shifts (desactive)",
       "id": "backlog_f05_shift_swaps"
     },
@@ -19782,7 +19802,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 91,
+      "community": 25,
       "norm_label": "r-04 decoupage server.js en routers (reporte)",
       "id": "backlog_r04_split_server"
     },
@@ -19821,7 +19841,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 62,
+      "community": 25,
       "norm_label": "pieges blocs /* f-05 desactive */ (d-47)",
       "id": "backlog_f05_blocks_trap"
     },
@@ -19886,7 +19906,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 101,
+      "community": 1,
       "norm_label": "pointage avance (heures reelles)",
       "id": "prd_pointage"
     },
@@ -19951,7 +19971,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 101,
+      "community": 1,
       "norm_label": "audit ergonomie tactile mobile (d-49)",
       "id": "ux_design_touch_audit"
     },
@@ -20016,7 +20036,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 101,
+      "community": 1,
       "norm_label": "pointage.html (compte etablissement)",
       "id": "pointage_pointage_html"
     },
@@ -23697,6 +23717,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public/lib/shift-hours.js",
+      "source_location": "L115",
+      "weight": 1.0,
+      "source": "lib_shift_hours",
+      "target": "lib_shift_hours_hoursoverlap",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public/lib/shift-hours.js",
       "source_location": "L50",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -23727,6 +23757,17 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "server.js",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "server",
+      "target": "lib_shift_hours",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "tests/shift-hours.test.js",
       "source_location": "L3",
       "weight": 1.0,
@@ -23744,6 +23785,17 @@
       "confidence_score": 1.0,
       "source": "lib_shift_hours_shiftdurationhours",
       "target": "lib_shift_hours_shifteffectivehours"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server.js",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "server",
+      "target": "lib_shift_hours_shifteffectivehours",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -23821,6 +23873,28 @@
       "confidence_score": 1.0,
       "source": "tests_shift_hours_test",
       "target": "lib_shift_hours_fmtdurationh"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server.js",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "server",
+      "target": "lib_shift_hours_hoursoverlap",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/shift-hours.test.js",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "tests_shift_hours_test",
+      "target": "lib_shift_hours_hoursoverlap",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -26353,9 +26427,9 @@
       "source_file": "public/planning.js",
       "source_location": "L490",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_applyjokercandidature",
-      "confidence_score": 1.0
+      "target": "public_planning_applyjokercandidature"
     },
     {
       "relation": "contains",
@@ -26373,9 +26447,9 @@
       "source_file": "public/planning.js",
       "source_location": "L501",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_bindjokerapply",
-      "confidence_score": 1.0
+      "target": "public_planning_bindjokerapply"
     },
     {
       "relation": "contains",
@@ -26403,9 +26477,9 @@
       "source_file": "public/planning.js",
       "source_location": "L660",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_buildpunctualjokerlist",
-      "confidence_score": 1.0
+      "target": "public_planning_buildpunctualjokerlist"
     },
     {
       "relation": "contains",
@@ -26413,9 +26487,9 @@
       "source_file": "public/planning.js",
       "source_location": "L533",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning",
-      "target": "public_planning_buildslotofferplanning",
-      "confidence_score": 1.0
+      "target": "public_planning_buildslotofferplanning"
     },
     {
       "relation": "contains",
@@ -26861,10 +26935,10 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public/planning.js",
-      "source_location": "L526",
+      "source_location": "L530",
       "weight": 1.0,
       "source": "public_planning",
-      "target": "public_planning_jokergroupcss",
+      "target": "public_planning_jokerconflictswithmine",
       "confidence_score": 1.0
     },
     {
@@ -27705,9 +27779,9 @@
       "source_file": "public/planning.js",
       "source_location": "L534",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_buildslotofferplanning",
-      "target": "public_planning_todatestr",
-      "confidence_score": 1.0
+      "target": "public_planning_todatestr"
     },
     {
       "relation": "calls",
@@ -27826,9 +27900,9 @@
       "source_file": "public/planning.js",
       "source_location": "L698",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_renderopenjokersinto",
-      "target": "public_planning_todatestr",
-      "confidence_score": 1.0
+      "target": "public_planning_todatestr"
     },
     {
       "relation": "calls",
@@ -28013,9 +28087,9 @@
       "source_file": "public/planning.js",
       "source_location": "L580",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_buildslotofferplanning",
-      "target": "public_planning_adddays",
-      "confidence_score": 1.0
+      "target": "public_planning_adddays"
     },
     {
       "relation": "calls",
@@ -28156,9 +28230,9 @@
       "source_file": "public/planning.js",
       "source_location": "L568",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_buildslotofferplanning",
-      "target": "public_planning_fmthour",
-      "confidence_score": 1.0
+      "target": "public_planning_fmthour"
     },
     {
       "relation": "calls",
@@ -28288,9 +28362,9 @@
       "source_file": "public/planning.js",
       "source_location": "L577",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_buildslotofferplanning",
-      "target": "public_planning_parsedate",
-      "confidence_score": 1.0
+      "target": "public_planning_parsedate"
     },
     {
       "relation": "calls",
@@ -28574,9 +28648,9 @@
       "source_file": "public/planning.js",
       "source_location": "L717",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_loadplanning",
-      "target": "public_planning_fetchopenjokers",
-      "confidence_score": 1.0
+      "target": "public_planning_fetchopenjokers"
     },
     {
       "relation": "calls",
@@ -28629,9 +28703,9 @@
       "source_file": "public/planning.js",
       "source_location": "L707",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_renderopenjokersinto",
-      "target": "public_planning_buildslotofferplanning",
-      "confidence_score": 1.0
+      "target": "public_planning_buildslotofferplanning"
     },
     {
       "relation": "calls",
@@ -28640,9 +28714,9 @@
       "source_file": "public/planning.js",
       "source_location": "L708",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_renderopenjokersinto",
-      "target": "public_planning_buildpunctualjokerlist",
-      "confidence_score": 1.0
+      "target": "public_planning_buildpunctualjokerlist"
     },
     {
       "relation": "calls",
@@ -28651,9 +28725,9 @@
       "source_file": "public/planning.js",
       "source_location": "L751",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_planning_loadplanning",
-      "target": "public_planning_renderopenjokersinto",
-      "confidence_score": 1.0
+      "target": "public_planning_renderopenjokersinto"
     },
     {
       "relation": "calls",
@@ -44138,6 +44212,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server.js",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "server",
+      "target": "server_hoursoverlap_shifteffectivehours",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server.js",
       "source_location": "L1709",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -49958,9 +50042,9 @@
       "source_file": "tests/shift-hours.test.js",
       "source_location": "L3",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "tests_shift_hours_test",
-      "target": "tests_shift_hours_test_shifteffectivehours_shiftdurationhours_monthlytotals_fmthourofday_fmtclock_fmtdurationh"
+      "target": "tests_shift_hours_test_shifteffectivehours_shiftdurationhours_monthlytotals_fmthourofday_fmtclock_fmtdurationh_hoursoverlap",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -53453,9 +53537,9 @@
       "source_file": "docs/methodologie-et-cicd.md",
       "source_location": "L97",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_methodologie_et_cicd_p1_fermer_le_trou_prod_d\u00e9ploy\u00e9e_m\u00eame_si_ci_rouge",
-      "target": "docs_methodologie_et_cicd_cd_01_\u00e9tat_r\u00e9el_au_2026_09_10_et_ce_qui_reste_\u00e0_faire",
-      "confidence_score": 1.0
+      "target": "docs_methodologie_et_cicd_cd_01_\u00e9tat_r\u00e9el_au_2026_09_10_et_ce_qui_reste_\u00e0_faire"
     },
     {
       "relation": "contains",
@@ -55100,5 +55184,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "f83ad1d9535b19e61eb07967ecd2733cb44fe280"
+  "built_at_commit": "458aa17417429e840d13cc6e0f4a5b5bcbaa06ca"
 }

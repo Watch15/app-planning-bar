@@ -178,6 +178,13 @@ a:hover { color: var(--accent-soft); }
 }
 .week-arrow:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 .week-label { font-size: 14px; font-weight: 600; flex: 1; text-align: center; color: var(--text-primary); letter-spacing: -0.2px; }
+#btn-propose-slots {
+  padding: 5px 12px; height: 30px; border-radius: var(--radius);
+  border: 1px solid #0d9488; background: rgba(13,148,136,0.12);
+  font-size: 12px; font-weight: 600; color: #0d9488;
+  cursor: pointer; white-space: nowrap; font-family: var(--font); flex-shrink: 0;
+}
+#btn-propose-slots:hover { background: rgba(13,148,136,0.2); }
 .btn-today {
   padding: 5px 12px; height: 30px; border-radius: 20px;
   border: 1px solid var(--light-border); background: var(--light-bg);
