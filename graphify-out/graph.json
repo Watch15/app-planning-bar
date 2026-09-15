@@ -309,7 +309,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "lib_utils_hashtoken",
-      "community": 80,
+      "community": 11,
       "norm_label": "hashtoken()"
     },
     {
@@ -319,7 +319,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "lib_utils_normalizephone",
-      "community": 80,
+      "community": 11,
       "norm_label": "normalizephone()"
     },
     {
@@ -329,7 +329,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "lib_utils_computeactivedate",
-      "community": 80,
+      "community": 11,
       "norm_label": "computeactivedate()"
     },
     {
@@ -349,7 +349,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "lib_utils_isautopublished",
-      "community": 67,
+      "community": 11,
       "norm_label": "isautopublished()"
     },
     {
@@ -359,7 +359,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "lib_utils_normalizepublishdoc",
-      "community": 80,
+      "community": 11,
       "norm_label": "normalizepublishdoc()"
     },
     {
@@ -369,7 +369,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "lib_utils_isdatepublished",
-      "community": 67,
+      "community": 11,
       "norm_label": "isdatepublished()"
     },
     {
@@ -379,7 +379,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "lib_utils_datesoverlap",
-      "community": 117,
+      "community": 80,
       "norm_label": "datesoverlap()"
     },
     {
@@ -389,7 +389,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "lib_utils_congecoversdate",
-      "community": 117,
+      "community": 80,
       "norm_label": "congecoversdate()"
     },
     {
@@ -399,7 +399,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "lib_utils_congedaysinrange",
-      "community": 117,
+      "community": 80,
       "norm_label": "congedaysinrange()"
     },
     {
@@ -449,7 +449,7 @@
       "source_location": "L188",
       "_origin": "ast",
       "id": "lib_utils_resolveperfsettings",
-      "community": 80,
+      "community": 73,
       "norm_label": "resolveperfsettings()"
     },
     {
@@ -589,7 +589,7 @@
       "source_location": "L577",
       "_origin": "ast",
       "id": "lib_utils_datescoveredbyperiods",
-      "community": 80,
+      "community": 58,
       "norm_label": "datescoveredbyperiods()"
     },
     {
@@ -599,7 +599,7 @@
       "source_location": "L598",
       "_origin": "ast",
       "id": "lib_utils_dispodeadlinewaived",
-      "community": 80,
+      "community": 11,
       "norm_label": "dispodeadlinewaived()"
     },
     {
@@ -609,7 +609,7 @@
       "source_location": "L617",
       "_origin": "ast",
       "id": "lib_utils_forceopenactive",
-      "community": 80,
+      "community": 11,
       "norm_label": "forceopenactive()"
     },
     {
@@ -619,7 +619,7 @@
       "source_location": "L626",
       "_origin": "ast",
       "id": "lib_utils_buildtemplatedispos",
-      "community": 80,
+      "community": 58,
       "norm_label": "{ buildtemplatedispos }"
     },
     {
@@ -629,7 +629,7 @@
       "source_location": "L646",
       "_origin": "ast",
       "id": "lib_utils_shouldmaterializetemplate",
-      "community": 80,
+      "community": 93,
       "norm_label": "shouldmaterializetemplate()"
     },
     {
@@ -639,7 +639,7 @@
       "source_location": "L656",
       "_origin": "ast",
       "id": "lib_utils_normname",
-      "community": 18,
+      "community": 108,
       "norm_label": "normname()"
     },
     {
@@ -649,7 +649,7 @@
       "source_location": "L673",
       "_origin": "ast",
       "id": "lib_utils_classifydirectorlinks",
-      "community": 18,
+      "community": 108,
       "norm_label": "classifydirectorlinks()"
     },
     {
@@ -659,7 +659,7 @@
       "source_location": "L696",
       "_origin": "ast",
       "id": "lib_utils_validateoffperiod",
-      "community": 104,
+      "community": 80,
       "norm_label": "validateoffperiod()"
     },
     {
@@ -669,7 +669,7 @@
       "source_location": "L712",
       "_origin": "ast",
       "id": "lib_utils_scopemanageroff",
-      "community": 104,
+      "community": 80,
       "norm_label": "scopemanageroff()"
     },
     {
@@ -1439,7 +1439,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_dispo_template",
-      "community": 58,
+      "community": 80,
       "norm_label": "dispo-template.js"
     },
     {
@@ -1449,7 +1449,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "lib_dispo_template_buildtemplatedispos",
-      "community": 58,
+      "community": 80,
       "norm_label": "buildtemplatedispos()"
     },
     {
@@ -9439,7 +9439,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "scripts_db_app_collections",
-      "community": 109,
+      "community": 113,
       "norm_label": "app_collections"
     },
     {
@@ -9479,7 +9479,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_create_patron",
-      "community": 120,
+      "community": 113,
       "norm_label": "create-patron.js"
     },
     {
@@ -9489,7 +9489,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_create_patron_bcrypt",
-      "community": 120,
+      "community": 113,
       "norm_label": "bcrypt"
     },
     {
@@ -9499,7 +9499,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "scripts_create_patron_readline",
-      "community": 120,
+      "community": 113,
       "norm_label": "readline"
     },
     {
@@ -9509,7 +9509,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "scripts_create_patron_opendb",
-      "community": 120,
+      "community": 113,
       "norm_label": "{ opendb }"
     },
     {
@@ -9519,7 +9519,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "scripts_create_patron_rl",
-      "community": 120,
+      "community": 113,
       "norm_label": "rl"
     },
     {
@@ -9529,7 +9529,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "scripts_create_patron_ask",
-      "community": 120,
+      "community": 113,
       "norm_label": "ask()"
     },
     {
@@ -9539,7 +9539,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "scripts_create_patron_main",
-      "community": 120,
+      "community": 113,
       "norm_label": "main()"
     },
     {
@@ -9549,7 +9549,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_db_uri",
-      "community": 121,
+      "community": 113,
       "norm_label": "db-uri.js"
     },
     {
@@ -9559,7 +9559,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "scripts_db_uri_fs",
-      "community": 121,
+      "community": 113,
       "norm_label": "fs"
     },
     {
@@ -9569,7 +9569,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "scripts_db_uri_prod_db_name",
-      "community": 121,
+      "community": 113,
       "norm_label": "{ prod_db_name }"
     },
     {
@@ -9579,7 +9579,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "scripts_db_uri_path",
-      "community": 121,
+      "community": 113,
       "norm_label": "path"
     },
     {
@@ -9589,7 +9589,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "scripts_db_uri_full",
-      "community": 121,
+      "community": 113,
       "norm_label": "full"
     },
     {
@@ -9599,7 +9599,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "scripts_db_uri_cfg",
-      "community": 121,
+      "community": 113,
       "norm_label": "cfg"
     },
     {
@@ -9609,7 +9609,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "scripts_db_uri_head_query",
-      "community": 121,
+      "community": 113,
       "norm_label": "[head, query]"
     },
     {
@@ -9679,7 +9679,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link",
-      "community": 123,
+      "community": 113,
       "norm_label": "fix-orphan-staff-link.js"
     },
     {
@@ -9689,7 +9689,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_objectid",
-      "community": 123,
+      "community": 113,
       "norm_label": "{ objectid }"
     },
     {
@@ -9699,7 +9699,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_opendb",
-      "community": 123,
+      "community": 113,
       "norm_label": "{ opendb }"
     },
     {
@@ -9709,7 +9709,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_apply",
-      "community": 123,
+      "community": 113,
       "norm_label": "apply"
     },
     {
@@ -9719,7 +9719,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_normname_norm",
-      "community": 123,
+      "community": 113,
       "norm_label": "{ normname: norm }"
     },
     {
@@ -9729,7 +9729,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_main",
-      "community": 123,
+      "community": 113,
       "norm_label": "main()"
     },
     {
@@ -9789,7 +9789,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_link_director_staff",
-      "community": 18,
+      "community": 108,
       "norm_label": "link-director-staff.js"
     },
     {
@@ -9799,7 +9799,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "scripts_link_director_staff_opendb",
-      "community": 18,
+      "community": 108,
       "norm_label": "{ opendb }"
     },
     {
@@ -9809,7 +9809,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "scripts_link_director_staff_pickstaffcolor_classifydirectorlinks",
-      "community": 18,
+      "community": 108,
       "norm_label": "{ pickstaffcolor, classifydirectorlinks }"
     },
     {
@@ -9819,7 +9819,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "scripts_link_director_staff_apply",
-      "community": 18,
+      "community": 108,
       "norm_label": "apply"
     },
     {
@@ -9829,7 +9829,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "scripts_link_director_staff_create",
-      "community": 18,
+      "community": 108,
       "norm_label": "create"
     },
     {
@@ -9839,7 +9839,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "scripts_link_director_staff_main",
-      "community": 18,
+      "community": 108,
       "norm_label": "main()"
     },
     {
@@ -10139,7 +10139,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_seed_dev",
-      "community": 109,
+      "community": 113,
       "norm_label": "seed-dev.js"
     },
     {
@@ -10149,7 +10149,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "scripts_seed_dev_bcrypt",
-      "community": 109,
+      "community": 113,
       "norm_label": "bcrypt"
     },
     {
@@ -10159,7 +10159,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "scripts_seed_dev_objectid",
-      "community": 109,
+      "community": 113,
       "norm_label": "{ objectid }"
     },
     {
@@ -10169,7 +10169,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "scripts_seed_dev_opendb_app_collections",
-      "community": 109,
+      "community": 113,
       "norm_label": "{ opendb, app_collections }"
     },
     {
@@ -10179,7 +10179,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "scripts_seed_dev_todatestr_weekstart",
-      "community": 109,
+      "community": 113,
       "norm_label": "{ todatestr, weekstart }"
     },
     {
@@ -10189,7 +10189,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "scripts_seed_dev_features",
-      "community": 109,
+      "community": 113,
       "norm_label": "features"
     },
     {
@@ -10199,7 +10199,7 @@
       "source_location": "L420",
       "_origin": "ast",
       "id": "scripts_seed_dev_run",
-      "community": 109,
+      "community": 67,
       "norm_label": "run()"
     },
     {
@@ -11269,7 +11269,7 @@
       "source_location": "L631",
       "_origin": "ast",
       "id": "server_publishedshiftfilter",
-      "community": 5,
+      "community": 11,
       "norm_label": "publishedshiftfilter()"
     },
     {
@@ -11309,7 +11309,7 @@
       "source_location": "L733",
       "_origin": "ast",
       "id": "server_fetchpublishedweeks",
-      "community": 5,
+      "community": 11,
       "norm_label": "fetchpublishedweeks()"
     },
     {
@@ -11586,7 +11586,7 @@
       "label": "createManagerStaffProfile()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1653",
+      "source_location": "L1651",
       "_origin": "ast",
       "id": "server_createmanagerstaffprofile",
       "community": 108,
@@ -11596,7 +11596,7 @@
       "label": "ensureDirectorStaffProfile()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1684",
+      "source_location": "L1682",
       "_origin": "ast",
       "id": "server_ensuredirectorstaffprofile",
       "community": 108,
@@ -11606,7 +11606,7 @@
       "label": "syncDirectorAssignedEstablishments()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1706",
+      "source_location": "L1704",
       "_origin": "ast",
       "id": "server_syncdirectorassignedestablishments",
       "community": 5,
@@ -11616,7 +11616,7 @@
       "label": "invalidateUserSessions()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1728",
+      "source_location": "L1726",
       "_origin": "ast",
       "id": "server_invalidateusersessions",
       "community": 5,
@@ -11626,7 +11626,7 @@
       "label": "invalidateStaffSessions()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L1743",
+      "source_location": "L1741",
       "_origin": "ast",
       "id": "server_invalidatestaffsessions",
       "community": 5,
@@ -11636,7 +11636,7 @@
       "label": "icsEscape()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L2804",
+      "source_location": "L2802",
       "_origin": "ast",
       "id": "server_icsescape",
       "community": 5,
@@ -11646,7 +11646,7 @@
       "label": "icsLocalDateTime()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L2815",
+      "source_location": "L2813",
       "_origin": "ast",
       "id": "server_icslocaldatetime",
       "community": 5,
@@ -11656,7 +11656,7 @@
       "label": "ICS_VTIMEZONE",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L2828",
+      "source_location": "L2826",
       "_origin": "ast",
       "id": "server_ics_vtimezone",
       "community": 5,
@@ -11666,7 +11666,7 @@
       "label": "buildShiftsIcs()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L2842",
+      "source_location": "L2840",
       "_origin": "ast",
       "id": "server_buildshiftsics",
       "community": 5,
@@ -11676,7 +11676,7 @@
       "label": "computeEffectiveDeadline()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3552",
+      "source_location": "L3550",
       "_origin": "ast",
       "id": "server_computeeffectivedeadline",
       "community": 93,
@@ -11686,7 +11686,7 @@
       "label": "dispoHorizons()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3591",
+      "source_location": "L3589",
       "_origin": "ast",
       "id": "server_dispohorizons",
       "community": 67,
@@ -11696,7 +11696,7 @@
       "label": "aggStatus()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3848",
+      "source_location": "L3846",
       "_origin": "ast",
       "id": "server_aggstatus",
       "community": 5,
@@ -11706,17 +11706,17 @@
       "label": "releaseShiftsOnDispoChange()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L3940",
+      "source_location": "L3938",
       "_origin": "ast",
       "id": "server_releaseshiftsondispochange",
-      "community": 5,
+      "community": 11,
       "norm_label": "releaseshiftsondispochange()"
     },
     {
       "label": "pendingScopeFilter()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4207",
+      "source_location": "L4205",
       "_origin": "ast",
       "id": "server_pendingscopefilter",
       "community": 5,
@@ -11726,7 +11726,7 @@
       "label": "fullWeekCongeSet()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4432",
+      "source_location": "L4430",
       "_origin": "ast",
       "id": "server_fullweekcongeset",
       "community": 5,
@@ -11736,7 +11736,7 @@
       "label": "appliquerCongeApprouve()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4701",
+      "source_location": "L4699",
       "_origin": "ast",
       "id": "server_appliquercongeapprouve",
       "community": 58,
@@ -11746,7 +11746,7 @@
       "label": "requireDirecteur()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4820",
+      "source_location": "L4818",
       "_origin": "ast",
       "id": "server_requiredirecteur",
       "community": 5,
@@ -11756,7 +11756,7 @@
       "label": "requireStaffProfileId()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4912",
+      "source_location": "L4910",
       "_origin": "ast",
       "id": "server_requirestaffprofileid",
       "community": 5,
@@ -11766,7 +11766,7 @@
       "label": "DISPO_TEMPLATE_TYPES",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4918",
+      "source_location": "L4916",
       "_origin": "ast",
       "id": "server_dispo_template_types",
       "community": 5,
@@ -11776,7 +11776,7 @@
       "label": "managerOffPeriods()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4929",
+      "source_location": "L4927",
       "_origin": "ast",
       "id": "server_manageroffperiods",
       "community": 58,
@@ -11786,7 +11786,7 @@
       "label": "disposOffPeriods()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4955",
+      "source_location": "L4953",
       "_origin": "ast",
       "id": "server_disposoffperiods",
       "community": 58,
@@ -11796,7 +11796,7 @@
       "label": "materializeTemplateWeek()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L4979",
+      "source_location": "L4977",
       "_origin": "ast",
       "id": "server_materializetemplateweek",
       "community": 58,
@@ -11806,7 +11806,7 @@
       "label": "templateEligible()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5020",
+      "source_location": "L5018",
       "_origin": "ast",
       "id": "server_templateeligible",
       "community": 93,
@@ -11816,7 +11816,7 @@
       "label": "materializeAllDispoTemplates()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5052",
+      "source_location": "L5050",
       "_origin": "ast",
       "id": "server_materializealldispotemplates",
       "community": 93,
@@ -11826,7 +11826,7 @@
       "label": "DISPO_TEMPLATE_PATHS",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5102",
+      "source_location": "L5100",
       "_origin": "ast",
       "id": "server_dispo_template_paths",
       "community": 5,
@@ -11836,7 +11836,7 @@
       "label": "swapsAllowCross()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5310",
+      "source_location": "L5308",
       "_origin": "ast",
       "id": "server_swapsallowcross",
       "community": 5,
@@ -11846,7 +11846,7 @@
       "label": "weekEndStr()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L5979",
+      "source_location": "L5977",
       "_origin": "ast",
       "id": "server_weekendstr",
       "community": 5,
@@ -11856,17 +11856,17 @@
       "label": "loadPerfSettings()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L6591",
+      "source_location": "L6589",
       "_origin": "ast",
       "id": "server_loadperfsettings",
-      "community": 80,
+      "community": 73,
       "norm_label": "loadperfsettings()"
     },
     {
       "label": "pickPointageEstab()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7105",
+      "source_location": "L7103",
       "_origin": "ast",
       "id": "server_pickpointageestab",
       "community": 5,
@@ -11876,17 +11876,17 @@
       "label": "localDateParts()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7300",
+      "source_location": "L7298",
       "_origin": "ast",
       "id": "server_localdateparts",
-      "community": 11,
+      "community": 5,
       "norm_label": "localdateparts()"
     },
     {
       "label": "fmtClockHHMM()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7311",
+      "source_location": "L7309",
       "_origin": "ast",
       "id": "server_fmtclockhhmm",
       "community": 5,
@@ -11896,7 +11896,7 @@
       "label": "fmtHourFloatToHHMM()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7316",
+      "source_location": "L7314",
       "_origin": "ast",
       "id": "server_fmthourfloattohhmm",
       "community": 5,
@@ -11906,57 +11906,57 @@
       "label": "genCode4()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7325",
+      "source_location": "L7323",
       "_origin": "ast",
       "id": "server_gencode4",
-      "community": 11,
+      "community": 5,
       "norm_label": "gencode4()"
     },
     {
       "label": "isValidHHMM()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7329",
+      "source_location": "L7327",
       "_origin": "ast",
       "id": "server_isvalidhhmm",
-      "community": 11,
+      "community": 5,
       "norm_label": "isvalidhhmm()"
     },
     {
       "label": "hhmmToHourFloat()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7334",
+      "source_location": "L7332",
       "_origin": "ast",
       "id": "server_hhmmtohourfloat",
-      "community": 11,
+      "community": 5,
       "norm_label": "hhmmtohourfloat()"
     },
     {
       "label": "roundQuarter()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7341",
+      "source_location": "L7339",
       "_origin": "ast",
       "id": "server_roundquarter",
-      "community": 11,
+      "community": 5,
       "norm_label": "roundquarter()"
     },
     {
       "label": "syncRealHoursFromCloture()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7350",
+      "source_location": "L7348",
       "_origin": "ast",
       "id": "server_syncrealhoursfromcloture",
-      "community": 11,
+      "community": 5,
       "norm_label": "syncrealhoursfromcloture()"
     },
     {
       "label": "weekDateStrings()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7400",
+      "source_location": "L7398",
       "_origin": "ast",
       "id": "server_weekdatestrings",
       "community": 5,
@@ -11966,37 +11966,37 @@
       "label": "regenerateCodeCloture()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7411",
+      "source_location": "L7409",
       "_origin": "ast",
       "id": "server_regeneratecodecloture",
-      "community": 11,
+      "community": 5,
       "norm_label": "regeneratecodecloture()"
     },
     {
       "label": "ensureCodeCloture()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7433",
+      "source_location": "L7431",
       "_origin": "ast",
       "id": "server_ensurecodecloture",
-      "community": 11,
+      "community": 5,
       "norm_label": "ensurecodecloture()"
     },
     {
       "label": "insertTimeValidation()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7441",
+      "source_location": "L7439",
       "_origin": "ast",
       "id": "server_inserttimevalidation",
-      "community": 11,
+      "community": 5,
       "norm_label": "inserttimevalidation()"
     },
     {
       "label": "weekSignTargetFromNow()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7447",
+      "source_location": "L7445",
       "_origin": "ast",
       "id": "server_weeksigntargetfromnow",
       "community": 67,
@@ -12006,17 +12006,17 @@
       "label": "weekSignExpireMs()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7466",
+      "source_location": "L7464",
       "_origin": "ast",
       "id": "server_weeksignexpirems",
-      "community": 11,
+      "community": 5,
       "norm_label": "weeksignexpirems()"
     },
     {
       "label": "staffHasResponsableRole()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7472",
+      "source_location": "L7470",
       "_origin": "ast",
       "id": "server_staffhasresponsablerole",
       "community": 108,
@@ -12026,7 +12026,7 @@
       "label": "canAccessWeekValidation()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7483",
+      "source_location": "L7481",
       "_origin": "ast",
       "id": "server_canaccessweekvalidation",
       "community": 108,
@@ -12036,7 +12036,7 @@
       "label": "canEditWeekValidation()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7490",
+      "source_location": "L7488",
       "_origin": "ast",
       "id": "server_caneditweekvalidation",
       "community": 5,
@@ -12046,27 +12046,27 @@
       "label": "ensureWeekSignCode()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7494",
+      "source_location": "L7492",
       "_origin": "ast",
       "id": "server_ensureweeksigncode",
-      "community": 11,
+      "community": 5,
       "norm_label": "ensureweeksigncode()"
     },
     {
       "label": "regenerateWeekSignCode()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7519",
+      "source_location": "L7517",
       "_origin": "ast",
       "id": "server_regenerateweeksigncode",
-      "community": 11,
+      "community": 5,
       "norm_label": "regenerateweeksigncode()"
     },
     {
       "label": "validationEstabFilter()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7536",
+      "source_location": "L7534",
       "_origin": "ast",
       "id": "server_validationestabfilter",
       "community": 5,
@@ -12076,7 +12076,7 @@
       "label": "classifyCodeRefuse()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L7543",
+      "source_location": "L7541",
       "_origin": "ast",
       "id": "server_classifycoderefuse",
       "community": 5,
@@ -12086,7 +12086,7 @@
       "label": "formatShiftTime()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L8779",
+      "source_location": "L8777",
       "_origin": "ast",
       "id": "server_formatshifttime",
       "community": 5,
@@ -12096,7 +12096,7 @@
       "label": "formatDateFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L8786",
+      "source_location": "L8784",
       "_origin": "ast",
       "id": "server_formatdatefr",
       "community": 5,
@@ -12106,7 +12106,7 @@
       "label": "formatDateShortFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L8792",
+      "source_location": "L8790",
       "_origin": "ast",
       "id": "server_formatdateshortfr",
       "community": 5,
@@ -12116,7 +12116,7 @@
       "label": "formatWeekFR()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L8798",
+      "source_location": "L8796",
       "_origin": "ast",
       "id": "server_formatweekfr",
       "community": 5,
@@ -12126,7 +12126,7 @@
       "label": "touchLastUpdated()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L8806",
+      "source_location": "L8804",
       "_origin": "ast",
       "id": "server_touchlastupdated",
       "community": 5,
@@ -12136,7 +12136,7 @@
       "label": "nouveautesUserId()",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L8877",
+      "source_location": "L8875",
       "_origin": "ast",
       "id": "server_nouveautesuserid",
       "community": 108,
@@ -12146,7 +12146,7 @@
       "label": "DEPLOYED_COMMIT",
       "file_type": "code",
       "source_file": "server.js",
-      "source_location": "L8930",
+      "source_location": "L8928",
       "_origin": "ast",
       "id": "server_deployed_commit",
       "community": 5,
@@ -12399,7 +12399,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conges_test",
-      "community": 117,
+      "community": 80,
       "norm_label": "conges.test.js"
     },
     {
@@ -12409,7 +12409,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conges_test_test",
-      "community": 117,
+      "community": 80,
       "norm_label": "{ test }"
     },
     {
@@ -12419,7 +12419,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "tests_conges_test_assert",
-      "community": 117,
+      "community": 80,
       "norm_label": "assert"
     },
     {
@@ -12429,8 +12429,108 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "tests_conges_test_datesoverlap_congecoversdate_congedaysinrange",
-      "community": 117,
+      "community": 80,
       "norm_label": "{ datesoverlap, congecoversdate, congedaysinrange }"
+    },
+    {
+      "label": "critical-auth-security.test.js",
+      "file_type": "code",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "tests_critical_auth_security_test",
+      "community": 18,
+      "norm_label": "critical-auth-security.test.js"
+    },
+    {
+      "label": "{ test, before, after, beforeEach }",
+      "file_type": "code",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L7",
+      "_origin": "ast",
+      "id": "tests_critical_auth_security_test_test_before_after_beforeeach",
+      "community": 18,
+      "norm_label": "{ test, before, after, beforeeach }"
+    },
+    {
+      "label": "assert",
+      "file_type": "code",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L8",
+      "_origin": "ast",
+      "id": "tests_critical_auth_security_test_assert",
+      "community": 18,
+      "norm_label": "assert"
+    },
+    {
+      "label": "{ ObjectId }",
+      "file_type": "code",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L9",
+      "_origin": "ast",
+      "id": "tests_critical_auth_security_test_objectid",
+      "community": 18,
+      "norm_label": "{ objectid }"
+    },
+    {
+      "label": "{ hashToken }",
+      "file_type": "code",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L10",
+      "_origin": "ast",
+      "id": "tests_critical_auth_security_test_hashtoken",
+      "community": 18,
+      "norm_label": "{ hashtoken }"
+    },
+    {
+      "label": "{ makeDb }",
+      "file_type": "code",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L11",
+      "_origin": "ast",
+      "id": "tests_critical_auth_security_test_makedb",
+      "community": 18,
+      "norm_label": "{ makedb }"
+    },
+    {
+      "label": "{ app, startApp, stopApp, req }",
+      "file_type": "code",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "tests_critical_auth_security_test_app_startapp_stopapp_req",
+      "community": 18,
+      "norm_label": "{ app, startapp, stopapp, req }"
+    },
+    {
+      "label": "PATRON",
+      "file_type": "code",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L14",
+      "_origin": "ast",
+      "id": "tests_critical_auth_security_test_patron",
+      "community": 18,
+      "norm_label": "patron"
+    },
+    {
+      "label": "DIRECTEUR",
+      "file_type": "code",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L15",
+      "_origin": "ast",
+      "id": "tests_critical_auth_security_test_directeur",
+      "community": 18,
+      "norm_label": "directeur"
+    },
+    {
+      "label": "OBSERVATEUR",
+      "file_type": "code",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L21",
+      "_origin": "ast",
+      "id": "tests_critical_auth_security_test_observateur",
+      "community": 18,
+      "norm_label": "observateur"
     },
     {
       "label": "dispo-audit.test.js",
@@ -13519,7 +13619,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "helpers_harness_startapp",
-      "community": 42,
+      "community": 90,
       "norm_label": "startapp()"
     },
     {
@@ -13529,7 +13629,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "helpers_harness_stopapp",
-      "community": 90,
+      "community": 42,
       "norm_label": "stopapp()"
     },
     {
@@ -13539,7 +13639,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "helpers_harness_req",
-      "community": 29,
+      "community": 83,
       "norm_label": "req()"
     },
     {
@@ -13579,7 +13679,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_joker_color_test",
-      "community": 72,
+      "community": 90,
       "norm_label": "joker-color.test.js"
     },
     {
@@ -13589,7 +13689,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_joker_color_test_test_before_after_beforeeach",
-      "community": 72,
+      "community": 90,
       "norm_label": "{ test, before, after, beforeeach }"
     },
     {
@@ -13599,7 +13699,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "tests_joker_color_test_assert",
-      "community": 72,
+      "community": 90,
       "norm_label": "assert"
     },
     {
@@ -13609,7 +13709,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "tests_joker_color_test_jokergroupcolor",
-      "community": 72,
+      "community": 90,
       "norm_label": "jokergroupcolor"
     },
     {
@@ -13619,7 +13719,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "tests_joker_color_test_makedb",
-      "community": 72,
+      "community": 90,
       "norm_label": "{ makedb }"
     },
     {
@@ -13629,7 +13729,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_joker_color_test_app_startapp_stopapp_req",
-      "community": 72,
+      "community": 90,
       "norm_label": "{ app, startapp, stopapp, req }"
     },
     {
@@ -13639,7 +13739,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "tests_joker_color_test_patron",
-      "community": 72,
+      "community": 90,
       "norm_label": "patron"
     },
     {
@@ -13649,7 +13749,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "tests_joker_color_test_dir",
-      "community": 72,
+      "community": 90,
       "norm_label": "dir"
     },
     {
@@ -13659,7 +13759,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "tests_joker_color_test_obs",
-      "community": 72,
+      "community": 90,
       "norm_label": "obs"
     },
     {
@@ -14019,7 +14119,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "tests_manager_dispos_test_puttemplate",
-      "community": 29,
+      "community": 83,
       "norm_label": "puttemplate()"
     },
     {
@@ -14119,7 +14219,7 @@
       "source_location": "L292",
       "_origin": "ast",
       "id": "tests_manager_dispos_test_postonedispo",
-      "community": 29,
+      "community": 83,
       "norm_label": "postonedispo()"
     },
     {
@@ -14139,7 +14239,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_manager_off_test",
-      "community": 104,
+      "community": 80,
       "norm_label": "manager-off.test.js"
     },
     {
@@ -14149,7 +14249,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "tests_manager_off_test_test",
-      "community": 104,
+      "community": 80,
       "norm_label": "{ test }"
     },
     {
@@ -14159,7 +14259,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "tests_manager_off_test_assert",
-      "community": 104,
+      "community": 80,
       "norm_label": "assert"
     },
     {
@@ -14169,7 +14269,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_manager_off_test_validateoffperiod_scopemanageroff",
-      "community": 104,
+      "community": 80,
       "norm_label": "{ validateoffperiod, scopemanageroff }"
     },
     {
@@ -14179,7 +14279,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "tests_manager_off_test_offs",
-      "community": 104,
+      "community": 80,
       "norm_label": "offs"
     },
     {
@@ -14189,7 +14289,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "tests_manager_off_test_metabyid",
-      "community": 104,
+      "community": 80,
       "norm_label": "metabyid"
     },
     {
@@ -14199,7 +14299,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "tests_manager_off_test_canaccess",
-      "community": 104,
+      "community": 80,
       "norm_label": "canaccess()"
     },
     {
@@ -14209,7 +14309,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "tests_manager_off_test_names",
-      "community": 104,
+      "community": 80,
       "norm_label": "names()"
     },
     {
@@ -14409,7 +14509,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_perf_settings_test",
-      "community": 128,
+      "community": 83,
       "norm_label": "perf-settings.test.js"
     },
     {
@@ -14419,7 +14519,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "tests_perf_settings_test_test_before_after_beforeeach",
-      "community": 128,
+      "community": 83,
       "norm_label": "{ test, before, after, beforeeach }"
     },
     {
@@ -14429,7 +14529,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "tests_perf_settings_test_assert",
-      "community": 128,
+      "community": 83,
       "norm_label": "assert"
     },
     {
@@ -14439,7 +14539,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "tests_perf_settings_test_makedb",
-      "community": 128,
+      "community": 83,
       "norm_label": "{ makedb }"
     },
     {
@@ -14449,7 +14549,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_perf_settings_test_app_startapp_stopapp_req",
-      "community": 128,
+      "community": 83,
       "norm_label": "{ app, startapp, stopapp, req }"
     },
     {
@@ -14459,7 +14559,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "tests_perf_settings_test_patron",
-      "community": 128,
+      "community": 83,
       "norm_label": "patron"
     },
     {
@@ -14469,7 +14569,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "tests_perf_settings_test_observateur",
-      "community": 128,
+      "community": 83,
       "norm_label": "observateur"
     },
     {
@@ -14479,7 +14579,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "tests_perf_settings_test_directeur",
-      "community": 128,
+      "community": 83,
       "norm_label": "directeur"
     },
     {
@@ -14489,7 +14589,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "tests_perf_settings_test_staff",
-      "community": 128,
+      "community": 83,
       "norm_label": "staff"
     },
     {
@@ -14499,7 +14599,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "tests_perf_settings_test_patch",
-      "community": 29,
+      "community": 83,
       "norm_label": "patch()"
     },
     {
@@ -14509,7 +14609,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "tests_perf_settings_test_settingsof",
-      "community": 128,
+      "community": 83,
       "norm_label": "settingsof()"
     },
     {
@@ -14519,7 +14619,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_performance_simulate_test",
-      "community": 90,
+      "community": 104,
       "norm_label": "performance-simulate.test.js"
     },
     {
@@ -14529,7 +14629,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_performance_simulate_test_test_before_after_beforeeach",
-      "community": 90,
+      "community": 104,
       "norm_label": "{ test, before, after, beforeeach }"
     },
     {
@@ -14539,7 +14639,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "tests_performance_simulate_test_assert",
-      "community": 90,
+      "community": 104,
       "norm_label": "assert"
     },
     {
@@ -14549,7 +14649,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "tests_performance_simulate_test_objectid",
-      "community": 90,
+      "community": 104,
       "norm_label": "{ objectid }"
     },
     {
@@ -14559,7 +14659,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "tests_performance_simulate_test_makedb",
-      "community": 90,
+      "community": 104,
       "norm_label": "{ makedb }"
     },
     {
@@ -14569,7 +14669,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_performance_simulate_test_app_startapp_stopapp_req",
-      "community": 90,
+      "community": 104,
       "norm_label": "{ app, startapp, stopapp, req }"
     },
     {
@@ -14579,7 +14679,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "tests_performance_simulate_test_patron",
-      "community": 90,
+      "community": 104,
       "norm_label": "patron"
     },
     {
@@ -14589,7 +14689,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "tests_performance_simulate_test_staff_user",
-      "community": 90,
+      "community": 104,
       "norm_label": "staff_user"
     },
     {
@@ -14749,7 +14849,7 @@
       "source_location": "L159",
       "_origin": "ast",
       "id": "tests_planning_publication_test_seedresponsable",
-      "community": 10,
+      "community": 68,
       "norm_label": "seedresponsable()"
     },
     {
@@ -15549,7 +15649,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_utils_test",
-      "community": 80,
+      "community": 11,
       "norm_label": "utils.test.js"
     },
     {
@@ -15559,7 +15659,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_utils_test_test",
-      "community": 80,
+      "community": 11,
       "norm_label": "{ test }"
     },
     {
@@ -15569,7 +15669,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "tests_utils_test_assert",
-      "community": 80,
+      "community": 11,
       "norm_label": "assert"
     },
     {
@@ -15579,7 +15679,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "tests_utils_test_isvalidobjectid_hashtoken_normalizephone_computeactivedate_todatestr_weekstart_disposweekstart_isautopublished_isdatepublished_normalizepublishdoc_chargemultiplier_resolveperfsettings_derivestaffhourlystat_wagelineforshift_buildperformancesimulation_datescoveredbyperiods_dispodeadlinewaived_forceopenactive_shouldmaterializetemplate_buildtemplatedispos_classifydirectorlinks",
-      "community": 80,
+      "community": 11,
       "norm_label": "{\r\n    isvalidobjectid,\r\n    hashtoken,\r\n    normalizephone,\r\n    computeactivedate,\r\n    todatestr,\r\n    weekstart,\r\n    disposweekstart,\r\n    isautopublished,\r\n    isdatepublished,\r\n    normalizepublishdoc,\r\n    chargemultiplier,\r\n    resolveperfsettings,\r\n    derivestaffhourlystat,\r\n    wagelineforshift,\r\n    buildperformancesimulation,\r\n    datescoveredbyperiods,\r\n    dispodeadlinewaived, forceopenactive,\r\n    shouldmaterializetemplate,\r\n    buildtemplatedispos,\r\n    classifydirectorlinks,\r\n}"
     },
     {
@@ -15589,7 +15689,7 @@
       "source_location": "L503",
       "_origin": "ast",
       "id": "tests_utils_test_tplv2",
-      "community": 80,
+      "community": 11,
       "norm_label": "_tplv2"
     },
     {
@@ -15599,7 +15699,7 @@
       "source_location": "L635",
       "_origin": "ast",
       "id": "tests_utils_test_ven13",
-      "community": 80,
+      "community": 11,
       "norm_label": "ven13"
     },
     {
@@ -15609,7 +15709,7 @@
       "source_location": "L679",
       "_origin": "ast",
       "id": "tests_utils_test_dir",
-      "community": 80,
+      "community": 11,
       "norm_label": "dir()"
     },
     {
@@ -15619,7 +15719,7 @@
       "source_location": "L680",
       "_origin": "ast",
       "id": "tests_utils_test_prof",
-      "community": 80,
+      "community": 11,
       "norm_label": "prof()"
     },
     {
@@ -19621,7 +19721,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 20,
+      "community": 72,
       "norm_label": "github actions ci workflow",
       "id": "ci_ci"
     },
@@ -19634,7 +19734,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 20,
+      "community": 72,
       "norm_label": "ci syntax check (node -c)",
       "id": "ci_syntax_check"
     },
@@ -19647,7 +19747,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 20,
+      "community": 72,
       "norm_label": "node 20/22 test matrix",
       "id": "ci_node_matrix"
     },
@@ -19686,7 +19786,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 82,
+      "community": 72,
       "norm_label": "server.js (serveur express monolithique)",
       "id": "readme_server_js"
     },
@@ -19699,7 +19799,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 20,
+      "community": 72,
       "norm_label": "script.js (logique patron monolithique)",
       "id": "readme_script_js"
     },
@@ -19712,7 +19812,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 20,
+      "community": 101,
       "norm_label": "lib/utils.js (helpers purs)",
       "id": "readme_lib_utils"
     },
@@ -19946,7 +20046,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 101,
+      "community": 20,
       "norm_label": "service worker / pwa (cache first, build_time)",
       "id": "architecture_service_worker"
     },
@@ -20011,7 +20111,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 20,
+      "community": 109,
       "norm_label": "synchronisation agenda \u2014 flux ical (d-72)",
       "id": "architecture_ical_feed"
     },
@@ -20024,7 +20124,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 20,
+      "community": 109,
       "norm_label": "flag calendar_enabled (ical desactive d-83)",
       "id": "architecture_calendar_enabled_flag"
     },
@@ -20063,7 +20163,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 62,
+      "community": 72,
       "norm_label": "f-05 echange de shifts (desactive)",
       "id": "backlog_f05_shift_swaps"
     },
@@ -20076,7 +20176,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 20,
+      "community": 109,
       "norm_label": "f-09 abonnement agenda ical",
       "id": "backlog_f09_ical"
     },
@@ -20102,7 +20202,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 82,
+      "community": 72,
       "norm_label": "r-04 decoupage server.js en routers (reporte)",
       "id": "backlog_r04_split_server"
     },
@@ -20141,7 +20241,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 62,
+      "community": 72,
       "norm_label": "pieges blocs /* f-05 desactive */ (d-47)",
       "id": "backlog_f05_blocks_trap"
     },
@@ -20154,7 +20254,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 20,
       "norm_label": "prd \u2014 templyo",
       "id": "prd_prd"
     },
@@ -20180,7 +20280,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 20,
       "norm_label": "disponibilites staff & patron",
       "id": "prd_dispos"
     },
@@ -20193,7 +20293,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 20,
       "norm_label": "performance \u2014 pilotage economique",
       "id": "prd_performance"
     },
@@ -20206,7 +20306,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 20,
       "norm_label": "pointage avance (heures reelles)",
       "id": "prd_pointage"
     },
@@ -20310,7 +20410,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 20,
       "norm_label": "performance.html (pilotage economique)",
       "id": "performance_performance_html"
     },
@@ -20336,7 +20436,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 20,
       "norm_label": "pointage.html (compte etablissement)",
       "id": "pointage_pointage_html"
     },
@@ -21351,6 +21451,17 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "lib_utils",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "tests/dispo-audit.test.js",
       "source_location": "L15",
       "weight": 1.0,
@@ -21588,6 +21699,17 @@
       "confidence_score": 1.0,
       "source": "server",
       "target": "lib_utils_hashtoken"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "lib_utils_hashtoken",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -46456,6 +46578,173 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "helpers_fake_db",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "helpers_fake_db_makedb",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "helpers_harness",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "helpers_harness_app",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "helpers_harness_req",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "helpers_harness_startapp",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "helpers_harness_stopapp",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "tests_critical_auth_security_test_app_startapp_stopapp_req",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "tests_critical_auth_security_test_assert",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "tests_critical_auth_security_test_directeur",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "tests_critical_auth_security_test_hashtoken",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "tests_critical_auth_security_test_makedb",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "tests_critical_auth_security_test_objectid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "tests_critical_auth_security_test_observateur",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "tests_critical_auth_security_test_patron",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/critical-auth-security.test.js",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "tests_critical_auth_security_test",
+      "target": "tests_critical_auth_security_test_test_before_after_beforeeach",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "tests/dispo-audit.test.js",
       "source_location": "L16",
       "weight": 1.0,
@@ -56038,5 +56327,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "3519e52a5d6287b9967e2b7a45ccb879fbb6a745"
+  "built_at_commit": "c3562243e7628a6c17d0bb1f9ff0f983c9861517"
 }

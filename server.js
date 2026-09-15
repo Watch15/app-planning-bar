@@ -1522,6 +1522,9 @@ app.patch('/auth/reset-password', checkDB, async (req, res) => {
             { _id: user._id },
             { $set: { password_hash: hash, active: true }, $unset: { reset_token: '', reset_expires: '' } }
         );
+        // Un changement de mot de passe doit révoquer toutes les sessions existantes :
+        // sinon une session volée reste valable malgré la récupération du compte.
+        await invalidateUserSessions(user._id);
         res.json({ message: 'Mot de passe mis à jour, tu peux te connecter' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
@@ -1574,18 +1577,15 @@ app.post('/auth/forgot-password', checkDB, async (req, res) => {
                 }}
             );
 
-            let manual = false;
             try {
                 // Message court : 1 segment SMS = 1 seul tarif Twilio (< 160 chars)
                 await sendSMS(normalizePhone(phone), 'Templyo - Nouveau mot de passe :\n' + link);
             } catch (smsErr) {
                 console.error('❌ Reset SMS failed:', smsErr.message);
-                manual = true;
             }
-            return res.json({
-                message: 'Si ce numéro existe, un SMS a été envoyé.',
-                ...(manual && { link, manual: true }),
-            });
+            // Ne jamais renvoyer le token depuis cette route publique, même si l'envoi
+            // échoue ou si OUTBOUND_ENABLED=false : ce serait une prise de contrôle directe.
+            return res.json({ message: 'Si ce numéro existe, un SMS a été envoyé.' });
         }
 
         // ── Envoi par email ────────────────────────────────────────────────────
@@ -1595,18 +1595,16 @@ app.post('/auth/forgot-password', checkDB, async (req, res) => {
             '<p><a href="' + link + '" style="background:#1a1a2e;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;display:inline-block;margin:16px 0">Réinitialiser mon mot de passe</a></p>' +
             '<p style="color:#999;font-size:12px">Ce lien expire dans 1h.</p>';
 
-        let manual = false;
         try {
             await sendEmail(email, 'Réinitialisation de ton mot de passe', html);
         } catch (mailErr) {
             console.error('❌ Reset email failed:', mailErr.message);
-            manual = true;
         }
 
-        res.json({
-            message: 'Si cet email existe, un lien a été envoyé.',
-            ...(manual && { link, manual: true }),
-        });
+        // Même réponse générique en cas de succès, d'échec ou d'envois désactivés.
+        // Le lien de récupération ne doit être visible que dans le canal possédé par
+        // l'utilisateur (boîte mail/SMS), jamais dans la réponse HTTP publique.
+        res.json({ message: 'Si cet email existe, un lien a été envoyé.' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
@@ -1937,7 +1935,7 @@ app.patch('/api/users/:id/role', checkDB, requirePatronOnly, async (req, res) =>
 });
 
 // Assigner des établissements à un directeur (patron admin uniquement)
-app.patch('/api/users/:id/establishments', checkDB, requireAdmin, async (req, res) => {
+app.patch('/api/users/:id/establishments', checkDB, requirePatronOnly, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const { assigned_establishments } = req.body;
     if (!Array.isArray(assigned_establishments)) return res.status(400).json({ error: 'assigned_establishments (tableau) requis' });
@@ -1956,7 +1954,7 @@ app.patch('/api/users/:id/establishments', checkDB, requireAdmin, async (req, re
 });
 
 // Reset mot de passe par le patron
-app.patch('/api/users/:id/reset-password', checkDB, requirePatron, async (req, res) => {
+app.patch('/api/users/:id/reset-password', checkDB, requirePatronOnly, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const { password } = req.body;
     if (!password || password.length < 8) return res.status(400).json({ error: 'Minimum 8 caractères' });
@@ -1974,7 +1972,7 @@ app.patch('/api/users/:id/reset-password', checkDB, requirePatron, async (req, r
 });
 
 // Régénère un lien d'activation pour un compte non activé (sans envoi automatique)
-app.post('/api/users/:id/invite-link', checkDB, requirePatron, async (req, res) => {
+app.post('/api/users/:id/invite-link', checkDB, requirePatronOnly, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     try {
         const user = await db.collection('users').findOne({ _id: new ObjectId(req.params.id) });
@@ -1990,7 +1988,7 @@ app.post('/api/users/:id/invite-link', checkDB, requirePatron, async (req, res) 
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-app.delete('/api/users/:id', checkDB, requirePatron, async (req, res) => {
+app.delete('/api/users/:id', checkDB, requirePatronOnly, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     try {
         // R-12 — lire le compte AVANT de le supprimer : c'est le seul lien vers son profil.
@@ -2318,7 +2316,7 @@ app.patch('/api/establishments/:id', checkDB, requireAdmin, async (req, res) => 
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-app.delete('/api/establishments/:id', checkDB, requireAdmin, async (req, res) => {
+app.delete('/api/establishments/:id', checkDB, requirePatronOnly, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     try {
         const estab = await db.collection('establishments').findOne({ _id: new ObjectId(req.params.id) });
@@ -2581,7 +2579,7 @@ app.patch('/api/staff/:id/archive', checkDB, requirePatron, async (req, res) => 
 // tout le monde. Le patron construisait son planning sans voir ces congés.
 // Le compte est DÉLIÉ (staff_id: null) et non supprimé : la personne garde son accès, et
 // l'absence de profil est visible dans « Comptes » au lieu d'être un lien mort silencieux.
-app.delete('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
+app.delete('/api/staff/:id', checkDB, requirePatronOnly, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     try {
         const result = await db.collection('staff').deleteOne({ _id: new ObjectId(req.params.id) });
@@ -6218,7 +6216,7 @@ app.post('/api/roles', checkDB, requirePatron, async (req, res) => {
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-app.delete('/api/roles/:id', checkDB, requirePatron, async (req, res) => {
+app.delete('/api/roles/:id', checkDB, requirePatronOnly, async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     try {
         await db.collection('roles').deleteOne({ _id: new ObjectId(req.params.id) });

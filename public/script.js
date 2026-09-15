@@ -5027,7 +5027,9 @@ async function renderEstablishmentsList() {
                 (hasTimeTracking
                     ? '<button class="staff-manage-save" data-action="compte" style="background:#f0effe;border-color:#7F77DD;color:#534AB7" title="Créer/voir compte pointage">Compte</button>'
                     : '') +
-                '<button class="staff-manage-delete" data-action="delete" title="Supprimer">×</button>';
+                (currentUser.role === 'patron'
+                    ? '<button class="staff-manage-delete" data-action="delete" title="Supprimer">×</button>'
+                    : '');
 
             // Toggle groupes établissement
             row.querySelectorAll('.estab-group-btn').forEach(btn => {
@@ -5077,22 +5079,25 @@ async function renderEstablishmentsList() {
             const compteBtn = row.querySelector('[data-action="compte"]');
             if (compteBtn) compteBtn.addEventListener('click', () => openCompteEtabModal(e));
 
-            row.querySelector('[data-action="delete"]').addEventListener('click', () => {
-                showConfirm(
-                    'Supprimer <strong>' + e.name + '</strong> ?<br><span style="color:#e74c3c;font-size:12px">Tous les shifts de cet établissement seront supprimés.</span>',
-                    async () => {
-                        try {
-                            const r = await fetch('/api/establishments/' + e._id, { credentials: 'include', method: 'DELETE' });
-                            const d = await r.json();
-                            if (!r.ok) throw new Error(d.error);
-                            allEstablishments = allEstablishments.filter(x => String(x._id) !== String(e._id) && x.id !== e.id);
-                            renderTabs(allEstablishments);
-                            await renderEstablishmentsList();
-                            showToast(e.name + ' supprimé');
-                        } catch (err) { showToast(err.message, true); }
-                    }
-                );
-            });
+            const deleteBtn = row.querySelector('[data-action="delete"]');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', () => {
+                    showConfirm(
+                        'Supprimer <strong>' + e.name + '</strong> ?<br><span style="color:#e74c3c;font-size:12px">Tous les shifts de cet établissement seront supprimés.</span>',
+                        async () => {
+                            try {
+                                const r = await fetch('/api/establishments/' + e._id, { credentials: 'include', method: 'DELETE' });
+                                const d = await r.json();
+                                if (!r.ok) throw new Error(d.error);
+                                allEstablishments = allEstablishments.filter(x => String(x._id) !== String(e._id) && x.id !== e.id);
+                                renderTabs(allEstablishments);
+                                await renderEstablishmentsList();
+                                showToast(e.name + ' supprimé');
+                            } catch (err) { showToast(err.message, true); }
+                        }
+                    );
+                });
+            }
 
             list.appendChild(row);
         });
@@ -5254,14 +5259,18 @@ async function renderAccountsList() {
                     (isP && currentUser.role === 'patron'
                         ? '<button type="button" class="staff-manage-save" data-action="assign-bars" style="background:#f0effe;border-color:#7F77DD;color:#534AB7">Bars</button>'
                         : '') +
-                    '<button type="button" class="staff-manage-save" data-action="reset">' +
-                        '<span class="sm-label-long">Reset mdp</span>' +
-                        '<span class="sm-label-short" aria-hidden="true">Mdp</span>' +
-                    '</button>' +
-                    '<button type="button" class="staff-manage-delete" data-action="delete" title="Supprimer" aria-label="Supprimer">×</button>' +
+                    (currentUser.role === 'patron'
+                        ? '<button type="button" class="staff-manage-save" data-action="reset">' +
+                            '<span class="sm-label-long">Reset mdp</span>' +
+                            '<span class="sm-label-short" aria-hidden="true">Mdp</span>' +
+                          '</button>' +
+                          '<button type="button" class="staff-manage-delete" data-action="delete" title="Supprimer" aria-label="Supprimer">×</button>'
+                        : '') +
                 '</div>';
-            row.querySelector('[data-action="reset"]').addEventListener('click',  () => patronResetPassword(user._id, user.name || user.email));
-            row.querySelector('[data-action="delete"]').addEventListener('click', () => deleteAccount(user._id, user.name || user.email));
+            const resetBtn = row.querySelector('[data-action="reset"]');
+            if (resetBtn) resetBtn.addEventListener('click', () => patronResetPassword(user._id, user.name || user.email));
+            const deleteBtn = row.querySelector('[data-action="delete"]');
+            if (deleteBtn) deleteBtn.addEventListener('click', () => deleteAccount(user._id, user.name || user.email));
             if (currentUser.role === 'patron' && String(user._id) !== currentUser._id) {
                 row.querySelector('[data-action="change-role"]').addEventListener('click', () => openChangeRoleModal(user));
             }
@@ -5349,12 +5358,14 @@ async function renderPendingInvites() {
             row.innerHTML =
                 '<span class="staff-manage-dot" style="background:' + escapeHtml(color) + '"></span>' +
                 nameBlock +
-                '<div class="staff-manage-actions">' +
-                    '<button type="button" class="staff-manage-save btn-copy-invite-link" style="background:#f0effe;border-color:var(--accent);color:var(--accent)">' +
-                        '<span class="sm-label-long">Copier le lien</span>' +
-                        '<span class="sm-label-short" aria-hidden="true">Lien</span>' +
-                    '</button>' +
-                '</div>';
+                (currentUser.role === 'patron'
+                    ? '<div class="staff-manage-actions">' +
+                        '<button type="button" class="staff-manage-save btn-copy-invite-link" style="background:#f0effe;border-color:var(--accent);color:var(--accent)">' +
+                            '<span class="sm-label-long">Copier le lien</span>' +
+                            '<span class="sm-label-short" aria-hidden="true">Lien</span>' +
+                        '</button>' +
+                      '</div>'
+                    : '');
 
             const emailBtn = row.querySelector('.btn-copy-email');
             if (emailBtn) emailBtn.addEventListener('click', () => {
@@ -5365,23 +5376,25 @@ async function renderPendingInvites() {
                 navigator.clipboard.writeText(user.phone).then(() => showToast('Numéro copié'));
             });
             const linkBtnEl = row.querySelector('.btn-copy-invite-link');
-            linkBtnEl.addEventListener('click', async () => {
-                linkBtnEl.disabled    = true;
-                const original        = linkBtnEl.innerHTML;
-                linkBtnEl.textContent = '…';
-                try {
-                    const r = await fetch('/api/users/' + user._id + '/invite-link', { method: 'POST', credentials: 'include' });
-                    const data = await r.json();
-                    if (!r.ok) throw new Error(data.error);
-                    await navigator.clipboard.writeText(data.link);
-                    showToast('Lien d\'activation copié');
-                } catch (err) {
-                    showToast(err.message || 'Erreur', true);
-                } finally {
-                    linkBtnEl.disabled = false;
-                    linkBtnEl.innerHTML = original;
-                }
-            });
+            if (linkBtnEl) {
+                linkBtnEl.addEventListener('click', async () => {
+                    linkBtnEl.disabled    = true;
+                    const original        = linkBtnEl.innerHTML;
+                    linkBtnEl.textContent = '…';
+                    try {
+                        const r = await fetch('/api/users/' + user._id + '/invite-link', { method: 'POST', credentials: 'include' });
+                        const data = await r.json();
+                        if (!r.ok) throw new Error(data.error);
+                        await navigator.clipboard.writeText(data.link);
+                        showToast('Lien d\'activation copié');
+                    } catch (err) {
+                        showToast(err.message || 'Erreur', true);
+                    } finally {
+                        linkBtnEl.disabled = false;
+                        linkBtnEl.innerHTML = original;
+                    }
+                });
+            }
 
             list.appendChild(row);
         });
@@ -8443,19 +8456,24 @@ function renderRolesList() {
                     (role.type === 'responsable' ? 'Responsable' : 'Informatif') +
                 '</span>' +
                 '<span style="flex:1;font-size:13px;font-weight:600;color:#333">' + escapeHtml(role.name) + '</span>' +
-                '<button class="staff-manage-delete" data-id="' + escapeHtml(role._id) + '">×</button>';
-            row.querySelector('.staff-manage-delete').addEventListener('click', () => {
-                showConfirm('Supprimer le rôle <strong>' + escapeHtml(role.name) + '</strong> ?', async () => {
-                    try {
-                        const res = await fetch('/api/roles/' + role._id, { credentials: 'include', method: 'DELETE' });
-                        if (!res.ok) throw new Error((await res.json()).error);
-                        await loadRoles();
-                        renderRolesList();
-                        renderStaffManageList();
-                        showToast('Rôle supprimé');
-                    } catch (e) { showToast(e.message, true); }
+                (currentUser.role === 'patron'
+                    ? '<button class="staff-manage-delete" data-id="' + escapeHtml(role._id) + '">×</button>'
+                    : '');
+            const deleteBtn = row.querySelector('.staff-manage-delete');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', () => {
+                    showConfirm('Supprimer le rôle <strong>' + escapeHtml(role.name) + '</strong> ?', async () => {
+                        try {
+                            const res = await fetch('/api/roles/' + role._id, { credentials: 'include', method: 'DELETE' });
+                            if (!res.ok) throw new Error((await res.json()).error);
+                            await loadRoles();
+                            renderRolesList();
+                            renderStaffManageList();
+                            showToast('Rôle supprimé');
+                        } catch (e) { showToast(e.message, true); }
+                    });
                 });
-            });
+            }
             list.appendChild(row);
         });
     }
@@ -8909,7 +8927,9 @@ function renderStaffManageList() {
                         ? '<span class="sm-label-long">Réactiver</span><span class="sm-label-short" aria-hidden="true">Réact.</span>'
                         : '<span class="sm-label-long">Archiver</span><span class="sm-label-short" aria-hidden="true">Archiv.</span>') +
                 '</button>' +
-                '<button type="button" class="staff-manage-delete" title="Supprimer" aria-label="Supprimer">×</button>' +
+                (currentUser.role === 'patron'
+                    ? '<button type="button" class="staff-manage-delete" title="Supprimer" aria-label="Supprimer">×</button>'
+                    : '') +
             '</div>';
 
         if (staff.archived) row.classList.add('is-archived');
@@ -9091,26 +9111,29 @@ function renderStaffManageList() {
         });
 
         // Supprimer
-        row.querySelector('.staff-manage-delete').addEventListener('click', () => {
-            showConfirm('Supprimer <strong>' + staff.name + '</strong> ? Tous ses shifts seront supprimés.'
-                + '<br><br>Pour retirer une personne de l\'équipe <strong>en gardant ses heures</strong>, utilise plutôt « Archiver ».', async () => {
-                try {
-                    const res = await fetch('/api/staff/' + staff._id, { method: 'DELETE', credentials: 'include' });
-                    if (!res.ok) throw new Error((await res.json()).error);
+        const deleteBtn = row.querySelector('.staff-manage-delete');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => {
+                showConfirm('Supprimer <strong>' + staff.name + '</strong> ? Tous ses shifts seront supprimés.'
+                    + '<br><br>Pour retirer une personne de l\'équipe <strong>en gardant ses heures</strong>, utilise plutôt « Archiver ».', async () => {
+                    try {
+                        const res = await fetch('/api/staff/' + staff._id, { method: 'DELETE', credentials: 'include' });
+                        if (!res.ok) throw new Error((await res.json()).error);
 
-                    allStaff = allStaff.filter(s => s._id !== staff._id);
-                    buildStaffDisplayNames();
-                    currentShifts  = currentShifts.filter(s => s.staff_id !== staff._id);
-                    displayedStaff = displayedStaff.filter(s => s._id !== staff._id);
+                        allStaff = allStaff.filter(s => s._id !== staff._id);
+                        buildStaffDisplayNames();
+                        currentShifts  = currentShifts.filter(s => s.staff_id !== staff._id);
+                        displayedStaff = displayedStaff.filter(s => s._id !== staff._id);
 
-                    renderSidebar();
-                    renderStaffManageList();
-                    renderBody();
-                    renderStats();
-                    showToast(staff.name + ' supprimé');
-                } catch (e) { showToast(e.message || 'Erreur suppression', true); }
+                        renderSidebar();
+                        renderStaffManageList();
+                        renderBody();
+                        renderStats();
+                        showToast(staff.name + ' supprimé');
+                    } catch (e) { showToast(e.message || 'Erreur suppression', true); }
+                });
             });
-        });
+        }
 
         list.appendChild(row);
     });

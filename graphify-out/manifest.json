@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "server.js": {
-    "mtime": 1789482349.0837603,
-    "ast_hash": "70e1b0a13d5b6caf62ec8d1868bda605",
+    "mtime": 1789487344.7347002,
+    "ast_hash": "fbee0f4269bb30a06e44edde4cfa9dc4",
     "semantic_hash": ""
   },
   "tests/routes.test.js": {
@@ -502,6 +502,11 @@
   "tests/feature-entitlements.test.js": {
     "mtime": 1789481941.192947,
     "ast_hash": "d684aabec2a8010742f7263a3f22758d",
+    "semantic_hash": ""
+  },
+  "tests/critical-auth-security.test.js": {
+    "mtime": 1789487369.94439,
+    "ast_hash": "b24b5fb2b9874cf818ff6d7bee9a8da5",
     "semantic_hash": ""
   }
 }
