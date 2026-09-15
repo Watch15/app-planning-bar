@@ -130,6 +130,18 @@ function displayName(staffId, fallbackName) {
     return n.split(/\s+/)[0] || n;
 }
 
+// Affichage lisible FR (+33), BE (+32) et CH (+41) ; sinon brut.
+function formatPhoneDisplay(phoneRaw) {
+    if (!phoneRaw) return '';
+    if (/^\+33\d{9}$/.test(phoneRaw))
+        return '+33 ' + phoneRaw[3] + ' ' + phoneRaw.slice(4).replace(/(\d{2})(?=\d)/g, '$1 ');
+    if (/^\+32\d{8,9}$/.test(phoneRaw))
+        return '+32 ' + phoneRaw.slice(3).replace(/(\d{2,3})(?=\d)/, '$1 ').replace(/(\d{2})(?=\d)/g, '$1 ');
+    if (/^\+41\d{9}$/.test(phoneRaw))
+        return '+41 ' + phoneRaw.slice(3, 5) + ' ' + phoneRaw.slice(5).replace(/(\d{3})(\d{2})(\d{2})$/, '$1 $2 $3');
+    return phoneRaw;
+}
+
 function normalizeStr(str) {
     if (!str) return '';
     return str.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -5231,12 +5243,7 @@ async function renderAccountsList() {
             else             { statusLabel = user.active ? 'Actif' : 'Invitation envoyée'; statusBadge = user.active ? 'linked' : 'unlinked'; }
 
             const phoneRaw = user.phone || '';
-            const phoneDisplay = (() => {
-                if (!phoneRaw) return '';
-                if (/^\+33\d{9}$/.test(phoneRaw))
-                    return '+33 ' + phoneRaw[3] + ' ' + phoneRaw.slice(4).replace(/(\d{2})(?=\d)/g, '$1 ');
-                return phoneRaw;
-            })();
+            const phoneDisplay = formatPhoneDisplay(phoneRaw);
             const coordsParts = [
                 user.email    ? '📧 ' + escapeHtml(user.email)        : '',
                 phoneDisplay  ? '📱 ' + escapeHtml(phoneDisplay)       : '',
@@ -5313,12 +5320,7 @@ async function renderPendingInvites() {
             const color = sm ? sm.color : '#888';
 
             const phoneRaw = user.phone || '';
-            const phoneDisplay = (() => {
-                if (!phoneRaw) return '';
-                if (/^\+33\d{9}$/.test(phoneRaw))
-                    return '+33 ' + phoneRaw[3] + ' ' + phoneRaw.slice(4).replace(/(\d{2})(?=\d)/g, '$1 ');
-                return phoneRaw;
-            })();
+            const phoneDisplay = formatPhoneDisplay(phoneRaw);
 
             const createdLabel = (() => {
                 if (!user.created_at) return '';

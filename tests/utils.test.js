@@ -120,6 +120,40 @@ test('normalizePhone gère "+33(0)6..." (format copié depuis certains annuaires
     assert.equal(normalizePhone('+33(0)612345678'), '+33612345678');
 });
 
+test('normalizePhone Belgique : mobile local 047x → +32', () => {
+    assert.equal(normalizePhone('0470123456'), '+32470123456');
+    assert.equal(normalizePhone('0470 12 34 56'), '+32470123456');
+    assert.equal(normalizePhone('0485 12 34 56'), '+32485123456');
+    assert.equal(normalizePhone('0499 88 77 66'), '+32499887766');
+});
+
+test('normalizePhone Belgique : formats internationaux', () => {
+    assert.equal(normalizePhone('+32470123456'), '+32470123456');
+    assert.equal(normalizePhone('+32 470 12 34 56'), '+32470123456');
+    assert.equal(normalizePhone('0032470123456'), '+32470123456');
+    assert.equal(normalizePhone('+32(0)470123456'), '+32470123456');
+    assert.equal(normalizePhone('+320470123456'), '+32470123456'); // trunk 0 oublié
+});
+
+test('normalizePhone Suisse : formats internationaux (+41 obligatoire en local)', () => {
+    assert.equal(normalizePhone('+41791234567'), '+41791234567');
+    assert.equal(normalizePhone('+41 79 123 45 67'), '+41791234567');
+    assert.equal(normalizePhone('0041791234567'), '+41791234567');
+    assert.equal(normalizePhone('+41(0)791234567'), '+41791234567');
+    assert.equal(normalizePhone('+410791234567'), '+41791234567'); // trunk 0 oublié
+});
+
+test('normalizePhone Suisse : un 07 local reste FR (ambiguïté CH/FR)', () => {
+    // Sans indicatif, 07xxxxxxxx est le mobile français historique — la Suisse doit
+    // passer par +41 / 0041 pour éviter d'écraser les comptes FR existants.
+    assert.equal(normalizePhone('0791234567'), '+33791234567');
+});
+
+test('normalizePhone refuse une longueur BE/CH incohérente', () => {
+    assert.equal(normalizePhone('+32470'), null);
+    assert.equal(normalizePhone('+4179123'), null);
+});
+
 test('normalizePhone retourne null pour un numéro invalide', () => {
     assert.equal(normalizePhone('12345'), null);
     assert.equal(normalizePhone('abcdef'), null);
