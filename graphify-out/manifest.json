@@ -1,7 +1,7 @@
 {
   "lib/utils.js": {
-    "mtime": 1789059096.641121,
-    "ast_hash": "02939069fe4d4366f06815d1b6655283",
+    "mtime": 1789488512.2453685,
+    "ast_hash": "1940b728d5eee57ca45fa50e98d0c29a",
     "semantic_hash": ""
   },
   "package.json": {
@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "public/script.js": {
-    "mtime": 1789482006.818424,
-    "ast_hash": "fc5da35e96fa8c42666b3e78d3f2491a",
+    "mtime": 1789488533.2198174,
+    "ast_hash": "c18c2037c118b90ed76fb7a6f83daf01",
     "semantic_hash": ""
   },
   "public/sw.js": {
@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "server.js": {
-    "mtime": 1789487344.7347002,
-    "ast_hash": "fbee0f4269bb30a06e44edde4cfa9dc4",
+    "mtime": 1789488096.2624419,
+    "ast_hash": "84c20b2ab36ac2bd3229d0b458693ae9",
     "semantic_hash": ""
   },
   "tests/routes.test.js": {
@@ -85,8 +85,8 @@
     "semantic_hash": ""
   },
   "tests/utils.test.js": {
-    "mtime": 1789031214.2167542,
-    "ast_hash": "1d17a2c27e6de941358509f6fc6c9f6f",
+    "mtime": 1789488512.2443676,
+    "ast_hash": "f7ed7c0d5393d54379e0bd373b31ab1e",
     "semantic_hash": ""
   },
   "tests/week.test.js": {
@@ -125,13 +125,13 @@
     "semantic_hash": ""
   },
   "public/index.html": {
-    "mtime": 1789481981.9949236,
-    "ast_hash": "20912dbbac7d0c9298905f3fe00b3f7b",
+    "mtime": 1789488521.3217485,
+    "ast_hash": "3abb2516ca6633eae992ebd9aa556435",
     "semantic_hash": ""
   },
   "public/login.html": {
-    "mtime": 1781250746.2460775,
-    "ast_hash": "827bab3eab377a86a7c40e23e29b8ac8",
+    "mtime": 1789488519.5423248,
+    "ast_hash": "9f65cc90f5a34f3e944218c69dc5dd50",
     "semantic_hash": ""
   },
   "public/performance.html": {
@@ -190,8 +190,8 @@
     "semantic_hash": ""
   },
   "public/login.js": {
-    "mtime": 1786354559.9325109,
-    "ast_hash": "863b47738e67266aedda242b56519211",
+    "mtime": 1789488174.7836792,
+    "ast_hash": "80766031322b16ef00659a34adea9854",
     "semantic_hash": ""
   },
   "docs/onboarding.md": {
@@ -295,8 +295,8 @@
     "semantic_hash": ""
   },
   "public/lib/auth-guard.js": {
-    "mtime": 1786354559.930511,
-    "ast_hash": "9b6b81888813973344d820883f8c90c4",
+    "mtime": 1789488233.2833495,
+    "ast_hash": "d65f44262e92e4d142bce9f0b06322f3",
     "semantic_hash": ""
   },
   "tests/auth-guard.test.js": {
@@ -330,8 +330,8 @@
     "semantic_hash": ""
   },
   "tests/planning-publication.test.js": {
-    "mtime": 1789140350.99253,
-    "ast_hash": "36cebbad7eb6035b394299fdb9480bd5",
+    "mtime": 1789489100.1826847,
+    "ast_hash": "cc23cd1a6f0c72855d998c4e71ae6fd4",
     "semantic_hash": ""
   },
   "scripts/seed-demo.js": {
@@ -507,6 +507,11 @@
   "tests/critical-auth-security.test.js": {
     "mtime": 1789487369.94439,
     "ast_hash": "b24b5fb2b9874cf818ff6d7bee9a8da5",
+    "semantic_hash": ""
+  },
+  "tests/invite-link-reuse.test.js": {
+    "mtime": 1789488177.9909687,
+    "ast_hash": "2848674d62a75c040ccfb5ee36639dca",
     "semantic_hash": ""
   }
 }

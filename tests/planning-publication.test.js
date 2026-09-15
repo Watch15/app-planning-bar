@@ -25,8 +25,18 @@ const N1   = toDateStr(weekStart(new Date(Date.now() + 7 * 864e5)));
 const N2   = toDateStr(weekStart(new Date(Date.now() + 14 * 864e5)));
 const day  = (monday, i) => toDateStr(new Date(new Date(monday + 'T12:00:00').getTime() + i * 864e5));
 
-before(startApp);
-after(stopApp);
+// D-101 est une feature client gatée (`predefined_slots`, profil castaniu). Les tests
+// `slot_offer` ci-dessous décrivent le comportement QUAND elle est active ; le cas où
+// elle est éteinte a sa propre suite (`jokers-open-week.test.js`). Sans ce `force`, le
+// profil par défaut la désactive et ces tests décriraient une autre instance que la leur.
+before(async () => {
+    process.env.FEATURE_PREDEFINED_SLOTS = 'force';
+    await startApp();
+});
+after(() => {
+    delete process.env.FEATURE_PREDEFINED_SLOTS;
+    stopApp();
+});
 
 const shift = (date, estab = 'bar1', extra = {}) => ({
     staff_id: STAFF_ID, staff_name: 'Bob', establishment_id: estab, date,
