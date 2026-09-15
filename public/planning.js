@@ -362,7 +362,7 @@ async function init() {
     // Vérifier si le staff est responsable de soirée ce soir → onglet Pointage
     // Avant l'heure de bascule (ex: 9h) on considère encore la date "d'hier" pour
     // que le responsable puisse pointer le lendemain matin.
-    try {
+    if (window.ClientFeatures && ClientFeatures.enabled('time_tracking')) try {
         // `cutoffH` vient de `loadServiceCutoff` plus haut — MÊME valeur que celle qui
         // décide la semaine affichée. C'est tout l'objet du branchement : la journée de
         // pointage et la semaine du planning basculent au même instant.
@@ -944,7 +944,11 @@ function renderOpenJokersInto(jokers, from, to, section, myShifts) {
     try {
         const today = toDateStr(new Date());
         const inWeek = j => j.date >= from && j.date <= to;
-        const slotOffers = jokers.filter(j => j.slot_offer && inWeek(j));
+        const slotOffersEnabled = !!(window.ClientFeatures
+            && ClientFeatures.enabled('predefined_slots'));
+        const slotOffers = slotOffersEnabled
+            ? jokers.filter(j => j.slot_offer && inWeek(j))
+            : [];
         const punctual = jokers
             .filter(j => !j.slot_offer && inWeek(j) && j.date >= today)
             .sort((a, b) => a.date === b.date ? a.start_time - b.start_time : a.date.localeCompare(b.date));
@@ -1611,7 +1615,8 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
             }
 
             // OTP début/fin : CTA sur la carte du jour de service (pas de bandeau top)
-            const canCta = date === serviceDate && !shift.heure_validee_code && !shift.heure_validee_finale;
+            const canCta = window.ClientFeatures && ClientFeatures.enabled('time_tracking')
+                && date === serviceDate && !shift.heure_validee_code && !shift.heure_validee_finale;
             if (canCta) {
                 card.appendChild(buildClotureCta(shift));
             }
@@ -1785,7 +1790,9 @@ function openDaySheet(detail) {
     // Trois états, jamais deux à la fois : je peux proposer, j'ai une demande en
     // cours que je peux annuler, ou c'est un collègue qui a proposé sur ce shift et
     // je n'ai qu'à attendre le patron.
-    const sw = detail.swap || null;
+    const sw = window.ClientFeatures && ClientFeatures.enabled('shift_swaps')
+        ? (detail.swap || null)
+        : null;
     const _waitLabel = sw && sw.pending && sw.pending.status === 'pending_staff'
         ? 'Échange proposé — en attente de votre collègue'
         : 'Échange proposé — en attente du patron';
@@ -2296,11 +2303,6 @@ function initTabs() {
     });
 }
 
-// ⚠️ Fonctionnalité agenda iCal DÉSACTIVÉE (D-83) — pas encore assez fiable pour la prod.
-// Doit rester aligné avec le flag serveur CALENDAR_ENABLED (server.js). Pour réactiver :
-// passer ce flag à true ET réactiver côté serveur.
-const CALENDAR_ENABLED = false;
-
 // Carte « Ajouter à mon agenda » : récupère l'URL d'abonnement iCal et propose
 // les raccourcis Apple (webcal) / Google + copie manuelle pour Outlook/autres.
 function initCalSync() {
@@ -2308,8 +2310,11 @@ function initCalSync() {
     const toggle = document.getElementById('cal-sync-toggle');
     const body   = document.getElementById('cal-sync-body');
     if (!card || !toggle || !body) return;
-    // Fonctionnalité désactivée → on masque la carte entièrement (D-83).
-    if (!CALENDAR_ENABLED) { card.style.display = 'none'; return; }
+    // Fonctionnalité expérimentale : le snapshot serveur est la source unique.
+    if (!window.ClientFeatures || !ClientFeatures.enabled('calendar_sync')) {
+        card.style.display = 'none';
+        return;
+    }
     // C-01 : sans profil staff lié (ex. directeur), aucun flux agenda perso possible
     // (l'API /api/calendar-url renverrait 400) → on masque la carte au lieu d'afficher une erreur.
     if (!currentUser || !currentUser.staff_id) { card.style.display = 'none'; return; }
@@ -3890,6 +3895,10 @@ function showSwapToast(msg, isError) {
 let _pendingSwapsInFlight = null;
 
 function loadMyPendingSwaps() {
+    if (!window.ClientFeatures || !ClientFeatures.enabled('shift_swaps')) {
+        window._myPendingSwaps = [];
+        return Promise.resolve();
+    }
     if (_pendingSwapsInFlight) return _pendingSwapsInFlight;
     _pendingSwapsInFlight = (async () => {
         try {

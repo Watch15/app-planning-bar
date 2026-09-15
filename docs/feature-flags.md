@@ -19,8 +19,61 @@ Activation = **profil autorisé** + **`FEATURE_*=true`** (sauf `defaultOn`).
 
 | Clé | Env | Profils | Défaut | Ticket |
 |-----|-----|---------|--------|--------|
+| `time_tracking` | `FEATURE_TIME_TRACKING` | tous | off | D-103 |
+| `performance` | `FEATURE_PERFORMANCE` | tous | off | D-103 |
+| `shift_swaps` | `FEATURE_SHIFT_SWAPS` | tous | off | D-103 |
+| `calendar_sync` | `FEATURE_CALENDAR_SYNC` | tous | off | D-83 / D-103 |
 | `weekly_staff_validation` | `FEATURE_WEEKLY_VALIDATION` | castaniu | off | D-100 |
 | `predefined_slots` | `FEATURE_PREDEFINED_SLOTS` | castaniu | **on** | D-101 |
+
+## Matrice contractuelle
+
+La source commerciale/juridique est `juridique/00_Fiche_Tarifaire_Commerciale.txt`,
+`02_Projet_CGV_v2.md` (art. 3.1) et `03_Modele_Bon_de_Commande.md` (§3).
+
+| Capacité | Socle Planning | Flag |
+|---|---:|---|
+| Planning drag & drop, PWA staff, disponibilités, congés, Jokers, exports | oui | aucun — toujours disponible |
+| Clôture de service, pointage et code OTP, heures réelles, audit | non | `time_tracking` |
+| CA, masse salariale, ratios et simulation | non | `performance` |
+| Échanges de shifts | non promis au socle | `shift_swaps` |
+| Abonnement agenda iCal | expérimental, non promis au socle | `calendar_sync` |
+| Validation hebdo et créneaux N+1 Castaniu | développements spécifiques | flags existants |
+
+Les flags portent sur des **frontières de module**, pas sur chaque bouton du socle :
+cela évite de créer des combinaisons incohérentes impossibles à vendre ou tester.
+
+> **Arbitrage contractuel à confirmer :** l'enforcement classe provisoirement toute
+> saisie d'heures réelles (manuelle, tablette ou OTP) dans `time_tracking`, conformément
+> au Bon de commande qui place les « heures réelles » en formule 2. Or la formule 3
+> Performance est vendue sans Pointage alors que ses indicateurs réels consomment ces
+> heures. Il faut préciser au contrat si le pointage manuel accompagne Performance seul ;
+> la Simulation planifiée reste, elle, utilisable avec `performance` uniquement.
+
+## Presets d'offre
+
+```dotenv
+# Formule 1 — Socle Planning
+FEATURE_TIME_TRACKING=false
+FEATURE_PERFORMANCE=false
+FEATURE_SHIFT_SWAPS=false
+FEATURE_CALENDAR_SYNC=false
+
+# Formule 2 — Planning + Clôture & Pointage
+FEATURE_TIME_TRACKING=true
+FEATURE_PERFORMANCE=false
+
+# Formule 3 — Planning + Performance & Simulation
+FEATURE_TIME_TRACKING=false
+FEATURE_PERFORMANCE=true
+
+# Formule 4 / Pack Fondateur — Pack complet contractuel
+FEATURE_TIME_TRACKING=true
+FEATURE_PERFORMANCE=true
+```
+
+`shift_swaps` et `calendar_sync` restent des activations explicites indépendantes :
+elles ne font pas partie des trois modules tarifaires contractuels.
 
 ## Où le flag est posé (état au 2026-09-11)
 
@@ -67,13 +120,21 @@ Vérifier quand même que le code est bien déployé avant de conclure :
 4. Test dans `tests/client-features.test.js`
 5. Ligne dans ce doc + backlog
 
-## Pas maintenant — features déjà en prod
+## Portes effectivement protégées
 
-Les capacités **déjà déployées** (échanges, Simulation, clôture OTP, jokers par groupe,
-observateur, etc.) restent **toujours on** : on ne les passe pas encore par
-`FEATURE_*`. Ticket **D-103** (backlog) : migration éventuelle **bien plus tard**,
-quand le multi-client le demandera vraiment. Jusque-là le catalogue ne sert qu’au
-neuf gated (Castaniu : D-100 / D-101).
+- `time_tracking` : page Pointage, CTA OTP staff, édition des heures réelles,
+  responsables de soirée, comptes tablette établissement, réglages et routes
+  pointage/clôture/audit.
+- `performance` : page Performance, saisie CA, réglages, simulation, taux/forfaits
+  staff et routes associées.
+- `shift_swaps` : actions staff, file patron, réglages et toutes les routes d'échange.
+- `calendar_sync` : carte staff et les deux routes iCal. Il remplace l'ancien doublon
+  `CALENDAR_ENABLED` serveur + constante front.
+- `predefined_slots` : la garde couvre aussi `PATCH .../joker-open`, la lecture staff
+  et la candidature ; un ancien `slot_offer` ne contourne donc pas un flag coupé.
+
+Quand un flag est off, l'interface est masquée **et** l'API répond 404 : masquer un
+bouton seul n'est jamais considéré comme un contrôle d'accès.
 
 ## Recette Castaniu
 
@@ -81,6 +142,8 @@ Voir [`setup-castaniu-dev.md`](setup-castaniu-dev.md). Exemple :
 
 ```
 CLIENT_PROFILE=castaniu
+FEATURE_TIME_TRACKING=true       # Pack Fondateur
+FEATURE_PERFORMANCE=true         # Pack Fondateur
 FEATURE_WEEKLY_VALIDATION=false
 FEATURE_PREDEFINED_SLOTS=true    # D-101 : on par défaut sur Castaniu ; false pour forcer off
 ```

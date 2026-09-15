@@ -170,6 +170,15 @@ async function checkAuth() {
         if (window.ClientFeatures) {
             ClientFeatures.fromAuthPayload(data);
             ClientFeatures.applyDom();
+            if (!ClientFeatures.enabled('time_tracking')) {
+                if (data.user?.role === 'etablissement') {
+                    await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+                    window.location.href = '/login.html?module=pointage-indisponible';
+                } else {
+                    window.location.href = data.user?.role === 'staff' ? '/planning.html' : '/';
+                }
+                return null;
+            }
         }
         if (!['etablissement', 'patron', 'directeur', 'staff', 'observateur'].includes(data.user?.role)) {
             window.location.href = '/login.html'; return null;

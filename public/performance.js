@@ -83,6 +83,10 @@ async function checkAuth() {
         if (window.ClientFeatures) {
             ClientFeatures.fromAuthPayload(data);
             ClientFeatures.applyDom();
+            if (!ClientFeatures.enabled('performance')) {
+                window.location.href = '/';
+                return null;
+            }
         }
         return data.user;
     } catch { window.location.href = '/login.html'; return null; }

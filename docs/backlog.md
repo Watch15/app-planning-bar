@@ -2414,7 +2414,7 @@ fond de carte).
 
 | ID | Description | Statut |
 |---|---|---|
-| D-103 | **Migrer les features DÉJÀ en place** vers le catalogue `CLIENT_PROFILE` / `FEATURE_*` (échanges F-05, Simulation, clôture OTP, jokers groupe, observateur hors dispos… — inventaire à faire). **Pas maintenant** : l’infra D-102 existe ; on ne wrappe les features historiques qu’après stabilisation Castaniu (D-100/D-101) et quand un vrai besoin multi-client l’exige. Jusque-là : flags **uniquement** pour le neuf réservé (Castaniu). | Plus tard |
+| D-103 | **Modules non essentiels derrière feature flags** — matrice issue des CGV / fiche tarifaire : socle Planning toujours disponible ; `time_tracking` (`FEATURE_TIME_TRACKING`) pour Pointage + Clôture OTP ; `performance` (`FEATURE_PERFORMANCE`) pour CA + masse + simulation ; `shift_swaps` et `calendar_sync` en add-on explicite. Garde double UI + API (404), pages directes protégées, comptes tablette/taux staff masqués et refusés hors entitlement. Tests catalogue + profils API. Doc : `docs/feature-flags.md`. | ✅ |
 | D-104 | **Sim — taux manquant traité comme un Joker** : sur un créneau ESTIMÉ, une personne sans `hourly_rate` ni `fixed_rate` prend le taux résolu pour son groupe (`staffGroupKey` = 1er groupe en tri fr) au lieu de compter 0 € en silence. La ligne le dit (`rate_fallback` / `fallback_group`). Côté RÉEL : inchangé, reste « taux manquant ». Groupe sans Joker → moyenne dérivée plutôt qu'un 400 désignant un champ inexistant. | ✅ |
 
 ---

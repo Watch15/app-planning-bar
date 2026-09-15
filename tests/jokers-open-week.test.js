@@ -39,6 +39,54 @@ test('open-week : 404 si feature off', async () => {
     }
 });
 
+test('feature off : impossible de contourner via joker-open, lecture ou candidature', async () => {
+    const prev = process.env.FEATURE_PREDEFINED_SLOTS;
+    process.env.FEATURE_PREDEFINED_SLOTS = 'false';
+    const shiftId = new ObjectId();
+    const staffId = new ObjectId();
+    await db.collection('shifts').insertOne({
+        _id: shiftId,
+        establishment_id: 'bar1',
+        date: '2099-09-20',
+        staff_id: '__joker__',
+        is_joker: true,
+        joker_open: true,
+        slot_offer: true,
+        start_time: 18,
+        end_time: 22,
+    });
+    await db.collection('staff').insertOne({
+        _id: staffId,
+        name: 'Ada',
+        venues: ['bar1'],
+    });
+
+    try {
+        const bypass = await req('/api/shifts/' + shiftId + '/joker-open', PATRON, {
+            method: 'PATCH',
+            body: JSON.stringify({ open: true, slot_offer: true }),
+        });
+        assert.equal(bypass.status, 404);
+
+        const list = await req('/api/shifts/joker-ouverts', {
+            _id: 'u1', role: 'staff', name: 'Ada', staff_id: String(staffId),
+        });
+        assert.equal(list.status, 200);
+        assert.deepEqual(await list.json(), []);
+
+        const candidature = await req('/api/shifts/' + shiftId + '/joker-candidature', {
+            _id: 'u1', role: 'staff', name: 'Ada', staff_id: String(staffId),
+        }, {
+            method: 'POST',
+            body: JSON.stringify({}),
+        });
+        assert.equal(candidature.status, 403);
+        assert.match((await candidature.json()).error, /pas encore proposé/);
+    } finally {
+        process.env.FEATURE_PREDEFINED_SLOTS = prev;
+    }
+});
+
 test('open-week : pose joker_open + slot_offer', async () => {
     const id1 = new ObjectId();
     const id2 = new ObjectId();

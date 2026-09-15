@@ -1760,6 +1760,8 @@ app.post('/api/users', checkDB, requirePatron, async (req, res) => {
         return res.status(403).json({ error: 'Seul l\'administrateur peut créer un observateur' });
     if (userRole === 'etablissement' && req.session.user.role !== 'patron')
         return res.status(403).json({ error: 'Seul l\'administrateur peut créer un compte établissement' });
+    if (userRole === 'etablissement' && !clientFeatureEnabled('time_tracking'))
+        return res.status(404).json({ error: 'Fonctionnalité non disponible sur cette instance' });
     if (userRole === 'etablissement' && !establishment_id)
         return res.status(400).json({ error: 'establishment_id requis pour un compte établissement' });
     try {
@@ -2460,6 +2462,10 @@ app.patch('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
     const { color, name, email, venues, can_submit_dispos, groups, rest_days, hourly_rate, fixed_rate } = req.body;
     if (!color && !name && email === undefined && venues === undefined && can_submit_dispos === undefined && req.body.roles === undefined && groups === undefined && req.body.name_color === undefined && rest_days === undefined && req.body.nickname === undefined && hourly_rate === undefined && fixed_rate === undefined && req.body.conge_modes === undefined)
         return res.status(400).json({ error: 'color, name, email, venues, roles, groups, name_color, nickname, can_submit_dispos, conge_modes, hourly_rate, fixed_rate ou rest_days requis' });
+    if ((hourly_rate !== undefined || fixed_rate !== undefined)
+        && !clientFeatureEnabled('performance')) {
+        return res.status(404).json({ error: 'Fonctionnalité non disponible sur cette instance' });
+    }
     try {
         const update = {};
         if (color)                             update.color             = color;
@@ -2602,7 +2608,7 @@ app.delete('/api/staff/:id', checkDB, requirePatron, async (req, res) => {
 // Audit litiges (AVANT `/api/shifts/:establishmentId/:date` sinon « time-validations »
 // est capturé comme une date et renvoie []).
 app.get('/api/shifts/:id/time-validations',
-    checkDB, requirePatron,
+    checkDB, requirePatron, requireFeature('time_tracking'),
     async (req, res) => {
         if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
         try {
@@ -2869,15 +2875,10 @@ function buildShiftsIcs(shifts, estabMap) {
     return lines.join('\r\n') + '\r\n';
 }
 
-// ⚠️ Fonctionnalité agenda iCal DÉSACTIVÉE (D-83) — pas encore assez fiable pour la
-// prod (synchro iCal non temps réel : un changement met jusqu'à ~1 h à se propager).
-// Le code est conservé. Pour réactiver : passer CALENDAR_ENABLED à true (ou définir
-// la variable d'env CALENDAR_ENABLED=true) ET le flag client dans public/planning.js.
-const CALENDAR_ENABLED = process.env.CALENDAR_ENABLED === 'true';
+// Agenda iCal expérimental : entitlement centralisé dans client-features.
 
 // URL d'abonnement agenda du staff connecté (génère le token au 1er appel)
-app.get('/api/calendar-url', checkDB, requireAuth, async (req, res) => {
-    if (!CALENDAR_ENABLED) return res.status(404).json({ error: 'Fonctionnalité indisponible' });
+app.get('/api/calendar-url', checkDB, requireAuth, requireFeature('calendar_sync'), async (req, res) => {
     const userId = req.session.user._id;
     if (!req.session.user.staff_id) return res.status(400).json({ error: 'Aucun profil staff lié à ce compte' });
     try {
@@ -2900,8 +2901,7 @@ app.get('/api/calendar-url', checkDB, requireAuth, async (req, res) => {
 
 // Flux iCal public — le token tient lieu d'authentification (lecture seule).
 // Expose les shifts du staff de la semaine en cours et des semaines futures PUBLIÉES.
-app.get('/api/calendar/:token([a-f0-9]+).ics', checkDB, async (req, res) => {
-    if (!CALENDAR_ENABLED) return res.status(404).send('Not found');
+app.get('/api/calendar/:token([a-f0-9]+).ics', checkDB, requireFeature('calendar_sync'), async (req, res) => {
     try {
         const user = await db.collection('users').findOne({ calendar_token: req.params.token });
         if (!user || !user.staff_id) return res.status(404).send('Calendrier introuvable');
@@ -3097,6 +3097,9 @@ app.patch('/api/shifts/:id/joker-open', checkDB, requirePatron, denyObservateurE
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const { open } = req.body;
     if (typeof open !== 'boolean') return res.status(400).json({ error: 'open (boolean) requis' });
+    if (req.body?.slot_offer === true && !clientFeatureEnabled('predefined_slots')) {
+        return res.status(404).json({ error: 'Fonctionnalité non disponible sur cette instance' });
+    }
     try {
         const shift = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
         if (!shift) return res.status(404).json({ error: 'Shift introuvable' });
@@ -5311,7 +5314,7 @@ async function swapsAllowCross() {
 
 // GET — lisible par tout le monde : l'écran d'échange du staff s'en sert pour ne
 // proposer que des cibles réellement échangeables.
-app.get('/api/swap-settings', checkDB, requireAuth, async (req, res) => {
+app.get('/api/swap-settings', checkDB, requireAuth, requireFeature('shift_swaps'), async (req, res) => {
     try {
         res.json({ cross_establishment: await swapsAllowCross() });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
@@ -5320,7 +5323,7 @@ app.get('/api/swap-settings', checkDB, requireAuth, async (req, res) => {
 // PATCH — patron strict : c'est une règle d'organisation globale, pas un réglage de
 // périmètre. Le directeur ne voit qu'une partie des établissements concernés, et
 // l'observateur est en lecture seule.
-app.patch('/api/swap-settings', checkDB, requirePatronOnly, async (req, res) => {
+app.patch('/api/swap-settings', checkDB, requirePatronOnly, requireFeature('shift_swaps'), async (req, res) => {
     const { cross_establishment } = req.body;
     if (typeof cross_establishment !== 'boolean') {
         return res.status(400).json({ error: 'cross_establishment booléen requis' });
@@ -5337,7 +5340,7 @@ app.patch('/api/swap-settings', checkDB, requirePatronOnly, async (req, res) => 
 });
 
 // POST — un staff propose un échange (son shift contre celui d'un collègue)
-app.post('/api/shift-swaps', checkDB, requireAuth, async (req, res) => {
+app.post('/api/shift-swaps', checkDB, requireAuth, requireFeature('shift_swaps'), async (req, res) => {
     const user = req.session.user;
     const staffId = user.staff_id;
     if (!staffId) return res.status(403).json({ error: 'Action réservée au staff' });
@@ -5452,7 +5455,7 @@ app.post('/api/shift-swaps', checkDB, requireAuth, async (req, res) => {
 // PATCH — étape 1 : le COLLÈGUE visé accepte. La demande passe alors chez le patron.
 // Route réservée à `to_staff_id` : ni le proposeur (il signerait des deux mains), ni
 // un tiers, ni le patron (qui a ses propres routes et ne parle pas au nom du staff).
-app.patch('/api/shift-swaps/:id/staff-accept', checkDB, requireAuth, async (req, res) => {
+app.patch('/api/shift-swaps/:id/staff-accept', checkDB, requireAuth, requireFeature('shift_swaps'), async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const staffId = req.session.user.staff_id;
     if (!staffId) return res.status(403).json({ error: 'Action réservée au staff' });
@@ -5515,7 +5518,7 @@ app.patch('/api/shift-swaps/:id/staff-accept', checkDB, requireAuth, async (req,
 });
 
 // PATCH — étape 1 : le collègue refuse. La demande est close, le patron ne la verra jamais.
-app.patch('/api/shift-swaps/:id/staff-decline', checkDB, requireAuth, async (req, res) => {
+app.patch('/api/shift-swaps/:id/staff-decline', checkDB, requireAuth, requireFeature('shift_swaps'), async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const staffId = req.session.user.staff_id;
     if (!staffId) return res.status(403).json({ error: 'Action réservée au staff' });
@@ -5550,7 +5553,7 @@ app.patch('/api/shift-swaps/:id/staff-decline', checkDB, requireAuth, async (req
 });
 
 // GET — patron : liste des demandes en attente
-app.get('/api/shift-swaps/pending', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
+app.get('/api/shift-swaps/pending', checkDB, requirePatron, denyObservateurEdit, requireFeature('shift_swaps'), async (req, res) => {
     const user = req.session.user;
     try {
         const swaps = await db.collection('shift_swaps').find({ status: 'pending' }).sort({ created_at: -1 }).toArray();
@@ -5563,7 +5566,7 @@ app.get('/api/shift-swaps/pending', checkDB, requirePatron, denyObservateurEdit,
 });
 
 // GET — patron : compteur pour badge header
-app.get('/api/shift-swaps/count', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
+app.get('/api/shift-swaps/count', checkDB, requirePatron, denyObservateurEdit, requireFeature('shift_swaps'), async (req, res) => {
     const user = req.session.user;
     try {
         if (user.role === 'patron') {
@@ -5577,7 +5580,7 @@ app.get('/api/shift-swaps/count', checkDB, requirePatron, denyObservateurEdit, a
 });
 
 // GET — staff : ses propres demandes (pending + récentes)
-app.get('/api/shift-swaps/mine', checkDB, requireAuth, async (req, res) => {
+app.get('/api/shift-swaps/mine', checkDB, requireAuth, requireFeature('shift_swaps'), async (req, res) => {
     const staffId = req.session.user.staff_id;
     if (!staffId) return res.json([]);
     try {
@@ -5589,7 +5592,7 @@ app.get('/api/shift-swaps/mine', checkDB, requireAuth, async (req, res) => {
 });
 
 // PATCH — patron approuve : swap effectif des staff sur les 2 shifts
-app.patch('/api/shift-swaps/:id/approve', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
+app.patch('/api/shift-swaps/:id/approve', checkDB, requirePatron, denyObservateurEdit, requireFeature('shift_swaps'), async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const user = req.session.user;
     try {
@@ -5656,7 +5659,7 @@ app.patch('/api/shift-swaps/:id/approve', checkDB, requirePatron, denyObservateu
 });
 
 // PATCH — patron refuse
-app.patch('/api/shift-swaps/:id/reject', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
+app.patch('/api/shift-swaps/:id/reject', checkDB, requirePatron, denyObservateurEdit, requireFeature('shift_swaps'), async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const user = req.session.user;
     const reason = (req.body?.reason || '').toString().slice(0, 280);
@@ -5723,12 +5726,13 @@ app.get('/api/shifts/joker-ouverts', checkDB, requireAuth, async (req, res) => {
         // côté staff même si la semaine n'est pas publiée. Le reste du brouillon
         // (shifts affectés, Jokers non proposés) reste caché par `my-shifts`.
         const isVisible = await publishedShiftFilter();
+        const slotOffersEnabled = clientFeatureEnabled('predefined_slots');
         let shifts = (await db.collection('shifts').find(query, {
             projection: {
                 _id: 1, date: 1, start_time: 1, end_time: 1, establishment_id: 1,
                 joker_candidates: 1, joker_group: 1, slot_offer: 1,
             }
-        }).toArray()).filter(s => s.slot_offer || isVisible(s));
+        }).toArray()).filter(s => (slotOffersEnabled && s.slot_offer) || isVisible(s));
         // Filtre groupe : seuls les Jokers du (des) groupe(s) du staff (polyvalent = tous).
         if (staffId && isValidObjectId(String(staffId))) {
             const staffDoc = await db.collection('staff').findOne({ _id: new ObjectId(String(staffId)) });
@@ -5750,7 +5754,7 @@ app.get('/api/shifts/joker-ouverts', checkDB, requireAuth, async (req, res) => {
             establishment_name: estabNameById[s.establishment_id] || s.establishment_id,
             // Pas de `joker_group` côté staff : le filtre est déjà fait serveur,
             // le nom de groupe ne doit pas apparaître dans l'UI planning.
-            slot_offer:         !!s.slot_offer,
+            slot_offer:         slotOffersEnabled && !!s.slot_offer,
             has_applied:        staffId ? (s.joker_candidates || []).some(c => c.staff_id === staffId) : false,
         }));
         res.json(result);
@@ -5787,7 +5791,7 @@ app.post('/api/shifts/:id/joker-candidature', checkDB, requireAuth, async (req, 
         }
         // B2-b + D-101 — un Joker ponctuel d'un brouillon n'est pas candidatable.
         // Seul un `slot_offer` (bouton « Proposer les créneaux ») l'est sans publication.
-        if (!existing.slot_offer) {
+        if (!(existing.slot_offer && clientFeatureEnabled('predefined_slots'))) {
             const isVisible = await publishedShiftFilter();
             if (!isVisible(existing)) {
                 return res.status(403).json({ error: 'Ce créneau n\'est pas encore proposé' });
@@ -5895,7 +5899,7 @@ app.delete('/api/shifts/:id/joker-candidature', checkDB, requireAuth, async (req
 // ── Échanges de shifts (F-05) — suite ────────────────────────────────────────
 
 // GET — staff : liste des shifts futurs échangeables (autres staff, ses établissements)
-app.get('/api/shifts-for-swap', checkDB, requireAuth, async (req, res) => {
+app.get('/api/shifts-for-swap', checkDB, requireAuth, requireFeature('shift_swaps'), async (req, res) => {
     const staffId = req.session.user.staff_id;
     if (!staffId) return res.json([]);
     const from = req.query.from;
@@ -5952,7 +5956,7 @@ app.get('/api/shifts-for-swap', checkDB, requireAuth, async (req, res) => {
 });
 
 // DELETE — staff annule sa propre demande (tant que pending)
-app.delete('/api/shift-swaps/:id', checkDB, requireAuth, async (req, res) => {
+app.delete('/api/shift-swaps/:id', checkDB, requireAuth, requireFeature('shift_swaps'), async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const staffId = req.session.user.staff_id;
     try {
@@ -6409,7 +6413,7 @@ app.get('/api/recap-mensuel', checkDB, requirePatron,
 // GET responsable de soirée — vérifie si le staff/directeur connecté peut faire le pointage ce soir
 // Pour un directeur : retourne tous ses établissements (il a toujours accès)
 // Pour un staff : vérifie isResponsablePourSoiree sur chacun de ses shifts du jour
-app.get('/api/me/responsable-tonight', checkDB, requireAuth, async (req, res) => {
+app.get('/api/me/responsable-tonight', checkDB, requireAuth, requireFeature('time_tracking'), async (req, res) => {
     const user = req.session.user;
     const { date } = req.query;
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.json({ isResponsable: false });
@@ -6547,7 +6551,7 @@ app.get('/api/me/responsable-week', checkDB, requireAuth, async (req, res) => {
 // ── Pilotage économique : CA + performance ───────────────────────────────────
 
 // POST CA d'une soirée (établissement, directeur, patron)
-app.post('/api/revenue', checkDB, requireAuth, async (req, res) => {
+app.post('/api/revenue', checkDB, requireAuth, requireFeature('performance'), async (req, res) => {
     const user = req.session.user;
     const { date, revenue } = req.body;
     const establishment_id = user.role === 'etablissement' ? user.establishment_id : req.body.establishment_id;
@@ -6570,7 +6574,7 @@ app.post('/api/revenue', checkDB, requireAuth, async (req, res) => {
 });
 
 // GET le CA d'un établissement à une date (pour pré-remplir le champ)
-app.get('/api/revenue/:establishmentId/:date', checkDB, requireAuth, async (req, res) => {
+app.get('/api/revenue/:establishmentId/:date', checkDB, requireAuth, requireFeature('performance'), async (req, res) => {
     const user = req.session.user;
     const { establishmentId, date } = req.params;
     if (!canAccessEstablishment(user, establishmentId))
@@ -6596,7 +6600,7 @@ async function loadPerfSettings(establishmentId) {
 // GET performance (CA + masse salariale + coeff) — patron/directeur
 // R-16 — exemple de migration : l'id vient de la query et rien d'autre, le contrôle est
 // donc déclaratif. Les 400/403 sont désormais rendus par le middleware.
-app.get('/api/performance', checkDB, requirePatron,
+app.get('/api/performance', checkDB, requirePatron, requireFeature('performance'),
     requireEstablishmentAccess(r => r.query.establishment_id), async (req, res) => {
     const { establishment_id, from, to } = req.query;
     try {
@@ -6702,7 +6706,7 @@ app.get('/api/performance', checkDB, requirePatron,
 });
 
 // GET moyennes / médianes des taux staff (D-98) — pool établissements + filtre groupe.
-app.get('/api/performance/staff-rate-stats', checkDB, requirePatron, async (req, res) => {
+app.get('/api/performance/staff-rate-stats', checkDB, requirePatron, requireFeature('performance'), async (req, res) => {
     try {
         let ids = [];
         const raw = req.query.establishment_ids;
@@ -6745,7 +6749,7 @@ app.get('/api/performance/staff-rate-stats', checkDB, requirePatron, async (req,
 // Ne touche PAS à daily_revenue. joker_mode: manual_hourly | manual_fixed | mean | median.
 // Valo joker par groupe (`joker_group`) via maps joker_*_by_group (scalaires = fallback legacy).
 // D-99 : joker_mode_by_group { Bar: 'manual_hourly', Cuisine: 'mean', … } pour modes distincts.
-app.post('/api/performance/simulate', checkDB, requirePatron,
+app.post('/api/performance/simulate', checkDB, requirePatron, requireFeature('performance'),
     requireEstablishmentAccess(r => r.body && r.body.establishment_id), async (req, res) => {
     try {
         const {
@@ -7025,7 +7029,7 @@ app.post('/api/performance/simulate', checkDB, requirePatron,
 // GET/PATCH objectifs performance (coefficient cible)
 // S-03 : `requireAuth` seul laissait n'importe quel staff lire les objectifs.
 // `whenAbsent: 'patronOnly'` : sans establishment_id → doc GLOBAL `performance`.
-app.get('/api/performance-settings', checkDB, requirePatron,
+app.get('/api/performance-settings', checkDB, requirePatron, requireFeature('performance'),
     requireEstablishmentAccess(r => r.query.establishment_id, { whenAbsent: 'patronOnly' }), async (req, res) => {
     try {
         // establishment_id fourni → paramètres effectifs de cet établissement
@@ -7036,7 +7040,7 @@ app.get('/api/performance-settings', checkDB, requirePatron,
 
 // S-02 : `denyObservateurEdit` manquait — `requirePatron` laisse passer l'observateur,
 // donc un rôle lecture seule pouvait écrire les objectifs et le taux de charges.
-app.patch('/api/performance-settings', checkDB, requirePatron, denyObservateurEdit,
+app.patch('/api/performance-settings', checkDB, requirePatron, denyObservateurEdit, requireFeature('performance'),
     requireEstablishmentAccess(r => r.body.establishment_id, { whenAbsent: 'patronOnly' }), async (req, res) => {
     const { target_gross, target_charged, charge_rate, establishment_id } = req.body;
     const key = establishment_id ? 'performance_' + establishment_id : 'performance';
@@ -7078,7 +7082,7 @@ app.get('/api/pointage-settings', checkDB, requireAuth, async (req, res) => {
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-app.patch('/api/pointage-settings', checkDB, requireAdmin, async (req, res) => {
+app.patch('/api/pointage-settings', checkDB, requireAdmin, requireFeature('time_tracking'), async (req, res) => {
     const { cutoff_hour, cutoff_open_hour } = req.body;
     if (cutoff_hour == null || cutoff_hour < 0 || cutoff_hour > 23)
         return res.status(400).json({ error: 'cutoff_hour entre 0 et 23 requis' });
@@ -7108,7 +7112,7 @@ const pickPointageEstab = r => (r.session.user.role === 'etablissement'
 // plus aucun shift à pointer. Le droit vient de son rôle SUR LA SOIRÉE, ce qui demande une
 // requête — donc un repli inline, comme les routes d'écriture voisines qui l'ont toujours
 // fait (PATCH/DELETE `/api/shifts/:id/pointage`). Un middleware ne peut pas porter ça.
-app.get('/api/pointage/:date', checkDB, requireAuth, async (req, res) => {
+app.get('/api/pointage/:date', checkDB, requireAuth, requireFeature('time_tracking'), async (req, res) => {
     const user    = req.session.user;
     const estabId = pickPointageEstab(req);
     if (!estabId) return res.status(400).json({ error: 'establishment_id requis' });
@@ -7126,7 +7130,7 @@ app.get('/api/pointage/:date', checkDB, requireAuth, async (req, res) => {
 
 // PATCH désigner le responsable de pointage pour un établissement/date
 // Dé-désigne tous les autres responsables du même établissement ce jour
-app.patch('/api/shifts/:id/pointage-resp', checkDB, requirePatron, denyObservateurEdit, async (req, res) => {
+app.patch('/api/shifts/:id/pointage-resp', checkDB, requirePatron, denyObservateurEdit, requireFeature('time_tracking'), async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const { value } = req.body; // true | false
     try {
@@ -7146,7 +7150,7 @@ app.patch('/api/shifts/:id/pointage-resp', checkDB, requirePatron, denyObservate
 });
 
 // PATCH heures réelles sur un shift existant
-app.patch('/api/shifts/:id/pointage', checkDB, requireAuth, async (req, res) => {
+app.patch('/api/shifts/:id/pointage', checkDB, requireAuth, requireFeature('time_tracking'), async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const { real_start, real_end } = req.body;
     // Accepter null explicite (effacement) ou valeurs numériques
@@ -7191,7 +7195,7 @@ app.patch('/api/shifts/:id/pointage', checkDB, requireAuth, async (req, res) => 
 // DELETE shift non pointé (depuis l'écran Pointage).
 // Auth identique au PATCH pointage : établissement, patron/directeur, responsable de soirée.
 // Refus si le shift a déjà des heures réelles saisies.
-app.delete('/api/shifts/:id/pointage', checkDB, requireAuth, async (req, res) => {
+app.delete('/api/shifts/:id/pointage', checkDB, requireAuth, requireFeature('time_tracking'), async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     try {
         const existing = await db.collection('shifts').findOne({ _id: new ObjectId(req.params.id) });
@@ -7211,7 +7215,7 @@ app.delete('/api/shifts/:id/pointage', checkDB, requireAuth, async (req, res) =>
 });
 
 // POST service non planifié (extra)
-app.post('/api/shifts/extra', checkDB, requireAuth, async (req, res) => {
+app.post('/api/shifts/extra', checkDB, requireAuth, requireFeature('time_tracking'), async (req, res) => {
     const user = req.session.user;
     const { staff_id, staff_name, date, real_start, real_end, establishment_id } = req.body;
     if (!date || real_start == null || real_end == null)
@@ -7549,7 +7553,7 @@ async function classifyCodeRefuse(estabId, code) {
 
 // GET code de clôture courant (manager éditeur ou responsable de soirée — pas observateur)
 app.get('/api/etablissements/:id/code-cloture',
-    checkDB, requireAuth, denyObservateurEdit,
+    checkDB, requireAuth, denyObservateurEdit, requireFeature('time_tracking'),
     async (req, res) => {
         try {
             const date = (req.query.date && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date))
@@ -7570,7 +7574,7 @@ app.get('/api/etablissements/:id/code-cloture',
 
 // GET shifts + champs clôture pour une semaine (patron/directeur/observateur lecture, ou responsable)
 app.get('/api/etablissements/:id/clotures-semaine',
-    checkDB, requireAuth,
+    checkDB, requireAuth, requireFeature('time_tracking'),
     async (req, res) => {
         const weekStart = req.query.week_start;
         if (!weekStart || !/^\d{4}-\d{2}-\d{2}$/.test(weekStart))
@@ -7619,7 +7623,7 @@ app.get('/api/etablissements/:id/clotures-semaine',
 
 // POST pointer début ou fin via code OTP (staff) — body { code, phase: 'debut'|'fin' }
 // phase défaut 'fin' (rétrocompat) ; la fin exige un début déjà pointé.
-app.post('/api/shifts/:id/cloturer-par-code', checkDB, requireAuth, async (req, res) => {
+app.post('/api/shifts/:id/cloturer-par-code', checkDB, requireAuth, requireFeature('time_tracking'), async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const code = String(req.body?.code || '').trim();
     if (!/^\d{4}$/.test(code)) return res.status(400).json({ error: 'Code à 4 chiffres requis' });
@@ -7770,7 +7774,7 @@ app.post('/api/shifts/:id/cloturer-par-code', checkDB, requireAuth, async (req, 
 // POST clôture manuelle (manager) — body { phase: 'debut'|'fin', heure?, heure_debut? }
 // Fin sans début : autorisée seulement si heure_debut fournie (force les deux).
 app.post('/api/shifts/:id/cloturer-manuel',
-    checkDB, requireAuth,
+    checkDB, requireAuth, requireFeature('time_tracking'),
     async (req, res) => {
         if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
         const phase = req.body?.phase === 'debut' ? 'debut' : 'fin';
@@ -7910,7 +7914,7 @@ app.post('/api/shifts/:id/cloturer-manuel',
 
 // PATCH ajuster debut_valide_finale et/ou heure_validee_finale (sans toucher *_code)
 app.patch('/api/shifts/:id/ajuster-heure',
-    checkDB, requireAuth,
+    checkDB, requireAuth, requireFeature('time_tracking'),
     async (req, res) => {
         if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
         const finFinale = req.body?.heure_validee_finale;
@@ -7984,7 +7988,7 @@ app.patch('/api/shifts/:id/ajuster-heure',
 
 // GET audit litiges d'un établissement pour une date — patron / directeur
 app.get('/api/etablissements/:id/time-validations',
-    checkDB, requirePatron,
+    checkDB, requirePatron, requireFeature('time_tracking'),
     requireEstablishmentAccess(r => r.params.id),
     async (req, res) => {
         const date = req.query.date;
@@ -8029,7 +8033,7 @@ app.get('/api/etablissements/:id/time-validations',
 // POST valider le récap hebdo (marque patron_valide sur les shifts clôturés)
 // Observateur autorisé (pas le code OTP — celui-ci reste derrière denyObservateurEdit).
 app.post('/api/etablissements/:id/valider-recap',
-    checkDB, requirePatron,
+    checkDB, requirePatron, requireFeature('time_tracking'),
     requireEstablishmentAccess(r => r.params.id),
     async (req, res) => {
         const weekStart = req.body?.week_start;
@@ -8517,7 +8521,7 @@ app.get('/api/me/week-sign-code',
 
 // ── Vérification Pointage (panel patron / directeur / observateur) ────────────
 
-app.get('/api/pointage/verif/count', checkDB, requirePatron, async (req, res) => {
+app.get('/api/pointage/verif/count', checkDB, requirePatron, requireFeature('time_tracking'), async (req, res) => {
     try {
         const estabFilter = pointageVerifEstabFilter(req.session.user);
         const active = await getActivePointageDateStr();
@@ -8551,7 +8555,7 @@ app.get('/api/pointage/verif/count', checkDB, requirePatron, async (req, res) =>
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-app.get('/api/pointage/verif/pending', checkDB, requirePatron, async (req, res) => {
+app.get('/api/pointage/verif/pending', checkDB, requirePatron, requireFeature('time_tracking'), async (req, res) => {
     try {
         const estabFilter = pointageVerifEstabFilter(req.session.user);
         const active = await getActivePointageDateStr();
@@ -8635,7 +8639,7 @@ app.get('/api/pointage/verif/pending', checkDB, requirePatron, async (req, res) 
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-app.get('/api/pointage/verif/journal', checkDB, requirePatron, async (req, res) => {
+app.get('/api/pointage/verif/journal', checkDB, requirePatron, requireFeature('time_tracking'), async (req, res) => {
     const { from, to, establishment_id } = req.query;
     if (!from || !to || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to))
         return res.status(400).json({ error: 'from et to (YYYY-MM-DD) requis' });

@@ -41,7 +41,10 @@ Variables d'environnement minimales dans un `.env` (non commité) :
 | `TWILIO_*` | SMS | optionnel |
 | `SENTRY_DSN` | Observabilité — Sentry activé **seulement si défini** | optionnel |
 | `APP_URL` / `PUBLIC_BASE_URL` | Domaine pour liens email/SMS + flux iCal | optionnel |
-| `CALENDAR_ENABLED` | Active la synchro iCal (défaut `false`, **désactivée**) | optionnel |
+| `FEATURE_CALENDAR_SYNC` | Active la synchro iCal (défaut `false`, **désactivée**) | optionnel |
+| `FEATURE_TIME_TRACKING` | Active Pointage + Clôture OTP (option commerciale) | selon formule |
+| `FEATURE_PERFORMANCE` | Active Performance + Simulation (option commerciale) | selon formule |
+| `FEATURE_SHIFT_SWAPS` | Active les échanges de shifts (add-on) | optionnel |
 | `ALLOW_TEST_AUTH` | ⚠️ **Tests uniquement.** Arme le harnais (`x-test-user`, `setTestDb`) — n'a d'effet qu'avec `NODE_ENV=test` **et** `server.js` requis, jamais lancé. Posée par `tests/helpers/harness.js`. **Ne jamais la définir sur un environnement déployé** : le serveur refuse de démarrer si elle contredit `NODE_ENV=production`. | jamais |
 
 Puis : `http://localhost:3000` → page de login.
@@ -108,7 +111,10 @@ Un **seul fichier**, organisé en sections séquentielles. Ordre approximatif :
 6. **Routes statiques + `/health`** et, tout en bas, `if (require.main === module) { connectDB(); app.listen() }` — `app` est **exporté** pour les tests.
 
 ### ⚠️ Zones piégées dans `server.js`
-- **`shift-swaps` (F-05 / D-90)** : routes **actives** (plus de blocs `/* F-05 DÉSACTIVÉ */`). **iCal (D-72)** reste derrière `CALENDAR_ENABLED`. Leçon conservée : **ne jamais commenter un bloc de routes** — un flag de config se lit, un `/* */` de 240 lignes non (404 silencieux, piège D-47).
+- **`shift-swaps` (F-05 / D-90)** : routes derrière `FEATURE_SHIFT_SWAPS`.
+  **iCal (D-72)** reste derrière `FEATURE_CALENDAR_SYNC`. Leçon conservée :
+  **ne jamais commenter un bloc de routes** — un flag de config se lit, un `/* */`
+  de 240 lignes non (404 silencieux, piège D-47).
 - Les **numéros de ligne dans la doc bougent** quand le fichier grossit : repérer par marqueur texte, pas par n° de ligne.
 
 ---
@@ -172,7 +178,7 @@ Base `gestion_bar`. Détail des champs dans `architecture.md` §5 — résumé :
 
 ## 7. Cartographie des routes API (`server.js`)
 
-> ✅ actives · 🚫 désactivées (iCal si `CALENDAR_ENABLED=false`). Middlewares clés entre parenthèses.
+> ✅ actives · 🚫 désactivées selon les `FEATURE_*`. Middlewares clés entre parenthèses.
 
 ### Auth
 | Méthode | Route | Note |
@@ -254,7 +260,7 @@ Tests : `tests/cloture-otp.test.js` · smoke `scripts/smoke-cloture.js`.
 Pending/count/approve/reject : `denyObservateurEdit`.
 
 ### 🚫 Désactivées (flag)
-`/api/calendar-url` + `/api/calendar/:token.ics` (iCal, `CALENDAR_ENABLED`).
+`/api/calendar-url` + `/api/calendar/:token.ics` (iCal, `FEATURE_CALENDAR_SYNC`).
 
 ---
 
@@ -345,7 +351,7 @@ call sites serveur inchangés. C'est le **gabarit** de toute future extraction i
 | **Web Push** | VAPID + `web-push`, debounce 60 s (`scheduleShiftNotif`), garde « pas de notif pour shift passé » (B-10) | `server.js` |
 | **E-mail** | POST HTTP direct → `api.resend.com/emails` (pas de SDK) | `server.js` |
 | **SMS** | POST HTTP direct → API REST Twilio, normalisation `06…`→`+336…` | `server.js` |
-| **iCal** | flux `.ics` lecture seule par token (**désactivé**, `CALENDAR_ENABLED`) | `server.js` |
+| **iCal** | flux `.ics` lecture seule par token (**désactivé**, `FEATURE_CALENDAR_SYNC`) | `server.js` |
 | **Sentry** | initialisé **seulement si** `SENTRY_DSN` défini | `server.js` |
 
 ---

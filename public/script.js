@@ -542,7 +542,9 @@ async function init() {
     });
 
     const btnSwaps = document.getElementById('btn-swaps');
-    if (btnSwaps) btnSwaps.addEventListener('click', openSwapsPanel);
+    if (btnSwaps && window.ClientFeatures && ClientFeatures.enabled('shift_swaps')) {
+        btnSwaps.addEventListener('click', openSwapsPanel);
+    }
     const swapsClose = document.getElementById('swaps-modal-close');
     if (swapsClose) swapsClose.addEventListener('click', () => {
         document.getElementById('swaps-modal').style.display = 'none';
@@ -689,7 +691,9 @@ async function init() {
     if (btnBulkNames) btnBulkNames.addEventListener('click', openBulkStaffNamesModal);
 
     const btnBulkRates = document.getElementById('btn-bulk-staff-rates');
-    if (btnBulkRates) btnBulkRates.addEventListener('click', openBulkStaffRatesModal);
+    if (btnBulkRates && window.ClientFeatures && ClientFeatures.enabled('performance')) {
+        btnBulkRates.addEventListener('click', openBulkStaffRatesModal);
+    }
 }
 
 async function checkAuth() {
@@ -2226,7 +2230,9 @@ function createShiftEl(shift) {
     // Bouton 👑 responsable pointage — uniquement si le staff a un rôle responsable
     const staffMember    = allStaff.find(s => String(s._id) === String(shift.staff_id));
     const staffRoleIds   = (staffMember && staffMember.roles) || [];
-    const isResp         = allRoles.some(r => r.type === 'responsable' && staffRoleIds.includes(String(r._id)));
+    const hasTimeTracking = !!(window.ClientFeatures && ClientFeatures.enabled('time_tracking'));
+    const isResp         = hasTimeTracking
+        && allRoles.some(r => r.type === 'responsable' && staffRoleIds.includes(String(r._id)));
     const respBtn        = isResp
         ? `<button class="shift-resp-btn${shift.pointage_resp ? ' active' : ''}" title="Responsable pointage">👑</button>`
         : '';
@@ -2276,7 +2282,7 @@ function createShiftEl(shift) {
             if (shiftInteractionBlocked()) return;
             if (isPhone() || isTablet()) {
                 openMobileShiftEditModal(shift);
-            } else {
+            } else if (hasTimeTracking) {
                 openRealHoursModal(shift, el);
             }
         });
@@ -2317,7 +2323,9 @@ function openMobileShiftEditModal(shift) {
 
     const _staffMember  = allStaff.find(s => String(s._id) === String(shift.staff_id));
     const _staffRoleIds = (_staffMember && _staffMember.roles) || [];
-    const _isResp       = allRoles.some(r => r.type === 'responsable' && _staffRoleIds.includes(String(r._id)));
+    const hasTimeTracking = !!(window.ClientFeatures && ClientFeatures.enabled('time_tracking'));
+    const _isResp       = hasTimeTracking
+        && allRoles.some(r => r.type === 'responsable' && _staffRoleIds.includes(String(r._id)));
 
     const overlay = document.createElement('div');
     overlay.className = 'ms-overlay';
@@ -2332,6 +2340,18 @@ function openMobileShiftEditModal(shift) {
 
     const transferBtn = allEstablishments.length > 1
         ? '<button type="button" id="_ms-copy">Transférer</button>'
+        : '';
+
+    const realHoursHtml = hasTimeTracking
+        ? ('<div class="ms-real-box">' +
+                '<div class="ms-sec-label">Heures réelles</div>' +
+                '<div class="ms-time-grid">' +
+                    '<div class="ms-field"><label for="_ms-real-start">Début réel</label>' +
+                        '<input id="_ms-real-start" type="time" value="' + fmt(shift.real_start) + '"></div>' +
+                    '<div class="ms-field"><label for="_ms-real-end">Fin réelle</label>' +
+                        '<input id="_ms-real-end" type="time" value="' + fmt(shift.real_end) + '"></div>' +
+                '</div>' +
+            '</div>')
         : '';
 
     overlay.innerHTML =
@@ -2354,15 +2374,7 @@ function openMobileShiftEditModal(shift) {
                     '<div class="ms-field"><label for="_ms-end">Fin</label>' +
                         '<input id="_ms-end" type="time" value="' + fmt(shift.end_time) + '"></div>' +
                 '</div>' +
-                '<div class="ms-real-box">' +
-                    '<div class="ms-sec-label">Heures réelles</div>' +
-                    '<div class="ms-time-grid">' +
-                        '<div class="ms-field"><label for="_ms-real-start">Début réel</label>' +
-                            '<input id="_ms-real-start" type="time" value="' + fmt(shift.real_start) + '"></div>' +
-                        '<div class="ms-field"><label for="_ms-real-end">Fin réelle</label>' +
-                            '<input id="_ms-real-end" type="time" value="' + fmt(shift.real_end) + '"></div>' +
-                    '</div>' +
-                '</div>' +
+                realHoursHtml +
                 respHtml +
             '</div>' +
             '<div class="ms-footer">' +
@@ -2447,9 +2459,11 @@ function openMobileShiftEditModal(shift) {
         if (newStart == null || newEnd == null) { showToast('Horaires invalides', true); return; }
         if (newEnd <= newStart) { showToast('La fin doit être après le début', true); return; }
 
-        const rs = parseReal(overlay.querySelector('#_ms-real-start').value, null);
-        const re = parseReal(overlay.querySelector('#_ms-real-end').value, rs);
-        const hasReal = rs != null || re != null;
+        const realStartInput = overlay.querySelector('#_ms-real-start');
+        const realEndInput = overlay.querySelector('#_ms-real-end');
+        const rs = realStartInput ? parseReal(realStartInput.value, null) : null;
+        const re = realEndInput ? parseReal(realEndInput.value, rs) : null;
+        const hasReal = hasTimeTracking && (rs != null || re != null);
 
         const btn = overlay.querySelector('#_ms-save');
         btn.disabled    = true;
@@ -4868,6 +4882,7 @@ async function openEstablishmentsModal() {
 // ── Modale compte établissement (pointage) ────────────────────────────────────
 
 async function openCompteEtabModal(estab) {
+    if (!window.ClientFeatures || !ClientFeatures.enabled('time_tracking')) return;
     // Vérifier si un compte existe déjà pour cet établissement
     let existingAccount = null;
     try {
@@ -4956,6 +4971,7 @@ async function openCompteEtabModal(estab) {
 }
 
 async function renderEstablishmentsList() {
+    const hasTimeTracking = !!(window.ClientFeatures && ClientFeatures.enabled('time_tracking'));
     const list = document.getElementById('establishments-list');
     list.innerHTML = '<div style="padding:12px;text-align:center;color:#ccc;font-size:13px">Chargement…</div>';
     try {
@@ -5008,7 +5024,9 @@ async function renderEstablishmentsList() {
                     groupChipsEstab +
                 '</div>' +
                 '<button class="staff-manage-save"  data-action="save">Enregistrer</button>' +
-                '<button class="staff-manage-save"  data-action="compte" style="background:#f0effe;border-color:#7F77DD;color:#534AB7" title="Créer/voir compte pointage">Compte</button>' +
+                (hasTimeTracking
+                    ? '<button class="staff-manage-save" data-action="compte" style="background:#f0effe;border-color:#7F77DD;color:#534AB7" title="Créer/voir compte pointage">Compte</button>'
+                    : '') +
                 '<button class="staff-manage-delete" data-action="delete" title="Supprimer">×</button>';
 
             // Toggle groupes établissement
@@ -5056,7 +5074,8 @@ async function renderEstablishmentsList() {
                 } catch (err) { showToast(err.message, true); }
             });
 
-            row.querySelector('[data-action="compte"]').addEventListener('click', () => openCompteEtabModal(e));
+            const compteBtn = row.querySelector('[data-action="compte"]');
+            if (compteBtn) compteBtn.addEventListener('click', () => openCompteEtabModal(e));
 
             row.querySelector('[data-action="delete"]').addEventListener('click', () => {
                 showConfirm(
@@ -6253,7 +6272,9 @@ function exportRecapXlsx() {
 // ── Échanges de shifts — côté patron (F-05) ──────────────────────────────────
 
 async function loadSwapsBadge() {
-    if (isObservateur()) return;
+    if (isObservateur()
+        || !window.ClientFeatures
+        || !ClientFeatures.enabled('shift_swaps')) return;
     try {
         const res = await fetch('/api/shift-swaps/count', { credentials: 'include' });
         if (!res.ok) return;
@@ -6269,7 +6290,9 @@ async function loadSwapsBadge() {
 }
 
 async function openSwapsPanel() {
-    if (isObservateur()) return;
+    if (isObservateur()
+        || !window.ClientFeatures
+        || !ClientFeatures.enabled('shift_swaps')) return;
     const modal = document.getElementById('swaps-modal');
     if (!modal) return;
     modal.style.display = 'flex';
@@ -8146,13 +8169,18 @@ function buildEstablishmentSelect(staffId) {
 async function loadDispoControl() {
     if (isObservateur()) return;
     try {
+        const hasTimeTracking = !!(window.ClientFeatures && ClientFeatures.enabled('time_tracking'));
         const [dispoRes, pointageRes] = await Promise.all([
-            fetch('/api/dispo-settings',   { credentials: 'include' }),
-            fetch('/api/pointage-settings', { credentials: 'include' }),
+            fetch('/api/dispo-settings', { credentials: 'include' }),
+            hasTimeTracking
+                ? fetch('/api/pointage-settings', { credentials: 'include' })
+                : Promise.resolve(null),
         ]);
         if (!dispoRes.ok) return;
         const settings      = await dispoRes.json();
-        const ptSettings      = pointageRes.ok ? await pointageRes.json() : { cutoff_hour: 9, cutoff_open_hour: 0 };
+        const ptSettings      = pointageRes && pointageRes.ok
+            ? await pointageRes.json()
+            : { cutoff_hour: 9, cutoff_open_hour: 0 };
         const cutoffHourVal     = ptSettings.cutoff_hour      ?? 9;
         const cutoffOpenHourVal = ptSettings.cutoff_open_hour ?? 0;
 
@@ -8250,6 +8278,23 @@ async function loadDispoControl() {
               '</div>'
             : '';
 
+        const pointageSection = hasTimeTracking
+            ? ('<div style="margin-bottom:10px;border-top:1px solid #f0f0f0;padding-top:10px">' +
+                '<div style="font-size:11px;color:#aaa;margin-bottom:6px">Fenêtre de saisie pointage</div>' +
+                '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
+                    '<span style="font-size:11px;color:#666">De</span>' +
+                    '<select id="pointage-cutoff-open" style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px">' +
+                        cutoffOpenOpts +
+                    '</select>' +
+                    '<span style="font-size:11px;color:#666">jusqu\'à</span>' +
+                    '<select id="pointage-cutoff" style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px">' +
+                        cutoffOpts +
+                    '</select>' +
+                    '<span style="font-size:10px;color:#bbb">le lendemain</span>' +
+                '</div>' +
+            '</div>')
+            : '';
+
         panel.innerHTML =
             '<div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Paramètres dispos</div>' +
             '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;margin-bottom:8px;cursor:pointer">' +
@@ -8281,20 +8326,7 @@ async function loadDispoControl() {
             '</div>' +
             horizonSection +
             venuesSection +
-            '<div style="margin-bottom:10px;border-top:1px solid #f0f0f0;padding-top:10px">' +
-                '<div style="font-size:11px;color:#aaa;margin-bottom:6px">Fenêtre de saisie pointage</div>' +
-                '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
-                    '<span style="font-size:11px;color:#666">De</span>' +
-                    '<select id="pointage-cutoff-open" style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px">' +
-                        cutoffOpenOpts +
-                    '</select>' +
-                    '<span style="font-size:11px;color:#666">jusqu\'à</span>' +
-                    '<select id="pointage-cutoff" style="font-size:12px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px">' +
-                        cutoffOpts +
-                    '</select>' +
-                    '<span style="font-size:10px;color:#bbb">le lendemain</span>' +
-                '</div>' +
-            '</div>' +
+            pointageSection +
             '<button id="dispo-save-advanced" style="width:100%;padding:6px;background:#1a1a2e;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer">Enregistrer</button>';
 
         const settingsBtn = document.getElementById('dispo-settings-btn');
@@ -8311,8 +8343,12 @@ async function loadDispoControl() {
             const forceOpen   = document.getElementById('dispo-force-open').checked;
             const dayVal      = document.getElementById('dispo-deadline-day').value;
             const timeVal     = document.getElementById('dispo-deadline-time').value || '13:00';
-            const cutoffVal     = parseInt(document.getElementById('pointage-cutoff').value);
-            const cutoffOpenVal = parseInt(document.getElementById('pointage-cutoff-open').value);
+            const cutoffVal = hasTimeTracking
+                ? parseInt(document.getElementById('pointage-cutoff').value)
+                : null;
+            const cutoffOpenVal = hasTimeTracking
+                ? parseInt(document.getElementById('pointage-cutoff-open').value)
+                : null;
             let customDeadline = null;
             if (dayVal !== '') {
                 const [hh, mm] = timeVal.split(':').map(Number);
@@ -8345,18 +8381,21 @@ async function loadDispoControl() {
             // l'ordre des deux valeurs dans le corps n'a aucune importance ici.
             dispoBody.horizon_weeks            = parseInt(document.getElementById('dispo-horizon').value);
             dispoBody.validation_horizon_weeks = parseInt(document.getElementById('dispo-horizon-validation').value);
-            await Promise.all([
+            const saves = [
                 fetch('/api/dispo-settings', {
                     credentials: 'include', method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(dispoBody),
                 }),
-                fetch('/api/pointage-settings', {
+            ];
+            if (hasTimeTracking) {
+                saves.push(fetch('/api/pointage-settings', {
                     credentials: 'include', method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ cutoff_hour: cutoffVal, cutoff_open_hour: cutoffOpenVal }),
-                }),
-            ]);
+                }));
+            }
+            await Promise.all(saves);
             panel.style.display = 'none';
             showToast('Paramètres enregistrés');
         });
@@ -8697,6 +8736,7 @@ let _showArchivedStaff = false; // F-13 — préférence d'affichage, volontaire
 function renderStaffManageList() {
     const list = document.getElementById('staff-manage-list');
     list.innerHTML = '';
+    const hasPerformance = !!(window.ClientFeatures && ClientFeatures.enabled('performance'));
 
     if (allStaff.length === 0) {
         list.innerHTML = '<p style="text-align:center;color:#ccc;font-size:13px;padding:16px 0">Aucun membre du staff</p>';
@@ -8818,7 +8858,7 @@ function renderStaffManageList() {
                     '<input type="color" class="staff-manage-name-color" value="' + escapeHtml(staff.name_color || staff.color) + '" title="Couleur du nom">' +
                     '<button type="button" class="staff-name-color-reset" style="font-size:10px;color:#bbb;border:1px solid #e0e0e0;background:white;border-radius:4px;padding:2px 6px;cursor:pointer" title="Utiliser la couleur du shift">Reset</button>' +
                 '</div>' +
-                (function () {
+                (hasPerformance ? (function () {
                     // Deux modes mutuellement exclusifs : taux horaire OU forfait fixe par shift.
                     const isFixedMode = staff.fixed_rate != null;
                     const hRate = staff.hourly_rate != null ? staff.hourly_rate : '';
@@ -8840,7 +8880,7 @@ function renderStaffManageList() {
                             '<span style="font-size:11px;color:#aaa">€ / shift brut</span>' +
                         '</span>' +
                     '</div>';
-                })() +
+                })() : '') +
                 '<div class="venue-pref-row">' + venueButtons + '</div>' +
                 '<div class="role-assign-section">' + rolesHTML + '</div>' +
                 groupChips +
@@ -8948,13 +8988,16 @@ function renderStaffManageList() {
             const newCanSubmit  = row.querySelector('.staff-can-submit').checked;
             const newCongeModes = row.querySelector('.staff-conge-modes')?.value || 'both';
             const newGroups     = Array.from(row.querySelectorAll('.staff-group-btn.active')).map(b => b.dataset.group);
-            const rateMode = row.querySelector('.staff-rate-mode:checked')?.value || 'hourly';
-            const hRaw = row.querySelector('.staff-manage-hourly-rate')?.value;
-            const fRaw = row.querySelector('.staff-manage-fixed-rate')?.value;
-            // Mode actif → on envoie la valeur saisie ; l'autre champ est forcé null
-            // côté client pour rester explicite (le serveur applique aussi la mutual exclusion).
-            const newHourlyRate = rateMode === 'hourly' && hRaw !== '' && hRaw != null ? parseFloat(hRaw) : null;
-            const newFixedRate  = rateMode === 'fixed'  && fRaw !== '' && fRaw != null ? parseFloat(fRaw) : null;
+            let newHourlyRate = staff.hourly_rate ?? null;
+            let newFixedRate  = staff.fixed_rate  ?? null;
+            if (hasPerformance) {
+                const rateMode = row.querySelector('.staff-rate-mode:checked')?.value || 'hourly';
+                const hRaw = row.querySelector('.staff-manage-hourly-rate')?.value;
+                const fRaw = row.querySelector('.staff-manage-fixed-rate')?.value;
+                // Mode actif → on envoie la valeur saisie ; l'autre champ est forcé null.
+                newHourlyRate = rateMode === 'hourly' && hRaw !== '' && hRaw != null ? parseFloat(hRaw) : null;
+                newFixedRate  = rateMode === 'fixed'  && fRaw !== '' && fRaw != null ? parseFloat(fRaw) : null;
+            }
 
             if (!newName) { showToast('Le nom ne peut pas être vide', true); return; }
 
@@ -8962,11 +9005,20 @@ function renderStaffManageList() {
             const effectiveNameColor = newNameColor && newNameColor !== newColor ? newNameColor : null;
 
             try {
+                const payload = {
+                    name: newName, color: newColor, venues: newVenues, roles: newRoles,
+                    can_submit_dispos: newCanSubmit, conge_modes: newCongeModes,
+                    groups: newGroups, name_color: effectiveNameColor, nickname: newNickname,
+                };
+                if (hasPerformance) {
+                    payload.hourly_rate = newHourlyRate;
+                    payload.fixed_rate = newFixedRate;
+                }
                 const res = await fetch('/api/staff/' + staff._id, {
                     method:      'PATCH',
                     credentials: 'include',
                     headers:     { 'Content-Type': 'application/json' },
-                    body:        JSON.stringify({ name: newName, color: newColor, venues: newVenues, roles: newRoles, can_submit_dispos: newCanSubmit, conge_modes: newCongeModes, groups: newGroups, name_color: effectiveNameColor, nickname: newNickname, hourly_rate: newHourlyRate, fixed_rate: newFixedRate }),
+                    body:        JSON.stringify(payload),
                 });
                 if (!res.ok) throw new Error((await res.json()).error);
 
@@ -8979,8 +9031,10 @@ function renderStaffManageList() {
                 staff.conge_modes       = newCongeModes;
                 staff.groups            = newGroups;
                 staff.name_color = effectiveNameColor;
-                staff.hourly_rate = newHourlyRate;
-                staff.fixed_rate  = newFixedRate;
+                if (hasPerformance) {
+                    staff.hourly_rate = newHourlyRate;
+                    staff.fixed_rate  = newFixedRate;
+                }
 
                 buildStaffDisplayNames();
 

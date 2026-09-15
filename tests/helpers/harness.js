@@ -15,6 +15,11 @@ process.env.ALLOW_TEST_AUTH = '1'; // 2e garde du harnais (S-01)
 // testée tente un vrai appel Resend/Twilio : lent, dépendant du réseau, et un jour ça
 // partira pour de bon.
 process.env.OUTBOUND_ENABLED = 'false';
+// Les suites historiques testent le Pack complet et les échanges. Les tests dédiés
+// aux entitlements vérifient séparément le profil "Planning seul" fail-closed.
+process.env.FEATURE_TIME_TRACKING = 'force';
+process.env.FEATURE_PERFORMANCE   = 'force';
+process.env.FEATURE_SHIFT_SWAPS   = 'force';
 process.env.MONGO_URI       = process.env.MONGO_URI      || 'mongodb://127.0.0.1:27017/templyo_test';
 process.env.SESSION_SECRET  = process.env.SESSION_SECRET || 'integration-test-secret-0123456789abcdef';
 

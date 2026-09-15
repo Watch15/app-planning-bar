@@ -939,13 +939,13 @@
                 <span id="dispos-badge" style="display:none;position:absolute;top:-5px;right:-5px;background:var(--danger);color:white;font-size:9px;font-weight:700;width:14px;height:14px;border-radius:50%;align-items:center;justify-content:center;pointer-events:none;z-index:1;border:1.5px solid var(--dark-bg)">0</span>
             </div>
             <div style="position:relative;display:inline-block">
-                <button class="btn-manage-staff" id="btn-swaps" title="Échanges de shifts à valider">Échanges</button>
+                <button class="btn-manage-staff" id="btn-swaps" data-feature="shift_swaps" title="Échanges de shifts à valider">Échanges</button>
                 <span id="swaps-badge" style="display:none;position:absolute;top:-5px;right:-5px;background:var(--danger);color:white;font-size:9px;font-weight:700;width:14px;height:14px;border-radius:50%;align-items:center;justify-content:center;pointer-events:none;z-index:1;border:1.5px solid var(--dark-bg)">0</span>
             </div>
             <button class="btn-manage-staff" id="btn-recap" style="background:rgba(16,185,129,0.12);border-color:#10b981;color:#10b981">Récap</button>
-            <a href="/performance.html" class="btn-manage-staff" id="btn-performance" style="background:rgba(108,99,255,0.12);border-color:#6C63FF;color:#6C63FF;text-decoration:none;display:inline-flex;align-items:center" title="Pilotage économique (CA + masse salariale)">Performance</a>
+            <a href="/performance.html" class="btn-manage-staff" id="btn-performance" data-feature="performance" style="background:rgba(108,99,255,0.12);border-color:#6C63FF;color:#6C63FF;text-decoration:none;display:inline-flex;align-items:center" title="Pilotage économique (CA + masse salariale)">Performance</a>
             <button id="btn-revenue" style="display:none" aria-hidden="true"></button>
-            <a href="/pointage.html" class="btn-manage-staff" id="btn-pointage" style="background:rgba(245,158,11,0.12);border-color:#f59e0b;color:#f59e0b;text-decoration:none;display:inline-flex;align-items:center" title="Heures réelles + code &amp; clôtures de service">Pointage</a>
+            <a href="/pointage.html" class="btn-manage-staff" id="btn-pointage" data-feature="time_tracking" style="background:rgba(245,158,11,0.12);border-color:#f59e0b;color:#f59e0b;text-decoration:none;display:inline-flex;align-items:center" title="Heures réelles + code &amp; clôtures de service">Pointage</a>
             <div class="header-sep"></div>
             <!-- Groupe 3 : toggle dispos + paramètres -->
             <div id="header-dispo-controls" style="position:relative;display:flex;align-items:center;gap:6px">
@@ -1041,7 +1041,7 @@
             <button class="btn-copy-day" id="btn-copy-day">Copier ce jour →</button>
             <button class="btn-manage-staff" id="btn-copy-week" style="font-size:12px;padding:5px 12px">Copier la semaine →</button>
             <button class="btn-manage-staff" id="btn-propose-slots" data-feature="predefined_slots" style="display:none;font-size:12px;padding:5px 12px;background:rgba(13,148,136,0.12);border-color:#0d9488;color:#0d9488" title="Ouvre les Jokers de la semaine aux candidatures (créneaux prédéfinis)">Proposer les créneaux</button>
-            <button class="btn-manage-staff" id="btn-refresh-day" title="Recharger les heures réelles saisies depuis la tablette de pointage" style="font-size:12px;padding:5px 10px">⟳ Actualiser</button>
+            <button class="btn-manage-staff" id="btn-refresh-day" data-feature="time_tracking" title="Recharger les heures réelles saisies depuis la tablette de pointage" style="font-size:12px;padding:5px 10px">⟳ Actualiser</button>
             <button class="btn-manage-staff" id="btn-publish-week" style="font-size:12px;padding:5px 12px;background:var(--accent);border-color:var(--accent);color:#fff">Publier la semaine</button>
             <button class="day-detail-close" id="day-detail-close">×</button>
         </div>
@@ -1162,7 +1162,7 @@
                 <div class="staff-add-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
                     <span>Ajouter un membre</span>
                     <div style="display:flex;gap:6px;flex-wrap:wrap">
-                        <button id="btn-bulk-staff-rates" title="Importer les taux horaires depuis une liste prenom nom;taux" style="background:rgba(108,99,255,0.10);border:1.5px solid var(--accent);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:var(--radius);cursor:pointer;font-family:var(--font)">Import taux</button>
+                        <button id="btn-bulk-staff-rates" data-feature="performance" title="Importer les taux horaires depuis une liste prenom nom;taux" style="background:rgba(108,99,255,0.10);border:1.5px solid var(--accent);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:var(--radius);cursor:pointer;font-family:var(--font)">Import taux</button>
                         <button id="btn-bulk-staff-names" title="Créer plusieurs profils depuis une liste de noms" style="background:var(--success-bg);border:1.5px solid var(--success);color:var(--success-text);font-size:11px;font-weight:600;padding:4px 10px;border-radius:var(--radius);cursor:pointer;font-family:var(--font)">Import liste</button>
                     </div>
                 </div>
@@ -1203,7 +1203,7 @@
 </div>
 
 <!-- Modale saisie CA -->
-<div class="modal-overlay" id="revenue-modal" style="display:none">
+<div class="modal-overlay" id="revenue-modal" data-feature="performance" style="display:none">
     <div class="modal" style="width:440px;max-width:95vw">
         <div class="modal-header">
             <span class="modal-title">Saisir un CA</span>
@@ -1412,7 +1412,7 @@
     </div>
 </div>
 
-<div class="modal-overlay" id="swaps-modal" style="display:none">
+<div class="modal-overlay" id="swaps-modal" data-feature="shift_swaps" style="display:none">
     <div class="modal" style="width:640px;max-width:95vw">
         <div class="modal-header">
             <span class="modal-title">Échanges de shifts à valider</span>
@@ -1537,12 +1537,12 @@
         Disponibilités
         <span id="drawer-dispos-badge" style="display:none;background:#e74c3c;color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px">0</span>
     </button>
-    <button class="drawer-btn" id="drawer-btn-swaps" onclick="closeMobileDrawer();document.getElementById('btn-swaps').click()">
+    <button class="drawer-btn" id="drawer-btn-swaps" data-feature="shift_swaps" onclick="closeMobileDrawer();document.getElementById('btn-swaps').click()">
         Échanges
         <span id="drawer-swaps-badge" style="display:none;background:#e74c3c;color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px">0</span>
     </button>
-    <a class="drawer-btn drawer-btn-pointage" href="/pointage.html" onclick="closeMobileDrawer()">Pointage</a>
-    <a class="drawer-btn" href="/performance.html" onclick="closeMobileDrawer()">Performance</a>
+    <a class="drawer-btn drawer-btn-pointage" data-feature="time_tracking" href="/pointage.html" onclick="closeMobileDrawer()">Pointage</a>
+    <a class="drawer-btn" data-feature="performance" href="/performance.html" onclick="closeMobileDrawer()">Performance</a>
     <button class="drawer-btn" onclick="closeMobileDrawer();document.getElementById('btn-recap').click()">Récap mensuel</button>
     <div class="drawer-section-label" id="drawer-section-dispos">Disponibilités</div>
     <div class="drawer-btn" id="drawer-dispo-row" style="justify-content:space-between;cursor:default">

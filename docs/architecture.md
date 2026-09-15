@@ -498,7 +498,11 @@ POST HTTP direct vers l'API REST Twilio. Pas de SDK. Normalisation des numéros 
 
 ## 14. Synchronisation agenda — flux iCal (D-72)
 
-> ⚠️ **DÉSACTIVÉE en prod (D-83)** — flag `CALENDAR_ENABLED` (défaut `false`, ou env `CALENDAR_ENABLED=true`). Routes `/api/calendar*` → 404, carte client masquée (flag jumeau dans `public/planning.js`). Code conservé. Réactiver : flipper les **deux** flags. Raison : synchro iCal non temps réel (jusqu'à ~1 h), pas assez fiable — à roder avant remise en prod.
+> ⚠️ **DÉSACTIVÉE par défaut (D-83 / D-103)** — feature flag central
+> `calendar_sync` (`FEATURE_CALENDAR_SYNC=true`). Routes `/api/calendar*` → 404 et
+> carte client masquée quand il est off. L'ancien doublon `CALENDAR_ENABLED` serveur /
+> constante front a été supprimé. Raison : synchro iCal non temps réel (jusqu'à ~1 h),
+> pas assez fiable — à roder avant activation client.
 
 Permet au staff d'ajouter son planning à **Google Agenda / Apple Calendrier / Outlook** via un abonnement iCal. Réglage **unique** côté utilisateur, puis l'agenda se rafraîchit tout seul → plus besoin de se connecter pour consulter ses horaires.
 

@@ -1202,7 +1202,7 @@
 <div id="upcoming-weeks"></div>
 
 <!-- Synchronisation agenda (Google / Apple / Outlook) -->
-<div class="cal-sync-card" id="cal-sync-card">
+<div class="cal-sync-card" id="cal-sync-card" data-feature="calendar_sync">
     <div class="cal-sync-head">
         <span class="cal-sync-icon">📅</span>
         <div>
@@ -1291,7 +1291,7 @@
     <div style="height:40px"></div>
 </div>
 
-<div id="swap-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:flex-end;justify-content:center">
+<div id="swap-modal" data-feature="shift_swaps" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:flex-end;justify-content:center">
     <div style="background:#fff;width:100%;max-width:560px;border-radius:20px 20px 0 0;max-height:88vh;overflow-y:auto;padding:18px 16px 28px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
             <div style="font-weight:700;font-size:16px;color:#1a1a2e">Proposer un échange</div>
@@ -1312,7 +1312,7 @@
 </div>
 <div id="swap-toast" style="display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:white;padding:10px 16px;border-radius:10px;font-size:13px;z-index:10000;box-shadow:0 4px 16px rgba(0,0,0,0.2)"></div>
 
-<div id="cloture-code-modal" aria-hidden="true">
+<div id="cloture-code-modal" data-feature="time_tracking" aria-hidden="true">
     <div class="cloture-code-sheet" role="dialog" aria-modal="true" aria-label="Pointer le service">
         <div id="cloture-code-title" style="font-weight:700;font-size:16px;color:#1a1a2e">Pointer mon service</div>
         <div id="cloture-code-shift-label" style="font-size:13px;color:#64748b;margin-top:4px"></div>

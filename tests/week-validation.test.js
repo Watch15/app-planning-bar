@@ -13,6 +13,21 @@ const STAFF_USER = { _id: 'u1', role: 'staff', name: 'Ada', staff_id: null };
 let db;
 let staffId;
 
+function currentWeekDates() {
+    const monday = new Date();
+    monday.setHours(12, 0, 0, 0);
+    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+    const dateStr = d => d.getFullYear() + '-'
+        + String(d.getMonth() + 1).padStart(2, '0') + '-'
+        + String(d.getDate()).padStart(2, '0');
+    const plus = days => {
+        const d = new Date(monday);
+        d.setDate(d.getDate() + days);
+        return dateStr(d);
+    };
+    return { weekStart: dateStr(monday), plus };
+}
+
 before(async () => {
     process.env.FEATURE_WEEKLY_VALIDATION = 'force';
     await startApp();
@@ -41,12 +56,12 @@ test('validation/week : 404 si feature off', async () => {
 });
 
 test('sign + garde valider-recap', async () => {
-    const weekStart = '2026-09-01'; // lun
+    const { weekStart, plus } = currentWeekDates();
     await db.collection('shifts').insertMany([
         {
             _id: new ObjectId(),
             establishment_id: 'bar1',
-            date: '2026-09-02',
+            date: plus(1),
             staff_id: String(staffId),
             staff_name: 'Ada',
             start_time: 18, end_time: 22,
@@ -56,7 +71,7 @@ test('sign + garde valider-recap', async () => {
         {
             _id: new ObjectId(),
             establishment_id: 'bar2',
-            date: '2026-09-03',
+            date: plus(2),
             staff_id: String(staffId),
             staff_name: 'Ada',
             start_time: 18, end_time: 22,
@@ -107,10 +122,10 @@ test('sign + garde valider-recap', async () => {
 });
 
 test('reopen régénère un code', async () => {
-    const weekStart = '2026-09-01';
+    const { weekStart, plus } = currentWeekDates();
     await db.collection('shifts').insertOne({
         establishment_id: 'bar1',
-        date: '2026-09-02',
+        date: plus(1),
         staff_id: String(staffId),
         staff_name: 'Ada',
         start_time: 18, end_time: 22,
