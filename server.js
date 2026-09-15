@@ -1485,6 +1485,49 @@ app.get('/api/client-features', checkDB, requireAuth, (req, res) => {
     res.json(clientFeatureFlags());
 });
 
+// Session utilisateur — même forme que /auth/login (source unique pour set/reset password).
+function sessionUserFromDoc(user) {
+    return {
+        _id:                     String(user._id),
+        email:                   user.email  || null,
+        phone:                   user.phone  || null,
+        role:                    user.role,
+        staff_id:                user.staff_id || null,
+        name:                    user.name || '',
+        assigned_establishments: user.assigned_establishments || [],
+        establishment_id:        user.establishment_id || null,
+    };
+}
+
+// Prévisualisation d'un lien d'activation / reset — pour guider l'UI AVANT la saisie.
+// Un lien SMS est souvent rouvert comme « bouton de connexion » : on doit pouvoir dire
+// clairement « compte déjà activé → va te connecter » au lieu d'un 404 opaque.
+app.get('/auth/password-link', checkDB, async (req, res) => {
+    const token = String(req.query.token || '');
+    const mode  = String(req.query.mode || '');
+    if (!token) return res.status(400).json({ status: 'invalid', error: 'Token requis' });
+    try {
+        if (mode === 'reset') {
+            const user = await db.collection('users').findOne({ reset_token: hashToken(token) });
+            if (!user) return res.json({ status: 'used_or_invalid', login_hint: 'phone_or_email' });
+            if (user.reset_expires < new Date()) return res.json({ status: 'expired', login_hint: user.phone ? 'phone' : 'email' });
+            return res.json({ status: 'ok', mode: 'reset', login_hint: user.phone ? 'phone' : 'email' });
+        }
+        const user = await db.collection('users').findOne({ invite_token: hashToken(token) });
+        if (!user) return res.json({ status: 'used_or_invalid', login_hint: 'phone_or_email' });
+        if (user.password_hash) {
+            return res.json({
+                status: 'already_activated',
+                login_hint: user.phone ? 'phone' : 'email',
+            });
+        }
+        if (user.invite_expires < new Date()) {
+            return res.json({ status: 'expired', login_hint: user.phone ? 'phone' : 'email' });
+        }
+        return res.json({ status: 'ok', mode: 'invite', login_hint: user.phone ? 'phone' : 'email' });
+    } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
+});
+
 // Activation compte via token invitation
 app.post('/auth/set-password', checkDB, async (req, res) => {
     const { token, password } = req.body;
@@ -1494,15 +1537,36 @@ app.post('/auth/set-password', checkDB, async (req, res) => {
         // Token toujours hashé en base (SHA-256). Tout token en clair antérieur à la migration
         // est de fait expiré (TTL 24h sur les invitations), donc plus de fallback en clair.
         const user = await db.collection('users').findOne({ invite_token: hashToken(token) });
-        if (!user)                            return res.status(404).json({ error: 'Lien invalide' });
+        if (!user) {
+            return res.status(404).json({
+                error: 'Lien déjà utilisé ou invalide. Connecte-toi avec ton numéro ou ton email et ton mot de passe.',
+                code: 'link_used_or_invalid',
+            });
+        }
+        // Compte déjà activé : on GARDE invite_token pour pouvoir renvoyer ce 409 quand
+        // la personne rouvre le SMS plus tard (sinon findOne rate → 404 opaque).
+        if (user.password_hash) {
+            return res.status(409).json({
+                error: 'Compte déjà activé. Connecte-toi avec ton mot de passe.',
+                code: 'already_activated',
+                login_hint: user.phone ? 'phone' : 'email',
+            });
+        }
         if (user.invite_expires < new Date()) return res.status(410).json({ error: 'Lien expiré (24h)' });
-        if (user.password_hash)               return res.status(409).json({ error: 'Compte déjà activé, utilise la connexion' });
         const hash = await bcrypt.hash(password, 12);
         await db.collection('users').updateOne(
             { _id: user._id },
-            { $set: { password_hash: hash, active: true }, $unset: { invite_token: '', invite_expires: '' } }
+            // On conserve invite_token (hash) pour reconnaître une réouverture du SMS.
+            // Il ne permet plus de changer le mot de passe une fois password_hash posé.
+            { $set: { password_hash: hash, active: true }, $unset: { invite_expires: '' } }
         );
-        res.json({ message: 'Mot de passe créé, tu peux te connecter' });
+        const sessionUser = sessionUserFromDoc(user);
+        req.session.user = sessionUser;
+        res.json({
+            message: 'Compte activé',
+            user: sessionUser,
+            client: clientFeatureFlags(),
+        });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
@@ -1515,7 +1579,12 @@ app.patch('/auth/reset-password', checkDB, async (req, res) => {
         // Token toujours hashé en base (SHA-256). Tout token en clair antérieur à la migration
         // est de fait expiré (TTL 1h sur les resets), donc plus de fallback en clair.
         const user = await db.collection('users').findOne({ reset_token: hashToken(token) });
-        if (!user)                           return res.status(404).json({ error: 'Lien invalide' });
+        if (!user) {
+            return res.status(404).json({
+                error: 'Lien déjà utilisé ou invalide. Connecte-toi avec ton mot de passe.',
+                code: 'link_used_or_invalid',
+            });
+        }
         if (user.reset_expires < new Date()) return res.status(410).json({ error: 'Lien expiré (1h)' });
         const hash = await bcrypt.hash(password, 12);
         await db.collection('users').updateOne(
@@ -1525,7 +1594,13 @@ app.patch('/auth/reset-password', checkDB, async (req, res) => {
         // Un changement de mot de passe doit révoquer toutes les sessions existantes :
         // sinon une session volée reste valable malgré la récupération du compte.
         await invalidateUserSessions(user._id);
-        res.json({ message: 'Mot de passe mis à jour, tu peux te connecter' });
+        const sessionUser = sessionUserFromDoc({ ...user, password_hash: hash, active: true });
+        req.session.user = sessionUser;
+        res.json({
+            message: 'Mot de passe mis à jour',
+            user: sessionUser,
+            client: clientFeatureFlags(),
+        });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 

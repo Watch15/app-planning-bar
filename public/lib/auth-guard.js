@@ -41,6 +41,7 @@
         '/auth/forgot-password',
         '/auth/set-password',
         '/auth/reset-password',
+        '/auth/password-link',
     ];
 
     // Pages sur lesquelles on est déjà, par nature, déconnecté. `login.js` appelle
