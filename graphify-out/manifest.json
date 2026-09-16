@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "docs/backlog.md": {
-    "mtime": 1789568952.669752,
-    "ast_hash": "ad5628396a37007c81d25f368ad67b9a",
+    "mtime": 1789571982.707616,
+    "ast_hash": "29d33485615da3ddd1d73fdde1ab3e09",
     "semantic_hash": ""
   },
   "docs/prd.md": {
@@ -195,8 +195,8 @@
     "semantic_hash": ""
   },
   "docs/onboarding.md": {
-    "mtime": 1789568951.5512526,
-    "ast_hash": "16533036e45d8fbf09010af74411a460",
+    "mtime": 1789569565.2403889,
+    "ast_hash": "f04531bbd134b7d368407cd5c47bea5e",
     "semantic_hash": ""
   },
   "eslint.config.js": {
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "scripts/seed-demo.js": {
-    "mtime": 1789031214.183998,
-    "ast_hash": "62918c3841a7a434132256c13ddccc9a",
+    "mtime": 1789571868.5057244,
+    "ast_hash": "a8c69df4a70368e82213234a09237fe3",
     "semantic_hash": ""
   },
   "tests/dispo-template.test.js": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "docs/dossier-projet.md": {
-    "mtime": 1789057246.3965359,
-    "ast_hash": "646b7aff50d202f5a4673baf65060dd4",
+    "mtime": 1789569582.6157327,
+    "ast_hash": "bca8322ed626241ee2cc42c8110e2b0b",
     "semantic_hash": ""
   },
   "public/lib/dispo-template.js": {
@@ -440,8 +440,8 @@
     "semantic_hash": ""
   },
   "docs/feature-flags.md": {
-    "mtime": 1789548403.7305257,
-    "ast_hash": "84c6c8f287014de1038c210d0d643056",
+    "mtime": 1789570388.054463,
+    "ast_hash": "aad36ba9082110502cfb83afe45bac99",
     "semantic_hash": ""
   },
   "public/validation.js": {
@@ -517,6 +517,16 @@
   "tests/pointage-delete.test.js": {
     "mtime": 1789568948.5433016,
     "ast_hash": "413ac6e474b15a0bb92f05c521c71c4e",
+    "semantic_hash": ""
+  },
+  "docs/guide-demo-prospect.md": {
+    "mtime": 1789571954.920007,
+    "ast_hash": "076d0a0b4a8aa9190bb5d5649a30c6b6",
+    "semantic_hash": ""
+  },
+  "public/demo-guide.html": {
+    "mtime": 1789571968.8700068,
+    "ast_hash": "bc5058daa8077b234e7ec1951287e6d1",
     "semantic_hash": ""
   }
 }

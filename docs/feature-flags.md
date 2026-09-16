@@ -76,19 +76,39 @@ FEATURE_PERFORMANCE=true
 `shift_swaps` et `calendar_sync` restent des activations explicites indépendantes :
 elles ne font pas partie des trois modules tarifaires contractuels.
 
-## Où le flag est posé (état au 2026-09-11)
+## Où le flag est posé (relevé Railway du 2026-09-16)
 
 Le catalogue dit ce qu'une feature *peut* être ; seule la config d'une instance dit ce
 qu'elle *est*. Les variables Railway ne sont dans aucun fichier du dépôt — se fier au
 catalogue seul fait conclure à un bug là où il n'y a qu'une variable absente.
 
-| Instance | `CLIENT_PROFILE` | `FEATURE_PREDEFINED_SLOTS` | D-101 visible |
-|---|---|---|---|
-| Local `.env` | `castaniu` | `true` | ✅ |
-| Local `.env.dev` / `.env.castaniu` | — / `castaniu` | `force` / `true` | ✅ |
-| Railway **Dev** (dev.templyo.fr) | *(absent)* | `force` **← posé le 2026-09-11** | ✅ |
-| Railway **Demo** / **Prod** interne | *(absent)* | *(absente)* | ❌ |
-| Railway **Castaniu Family** (prod client) | `castaniu` | `true` (+ `FEATURE_WEEKLY_VALIDATION=false`) | ✅ |
+Depuis `c356224`, les quatre modules optionnels sont **fail-closed** : une variable
+absente n'est plus « le comportement d'hier », c'est un module éteint. Ce tableau est
+donc un état des lieux de ce qui est allumé, pas une curiosité. Les lignes Railway sont
+**lues** (`railway variables --kv`), pas déduites du dépôt.
+
+| Instance | `CLIENT_PROFILE` | `TIME_TRACKING` | `PERFORMANCE` | `SHIFT_SWAPS` | `CALENDAR_SYNC` | `PREDEFINED_SLOTS` |
+|---|---|---|---|---|---|---|
+| Local `.env` | `castaniu` | — | — | — | — | `true` |
+| Local `.env.dev` | — | — | — | — | — | `force` |
+| Local `.env.castaniu` | `castaniu` | — | — | — | — | `true` (+ `WEEKLY_VALIDATION=true`) |
+| Local `.env.demo` | — | `true` | `true` | `true` | `false` | — |
+| Railway **Dev** (dev.templyo.fr) | — | — | — | — | — | `force` |
+| Railway **Demo** (demo.templyo.fr) | — | — | — | — | — | — |
+| Railway **Prod interne** | — | — | — | — | — | — |
+| Railway **Castaniu Family** (client) | `castaniu` | — | — | — | — | `true` (+ `WEEKLY_VALIDATION=false`) |
+
+« — » = variable absente, donc, depuis le fail-closed, **module éteint**.
+
+> 🔴 **Deux conséquences déjà réelles.**
+> 1. **Démo prospect.** `demo.templyo.fr` ne porte aucun `FEATURE_*` : Pointage,
+>    Performance et Échanges y répondent 404. Un rendez-vous tenu dessus en l'état
+>    montre le socle seul — cf. [`guide-demo-prospect.md`](./guide-demo-prospect.md) § 0.
+> 2. **Client.** `Castaniu Family` ne porte ni `FEATURE_TIME_TRACKING` ni
+>    `FEATURE_PERFORMANCE`. Il tourne aujourd'hui sur `3519e52`, *avant* le fail-closed,
+>    donc les deux modules marchent encore par l'ancien défaut. Le jour où un
+>    `git push castanui main:main` lui apporte `c356224`, ils disparaissent — clôture
+>    par code comprise. **Poser les deux variables AVANT la livraison, pas après.**
 
 `force` sur Dev est délibéré : il ouvre **cette seule** feature sans faire passer
 dev.templyo.fr en profil `castaniu`, ce qui y allumerait aussi, sans prévenir, toute
@@ -113,6 +133,15 @@ Vérifier quand même que le code est bien déployé avant de conclure :
 - Routes métier Castaniu : `requireFeature('weekly_staff_validation')` → 404 si off
 - DOM : `<div data-feature="predefined_slots">…</div>` masqué automatiquement via `ClientFeatures.applyDom()`
 
+> **`applyDom()` masque, il ne révèle pas.** Un flag actif rend l'élément *éligible* à
+> l'affichage ; c'est le code qui le pilote (`openRevenueModal`, `openSwapsModal`,
+> `refreshProposeSlotsButton`) qui l'affiche. La fonction posait `display: ''` sur les
+> nœuds dont le flag était actif : cela effaçait le `display:none` inline qui tient une
+> modale fermée, et « Saisir un CA », « Échanges de shifts à valider » et la modale
+> d'échange du planning staff s'ouvraient seules au chargement, dès la réponse de
+> `/auth/me`. Invisible sur une instance où les modules sont éteints — donc invisible en
+> CI et sur dev. Contrat vérifié par `tests/client-features-dom.test.js`.
+
 ## Ajouter une feature
 
 1. Entrée dans `FEATURES` (`lib/client-features.js`)
@@ -123,7 +152,7 @@ Vérifier quand même que le code est bien déployé avant de conclure :
    `process.env.FEATURE_X = 'force'` dans le `before()` : le harnais ne force que
    `time_tracking` / `performance` / `shift_swaps`, le reste tourne sous le profil par
    défaut, où une feature `profiles: ['castaniu']` est off — et la suite devient rouge.
-5. Ligne dans ce doc + backlog
+6. Ligne dans ce doc (dont le tableau « Où le flag est posé ») + backlog
 
 ## Portes effectivement protégées
 

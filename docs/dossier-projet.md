@@ -134,9 +134,18 @@ cliquer partout en direct.
 | `SEED_PASSWORD` | **pas `Demo2026!`** | le défaut du script. Sur une instance publique, 27 comptes derrière un mot de passe deviné = accès libre. À changer, et à repasser au seed |
 | `APP_URL` | domaine Railway de la démo | liens d'invitation et URL de calendrier |
 | `TZ` | `Europe/Paris` | comme les autres services |
+| `FEATURE_TIME_TRACKING` | `true` | Pointage + clôture OTP (pack démo complet) |
+| `FEATURE_PERFORMANCE` | `true` | CA, masse, Simulation |
+| `FEATURE_SHIFT_SWAPS` | `true` | Échanges (à présenter au prospect) |
+| `FEATURE_CALENDAR_SYNC` | `false` | iCal expérimental — off sauf besoin explicite |
+
+**Modèle local :** `.env.demo.example` → copier en `.env.demo`.  
+**Guide prospect :** [`docs/guide-demo-prospect.md`](./guide-demo-prospect.md) · page
+[`/demo-guide.html`](../public/demo-guide.html) pendant le RDV.
 
 **Ne PAS poser** : `ALLOW_TEST_AUTH` (le serveur refuse de démarrer hors `NODE_ENV=test`,
 `server.js:161` — c'est voulu), et `PATRON_EMAIL` / `PATRON_PASSWORD` (code mort, A-04).
+**Ne PAS poser** `CLIENT_PROFILE=castaniu` sur la démo générique (customs client uniquement).
 
 **Trois points de câblage à ne pas rater**
 
@@ -311,7 +320,7 @@ qui la réintroduisaient auparavant dans les écrans de planification.
 |---|---|
 | **Ergonomie mobile « Gestion du staff »** | Livré sur `dev` (`c8b5d8f`), **pas chez le client**. Cibles tactiles portées à 44 px et grille des jours de repos restructurée en portrait. Non vérifiable par les tests (aucune couverture DOM/CSS) — demande un vrai téléphone |
 | **Maquettes Stitch** | 32 écrans à générer dans le projet Stitch « Templyo ». La génération par l'outil automatisé échoue ; les prompts sont prêts à coller à la main |
-| **E-21 — environnement de démonstration** | Réflexion faite, **aucun code**. Recommandation : démo pilotée en visio d'abord, bac à sable qui se réinitialise seul, et un drapeau `DEMO_MODE` qui coupe **tout** envoi sortant (SMS, push, e-mail). Le vrai travail est le jeu de données, pas l'infrastructure |
+| **E-21 — environnement de démonstration** | Jeu `seed-demo.js` + service Railway dédié. Pack flags documenté (`.env.demo.example`). Guide prospect : `docs/guide-demo-prospect.md` + `/demo-guide.html`. Reseed avant chaque RDV. `OUTBOUND_ENABLED=false` obligatoire. |
 | **E-08 — multi-tenant** | Non commencé. Aujourd'hui, un client = une instance + une base. Conditionné à un volume de 20-25 clients |
 
 **Une fonctionnalité est livrée mais volontairement éteinte** — la rencontrer dans le code
@@ -392,6 +401,7 @@ Le backlog nomme tout par un préfixe. Sans cette table, il est illisible.
 | L'horizon de saisie, en détail | `docs/design-b2-horizon-saisie.md` — **§8 fait autorité** |
 | Les disponibilités des directeurs, en détail | `docs/design-e22-dispos-directeur.md` — **§8 et §9 font autorité**, les sections antérieures sont marquées supersédées |
 | Quoi annoncer au client | `docs/note-client-mise-a-jour.md` |
+| Démo prospect (parcours + comptes) | `docs/guide-demo-prospect.md` · `/demo-guide.html` |
 | Audit ergonomique page par page | `docs/ux-design.md` |
 | Installation, variables d'environnement, routes API | `README.md` |
 

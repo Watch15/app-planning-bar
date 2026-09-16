@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Guide démo — Templyo</title>
+    <link rel="stylesheet" href="/demo-guide.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="brand">Templyo · Démonstration</div>
+            <h1>Guide d’utilisation</h1>
+            <p>
+                Parcours pour découvrir le planning multi-établissements, le pointage,
+                la performance et les échanges — sur un jeu de données fictif prêt à l’emploi.
+            </p>
+            <div class="actions">
+                <a class="btn btn-primary" href="/login.html">Ouvrir la connexion</a>
+                <a class="btn btn-ghost" href="#parcours">Voir le parcours</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="wrap">
+        <nav class="toc" aria-label="Sommaire">
+            <h2>Sommaire</h2>
+            <ol>
+                <li><a href="#comptes">Comptes de démo</a></li>
+                <li><a href="#parcours">Parcours recommandé</a></li>
+                <li><a href="#mode-emploi">Mode d’emploi rapide</a></li>
+                <li><a href="#modules">Modules activés</a></li>
+            </ol>
+        </nav>
+
+        <div class="warn">
+            <strong>Confidentialité.</strong> Tous les bars, noms et téléphones sont inventés.
+            Aucun SMS ni e-mail n’est envoyé depuis cette instance
+            (<code>OUTBOUND_ENABLED=false</code>).
+        </div>
+
+        <section id="comptes">
+            <h2>1. Comptes de démo</h2>
+            <p>
+                Mot de passe commun (sauf invitation en attente) : celui communiqué pour la session
+                (souvent la valeur de <code>SEED_PASSWORD</code>).
+            </p>
+            <div class="creds">
+                <div class="cred">
+                    <div class="role">Patron</div>
+                    <div class="mail">patron@demo.templyo.fr</div>
+                    <div class="hint">Tout le cycle : planning, dispos, pointage, performance, échanges.</div>
+                </div>
+                <div class="cred">
+                    <div class="role">Directrice</div>
+                    <div class="mail">directeur@demo.templyo.fr</div>
+                    <div class="hint">Uniquement Le Zinc (1 affaire sur 8) + ses propres disponibilités.</div>
+                </div>
+                <div class="cred">
+                    <div class="role">Observateur</div>
+                    <div class="mail">comptable@demo.templyo.fr</div>
+                    <div class="hint">Admin / perf / pointage — sans files Dispos ni Échanges.</div>
+                </div>
+                <div class="cred">
+                    <div class="role">Staff (ex.)</div>
+                    <div class="mail">adrien@demo.templyo.fr</div>
+                    <div class="hint">Vue téléphone : planning, dispos, congés, Jokers, échanges, OTP.</div>
+                </div>
+            </div>
+            <p>Groupe fictif de <strong>8 établissements</strong> et ~78 personnes : 4 bars
+            (Le Zinc, Le Comptoir, Le Perchoir, La Guinguette) et 4 restaurants
+            (La Rotonde, La Criée, Chez Mado, Bistrot des Halles — midi seulement).
+            Le parcours ci-dessous se joue sur <strong>Le Zinc</strong> et
+            <strong>La Rotonde</strong> ; les six autres donnent au groupe sa taille
+            (sélecteur d’affaires, récap consolidé, masse salariale de groupe).</p>
+            <p class="note">L’adresse d’un compte staff est le prénom seul
+            (<code>adrien@</code>, <code>ines@</code>, <code>nathan@</code>…).</p>
+        </section>
+
+        <section id="parcours">
+            <h2>2. Parcours recommandé</h2>
+            <p class="note">Comptez ~30 minutes pour le tour complet. Chaque carte = un moment à laisser digérer.</p>
+
+            <h3>A · Le cycle cœur — compte patron</h3>
+            <div class="step"><span class="step-num">1</span><strong>Planning · semaine en cours</strong><br>Semaine publiée. Basculez Zinc ↔ Rotonde : la grille suit les horaires.</div>
+            <div class="step"><span class="step-num">2</span><strong>Filtrer par groupe</strong><br>Bar / Salle / Cuisine. Les polyvalents sans groupe restent visibles partout.</div>
+            <div class="step"><span class="step-num">3</span><strong>Semaine suivante = brouillon</strong><br>File de dispos → valider → publier. C’est le cœur du produit.</div>
+            <div class="step"><span class="step-num">4</span><strong>KPI Dispos envoyées</strong><br>Pas à 100 % : montrez la relance.</div>
+
+            <h3>B · Les rôles</h3>
+            <div class="step"><span class="step-num">5</span><strong>Directrice</strong><br>Un seul établissement, un seul récap.</div>
+            <div class="step"><span class="step-num">6</span><strong>Observateur</strong><br>Voit Planning / Performance, pas Dispos / Échanges.</div>
+
+            <h3>C · Terrain &amp; pilotage — revenir en patron</h3>
+            <div class="step"><span class="step-num">7</span><strong>Pointage</strong><br>Code OTP + saisie directe le même jour. Comparer planifié / réel.</div>
+            <div class="step"><span class="step-num">8</span><strong>Performance · Réel</strong><br>CA, masse, coefficient contre l’objectif.</div>
+            <div class="step"><span class="step-num">9</span><strong>Performance · Simulation</strong><br>Jour ou semaine, sans écrire le CA officiel.</div>
+            <div class="step"><span class="step-num">10</span><strong>Récap mensuel</strong><br>Heures, écarts, Excel.</div>
+
+            <h3>D · Options &amp; vie d’équipe</h3>
+            <div class="step"><span class="step-num">11</span><strong>Joker ouvert</strong> — candidatures, en retenir une.</div>
+            <div class="step"><span class="step-num">12</span><strong>Échanges</strong> — une demande attend votre validation.</div>
+            <div class="step"><span class="step-num">13</span><strong>Congés</strong> — demande, refus, staff grisé au planning.</div>
+            <div class="step"><span class="step-num">14</span><strong>Gestion du staff</strong> — taux, groupes, archivée (historique conservé).</div>
+        </section>
+
+        <section id="mode-emploi">
+            <h2>3. Mode d’emploi rapide</h2>
+
+            <h3>Construire une semaine</h3>
+            <ol>
+                <li>Choisir l’établissement (onglets).</li>
+                <li>Glisser le personnel, ou copier une semaine type.</li>
+                <li>Poser des Jokers pour les postes à pourvoir.</li>
+                <li><strong>Publier</strong> quand la grille est bonne — sinon l’équipe ne voit rien.</li>
+            </ol>
+
+            <h3>Collecter les disponibilités</h3>
+            <ol>
+                <li>Ouvrir la saisie des dispos (horizon réglable).</li>
+                <li>L’équipe répond depuis son téléphone.</li>
+                <li>Valider dans la file, puis placer les gens sur le planning.</li>
+            </ol>
+
+            <h3>Pointer les heures</h3>
+            <ul>
+                <li><strong>Code</strong> : le responsable dicte le code 4 chiffres ; début puis fin.</li>
+                <li><strong>Saisie directe</strong> (patron / directeur) : sous le panneau de clôture.</li>
+            </ul>
+            <p>Les heures réelles alimentent le récap et la Performance.</p>
+
+            <h3>Piloter</h3>
+            <p>Menu <strong>Performance</strong> : CA du soir, coefficient, simulation d’une semaine à venir.</p>
+        </section>
+
+        <section id="modules">
+            <h2>4. Modules activés sur cette démo</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Module</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Planning, dispos, congés, Jokers, exports</td>
+                        <td>Socle — toujours</td>
+                    </tr>
+                    <tr>
+                        <td>Pointage &amp; clôture OTP</td>
+                        <td>Activé</td>
+                    </tr>
+                    <tr>
+                        <td>Performance &amp; Simulation</td>
+                        <td>Activé</td>
+                    </tr>
+                    <tr>
+                        <td>Échanges de shifts</td>
+                        <td>Activé</td>
+                    </tr>
+                    <tr>
+                        <td>Agenda iCal</td>
+                        <td>Désactivé (expérimental)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <footer class="footer">
+            Version guide alignée sur <code>docs/guide-demo-prospect.md</code>.
+            Reseed avant chaque rendez-vous : <code>npm run demo:seed</code>.
+        </footer>
+    </main>
+</body>
+</html>

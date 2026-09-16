@@ -14,10 +14,15 @@
 //                  hybride (passé pointé + futur planifié). On montre un outil VIVANT.
 //
 // ── Ce que le jeu raconte ──────────────────────────────────────────────────────
-//   • UN BAR + UN RESTAURANT, 25 personnes + une directrice, ~2 mois de plannings
-//     passés intégralement pointés, avec les écarts planifié/réel qu'on observe en vrai.
-//     C'est la taille d'exploitation d'un vrai groupe de restauration : à 13 personnes
-//     sur 3 établissements, le prospect qui en emploie 25 ne se reconnaissait pas.
+//   • UN GROUPE DE HUIT ADRESSES (4 bars, 4 restaurants dont un bistrot du midi),
+//     ~70 personnes, ~2 mois de plannings passés intégralement pointés, avec les écarts
+//     planifié/réel qu'on observe en vrai. La taille compte autant que le contenu : à
+//     13 personnes sur 3 établissements, le prospect qui en emploie 25 ne se
+//     reconnaissait pas ; à 2 établissements, celui qui en exploite 8 ne reconnaît ni
+//     son sélecteur d'affaires, ni son récap consolidé, ni sa masse salariale.
+//     Le RÉCIT, lui, tient sur deux établissements (Le Zinc et La Rotonde) : congés,
+//     échange, Joker, extra au forfait, archivée, invitation en attente. Les six autres
+//     apportent la taille du groupe et rien d'autre — leurs équipes sont générées.
 //   • Un CA quotidien calculé À REBOURS depuis la masse salariale, pour que le
 //     coefficient tombe dans une bande crédible (24–36 %) et se colore contre
 //     l'objectif — un CA tiré au hasard donnerait des coefficients absurdes.
@@ -109,11 +114,16 @@ const pick = arr => arr[Math.floor(rnd() * arr.length)];
 // RIEN dans le produit ne lit : la démo tombait donc systématiquement sur la grille
 // par défaut 10 h → 26 h, et le bar s'affichait avec sept heures vides tous les matins.
 // La fiche établissement, elle, affichait « — » à la place des horaires.
-const ESTABS = [
+//
+// `target` est l'objectif de coefficient de l'établissement. Il vit ICI et non dans la
+// table des réglages plus bas : c'est une propriété de l'affaire, et deux listes
+// d'établissements à tenir d'accord auraient laissé un satellite sans objectif — donc
+// une colonne grise au milieu de la page Performance, sans rien pour l'expliquer.
+const CORE_ESTABS = [
     { id: 'Le_Zinc_bar',           name: 'Le Zinc',    type: 'bar',
-      open_time: '17:00', close_time: '02:00', groups: ['Bar', 'Salle'] },
+      open_time: '17:00', close_time: '02:00', groups: ['Bar', 'Salle'], target: 31 },
     { id: 'La_Rotonde_restaurant', name: 'La Rotonde', type: 'restaurant',
-      open_time: '11:00', close_time: '00:30', groups: ['Salle', 'Cuisine'] },
+      open_time: '11:00', close_time: '00:30', groups: ['Salle', 'Cuisine'], target: 30 },
 ];
 const Z = 'Le_Zinc_bar', T = 'La_Rotonde_restaurant';
 
@@ -127,6 +137,91 @@ function venueHours(e) {
     let close = hm(e.close_time);
     if (close <= open) close += 24;
     return { open, close };
+}
+
+// ── Les six satellites — ce qui fait un GROUPE et non deux affaires ───────────
+// Un prospect qui exploite huit adresses ne se reconnaît pas dans un groupe de deux :
+// le sélecteur d'établissements, le filtre « toutes les affaires » de la Simulation et
+// la ventilation du récap mensuel ne racontent rien à cette échelle — et ce sont
+// précisément les trois écrans qui décident chez un multi-site. Même raison que
+// l'effectif porté à 25 : un jeu à la taille du prospect, sinon il regarde une
+// maquette.
+//
+// Ces six-là n'ont PAS de récit : les congés, l'échange, le Joker, l'extra au forfait,
+// l'archivée et l'invitation en attente restent au Zinc et à La Rotonde, où vivent les
+// vingt-six personnes nommées. Un satellite apporte de la masse, du volume horaire et
+// une colonne dans les vues consolidées, rien d'autre — le parcours du guide prospect
+// est inchangé.
+//
+// `format` décide des services ET de la composition d'équipe (cf. `derivedService` et
+// `TEAM`). `closed` est en convention lundi = 0, comme `SERVICES`.
+const SATELLITES = [
+    { id: 'Le_Comptoir_bar',        name: 'Le Comptoir',        type: 'bar',
+      open_time: '16:00', close_time: '01:00', groups: ['Bar', 'Salle'],
+      format: 'bar',    closed: [],     target: 31 },
+    // Le Perchoir est le SEUL du groupe dont l'objectif est sous son coefficient réel :
+    // il ressort majoritairement en rouge. Sur huit affaires toutes vertes, la vue
+    // consolidée ne sert à rien — et c'est précisément ce qu'un multi-site vient
+    // chercher : celle des huit qui décroche, sans ouvrir huit tableaux.
+    { id: 'Le_Perchoir_bar',        name: 'Le Perchoir',        type: 'bar',
+      open_time: '18:00', close_time: '02:00', groups: ['Bar', 'Salle'],
+      format: 'bar',    closed: [0],    target: 28 },
+    { id: 'La_Guinguette_bar',      name: 'La Guinguette',      type: 'bar',
+      open_time: '17:00', close_time: '00:00', groups: ['Bar', 'Salle'],
+      format: 'bar',    closed: [0, 1], target: 30 },
+    { id: 'La_Criee_restaurant',    name: 'La Criée',           type: 'restaurant',
+      open_time: '11:30', close_time: '23:30', groups: ['Salle', 'Cuisine'],
+      format: 'double', closed: [6],    target: 32 },
+    { id: 'Chez_Mado_restaurant',   name: 'Chez Mado',          type: 'restaurant',
+      open_time: '12:00', close_time: '23:30', groups: ['Salle', 'Cuisine'],
+      format: 'double', closed: [0],    target: 31 },
+    { id: 'Les_Halles_restaurant',  name: 'Bistrot des Halles', type: 'restaurant',
+      open_time: '11:00', close_time: '15:30', groups: ['Salle', 'Cuisine'],
+      format: 'midi',   closed: [6],    target: 31 },
+];
+const ESTABS = [...CORE_ESTABS, ...SATELLITES];
+
+// Les créneaux d'un satellite sont DÉRIVÉS de ses horaires, jamais saisis. Six tables de
+// créneaux à tenir d'accord avec six lignes d'horaires, c'est six occasions de poser un
+// service qui déborde de sa grille — exactement ce que le contrôle plus bas attrape, et
+// qu'on préfère ne pas avoir à attraper. Les deux établissements du récit gardent, eux,
+// leurs services écrits à la main : ils portent des cas précis (deux responsables par
+// jour à La Rotonde) qu'aucun gabarit ne saurait exprimer.
+function derivedService(e) {
+    const { open, close } = venueHours(e);
+    const span = close - open;
+    const need = { bar: 6, double: 10.5, midi: 4 }[e.format];
+    if (!(span >= need))
+        throw new Error(e.name + ' : amplitude ' + span + ' h trop courte pour le format ' + e.format);
+    if (e.format === 'bar') {
+        // Un seul service du soir : l'ouverture (avec le responsable), deux renforts qui
+        // tiennent jusqu'à la fermeture, un troisième les soirs de forte affluence.
+        return { closed: e.closed,
+                 slots:   [{ start: open,       end: Math.min(open + 7, close), resp: true },
+                           { start: open + 1,   end: close },
+                           { start: open + 1.5, end: close }],
+                 weekend: [{ start: close - 5,  end: close }] };
+    }
+    if (e.format === 'midi') {
+        // Le bistrot ne fait que le service du midi : c'est le format qui montre qu'un
+        // établissement du groupe peut n'avoir aucune soirée.
+        return { closed: e.closed,
+                 slots:   [{ start: open,       end: close,       resp: true },
+                           { start: open + 0.5, end: close },
+                           { start: open + 0.5, end: close - 0.5 },
+                           { start: open + 1,   end: close }],
+                 weekend: [{ start: open + 1,   end: close }] };
+    }
+    // `double` : midi ET soir, chacun avec son responsable désigné.
+    return { closed: e.closed,
+             slots:   [{ start: open,         end: open + 4.5, resp: true },
+                       { start: open + 0.5,   end: open + 4.5 },
+                       { start: open + 1,     end: open + 4 },
+                       { start: close - 6,    end: close,      resp: true },
+                       { start: close - 5.5,  end: close },
+                       { start: close - 5,    end: close }],
+             weekend: [{ start: open + 1,     end: open + 4.5 },
+                       { start: close - 4.5,  end: close }] };
 }
 
 // Un RÔLE décrit le métier exact ; un GROUPE dit le côté (Bar / Salle / Cuisine).
@@ -150,10 +245,13 @@ const ROLES = [
 ];
 const RESP_ROLES = ROLES.filter(r => r.type === 'responsable').map(r => r.name);
 
-// ── L'équipe ──────────────────────────────────────────────────────────────────
-// 25 personnes + la directrice. Les prénoms suivent l'alphabet (A → Z, sans X) : sur
-// un effectif de cette taille, c'est ce qui permet de retrouver quelqu'un en direct
-// devant le prospect sans faire défiler une liste au hasard.
+// ── L'équipe du récit ─────────────────────────────────────────────────────────
+// 25 personnes + la directrice, TOUTES sur Le Zinc et/ou La Rotonde : ce sont elles
+// qu'on nomme pendant la démonstration. Les équipes des six satellites sont générées
+// juste après cette table. Les prénoms suivent l'alphabet (A → Z, sans X) : sur un
+// effectif de cette taille, c'est ce qui permet de retrouver quelqu'un en direct devant
+// le prospect sans faire défiler une liste au hasard — les satellites, eux, n'ont pas
+// à être retrouvés à la voix.
 //
 // `venues` = les établissements où la personne peut travailler. Il conditionne
 // l'ouverture des dispos ET l'affectation : chaque établissement a besoin d'au moins
@@ -251,6 +349,114 @@ const STAFF = [
       dispo: { type: 'soir', start: 19, end: 26, days: [4, 5] }, extra: true },
 ];
 
+// ── Les équipes des satellites — générées, pas écrites ────────────────────────
+// Quarante-sept lignes de plus dans la table ci-dessus auraient noyé les vingt-six qui
+// portent la démonstration, sans rien apprendre : une équipe de satellite n'a aucune
+// singularité à déclarer, juste un effectif crédible et compatible avec ses services.
+//
+// L'effectif dépasse VOLONTAIREMENT le plus gros jour de l'établissement (le contrôle
+// « personnes éligibles » plus bas ne vérifie que l'égalité stricte) : sans cette marge,
+// le premier congé validé ou le premier jour de repos laisse un créneau vide, et un
+// planning troué est la première chose que voit le prospect.
+// `vol` est le volume CONTRACTUEL, et il vaut ici moins qu'au Zinc ou à La Rotonde :
+// ce n'est pas un arrondi, c'est la conséquence des services. Un satellite ouvre 3 à 8
+// créneaux par jour pour 6 à 11 personnes, et personne n'y fait deux services le même
+// jour — l'équipe d'un double service tourne autour de 17 h par semaine, celle d'un bar
+// autour de 29 h (les créneaux de bar sont longs). Les volumes ci-dessous sont calés sur
+// CE que l'établissement peut offrir : recopier ceux du Zinc aurait affiché, dans le
+// récap de fin de script, des chefs de cuisine à 20 h pour un contrat de 39 — la
+// signature d'un jeu qui ne s'est pas relu. `vol` ne part pas en base : il ne sert qu'à
+// pondérer l'affectation (règle du moins chargé) et ce récap.
+//
+// ⚠️ Le nombre de RESPONSABLES n'est pas décoratif : les créneaux `resp` leur sont
+// réservés, ce sont les plus longs, et personne ne fait deux services le même jour. Avec
+// deux responsables pour un établissement à deux services quotidiens, ces deux-là
+// raflaient tout — 36 h par semaine chacun quand la médiane de leur équipe tombait à
+// 12 h. Il en faut donc AUTANT QUE de créneaux `resp` par jour, fois deux.
+const TEAM = {
+    bar: [                                                      // 7 personnes, 4 créneaux le samedi
+        { role: RESP_SOIREE,        g: ['Bar'],     rate: 14.6, vol: 28, n: 3 },
+        { role: 'Barman',           g: ['Bar'],     rate: 13.1, vol: 26, n: 2 },
+        { role: 'Barback',          g: ['Bar'],     rate: 11.9, vol: 22, n: 1 },
+        { role: 'Serveur',          g: ['Salle'],   rate: 12.3, vol: 22, n: 1 },
+    ],
+    double: [                                                   // 12 personnes, 8 créneaux le samedi
+        { role: RESP_SALLE,         g: ['Salle'],   rate: 14.4, vol: 18, n: 4 },
+        { role: 'Serveur',          g: ['Salle'],   rate: 12.2, vol: 14, n: 2 },
+        { role: 'Runner',           g: [],          rate: 12.0, vol: 12, n: 1 },
+        { role: 'Chef de cuisine',  g: ['Cuisine'], rate: 17.3, vol: 18, n: 1 },
+        { role: 'Second de cuisine', g: ['Cuisine'], rate: 14.5, vol: 16, n: 1 },
+        { role: 'Commis de cuisine', g: ['Cuisine'], rate: 11.9, vol: 12, n: 2 },
+        { role: 'Plongeur',         g: ['Cuisine'], rate: 11.8, vol: 12, n: 1 },
+    ],
+    midi: [                                                     // 7 personnes, 5 créneaux le samedi
+        { role: RESP_SALLE,         g: ['Salle'],   rate: 14.3, vol: 18, n: 2 },
+        { role: 'Serveur',          g: ['Salle'],   rate: 12.2, vol: 14, n: 2 },
+        { role: 'Chef de cuisine',  g: ['Cuisine'], rate: 16.8, vol: 18, n: 1 },
+        { role: 'Commis de cuisine', g: ['Cuisine'], rate: 11.9, vol: 12, n: 1 },
+        { role: 'Plongeur',         g: ['Cuisine'], rate: 11.8, vol: 12, n: 1 },
+    ],
+};
+
+// Prénoms TOUS distincts de ceux des vingt-six ci-dessus : l'adresse d'un compte est le
+// prénom seul (`slug`, plus bas) et `users.email` est unique — un homonyme ferait
+// échouer le seed en cours de route. Le contrôle explicite est posé au moment des
+// comptes ; cette liste est ce qui fait qu'il ne se déclenche pas.
+const SAT_FIRST = [
+    'Amir', 'Anaïs', 'Aurélien', 'Baptiste', 'Basile', 'Bérénice', 'Clara', 'Clément',
+    'Corentin', 'Éliott', 'Emma', 'Enzo', 'Fanny', 'Gaël', 'Hugo', 'Ilyes', 'Jade',
+    'Jules', 'Justine', 'Léa', 'Léo', 'Lilou', 'Louis', 'Maël', 'Marius', 'Mathis',
+    'Maya', 'Naïm', 'Nina', 'Noé', 'Océane', 'Olivier', 'Raphaël', 'Rémi', 'Romane',
+    'Sacha', 'Salomé', 'Sofia', 'Soline', 'Thibault', 'Timothée', 'Tom', 'Victor',
+    'Younes', 'Zacharie', 'Amandine', 'Margaux', 'Adèle', 'Charline', 'Gaspard',
+    'Manuel', 'Pénélope', 'Sven',
+];
+const SAT_LAST = [
+    'Abadie', 'Barral', 'Cazaux', 'Delaunay', 'Fontaine', 'Gilbert', 'Hamon', 'Jourdan',
+    'Kessler', 'Lafitte', 'Maréchal', 'Naudin', 'Oury', 'Pasquier', 'Quéré', 'Rambert',
+    'Sauvage', 'Tessier', 'Urbain', 'Vidal', 'Weber', 'Yvon', 'Zanetti', 'Aubry',
+];
+
+let satCursor = 0;
+function satelliteTeam(e) {
+    const { open, close } = venueHours(e);
+    const openDays = [0, 1, 2, 3, 4, 5, 6].filter(d => !e.closed.includes(d));
+    const team = [];
+    for (const spec of TEAM[e.format]) {
+        for (let k = 0; k < spec.n; k++) {
+            const i = satCursor++;
+            if (i >= SAT_FIRST.length)
+                throw new Error('Plus de prénoms disponibles pour les satellites (' + (i + 1) + ')');
+            // Quatre jours travaillés, décalés d'une personne à l'autre : tout le monde
+            // sur les mêmes jours, et la file de dispos n'a plus rien à arbitrer — or
+            // c'est l'écran de la démo.
+            const days = [...openDays.slice(i % openDays.length), ...openDays]
+                .slice(0, 4).sort((a, b) => a - b);
+            // Midi ou soir selon le format ; sur un établissement à deux services,
+            // l'équipe se partage entre les deux.
+            const kind = e.format === 'bar' ? 'soir'
+                : e.format === 'midi' ? 'midi'
+                    : (i % 2 === 0 ? 'midi' : 'soir');
+            team.push({
+                n: SAT_FIRST[i] + ' ' + SAT_LAST[i % SAT_LAST.length],
+                v: [e.id],
+                r: [spec.role],
+                g: spec.g,
+                // Les taux s'échelonnent autour de celui du poste : trente personnes
+                // payées au centime près, c'est la signature d'un jeu fabriqué — et le
+                // récap mensuel est justement fait pour comparer des salaires.
+                rate: Math.round((spec.rate + ((i % 5) - 2) * 0.1) * 100) / 100,
+                vol: spec.vol,
+                dispo: kind === 'midi'
+                    ? { type: 'midi', start: open, end: Math.min(open + 4.5, close), days }
+                    : { type: 'soir', start: e.format === 'bar' ? open : close - 6, end: close, days },
+            });
+        }
+    }
+    return team;
+}
+SATELLITES.forEach(e => STAFF.push(...satelliteTeam(e)));
+
 // La directrice a un VRAI profil staff (E-22 modèle A) : planifiable, comptée en paie,
 // et ses dispos passent par la même file de validation que tout le monde.
 // `venues` DOIT rester aligné sur `assigned_establishments` de son compte (R-06),
@@ -295,6 +501,11 @@ const SERVICES = {
                      { start: 19.5, end: 24.5 }],
            weekend: [{ start: 12, end: 16 }, { start: 19.5, end: 24.5 }] },
 };
+// Les satellites rejoignent la même table : le générateur de plannings ne connaît que
+// `SERVICES[id]`, et lui faire distinguer deux origines aurait créé un second chemin à
+// maintenir pour six établissements sur huit.
+SATELLITES.forEach(e => { SERVICES[e.id] = derivedService(e); });
+
 function slotsFor(estabId, dow) {
     const s = SERVICES[estabId];
     if (s.closed.includes(dow)) return [];
@@ -372,8 +583,15 @@ async function run() {
         const histStart      = weekStart(firstPrevMonth < eightWeeksAgo ? firstPrevMonth : eightWeeksAgo);
 
         // ── Établissements ────────────────────────────────────────────────────
-        writes.push(db.collection('establishments').insertMany(
-            ESTABS.map(e => ({ ...e, created_at: addDays(now, -180) }))));
+        // Champs ÉNUMÉRÉS et non `...e` : la définition porte aussi de quoi fabriquer
+        // les services et l'objectif de coefficient (`format`, `closed`, `target`), qui
+        // ne sont pas des champs du produit. Les recopier en base aurait mis dans la
+        // fiche établissement du prospect des attributs qu'aucun écran ne sait lire.
+        writes.push(db.collection('establishments').insertMany(ESTABS.map(e => ({
+            id: e.id, name: e.name, type: e.type,
+            open_time: e.open_time, close_time: e.close_time, groups: e.groups,
+            created_at: addDays(now, -180),
+        }))));
 
         // ── Rôles ─────────────────────────────────────────────────────────────
         const roleIns = await db.collection('roles').insertMany(ROLES.map(r => ({ ...r })));
@@ -402,8 +620,13 @@ async function run() {
                 // Plage 06 39 98 XX XX — réservée à la fiction, cf. l'en-tête. Stockée
                 // en E.164 par la fonction du produit : le format brut passerait à
                 // l'insertion mais casserait la fiche contact du pointage.
-                phone: normalizePhone('06 39 98 ' + String(10 + i).padStart(2, '0')
-                    + ' ' + String(20 + i * 3).padStart(2, '0')),
+                // Les quatre derniers chiffres sont l'index, et rien d'autre : le schéma
+                // précédent (`20 + i * 3`) passait à trois chiffres dès la 27ᵉ personne
+                // et fabriquait un numéro à onze chiffres. Il tenait tant que l'équipe
+                // restait dans la vingtaine — c'est-à-dire jusqu'au jour où le groupe
+                // est passé à huit établissements.
+                phone: normalizePhone('06 39 98 ' + String(1000 + i).slice(0, 2)
+                    + ' ' + String(1000 + i).slice(2)),
                 can_submit_dispos: s.noDispos !== true,
                 created_at: addDays(now, -170 + i),
             };
@@ -720,8 +943,14 @@ async function run() {
         // Au Zinc de préférence : c'est le seul établissement de la directrice, donc
         // le seul endroit où la demande apparaît AUSSI sur un compte non-patron — le
         // filtre de périmètre est une partie de ce qu'on montre.
-        const source = echangeables.find(({ s }) => s.establishment_id === Z) || echangeables[0];
-        const cible  = source && echangeables.find(({ s }) => s.staff_id !== source.s.staff_id);
+        // La directrice est écartée du tirage : la carte raconte « un salarié propose,
+        // le patron tranche », et une demande qu'elle pourrait s'approuver elle-même la
+        // contredit. Rien ne l'interdisait jusqu'ici, c'est simplement le tirage qui ne
+        // tombait pas sur elle — il y est tombé dès que le groupe est passé à huit
+        // établissements.
+        const swappables = echangeables.filter(({ s }) => s.staff_id !== sid[DIRECTOR.n]);
+        const source = swappables.find(({ s }) => s.establishment_id === Z) || swappables[0];
+        const cible  = source && swappables.find(({ s }) => s.staff_id !== source.s.staff_id);
 
         if (cible) {
             writes.push(db.collection('shift_swaps').insertOne({
@@ -975,9 +1204,13 @@ async function run() {
             // jours verts, une minorité rouge — ce qui montre l'alerte sans noircir le
             // tableau. Le récap de fin de script affiche la médiane réelle : si elle
             // s'éloigne de ces cibles, ce sont ces trois lignes qu'il faut rectifier.
-            { key: 'performance',      target_charged: 31, charge_rate: CHARGE_RATE },
-            { key: 'performance_' + Z, target_charged: 31, charge_rate: CHARGE_RATE },
-            { key: 'performance_' + T, target_charged: 30, charge_rate: CHARGE_RATE },
+            { key: 'performance', target_charged: 31, charge_rate: CHARGE_RATE },
+            // Une surcharge par établissement, dérivée de la table du groupe : à huit
+            // adresses, deux lignes écrites à la main en laissaient six sur l'objectif
+            // global — donc six colonnes colorées contre une cible qui n'est pas la leur.
+            ...ESTABS.map(e => ({
+                key: 'performance_' + e.id, target_charged: e.target, charge_rate: CHARGE_RATE,
+            })),
             // F-05 : échanges inter-établissements activés (le patron peut les couper en démo).
             { key: 'swaps', cross_establishment: true },
             // Semaine courante publiée. Forme courante : `establishments` ('ALL' ou
@@ -1088,6 +1321,22 @@ async function run() {
         console.log('│    staff        ' + staffAccounts.length + ' comptes : '
             + staffAccounts.map(a => a.email.split('@')[0]).join(', '));
         console.log('│                 @' + MAIL_DOMAIN);
+        const feat = {
+            time: process.env.FEATURE_TIME_TRACKING,
+            perf: process.env.FEATURE_PERFORMANCE,
+            swaps: process.env.FEATURE_SHIFT_SWAPS,
+        };
+        console.log('│  Flags : TIME_TRACKING=' + (feat.time || '(absent)')
+            + '  PERFORMANCE=' + (feat.perf || '(absent)')
+            + '  SHIFT_SWAPS=' + (feat.swaps || '(absent)'));
+        if (feat.time !== 'true' && feat.time !== 'force'
+            || feat.perf !== 'true' && feat.perf !== 'force'
+            || feat.swaps !== 'true' && feat.swaps !== 'force') {
+            console.log('│  ⚠️  Pack démo incomplet : pose FEATURE_TIME_TRACKING / PERFORMANCE /');
+            console.log('│      SHIFT_SWAPS=true dans .env.demo (cf. .env.demo.example).');
+        }
+        console.log('│  Guide prospect : docs/guide-demo-prospect.md');
+        console.log('│  Page navigateur : /demo-guide.html  (après npm run demo:server)');
         console.log('╰─ Déroulé de démo suggéré :\n');
         [
             'Planning, semaine courante — publiée, l\'équipe la voit. Basculer du Zinc à La Rotonde : '
@@ -1107,7 +1356,8 @@ async function run() {
                 + 'REFUSÉE, Lucas Bonnet est en congé cette semaine (grisé au planning) et Oksana Petrenko '
                 + 'part 8 jours à cheval sur les deux semaines ouvertes.',
             'Joker ouvert samedi au Zinc (groupe Bar) — 3 candidatures, en retenir une. Sidebar : un Joker par groupe.',
-            'Gestion du staff — 25 personnes : taux horaire, rôles, groupes, jours de repos '
+            'Gestion du staff — ' + staffDefs.length + ' personnes sur ' + ESTABS.length
+                + ' établissements : taux horaire, rôles, groupes, jours de repos '
                 + '(Nathan Rivière, Élodie Sanchez), surnoms (« Bast », « PY »), et Rachida Amrani qui ne '
                 + 'saisit pas de dispos. Yasmine Corbier est ARCHIVÉE : partie il y a 3 semaines, elle '
                 + 'sort des dispos et du planning mais ses heures restent au récap. Le turnover, en clair.',

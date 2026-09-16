@@ -439,7 +439,7 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "lib_utils_splitdisposbyconges",
-      "community": 42,
+      "community": 80,
       "norm_label": "splitdisposbyconges()"
     },
     {
@@ -5439,7 +5439,7 @@
       "source_location": "L214",
       "_origin": "ast",
       "id": "public_script_istouchdevice",
-      "community": 28,
+      "community": 121,
       "norm_label": "istouchdevice()"
     },
     {
@@ -5449,7 +5449,7 @@
       "source_location": "L218",
       "_origin": "ast",
       "id": "public_script_isphone",
-      "community": 28,
+      "community": 121,
       "norm_label": "isphone()"
     },
     {
@@ -5459,7 +5459,7 @@
       "source_location": "L224",
       "_origin": "ast",
       "id": "public_script_ismobiledevice",
-      "community": 28,
+      "community": 121,
       "norm_label": "ismobiledevice()"
     },
     {
@@ -5469,7 +5469,7 @@
       "source_location": "L228",
       "_origin": "ast",
       "id": "public_script_istablet",
-      "community": 28,
+      "community": 121,
       "norm_label": "istablet()"
     },
     {
@@ -5479,7 +5479,7 @@
       "source_location": "L235",
       "_origin": "ast",
       "id": "public_script_syncdeviceclasses",
-      "community": 28,
+      "community": 121,
       "norm_label": "syncdeviceclasses()"
     },
     {
@@ -5599,7 +5599,7 @@
       "source_location": "L355",
       "_origin": "ast",
       "id": "public_script_showconfirm",
-      "community": 28,
+      "community": 121,
       "norm_label": "showconfirm()"
     },
     {
@@ -5619,7 +5619,7 @@
       "source_location": "L386",
       "_origin": "ast",
       "id": "public_script_showprompt",
-      "community": 28,
+      "community": 121,
       "norm_label": "showprompt()"
     },
     {
@@ -5629,7 +5629,7 @@
       "source_location": "L409",
       "_origin": "ast",
       "id": "public_script_showtextprompt",
-      "community": 28,
+      "community": 121,
       "norm_label": "showtextprompt()"
     },
     {
@@ -5639,7 +5639,7 @@
       "source_location": "L432",
       "_origin": "ast",
       "id": "public_script_shownoteprompt",
-      "community": 28,
+      "community": 121,
       "norm_label": "shownoteprompt()"
     },
     {
@@ -6489,7 +6489,7 @@
       "source_location": "L3388",
       "_origin": "ast",
       "id": "public_script_openjokernotemodal",
-      "community": 28,
+      "community": 121,
       "norm_label": "openjokernotemodal()"
     },
     {
@@ -6629,7 +6629,7 @@
       "source_location": "L3940",
       "_origin": "ast",
       "id": "public_script_tapselectstaff",
-      "community": 28,
+      "community": 121,
       "norm_label": "tapselectstaff()"
     },
     {
@@ -6639,7 +6639,7 @@
       "source_location": "L3969",
       "_origin": "ast",
       "id": "public_script_cleartapselection",
-      "community": 28,
+      "community": 121,
       "norm_label": "cleartapselection()"
     },
     {
@@ -6649,7 +6649,7 @@
       "source_location": "L3975",
       "_origin": "ast",
       "id": "public_script_showtapbanner",
-      "community": 28,
+      "community": 121,
       "norm_label": "showtapbanner()"
     },
     {
@@ -6659,7 +6659,7 @@
       "source_location": "L3990",
       "_origin": "ast",
       "id": "public_script_hidetapbanner",
-      "community": 28,
+      "community": 121,
       "norm_label": "hidetapbanner()"
     },
     {
@@ -6999,7 +6999,7 @@
       "source_location": "L5665",
       "_origin": "ast",
       "id": "public_script_patronresetpassword",
-      "community": 28,
+      "community": 121,
       "norm_label": "patronresetpassword()"
     },
     {
@@ -7009,7 +7009,7 @@
       "source_location": "L5682",
       "_origin": "ast",
       "id": "public_script_deleteaccount",
-      "community": 28,
+      "community": 121,
       "norm_label": "deleteaccount()"
     },
     {
@@ -9809,7 +9809,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link",
-      "community": 131,
+      "community": 113,
       "norm_label": "fix-orphan-staff-link.js"
     },
     {
@@ -9819,7 +9819,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_objectid",
-      "community": 131,
+      "community": 113,
       "norm_label": "{ objectid }"
     },
     {
@@ -9829,7 +9829,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_opendb",
-      "community": 131,
+      "community": 113,
       "norm_label": "{ opendb }"
     },
     {
@@ -9839,7 +9839,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_apply",
-      "community": 131,
+      "community": 113,
       "norm_label": "apply"
     },
     {
@@ -9849,7 +9849,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_normname_norm",
-      "community": 131,
+      "community": 113,
       "norm_label": "{ normname: norm }"
     },
     {
@@ -9859,7 +9859,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_main",
-      "community": 131,
+      "community": 113,
       "norm_label": "main()"
     },
     {
@@ -10056,7 +10056,7 @@
       "label": "bcrypt",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L47",
+      "source_location": "L52",
       "_origin": "ast",
       "id": "scripts_seed_demo_bcrypt",
       "community": 73,
@@ -10066,7 +10066,7 @@
       "label": "{ openDb, APP_COLLECTIONS }",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L48",
+      "source_location": "L53",
       "_origin": "ast",
       "id": "scripts_seed_demo_opendb_app_collections",
       "community": 73,
@@ -10076,7 +10076,7 @@
       "label": "{\r\n    toDateStr, weekStart, chargeMultiplier, normName, hashToken, normalizePhone,\r\n    STAFF_COLORS,\r\n    // Les trois fonctions qui d\u00e9finissent l'horizon et l'audit C\u00d4T\u00c9 PRODUIT. Les\r\n    // re-d\u00e9river \u00e0 la main ici, c'\u00e9tait semer un jeu d\u00e9cal\u00e9 de ce que l'app ouvre.\r\n    disposHorizonRange, clampHorizonWeeks, dispoEventDelta, staffReopenedFor,\r\n}",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L49",
+      "source_location": "L54",
       "_origin": "ast",
       "id": "scripts_seed_demo_todatestr_weekstart_chargemultiplier_normname_hashtoken_normalizephone_staff_colors_les_trois_fonctions_qui_d\u00e9finissent_l_horizon_et_l_audit_c\u00f4t\u00e9_produit_les_re_d\u00e9river_\u00e0_la_main_ici_c_\u00e9tait_semer_un_jeu_d\u00e9cal\u00e9_de_ce_que_l_app_ouvre_disposhorizonrange_clamphorizonweeks_dispoeventdelta_staffreopenedfor",
       "community": 73,
@@ -10086,7 +10086,7 @@
       "label": "CHARGE_MULT",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L66",
+      "source_location": "L71",
       "_origin": "ast",
       "id": "scripts_seed_demo_charge_mult",
       "community": 73,
@@ -10096,7 +10096,7 @@
       "label": "mulberry32()",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L91",
+      "source_location": "L96",
       "_origin": "ast",
       "id": "scripts_seed_demo_mulberry32",
       "community": 73,
@@ -10106,7 +10106,7 @@
       "label": "rnd",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L99",
+      "source_location": "L104",
       "_origin": "ast",
       "id": "scripts_seed_demo_rnd",
       "community": 73,
@@ -10116,37 +10116,67 @@
       "label": "pick()",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L100",
+      "source_location": "L105",
       "_origin": "ast",
       "id": "scripts_seed_demo_pick",
       "community": 73,
       "norm_label": "pick()"
     },
     {
-      "label": "ESTABS",
+      "label": "CORE_ESTABS",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L112",
+      "source_location": "L122",
       "_origin": "ast",
-      "id": "scripts_seed_demo_estabs",
+      "id": "scripts_seed_demo_core_estabs",
       "community": 73,
-      "norm_label": "estabs"
+      "norm_label": "core_estabs"
     },
     {
       "label": "venueHours()",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L124",
+      "source_location": "L134",
       "_origin": "ast",
       "id": "scripts_seed_demo_venuehours",
       "community": 73,
       "norm_label": "venuehours()"
     },
     {
+      "label": "SATELLITES",
+      "file_type": "code",
+      "source_file": "scripts/seed-demo.js",
+      "source_location": "L158",
+      "_origin": "ast",
+      "id": "scripts_seed_demo_satellites",
+      "community": 73,
+      "norm_label": "satellites"
+    },
+    {
+      "label": "ESTABS",
+      "file_type": "code",
+      "source_file": "scripts/seed-demo.js",
+      "source_location": "L182",
+      "_origin": "ast",
+      "id": "scripts_seed_demo_estabs",
+      "community": 73,
+      "norm_label": "estabs"
+    },
+    {
+      "label": "derivedService()",
+      "file_type": "code",
+      "source_file": "scripts/seed-demo.js",
+      "source_location": "L190",
+      "_origin": "ast",
+      "id": "scripts_seed_demo_derivedservice",
+      "community": 73,
+      "norm_label": "derivedservice()"
+    },
+    {
       "label": "ROLES",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L137",
+      "source_location": "L232",
       "_origin": "ast",
       "id": "scripts_seed_demo_roles",
       "community": 73,
@@ -10156,7 +10186,7 @@
       "label": "RESP_ROLES",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L151",
+      "source_location": "L246",
       "_origin": "ast",
       "id": "scripts_seed_demo_resp_roles",
       "community": 73,
@@ -10166,17 +10196,57 @@
       "label": "STAFF",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L186",
+      "source_location": "L284",
       "_origin": "ast",
       "id": "scripts_seed_demo_staff",
       "community": 73,
       "norm_label": "staff"
     },
     {
+      "label": "TEAM",
+      "file_type": "code",
+      "source_file": "scripts/seed-demo.js",
+      "source_location": "L376",
+      "_origin": "ast",
+      "id": "scripts_seed_demo_team",
+      "community": 73,
+      "norm_label": "team"
+    },
+    {
+      "label": "SAT_FIRST",
+      "file_type": "code",
+      "source_file": "scripts/seed-demo.js",
+      "source_location": "L405",
+      "_origin": "ast",
+      "id": "scripts_seed_demo_sat_first",
+      "community": 73,
+      "norm_label": "sat_first"
+    },
+    {
+      "label": "SAT_LAST",
+      "file_type": "code",
+      "source_file": "scripts/seed-demo.js",
+      "source_location": "L414",
+      "_origin": "ast",
+      "id": "scripts_seed_demo_sat_last",
+      "community": 73,
+      "norm_label": "sat_last"
+    },
+    {
+      "label": "satelliteTeam()",
+      "file_type": "code",
+      "source_file": "scripts/seed-demo.js",
+      "source_location": "L421",
+      "_origin": "ast",
+      "id": "scripts_seed_demo_satelliteteam",
+      "community": 73,
+      "norm_label": "satelliteteam()"
+    },
+    {
       "label": "DIRECTOR",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L260",
+      "source_location": "L466",
       "_origin": "ast",
       "id": "scripts_seed_demo_director",
       "community": 73,
@@ -10186,7 +10256,7 @@
       "label": "WEEKEND",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L272",
+      "source_location": "L478",
       "_origin": "ast",
       "id": "scripts_seed_demo_weekend",
       "community": 73,
@@ -10196,7 +10266,7 @@
       "label": "SERVICES",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L273",
+      "source_location": "L479",
       "_origin": "ast",
       "id": "scripts_seed_demo_services",
       "community": 73,
@@ -10206,7 +10276,7 @@
       "label": "slotsFor()",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L298",
+      "source_location": "L509",
       "_origin": "ast",
       "id": "scripts_seed_demo_slotsfor",
       "community": 73,
@@ -10216,7 +10286,7 @@
       "label": "COEFF_TARGET",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L323",
+      "source_location": "L534",
       "_origin": "ast",
       "id": "scripts_seed_demo_coeff_target",
       "community": 73,
@@ -10226,7 +10296,7 @@
       "label": "addDays()",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L326",
+      "source_location": "L537",
       "_origin": "ast",
       "id": "scripts_seed_demo_adddays",
       "community": 73,
@@ -10236,7 +10306,7 @@
       "label": "dowOf()",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L327",
+      "source_location": "L538",
       "_origin": "ast",
       "id": "scripts_seed_demo_dowof",
       "community": 73,
@@ -10246,7 +10316,7 @@
       "label": "round2()",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L328",
+      "source_location": "L539",
       "_origin": "ast",
       "id": "scripts_seed_demo_round2",
       "community": 73,
@@ -10256,7 +10326,7 @@
       "label": "run()",
       "file_type": "code",
       "source_file": "scripts/seed-demo.js",
-      "source_location": "L330",
+      "source_location": "L541",
       "_origin": "ast",
       "id": "scripts_seed_demo_run",
       "community": 73,
@@ -12019,7 +12089,7 @@
       "source_location": "L7379",
       "_origin": "ast",
       "id": "server_localdateparts",
-      "community": 12,
+      "community": 130,
       "norm_label": "localdateparts()"
     },
     {
@@ -12049,7 +12119,7 @@
       "source_location": "L7404",
       "_origin": "ast",
       "id": "server_gencode4",
-      "community": 12,
+      "community": 130,
       "norm_label": "gencode4()"
     },
     {
@@ -12059,7 +12129,7 @@
       "source_location": "L7408",
       "_origin": "ast",
       "id": "server_isvalidhhmm",
-      "community": 12,
+      "community": 130,
       "norm_label": "isvalidhhmm()"
     },
     {
@@ -12069,7 +12139,7 @@
       "source_location": "L7413",
       "_origin": "ast",
       "id": "server_hhmmtohourfloat",
-      "community": 12,
+      "community": 130,
       "norm_label": "hhmmtohourfloat()"
     },
     {
@@ -12079,7 +12149,7 @@
       "source_location": "L7420",
       "_origin": "ast",
       "id": "server_roundquarter",
-      "community": 12,
+      "community": 130,
       "norm_label": "roundquarter()"
     },
     {
@@ -12089,7 +12159,7 @@
       "source_location": "L7429",
       "_origin": "ast",
       "id": "server_syncrealhoursfromcloture",
-      "community": 12,
+      "community": 130,
       "norm_label": "syncrealhoursfromcloture()"
     },
     {
@@ -12109,7 +12179,7 @@
       "source_location": "L7490",
       "_origin": "ast",
       "id": "server_regeneratecodecloture",
-      "community": 12,
+      "community": 130,
       "norm_label": "regeneratecodecloture()"
     },
     {
@@ -12119,7 +12189,7 @@
       "source_location": "L7512",
       "_origin": "ast",
       "id": "server_ensurecodecloture",
-      "community": 12,
+      "community": 130,
       "norm_label": "ensurecodecloture()"
     },
     {
@@ -12129,7 +12199,7 @@
       "source_location": "L7520",
       "_origin": "ast",
       "id": "server_inserttimevalidation",
-      "community": 12,
+      "community": 130,
       "norm_label": "inserttimevalidation()"
     },
     {
@@ -12149,7 +12219,7 @@
       "source_location": "L7545",
       "_origin": "ast",
       "id": "server_weeksignexpirems",
-      "community": 12,
+      "community": 130,
       "norm_label": "weeksignexpirems()"
     },
     {
@@ -12189,7 +12259,7 @@
       "source_location": "L7573",
       "_origin": "ast",
       "id": "server_ensureweeksigncode",
-      "community": 12,
+      "community": 130,
       "norm_label": "ensureweeksigncode()"
     },
     {
@@ -12199,7 +12269,7 @@
       "source_location": "L7598",
       "_origin": "ast",
       "id": "server_regenerateweeksigncode",
-      "community": 12,
+      "community": 130,
       "norm_label": "regenerateweeksigncode()"
     },
     {
@@ -13349,7 +13419,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_estab_access_test",
-      "community": 10,
+      "community": 28,
       "norm_label": "estab-access.test.js"
     },
     {
@@ -13359,7 +13429,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "tests_estab_access_test_test_before_after_beforeeach",
-      "community": 10,
+      "community": 28,
       "norm_label": "{ test, before, after, beforeeach }"
     },
     {
@@ -13369,7 +13439,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "tests_estab_access_test_assert",
-      "community": 10,
+      "community": 28,
       "norm_label": "assert"
     },
     {
@@ -13379,7 +13449,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "tests_estab_access_test_makedb",
-      "community": 10,
+      "community": 28,
       "norm_label": "{ makedb }"
     },
     {
@@ -13389,7 +13459,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "tests_estab_access_test_app_startapp_stopapp_req",
-      "community": 10,
+      "community": 28,
       "norm_label": "{ app, startapp, stopapp, req }"
     },
     {
@@ -13399,7 +13469,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "tests_estab_access_test_patron",
-      "community": 10,
+      "community": 28,
       "norm_label": "patron"
     },
     {
@@ -13409,7 +13479,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_estab_access_test_obs",
-      "community": 10,
+      "community": 28,
       "norm_label": "obs"
     },
     {
@@ -13419,7 +13489,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "tests_estab_access_test_dir",
-      "community": 10,
+      "community": 28,
       "norm_label": "dir"
     },
     {
@@ -13429,7 +13499,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "tests_estab_access_test_staff",
-      "community": 10,
+      "community": 28,
       "norm_label": "staff"
     },
     {
@@ -13439,7 +13509,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "tests_estab_access_test_etab",
-      "community": 10,
+      "community": 28,
       "norm_label": "etab"
     },
     {
@@ -13449,7 +13519,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "tests_estab_access_test_code",
-      "community": 10,
+      "community": 28,
       "norm_label": "code()"
     },
     {
@@ -13459,7 +13529,7 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "tests_estab_access_test_recaprow",
-      "community": 10,
+      "community": 28,
       "norm_label": "recaprow()"
     },
     {
@@ -13469,7 +13539,7 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "tests_estab_access_test_seeddispo",
-      "community": 10,
+      "community": 28,
       "norm_label": "seeddispo()"
     },
     {
@@ -13489,7 +13559,7 @@
       "source_location": "L179",
       "_origin": "ast",
       "id": "tests_estab_access_test_resp_user",
-      "community": 10,
+      "community": 28,
       "norm_label": "resp_user"
     },
     {
@@ -13499,7 +13569,7 @@
       "source_location": "L181",
       "_origin": "ast",
       "id": "tests_estab_access_test_seedsoiree",
-      "community": 10,
+      "community": 28,
       "norm_label": "seedsoiree()"
     },
     {
@@ -13509,7 +13579,7 @@
       "source_location": "L256",
       "_origin": "ast",
       "id": "tests_estab_access_test_sessionsof",
-      "community": 10,
+      "community": 28,
       "norm_label": "sessionsof()"
     },
     {
@@ -13519,7 +13589,7 @@
       "source_location": "L257",
       "_origin": "ast",
       "id": "tests_estab_access_test_seedsession",
-      "community": 10,
+      "community": 28,
       "norm_label": "seedsession()"
     },
     {
@@ -13529,7 +13599,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_feature_entitlements_test",
-      "community": 90,
+      "community": 131,
       "norm_label": "feature-entitlements.test.js"
     },
     {
@@ -13539,7 +13609,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "tests_feature_entitlements_test_test_before_after_beforeeach",
-      "community": 90,
+      "community": 131,
       "norm_label": "{ test, before, after, beforeeach }"
     },
     {
@@ -13549,7 +13619,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_feature_entitlements_test_assert",
-      "community": 90,
+      "community": 131,
       "norm_label": "assert"
     },
     {
@@ -13559,7 +13629,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "tests_feature_entitlements_test_objectid",
-      "community": 90,
+      "community": 131,
       "norm_label": "{ objectid }"
     },
     {
@@ -13569,7 +13639,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "tests_feature_entitlements_test_makedb",
-      "community": 90,
+      "community": 131,
       "norm_label": "{ makedb }"
     },
     {
@@ -13579,7 +13649,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "tests_feature_entitlements_test_app_startapp_stopapp_req",
-      "community": 90,
+      "community": 131,
       "norm_label": "{ app, startapp, stopapp, req }"
     },
     {
@@ -13589,7 +13659,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "tests_feature_entitlements_test_patron",
-      "community": 90,
+      "community": 131,
       "norm_label": "patron"
     },
     {
@@ -13599,7 +13669,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "tests_feature_entitlements_test_withflags",
-      "community": 90,
+      "community": 131,
       "norm_label": "withflags()"
     },
     {
@@ -13769,7 +13839,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "helpers_harness_app",
-      "community": 90,
+      "community": 42,
       "norm_label": "app"
     },
     {
@@ -13779,7 +13849,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "helpers_harness_startapp",
-      "community": 42,
+      "community": 90,
       "norm_label": "startapp()"
     },
     {
@@ -13799,7 +13869,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "helpers_harness_req",
-      "community": 29,
+      "community": 83,
       "norm_label": "req()"
     },
     {
@@ -14349,7 +14419,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "tests_manager_dispos_test_puttemplate",
-      "community": 29,
+      "community": 83,
       "norm_label": "puttemplate()"
     },
     {
@@ -14449,7 +14519,7 @@
       "source_location": "L292",
       "_origin": "ast",
       "id": "tests_manager_dispos_test_postonedispo",
-      "community": 29,
+      "community": 83,
       "norm_label": "postonedispo()"
     },
     {
@@ -15119,7 +15189,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_pointage_delete_test",
-      "community": 121,
+      "community": 83,
       "norm_label": "pointage-delete.test.js"
     },
     {
@@ -15129,7 +15199,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_test_before_after_beforeeach",
-      "community": 121,
+      "community": 83,
       "norm_label": "{ test, before, after, beforeeach }"
     },
     {
@@ -15139,7 +15209,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_assert",
-      "community": 121,
+      "community": 83,
       "norm_label": "assert"
     },
     {
@@ -15149,7 +15219,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_objectid",
-      "community": 121,
+      "community": 83,
       "norm_label": "{ objectid }"
     },
     {
@@ -15159,7 +15229,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_makedb",
-      "community": 121,
+      "community": 83,
       "norm_label": "{ makedb }"
     },
     {
@@ -15169,7 +15239,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_app_startapp_stopapp_req",
-      "community": 121,
+      "community": 83,
       "norm_label": "{ app, startapp, stopapp, req }"
     },
     {
@@ -15179,7 +15249,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_patron",
-      "community": 121,
+      "community": 83,
       "norm_label": "patron"
     },
     {
@@ -15189,7 +15259,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_dir",
-      "community": 121,
+      "community": 83,
       "norm_label": "dir"
     },
     {
@@ -15199,7 +15269,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_etab",
-      "community": 121,
+      "community": 83,
       "norm_label": "etab"
     },
     {
@@ -15209,7 +15279,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_staff_user",
-      "community": 121,
+      "community": 83,
       "norm_label": "staff_user"
     },
     {
@@ -15339,7 +15409,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_routes_test",
-      "community": 42,
+      "community": 90,
       "norm_label": "routes.test.js"
     },
     {
@@ -15349,7 +15419,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "tests_routes_test_test_before_after",
-      "community": 42,
+      "community": 90,
       "norm_label": "{ test, before, after }"
     },
     {
@@ -15359,7 +15429,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "tests_routes_test_assert",
-      "community": 42,
+      "community": 90,
       "norm_label": "assert"
     },
     {
@@ -15369,7 +15439,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "tests_routes_test_startapp_stopapp_baseurl",
-      "community": 42,
+      "community": 90,
       "norm_label": "{ startapp, stopapp, baseurl }"
     },
     {
@@ -17756,7 +17826,7 @@
       "label": "Backlog Pointage / Cl\u00f4ture OTP (sept. 2026)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L2424",
+      "source_location": "L2426",
       "_origin": "ast",
       "id": "docs_backlog_backlog_pointage_cl\u00f4ture_otp_sept_2026",
       "community": 102,
@@ -17766,7 +17836,7 @@
       "label": "Livr\u00e9",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L2429",
+      "source_location": "L2431",
       "_origin": "ast",
       "id": "docs_backlog_livr\u00e9",
       "community": 102,
@@ -17776,7 +17846,7 @@
       "label": "Ouvert \u2014 \u00e0 prioriser",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L2444",
+      "source_location": "L2446",
       "_origin": "ast",
       "id": "docs_backlog_ouvert_\u00e0_prioriser",
       "community": 102,
@@ -17786,7 +17856,7 @@
       "label": "Invariants (ne pas casser)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L2454",
+      "source_location": "L2456",
       "_origin": "ast",
       "id": "docs_backlog_invariants_ne_pas_casser",
       "community": 102,
@@ -17796,7 +17866,7 @@
       "label": "P2 \u2014 Audit ergonomie restant (mai 2026)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L2461",
+      "source_location": "L2463",
       "_origin": "ast",
       "id": "docs_backlog_p2_audit_ergonomie_restant_mai_2026",
       "community": 62,
@@ -17806,7 +17876,7 @@
       "label": "Reste \u00e0 faire \u2014 dette technique & refacto (incr\u00e9mental)",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L2479",
+      "source_location": "L2481",
       "_origin": "ast",
       "id": "docs_backlog_reste_\u00e0_faire_dette_technique_refacto_incr\u00e9mental",
       "community": 62,
@@ -17816,7 +17886,7 @@
       "label": "Notes pour les agents",
       "file_type": "document",
       "source_file": "docs/backlog.md",
-      "source_location": "L2495",
+      "source_location": "L2497",
       "_origin": "ast",
       "id": "docs_backlog_notes_pour_les_agents",
       "community": 62,
@@ -18496,7 +18566,7 @@
       "label": "Le fait structurant : le client est sur un d\u00e9p\u00f4t s\u00e9par\u00e9",
       "file_type": "document",
       "source_file": "docs/dossier-projet.md",
-      "source_location": "L162",
+      "source_location": "L171",
       "_origin": "ast",
       "id": "docs_dossier_projet_le_fait_structurant_le_client_est_sur_un_d\u00e9p\u00f4t_s\u00e9par\u00e9",
       "community": 43,
@@ -18506,7 +18576,7 @@
       "label": "Qui a quoi, au 2026-08-14",
       "file_type": "document",
       "source_file": "docs/dossier-projet.md",
-      "source_location": "L173",
+      "source_location": "L182",
       "_origin": "ast",
       "id": "docs_dossier_projet_qui_a_quoi_au_2026_08_14",
       "community": 43,
@@ -18516,7 +18586,7 @@
       "label": "Les bases de donn\u00e9es \u2014 la distinction \u00e0 ne jamais perdre",
       "file_type": "document",
       "source_file": "docs/dossier-projet.md",
-      "source_location": "L185",
+      "source_location": "L194",
       "_origin": "ast",
       "id": "docs_dossier_projet_les_bases_de_donn\u00e9es_la_distinction_\u00e0_ne_jamais_perdre",
       "community": 43,
@@ -18526,7 +18596,7 @@
       "label": "4. Comment une livraison atteint la production",
       "file_type": "document",
       "source_file": "docs/dossier-projet.md",
-      "source_location": "L206",
+      "source_location": "L215",
       "_origin": "ast",
       "id": "docs_dossier_projet_4_comment_une_livraison_atteint_la_production",
       "community": 43,
@@ -18536,7 +18606,7 @@
       "label": "La r\u00e8gle de l'\u00e9tage 3",
       "file_type": "document",
       "source_file": "docs/dossier-projet.md",
-      "source_location": "L222",
+      "source_location": "L231",
       "_origin": "ast",
       "id": "docs_dossier_projet_la_r\u00e8gle_de_l_\u00e9tage_3",
       "community": 43,
@@ -18546,7 +18616,7 @@
       "label": "Une livraison client n'est pas toujours un push",
       "file_type": "document",
       "source_file": "docs/dossier-projet.md",
-      "source_location": "L230",
+      "source_location": "L239",
       "_origin": "ast",
       "id": "docs_dossier_projet_une_livraison_client_n_est_pas_toujours_un_push",
       "community": 43,
@@ -18556,7 +18626,7 @@
       "label": "5. Les garde-fous d'exploitation",
       "file_type": "document",
       "source_file": "docs/dossier-projet.md",
-      "source_location": "L250",
+      "source_location": "L259",
       "_origin": "ast",
       "id": "docs_dossier_projet_5_les_garde_fous_d_exploitation",
       "community": 43,
@@ -18566,7 +18636,7 @@
       "label": "6. Ce qui a \u00e9t\u00e9 livr\u00e9 r\u00e9cemment",
       "file_type": "document",
       "source_file": "docs/dossier-projet.md",
-      "source_location": "L267",
+      "source_location": "L276",
       "_origin": "ast",
       "id": "docs_dossier_projet_6_ce_qui_a_\u00e9t\u00e9_livr\u00e9_r\u00e9cemment",
       "community": 43,
@@ -18576,7 +18646,7 @@
       "label": "Ao\u00fbt 2026 \u2014 l'horizon de planification (lot \u00ab B2 \u00bb)",
       "file_type": "document",
       "source_file": "docs/dossier-projet.md",
-      "source_location": "L272",
+      "source_location": "L281",
       "_origin": "ast",
       "id": "docs_dossier_projet_ao\u00fbt_2026_l_horizon_de_planification_lot_b2",
       "community": 43,
@@ -18586,7 +18656,7 @@
       "label": "Ao\u00fbt 2026 \u2014 le journal d'audit des disponibilit\u00e9s (F-12)",
       "file_type": "document",
       "source_file": "docs/dossier-projet.md",
-      "source_location": "L289",
+      "source_location": "L298",
       "_origin": "ast",
       "id": "docs_dossier_projet_ao\u00fbt_2026_le_journal_d_audit_des_disponibilit\u00e9s_f_12",
       "community": 43,
@@ -18596,7 +18666,7 @@
       "label": "Ao\u00fbt 2026 \u2014 l'archivage d'un membre du staff (F-13 / F-14)",
       "file_type": "document",
       "source_file": "docs/dossier-projet.md",
-      "source_location": "L300",
+      "source_location": "L309",
       "_origin": "ast",
       "id": "docs_dossier_projet_ao\u00fbt_2026_l_archivage_d_un_membre_du_staff_f_13_f_14",
       "community": 43,
@@ -18606,7 +18676,7 @@
       "label": "7. Ce qui est en cours ou en attente",
       "file_type": "document",
       "source_file": "docs/dossier-projet.md",
-      "source_location": "L308",
+      "source_location": "L317",
       "_origin": "ast",
       "id": "docs_dossier_projet_7_ce_qui_est_en_cours_ou_en_attente",
       "community": 43,
@@ -18616,7 +18686,7 @@
       "label": "8. Donn\u00e9es personnelles",
       "file_type": "document",
       "source_file": "docs/dossier-projet.md",
-      "source_location": "L331",
+      "source_location": "L340",
       "_origin": "ast",
       "id": "docs_dossier_projet_8_donn\u00e9es_personnelles",
       "community": 43,
@@ -18626,7 +18696,7 @@
       "label": "9. Identit\u00e9 visuelle et design",
       "file_type": "document",
       "source_file": "docs/dossier-projet.md",
-      "source_location": "L348",
+      "source_location": "L357",
       "_origin": "ast",
       "id": "docs_dossier_projet_9_identit\u00e9_visuelle_et_design",
       "community": 43,
@@ -18636,7 +18706,7 @@
       "label": "10. Comment lire les identifiants du backlog",
       "file_type": "document",
       "source_file": "docs/dossier-projet.md",
-      "source_location": "L364",
+      "source_location": "L373",
       "_origin": "ast",
       "id": "docs_dossier_projet_10_comment_lire_les_identifiants_du_backlog",
       "community": 43,
@@ -18646,7 +18716,7 @@
       "label": "11. O\u00f9 trouver le d\u00e9tail",
       "file_type": "document",
       "source_file": "docs/dossier-projet.md",
-      "source_location": "L383",
+      "source_location": "L392",
       "_origin": "ast",
       "id": "docs_dossier_projet_11_o\u00f9_trouver_le_d\u00e9tail",
       "community": 43,
@@ -18656,7 +18726,7 @@
       "label": "12. Chiffres du d\u00e9p\u00f4t au 2026-08-14",
       "file_type": "document",
       "source_file": "docs/dossier-projet.md",
-      "source_location": "L406",
+      "source_location": "L416",
       "_origin": "ast",
       "id": "docs_dossier_projet_12_chiffres_du_d\u00e9p\u00f4t_au_2026_08_14",
       "community": 43,
@@ -18723,20 +18793,20 @@
       "norm_label": "presets d'offre"
     },
     {
-      "label": "O\u00f9 le flag est pos\u00e9 (\u00e9tat au 2026-09-11)",
+      "label": "O\u00f9 le flag est pos\u00e9 (relev\u00e9 Railway du 2026-09-16)",
       "file_type": "document",
       "source_file": "docs/feature-flags.md",
       "source_location": "L79",
       "_origin": "ast",
-      "id": "docs_feature_flags_o\u00f9_le_flag_est_pos\u00e9_\u00e9tat_au_2026_09_11",
+      "id": "docs_feature_flags_o\u00f9_le_flag_est_pos\u00e9_relev\u00e9_railway_du_2026_09_16",
       "community": 112,
-      "norm_label": "ou le flag est pose (etat au 2026-09-11)"
+      "norm_label": "ou le flag est pose (releve railway du 2026-09-16)"
     },
     {
       "label": "API / UI",
       "file_type": "document",
       "source_file": "docs/feature-flags.md",
-      "source_location": "L109",
+      "source_location": "L129",
       "_origin": "ast",
       "id": "docs_feature_flags_api_ui",
       "community": 112,
@@ -18746,7 +18816,7 @@
       "label": "Ajouter une feature",
       "file_type": "document",
       "source_file": "docs/feature-flags.md",
-      "source_location": "L116",
+      "source_location": "L136",
       "_origin": "ast",
       "id": "docs_feature_flags_ajouter_une_feature",
       "community": 112,
@@ -18756,7 +18826,7 @@
       "label": "Portes effectivement prot\u00e9g\u00e9es",
       "file_type": "document",
       "source_file": "docs/feature-flags.md",
-      "source_location": "L128",
+      "source_location": "L148",
       "_origin": "ast",
       "id": "docs_feature_flags_portes_effectivement_prot\u00e9g\u00e9es",
       "community": 112,
@@ -18766,11 +18836,211 @@
       "label": "Recette Castaniu",
       "file_type": "document",
       "source_file": "docs/feature-flags.md",
-      "source_location": "L146",
+      "source_location": "L166",
       "_origin": "ast",
       "id": "docs_feature_flags_recette_castaniu",
       "community": 112,
       "norm_label": "recette castaniu"
+    },
+    {
+      "label": "guide-demo-prospect.md",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect",
+      "community": 12,
+      "norm_label": "guide-demo-prospect.md"
+    },
+    {
+      "label": "Guide de d\u00e9monstration Templyo \u2014 prospects",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_guide_de_d\u00e9monstration_templyo_prospects",
+      "community": 12,
+      "norm_label": "guide de demonstration templyo \u2014 prospects"
+    },
+    {
+      "label": "0. Avant le RDV (\u00e9quipe Templyo)",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_0_avant_le_rdv_\u00e9quipe_templyo",
+      "community": 12,
+      "norm_label": "0. avant le rdv (equipe templyo)"
+    },
+    {
+      "label": "Pr\u00e9parer l\u2019instance publique (demo.templyo.fr)",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L28",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_pr\u00e9parer_l_instance_publique_demo_templyo_fr",
+      "community": 12,
+      "norm_label": "preparer l\u2019instance publique (demo.templyo.fr)"
+    },
+    {
+      "label": "1. Comptes de la d\u00e9mo",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L74",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_1_comptes_de_la_d\u00e9mo",
+      "community": 12,
+      "norm_label": "1. comptes de la demo"
+    },
+    {
+      "label": "2. Parcours recommand\u00e9 (ordre de vente)",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L102",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_2_parcours_recommand\u00e9_ordre_de_vente",
+      "community": 12,
+      "norm_label": "2. parcours recommande (ordre de vente)"
+    },
+    {
+      "label": "A. Le cycle c\u0153ur (10 min) \u2014 compte **patron**",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L106",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_a_le_cycle_c\u0153ur_10_min_compte_patron",
+      "community": 12,
+      "norm_label": "a. le cycle c\u0153ur (10 min) \u2014 compte **patron**"
+    },
+    {
+      "label": "B. Les r\u00f4les (5 min)",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L121",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_b_les_r\u00f4les_5_min",
+      "community": 12,
+      "norm_label": "b. les roles (5 min)"
+    },
+    {
+      "label": "C. Terrain & pilotage (10 min) \u2014 revenir en **patron**",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L129",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_c_terrain_pilotage_10_min_revenir_en_patron",
+      "community": 12,
+      "norm_label": "c. terrain & pilotage (10 min) \u2014 revenir en **patron**"
+    },
+    {
+      "label": "D. Options & vie d\u2019\u00e9quipe (5 min)",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L144",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_d_options_vie_d_\u00e9quipe_5_min",
+      "community": 12,
+      "norm_label": "d. options & vie d\u2019equipe (5 min)"
+    },
+    {
+      "label": "3. Mode d\u2019emploi rapide (pour le prospect)",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L154",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_3_mode_d_emploi_rapide_pour_le_prospect",
+      "community": 12,
+      "norm_label": "3. mode d\u2019emploi rapide (pour le prospect)"
+    },
+    {
+      "label": "Se connecter",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L156",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_se_connecter",
+      "community": 12,
+      "norm_label": "se connecter"
+    },
+    {
+      "label": "Construire une semaine",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L159",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_construire_une_semaine",
+      "community": 12,
+      "norm_label": "construire une semaine"
+    },
+    {
+      "label": "Collecter les disponibilit\u00e9s",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L165",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_collecter_les_disponibilit\u00e9s",
+      "community": 12,
+      "norm_label": "collecter les disponibilites"
+    },
+    {
+      "label": "Pointer les heures r\u00e9elles",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L170",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_pointer_les_heures_r\u00e9elles",
+      "community": 12,
+      "norm_label": "pointer les heures reelles"
+    },
+    {
+      "label": "Piloter la masse salariale",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L175",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_piloter_la_masse_salariale",
+      "community": 12,
+      "norm_label": "piloter la masse salariale"
+    },
+    {
+      "label": "\u00c9changes entre coll\u00e8gues",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L178",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_\u00e9changes_entre_coll\u00e8gues",
+      "community": 12,
+      "norm_label": "echanges entre collegues"
+    },
+    {
+      "label": "4. Ce que le pack d\u00e9mo active",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L183",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_4_ce_que_le_pack_d\u00e9mo_active",
+      "community": 12,
+      "norm_label": "4. ce que le pack demo active"
+    },
+    {
+      "label": "5. Checklist \u00ab apr\u00e8s le RDV \u00bb",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L196",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_5_checklist_apr\u00e8s_le_rdv",
+      "community": 12,
+      "norm_label": "5. checklist \u00ab apres le rdv \u00bb"
+    },
+    {
+      "label": "6. Liens utiles",
+      "file_type": "document",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L205",
+      "_origin": "ast",
+      "id": "docs_guide_demo_prospect_6_liens_utiles",
+      "community": 12,
+      "norm_label": "6. liens utiles"
     },
     {
       "label": "methodologie-et-cicd.md",
@@ -19436,7 +19706,7 @@
       "label": "14. Parcours de prise en main recommand\u00e9",
       "file_type": "document",
       "source_file": "docs/onboarding.md",
-      "source_location": "L417",
+      "source_location": "L418",
       "_origin": "ast",
       "id": "docs_onboarding_14_parcours_de_prise_en_main_recommand\u00e9",
       "community": 40,
@@ -31241,9 +31511,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L186",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_canforcedeletepointageshift",
-      "confidence_score": 1.0
+      "target": "public_pointage_canforcedeletepointageshift"
     },
     {
       "relation": "contains",
@@ -31261,9 +31531,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L190",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_canshowpointagedelete",
-      "confidence_score": 1.0
+      "target": "public_pointage_canshowpointagedelete"
     },
     {
       "relation": "contains",
@@ -31361,9 +31631,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L199",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_deletepointageshift",
-      "confidence_score": 1.0
+      "target": "public_pointage_deletepointageshift"
     },
     {
       "relation": "contains",
@@ -31561,9 +31831,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L177",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_navigatepointageday",
-      "confidence_score": 1.0
+      "target": "public_pointage_navigatepointageday"
     },
     {
       "relation": "contains",
@@ -31661,9 +31931,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L168",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage",
-      "target": "public_pointage_refreshpointageday",
-      "confidence_score": 1.0
+      "target": "public_pointage_refreshpointageday"
     },
     {
       "relation": "contains",
@@ -31886,9 +32156,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L179",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_navigatepointageday",
-      "target": "public_pointage_todatestr",
-      "confidence_score": 1.0
+      "target": "public_pointage_todatestr"
     },
     {
       "relation": "calls",
@@ -32106,9 +32376,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L208",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_deletepointageshift",
-      "target": "public_pointage_showtoast",
-      "confidence_score": 1.0
+      "target": "public_pointage_showtoast"
     },
     {
       "relation": "calls",
@@ -32161,9 +32431,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L180",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_navigatepointageday",
-      "target": "public_pointage_getactivedate",
-      "confidence_score": 1.0
+      "target": "public_pointage_getactivedate"
     },
     {
       "relation": "calls",
@@ -32194,9 +32464,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L181",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_navigatepointageday",
-      "target": "public_pointage_setactivedate",
-      "confidence_score": 1.0
+      "target": "public_pointage_setactivedate"
     },
     {
       "relation": "calls",
@@ -32205,9 +32475,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L209",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_deletepointageshift",
-      "target": "public_pointage_refreshpointageday",
-      "confidence_score": 1.0
+      "target": "public_pointage_refreshpointageday"
     },
     {
       "relation": "calls",
@@ -32216,9 +32486,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L182",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_navigatepointageday",
-      "target": "public_pointage_refreshpointageday",
-      "confidence_score": 1.0
+      "target": "public_pointage_refreshpointageday"
     },
     {
       "relation": "calls",
@@ -32227,9 +32497,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L171",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_refreshpointageday",
-      "target": "public_pointage_canseecodecloture",
-      "confidence_score": 1.0
+      "target": "public_pointage_canseecodecloture"
     },
     {
       "relation": "calls",
@@ -32238,9 +32508,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L170",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_refreshpointageday",
-      "target": "public_pointage_canuseclotureui",
-      "confidence_score": 1.0
+      "target": "public_pointage_canuseclotureui"
     },
     {
       "relation": "calls",
@@ -32249,9 +32519,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L169",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_refreshpointageday",
-      "target": "public_pointage_loadrevenue",
-      "confidence_score": 1.0
+      "target": "public_pointage_loadrevenue"
     },
     {
       "relation": "calls",
@@ -32260,9 +32530,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L169",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_refreshpointageday",
-      "target": "public_pointage_loadshifts",
-      "confidence_score": 1.0
+      "target": "public_pointage_loadshifts"
     },
     {
       "relation": "calls",
@@ -32271,9 +32541,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L173",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_refreshpointageday",
-      "target": "public_pointage_refreshcloturejournalifneeded",
-      "confidence_score": 1.0
+      "target": "public_pointage_refreshcloturejournalifneeded"
     },
     {
       "relation": "calls",
@@ -32282,9 +32552,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L171",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_refreshpointageday",
-      "target": "public_pointage_refreshcodecloture",
-      "confidence_score": 1.0
+      "target": "public_pointage_refreshcodecloture"
     },
     {
       "relation": "calls",
@@ -32293,9 +32563,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L172",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_refreshpointageday",
-      "target": "public_pointage_renderclotureslist",
-      "confidence_score": 1.0
+      "target": "public_pointage_renderclotureslist"
     },
     {
       "relation": "calls",
@@ -32304,9 +32574,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L179",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_navigatepointageday",
-      "target": "public_pointage_adddayslocal",
-      "confidence_score": 1.0
+      "target": "public_pointage_adddayslocal"
     },
     {
       "relation": "calls",
@@ -32315,9 +32585,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L191",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_canshowpointagedelete",
-      "target": "public_pointage_canforcedeletepointageshift",
-      "confidence_score": 1.0
+      "target": "public_pointage_canforcedeletepointageshift"
     },
     {
       "relation": "calls",
@@ -32326,9 +32596,9 @@
       "source_file": "public/pointage.js",
       "source_location": "L545",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "public_pointage_buildshiftcard",
-      "target": "public_pointage_canshowpointagedelete",
-      "confidence_score": 1.0
+      "target": "public_pointage_canshowpointagedelete"
     },
     {
       "relation": "calls",
@@ -43930,6 +44200,26 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "scripts/seed-demo.js",
+      "source_location": "L122",
+      "weight": 1.0,
+      "source": "scripts_seed_demo",
+      "target": "scripts_seed_demo_core_estabs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-demo.js",
+      "source_location": "L190",
+      "weight": 1.0,
+      "source": "scripts_seed_demo",
+      "target": "scripts_seed_demo_derivedservice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-demo.js",
       "source_location": "L150",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -44040,6 +44330,46 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "scripts/seed-demo.js",
+      "source_location": "L405",
+      "weight": 1.0,
+      "source": "scripts_seed_demo",
+      "target": "scripts_seed_demo_sat_first",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-demo.js",
+      "source_location": "L414",
+      "weight": 1.0,
+      "source": "scripts_seed_demo",
+      "target": "scripts_seed_demo_sat_last",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-demo.js",
+      "source_location": "L158",
+      "weight": 1.0,
+      "source": "scripts_seed_demo",
+      "target": "scripts_seed_demo_satellites",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-demo.js",
+      "source_location": "L421",
+      "weight": 1.0,
+      "source": "scripts_seed_demo",
+      "target": "scripts_seed_demo_satelliteteam",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-demo.js",
       "source_location": "L164",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -44065,6 +44395,16 @@
       "confidence_score": 1.0,
       "source": "scripts_seed_demo",
       "target": "scripts_seed_demo_staff"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-demo.js",
+      "source_location": "L376",
+      "weight": 1.0,
+      "source": "scripts_seed_demo",
+      "target": "scripts_seed_demo_team",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -44117,6 +44457,28 @@
       "confidence_score": 1.0,
       "source": "scripts_seed_demo_run",
       "target": "scripts_seed_demo_rnd"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-demo.js",
+      "source_location": "L191",
+      "weight": 1.0,
+      "source": "scripts_seed_demo_derivedservice",
+      "target": "scripts_seed_demo_venuehours",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/seed-demo.js",
+      "source_location": "L422",
+      "weight": 1.0,
+      "source": "scripts_seed_demo_satelliteteam",
+      "target": "scripts_seed_demo_venuehours",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -49229,9 +49591,9 @@
       "source_file": "tests/pointage-delete.test.js",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_pointage_delete_test",
-      "target": "helpers_fake_db",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db"
     },
     {
       "relation": "imports_from",
@@ -49570,9 +49932,9 @@
       "source_file": "tests/pointage-delete.test.js",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_pointage_delete_test",
-      "target": "helpers_fake_db_makedb",
-      "confidence_score": 1.0
+      "target": "helpers_fake_db_makedb"
     },
     {
       "relation": "imports",
@@ -49849,9 +50211,9 @@
       "source_file": "tests/pointage-delete.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_pointage_delete_test",
-      "target": "helpers_harness",
-      "confidence_score": 1.0
+      "target": "helpers_harness"
     },
     {
       "relation": "imports_from",
@@ -50036,9 +50398,9 @@
       "source_file": "tests/pointage-delete.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_pointage_delete_test",
-      "target": "helpers_harness_app",
-      "confidence_score": 1.0
+      "target": "helpers_harness_app"
     },
     {
       "relation": "imports",
@@ -50212,9 +50574,9 @@
       "source_file": "tests/pointage-delete.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_pointage_delete_test",
-      "target": "helpers_harness_startapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_startapp"
     },
     {
       "relation": "imports",
@@ -50399,9 +50761,9 @@
       "source_file": "tests/pointage-delete.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_pointage_delete_test",
-      "target": "helpers_harness_stopapp",
-      "confidence_score": 1.0
+      "target": "helpers_harness_stopapp"
     },
     {
       "relation": "imports",
@@ -50619,9 +50981,9 @@
       "source_file": "tests/pointage-delete.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_pointage_delete_test",
-      "target": "helpers_harness_req",
-      "confidence_score": 1.0
+      "target": "helpers_harness_req"
     },
     {
       "relation": "imports",
@@ -51930,9 +52292,9 @@
       "source_file": "tests/pointage-delete.test.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_pointage_delete_test",
-      "target": "tests_pointage_delete_test_app_startapp_stopapp_req",
-      "confidence_score": 1.0
+      "target": "tests_pointage_delete_test_app_startapp_stopapp_req"
     },
     {
       "relation": "contains",
@@ -51940,9 +52302,9 @@
       "source_file": "tests/pointage-delete.test.js",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_pointage_delete_test",
-      "target": "tests_pointage_delete_test_assert",
-      "confidence_score": 1.0
+      "target": "tests_pointage_delete_test_assert"
     },
     {
       "relation": "contains",
@@ -51950,9 +52312,9 @@
       "source_file": "tests/pointage-delete.test.js",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_pointage_delete_test",
-      "target": "tests_pointage_delete_test_dir",
-      "confidence_score": 1.0
+      "target": "tests_pointage_delete_test_dir"
     },
     {
       "relation": "contains",
@@ -51960,9 +52322,9 @@
       "source_file": "tests/pointage-delete.test.js",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_pointage_delete_test",
-      "target": "tests_pointage_delete_test_etab",
-      "confidence_score": 1.0
+      "target": "tests_pointage_delete_test_etab"
     },
     {
       "relation": "contains",
@@ -51970,9 +52332,9 @@
       "source_file": "tests/pointage-delete.test.js",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_pointage_delete_test",
-      "target": "tests_pointage_delete_test_makedb",
-      "confidence_score": 1.0
+      "target": "tests_pointage_delete_test_makedb"
     },
     {
       "relation": "contains",
@@ -51980,9 +52342,9 @@
       "source_file": "tests/pointage-delete.test.js",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_pointage_delete_test",
-      "target": "tests_pointage_delete_test_objectid",
-      "confidence_score": 1.0
+      "target": "tests_pointage_delete_test_objectid"
     },
     {
       "relation": "contains",
@@ -51990,9 +52352,9 @@
       "source_file": "tests/pointage-delete.test.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_pointage_delete_test",
-      "target": "tests_pointage_delete_test_patron",
-      "confidence_score": 1.0
+      "target": "tests_pointage_delete_test_patron"
     },
     {
       "relation": "contains",
@@ -52000,9 +52362,9 @@
       "source_file": "tests/pointage-delete.test.js",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_pointage_delete_test",
-      "target": "tests_pointage_delete_test_staff_user",
-      "confidence_score": 1.0
+      "target": "tests_pointage_delete_test_staff_user"
     },
     {
       "relation": "contains",
@@ -52010,9 +52372,9 @@
       "source_file": "tests/pointage-delete.test.js",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_pointage_delete_test",
-      "target": "tests_pointage_delete_test_test_before_after_beforeeach",
-      "confidence_score": 1.0
+      "target": "tests_pointage_delete_test_test_before_after_beforeeach"
     },
     {
       "relation": "contains",
@@ -55484,11 +55846,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/feature-flags.md",
-      "source_location": "L25",
+      "source_location": "L79",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "docs_feature_flags_feature_flags_client_client_profile_feature",
-      "target": "docs_feature_flags_o\u00f9_le_flag_est_pos\u00e9_\u00e9tat_au_2026_09_11"
+      "target": "docs_feature_flags_o\u00f9_le_flag_est_pos\u00e9_relev\u00e9_railway_du_2026_09_16",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -55529,6 +55891,196 @@
       "confidence_score": 1.0,
       "source": "docs_feature_flags_feature_flags_client_client_profile_feature",
       "target": "docs_feature_flags_recette_castaniu"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect",
+      "target": "docs_guide_demo_prospect_guide_de_d\u00e9monstration_templyo_prospects"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L13",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect_guide_de_d\u00e9monstration_templyo_prospects",
+      "target": "docs_guide_demo_prospect_0_avant_le_rdv_\u00e9quipe_templyo"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L27",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect_guide_de_d\u00e9monstration_templyo_prospects",
+      "target": "docs_guide_demo_prospect_1_comptes_de_la_d\u00e9mo"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L43",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect_guide_de_d\u00e9monstration_templyo_prospects",
+      "target": "docs_guide_demo_prospect_2_parcours_recommand\u00e9_ordre_de_vente"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L94",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect_guide_de_d\u00e9monstration_templyo_prospects",
+      "target": "docs_guide_demo_prospect_3_mode_d_emploi_rapide_pour_le_prospect"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L123",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect_guide_de_d\u00e9monstration_templyo_prospects",
+      "target": "docs_guide_demo_prospect_4_ce_que_le_pack_d\u00e9mo_active"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L136",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect_guide_de_d\u00e9monstration_templyo_prospects",
+      "target": "docs_guide_demo_prospect_5_checklist_apr\u00e8s_le_rdv"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L145",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect_guide_de_d\u00e9monstration_templyo_prospects",
+      "target": "docs_guide_demo_prospect_6_liens_utiles"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "docs_guide_demo_prospect_0_avant_le_rdv_\u00e9quipe_templyo",
+      "target": "docs_guide_demo_prospect_pr\u00e9parer_l_instance_publique_demo_templyo_fr",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L47",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect_2_parcours_recommand\u00e9_ordre_de_vente",
+      "target": "docs_guide_demo_prospect_a_le_cycle_c\u0153ur_10_min_compte_patron"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L62",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect_2_parcours_recommand\u00e9_ordre_de_vente",
+      "target": "docs_guide_demo_prospect_b_les_r\u00f4les_5_min"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L70",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect_2_parcours_recommand\u00e9_ordre_de_vente",
+      "target": "docs_guide_demo_prospect_c_terrain_pilotage_10_min_revenir_en_patron"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L84",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect_2_parcours_recommand\u00e9_ordre_de_vente",
+      "target": "docs_guide_demo_prospect_d_options_vie_d_\u00e9quipe_5_min"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L105",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect_3_mode_d_emploi_rapide_pour_le_prospect",
+      "target": "docs_guide_demo_prospect_collecter_les_disponibilit\u00e9s"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L99",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect_3_mode_d_emploi_rapide_pour_le_prospect",
+      "target": "docs_guide_demo_prospect_construire_une_semaine"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L115",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect_3_mode_d_emploi_rapide_pour_le_prospect",
+      "target": "docs_guide_demo_prospect_piloter_la_masse_salariale"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L110",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect_3_mode_d_emploi_rapide_pour_le_prospect",
+      "target": "docs_guide_demo_prospect_pointer_les_heures_r\u00e9elles"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L96",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect_3_mode_d_emploi_rapide_pour_le_prospect",
+      "target": "docs_guide_demo_prospect_se_connecter"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/guide-demo-prospect.md",
+      "source_location": "L118",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "docs_guide_demo_prospect_3_mode_d_emploi_rapide_pour_le_prospect",
+      "target": "docs_guide_demo_prospect_\u00e9changes_entre_coll\u00e8gues"
     },
     {
       "relation": "contains",
@@ -57363,5 +57915,5 @@
       "source_file": "docs/architecture.md"
     }
   ],
-  "built_at_commit": "822fc2ff0de8dd3e76cdabf660fa33965d49c826"
+  "built_at_commit": "9e023dd969b049b90d23e25c1bd2cdd2cf37277a"
 }

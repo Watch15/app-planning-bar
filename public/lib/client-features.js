@@ -65,7 +65,19 @@
         };
     }
 
-    /** Affiche/masque des nœuds `[data-feature="clé"]` selon le flag. */
+    /**
+     * MASQUE les nœuds `[data-feature="clé"]` dont le flag est off. Ne RÉVÈLE rien :
+     * un flag actif rend seulement l'élément éligible à être affiché par le code qui
+     * le pilote (ouverture d'une modale, bouton contextuel), il ne l'affiche pas.
+     *
+     * La version précédente posait `el.style.display = ''` quand le flag était actif.
+     * Cela effaçait le `display:none` INLINE qui tient une modale fermée — et comme
+     * `.modal-overlay` vaut `display:flex`, « Saisir un CA » et « Échanges de shifts à
+     * valider » s'ouvraient tout seuls au chargement, dès que `/auth/me` répondait.
+     * Même effet sur la modale d'échange du planning staff, qui couvre tout l'écran.
+     * Aucun nœud gaté ne dépend de cette fonction pour s'afficher : chacun a son
+     * propre chemin (`openRevenueModal`, `openSwapsModal`, `refreshProposeSlotsButton`).
+     */
     function applyDom(rootEl) {
         const rootNode = rootEl || (typeof document !== 'undefined' ? document : null);
         if (!rootNode || !rootNode.querySelectorAll) return;
@@ -73,8 +85,11 @@
             const key = el.getAttribute('data-feature');
             const on = enabled(key);
             el.hidden = !on;
-            el.style.display = on ? '' : 'none';
             el.setAttribute('aria-hidden', on ? 'false' : 'true');
+            // `hidden` seul ne suffit pas : une règle de classe (`.modal-overlay`) qui
+            // pose `display` l'emporte sur l'attribut. On force donc l'invisibilité —
+            // mais uniquement dans ce sens-là.
+            if (!on) el.style.display = 'none';
         });
     }
 

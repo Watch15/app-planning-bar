@@ -406,6 +406,7 @@ ou on corrige un bug régressable.
 | `design-e22-dispos-directeur.md` | Dispos des directeurs — **§8/§9 font autorité**, sections antérieures supersédées |
 | `methodologie-et-cicd.md` | Méthode de travail et pipeline |
 | `note-client-mise-a-jour.md` | Ce qui est annoncé au client |
+| `guide-demo-prospect.md` | Parcours + mode d’emploi pour une démo prospect |
 | `ux-design.md` | Choix UX |
 | `onboarding.md` | Ce fichier |
 | `graphify-out/` | Graphe de connaissances **généré** (ne pas éditer à la main ; `graphify update .` après modif code) |
