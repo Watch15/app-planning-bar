@@ -34,8 +34,8 @@ La source commerciale/juridique est `juridique/00_Fiche_Tarifaire_Commerciale.tx
 | Capacité | Socle Planning | Flag |
 |---|---:|---|
 | Planning drag & drop, PWA staff, disponibilités, congés, Jokers, exports | oui | aucun — toujours disponible |
-| Clôture de service, pointage et code OTP, heures réelles, audit | non | `time_tracking` |
-| CA, masse salariale, ratios et simulation | non | `performance` |
+| Clôture de service, pointage terrain (OTP, tablette), comptes établissement, audit litiges | non | `time_tracking` |
+| CA, masse salariale, ratios, simulation **+ saisie manuelle des heures** (patron/directeur) | non | `performance` |
 | Échanges de shifts | non promis au socle | `shift_swaps` |
 | Abonnement agenda iCal | expérimental, non promis au socle | `calendar_sync` |
 | Validation hebdo et créneaux N+1 Castaniu | développements spécifiques | flags existants |
@@ -43,12 +43,12 @@ La source commerciale/juridique est `juridique/00_Fiche_Tarifaire_Commerciale.tx
 Les flags portent sur des **frontières de module**, pas sur chaque bouton du socle :
 cela évite de créer des combinaisons incohérentes impossibles à vendre ou tester.
 
-> **Arbitrage contractuel à confirmer :** l'enforcement classe provisoirement toute
-> saisie d'heures réelles (manuelle, tablette ou OTP) dans `time_tracking`, conformément
-> au Bon de commande qui place les « heures réelles » en formule 2. Or la formule 3
-> Performance est vendue sans Pointage alors que ses indicateurs réels consomment ces
-> heures. Il faut préciser au contrat si le pointage manuel accompagne Performance seul ;
-> la Simulation planifiée reste, elle, utilisable avec `performance` uniquement.
+> **Arbitrage A (2026-09-16, tranché) :** Formule 3 Performance inclut la **saisie
+> manuelle** des heures réelles (modale patron / feuille mobile → `PATCH …/pointage`),
+> pour alimenter les KPI réels sans module terrain. Formule 2 reste le pointage de
+> terrain (OTP, tablette, comptes établissement, responsable de soirée). Helper
+> `canWriteRealHours` = `time_tracking` **OU** `performance`. La Simulation planifiée
+> fonctionne avec `performance` seul (hybride : réel si déjà saisi + planifié).
 
 ## Presets d'offre
 
@@ -59,11 +59,12 @@ FEATURE_PERFORMANCE=false
 FEATURE_SHIFT_SWAPS=false
 FEATURE_CALENDAR_SYNC=false
 
-# Formule 2 — Planning + Clôture & Pointage
+# Formule 2 — Planning + Clôture & Pointage terrain
 FEATURE_TIME_TRACKING=true
 FEATURE_PERFORMANCE=false
 
 # Formule 3 — Planning + Performance & Simulation
+# (inclut saisie manuelle des heures ; pas d'OTP / tablette)
 FEATURE_TIME_TRACKING=false
 FEATURE_PERFORMANCE=true
 
@@ -126,11 +127,13 @@ Vérifier quand même que le code est bien déployé avant de conclure :
 
 ## Portes effectivement protégées
 
-- `time_tracking` : page Pointage, CTA OTP staff, édition des heures réelles,
-  responsables de soirée, comptes tablette établissement, réglages et routes
-  pointage/clôture/audit.
+- `time_tracking` : page Pointage, CTA OTP staff, responsables de soirée, comptes
+  tablette établissement, réglages et routes pointage/clôture/audit **terrain**.
 - `performance` : page Performance, saisie CA, réglages, simulation, taux/forfaits
   staff et routes associées.
+- **Heures réelles manuelles** (`canWriteRealHours`) : `PATCH /api/shifts/:id/pointage`
+  + modale / feuille d'édition patron — ouvertes si `time_tracking` **ou**
+  `performance` (arbitrage A). Effacer les heures passe par le même PATCH.
 - `shift_swaps` : actions staff, file patron, réglages et toutes les routes d'échange.
 - `calendar_sync` : carte staff et les deux routes iCal. Il remplace l'ancien doublon
   `CALENDAR_ENABLED` serveur + constante front.

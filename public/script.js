@@ -2240,9 +2240,11 @@ function createShiftEl(shift) {
         : '';
 
     // Bouton 👑 responsable pointage — uniquement si le staff a un rôle responsable
+    // (module terrain `time_tracking` — pas la saisie manuelle Formule 3).
     const staffMember    = allStaff.find(s => String(s._id) === String(shift.staff_id));
     const staffRoleIds   = (staffMember && staffMember.roles) || [];
     const hasTimeTracking = !!(window.ClientFeatures && ClientFeatures.enabled('time_tracking'));
+    const canWriteRealHours = !!(window.ClientFeatures && ClientFeatures.canWriteRealHours());
     const isResp         = hasTimeTracking
         && allRoles.some(r => r.type === 'responsable' && staffRoleIds.includes(String(r._id)));
     const respBtn        = isResp
@@ -2294,7 +2296,7 @@ function createShiftEl(shift) {
             if (shiftInteractionBlocked()) return;
             if (isPhone() || isTablet()) {
                 openMobileShiftEditModal(shift);
-            } else if (hasTimeTracking) {
+            } else if (canWriteRealHours) {
                 openRealHoursModal(shift, el);
             }
         });
@@ -2336,6 +2338,7 @@ function openMobileShiftEditModal(shift) {
     const _staffMember  = allStaff.find(s => String(s._id) === String(shift.staff_id));
     const _staffRoleIds = (_staffMember && _staffMember.roles) || [];
     const hasTimeTracking = !!(window.ClientFeatures && ClientFeatures.enabled('time_tracking'));
+    const canWriteRealHours = !!(window.ClientFeatures && ClientFeatures.canWriteRealHours());
     const _isResp       = hasTimeTracking
         && allRoles.some(r => r.type === 'responsable' && _staffRoleIds.includes(String(r._id)));
 
@@ -2354,7 +2357,7 @@ function openMobileShiftEditModal(shift) {
         ? '<button type="button" id="_ms-copy">Transférer</button>'
         : '';
 
-    const realHoursHtml = hasTimeTracking
+    const realHoursHtml = canWriteRealHours
         ? ('<div class="ms-real-box">' +
                 '<div class="ms-sec-label">Heures réelles</div>' +
                 '<div class="ms-time-grid">' +
@@ -2475,7 +2478,7 @@ function openMobileShiftEditModal(shift) {
         const realEndInput = overlay.querySelector('#_ms-real-end');
         const rs = realStartInput ? parseReal(realStartInput.value, null) : null;
         const re = realEndInput ? parseReal(realEndInput.value, rs) : null;
-        const hasReal = hasTimeTracking && (rs != null || re != null);
+        const hasReal = canWriteRealHours && (rs != null || re != null);
 
         const btn = overlay.querySelector('#_ms-save');
         btn.disabled    = true;
@@ -2670,6 +2673,7 @@ function openReplaceStaffModal(shift) {
 
 function openRealHoursModal(shift, shiftEl) {
     if (isObservateur()) return;
+    if (!window.ClientFeatures || !ClientFeatures.canWriteRealHours()) return;
     const fmt     = h => h == null ? '' : String(Math.floor(h % 24)).padStart(2, '0') + ':' + String(Math.round((h % 1) * 60)).padStart(2, '0');
     const fmtDisp = h => h == null ? '—' : String(Math.floor(h % 24)).padStart(2, '0') + 'h' + String(Math.round((h % 1) * 60)).padStart(2, '0');
 

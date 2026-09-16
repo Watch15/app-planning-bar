@@ -40,6 +40,20 @@
         return !!(_state.features && _state.features[featureKey]);
     }
 
+    /** True si au moins une des clés est active (ex. hours manuelles = pointage OU perf). */
+    function enabledAny(featureKeys) {
+        if (!Array.isArray(featureKeys) || featureKeys.length === 0) return false;
+        return featureKeys.some(enabled);
+    }
+
+    /**
+     * Saisie manuelle des heures réelles : Formule 2 (terrain) ou Formule 3 (Performance).
+     * OTP / tablette / comptes établissement restent derrière `time_tracking` seul.
+     */
+    function canWriteRealHours() {
+        return enabledAny(['time_tracking', 'performance']);
+    }
+
     function profile() {
         return _state.profile || 'default';
     }
@@ -64,5 +78,5 @@
         });
     }
 
-    return { apply, fromAuthPayload, enabled, profile, snapshot, applyDom };
+    return { apply, fromAuthPayload, enabled, enabledAny, canWriteRealHours, profile, snapshot, applyDom };
 });

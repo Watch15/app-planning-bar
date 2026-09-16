@@ -28,6 +28,7 @@ const {
     resolveAll: resolveClientFeatures,
     enabled: clientFeatureEnabled,
     requireFeature,
+    requireFeatureAny,
     normalizeProfile: normalizeClientProfile,
 } = require('./lib/client-features');
 
@@ -7222,8 +7223,11 @@ app.patch('/api/shifts/:id/pointage-resp', checkDB, requirePatron, denyObservate
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-// PATCH heures réelles sur un shift existant
-app.patch('/api/shifts/:id/pointage', checkDB, requireAuth, requireFeature('time_tracking'), async (req, res) => {
+// PATCH heures réelles sur un shift existant.
+// Arbitrage A : Formule 2 (terrain) OU Formule 3 (saisie manuelle patron pour les KPI).
+// OTP / tablette / comptes établissement restent derrière `time_tracking` seul.
+app.patch('/api/shifts/:id/pointage', checkDB, requireAuth,
+    requireFeatureAny(['time_tracking', 'performance']), async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const { real_start, real_end } = req.body;
     // Accepter null explicite (effacement) ou valeurs numériques

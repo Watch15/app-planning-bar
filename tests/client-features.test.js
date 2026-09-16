@@ -5,6 +5,8 @@ const {
     FEATURES,
     normalizeProfile,
     enabled,
+    enabledAny,
+    canWriteRealHours,
     resolveAll,
 } = require('../lib/client-features');
 
@@ -110,4 +112,26 @@ test('resolveAll expose profile + toutes les clés du catalogue', () => {
 
 test('clé inconnue → false', () => {
     assert.equal(enabled('does_not_exist', { profile: 'castaniu', env: {} }), false);
+});
+
+test('canWriteRealHours : Formule 3 (perf seule) autorise la saisie manuelle', () => {
+    const opts = {
+        profile: 'default',
+        env: { FEATURE_PERFORMANCE: 'true', FEATURE_TIME_TRACKING: 'false' },
+    };
+    assert.equal(enabled('performance', opts), true);
+    assert.equal(enabled('time_tracking', opts), false);
+    assert.equal(canWriteRealHours(opts), true);
+    assert.equal(enabledAny(['time_tracking', 'performance'], opts), true);
+});
+
+test('canWriteRealHours : Planning seul refuse', () => {
+    assert.equal(canWriteRealHours({ profile: 'default', env: {} }), false);
+});
+
+test('canWriteRealHours : Formule 2 (pointage seul) autorise', () => {
+    assert.equal(canWriteRealHours({
+        profile: 'default',
+        env: { FEATURE_TIME_TRACKING: 'true' },
+    }), true);
 });

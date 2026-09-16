@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "public/script.js": {
-    "mtime": 1789488533.2198174,
-    "ast_hash": "c18c2037c118b90ed76fb7a6f83daf01",
+    "mtime": 1789548337.1152322,
+    "ast_hash": "ae31fd9def6bdb4748070b891c32c62a",
     "semantic_hash": ""
   },
   "public/sw.js": {
@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "server.js": {
-    "mtime": 1789488096.2624419,
-    "ast_hash": "84c20b2ab36ac2bd3229d0b458693ae9",
+    "mtime": 1789548323.471223,
+    "ast_hash": "369c374af6f4f2b35bdf6df51eae8dfd",
     "semantic_hash": ""
   },
   "tests/routes.test.js": {
@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "docs/backlog.md": {
-    "mtime": 1789482061.935953,
-    "ast_hash": "0e3197e97fe6527b53a9e00b14d1823c",
+    "mtime": 1789548482.5392978,
+    "ast_hash": "55bf945a59465968098fe4ef1c2a4fc1",
     "semantic_hash": ""
   },
   "docs/prd.md": {
@@ -425,23 +425,23 @@
     "semantic_hash": ""
   },
   "lib/client-features.js": {
-    "mtime": 1789481671.504944,
-    "ast_hash": "4e53e27cae7858298c9055d33fb6b50e",
+    "mtime": 1789548294.1535003,
+    "ast_hash": "ab5e2d51d8d822df0ec555584afd2ec7",
     "semantic_hash": ""
   },
   "public/lib/client-features.js": {
-    "mtime": 1789055553.5223634,
-    "ast_hash": "a33a2cff94a8b78ee0405fb1699d7bb9",
+    "mtime": 1789548305.8264546,
+    "ast_hash": "598190be8d7d192687bbfff0166bbafa",
     "semantic_hash": ""
   },
   "tests/client-features.test.js": {
-    "mtime": 1789481681.733617,
-    "ast_hash": "4322d56a42eb4413f8eea6123e518a64",
+    "mtime": 1789548370.839289,
+    "ast_hash": "d7b2bf91097a72d2d02939b74761cfe8",
     "semantic_hash": ""
   },
   "docs/feature-flags.md": {
-    "mtime": 1789482372.2196434,
-    "ast_hash": "2c9b2cce7234d4d5baea73acbb95dabb",
+    "mtime": 1789548403.7305257,
+    "ast_hash": "84c6c8f287014de1038c210d0d643056",
     "semantic_hash": ""
   },
   "public/validation.js": {
@@ -500,8 +500,8 @@
     "semantic_hash": ""
   },
   "tests/feature-entitlements.test.js": {
-    "mtime": 1789481941.192947,
-    "ast_hash": "d684aabec2a8010742f7263a3f22758d",
+    "mtime": 1789548479.3010247,
+    "ast_hash": "071ed7702bc82016c366ea82dff975bf",
     "semantic_hash": ""
   },
   "tests/critical-auth-security.test.js": {
