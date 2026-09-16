@@ -430,8 +430,8 @@
     "semantic_hash": ""
   },
   "public/lib/client-features.js": {
-    "mtime": 1789548305.8264546,
-    "ast_hash": "598190be8d7d192687bbfff0166bbafa",
+    "mtime": 1789573469.7847395,
+    "ast_hash": "497a91aa66a957d9df5e2c816e528ea1",
     "semantic_hash": ""
   },
   "tests/client-features.test.js": {
@@ -440,8 +440,8 @@
     "semantic_hash": ""
   },
   "docs/feature-flags.md": {
-    "mtime": 1789570388.054463,
-    "ast_hash": "aad36ba9082110502cfb83afe45bac99",
+    "mtime": 1789573528.9480927,
+    "ast_hash": "a12250d7543814120c4e4bbe3185dc9b",
     "semantic_hash": ""
   },
   "public/validation.js": {
@@ -527,6 +527,11 @@
   "public/demo-guide.html": {
     "mtime": 1789571968.8700068,
     "ast_hash": "bc5058daa8077b234e7ec1951287e6d1",
+    "semantic_hash": ""
+  },
+  "tests/client-features-dom.test.js": {
+    "mtime": 1789573486.2074044,
+    "ast_hash": "31601f201ba00bde76ccc937d7072b9c",
     "semantic_hash": ""
   }
 }

@@ -379,7 +379,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "lib_utils_isautopublished",
-      "community": 67,
+      "community": 80,
       "norm_label": "isautopublished()"
     },
     {
@@ -399,7 +399,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "lib_utils_isdatepublished",
-      "community": 67,
+      "community": 80,
       "norm_label": "isdatepublished()"
     },
     {
@@ -439,7 +439,7 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "lib_utils_splitdisposbyconges",
-      "community": 80,
+      "community": 42,
       "norm_label": "splitdisposbyconges()"
     },
     {
@@ -609,7 +609,7 @@
       "source_location": "L586",
       "_origin": "ast",
       "id": "lib_utils_pickstaffcolor",
-      "community": 108,
+      "community": 35,
       "norm_label": "pickstaffcolor()"
     },
     {
@@ -669,7 +669,7 @@
       "source_location": "L682",
       "_origin": "ast",
       "id": "lib_utils_normname",
-      "community": 80,
+      "community": 35,
       "norm_label": "normname()"
     },
     {
@@ -679,7 +679,7 @@
       "source_location": "L699",
       "_origin": "ast",
       "id": "lib_utils_classifydirectorlinks",
-      "community": 80,
+      "community": 35,
       "norm_label": "classifydirectorlinks()"
     },
     {
@@ -1476,7 +1476,7 @@
       "label": "applyDom()",
       "file_type": "code",
       "source_file": "public/lib/client-features.js",
-      "source_location": "L69",
+      "source_location": "L81",
       "_origin": "ast",
       "id": "lib_client_features_applydom",
       "community": 115,
@@ -1489,7 +1489,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_dispo_template",
-      "community": 80,
+      "community": 58,
       "norm_label": "dispo-template.js"
     },
     {
@@ -1499,7 +1499,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "lib_dispo_template_buildtemplatedispos",
-      "community": 80,
+      "community": 58,
       "norm_label": "buildtemplatedispos()"
     },
     {
@@ -8649,7 +8649,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_pt",
-      "community": 127,
+      "community": 2,
       "norm_label": "pt()"
     },
     {
@@ -8929,7 +8929,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_sn",
-      "community": 127,
+      "community": 78,
       "norm_label": "sn()"
     },
     {
@@ -8969,7 +8969,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_an",
-      "community": 127,
+      "community": 2,
       "norm_label": "an()"
     },
     {
@@ -8979,7 +8979,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "vendor_html2canvas_min_fn",
-      "community": 127,
+      "community": 78,
       "norm_label": "fn()"
     },
     {
@@ -9569,7 +9569,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "scripts_db_app_collections",
-      "community": 123,
+      "community": 113,
       "norm_label": "app_collections"
     },
     {
@@ -9809,7 +9809,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link",
-      "community": 113,
+      "community": 35,
       "norm_label": "fix-orphan-staff-link.js"
     },
     {
@@ -9819,7 +9819,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_objectid",
-      "community": 113,
+      "community": 35,
       "norm_label": "{ objectid }"
     },
     {
@@ -9829,7 +9829,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_opendb",
-      "community": 113,
+      "community": 35,
       "norm_label": "{ opendb }"
     },
     {
@@ -9839,7 +9839,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_apply",
-      "community": 113,
+      "community": 35,
       "norm_label": "apply"
     },
     {
@@ -9849,7 +9849,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_normname_norm",
-      "community": 113,
+      "community": 35,
       "norm_label": "{ normname: norm }"
     },
     {
@@ -9859,7 +9859,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "scripts_fix_orphan_staff_link_main",
-      "community": 113,
+      "community": 35,
       "norm_label": "main()"
     },
     {
@@ -9919,7 +9919,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_link_director_staff",
-      "community": 108,
+      "community": 35,
       "norm_label": "link-director-staff.js"
     },
     {
@@ -9929,7 +9929,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "scripts_link_director_staff_opendb",
-      "community": 108,
+      "community": 35,
       "norm_label": "{ opendb }"
     },
     {
@@ -9939,7 +9939,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "scripts_link_director_staff_pickstaffcolor_classifydirectorlinks",
-      "community": 108,
+      "community": 35,
       "norm_label": "{ pickstaffcolor, classifydirectorlinks }"
     },
     {
@@ -9949,7 +9949,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "scripts_link_director_staff_apply",
-      "community": 108,
+      "community": 35,
       "norm_label": "apply"
     },
     {
@@ -9959,7 +9959,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "scripts_link_director_staff_create",
-      "community": 108,
+      "community": 35,
       "norm_label": "create"
     },
     {
@@ -9969,7 +9969,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "scripts_link_director_staff_main",
-      "community": 108,
+      "community": 35,
       "norm_label": "main()"
     },
     {
@@ -10339,7 +10339,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_seed_dev",
-      "community": 123,
+      "community": 113,
       "norm_label": "seed-dev.js"
     },
     {
@@ -10349,7 +10349,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "scripts_seed_dev_bcrypt",
-      "community": 123,
+      "community": 113,
       "norm_label": "bcrypt"
     },
     {
@@ -10359,7 +10359,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "scripts_seed_dev_objectid",
-      "community": 123,
+      "community": 113,
       "norm_label": "{ objectid }"
     },
     {
@@ -10369,7 +10369,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "scripts_seed_dev_opendb_app_collections",
-      "community": 123,
+      "community": 113,
       "norm_label": "{ opendb, app_collections }"
     },
     {
@@ -10379,7 +10379,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "scripts_seed_dev_todatestr_weekstart",
-      "community": 123,
+      "community": 113,
       "norm_label": "{ todatestr, weekstart }"
     },
     {
@@ -10389,7 +10389,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "scripts_seed_dev_features",
-      "community": 123,
+      "community": 113,
       "norm_label": "features"
     },
     {
@@ -10399,7 +10399,7 @@
       "source_location": "L420",
       "_origin": "ast",
       "id": "scripts_seed_dev_run",
-      "community": 67,
+      "community": 113,
       "norm_label": "run()"
     },
     {
@@ -10409,7 +10409,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_smoke_cloture",
-      "community": 35,
+      "community": 78,
       "norm_label": "smoke-cloture.js"
     },
     {
@@ -10419,7 +10419,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "scripts_smoke_cloture_base",
-      "community": 35,
+      "community": 78,
       "norm_label": "base"
     },
     {
@@ -10429,7 +10429,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "scripts_smoke_cloture_weekstart_todatestr",
-      "community": 35,
+      "community": 78,
       "norm_label": "{ weekstart, todatestr }"
     },
     {
@@ -10439,7 +10439,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "scripts_smoke_cloture_jar",
-      "community": 35,
+      "community": 78,
       "norm_label": "jar"
     },
     {
@@ -10449,7 +10449,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "scripts_smoke_cloture_req",
-      "community": 35,
+      "community": 78,
       "norm_label": "req()"
     },
     {
@@ -10459,7 +10459,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "scripts_smoke_cloture_login",
-      "community": 35,
+      "community": 78,
       "norm_label": "login()"
     },
     {
@@ -10469,7 +10469,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "scripts_smoke_cloture_results",
-      "community": 35,
+      "community": 78,
       "norm_label": "results"
     },
     {
@@ -10479,7 +10479,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "scripts_smoke_cloture_check",
-      "community": 35,
+      "community": 78,
       "norm_label": "check()"
     },
     {
@@ -10489,7 +10489,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "scripts_smoke_cloture_eq",
-      "community": 35,
+      "community": 78,
       "norm_label": "eq()"
     },
     {
@@ -10499,7 +10499,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "scripts_smoke_cloture_ok",
-      "community": 35,
+      "community": 78,
       "norm_label": "ok()"
     },
     {
@@ -10509,7 +10509,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "scripts_smoke_cloture_todaystr",
-      "community": 35,
+      "community": 78,
       "norm_label": "todaystr()"
     },
     {
@@ -10519,7 +10519,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "scripts_smoke_cloture_mondaystr",
-      "community": 35,
+      "community": 67,
       "norm_label": "mondaystr()"
     },
     {
@@ -10529,7 +10529,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "scripts_smoke_cloture_main",
-      "community": 35,
+      "community": 78,
       "norm_label": "main()"
     },
     {
@@ -10809,7 +10809,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_smoke_simulate",
-      "community": 85,
+      "community": 78,
       "norm_label": "smoke-simulate.js"
     },
     {
@@ -10819,7 +10819,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "scripts_smoke_simulate_base",
-      "community": 85,
+      "community": 78,
       "norm_label": "base"
     },
     {
@@ -10829,7 +10829,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "scripts_smoke_simulate_weekstart_todatestr",
-      "community": 85,
+      "community": 78,
       "norm_label": "{ weekstart, todatestr }"
     },
     {
@@ -10839,7 +10839,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "scripts_smoke_simulate_jar",
-      "community": 85,
+      "community": 78,
       "norm_label": "jar"
     },
     {
@@ -10849,7 +10849,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "scripts_smoke_simulate_req",
-      "community": 85,
+      "community": 78,
       "norm_label": "req()"
     },
     {
@@ -10859,7 +10859,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "scripts_smoke_simulate_login",
-      "community": 85,
+      "community": 78,
       "norm_label": "login()"
     },
     {
@@ -10869,7 +10869,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "scripts_smoke_simulate_results",
-      "community": 85,
+      "community": 78,
       "norm_label": "results"
     },
     {
@@ -10879,7 +10879,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "scripts_smoke_simulate_check",
-      "community": 85,
+      "community": 78,
       "norm_label": "check()"
     },
     {
@@ -10889,7 +10889,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "scripts_smoke_simulate_eq",
-      "community": 85,
+      "community": 78,
       "norm_label": "eq()"
     },
     {
@@ -10899,7 +10899,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "scripts_smoke_simulate_ok",
-      "community": 85,
+      "community": 78,
       "norm_label": "ok()"
     },
     {
@@ -10909,7 +10909,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "scripts_smoke_simulate_mondayof",
-      "community": 85,
+      "community": 78,
       "norm_label": "mondayof()"
     },
     {
@@ -10919,7 +10919,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "scripts_smoke_simulate_rangefrommonday",
-      "community": 85,
+      "community": 78,
       "norm_label": "rangefrommonday()"
     },
     {
@@ -10929,7 +10929,7 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "scripts_smoke_simulate_main",
-      "community": 85,
+      "community": 78,
       "norm_label": "main()"
     },
     {
@@ -11079,7 +11079,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "scripts_smoke_check",
-      "community": 127,
+      "community": 27,
       "norm_label": "check()"
     },
     {
@@ -12423,6 +12423,66 @@
       "norm_label": "makewindow()"
     },
     {
+      "label": "client-features-dom.test.js",
+      "file_type": "code",
+      "source_file": "tests/client-features-dom.test.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "tests_client_features_dom_test",
+      "community": 123,
+      "norm_label": "client-features-dom.test.js"
+    },
+    {
+      "label": "{ test }",
+      "file_type": "code",
+      "source_file": "tests/client-features-dom.test.js",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "tests_client_features_dom_test_test",
+      "community": 123,
+      "norm_label": "{ test }"
+    },
+    {
+      "label": "assert",
+      "file_type": "code",
+      "source_file": "tests/client-features-dom.test.js",
+      "source_location": "L14",
+      "_origin": "ast",
+      "id": "tests_client_features_dom_test_assert",
+      "community": 123,
+      "norm_label": "assert"
+    },
+    {
+      "label": "ClientFeatures",
+      "file_type": "code",
+      "source_file": "tests/client-features-dom.test.js",
+      "source_location": "L15",
+      "_origin": "ast",
+      "id": "tests_client_features_dom_test_clientfeatures",
+      "community": 123,
+      "norm_label": "clientfeatures"
+    },
+    {
+      "label": "fakeEl()",
+      "file_type": "code",
+      "source_file": "tests/client-features-dom.test.js",
+      "source_location": "L18",
+      "_origin": "ast",
+      "id": "tests_client_features_dom_test_fakeel",
+      "community": 123,
+      "norm_label": "fakeel()"
+    },
+    {
+      "label": "fakeRoot()",
+      "file_type": "code",
+      "source_file": "tests/client-features-dom.test.js",
+      "source_location": "L28",
+      "_origin": "ast",
+      "id": "tests_client_features_dom_test_fakeroot",
+      "community": 123,
+      "norm_label": "fakeroot()"
+    },
+    {
       "label": "client-features.test.js",
       "file_type": "code",
       "source_file": "tests/client-features.test.js",
@@ -13599,7 +13659,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_feature_entitlements_test",
-      "community": 131,
+      "community": 90,
       "norm_label": "feature-entitlements.test.js"
     },
     {
@@ -13609,7 +13669,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "tests_feature_entitlements_test_test_before_after_beforeeach",
-      "community": 131,
+      "community": 90,
       "norm_label": "{ test, before, after, beforeeach }"
     },
     {
@@ -13619,7 +13679,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_feature_entitlements_test_assert",
-      "community": 131,
+      "community": 90,
       "norm_label": "assert"
     },
     {
@@ -13629,7 +13689,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "tests_feature_entitlements_test_objectid",
-      "community": 131,
+      "community": 90,
       "norm_label": "{ objectid }"
     },
     {
@@ -13639,7 +13699,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "tests_feature_entitlements_test_makedb",
-      "community": 131,
+      "community": 90,
       "norm_label": "{ makedb }"
     },
     {
@@ -13649,7 +13709,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "tests_feature_entitlements_test_app_startapp_stopapp_req",
-      "community": 131,
+      "community": 90,
       "norm_label": "{ app, startapp, stopapp, req }"
     },
     {
@@ -13659,7 +13719,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "tests_feature_entitlements_test_patron",
-      "community": 131,
+      "community": 90,
       "norm_label": "patron"
     },
     {
@@ -13669,7 +13729,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "tests_feature_entitlements_test_withflags",
-      "community": 131,
+      "community": 90,
       "norm_label": "withflags()"
     },
     {
@@ -13839,7 +13899,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "helpers_harness_app",
-      "community": 42,
+      "community": 90,
       "norm_label": "app"
     },
     {
@@ -13849,7 +13909,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "helpers_harness_startapp",
-      "community": 90,
+      "community": 42,
       "norm_label": "startapp()"
     },
     {
@@ -13869,7 +13929,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "helpers_harness_req",
-      "community": 83,
+      "community": 29,
       "norm_label": "req()"
     },
     {
@@ -14419,7 +14479,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "tests_manager_dispos_test_puttemplate",
-      "community": 83,
+      "community": 29,
       "norm_label": "puttemplate()"
     },
     {
@@ -14519,7 +14579,7 @@
       "source_location": "L292",
       "_origin": "ast",
       "id": "tests_manager_dispos_test_postonedispo",
-      "community": 83,
+      "community": 29,
       "norm_label": "postonedispo()"
     },
     {
@@ -15189,7 +15249,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_pointage_delete_test",
-      "community": 83,
+      "community": 85,
       "norm_label": "pointage-delete.test.js"
     },
     {
@@ -15199,7 +15259,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_test_before_after_beforeeach",
-      "community": 83,
+      "community": 85,
       "norm_label": "{ test, before, after, beforeeach }"
     },
     {
@@ -15209,7 +15269,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_assert",
-      "community": 83,
+      "community": 85,
       "norm_label": "assert"
     },
     {
@@ -15219,7 +15279,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_objectid",
-      "community": 83,
+      "community": 85,
       "norm_label": "{ objectid }"
     },
     {
@@ -15229,7 +15289,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_makedb",
-      "community": 83,
+      "community": 85,
       "norm_label": "{ makedb }"
     },
     {
@@ -15239,7 +15299,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_app_startapp_stopapp_req",
-      "community": 83,
+      "community": 85,
       "norm_label": "{ app, startapp, stopapp, req }"
     },
     {
@@ -15249,7 +15309,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_patron",
-      "community": 83,
+      "community": 85,
       "norm_label": "patron"
     },
     {
@@ -15259,7 +15319,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_dir",
-      "community": 83,
+      "community": 85,
       "norm_label": "dir"
     },
     {
@@ -15269,7 +15329,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_etab",
-      "community": 83,
+      "community": 85,
       "norm_label": "etab"
     },
     {
@@ -15279,7 +15339,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "tests_pointage_delete_test_staff_user",
-      "community": 83,
+      "community": 85,
       "norm_label": "staff_user"
     },
     {
@@ -15409,7 +15469,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_routes_test",
-      "community": 90,
+      "community": 42,
       "norm_label": "routes.test.js"
     },
     {
@@ -15419,7 +15479,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "tests_routes_test_test_before_after",
-      "community": 90,
+      "community": 42,
       "norm_label": "{ test, before, after }"
     },
     {
@@ -15429,7 +15489,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "tests_routes_test_assert",
-      "community": 90,
+      "community": 42,
       "norm_label": "assert"
     },
     {
@@ -15439,7 +15499,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "tests_routes_test_startapp_stopapp_baseurl",
-      "community": 90,
+      "community": 42,
       "norm_label": "{ startapp, stopapp, baseurl }"
     },
     {
@@ -18816,7 +18876,7 @@
       "label": "Ajouter une feature",
       "file_type": "document",
       "source_file": "docs/feature-flags.md",
-      "source_location": "L136",
+      "source_location": "L145",
       "_origin": "ast",
       "id": "docs_feature_flags_ajouter_une_feature",
       "community": 112,
@@ -18826,7 +18886,7 @@
       "label": "Portes effectivement prot\u00e9g\u00e9es",
       "file_type": "document",
       "source_file": "docs/feature-flags.md",
-      "source_location": "L148",
+      "source_location": "L157",
       "_origin": "ast",
       "id": "docs_feature_flags_portes_effectivement_prot\u00e9g\u00e9es",
       "community": 112,
@@ -18836,7 +18896,7 @@
       "label": "Recette Castaniu",
       "file_type": "document",
       "source_file": "docs/feature-flags.md",
-      "source_location": "L166",
+      "source_location": "L175",
       "_origin": "ast",
       "id": "docs_feature_flags_recette_castaniu",
       "community": 112,
@@ -44202,9 +44262,9 @@
       "source_file": "scripts/seed-demo.js",
       "source_location": "L122",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_seed_demo",
-      "target": "scripts_seed_demo_core_estabs",
-      "confidence_score": 1.0
+      "target": "scripts_seed_demo_core_estabs"
     },
     {
       "relation": "contains",
@@ -44212,9 +44272,9 @@
       "source_file": "scripts/seed-demo.js",
       "source_location": "L190",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_seed_demo",
-      "target": "scripts_seed_demo_derivedservice",
-      "confidence_score": 1.0
+      "target": "scripts_seed_demo_derivedservice"
     },
     {
       "relation": "contains",
@@ -44332,9 +44392,9 @@
       "source_file": "scripts/seed-demo.js",
       "source_location": "L405",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_seed_demo",
-      "target": "scripts_seed_demo_sat_first",
-      "confidence_score": 1.0
+      "target": "scripts_seed_demo_sat_first"
     },
     {
       "relation": "contains",
@@ -44342,9 +44402,9 @@
       "source_file": "scripts/seed-demo.js",
       "source_location": "L414",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_seed_demo",
-      "target": "scripts_seed_demo_sat_last",
-      "confidence_score": 1.0
+      "target": "scripts_seed_demo_sat_last"
     },
     {
       "relation": "contains",
@@ -44352,9 +44412,9 @@
       "source_file": "scripts/seed-demo.js",
       "source_location": "L158",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_seed_demo",
-      "target": "scripts_seed_demo_satellites",
-      "confidence_score": 1.0
+      "target": "scripts_seed_demo_satellites"
     },
     {
       "relation": "contains",
@@ -44362,9 +44422,9 @@
       "source_file": "scripts/seed-demo.js",
       "source_location": "L421",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_seed_demo",
-      "target": "scripts_seed_demo_satelliteteam",
-      "confidence_score": 1.0
+      "target": "scripts_seed_demo_satelliteteam"
     },
     {
       "relation": "contains",
@@ -44402,9 +44462,9 @@
       "source_file": "scripts/seed-demo.js",
       "source_location": "L376",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_seed_demo",
-      "target": "scripts_seed_demo_team",
-      "confidence_score": 1.0
+      "target": "scripts_seed_demo_team"
     },
     {
       "relation": "contains",
@@ -44465,9 +44525,9 @@
       "source_file": "scripts/seed-demo.js",
       "source_location": "L191",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_seed_demo_derivedservice",
-      "target": "scripts_seed_demo_venuehours",
-      "confidence_score": 1.0
+      "target": "scripts_seed_demo_venuehours"
     },
     {
       "relation": "calls",
@@ -44476,9 +44536,9 @@
       "source_file": "scripts/seed-demo.js",
       "source_location": "L422",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_seed_demo_satelliteteam",
-      "target": "scripts_seed_demo_venuehours",
-      "confidence_score": 1.0
+      "target": "scripts_seed_demo_venuehours"
     },
     {
       "relation": "calls",
@@ -47358,6 +47418,56 @@
       "confidence_score": 1.0,
       "source": "tests_auth_guard_test",
       "target": "tests_auth_guard_test_test"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/client-features-dom.test.js",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "tests_client_features_dom_test",
+      "target": "tests_client_features_dom_test_assert",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/client-features-dom.test.js",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "tests_client_features_dom_test",
+      "target": "tests_client_features_dom_test_clientfeatures",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/client-features-dom.test.js",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "tests_client_features_dom_test",
+      "target": "tests_client_features_dom_test_fakeel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/client-features-dom.test.js",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "tests_client_features_dom_test",
+      "target": "tests_client_features_dom_test_fakeroot",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/client-features-dom.test.js",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "tests_client_features_dom_test",
+      "target": "tests_client_features_dom_test_test",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -55848,9 +55958,9 @@
       "source_file": "docs/feature-flags.md",
       "source_location": "L79",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_feature_flags_feature_flags_client_client_profile_feature",
-      "target": "docs_feature_flags_o\u00f9_le_flag_est_pos\u00e9_relev\u00e9_railway_du_2026_09_16",
-      "confidence_score": 1.0
+      "target": "docs_feature_flags_o\u00f9_le_flag_est_pos\u00e9_relev\u00e9_railway_du_2026_09_16"
     },
     {
       "relation": "contains",
@@ -55978,9 +56088,9 @@
       "source_file": "docs/guide-demo-prospect.md",
       "source_location": "L28",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "docs_guide_demo_prospect_0_avant_le_rdv_\u00e9quipe_templyo",
-      "target": "docs_guide_demo_prospect_pr\u00e9parer_l_instance_publique_demo_templyo_fr",
-      "confidence_score": 1.0
+      "target": "docs_guide_demo_prospect_pr\u00e9parer_l_instance_publique_demo_templyo_fr"
     },
     {
       "relation": "contains",
