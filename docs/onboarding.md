@@ -300,9 +300,9 @@ suit F-05.
 ### `pointage.js` — Pointage / clôture
 - **Tablette** (`etablissement`) : `loadShifts` → `buildShiftCard`, saisie `real_*`
   (`roundQuarter`, `ecartLabel`), CA du soir, shifts extra (`initExtraForm`), cutoff jour.
-- **Patron / directeur** : panneau clôture OTP (`initCloturePanel`) — code + **Clôture du jour**
-  (dates FR) ; bloc cartes legacy masqué (`legacy-pointage-block`) ; extra + CA conservés ;
-  `clotureManuelle`, `ajusterHeureCloture`, `validateCloturesWeek`.
+- **Patron / directeur** : panneau clôture OTP (`initCloturePanel`) **et** saisie
+  directe des heures (`legacy-pointage-block`) sur le **même jour** (`setActiveDate` /
+  `navigatePointageDay` — D-106) ; extra + CA ; suppression possible même si déjà pointé.
 
 ### `performance.js` — Pilotage éco (594 l.)
 `init` → `loadData` → `renderKpis` + `renderTable` + `renderDetail`. Coefficient de

@@ -30,8 +30,8 @@
     "semantic_hash": ""
   },
   "public/pointage.js": {
-    "mtime": 1789481786.1827297,
-    "ast_hash": "b76c382a614d461d3f2f25773d6dbc96",
+    "mtime": 1789568901.9127412,
+    "ast_hash": "1808dfc6a95a1859e4eaf8691481ce35",
     "semantic_hash": ""
   },
   "public/script.js": {
@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "server.js": {
-    "mtime": 1789548323.471223,
-    "ast_hash": "369c374af6f4f2b35bdf6df51eae8dfd",
+    "mtime": 1789568778.1965072,
+    "ast_hash": "eb01d6f45116617a94ad27448da3bde9",
     "semantic_hash": ""
   },
   "tests/routes.test.js": {
@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "docs/backlog.md": {
-    "mtime": 1789548482.5392978,
-    "ast_hash": "55bf945a59465968098fe4ef1c2a4fc1",
+    "mtime": 1789568952.669752,
+    "ast_hash": "ad5628396a37007c81d25f368ad67b9a",
     "semantic_hash": ""
   },
   "docs/prd.md": {
@@ -145,8 +145,8 @@
     "semantic_hash": ""
   },
   "public/pointage.html": {
-    "mtime": 1789481902.5066743,
-    "ast_hash": "2c4f6e16ad1b7977679f1efa4b85705c",
+    "mtime": 1789568778.225036,
+    "ast_hash": "f175b837980756030cdeb625adb6e172",
     "semantic_hash": ""
   },
   "public/politique-confidentialite.html": {
@@ -195,8 +195,8 @@
     "semantic_hash": ""
   },
   "docs/onboarding.md": {
-    "mtime": 1789482081.1177392,
-    "ast_hash": "260bd25be60e31f639a4c6d178a5e4ab",
+    "mtime": 1789568951.5512526,
+    "ast_hash": "16533036e45d8fbf09010af74411a460",
     "semantic_hash": ""
   },
   "eslint.config.js": {
@@ -512,6 +512,11 @@
   "tests/invite-link-reuse.test.js": {
     "mtime": 1789488177.9909687,
     "ast_hash": "2848674d62a75c040ccfb5ee36639dca",
+    "semantic_hash": ""
+  },
+  "tests/pointage-delete.test.js": {
+    "mtime": 1789568948.5433016,
+    "ast_hash": "413ac6e474b15a0bb92f05c521c71c4e",
     "semantic_hash": ""
   }
 }

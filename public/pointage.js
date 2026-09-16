@@ -110,6 +110,7 @@ function getActiveDate() {
 
 let today; // sera défini après chargement du cutoff
 let manualDate = false; // patron/directeur : date choisie manuellement (rattrapage)
+let _cloturesDay = null; // miroir Date de `today` — toujours recalée par setActiveDate (D-106)
 
 // Met à jour la bannière de soirée (cutoff ou rattrapage manuel)
 function refreshSessionBanner() {
@@ -145,10 +146,11 @@ function refreshSessionBanner() {
     container.insertBefore(banner, container.firstChild);
 }
 
-// Change la date active (utilisé en init et par le sélecteur date patron/directeur)
+// Change la date active (source UNIQUE pour legacy + clôture + CA + code OTP).
 function setActiveDate(newDateStr, isManual) {
     today      = newDateStr;
     manualDate = !!isManual;
+    _cloturesDay = today ? new Date(today + 'T12:00:00') : new Date();
 
     const d = new Date(today + 'T12:00:00');
     const dateStr = d.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
@@ -160,6 +162,51 @@ function setActiveDate(newDateStr, isManual) {
     if (dateInput && dateInput.value !== newDateStr) dateInput.value = newDateStr;
     const btnReset = document.getElementById('btn-reset-date');
     if (btnReset) btnReset.style.display = isManual ? '' : 'none';
+}
+
+/** Recharge tout ce qui dépend du jour courant (legacy + clôture + CA). */
+async function refreshPointageDay() {
+    await Promise.all([loadShifts(), loadRevenue()]);
+    if (!canUseClotureUi() || !currentEstabId) return;
+    if (canSeeCodeCloture()) refreshCodeCloture(false);
+    await renderCloturesList();
+    refreshClotureJournalIfNeeded();
+}
+
+/** Navigation ←→ : même date que le sélecteur / header. */
+function navigatePointageDay(delta) {
+    const base = today ? new Date(today + 'T12:00:00') : new Date();
+    const nextStr = toDateStr(addDaysLocal(base, delta));
+    const auto = getActiveDate();
+    setActiveDate(nextStr, nextStr !== auto);
+    return refreshPointageDay();
+}
+
+/** Patron / directeur : peuvent supprimer même un shift déjà pointé (D-106). */
+function canForceDeletePointageShift() {
+    return !!(currentUser && (currentUser.role === 'patron' || currentUser.role === 'directeur'));
+}
+
+function canShowPointageDelete(shift) {
+    if (canForceDeletePointageShift()) return true;
+    if (currentUser && MANAGER_ROLES.includes(currentUser.role)) {
+        // Observateur : comme la tablette — seulement si non pointé
+        return shift.real_start == null && shift.real_end == null;
+    }
+    return shift.real_start == null && shift.real_end == null;
+}
+
+async function deletePointageShift(shift) {
+    const res = await fetch('/api/shifts/' + shift._id + '/pointage', {
+        credentials: 'include', method: 'DELETE',
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error || 'Erreur');
+    if (window._visibleShifts) {
+        window._visibleShifts = window._visibleShifts.filter(s => String(s._id) !== String(shift._id));
+    }
+    showToast((shift.staff_name || 'Shift') + ' — shift supprimé');
+    await refreshPointageDay();
 }
 
 async function checkAuth() {
@@ -301,21 +348,11 @@ async function init() {
             if (!dateInput.value) return;
             const auto = getActiveDate();
             setActiveDate(dateInput.value, dateInput.value !== auto);
-            loadShifts();
-            loadRevenue();
-            if (canUseClotureUi()) {
-                _cloturesDay = new Date(today + 'T12:00:00');
-                renderCloturesList();
-            }
+            refreshPointageDay();
         });
         btnReset.addEventListener('click', () => {
             setActiveDate(getActiveDate(), false);
-            loadShifts();
-            loadRevenue();
-            if (canUseClotureUi()) {
-                _cloturesDay = new Date(today + 'T12:00:00');
-                renderCloturesList();
-            }
+            refreshPointageDay();
         });
     }
 
@@ -505,7 +542,7 @@ function buildShiftCard(shift) {
             '</div>' +
             (ecartDuree ? '<span class="ecart-badge ' + ecartDuree.cls + '">' + ecartDuree.text + '</span>' : '<span class="ecart-badge" style="display:none">—</span>') +
             '<button class="btn-save' + (lockedOnLoad ? ' saved' : '') + '"' + (lockedOnLoad ? ' disabled' : '') + '>' + (lockedOnLoad ? '✓ Enregistré' : (canEdit && isValidated ? 'Mettre à jour' : 'Enregistrer')) + '</button>' +
-            (isValidated ? '' : '<button class="btn-delete" type="button">Supprimer</button>') +
+            (canShowPointageDelete(shift) ? '<button class="btn-delete" type="button">Supprimer</button>' : '') +
         '</div>';
 
     // Mise à jour de l'écart en temps réel
@@ -636,13 +673,18 @@ function buildShiftCard(shift) {
             }
             if (window._visibleShifts) renderTotalFooter(window._visibleShifts);
             showToast(shift.staff_name + ' — heures enregistrées');
+            // D-106 : garder le panneau clôture aligné sur la même soirée
+            if (canUseClotureUi()) {
+                renderCloturesList();
+                refreshClotureJournalIfNeeded();
+            }
         } catch (e) {
             showToast(e.message, true);
             btnSave.disabled = false;
         }
     });
 
-    // Suppression d'un shift non pointé (2 clics : Supprimer → Confirmer)
+    // Suppression (2 clics : Supprimer → Confirmer). Patron/directeur : même si pointé.
     const btnDelete = card.querySelector('.btn-delete');
     if (btnDelete) {
         let confirmTimer = null;
@@ -654,7 +696,9 @@ function buildShiftCard(shift) {
         btnDelete.addEventListener('click', async () => {
             if (!btnDelete.classList.contains('confirming')) {
                 btnDelete.classList.add('confirming');
-                btnDelete.textContent = 'Confirmer ?';
+                btnDelete.textContent = isValidated && canForceDeletePointageShift()
+                    ? 'Confirmer (déjà pointé) ?'
+                    : 'Confirmer ?';
                 clearTimeout(confirmTimer);
                 confirmTimer = setTimeout(resetBtn, 4000);
                 return;
@@ -662,21 +706,7 @@ function buildShiftCard(shift) {
             clearTimeout(confirmTimer);
             btnDelete.disabled = true;
             try {
-                const res = await fetch('/api/shifts/' + shift._id + '/pointage', {
-                    credentials: 'include', method: 'DELETE',
-                });
-                const d = await res.json();
-                if (!res.ok) throw new Error(d.error);
-                card.remove();
-                if (window._visibleShifts) {
-                    window._visibleShifts = window._visibleShifts.filter(s => String(s._id) !== String(shift._id));
-                    renderTotalFooter(window._visibleShifts);
-                    if (window._visibleShifts.length === 0) {
-                        document.getElementById('shifts-list').innerHTML =
-                            '<div class="empty-msg">Aucun shift planifié aujourd\'hui</div>';
-                    }
-                }
-                showToast(shift.staff_name + ' — shift supprimé');
+                await deletePointageShift(shift);
             } catch (e) {
                 showToast(e.message, true);
                 btnDelete.disabled = false;
@@ -828,17 +858,8 @@ function initExtraForm() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
 
-            if (canUseClotureUi()) {
-                renderCloturesList();
-            } else {
-                // Ajouter la carte du nouveau shift (vue tablette)
-                const list = document.getElementById('shifts-list');
-                if (list) list.appendChild(buildShiftCard(data));
-                if (window._visibleShifts) {
-                    window._visibleShifts.push(data);
-                    renderTotalFooter(window._visibleShifts);
-                }
-            }
+            // D-106 : extra alimente les deux vues (clôture + saisie directe)
+            await refreshPointageDay();
 
             // Reset form
             searchInput.value = '';
@@ -862,7 +883,6 @@ const CLOTURE_ROLES = ['patron', 'directeur', 'observateur'];
 let _codeCloturePoll = null;
 let _codeClotureExpireMs = null;
 let _codeClotureTick = null;
-let _cloturesDay = null;
 let _clotureBound = false;
 let _clotureSearch = '';
 let _clotureTab = 'shifts';
@@ -901,7 +921,7 @@ function nameMatchesSearch(name, q) {
     return String(name || '').toLowerCase().includes(q);
 }
 
-function setLegacyPointageVisible(visible) {
+function setLegacyPointageVisible(visible, { linkedWithCloture } = {}) {
     const block = document.getElementById('legacy-pointage-block');
     const list = document.getElementById('shifts-list');
     if (block) block.style.display = visible ? '' : 'none';
@@ -909,6 +929,8 @@ function setLegacyPointageVisible(visible) {
     if (!block && list) list.style.display = visible ? '' : 'none';
     const footer = document.getElementById('total-footer');
     if (!visible && footer) footer.remove();
+    const title = document.getElementById('legacy-pointage-title');
+    if (title) title.style.display = (visible && linkedWithCloture) ? '' : 'none';
 }
 
 function escapeHtml(str) {
@@ -1092,6 +1114,35 @@ function paintCloturesList() {
                 actions.appendChild(btnLog);
             }
         }
+        if (canShowPointageDelete(s) && canForceDeletePointageShift()) {
+            const btnDel = document.createElement('button');
+            btnDel.type = 'button';
+            btnDel.textContent = 'Supprimer';
+            btnDel.title = 'Supprimer ce shift (corrige une erreur)';
+            btnDel.style.color = 'var(--danger)';
+            let arm = false;
+            let t = null;
+            btnDel.addEventListener('click', async () => {
+                if (!arm) {
+                    arm = true;
+                    btnDel.textContent = 'Confirmer ?';
+                    clearTimeout(t);
+                    t = setTimeout(() => { arm = false; btnDel.textContent = 'Supprimer'; }, 4000);
+                    return;
+                }
+                clearTimeout(t);
+                btnDel.disabled = true;
+                try {
+                    await deletePointageShift(s);
+                } catch (e) {
+                    showToast(e.message, true);
+                    btnDel.disabled = false;
+                    arm = false;
+                    btnDel.textContent = 'Supprimer';
+                }
+            });
+            actions.appendChild(btnDel);
+        }
         list.appendChild(row);
     });
 }
@@ -1139,9 +1190,7 @@ async function clotureManuelle(shift, phase) {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Erreur');
             showToast(isDebut ? 'Début manuel enregistré' : 'Fin manuelle enregistrée');
-            renderCloturesList();
-            refreshCodeCloture(true);
-            refreshClotureJournalIfNeeded();
+            await refreshPointageDay();
             return true;
         },
     });
@@ -1173,8 +1222,7 @@ async function ajusterHeureCloture(shift) {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Erreur');
             showToast('Heures ajustées (origines conservées)');
-            renderCloturesList();
-            refreshClotureJournalIfNeeded();
+            await refreshPointageDay();
             return true;
         },
     });
@@ -1340,11 +1388,12 @@ function initCloturePanel() {
     if (!gate || !currentEstabId) {
         panel.classList.remove('visible');
         stopCodeClotureTimers();
-        setLegacyPointageVisible(true);
+        setLegacyPointageVisible(true, { linkedWithCloture: false });
         return;
     }
     panel.classList.add('visible');
-    setLegacyPointageVisible(false);
+    // D-106 : clôture OTP + saisie directe visibles ensemble, même jour (`today`).
+    setLegacyPointageVisible(true, { linkedWithCloture: true });
     // Observateur : toutes les actions sauf le code OTP.
     const btnValidate = document.getElementById('clotures-validate-week');
     if (btnValidate) btnValidate.style.display = isClotureEditor() ? '' : 'none';
@@ -1366,20 +1415,18 @@ function initCloturePanel() {
     const revBtn = document.getElementById('btn-save-revenue');
     if (revInput) revInput.disabled = !canOperate;
     if (revBtn) revBtn.style.display = canOperate ? '' : 'none';
-    // Responsable : verrouillé sur la soirée active (`today`)
+    // Aligner sur la date unique (setActiveDate a déjà calé `_cloturesDay`)
     _cloturesDay = today ? new Date(today + 'T12:00:00') : new Date();
     if (!_clotureBound) {
         _clotureBound = true;
         document.getElementById('cc-refresh')?.addEventListener('click', () => refreshCodeCloture(true));
         document.getElementById('clotures-prev-day')?.addEventListener('click', () => {
             if (!isClotureManager()) return;
-            _cloturesDay = addDaysLocal(_cloturesDay, -1);
-            renderCloturesList();
+            navigatePointageDay(-1);
         });
         document.getElementById('clotures-next-day')?.addEventListener('click', () => {
             if (!isClotureManager()) return;
-            _cloturesDay = addDaysLocal(_cloturesDay, 1);
-            renderCloturesList();
+            navigatePointageDay(1);
         });
         document.getElementById('clotures-validate-week')?.addEventListener('click', validateCloturesWeek);
         document.getElementById('cloture-tab-btn-shifts')?.addEventListener('click', () => switchClotureTab('shifts'));

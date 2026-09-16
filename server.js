@@ -7269,9 +7269,10 @@ app.patch('/api/shifts/:id/pointage', checkDB, requireAuth,
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });
 
-// DELETE shift non pointé (depuis l'écran Pointage).
-// Auth identique au PATCH pointage : établissement, patron/directeur, responsable de soirée.
-// Refus si le shift a déjà des heures réelles saisies.
+// DELETE shift depuis l'écran Pointage.
+// Auth : établissement / patron / directeur / responsable de soirée.
+// Tablette & responsable : refus si déjà pointé (évite d'effacer une saisie terrain).
+// Patron / directeur (D-106) : peuvent supprimer même un shift pointé pour corriger une erreur.
 app.delete('/api/shifts/:id/pointage', checkDB, requireAuth, requireFeature('time_tracking'), async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     try {
@@ -7282,7 +7283,8 @@ app.delete('/api/shifts/:id/pointage', checkDB, requireAuth, requireFeature('tim
             const ok = await isResponsablePourSoiree(user.staff_id, existing.establishment_id, existing.date);
             if (!ok) return res.status(403).json({ error: 'Accès refusé' });
         }
-        if (existing.real_start != null || existing.real_end != null)
+        const canForceDelete = user.role === 'patron' || user.role === 'directeur';
+        if (!canForceDelete && (existing.real_start != null || existing.real_end != null))
             return res.status(409).json({ error: 'Shift déjà pointé, suppression interdite' });
 
         await db.collection('shifts').deleteOne({ _id: new ObjectId(req.params.id) });
