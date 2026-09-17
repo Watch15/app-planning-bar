@@ -448,6 +448,67 @@ a { color: inherit; text-decoration: none; }
 .phone-day .d { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
 .phone-day .p { font-size: 13px; font-weight: 600; }
 
+.otp-layout {
+    display: grid;
+    gap: 16px;
+}
+
+@media (min-width: 800px) {
+    .otp-layout {
+        grid-template-columns: 1fr minmax(260px, 280px);
+        align-items: start;
+    }
+}
+
+.otp-digits {
+    display: flex;
+    gap: 8px;
+    width: max-content;
+    margin: 8px 0 12px;
+}
+
+.otp-digit {
+    width: 48px;
+    height: 56px;
+    border-radius: 10px;
+    border: 1px solid rgba(108, 99, 255, 0.45);
+    background: rgba(108, 99, 255, 0.12);
+    color: #fff;
+    font-size: 24px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0;
+}
+
+.otp-meta {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 14px;
+}
+
+.phone-otp {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 12px 0;
+}
+
+.phone-cta {
+    display: block;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.status-ok { color: var(--success); font-size: 11px; font-weight: 600; }
+.status-wait { color: var(--muted); font-size: 11px; font-weight: 600; }
+
 .kpis {
     display: grid;
     grid-template-columns: 1fr 1fr;
