@@ -533,5 +533,10 @@
     "mtime": 1789573486.2074044,
     "ast_hash": "31601f201ba00bde76ccc937d7072b9c",
     "semantic_hash": ""
+  },
+  "public/maquette.html": {
+    "mtime": 1789630396.2937648,
+    "ast_hash": "d4da01a47db9d9b06bea34f59b3f0b3d",
+    "semantic_hash": ""
   }
 }
