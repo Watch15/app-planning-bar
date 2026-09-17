@@ -20,27 +20,27 @@
     <section class="scene" id="intro">
         <div class="scene-inner">
             <p class="kicker">01 Templyo</p>
-            <h2>Un seul endroit, pour le patron et pour l’équipe</h2>
-            <p class="lede">Templyo centralise ce qui sert à planifier. Le patron n’a plus à recoller quatre canaux. L’employé n’a plus à demander ses vacances dans un groupe, ni à deviner si c’est accepté : il déclare, et il voit le statut.</p>
+            <h2>Le planning d’un groupe de bars et restaurants</h2>
+            <p class="lede">Templyo s’adresse au patron (ou à la direction) qui gère plusieurs adresses CHR avec une équipe. Une seule application pour collecter les dispos, construire la semaine, la publier, pointer les heures réelles et lire la masse salariale face au CA.</p>
 
             <div class="intro-grid">
                 <div class="card">
                     <h3>Le besoin</h3>
-                    <p class="intro-p">Tableur, groupe de discussion, SMS et oral : la même info circule en parallèle. Le patron est surchargé, l’équipe n’a pas de source unique. Une dispo oubliée, un congé dit à une personne et pas à l’autre, un planning différent selon le canal : ce sont des erreurs de transmission, pas de métier.</p>
+                    <p class="intro-p">Quand l’équipe tourne entre plusieurs établissements, le planning sort des tableurs et des groupes de discussion. Les adresses se marchent dessus, les trous se voient trop tard, et les heures réellement faites ne recoupent pas ce qui était prévu. Le second levier de rentabilité CHR, après le CA, reste opaque : la masse salariale.</p>
                 </div>
                 <div class="card">
                     <h3>Ce que fait Templyo</h3>
-                    <p class="intro-p">Tout arrive ici. Côté patron : dispos à valider, congés à trancher, grille par adresse, publication, postes à pourvoir, heures pointées. Côté employé : son planning publié, ses dispos, ses demandes de congés et leur réponse (en attente, accepté, refusé). Une source, moins de copies, moins d’écarts.</p>
+                    <p class="intro-p">L’équipe déclare depuis le téléphone. Le patron valide, pose les gens (et les Jokers) établissement par établissement, puis publie : tant que la semaine n’est pas publiée, personne de l’équipe ne la voit. Les journées, un code à 4 chiffres sert à pointer le début et la fin. Ces heures réelles alimentent le coefficient masse chargée / CA, adresse par adresse.</p>
                 </div>
             </div>
 
             <h3 class="intro-how">Comment on s’en sert</h3>
             <ol class="steps">
                 <li><span class="step-n">1</span><span><strong>Dispos.</strong> L’équipe indique où et quand elle peut travailler.</span></li>
-                <li><span class="step-n">2</span><span><strong>Congés.</strong> Chacun pose ses vacances et voit si c’est accepté.</span></li>
-                <li><span class="step-n">3</span><span><strong>Planning.</strong> Le patron construit, publie ; l’équipe ne voit que le publié.</span></li>
-                <li><span class="step-n">4</span><span><strong>Joker.</strong> Un poste sans titulaire reste à pourvoir, visible par tous.</span></li>
-                <li><span class="step-n">5</span><span><strong>OTP.</strong> Un code à 4 chiffres pour pointer le début, puis la fin.</span></li>
+                <li><span class="step-n">2</span><span><strong>Planning.</strong> Le patron construit la grille, puis publie la semaine.</span></li>
+                <li><span class="step-n">3</span><span><strong>Joker.</strong> Un poste sans titulaire reste visible ; le staff peut postuler.</span></li>
+                <li><span class="step-n">4</span><span><strong>Téléphone.</strong> Chacun voit uniquement les semaines publiées.</span></li>
+                <li><span class="step-n">5</span><span><strong>OTP.</strong> Le responsable dicte un code ; début puis fin sont pointés.</span></li>
                 <li><span class="step-n">6</span><span><strong>Pilotage.</strong> CA, masse chargée, coefficient par établissement.</span></li>
             </ol>
             <p class="note">Les écrans suivants sont une maquette statique, avec des données d’exemple (groupe fictif de 8 établissements). Ce n’est pas une démonstration connectée.</p>
@@ -109,7 +109,6 @@
                     <div class="day">
                         <div class="day-head"><span class="day-name">Dim</span><span class="day-num">20</span></div>
                         <div class="shift"><span class="who">Adrien Morel</span><span class="when">18:00 – 00:00 · Bar</span></div>
-                        <div class="shift is-leave"><span class="who">Camille Dervaux</span><span class="when">Congé accepté</span></div>
                     </div>
                 </div>
                 </div>
@@ -126,11 +125,11 @@
         <div class="scene-inner">
             <p class="kicker">03 Disponibilités</p>
             <h2>L’équipe déclare, le patron valide</h2>
-            <p class="lede">Dispos de la semaine et congés plus longs arrivent dans la même file. L’employé envoie depuis le téléphone ; le patron tranche ici, sans relance sur quatre canaux.</p>
+            <p class="lede">Ouverture de la saisie, réponses depuis le téléphone, file unique pour valider et poser les gens sur la grille sans relance manuelle établissement par établissement.</p>
 
             <div class="grid-2">
                 <div class="card">
-                    <h3>Dispos en attente</h3>
+                    <h3>File En attente</h3>
                     <div class="row">
                         <div>
                             <div class="person">Hugo Perrin</div>
@@ -152,37 +151,19 @@
                         </div>
                         <span class="tag is-off">Indispo</span>
                     </div>
-                </div>
-                <div class="card">
-                    <h3>Congés à trancher</h3>
-                    <div class="row">
-                        <div>
-                            <div class="person">Léa Martin</div>
-                            <div class="sub">1 au 8 octobre · tous établissements</div>
-                        </div>
-                        <span class="tag is-off">En attente</span>
-                    </div>
                     <div class="row">
                         <div>
                             <div class="person">Nathan Roux</div>
-                            <div class="sub">20 au 22 sept. · tous établissements</div>
+                            <div class="sub">La Rotonde · vendredi 25 sept.</div>
                         </div>
-                        <span class="tag is-ok">Accepté</span>
+                        <span class="tag">Soir 18:00–01:00</span>
                     </div>
-                    <div class="row">
-                        <div>
-                            <div class="person">Hugo Perrin</div>
-                            <div class="sub">12 au 14 sept. · tous établissements</div>
-                        </div>
-                        <span class="tag is-no">Refusé</span>
-                    </div>
-                    <p class="kpi-caption">Une demande vaut pour tout le groupe, pas pour un seul bar. Chiffres et noms d’exemple.</p>
                 </div>
-            </div>
-            <div class="card kpi-inline">
-                <h3>Dispos envoyées</h3>
-                <div class="kpi-value">61<span>/78</span></div>
-                <p class="kpi-caption">Personnes ayant répondu pour la semaine du 21 septembre. Données d’exemple, groupe fictif.</p>
+                <div class="card">
+                    <h3>Dispos envoyées</h3>
+                    <div class="kpi-value">61<span>/78</span></div>
+                    <p class="kpi-caption">Personnes ayant répondu pour la semaine du 21 septembre. Chiffres d’exemple, groupe fictif.</p>
+                </div>
             </div>
         </div>
     </section>
@@ -230,16 +211,16 @@
     <section class="scene" id="staff">
         <div class="scene-inner">
             <p class="kicker">05 Équipe</p>
-            <h2>L’employé a la même source</h2>
-            <p class="lede">Planning publié, dispos, congés : tout est dans le téléphone. Une demande de vacances n’est plus un message perdu ; le statut (en attente, accepté, refusé) est visible pour la personne qui l’a posée.</p>
+            <h2>Le planning dans la poche</h2>
+            <p class="lede">Chaque salarié voit ses services publiés, envoie ses dispos et postule sur un Joker ouvert sans compte patron, depuis le téléphone. Seule la semaine publiée est visible.</p>
 
-            <div class="staff-layout staff-layout--duo">
+            <div class="staff-layout">
                 <div class="phone">
                     <div class="phone-bar"></div>
                     <div class="phone-tabs">
                         <span class="phone-tab is-on">Mon planning</span>
                         <span class="phone-tab">Dispos</span>
-                        <span class="phone-tab">Congés</span>
+                        <span class="phone-tab">Historique</span>
                     </div>
                     <div class="open-slot">
                         <strong>Créneau disponible</strong>
@@ -257,29 +238,6 @@
                     <div class="phone-day">
                         <div class="d">Dimanche 20 sept.</div>
                         <div class="p">Repos</div>
-                    </div>
-                </div>
-                <div class="phone">
-                    <div class="phone-bar"></div>
-                    <div class="phone-tabs">
-                        <span class="phone-tab">Mon planning</span>
-                        <span class="phone-tab">Dispos</span>
-                        <span class="phone-tab is-on">Congés</span>
-                    </div>
-                    <div class="phone-day">
-                        <div class="d">1 au 8 octobre</div>
-                        <div class="p">Demande de congés</div>
-                        <span class="tag is-off">En attente</span>
-                    </div>
-                    <div class="phone-day">
-                        <div class="d">20 au 22 septembre</div>
-                        <div class="p">Demande de congés</div>
-                        <span class="tag is-ok">Accepté</span>
-                    </div>
-                    <div class="phone-day">
-                        <div class="d">12 au 14 septembre</div>
-                        <div class="p">Demande de congés</div>
-                        <span class="tag is-no">Refusé</span>
                     </div>
                 </div>
             </div>
