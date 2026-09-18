@@ -107,7 +107,7 @@ donc un état des lieux de ce qui est allumé, pas une curiosité. Les lignes Ra
 | Railway **Dev** (dev.templyo.fr) | — | — | `force` *(inerte : parent absent)* | — | — | — | — | `force` |
 | Railway **Demo** (demo.templyo.fr) | — | `true` | `true` | `true` | `true` | `false` | — | — |
 | Railway **Prod interne** | — | `true` | — | `true` | `true` | `false` | — | — |
-| Railway **Castaniu Family** (client) | `castaniu` | `true` | *(à poser)* | `true` | `true` | `false` | `false` | `true` |
+| Railway **Castaniu Family** (client) | `castaniu` | `true` | — *(voulu)* | `true` | `true` | `false` | `true` | `true` |
 
 « — » = variable absente, donc, depuis le fail-closed, **module éteint**.
 
@@ -116,15 +116,14 @@ donc un état des lieux de ce qui est allumé, pas une curiosité. Les lignes Ra
 >    éteint, et `FEATURE_OTP_CLOSURE=force` n'y change rien (`requires`). Pour tester
 >    l'OTP journalier sur Dev, poser aussi `FEATURE_TIME_TRACKING=force`. Le pack démo
 >    complet se teste sur `demo.templyo.fr`.
-> 2. **Client — lancement « code semaine seul ».** Décision du 2026-09-18 : le client ne
->    veut, côté OTP, que le **code semaine** (`weekly_staff_validation`). Cible :
->    `FEATURE_WEEKLY_VALIDATION=true` (aujourd'hui `false`) et **pas** de
->    `FEATURE_OTP_CLOSURE`. Mais le code déployé chez lui (`2d7dafc`) ne connaît pas
->    `otp_closure` : tant que les commits `508981d`… ne lui sont pas livrés, le code OTP
->    journalier y est **allumé** par `TIME_TRACKING=true`, sans interrupteur.
+> 2. **Client — lancement « code semaine seul ».** Décision du 2026-09-18 : côté OTP, le
+>    client ne veut que le **code semaine** (`weekly_staff_validation`). En place depuis
+>    le 2026-09-18 (`942772f` livré, `FEATURE_WEEKLY_VALIDATION=true` posé) : le code OTP
+>    journalier y est éteint par absence de `FEATURE_OTP_CLOSURE`. Poser `true` le jour
+>    où on le rouvre — rien d'autre à livrer.
 > 3. **Client — fail-closed.** Le Pack Fondateur (`TIME_TRACKING`, `PERFORMANCE`) et les
->    échanges sont posés depuis le 2026-09-18 ; la livraison du flag OTP éteindra le code
->    journalier d'elle-même (variable absente). Poser `true` le jour où on le rouvre.
+>    échanges sont posés depuis le 2026-09-18 : le risque « modules éteints à la
+>    prochaine livraison » est levé.
 
 `force` sur Dev est délibéré : il ouvre **cette seule** feature sans faire passer
 dev.templyo.fr en profil `castaniu`, ce qui y allumerait aussi, sans prévenir, toute
