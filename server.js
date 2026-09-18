@@ -21,7 +21,7 @@ const {
     upcomingWeekRange, upcomingWeekMondays,
     dispoMateriallyDiffers, staffReopenedFor, dispoEventDelta,
     deriveStaffHourlyStat, buildPerformanceSimulation, jokerGroupKey, staffGroupKey, isJokerShift, isShiftCompleted,
-    buildStaffRateStatsReport,
+    buildStaffRateStatsReport, clotureFieldsFromRealHours,
 } = require('./lib/utils');
 const { hoursOverlap, shiftEffectiveHours } = require('./public/lib/shift-hours');
 const {
@@ -7247,6 +7247,16 @@ app.patch('/api/shifts/:id/pointage', checkDB, requireAuth,
         if (hasStart) update.real_start = real_start != null ? parseFloat(real_start) : null;
         if (hasEnd)   update.real_end   = real_end   != null ? parseFloat(real_end)   : null;
 
+        const hours = {
+            real_start: hasStart ? update.real_start : (existing.real_start ?? null),
+            real_end:   hasEnd   ? update.real_end   : (existing.real_end   ?? null),
+        };
+        const clearing = hours.real_start == null || hours.real_end == null;
+        if (clearing && existing.patron_valide)
+            return res.status(409).json({ error: 'Récap déjà validé : rouvre-le avant de retirer les heures' });
+        const mirror = clotureFieldsFromRealHours(existing, hours);
+        Object.assign(update, mirror.set);
+
         // Snapshot du taux au premier pointage (si pas encore figé).
         // Capture le MODE actif (horaire OU forfait) ET la valeur — évite qu'un
         // changement de mode/taux rétroactif n'affecte les soirées passées.
@@ -7264,7 +7274,25 @@ app.patch('/api/shifts/:id/pointage', checkDB, requireAuth,
             }
         }
 
-        await db.collection('shifts').updateOne({ _id: new ObjectId(req.params.id) }, { $set: update });
+        const ops = { $set: update };
+        if (Object.keys(mirror.unset).length) ops.$unset = mirror.unset;
+        await db.collection('shifts').updateOne({ _id: new ObjectId(req.params.id) }, ops);
+        await insertTimeValidation({
+            etablissement_id: existing.establishment_id,
+            shift_id:         String(existing._id),
+            staff_id:         String(user.staff_id || user._id),
+            acteur_role:      user.role || null,
+            action:           clearing ? 'saisie_directe_effacee' : 'saisie_directe',
+            source:           'manuelle',
+            code_saisi:       'DIRECT',
+            heure_saisie:     localDateParts(),
+            debut_retenue:    mirror.set.debut_valide_finale ?? null,
+            fin_retenue:      mirror.set.heure_validee_finale ?? null,
+            real_start:       hours.real_start,
+            real_end:         hours.real_end,
+            resultat:         clearing ? 'efface' : 'accepte',
+            phase:            hours.real_end != null ? 'fin' : 'debut',
+        });
         res.json({ message: 'Heures réelles enregistrées' });
     } catch (e) { console.error('[' + req.method + ' ' + req.path + ']', e); res.status(500).json({ error: 'Erreur interne' }); }
 });

@@ -64,6 +64,16 @@
 
     const NOUVEAUTES = [
         {
+            id: 'pointage-tablette-dans-cloture', date: '2026-09-18',
+            roles: ['patron', 'directeur', 'observateur'],
+            titre: 'Les heures pointées sur la tablette comptent dans la clôture',
+            quoi: "Un shift pointé sur la tablette (ou saisi à la main depuis le planning) "
+                + "apparaît maintenant « Clôturé » dans la clôture du jour, entre dans le "
+                + "récap de la semaine et dans la file à valider. Avant, il restait "
+                + "« Non commencé » et n’était jamais validé.",
+            ou: 'Pointage → Clôture du jour'
+        },
+        {
             id: 'pointage-supprimer-pointe', date: '2026-09-18',
             roles: ['patron', 'directeur'],
             titre: 'Corriger un shift même après le pointage',
