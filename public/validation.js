@@ -73,62 +73,99 @@ async function loadWeek() {
             'Semaine travaillée · fenêtre signature '
             + (win.window_start || '—') + ' → ' + (win.window_end || '—')
             + (win.in_window ? ' (ouverte)' : '');
-        renderStaff(data.staff || []);
+        renderStaff(data.staff || [], data.establishments || []);
     } catch (e) {
         list.innerHTML = '<div class="empty" style="color:var(--danger)">' + escapeHtml(e.message) + '</div>';
     }
 }
 
-function renderStaff(rows) {
+/**
+ * Un groupe par établissement, l'équipe de la semaine dessous. Un responsable voit tout
+ * le monde (D-110) : sans regroupement il ne retrouverait pas son affaire. Un staff en
+ * multi-affaires a une carte par établissement (heures de l'affaire), mais une seule
+ * signature pour la semaine — après signature, toutes ses cartes passent « Signé ».
+ */
+function renderStaff(rows, establishments) {
     const list = document.getElementById('staff-list');
     if (!rows.length) {
         list.innerHTML = '<div class="empty">Aucun shift staff sur cette semaine (périmètre accessible).</div>';
         return;
     }
-    list.innerHTML = '';
+    const nameOf = {};
+    (establishments || []).forEach(e => { nameOf[e.id] = e.name; });
+    const estabName = id => nameOf[id] || String(id).replace(/_/g, ' ');
+    const groups = {};
     rows.forEach(row => {
-        const card = document.createElement('div');
-        card.className = 'card ' + (row.signed ? 'signed' : 'pending');
-        const estabs = (row.establishment_ids || []).map(e => String(e).replace(/_/g, ' ')).join(', ');
-        let actions = '';
-        if (canEdit && !row.signed) {
-            actions = '<div class="actions">'
-                + '<input type="text" inputmode="numeric" maxlength="4" pattern="\\d{4}" '
-                + 'placeholder="Code" data-code-for="' + escapeHtml(row.staff_id) + '" autocomplete="off">'
-                + '<button type="button" class="btn-primary" data-sign="' + escapeHtml(row.staff_id) + '">Signer</button>'
-                + '</div><div class="err" data-err-for="' + escapeHtml(row.staff_id) + '" hidden></div>';
-        } else if (canEdit && row.signed) {
-            actions = '<div class="actions">'
-                + '<button type="button" class="btn-ghost" data-reopen="' + escapeHtml(row.staff_id) + '">Réouvrir</button>'
-                + '</div>';
-        }
-        const detailLines = (row.shifts || []).map(s =>
-            '<div>' + escapeHtml(s.date) + ' · ' + escapeHtml(String(s.establishment_id).replace(/_/g, ' '))
-            + ' · ' + (s.hours != null ? Number(s.hours).toFixed(2) + ' h' : '—') + '</div>'
-        ).join('');
-        card.innerHTML =
-            '<div class="card-head">'
-            + '<div><div class="name">' + escapeHtml(row.staff_name) + '</div>'
-            + '<div class="meta">' + escapeHtml(estabs) + ' · ' + (row.shifts_count || 0) + ' shifts · '
-            + (row.hours != null ? Number(row.hours).toFixed(1) + ' h' : '') + '</div></div>'
-            + '<div class="status ' + (row.signed ? 'ok' : 'wait') + '">'
-            + (row.signed ? 'Signé' : 'En attente') + '</div></div>'
-            + actions
-            + '<details class="detail"><summary>Détail par affaire</summary>' + detailLines + '</details>';
-        list.appendChild(card);
+        (row.shifts || []).forEach(s => {
+            const g = groups[s.establishment_id] || (groups[s.establishment_id] = {});
+            const r = g[row.staff_id] || (g[row.staff_id] = { row, shifts: [], hours: 0 });
+            r.shifts.push(s);
+            r.hours += Number(s.hours) || 0;
+        });
     });
 
+    list.innerHTML = '';
+    Object.keys(groups)
+        .sort((a, b) => estabName(a).localeCompare(estabName(b), 'fr'))
+        .forEach(estabId => {
+            const members = Object.values(groups[estabId])
+                .sort((a, b) => String(a.row.staff_name).localeCompare(String(b.row.staff_name), 'fr'));
+            const signed = members.filter(m => m.row.signed).length;
+            const group = document.createElement('section');
+            group.className = 'group';
+            group.innerHTML = '<div class="group-head"><span class="group-name">' + escapeHtml(estabName(estabId))
+                + '</span><span class="group-count ' + (signed === members.length ? 'ok' : '') + '">'
+                + signed + ' / ' + members.length + ' signé' + (signed > 1 ? 's' : '') + '</span></div>';
+            members.forEach(m => group.appendChild(buildStaffCard(m.row, m.shifts, m.hours, estabName)));
+            list.appendChild(group);
+        });
+
     list.querySelectorAll('[data-sign]').forEach(btn => {
-        btn.addEventListener('click', () => signStaff(btn.dataset.sign));
+        btn.addEventListener('click', () => signStaff(btn.dataset.sign, btn.closest('.card')));
     });
     list.querySelectorAll('[data-reopen]').forEach(btn => {
         btn.addEventListener('click', () => reopenStaff(btn.dataset.reopen));
     });
 }
 
-async function signStaff(staffId) {
-    const input = document.querySelector('input[data-code-for="' + staffId + '"]');
-    const err = document.querySelector('[data-err-for="' + staffId + '"]');
+function buildStaffCard(row, shifts, hours, estabName) {
+    const card = document.createElement('div');
+    card.className = 'card ' + (row.signed ? 'signed' : 'pending');
+    const others = (row.establishment_ids || []).filter(id => !shifts.some(s => s.establishment_id === id));
+    let actions = '';
+    if (canEdit && !row.signed) {
+        actions = '<div class="actions">'
+            + '<input type="text" inputmode="numeric" maxlength="4" pattern="\\d{4}" '
+            + 'placeholder="Code" data-code-for="' + escapeHtml(row.staff_id) + '" autocomplete="off">'
+            + '<button type="button" class="btn-primary" data-sign="' + escapeHtml(row.staff_id) + '">Signer</button>'
+            + '</div><div class="err" data-err-for="' + escapeHtml(row.staff_id) + '" hidden></div>';
+    } else if (canEdit && row.signed) {
+        actions = '<div class="actions">'
+            + '<button type="button" class="btn-ghost" data-reopen="' + escapeHtml(row.staff_id) + '">Réouvrir</button>'
+            + '</div>';
+    }
+    const detailLines = shifts.map(s =>
+        '<div>' + escapeHtml(s.date) + ' · ' + (s.hours != null ? Number(s.hours).toFixed(2) + ' h' : '—') + '</div>'
+    ).join('');
+    card.innerHTML =
+        '<div class="card-head">'
+        + '<div><div class="name">' + escapeHtml(row.staff_name) + '</div>'
+        + '<div class="meta">' + shifts.length + ' shift' + (shifts.length > 1 ? 's' : '') + ' · '
+        + Number(hours).toFixed(1) + ' h'
+        + (others.length ? ' · aussi : ' + escapeHtml(others.map(estabName).join(', '))
+            + ' (' + Number(row.hours).toFixed(1) + ' h semaine)' : '')
+        + '</div></div>'
+        + '<div class="status ' + (row.signed ? 'ok' : 'wait') + '">'
+        + (row.signed ? 'Signé' : 'En attente') + '</div></div>'
+        + actions
+        + '<details class="detail"><summary>Détail</summary>' + detailLines + '</details>';
+    return card;
+}
+
+async function signStaff(staffId, card) {
+    const scope = card || document;
+    const input = scope.querySelector('input[data-code-for="' + staffId + '"]');
+    const err = scope.querySelector('[data-err-for="' + staffId + '"]');
     const code = input ? String(input.value || '').trim() : '';
     if (err) { err.hidden = true; err.textContent = ''; }
     try {

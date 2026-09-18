@@ -8316,11 +8316,20 @@ app.get('/api/validation/week',
                 };
             }).sort((a, b) => String(a.staff_name).localeCompare(String(b.staff_name), 'fr'));
 
+            // La page regroupe par établissement : un responsable voit tout le monde,
+            // il lui faut retrouver l'équipe de chaque affaire.
+            const estabIds = [...new Set(staff.flatMap(s => s.establishment_ids))];
+            const estabDocs = estabIds.length
+                ? await db.collection('establishments').find({ id: { $in: estabIds } }).toArray()
+                : [];
             res.json({
                 week_start: weekStartStr,
                 window: target,
                 can_edit: canEditWeekValidation(user),
                 staff,
+                establishments: estabIds.map(id => ({
+                    id, name: (estabDocs.find(e => e.id === id) || {}).name || String(id).replace(/_/g, ' '),
+                })),
             });
         } catch (e) {
             console.error('[GET /api/validation/week]', e);

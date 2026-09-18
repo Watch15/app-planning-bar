@@ -43,8 +43,9 @@ pointé.
 
 ## 4. Validation hebdo — le responsable voit son équipe
 
-Tout **responsable** a le bouton **Validation** sur son planning ; la page liste toutes
-les personnes de la semaine passée, et il tape leur **code semaine**. Avant, la page
+Tout **responsable** a le bouton **Validation** sur son planning ; la page liste l’équipe
+de la semaine passée, **établissement par établissement**, et il tape leur **code
+semaine**. Avant, la page
 restait vide et le code était refusé — ce qui bloquait aussi « Valider le récap » côté
 patron. L’ordre reste : **codes des staffs d’abord, récap du patron ensuite.**
 

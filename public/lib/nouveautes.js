@@ -68,8 +68,9 @@
             roles: ['staff'],
             titre: 'Responsable : la page Validation liste enfin l’équipe',
             quoi: "Si tu as le rôle responsable, le bouton « Validation » est là et la "
-                + "page montre toutes les personnes de la semaine passée, pour taper leur "
-                + "code semaine. Avant, la liste restait vide et le code était refusé.",
+                + "page montre l’équipe de la semaine passée, établissement par "
+                + "établissement, pour taper leur code semaine. Avant, la liste restait "
+                + "vide et le code était refusé.",
             ou: 'Planning → bouton « Validation »'
         },
         {

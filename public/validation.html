@@ -67,6 +67,14 @@
             background: var(--card); border: 1px solid var(--border); border-radius: 12px;
             padding: 14px 16px; margin-bottom: 10px;
         }
+        .group { margin-bottom: 18px; }
+        .group-head {
+            display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+            padding: 4px 2px 8px; border-bottom: 1px solid var(--border); margin-bottom: 10px;
+        }
+        .group-name { font-weight: 800; font-size: 15px; }
+        .group-count { font-size: 12px; font-weight: 700; color: var(--teal); }
+        .group-count.ok { color: var(--ok); }
         .card.signed { border-left: 3px solid var(--ok); }
         .card.pending { border-left: 3px solid var(--teal); }
         .card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }

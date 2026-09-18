@@ -175,10 +175,15 @@ test('staff au rôle responsable : voit et signe tout le monde', async () => {
             start_time: 18, end_time: 22 },
     ]);
 
+    await db.collection('establishments').insertOne({ id: 'bar1', name: 'Le Bar' });
     const week = await req('/api/validation/week?week_start=' + weekStart, RESP_USER);
     assert.equal(week.status, 200, await week.clone().text());
-    const names = (await week.json()).staff.map(s => s.staff_name).sort();
+    const weekData = await week.json();
+    const names = weekData.staff.map(s => s.staff_name).sort();
     assert.deepEqual(names, ['Ada', 'Rémi']);
+    // Noms d'établissements pour le regroupement de la page (bar2 sans doc → id lisible)
+    assert.deepEqual(weekData.establishments.sort((x, y) => x.id.localeCompare(y.id)),
+        [{ id: 'bar1', name: 'Le Bar' }, { id: 'bar2', name: 'bar2' }]);
     const me = await (await req('/api/me/week-sign-code?week_start=' + weekStart, RESP_USER)).json();
     assert.equal(me.can_validate, true);
 
