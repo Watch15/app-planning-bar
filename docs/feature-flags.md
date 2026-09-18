@@ -104,23 +104,27 @@ donc un état des lieux de ce qui est allumé, pas une curiosité. Les lignes Ra
 | Local `.env.dev` | — | — | — | — | — | — | — | `force` |
 | Local `.env.castaniu` | `castaniu` | — | — | — | — | — | `true` | `true` |
 | Local `.env.demo` | — | `true` | `true` | `true` | `true` | `false` | — | — |
-| Railway **Dev** (dev.templyo.fr) | — | — | `force` | — | — | — | — | `force` |
-| Railway **Demo** (demo.templyo.fr) | — | — | `true` | — | — | — | — | — |
-| Railway **Prod interne** | — | — | — | — | — | — | — | — |
+| Railway **Dev** (dev.templyo.fr) | — | — | `force` *(inerte : parent absent)* | — | — | — | — | `force` |
+| Railway **Demo** (demo.templyo.fr) | — | `true` | `true` | `true` | `true` | `false` | — | — |
+| Railway **Prod interne** | — | `true` | — | `true` | `true` | `false` | — | — |
 | Railway **Castaniu Family** (client) | `castaniu` | `true` | *(à poser)* | `true` | `true` | `false` | `false` | `true` |
 
 « — » = variable absente, donc, depuis le fail-closed, **module éteint**.
 
-> 🔴 **Deux points à connaître.**
-> 1. **Démo prospect.** `demo.templyo.fr` ne porte aucun `FEATURE_*` : Pointage,
->    Performance et Échanges y répondent 404. Un rendez-vous tenu dessus en l'état
->    montre le socle seul — cf. [`guide-demo-prospect.md`](./guide-demo-prospect.md) § 0.
-> 2. **Client.** Le Pack Fondateur (`TIME_TRACKING`, `PERFORMANCE`) et les échanges
->    sont posés depuis le 2026-09-18 — le risque « modules éteints à la prochaine
->    livraison » est levé. En revanche, **`FEATURE_OTP_CLOSURE` n'y est pas encore** :
->    dès que le commit qui l'introduit est livré, le code OTP journalier s'éteint chez
->    le client (fail-closed). C'est voulu — il n'est pas assez éprouvé — mais il faut
->    le décider en connaissance de cause, et poser `true` le jour où on le rouvre.
+> 🔴 **Trois points à connaître.**
+> 1. **Dev.** `dev.templyo.fr` n'a pas `FEATURE_TIME_TRACKING` : le Pointage y est
+>    éteint, et `FEATURE_OTP_CLOSURE=force` n'y change rien (`requires`). Pour tester
+>    l'OTP journalier sur Dev, poser aussi `FEATURE_TIME_TRACKING=force`. Le pack démo
+>    complet se teste sur `demo.templyo.fr`.
+> 2. **Client — lancement « code semaine seul ».** Décision du 2026-09-18 : le client ne
+>    veut, côté OTP, que le **code semaine** (`weekly_staff_validation`). Cible :
+>    `FEATURE_WEEKLY_VALIDATION=true` (aujourd'hui `false`) et **pas** de
+>    `FEATURE_OTP_CLOSURE`. Mais le code déployé chez lui (`2d7dafc`) ne connaît pas
+>    `otp_closure` : tant que les commits `508981d`… ne lui sont pas livrés, le code OTP
+>    journalier y est **allumé** par `TIME_TRACKING=true`, sans interrupteur.
+> 3. **Client — fail-closed.** Le Pack Fondateur (`TIME_TRACKING`, `PERFORMANCE`) et les
+>    échanges sont posés depuis le 2026-09-18 ; la livraison du flag OTP éteindra le code
+>    journalier d'elle-même (variable absente). Poser `true` le jour où on le rouvre.
 
 `force` sur Dev est délibéré : il ouvre **cette seule** feature sans faire passer
 dev.templyo.fr en profil `castaniu`, ce qui y allumerait aussi, sans prévenir, toute
