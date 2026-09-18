@@ -210,6 +210,9 @@ async function loadWeekSignCodeBanner() {
         if (res.status === 404) { banner.style.display = 'none'; return; }
         const data = await res.json();
         if (!res.ok) { banner.style.display = 'none'; return; }
+        // Bouton « Validation » : tout staff au rôle responsable, quelle que soit la semaine.
+        const btnVal = document.getElementById('btn-validation');
+        if (btnVal && data.can_validate) btnVal.style.display = '';
         banner.style.display = '';
         const val = document.getElementById('week-sign-code-value');
         const hint = document.getElementById('week-sign-code-hint');
@@ -399,20 +402,8 @@ async function init() {
         const initFrom = toDateStr(respMondayInit);
         const initTo   = toDateStr(addDays(respMondayInit, 6));
         const rRes     = await fetch('/api/me/responsable-week?from=' + initFrom + '&to=' + initTo, { credentials: 'include' });
-        const initData = rRes.ok ? await rRes.json() : null;
-        // La signature porte sur la semaine PRÉCÉDENTE : le responsable de cette
-        // semaine-là doit voir le bouton même s'il n'est pas responsable cette semaine.
-        const btnVal = document.getElementById('btn-validation');
-        if (btnVal && window.ClientFeatures && ClientFeatures.enabled('weekly_staff_validation')) {
-            let respPrev = false;
-            if (!(initData && initData.authorized)) {
-                const pRes = await fetch('/api/me/responsable-week?from=' + toDateStr(addDays(respMondayInit, -7))
-                    + '&to=' + toDateStr(addDays(respMondayInit, -1)), { credentials: 'include' });
-                respPrev = pRes.ok && !!(await pRes.json()).authorized;
-            }
-            if ((initData && initData.authorized) || respPrev) btnVal.style.display = '';
-        }
-        if (initData) {
+        if (rRes.ok) {
+            const initData = await rRes.json();
             if (initData.authorized && initData.days) {
                 const viewResp = document.createElement('div');
                 viewResp.id            = 'view-resp-dashboard';

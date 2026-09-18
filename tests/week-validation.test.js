@@ -149,10 +149,11 @@ test('reopen régénère un code', async () => {
     assert.notEqual(againData.code, code);
 });
 
-// Chez Castaniu, ce sont les responsables de soirée (staff) qui tapent les codes.
-// Un compte staff n'a pas d'`assigned_establishments` : le périmètre doit venir des
-// soirées où il a été désigné (`pointage_resp`), sinon page vide + « Aucun shift ».
-test('responsable de soirée : voit et signe les staffs de ses soirées, pas les autres', async () => {
+// Chez Castaniu, ce sont les responsables (staff au rôle responsable) qui tapent les
+// codes — n'importe lequel, pas seulement celui des soirées où il était désigné. Un
+// compte staff n'a pas d'`assigned_establishments` : l'ancien filtre rendait une page
+// vide + « Aucun shift à signer ».
+test('staff au rôle responsable : voit et signe tout le monde', async () => {
     const { weekStart, plus } = currentWeekDates();
     const roleId = new ObjectId();
     const respId = new ObjectId();
@@ -178,6 +179,8 @@ test('responsable de soirée : voit et signe les staffs de ses soirées, pas les
     assert.equal(week.status, 200, await week.clone().text());
     const names = (await week.json()).staff.map(s => s.staff_name).sort();
     assert.deepEqual(names, ['Ada', 'Rémi']);
+    const me = await (await req('/api/me/week-sign-code?week_start=' + weekStart, RESP_USER)).json();
+    assert.equal(me.can_validate, true);
 
     const { code } = await (await req('/api/me/week-sign-code?week_start=' + weekStart, STAFF_USER)).json();
     const sign = await req('/api/validation/sign', RESP_USER, {
@@ -188,28 +191,29 @@ test('responsable de soirée : voit et signe les staffs de ses soirées, pas les
     assert.deepEqual((await sign.json()).establishment_ids.sort(), ['bar1', 'bar2']);
 });
 
-test('staff non désigné responsable : périmètre vide → rien à signer', async () => {
+test('staff sans rôle responsable : 403, et pas de bouton', async () => {
     const { weekStart, plus } = currentWeekDates();
     const roleId = new ObjectId();
-    const respId = new ObjectId();
-    const RESP_USER = { _id: 'u2', role: 'staff', name: 'Rémi', staff_id: String(respId) };
+    const otherId = new ObjectId();
+    const OTHER_USER = { _id: 'u2', role: 'staff', name: 'Léo', staff_id: String(otherId) };
     await db.collection('roles').insertOne({ _id: roleId, type: 'responsable', name: 'Responsable' });
     await db.collection('staff').insertMany([
         { _id: staffId, name: 'Ada', venues: ['bar1'] },
-        { _id: respId, name: 'Rémi', venues: ['bar1'], roles: [String(roleId)] },
+        { _id: otherId, name: 'Léo', venues: ['bar1'], roles: [] },
     ]);
     await db.collection('shifts').insertMany([
-        // Rémi a le rôle mais n'est PAS désigné cette semaine
-        { establishment_id: 'bar1', date: plus(1), staff_id: String(respId), staff_name: 'Rémi', start_time: 18, end_time: 23 },
+        // Léo est même désigné responsable ce soir-là, mais n'a pas le rôle
+        { establishment_id: 'bar1', date: plus(1), staff_id: String(otherId), staff_name: 'Léo', start_time: 18, end_time: 23, pointage_resp: true },
         { establishment_id: 'bar1', date: plus(1), staff_id: String(staffId), staff_name: 'Ada', start_time: 18, end_time: 22 },
     ]);
-    const week = await req('/api/validation/week?week_start=' + weekStart, RESP_USER);
-    assert.equal(week.status, 200);
-    assert.equal((await week.json()).staff.length, 0);
+    const week = await req('/api/validation/week?week_start=' + weekStart, OTHER_USER);
+    assert.equal(week.status, 403);
+    const me = await (await req('/api/me/week-sign-code?week_start=' + weekStart, OTHER_USER)).json();
+    assert.equal(me.can_validate, false);
     const { code } = await (await req('/api/me/week-sign-code?week_start=' + weekStart, STAFF_USER)).json();
-    const sign = await req('/api/validation/sign', RESP_USER, {
+    const sign = await req('/api/validation/sign', OTHER_USER, {
         method: 'POST',
         body: JSON.stringify({ staff_id: String(staffId), week_start: weekStart, code }),
     });
-    assert.equal(sign.status, 404);
+    assert.equal(sign.status, 403);
 });

@@ -66,10 +66,10 @@
         {
             id: 'validation-responsable-perimetre', date: '2026-09-18',
             roles: ['staff'],
-            titre: 'Responsable de soirée : la page Validation liste enfin ton équipe',
-            quoi: "Si tu as été responsable d’une soirée la semaine dernière, la page "
-                + "Validation montre les personnes de cette soirée et accepte leur code "
-                + "semaine. Avant, la liste restait vide et le code était refusé.",
+            titre: 'Responsable : la page Validation liste enfin l’équipe',
+            quoi: "Si tu as le rôle responsable, le bouton « Validation » est là et la "
+                + "page montre toutes les personnes de la semaine passée, pour taper leur "
+                + "code semaine. Avant, la liste restait vide et le code était refusé.",
             ou: 'Planning → bouton « Validation »'
         },
         {

@@ -43,11 +43,10 @@ pointé.
 
 ## 4. Validation hebdo — le responsable voit son équipe
 
-Le **responsable de soirée** qui ouvre la page **Validation** voit maintenant les personnes
-des soirées dont il était responsable la semaine passée, et peut taper leur **code
-semaine**. Avant, la page restait vide et le code était refusé — ce qui bloquait aussi
-« Valider le récap » côté patron. L’ordre reste : **codes des staffs d’abord, récap du
-patron ensuite.**
+Tout **responsable** a le bouton **Validation** sur son planning ; la page liste toutes
+les personnes de la semaine passée, et il tape leur **code semaine**. Avant, la page
+restait vide et le code était refusé — ce qui bloquait aussi « Valider le récap » côté
+patron. L’ordre reste : **codes des staffs d’abord, récap du patron ensuite.**
 
 ## 5. Inchangé
 

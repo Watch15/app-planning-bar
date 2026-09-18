@@ -7642,22 +7642,14 @@ async function regenerateWeekSignCode(staffId, weekStartStr) {
 
 /**
  * Périmètre de la validation hebdo. Patron / observateur : tout ; directeur : ses
- * établissements ; responsable de soirée : ceux où il a été désigné (`pointage_resp`)
- * sur la semaine à signer. Un compte staff n'a pas d'`assigned_establishments` : le
- * passer par `userEstablishmentIds` lui rendait une page vide et « Aucun shift à
- * signer » — alors que chez Castaniu ce sont les responsables qui signent.
+ * établissements ; staff au rôle responsable (déjà filtré par `canAccessWeekValidation`) :
+ * tout — chez Castaniu, n'importe quel responsable signe n'importe qui, pas seulement
+ * l'équipe des soirées où il était désigné. Un compte staff n'a pas
+ * d'`assigned_establishments` : le passer par `userEstablishmentIds` rendait une page
+ * vide et « Aucun shift à signer ».
  */
-async function validationEstabFilter(user, dates) {
-    if (user.role === 'staff') {
-        const ids = user.staff_id
-            ? await db.collection('shifts').distinct('establishment_id', {
-                staff_id: String(user.staff_id),
-                date: { $in: dates },
-                pointage_resp: true,
-            })
-            : [];
-        return { establishment_id: { $in: ids.filter(Boolean) } };
-    }
+function validationEstabFilter(user) {
+    if (user.role === 'staff') return {};
     const ids = userEstablishmentIds(user);
     if (ids === null) return {};
     return { establishment_id: { $in: ids } };
@@ -8249,7 +8241,7 @@ app.get('/api/validation/week',
             const dates = weekDateStrings(weekStartStr);
             if (!dates) return res.status(400).json({ error: 'week_start invalide' });
 
-            const estabFilter = await validationEstabFilter(user, dates);
+            const estabFilter = validationEstabFilter(user);
             const shifts = await db.collection('shifts').find({
                 ...estabFilter,
                 date: { $in: dates },
@@ -8393,7 +8385,7 @@ app.post('/api/validation/sign',
                 return res.status(401).json({ error: 'Code expiré' });
             }
 
-            const estabFilter = await validationEstabFilter(user, dates);
+            const estabFilter = validationEstabFilter(user);
             const shifts = await db.collection('shifts').find({
                 ...estabFilter,
                 staff_id: staffId,
@@ -8613,6 +8605,9 @@ app.get('/api/me/week-sign-code',
             if (!weekStartStr || !/^\d{4}-\d{2}-\d{2}$/.test(weekStartStr)) {
                 weekStartStr = target.week_start;
             }
+            // Le planning affiche le bouton « Validation » sur ce drapeau : rôle
+            // responsable, quelle que soit la semaine.
+            const can_validate = await staffHasResponsableRole(user.staff_id);
             const sig = await db.collection('week_signatures').findOne({
                 staff_id: String(user.staff_id),
                 week_start: weekStartStr,
@@ -8624,6 +8619,7 @@ app.get('/api/me/week-sign-code',
                     signed: true,
                     code: null,
                     window: target,
+                    can_validate,
                 });
             }
             const doc = await ensureWeekSignCode(user.staff_id, weekStartStr);
@@ -8634,6 +8630,7 @@ app.get('/api/me/week-sign-code',
                 code_utilise: !!doc.code_utilise,
                 expire_ms: doc.expire_ms,
                 window: target,
+                can_validate,
             });
         } catch (e) {
             console.error('[GET /api/me/week-sign-code]', e);
