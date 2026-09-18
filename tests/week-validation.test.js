@@ -148,3 +148,68 @@ test('reopen régénère un code', async () => {
     assert.ok(againData.code);
     assert.notEqual(againData.code, code);
 });
+
+// Chez Castaniu, ce sont les responsables de soirée (staff) qui tapent les codes.
+// Un compte staff n'a pas d'`assigned_establishments` : le périmètre doit venir des
+// soirées où il a été désigné (`pointage_resp`), sinon page vide + « Aucun shift ».
+test('responsable de soirée : voit et signe les staffs de ses soirées, pas les autres', async () => {
+    const { weekStart, plus } = currentWeekDates();
+    const roleId = new ObjectId();
+    const respId = new ObjectId();
+    const RESP_USER = { _id: 'u2', role: 'staff', name: 'Rémi', staff_id: String(respId) };
+    await db.collection('roles').insertOne({ _id: roleId, type: 'responsable', name: 'Responsable' });
+    await db.collection('staff').insertMany([
+        { _id: staffId, name: 'Ada', venues: ['bar1'] },
+        { _id: respId, name: 'Rémi', venues: ['bar1'], roles: [String(roleId)] },
+    ]);
+    await db.collection('shifts').insertMany([
+        // Rémi responsable désigné au bar1 mardi
+        { establishment_id: 'bar1', date: plus(1), staff_id: String(respId), staff_name: 'Rémi',
+            start_time: 18, end_time: 23, pointage_resp: true },
+        // Ada au bar1 mardi → dans le périmètre de Rémi
+        { establishment_id: 'bar1', date: plus(1), staff_id: String(staffId), staff_name: 'Ada',
+            start_time: 18, end_time: 22 },
+        // Ada au bar2 jeudi → hors périmètre pour la liste, mais signée avec (multi-affaires)
+        { establishment_id: 'bar2', date: plus(3), staff_id: String(staffId), staff_name: 'Ada',
+            start_time: 18, end_time: 22 },
+    ]);
+
+    const week = await req('/api/validation/week?week_start=' + weekStart, RESP_USER);
+    assert.equal(week.status, 200, await week.clone().text());
+    const names = (await week.json()).staff.map(s => s.staff_name).sort();
+    assert.deepEqual(names, ['Ada', 'Rémi']);
+
+    const { code } = await (await req('/api/me/week-sign-code?week_start=' + weekStart, STAFF_USER)).json();
+    const sign = await req('/api/validation/sign', RESP_USER, {
+        method: 'POST',
+        body: JSON.stringify({ staff_id: String(staffId), week_start: weekStart, code }),
+    });
+    assert.equal(sign.status, 200, await sign.clone().text());
+    assert.deepEqual((await sign.json()).establishment_ids.sort(), ['bar1', 'bar2']);
+});
+
+test('staff non désigné responsable : périmètre vide → rien à signer', async () => {
+    const { weekStart, plus } = currentWeekDates();
+    const roleId = new ObjectId();
+    const respId = new ObjectId();
+    const RESP_USER = { _id: 'u2', role: 'staff', name: 'Rémi', staff_id: String(respId) };
+    await db.collection('roles').insertOne({ _id: roleId, type: 'responsable', name: 'Responsable' });
+    await db.collection('staff').insertMany([
+        { _id: staffId, name: 'Ada', venues: ['bar1'] },
+        { _id: respId, name: 'Rémi', venues: ['bar1'], roles: [String(roleId)] },
+    ]);
+    await db.collection('shifts').insertMany([
+        // Rémi a le rôle mais n'est PAS désigné cette semaine
+        { establishment_id: 'bar1', date: plus(1), staff_id: String(respId), staff_name: 'Rémi', start_time: 18, end_time: 23 },
+        { establishment_id: 'bar1', date: plus(1), staff_id: String(staffId), staff_name: 'Ada', start_time: 18, end_time: 22 },
+    ]);
+    const week = await req('/api/validation/week?week_start=' + weekStart, RESP_USER);
+    assert.equal(week.status, 200);
+    assert.equal((await week.json()).staff.length, 0);
+    const { code } = await (await req('/api/me/week-sign-code?week_start=' + weekStart, STAFF_USER)).json();
+    const sign = await req('/api/validation/sign', RESP_USER, {
+        method: 'POST',
+        body: JSON.stringify({ staff_id: String(staffId), week_start: weekStart, code }),
+    });
+    assert.equal(sign.status, 404);
+});

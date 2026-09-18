@@ -399,13 +399,21 @@ async function init() {
         const initFrom = toDateStr(respMondayInit);
         const initTo   = toDateStr(addDays(respMondayInit, 6));
         const rRes     = await fetch('/api/me/responsable-week?from=' + initFrom + '&to=' + initTo, { credentials: 'include' });
-        if (rRes.ok) {
-            const initData = await rRes.json();
+        const initData = rRes.ok ? await rRes.json() : null;
+        // La signature porte sur la semaine PRÉCÉDENTE : le responsable de cette
+        // semaine-là doit voir le bouton même s'il n'est pas responsable cette semaine.
+        const btnVal = document.getElementById('btn-validation');
+        if (btnVal && window.ClientFeatures && ClientFeatures.enabled('weekly_staff_validation')) {
+            let respPrev = false;
+            if (!(initData && initData.authorized)) {
+                const pRes = await fetch('/api/me/responsable-week?from=' + toDateStr(addDays(respMondayInit, -7))
+                    + '&to=' + toDateStr(addDays(respMondayInit, -1)), { credentials: 'include' });
+                respPrev = pRes.ok && !!(await pRes.json()).authorized;
+            }
+            if ((initData && initData.authorized) || respPrev) btnVal.style.display = '';
+        }
+        if (initData) {
             if (initData.authorized && initData.days) {
-                const btnVal = document.getElementById('btn-validation');
-                if (btnVal && window.ClientFeatures && ClientFeatures.enabled('weekly_staff_validation')) {
-                    btnVal.style.display = '';
-                }
                 const viewResp = document.createElement('div');
                 viewResp.id            = 'view-resp-dashboard';
                 viewResp.style.display = 'none';

@@ -41,7 +41,15 @@ une personne de trop.
 La **tablette** de l’établissement ne peut toujours retirer qu’un shift **pas encore**
 pointé.
 
-## 4. Inchangé
+## 4. Validation hebdo — le responsable voit son équipe
+
+Le **responsable de soirée** qui ouvre la page **Validation** voit maintenant les personnes
+des soirées dont il était responsable la semaine passée, et peut taper leur **code
+semaine**. Avant, la page restait vide et le code était refusé — ce qui bloquait aussi
+« Valider le récap » côté patron. L’ordre reste : **codes des staffs d’abord, récap du
+patron ensuite.**
+
+## 5. Inchangé
 
 Vous dictez toujours le **code à 4 chiffres** ; l’équipe pointe **début** puis **fin**.
 Proposer les créneaux de la semaine, les Jokers et les échanges fonctionnent comme la

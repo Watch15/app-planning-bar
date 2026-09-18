@@ -7640,10 +7640,26 @@ async function regenerateWeekSignCode(staffId, weekStartStr) {
     return doc;
 }
 
-function validationEstabFilter(user) {
+/**
+ * Périmètre de la validation hebdo. Patron / observateur : tout ; directeur : ses
+ * établissements ; responsable de soirée : ceux où il a été désigné (`pointage_resp`)
+ * sur la semaine à signer. Un compte staff n'a pas d'`assigned_establishments` : le
+ * passer par `userEstablishmentIds` lui rendait une page vide et « Aucun shift à
+ * signer » — alors que chez Castaniu ce sont les responsables qui signent.
+ */
+async function validationEstabFilter(user, dates) {
+    if (user.role === 'staff') {
+        const ids = user.staff_id
+            ? await db.collection('shifts').distinct('establishment_id', {
+                staff_id: String(user.staff_id),
+                date: { $in: dates },
+                pointage_resp: true,
+            })
+            : [];
+        return { establishment_id: { $in: ids.filter(Boolean) } };
+    }
     const ids = userEstablishmentIds(user);
     if (ids === null) return {};
-    if (!ids.length) return { establishment_id: { $in: [] } };
     return { establishment_id: { $in: ids } };
 }
 
@@ -8233,7 +8249,7 @@ app.get('/api/validation/week',
             const dates = weekDateStrings(weekStartStr);
             if (!dates) return res.status(400).json({ error: 'week_start invalide' });
 
-            const estabFilter = validationEstabFilter(user);
+            const estabFilter = await validationEstabFilter(user, dates);
             const shifts = await db.collection('shifts').find({
                 ...estabFilter,
                 date: { $in: dates },
@@ -8377,7 +8393,7 @@ app.post('/api/validation/sign',
                 return res.status(401).json({ error: 'Code expiré' });
             }
 
-            const estabFilter = validationEstabFilter(user);
+            const estabFilter = await validationEstabFilter(user, dates);
             const shifts = await db.collection('shifts').find({
                 ...estabFilter,
                 staff_id: staffId,
