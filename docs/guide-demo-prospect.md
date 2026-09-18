@@ -14,7 +14,7 @@
 
 | Étape | Commande / action |
 |---|---|
-| 1. Flags locaux | Vérifier `.env.demo` : `FEATURE_TIME_TRACKING=true`, `FEATURE_PERFORMANCE=true`, `FEATURE_SHIFT_SWAPS=true`, `OUTBOUND_ENABLED=false`, `CRON_ENABLED=false` |
+| 1. Flags locaux | Vérifier `.env.demo` : `FEATURE_TIME_TRACKING=true`, `FEATURE_OTP_CLOSURE=true`, `FEATURE_PERFORMANCE=true`, `FEATURE_SHIFT_SWAPS=true`, `OUTBOUND_ENABLED=false`, `CRON_ENABLED=false` |
 | 2. Reseed | `npm run demo:seed` — **le matin du RDV** (le jeu est relatif à *aujourd’hui*) |
 | 3. Serveur local | `npm run demo:server` → http://localhost:3100 |
 | 4. Railway | Poser les `FEATURE_*` sur l’environnement **Demo** (bloc ci-dessous) |
@@ -34,6 +34,7 @@ redéploie le service Demo, et lui seul.
 ```bash
 railway variables --environment Demo --service Dev \
   --set FEATURE_TIME_TRACKING=true \
+  --set FEATURE_OTP_CLOSURE=true \
   --set FEATURE_PERFORMANCE=true \
   --set FEATURE_SHIFT_SWAPS=true \
   --set FEATURE_CALENDAR_SYNC=false \
@@ -185,7 +186,8 @@ Un salarié propose un échange sur une semaine **publiée** ; vous (patron) val
 | Module | Flag | Visible dans la démo |
 |---|---|---|
 | Planning, dispos, congés, Jokers, exports | *(socle)* | toujours |
-| Pointage + clôture OTP | `FEATURE_TIME_TRACKING` | oui |
+| Pointage (tablette, clôture manuelle, journal) | `FEATURE_TIME_TRACKING` | oui |
+| Code OTP journalier début / fin de service | `FEATURE_OTP_CLOSURE` (requiert le Pointage) | oui |
 | Performance + Simulation + taux staff | `FEATURE_PERFORMANCE` | oui |
 | Échanges de shifts | `FEATURE_SHIFT_SWAPS` | oui |
 | Agenda iCal | `FEATURE_CALENDAR_SYNC` | non (expérimental) |

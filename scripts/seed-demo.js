@@ -1325,15 +1325,18 @@ async function run() {
             time: process.env.FEATURE_TIME_TRACKING,
             perf: process.env.FEATURE_PERFORMANCE,
             swaps: process.env.FEATURE_SHIFT_SWAPS,
+            otp:   process.env.FEATURE_OTP_CLOSURE,
         };
         console.log('│  Flags : TIME_TRACKING=' + (feat.time || '(absent)')
             + '  PERFORMANCE=' + (feat.perf || '(absent)')
-            + '  SHIFT_SWAPS=' + (feat.swaps || '(absent)'));
+            + '  SHIFT_SWAPS=' + (feat.swaps || '(absent)')
+            + '  OTP_CLOSURE=' + (feat.otp || '(absent)'));
         if (feat.time !== 'true' && feat.time !== 'force'
             || feat.perf !== 'true' && feat.perf !== 'force'
-            || feat.swaps !== 'true' && feat.swaps !== 'force') {
-            console.log('│  ⚠️  Pack démo incomplet : pose FEATURE_TIME_TRACKING / PERFORMANCE /');
-            console.log('│      SHIFT_SWAPS=true dans .env.demo (cf. .env.demo.example).');
+            || feat.swaps !== 'true' && feat.swaps !== 'force'
+            || feat.otp !== 'true' && feat.otp !== 'force') {
+            console.log('│  ⚠️  Pack démo incomplet : pose FEATURE_TIME_TRACKING / OTP_CLOSURE /');
+            console.log('│      PERFORMANCE / SHIFT_SWAPS=true dans .env.demo (cf. .env.demo.example).');
         }
         console.log('│  Guide prospect : docs/guide-demo-prospect.md');
         console.log('│  Page navigateur : /demo-guide.html  (après npm run demo:server)');

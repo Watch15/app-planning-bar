@@ -1615,7 +1615,7 @@ function renderDaysInto(from, shifts, colleagues, list, jokers) {
             }
 
             // OTP début/fin : CTA sur la carte du jour de service (pas de bandeau top)
-            const canCta = window.ClientFeatures && ClientFeatures.enabled('time_tracking')
+            const canCta = window.ClientFeatures && ClientFeatures.enabled('otp_closure')
                 && date === serviceDate && !shift.heure_validee_code && !shift.heure_validee_finale;
             if (canCta) {
                 card.appendChild(buildClotureCta(shift));

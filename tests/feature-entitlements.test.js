@@ -38,11 +38,13 @@ function withFlags(flags, fn) {
         perf: process.env.FEATURE_PERFORMANCE,
         swaps: process.env.FEATURE_SHIFT_SWAPS,
         calendar: process.env.FEATURE_CALENDAR_SYNC,
+        otp: process.env.FEATURE_OTP_CLOSURE,
     };
     if (flags.time !== undefined) process.env.FEATURE_TIME_TRACKING = flags.time;
     if (flags.perf !== undefined) process.env.FEATURE_PERFORMANCE = flags.perf;
     if (flags.swaps !== undefined) process.env.FEATURE_SHIFT_SWAPS = flags.swaps;
     if (flags.calendar !== undefined) process.env.FEATURE_CALENDAR_SYNC = flags.calendar;
+    if (flags.otp !== undefined) process.env.FEATURE_OTP_CLOSURE = flags.otp;
     return Promise.resolve()
         .then(fn)
         .finally(() => {
@@ -51,6 +53,7 @@ function withFlags(flags, fn) {
             process.env.FEATURE_SHIFT_SWAPS = previous.swaps;
             if (previous.calendar === undefined) delete process.env.FEATURE_CALENDAR_SYNC;
             else process.env.FEATURE_CALENDAR_SYNC = previous.calendar;
+            process.env.FEATURE_OTP_CLOSURE = previous.otp;
         });
 }
 
@@ -104,5 +107,33 @@ test('Formule 3 : Performance seule ouvre la saisie manuelle, pas le pointage te
         assert.equal(perf.status, 200);
         assert.equal(manual.status, 200);
         assert.match((await manual.json()).message || '', /Heures réelles/);
+    });
+});
+
+test('Pointage sans OTP : la carte code et le pointage par code répondent 404, le reste du Pointage passe', async () => {
+    await withFlags({ time: 'true', otp: 'false' }, async () => {
+        const [code, parCode, pointage, manual] = await Promise.all([
+            req('/api/etablissements/bar1/code-cloture', PATRON),
+            req('/api/shifts/' + SHIFT_ID + '/cloturer-par-code', PATRON, {
+                method: 'POST',
+                body: JSON.stringify({ code: '1234', phase: 'debut' }),
+            }),
+            req('/api/pointage/2026-09-15?establishment_id=bar1', PATRON),
+            req('/api/shifts/' + SHIFT_ID + '/pointage', PATRON, {
+                method: 'PATCH',
+                body: JSON.stringify({ real_start: 18, real_end: 23 }),
+            }),
+        ]);
+        assert.equal(code.status, 404, 'code OTP derrière otp_closure');
+        assert.equal(parCode.status, 404, 'pointer par code derrière otp_closure');
+        assert.equal(pointage.status, 200, 'la page Pointage reste sous time_tracking seul');
+        assert.equal(manual.status, 200, 'la saisie manuelle ne dépend pas du code OTP');
+    });
+});
+
+test('OTP sans Pointage : FEATURE_OTP_CLOSURE=force ne rallume pas le module parent', async () => {
+    await withFlags({ time: 'false', perf: 'false', otp: 'force' }, async () => {
+        const code = await req('/api/etablissements/bar1/code-cloture', PATRON);
+        assert.equal(code.status, 404);
     });
 });

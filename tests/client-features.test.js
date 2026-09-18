@@ -135,3 +135,45 @@ test('canWriteRealHours : Formule 2 (pointage seul) autorise', () => {
         env: { FEATURE_TIME_TRACKING: 'true' },
     }), true);
 });
+
+// ── otp_closure : sous-module de time_tracking ───────────────────────────────
+
+test('otp_closure : off par défaut, même avec le Pointage allumé', () => {
+    assert.equal(enabled('otp_closure', {
+        profile: 'castaniu',
+        env: { FEATURE_TIME_TRACKING: 'true' },
+    }), false);
+});
+
+test('otp_closure : on si Pointage + FEATURE_OTP_CLOSURE=true', () => {
+    assert.equal(enabled('otp_closure', {
+        profile: 'default',
+        env: { FEATURE_TIME_TRACKING: 'true', FEATURE_OTP_CLOSURE: 'true' },
+    }), true);
+});
+
+test('otp_closure : jamais sans time_tracking — même avec force', () => {
+    assert.equal(enabled('otp_closure', {
+        profile: 'castaniu',
+        env: { FEATURE_OTP_CLOSURE: 'true' },
+    }), false, 'parent absent');
+    assert.equal(enabled('otp_closure', {
+        profile: 'castaniu',
+        env: { FEATURE_TIME_TRACKING: 'false', FEATURE_OTP_CLOSURE: 'force' },
+    }), false, 'parent explicitement off');
+});
+
+test('otp_closure : indépendant du code semaine (weekly_staff_validation)', () => {
+    const opts = {
+        profile: 'castaniu',
+        env: { FEATURE_TIME_TRACKING: 'true', FEATURE_OTP_CLOSURE: 'false', FEATURE_WEEKLY_VALIDATION: 'true' },
+    };
+    assert.equal(enabled('otp_closure', opts), false);
+    assert.equal(enabled('weekly_staff_validation', opts), true);
+    const inverse = {
+        profile: 'castaniu',
+        env: { FEATURE_TIME_TRACKING: 'true', FEATURE_OTP_CLOSURE: 'true', FEATURE_WEEKLY_VALIDATION: 'false' },
+    };
+    assert.equal(enabled('otp_closure', inverse), true);
+    assert.equal(enabled('weekly_staff_validation', inverse), false);
+});

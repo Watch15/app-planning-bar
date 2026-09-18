@@ -20,6 +20,7 @@ Activation = **profil autorisé** + **`FEATURE_*=true`** (sauf `defaultOn`).
 | Clé | Env | Profils | Défaut | Ticket |
 |-----|-----|---------|--------|--------|
 | `time_tracking` | `FEATURE_TIME_TRACKING` | tous | off | D-103 |
+| `otp_closure` | `FEATURE_OTP_CLOSURE` | tous — **requiert `time_tracking`** | off | D-107 |
 | `performance` | `FEATURE_PERFORMANCE` | tous | off | D-103 |
 | `shift_swaps` | `FEATURE_SHIFT_SWAPS` | tous | off | D-103 |
 | `calendar_sync` | `FEATURE_CALENDAR_SYNC` | tous | off | D-83 / D-103 |
@@ -36,6 +37,7 @@ La source commerciale/juridique est `juridique/00_Fiche_Tarifaire_Commerciale.tx
 | Planning drag & drop, PWA staff, disponibilités, congés, Jokers, exports | oui | aucun — toujours disponible |
 | Clôture de service, pointage terrain (OTP, tablette), comptes établissement, audit litiges | non | `time_tracking` |
 | CA, masse salariale, ratios, simulation **+ saisie manuelle des heures** (patron/directeur) | non | `performance` |
+| Code OTP journalier : pointer début / fin de service à 4 chiffres | sous-module du pointage terrain, activable à part | `otp_closure` (requiert `time_tracking`) |
 | Échanges de shifts | non promis au socle | `shift_swaps` |
 | Abonnement agenda iCal | expérimental, non promis au socle | `calendar_sync` |
 | Validation hebdo et créneaux N+1 Castaniu | développements spécifiques | flags existants |
@@ -61,6 +63,7 @@ FEATURE_CALENDAR_SYNC=false
 
 # Formule 2 — Planning + Clôture & Pointage terrain
 FEATURE_TIME_TRACKING=true
+FEATURE_OTP_CLOSURE=true         # code OTP début/fin ; false = Pointage sans le code
 FEATURE_PERFORMANCE=false
 
 # Formule 3 — Planning + Performance & Simulation
@@ -70,13 +73,21 @@ FEATURE_PERFORMANCE=true
 
 # Formule 4 / Pack Fondateur — Pack complet contractuel
 FEATURE_TIME_TRACKING=true
+FEATURE_OTP_CLOSURE=true
 FEATURE_PERFORMANCE=true
 ```
+
+`otp_closure` est un **sous-module** de `time_tracking` (clé `requires` du catalogue) :
+sans le Pointage, il reste off quoi qu'on pose — `force` compris. Il n'a rien à voir avec
+le **code semaine** (`weekly_staff_validation`, D-100) : les deux codes se coupent
+séparément. Coupé, le Pointage garde la clôture manuelle, l'ajustement, le journal et
+« Valider le récap » ; seuls disparaissent la carte code, le CTA staff « Pointer mon
+arrivée / Clôturer mon service » et les routes `code-cloture` / `cloturer-par-code`.
 
 `shift_swaps` et `calendar_sync` restent des activations explicites indépendantes :
 elles ne font pas partie des trois modules tarifaires contractuels.
 
-## Où le flag est posé (relevé Railway du 2026-09-16)
+## Où le flag est posé (relevé Railway du 2026-09-18)
 
 Le catalogue dit ce qu'une feature *peut* être ; seule la config d'une instance dit ce
 qu'elle *est*. Les variables Railway ne sont dans aucun fichier du dépôt — se fier au
@@ -87,28 +98,29 @@ absente n'est plus « le comportement d'hier », c'est un module éteint. Ce tab
 donc un état des lieux de ce qui est allumé, pas une curiosité. Les lignes Railway sont
 **lues** (`railway variables --kv`), pas déduites du dépôt.
 
-| Instance | `CLIENT_PROFILE` | `TIME_TRACKING` | `PERFORMANCE` | `SHIFT_SWAPS` | `CALENDAR_SYNC` | `PREDEFINED_SLOTS` |
-|---|---|---|---|---|---|---|
-| Local `.env` | `castaniu` | — | — | — | — | `true` |
-| Local `.env.dev` | — | — | — | — | — | `force` |
-| Local `.env.castaniu` | `castaniu` | — | — | — | — | `true` (+ `WEEKLY_VALIDATION=true`) |
-| Local `.env.demo` | — | `true` | `true` | `true` | `false` | — |
-| Railway **Dev** (dev.templyo.fr) | — | — | — | — | — | `force` |
-| Railway **Demo** (demo.templyo.fr) | — | — | — | — | — | — |
-| Railway **Prod interne** | — | — | — | — | — | — |
-| Railway **Castaniu Family** (client) | `castaniu` | — | — | — | — | `true` (+ `WEEKLY_VALIDATION=false`) |
+| Instance | `CLIENT_PROFILE` | `TIME_TRACKING` | `OTP_CLOSURE` | `PERFORMANCE` | `SHIFT_SWAPS` | `CALENDAR_SYNC` | `WEEKLY_VALIDATION` | `PREDEFINED_SLOTS` |
+|---|---|---|---|---|---|---|---|---|
+| Local `.env` | `castaniu` | — | — | — | — | — | — | `true` |
+| Local `.env.dev` | — | — | — | — | — | — | — | `force` |
+| Local `.env.castaniu` | `castaniu` | — | — | — | — | — | `true` | `true` |
+| Local `.env.demo` | — | `true` | `true` | `true` | `true` | `false` | — | — |
+| Railway **Dev** (dev.templyo.fr) | — | — | `force` | — | — | — | — | `force` |
+| Railway **Demo** (demo.templyo.fr) | — | — | `true` | — | — | — | — | — |
+| Railway **Prod interne** | — | — | — | — | — | — | — | — |
+| Railway **Castaniu Family** (client) | `castaniu` | `true` | *(à poser)* | `true` | `true` | `false` | `false` | `true` |
 
 « — » = variable absente, donc, depuis le fail-closed, **module éteint**.
 
-> 🔴 **Deux conséquences déjà réelles.**
+> 🔴 **Deux points à connaître.**
 > 1. **Démo prospect.** `demo.templyo.fr` ne porte aucun `FEATURE_*` : Pointage,
 >    Performance et Échanges y répondent 404. Un rendez-vous tenu dessus en l'état
 >    montre le socle seul — cf. [`guide-demo-prospect.md`](./guide-demo-prospect.md) § 0.
-> 2. **Client.** `Castaniu Family` ne porte ni `FEATURE_TIME_TRACKING` ni
->    `FEATURE_PERFORMANCE`. Il tourne aujourd'hui sur `3519e52`, *avant* le fail-closed,
->    donc les deux modules marchent encore par l'ancien défaut. Le jour où un
->    `git push castanui main:main` lui apporte `c356224`, ils disparaissent — clôture
->    par code comprise. **Poser les deux variables AVANT la livraison, pas après.**
+> 2. **Client.** Le Pack Fondateur (`TIME_TRACKING`, `PERFORMANCE`) et les échanges
+>    sont posés depuis le 2026-09-18 — le risque « modules éteints à la prochaine
+>    livraison » est levé. En revanche, **`FEATURE_OTP_CLOSURE` n'y est pas encore** :
+>    dès que le commit qui l'introduit est livré, le code OTP journalier s'éteint chez
+>    le client (fail-closed). C'est voulu — il n'est pas assez éprouvé — mais il faut
+>    le décider en connaissance de cause, et poser `true` le jour où on le rouvre.
 
 `force` sur Dev est délibéré : il ouvre **cette seule** feature sans faire passer
 dev.templyo.fr en profil `castaniu`, ce qui y allumerait aussi, sans prévenir, toute
@@ -150,14 +162,17 @@ Vérifier quand même que le code est bien déployé avant de conclure :
 4. Test dans `tests/client-features.test.js`
 5. **Si le code gaté était déjà couvert par une suite existante**, y poser
    `process.env.FEATURE_X = 'force'` dans le `before()` : le harnais ne force que
-   `time_tracking` / `performance` / `shift_swaps`, le reste tourne sous le profil par
+   `time_tracking` / `performance` / `shift_swaps` / `otp_closure`, le reste tourne sous le profil par
    défaut, où une feature `profiles: ['castaniu']` est off — et la suite devient rouge.
 6. Ligne dans ce doc (dont le tableau « Où le flag est posé ») + backlog
 
 ## Portes effectivement protégées
 
-- `time_tracking` : page Pointage, CTA OTP staff, responsables de soirée, comptes
-  tablette établissement, réglages et routes pointage/clôture/audit **terrain**.
+- `time_tracking` : page Pointage, responsables de soirée, comptes tablette
+  établissement, réglages et routes pointage/clôture/audit **terrain**.
+- `otp_closure` (requiert `time_tracking`) : carte code du Pointage, CTA OTP staff et
+  sa modale, `GET …/code-cloture`, `POST …/cloturer-par-code`. Le journal, la clôture
+  manuelle et l'ajustement restent sous `time_tracking`.
 - `performance` : page Performance, saisie CA, réglages, simulation, taux/forfaits
   staff et routes associées.
 - **Heures réelles manuelles** (`canWriteRealHours`) : `PATCH /api/shifts/:id/pointage`

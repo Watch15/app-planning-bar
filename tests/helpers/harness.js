@@ -20,6 +20,7 @@ process.env.OUTBOUND_ENABLED = 'false';
 process.env.FEATURE_TIME_TRACKING = 'force';
 process.env.FEATURE_PERFORMANCE   = 'force';
 process.env.FEATURE_SHIFT_SWAPS   = 'force';
+process.env.FEATURE_OTP_CLOSURE   = 'force';
 process.env.MONGO_URI       = process.env.MONGO_URI      || 'mongodb://127.0.0.1:27017/templyo_test';
 process.env.SESSION_SECRET  = process.env.SESSION_SECRET || 'integration-test-secret-0123456789abcdef';
 
