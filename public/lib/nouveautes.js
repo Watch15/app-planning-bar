@@ -64,6 +64,26 @@
 
     const NOUVEAUTES = [
         {
+            id: 'pointage-supprimer-pointe', date: '2026-09-18',
+            roles: ['patron', 'directeur'],
+            titre: 'Corriger un shift même après le pointage',
+            quoi: "Une personne de trop, un doublon, une erreur de saisie : sur Pointage, "
+                + "« Supprimer » marche aussi quand les heures réelles sont déjà là. Deux "
+                + "clics (Supprimer, puis Confirmer). La tablette de l’établissement, elle, "
+                + "ne peut toujours retirer qu’un shift pas encore pointé.",
+            ou: 'Pointage → carte du shift ou ligne de clôture → « Supprimer »'
+        },
+        {
+            id: 'pointage-un-seul-jour', date: '2026-09-18',
+            roles: ['patron', 'directeur', 'observateur'],
+            titre: 'Les flèches du Pointage emmènent tout le jour avec elles',
+            quoi: "En changeant de jour, le code à 4 chiffres, le CA, la clôture et les "
+                + "cartes d’heures suivent le même jour. Plus de code d’un soir affiché "
+                + "à côté des heures d’un autre. La saisie directe des heures reste "
+                + "visible en même temps que la clôture par code.",
+            ou: 'Pointage → flèches de jour à côté de la date'
+        },
+        {
             id: 'candidature-retrait', date: '2026-09-12',
             roles: ['staff'],
             titre: 'Revenir sur une candidature, et jamais deux créneaux à la même heure',

@@ -1,8 +1,6 @@
 # Templyo — ce qui change à la prochaine mise à jour
 
-*Rédigée pour être lue par le patron, pas par un développeur. Version du 2026-09-11.
-Le gros du lot est en ligne chez le client depuis le 10 ; les compléments sur les
-créneaux proposés (couleurs de service, retrait de candidature) partent le 11.*
+*Rédigée pour être lue par le patron, pas par un développeur. Version du 2026-09-18.*
 
 > Les notes des mises à jour précédentes restent consultables dans l'historique du dépôt
 > (`git log docs/note-client-mise-a-jour.md`).
@@ -11,77 +9,40 @@ créneaux proposés (couleurs de service, retrait de candidature) partent le 11.
 
 Bonjour,
 
-Cette mise à jour enrichit **le pilotage** (Performance, Simulation), **les Jokers**,
-et surtout **la composition de la semaine suivante** : vous pouvez proposer les créneaux
-à l’équipe **avant** de publier le planning. La **clôture de service par code** reste
-la méthode en place pour pointer début et fin de service.
+Cette mise à jour porte surtout sur **le Pointage** : un jour = un jour, partout, et
+vous pouvez **retirer un shift même après** que les heures aient été saisies.
 
-## 1. Proposer les créneaux de la semaine
+Les **échanges de shifts**, les **créneaux proposés** et la **clôture par code** ne
+changent pas de principe.
 
-Sur le **planning**, une fois la grille posée (souvent en copiant une semaine, en
-Jokers), le bouton **« Proposer les créneaux »** ouvre tous les postes non pourvus aux
-candidatures.
+## 1. Pointage — un seul jour à l’écran
 
-L’équipe les voit **tout de suite**, même si la semaine n’est pas encore publiée, et
-même si personne n’y a encore de shift. Chacun tape le créneau qui l’intéresse. Sans
-ce clic, rien n’est annoncé : le brouillon reste chez vous.
+Les flèches **← →** du Pointage font avancer **ensemble** le code à 4 chiffres, le CA,
+la clôture et les cartes d’heures. Vous ne voyez plus un code d’un soir collé aux
+heures d’un autre.
 
-Deux façons de les lire, au choix de chacun : **« Liste »**, jour par jour, taillée pour
-le téléphone, ou **« Tableau de bord »**, les créneaux en barres sur une grille semaine
-comme votre planning. Le choix est retenu d’une fois sur l’autre.
+La **saisie directe des heures** reste affichée **en même temps** que la clôture par
+code : les deux modes sont là, sur le même jour.
 
-Dans les deux vues, chaque créneau porte la **couleur de son service** — midi, soir, ou
-long quand il couvre les deux — avec la légende juste au-dessus. Ce sont les
-mêmes couleurs que sur votre **PDF de la semaine**, dont la légende dit désormais
-**« Midi »** là où elle disait « Matin » : un seul vocabulaire, de votre document
-imprimé à l’écran de votre équipe.
+## 2. Pointage — supprimer même après le pointage
 
-Côté équipe, une candidature n’est plus un aller simple. Le créneau affiche
-**« Se retirer »** une fois qu’on s’y est dit dispo, et **« Déjà en shift »**,
-intapable, quand il tombe sur des heures déjà travaillées — personne ne peut se
-porter candidat sur un horaire qu’il ne pourrait pas honorer. Et quand **vous**
-retenez quelqu’un sur un créneau, ses autres candidatures **aux mêmes heures** sont
-retirées automatiquement : vous ne verrez plus un nom proposé deux fois sur la même
-plage.
+Sur une carte ou une ligne de clôture, **« Supprimer »** (puis **Confirmer**) retire le
+shift **même si** les heures réelles sont déjà là. C’est pour corriger un doublon ou
+une personne de trop.
 
-## 2. Jokers par groupe, couleur au choix
+La **tablette** de l’établissement ne peut toujours retirer qu’un shift **pas encore**
+pointé.
 
-Chaque établissement peut avoir un **Joker par groupe** (Bar, Cuisine, Salle…). Sur le
-planning, survolez la carte Joker comme pour un membre du staff : **pastille de couleur**
-ou **Auto**. La Simulation valorise aussi ces Jokers groupe par groupe.
+## 3. Inchangé
 
-## 3. Performance — toutes les affaires, filtre groupe, Simulation
-
-Dans **Performance**, vous pouvez afficher **toutes les affaires** d’un coup (CA, masse,
-indicateurs), ou filtrer par **groupe**. La saisie du CA et des objectifs reste
-établissement par établissement.
-
-L’onglet **Simulation** estime un **jour** ou une **semaine** : CA hypothétique seulement
-là où il n’y a pas encore de CA réel — **rien n’est écrit** dans le CA officiel. Masse
-**hybride** (pointé = réel, le reste estimé). Valorisation des Jokers **par groupe**
-(horaire, forfait, moyenne ou médiane).
-
-## 4. Échanges de service — filtre par date
-
-Quand un membre de l’équipe propose un échange, il peut **filtrer les créneaux collègues
-par date**. Seules les semaines **déjà publiées** entrent en jeu.
-
-## 5. Observateur
-
-Le compte **observateur** ne voit plus **Dispos** ni **Échanges** à valider. Il conserve
-les actions utiles sur la clôture (sauf le **code** à 4 chiffres, réservé patron /
-directeur).
-
-## 6. Clôture par code — inchangée
-
-Vous dictez toujours le **code à 4 chiffres** (Pointage) ; l’équipe pointe **début** puis
-**fin** ; les heures réelles suivent pour le récap et la paie.
+Vous dictez toujours le **code à 4 chiffres** ; l’équipe pointe **début** puis **fin**.
+Proposer les créneaux de la semaine, les Jokers et les échanges fonctionnent comme la
+semaine dernière.
 
 ---
 
-En résumé : **proposer la semaine sans la publier**, **Jokers colorés comme le staff**,
-**Performance toutes affaires**, **Simulation pour anticiper** — sans changer la façon
-de pointer le service.
+En résumé : **un jour de Pointage cohérent**, **une suppression possible après
+pointage** pour le patron et le directeur.
 
 Bonne soirée,
 L’équipe Templyo
