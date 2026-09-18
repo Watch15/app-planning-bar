@@ -58,6 +58,7 @@ const {
     // re-dériver à la main ici, c'était semer un jeu décalé de ce que l'app ouvre.
     disposHorizonRange, clampHorizonWeeks, dispoEventDelta, staffReopenedFor,
 } = require('../lib/utils');
+const { FEATURES, enabled: featureEnabled } = require('../lib/client-features');
 
 const PASSWORD = process.env.SEED_PASSWORD || 'Demo2026!';
 const MAIL_DOMAIN = 'demo.templyo.fr';
@@ -1321,22 +1322,17 @@ async function run() {
         console.log('│    staff        ' + staffAccounts.length + ' comptes : '
             + staffAccounts.map(a => a.email.split('@')[0]).join(', '));
         console.log('│                 @' + MAIL_DOMAIN);
-        const feat = {
-            time: process.env.FEATURE_TIME_TRACKING,
-            perf: process.env.FEATURE_PERFORMANCE,
-            swaps: process.env.FEATURE_SHIFT_SWAPS,
-            otp:   process.env.FEATURE_OTP_CLOSURE,
-        };
-        console.log('│  Flags : TIME_TRACKING=' + (feat.time || '(absent)')
-            + '  PERFORMANCE=' + (feat.perf || '(absent)')
-            + '  SHIFT_SWAPS=' + (feat.swaps || '(absent)')
-            + '  OTP_CLOSURE=' + (feat.otp || '(absent)'));
-        if (feat.time !== 'true' && feat.time !== 'force'
-            || feat.perf !== 'true' && feat.perf !== 'force'
-            || feat.swaps !== 'true' && feat.swaps !== 'force'
-            || feat.otp !== 'true' && feat.otp !== 'force') {
-            console.log('│  ⚠️  Pack démo incomplet : pose FEATURE_TIME_TRACKING / OTP_CLOSURE /');
-            console.log('│      PERFORMANCE / SHIFT_SWAPS=true dans .env.demo (cf. .env.demo.example).');
+        // Pack démo = les modules `option` / `addon` du catalogue, résolus comme le
+        // serveur le fera (dépendances comprises : OTP éteint si le Pointage l'est).
+        const pack = Object.entries(FEATURES)
+            .filter(([, def]) => def.tier === 'option' || def.tier === 'addon');
+        console.log('│  Flags : ' + pack
+            .map(([, def]) => def.env.replace(/^FEATURE_/, '') + '=' + (process.env[def.env] || '(absent)'))
+            .join('  '));
+        const off = pack.filter(([key]) => !featureEnabled(key)).map(([, def]) => def.env);
+        if (off.length) {
+            console.log('│  ⚠️  Pack démo incomplet : pose ' + off.join(' / ') + '=true');
+            console.log('│      dans .env.demo (cf. .env.demo.example).');
         }
         console.log('│  Guide prospect : docs/guide-demo-prospect.md');
         console.log('│  Page navigateur : /demo-guide.html  (après npm run demo:server)');

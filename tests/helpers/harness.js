@@ -17,10 +17,13 @@ process.env.ALLOW_TEST_AUTH = '1'; // 2e garde du harnais (S-01)
 process.env.OUTBOUND_ENABLED = 'false';
 // Les suites historiques testent le Pack complet et les échanges. Les tests dédiés
 // aux entitlements vérifient séparément le profil "Planning seul" fail-closed.
-process.env.FEATURE_TIME_TRACKING = 'force';
-process.env.FEATURE_PERFORMANCE   = 'force';
-process.env.FEATURE_SHIFT_SWAPS   = 'force';
-process.env.FEATURE_OTP_CLOSURE   = 'force';
+// Lu dans le catalogue pour qu'un nouveau module (`tier` option/addon) soit forcé sans
+// édition ici — un oubli ferait passer les suites historiques sous "Planning seul".
+// Les tiers `experimental` (iCal) et `custom` (profil castaniu) restent au défaut.
+const { FEATURES } = require('../../lib/client-features');
+Object.values(FEATURES)
+    .filter(def => def.tier === 'option' || def.tier === 'addon')
+    .forEach(def => { process.env[def.env] = 'force'; });
 process.env.MONGO_URI       = process.env.MONGO_URI      || 'mongodb://127.0.0.1:27017/templyo_test';
 process.env.SESSION_SECRET  = process.env.SESSION_SECRET || 'integration-test-secret-0123456789abcdef';
 

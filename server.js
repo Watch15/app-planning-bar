@@ -7631,10 +7631,8 @@ async function classifyCodeRefuse(estabId, code) {
 }
 
 // GET code de clôture courant (manager éditeur ou responsable de soirée — pas observateur)
-// `otp_closure` est un sous-module de `time_tracking` (dépendance résolue dans le
-// catalogue) : le garder seul suffit, mais le parent reste écrit pour la lisibilité.
 app.get('/api/etablissements/:id/code-cloture',
-    checkDB, requireAuth, denyObservateurEdit, requireFeature('time_tracking'), requireFeature('otp_closure'),
+    checkDB, requireAuth, denyObservateurEdit, requireFeature('otp_closure'),
     async (req, res) => {
         try {
             const date = (req.query.date && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date))
@@ -7704,7 +7702,7 @@ app.get('/api/etablissements/:id/clotures-semaine',
 
 // POST pointer début ou fin via code OTP (staff) — body { code, phase: 'debut'|'fin' }
 // phase défaut 'fin' (rétrocompat) ; la fin exige un début déjà pointé.
-app.post('/api/shifts/:id/cloturer-par-code', checkDB, requireAuth, requireFeature('time_tracking'), requireFeature('otp_closure'), async (req, res) => {
+app.post('/api/shifts/:id/cloturer-par-code', checkDB, requireAuth, requireFeature('otp_closure'), async (req, res) => {
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ error: 'ID invalide' });
     const code = String(req.body?.code || '').trim();
     if (!/^\d{4}$/.test(code)) return res.status(400).json({ error: 'Code à 4 chiffres requis' });

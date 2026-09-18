@@ -32,28 +32,27 @@ beforeEach(() => {
     }));
 });
 
+const ENV_OF = {
+    time: 'FEATURE_TIME_TRACKING',
+    perf: 'FEATURE_PERFORMANCE',
+    swaps: 'FEATURE_SHIFT_SWAPS',
+    calendar: 'FEATURE_CALENDAR_SYNC',
+    otp: 'FEATURE_OTP_CLOSURE',
+};
+
 function withFlags(flags, fn) {
-    const previous = {
-        time: process.env.FEATURE_TIME_TRACKING,
-        perf: process.env.FEATURE_PERFORMANCE,
-        swaps: process.env.FEATURE_SHIFT_SWAPS,
-        calendar: process.env.FEATURE_CALENDAR_SYNC,
-        otp: process.env.FEATURE_OTP_CLOSURE,
-    };
-    if (flags.time !== undefined) process.env.FEATURE_TIME_TRACKING = flags.time;
-    if (flags.perf !== undefined) process.env.FEATURE_PERFORMANCE = flags.perf;
-    if (flags.swaps !== undefined) process.env.FEATURE_SHIFT_SWAPS = flags.swaps;
-    if (flags.calendar !== undefined) process.env.FEATURE_CALENDAR_SYNC = flags.calendar;
-    if (flags.otp !== undefined) process.env.FEATURE_OTP_CLOSURE = flags.otp;
+    const previous = {};
+    for (const [key, name] of Object.entries(ENV_OF)) {
+        previous[name] = process.env[name];
+        if (flags[key] !== undefined) process.env[name] = flags[key];
+    }
     return Promise.resolve()
         .then(fn)
         .finally(() => {
-            process.env.FEATURE_TIME_TRACKING = previous.time;
-            process.env.FEATURE_PERFORMANCE = previous.perf;
-            process.env.FEATURE_SHIFT_SWAPS = previous.swaps;
-            if (previous.calendar === undefined) delete process.env.FEATURE_CALENDAR_SYNC;
-            else process.env.FEATURE_CALENDAR_SYNC = previous.calendar;
-            process.env.FEATURE_OTP_CLOSURE = previous.otp;
+            for (const [name, value] of Object.entries(previous)) {
+                if (value === undefined) delete process.env[name];
+                else process.env[name] = value;
+            }
         });
 }
 

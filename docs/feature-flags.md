@@ -160,10 +160,11 @@ Vérifier quand même que le code est bien déployé avant de conclure :
 2. Variable dans `.env.castaniu` / Railway Castaniu
 3. Brancher UI (`ClientFeatures.enabled` / `data-feature`) + routes (`requireFeature`)
 4. Test dans `tests/client-features.test.js`
-5. **Si le code gaté était déjà couvert par une suite existante**, y poser
-   `process.env.FEATURE_X = 'force'` dans le `before()` : le harnais ne force que
-   `time_tracking` / `performance` / `shift_swaps` / `otp_closure`, le reste tourne sous le profil par
-   défaut, où une feature `profiles: ['castaniu']` est off — et la suite devient rouge.
+5. **Si le code gaté était déjà couvert par une suite existante**, vérifier le `tier` :
+   le harnais force automatiquement tout `option` / `addon` du catalogue. Un tier
+   `experimental` ou `custom` (profil castaniu) tourne sous le profil par défaut, donc
+   off — y poser `process.env.FEATURE_X = 'force'` dans le `before()` de la suite,
+   sinon elle devient rouge.
 6. Ligne dans ce doc (dont le tableau « Où le flag est posé ») + backlog
 
 ## Portes effectivement protégées

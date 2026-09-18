@@ -908,9 +908,8 @@ function isClotureEditor() {
     return !!(currentUser && CLOTURE_ROLES.includes(currentUser.role));
 }
 
-/** Code OTP : patron / directeur / responsable — pas l'observateur. Et seulement si le
- *  sous-module `otp_closure` est allumé : sans lui, la carte code disparaît mais la
- *  clôture manuelle et le journal restent. */
+/** Code OTP : patron / directeur / responsable — pas l'observateur. Seul pilote de la
+ *  carte code et de ses timers ; le flag `otp_closure` se lit ici et nulle part ailleurs. */
 function canSeeCodeCloture() {
     if (!window.ClientFeatures || !ClientFeatures.enabled('otp_closure')) return false;
     return !!(currentUser && (
