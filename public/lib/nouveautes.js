@@ -79,8 +79,8 @@
             titre: 'Les flèches du Pointage emmènent tout le jour avec elles',
             quoi: "En changeant de jour, le code à 4 chiffres, le CA, la clôture et les "
                 + "cartes d’heures suivent le même jour. Plus de code d’un soir affiché "
-                + "à côté des heures d’un autre. La saisie directe des heures reste "
-                + "visible en même temps que la clôture par code.",
+                + "à côté des heures d’un autre. Les heures se corrigent depuis la "
+                + "clôture du jour ; la saisie directe reste celle de la tablette.",
             ou: 'Pointage → flèches de jour à côté de la date'
         },
         {

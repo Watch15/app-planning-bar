@@ -923,7 +923,10 @@ function nameMatchesSearch(name, q) {
     return String(name || '').toLowerCase().includes(q);
 }
 
-function setLegacyPointageVisible(visible, { linkedWithCloture } = {}) {
+/** Saisie directe (cartes + pied de totaux) : le mode de la tablette. Un manager
+ *  corrige les heures depuis la clôture du jour, qui écrit la même donnée avec le
+ *  journal en plus — les deux listes ensemble faisaient doublon. */
+function setLegacyPointageVisible(visible) {
     const block = document.getElementById('legacy-pointage-block');
     const list = document.getElementById('shifts-list');
     if (block) block.style.display = visible ? '' : 'none';
@@ -931,8 +934,6 @@ function setLegacyPointageVisible(visible, { linkedWithCloture } = {}) {
     if (!block && list) list.style.display = visible ? '' : 'none';
     const footer = document.getElementById('total-footer');
     if (!visible && footer) footer.remove();
-    const title = document.getElementById('legacy-pointage-title');
-    if (title) title.style.display = (visible && linkedWithCloture) ? '' : 'none';
 }
 
 function escapeHtml(str) {
@@ -1390,12 +1391,11 @@ function initCloturePanel() {
     if (!gate || !currentEstabId) {
         panel.classList.remove('visible');
         stopCodeClotureTimers();
-        setLegacyPointageVisible(true, { linkedWithCloture: false });
+        setLegacyPointageVisible(true);
         return;
     }
     panel.classList.add('visible');
-    // D-106 : clôture OTP + saisie directe visibles ensemble, même jour (`today`).
-    setLegacyPointageVisible(true, { linkedWithCloture: true });
+    setLegacyPointageVisible(false);
     // Observateur : toutes les actions sauf le code OTP.
     const btnValidate = document.getElementById('clotures-validate-week');
     if (btnValidate) btnValidate.style.display = isClotureEditor() ? '' : 'none';

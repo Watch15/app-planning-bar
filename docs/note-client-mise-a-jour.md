@@ -21,8 +21,8 @@ Les flèches **← →** du Pointage font avancer **ensemble** le code à 4 chif
 la clôture et les cartes d’heures. Vous ne voyez plus un code d’un soir collé aux
 heures d’un autre.
 
-La **saisie directe des heures** reste affichée **en même temps** que la clôture par
-code : les deux modes sont là, sur le même jour.
+Les heures se corrigent depuis la **clôture du jour** (« Début manuel », « Ajuster »),
+qui garde une trace dans le journal. La **saisie directe** reste le mode de la tablette.
 
 ## 2. Pointage — supprimer même après le pointage
 

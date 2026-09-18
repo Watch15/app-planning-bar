@@ -130,7 +130,7 @@ Chaque étape = un écran à laisser **2–3 minutes** au prospect. Ne pas tout 
 ### C. Terrain & pilotage (10 min) — revenir en **patron**
 
 7. **Pointage**  
-   Code OTP + **saisie directe** sur le même jour (D-106). Comparer planifié / réel sur une soirée passée. Supprimer un extra « erreur » si besoin.
+   Code OTP + **clôture du jour** (« Début manuel », « Ajuster » avec motif, journal). Comparer planifié / réel sur une soirée passée. Supprimer un extra « erreur » si besoin.
 
 8. **Performance → Réel**  
    CA, masse chargée, coefficient coloré contre l’objectif (par établissement ou toutes les affaires).  
@@ -170,7 +170,7 @@ Ouvrir l’URL de démo → e-mail + mot de passe fournis → **Connexion**.
 
 ### Pointer les heures réelles
 - **Code** : le responsable dicte le code 4 chiffres ; chacun pointe début puis fin.  
-- **Saisie directe** (patron / directeur) : carte d’heures sous le panneau de clôture.  
+- **Saisie directe** (tablette de l’établissement) : cartes d’heures, sans panneau de clôture.  
 Les heures réelles alimentent le **récap** et la **Performance**.
 
 ### Piloter la masse salariale
